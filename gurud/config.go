@@ -1,12 +1,12 @@
 //go:build !test
 // +build !test
 
-package evmd
+package gurud
 
 import (
 	"fmt"
 
-	"github.com/cosmos/evm/cmd/evmd/config"
+	"github.com/cosmos/evm/cmd/gurud/config"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"cosmossdk.io/math"

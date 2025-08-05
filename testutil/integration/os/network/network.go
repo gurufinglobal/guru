@@ -15,8 +15,8 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cometbft/cometbft/version"
 
-	app "github.com/cosmos/evm/evmd"
-	chainutil "github.com/cosmos/evm/evmd/testutil"
+	app "github.com/cosmos/evm/gurud"
+	chainutil "github.com/cosmos/evm/gurud/testutil"
 	commonnetwork "github.com/cosmos/evm/testutil/integration/common/network"
 	"github.com/cosmos/evm/types"
 	erc20types "github.com/cosmos/evm/x/erc20/types"

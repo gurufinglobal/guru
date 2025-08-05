@@ -8,7 +8,7 @@ import (
 
 	cryptocodec "github.com/cosmos/evm/crypto/codec"
 	"github.com/cosmos/evm/ethereum/eip712"
-	exampleapp "github.com/cosmos/evm/evmd"
+	exampleapp "github.com/cosmos/evm/gurud"
 	"github.com/cosmos/evm/types"
 
 	"github.com/cosmos/cosmos-sdk/client"

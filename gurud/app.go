@@ -1,4 +1,4 @@
-package evmd
+package gurud
 
 import (
 	"encoding/json"
@@ -21,7 +21,7 @@ import (
 	evmante "github.com/cosmos/evm/ante"
 	cosmosevmante "github.com/cosmos/evm/ante/evm"
 	evmosencoding "github.com/cosmos/evm/encoding"
-	chainante "github.com/cosmos/evm/evmd/ante"
+	chainante "github.com/cosmos/evm/gurud/ante"
 	srvflags "github.com/cosmos/evm/server/flags"
 	cosmosevmtypes "github.com/cosmos/evm/types"
 	cosmosevmutils "github.com/cosmos/evm/utils"

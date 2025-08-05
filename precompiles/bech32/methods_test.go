@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	chainconfig "github.com/cosmos/evm/cmd/evmd/config"
+	chainconfig "github.com/cosmos/evm/cmd/gurud/config"
 	"github.com/cosmos/evm/precompiles/bech32"
 	cmn "github.com/cosmos/evm/precompiles/common"
 

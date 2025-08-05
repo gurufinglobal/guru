@@ -17,9 +17,9 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	cmtversion "github.com/cometbft/cometbft/version"
 
-	"github.com/cosmos/evm/cmd/evmd/config"
+	"github.com/cosmos/evm/cmd/gurud/config"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
-	"github.com/cosmos/evm/evmd"
+	"github.com/cosmos/evm/gurud"
 	"github.com/cosmos/evm/testutil/tx"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -367,7 +367,7 @@ func (chain *TestChain) SendEvmTx(
 	amount *big.Int,
 	data []byte,
 ) (*abci.ExecTxResult, error) {
-	app, ok := chain.App.(*evmd.EVMD)
+	app, ok := chain.App.(*gurud.EVMD)
 	require.True(chain.TB, ok)
 	ctx := chain.GetContext()
 

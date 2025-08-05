@@ -1,7 +1,7 @@
 package utils
 
 import (
-	exampleapp "github.com/cosmos/evm/evmd"
+	exampleapp "github.com/cosmos/evm/gurud"
 	"github.com/cosmos/evm/testutil/constants"
 	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
 	"github.com/cosmos/evm/testutil/integration/os/network"

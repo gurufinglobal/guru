@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	testifysuite "github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/evm/evmd"
+	"github.com/cosmos/evm/gurud"
 	"github.com/cosmos/evm/ibc"
 	evmibctesting "github.com/cosmos/evm/ibc/testing"
 	"github.com/cosmos/evm/testutil"
@@ -193,7 +193,7 @@ func (suite *MiddlewareTestSuite) TestOnRecvPacket() {
 
 				voucherDenom := testutil.GetVoucherDenomFromPacketData(data, packet.GetDestPort(), packet.GetDestChannel())
 
-				evmApp := suite.evmChainA.App.(*evmd.EVMD)
+				evmApp := suite.evmChainA.App.(*gurud.EVMD)
 				voucherCoin := evmApp.BankKeeper.GetBalance(ctxA, receiver, voucherDenom)
 				suite.Require().Equal(sendAmt.String(), voucherCoin.Amount.String())
 
@@ -225,7 +225,7 @@ func (suite *MiddlewareTestSuite) TestOnRecvPacketNativeErc20() {
 	nativeErc20 := SetupNativeErc20(suite.T(), suite.evmChainA)
 
 	evmCtx := suite.evmChainA.GetContext()
-	evmApp := suite.evmChainA.App.(*evmd.EVMD)
+	evmApp := suite.evmChainA.App.(*gurud.EVMD)
 
 	// Scenario: Native ERC20 token transfer from evmChainA to chainB
 	timeoutHeight := clienttypes.NewHeight(1, 110)
@@ -402,7 +402,7 @@ func (suite *MiddlewareTestSuite) TestOnAcknowledgementPacket() {
 			suite.SetupTest()
 
 			ctxA := suite.evmChainA.GetContext()
-			evmApp := suite.evmChainA.App.(*evmd.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.EVMD)
 
 			bondDenom, err := evmApp.StakingKeeper.BondDenom(ctxA)
 			suite.Require().NoError(err)
@@ -544,7 +544,7 @@ func (suite *MiddlewareTestSuite) TestOnAcknowledgementPacketNativeErc20() {
 			nativeErc20 := SetupNativeErc20(suite.T(), suite.evmChainA)
 
 			evmCtx := suite.evmChainA.GetContext()
-			evmApp := suite.evmChainA.App.(*evmd.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.EVMD)
 
 			timeoutHeight := clienttypes.NewHeight(1, 110)
 			path := suite.pathAToB
@@ -673,7 +673,7 @@ func (suite *MiddlewareTestSuite) TestOnTimeoutPacket() {
 			suite.SetupTest()
 
 			ctxA := suite.evmChainA.GetContext()
-			evmApp := suite.evmChainA.App.(*evmd.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.EVMD)
 			bondDenom, err := evmApp.StakingKeeper.BondDenom(ctxA)
 			suite.Require().NoError(err)
 
@@ -793,7 +793,7 @@ func (suite *MiddlewareTestSuite) TestOnTimeoutPacketNativeErc20() {
 			nativeErc20 := SetupNativeErc20(suite.T(), suite.evmChainA)
 
 			evmCtx := suite.evmChainA.GetContext()
-			evmApp := suite.evmChainA.App.(*evmd.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.EVMD)
 
 			timeoutHeight := clienttypes.NewHeight(1, 110)
 			path := suite.pathAToB

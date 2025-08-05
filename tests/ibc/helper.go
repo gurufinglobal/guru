@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/cosmos/evm/contracts"
-	"github.com/cosmos/evm/evmd"
+	"github.com/cosmos/evm/gurud"
 	evmibctesting "github.com/cosmos/evm/ibc/testing"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
@@ -32,7 +32,7 @@ func SetupNativeErc20(t *testing.T, chain *evmibctesting.TestChain) *NativeErc20
 	t.Helper()
 
 	evmCtx := chain.GetContext()
-	evmApp := chain.App.(*evmd.EVMD)
+	evmApp := chain.App.(*gurud.EVMD)
 
 	// Deploy new ERC20 contract with default metadata
 	contractAddr, err := evmApp.Erc20Keeper.DeployERC20Contract(evmCtx, banktypes.Metadata{

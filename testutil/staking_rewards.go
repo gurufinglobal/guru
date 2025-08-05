@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	app "github.com/cosmos/evm/evmd"
+	app "github.com/cosmos/evm/gurud"
 	"github.com/cosmos/evm/testutil/constants"
 	testutiltx "github.com/cosmos/evm/testutil/tx"
 

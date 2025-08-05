@@ -14,7 +14,7 @@ import (
 
 	"github.com/cometbft/cometbft/crypto"
 
-	exampleapp "github.com/cosmos/evm/evmd"
+	exampleapp "github.com/cosmos/evm/gurud"
 	"github.com/cosmos/evm/precompiles/p256"
 	"github.com/cosmos/evm/testutil/integration/os/factory"
 	"github.com/cosmos/evm/testutil/integration/os/grpc"

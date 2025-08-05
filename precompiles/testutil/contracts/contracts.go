@@ -10,8 +10,8 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
-	exampleapp "github.com/cosmos/evm/evmd"
-	chainutil "github.com/cosmos/evm/evmd/testutil"
+	exampleapp "github.com/cosmos/evm/gurud"
+	chainutil "github.com/cosmos/evm/gurud/testutil"
 	precompiletestutil "github.com/cosmos/evm/precompiles/testutil"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 

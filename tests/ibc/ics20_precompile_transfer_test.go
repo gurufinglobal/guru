@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/evm/evmd"
+	"github.com/cosmos/evm/gurud"
 	evmibctesting "github.com/cosmos/evm/ibc/testing"
 	"github.com/cosmos/evm/precompiles/ics20"
 	evmante "github.com/cosmos/evm/x/vm/ante"
@@ -44,14 +44,14 @@ func (suite *ICS20TransferTestSuite) SetupTest() {
 	suite.chainA = suite.coordinator.GetChain(evmibctesting.GetEvmChainID(1))
 	suite.chainB = suite.coordinator.GetChain(evmibctesting.GetEvmChainID(2))
 
-	evmAppA := suite.chainA.App.(*evmd.EVMD)
+	evmAppA := suite.chainA.App.(*gurud.EVMD)
 	suite.chainAPrecompile, _ = ics20.NewPrecompile(
 		*evmAppA.StakingKeeper,
 		evmAppA.TransferKeeper,
 		evmAppA.IBCKeeper.ChannelKeeper,
 		evmAppA.EVMKeeper,
 	)
-	evmAppB := suite.chainB.App.(*evmd.EVMD)
+	evmAppB := suite.chainB.App.(*gurud.EVMD)
 	suite.chainBPrecompile, _ = ics20.NewPrecompile(
 		*evmAppB.StakingKeeper,
 		evmAppB.TransferKeeper,
@@ -80,7 +80,7 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 		{
 			"transfer single denom",
 			func() {
-				evmAppA := suite.chainA.App.(*evmd.EVMD)
+				evmAppA := suite.chainA.App.(*gurud.EVMD)
 				sourceDenomToTransfer, err = evmAppA.StakingKeeper.BondDenom(suite.chainA.GetContext())
 				msgAmount = evmibctesting.DefaultCoinAmount
 			},
@@ -89,7 +89,7 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 			"transfer amount larger than int64",
 			func() {
 				var ok bool
-				evmAppA := suite.chainA.App.(*evmd.EVMD)
+				evmAppA := suite.chainA.App.(*gurud.EVMD)
 				sourceDenomToTransfer, err = evmAppA.StakingKeeper.BondDenom(suite.chainA.GetContext())
 				msgAmount, ok = sdkmath.NewIntFromString("9223372036854775808") // 2^63 (one above int64)
 				suite.Require().True(ok)
@@ -98,7 +98,7 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 		{
 			"transfer entire balance",
 			func() {
-				evmAppA := suite.chainA.App.(*evmd.EVMD)
+				evmAppA := suite.chainA.App.(*gurud.EVMD)
 				sourceDenomToTransfer, err = evmAppA.StakingKeeper.BondDenom(suite.chainA.GetContext())
 				msgAmount = transfertypes.UnboundedSpendLimit()
 			},
@@ -128,7 +128,7 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 
 			tc.malleate()
 
-			evmAppA := suite.chainA.App.(*evmd.EVMD)
+			evmAppA := suite.chainA.App.(*gurud.EVMD)
 
 			GetBalance := func() sdk.Coin {
 				ctx := suite.chainA.GetContext()
@@ -205,7 +205,7 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 			suite.Require().True(transferAmount.Equal(chainAEscrowBalance.Amount))
 
 			// check that voucher exists on chain B
-			evmAppB := suite.chainB.App.(*evmd.EVMD)
+			evmAppB := suite.chainB.App.(*gurud.EVMD)
 			chainBDenom := transfertypes.NewDenom(originalCoin.Denom, traceAToB)
 			chainBBalance := evmAppB.BankKeeper.GetBalance(
 				suite.chainB.GetContext(),

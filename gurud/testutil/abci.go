@@ -8,7 +8,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	app "github.com/cosmos/evm/evmd"
+	app "github.com/cosmos/evm/gurud"
 	"github.com/cosmos/evm/testutil/tx"
 
 	errorsmod "cosmossdk.io/errors"

@@ -219,7 +219,7 @@ func HexToBech32Cmd() *cobra.Command {
 		Use:     "0x-to-bech32",
 		Short:   "Get the bech32 address for a given 0x address",
 		Long:    "Get the bech32 address for a given 0x address.",
-		Example: "evmd query evm 0x-to-bech32 0x7cB61D4117AE31a12E393a1Cfa3BaC666481D02E",
+		Example: "gurud query evm 0x-to-bech32 0x7cB61D4117AE31a12E393a1Cfa3BaC666481D02E",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.Println(utils.Bech32StringFromHexAddress(args[0]))
@@ -237,7 +237,7 @@ func Bech32ToHexCmd() *cobra.Command {
 		Use:     "bech32-to-0x",
 		Short:   "Get the 0x address for a given bech32 address",
 		Long:    "Get the 0x address for a given bech32 address.",
-		Example: "evmd query evm bech32-to-0x cosmos10jmp6sgh4cc6zt3e8gw05wavvejgr5pwsjskvv",
+		Example: "gurud query evm bech32-to-0x cosmos10jmp6sgh4cc6zt3e8gw05wavvejgr5pwsjskvv",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			hex, err := utils.HexAddressFromBech32String(args[0])
@@ -258,7 +258,7 @@ func GetBankBalanceCmd() *cobra.Command {
 		Use:     "balance-bank [address] [denom]",
 		Short:   "Get the bank balance for a given 0x address and bank denom",
 		Long:    "Get the bank balance for a given 0x address and bank denom.",
-		Example: "evmd query evm balance-bank 0xA2A8B87390F8F2D188242656BFb6852914073D06 atoken",
+		Example: "gurud query evm balance-bank 0xA2A8B87390F8F2D188242656BFb6852914073D06 atoken",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -289,7 +289,7 @@ func GetERC20BalanceCmd() *cobra.Command {
 		Use:     "balance-erc20 [address] [erc20-address]",
 		Short:   "Get the ERC20 balance for a given 0x address and erc20 address",
 		Long:    "Get the ERC20 balance for a given 0x address and erc20 address.",
-		Example: "evmd query evm balance-erc20 0xA2A8B87390F8F2D188242656BFb6852914073D06 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+		Example: "gurud query evm balance-erc20 0xA2A8B87390F8F2D188242656BFb6852914073D06 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)

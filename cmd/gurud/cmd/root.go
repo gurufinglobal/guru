@@ -14,10 +14,10 @@ import (
 
 	dbm "github.com/cosmos/cosmos-db"
 	cosmosevmcmd "github.com/cosmos/evm/client"
-	evmdconfig "github.com/cosmos/evm/cmd/evmd/config"
+	gurudconfig "github.com/cosmos/evm/cmd/gurud/config"
 	cosmosevmkeyring "github.com/cosmos/evm/crypto/keyring"
-	"github.com/cosmos/evm/evmd"
-	"github.com/cosmos/evm/evmd/testutil"
+	"github.com/cosmos/evm/gurud"
+	"github.com/cosmos/evm/gurud/testutil"
 	cosmosevmserver "github.com/cosmos/evm/server"
 	cosmosevmserverconfig "github.com/cosmos/evm/server/config"
 	srvflags "github.com/cosmos/evm/server/flags"
@@ -131,7 +131,7 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
-			customAppTemplate, customAppConfig := InitAppConfig(evmdconfig.BaseDenom, evmdconfig.EVMChainID)
+			customAppTemplate, customAppConfig := InitAppConfig(gurudconfig.BaseDenom, gurudconfig.EVMChainID)
 			customTMConfig := initTendermintConfig()
 
 			return sdkserver.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)
@@ -213,7 +213,7 @@ func InitAppConfig(denom string, evmChainID uint64) (string, interface{}) {
 	return customAppTemplate, customAppConfig
 }
 
-func initRootCmd(rootCmd *cobra.Command, osApp *evmd.EVMD) {
+func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 	cfg := sdk.GetConfig()
 	cfg.Seal()
 
@@ -372,7 +372,7 @@ func newApp(
 	return evmd.NewExampleApp(
 		logger, db, traceStore, true,
 		appOpts,
-		evmdconfig.EVMChainID,
+		gurudconfig.EVMChainID,
 		evmd.EvmAppOptions,
 		baseappOptions...,
 	)
@@ -389,7 +389,7 @@ func appExport(
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
-	var exampleApp *evmd.EVMD
+	var exampleApp *gurud.EVMD
 
 	// this check is necessary as we use the flag in x/upgrade.
 	// we can exit more gracefully by checking the flag here.
@@ -414,13 +414,13 @@ func appExport(
 	}
 
 	if height != -1 {
-		exampleApp = evmd.NewExampleApp(logger, db, traceStore, false, appOpts, evmdconfig.EVMChainID, evmd.EvmAppOptions, baseapp.SetChainID(chainID))
+		exampleApp = evmd.NewExampleApp(logger, db, traceStore, false, appOpts, gurudconfig.EVMChainID, evmd.EvmAppOptions, baseapp.SetChainID(chainID))
 
 		if err := exampleApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		exampleApp = evmd.NewExampleApp(logger, db, traceStore, true, appOpts, evmdconfig.EVMChainID, evmd.EvmAppOptions, baseapp.SetChainID(chainID))
+		exampleApp = evmd.NewExampleApp(logger, db, traceStore, true, appOpts, gurudconfig.EVMChainID, evmd.EvmAppOptions, baseapp.SetChainID(chainID))
 	}
 
 	return exampleApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
@@ -435,7 +435,7 @@ func getChainIDFromOpts(appOpts servertypes.AppOptions) (chainID string, err err
 	if chainID == "" {
 		// If not available load from home
 		homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
-		chainID, err = evmdconfig.GetChainIDFromHome(homeDir)
+		chainID, err = gurudconfig.GetChainIDFromHome(homeDir)
 		if err != nil {
 			return "", err
 		}

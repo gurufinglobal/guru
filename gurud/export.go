@@ -1,4 +1,4 @@
-package evmd
+package gurud
 
 import (
 	"encoding/json"

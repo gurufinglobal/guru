@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	exampleapp "github.com/cosmos/evm/evmd"
+	exampleapp "github.com/cosmos/evm/gurud"
 	"github.com/cosmos/evm/x/vm/types"
 )
 

@@ -1,9 +1,9 @@
-package evmd
+package gurud
 
 import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/cosmos/evm/evmd/eips"
+	"github.com/cosmos/evm/gurud/eips"
 )
 
 // cosmosEVMActivators defines a map of opcode modifiers associated

@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/evm/evmd"
+	"github.com/cosmos/evm/gurud"
 	evmibctesting "github.com/cosmos/evm/ibc/testing"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
@@ -91,7 +91,7 @@ func (suite *TransferTestSuite) TestHandleMsgTransfer() {
 
 			tc.malleate()
 
-			evmApp := suite.evmChainA.App.(*evmd.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.EVMD)
 			sourceDenomToTransfer, err = evmApp.StakingKeeper.BondDenom(suite.evmChainA.GetContext())
 			suite.Require().NoError(err)
 			originalBalance := evmApp.BankKeeper.GetBalance(

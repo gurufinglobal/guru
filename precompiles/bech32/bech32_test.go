@@ -5,7 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	chainconfig "github.com/cosmos/evm/cmd/evmd/config"
+	chainconfig "github.com/cosmos/evm/cmd/gurud/config"
 	"github.com/cosmos/evm/precompiles/bech32"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

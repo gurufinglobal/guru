@@ -13,8 +13,8 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	"github.com/cosmos/evm/evmd/eips"
-	"github.com/cosmos/evm/evmd/eips/testdata"
+	"github.com/cosmos/evm/gurud/eips"
+	"github.com/cosmos/evm/gurud/eips/testdata"
 	"github.com/cosmos/evm/testutil/integration/os/factory"
 	"github.com/cosmos/evm/testutil/integration/os/grpc"
 	"github.com/cosmos/evm/testutil/integration/os/keyring"

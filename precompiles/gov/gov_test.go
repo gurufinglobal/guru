@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	chainutil "github.com/cosmos/evm/evmd/testutil"
+	chainutil "github.com/cosmos/evm/gurud/testutil"
 	"github.com/cosmos/evm/precompiles/gov"
 	"github.com/cosmos/evm/x/vm/statedb"
 	evmtypes "github.com/cosmos/evm/x/vm/types"

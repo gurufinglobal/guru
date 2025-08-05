@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	app "github.com/cosmos/evm/evmd"
-	chainutil "github.com/cosmos/evm/evmd/testutil"
+	app "github.com/cosmos/evm/gurud"
+	chainutil "github.com/cosmos/evm/gurud/testutil"
 	"github.com/cosmos/evm/precompiles/erc20"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 

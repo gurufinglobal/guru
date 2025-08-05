@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/evm/evmd"
+	"github.com/cosmos/evm/gurud"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
