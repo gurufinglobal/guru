@@ -13,7 +13,7 @@ TRACE=""
 PRUNING="default"
 #PRUNING="custom"
 
-CHAINDIR="$HOME/.tmp-evmd-solidity-tests" # TODO: make configurable like chain id
+CHAINDIR="$HOME/.tmp-gurud-solidity-tests" # TODO: make configurable like chain id
 GENESIS="$CHAINDIR/config/genesis.json"
 TMP_GENESIS="$CHAINDIR/config/tmp_genesis.json"
 APP_TOML="$CHAINDIR/config/app.toml"
@@ -35,8 +35,8 @@ set -e
 BASEFEE=1000000000
 
 # Set client config
-evmd config set client chain-id "$CHAINID" --home "$CHAINDIR"
-evmd config set client keyring-backend "$KEYRING" --home "$CHAINDIR"
+gurud config set client chain-id "$CHAINID" --home "$CHAINDIR"
+gurud config set client keyring-backend "$KEYRING" --home "$CHAINDIR"
 
 # myKey address 0x7cb61d4117ae31a12e393a1cfa3bac666481d02e
 VAL_KEY="mykey"
@@ -59,21 +59,21 @@ USER4_KEY="user4"
 USER4_MNEMONIC="doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch"
 
 # Import keys from mnemonics
-echo "$VAL_MNEMONIC" | evmd keys add "$VAL_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
-echo "$USER1_MNEMONIC" | evmd keys add "$USER1_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
-echo "$USER2_MNEMONIC" | evmd keys add "$USER2_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
-echo "$USER3_MNEMONIC" | evmd keys add "$USER3_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
-echo "$USER4_MNEMONIC" | evmd keys add "$USER4_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
+echo "$VAL_MNEMONIC" | gurud keys add "$VAL_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
+echo "$USER1_MNEMONIC" | gurud keys add "$USER1_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
+echo "$USER2_MNEMONIC" | gurud keys add "$USER2_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
+echo "$USER3_MNEMONIC" | gurud keys add "$USER3_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
+echo "$USER4_MNEMONIC" | gurud keys add "$USER4_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$CHAINDIR"
 
 # Set moniker and chain-id for Cosmos EVM (Moniker can be anything, chain-id must be an integer)
-evmd init "$MONIKER" --chain-id "$CHAINID" --home "$CHAINDIR"
+gurud init "$MONIKER" --chain-id "$CHAINID" --home "$CHAINDIR"
 
-# Change parameter token denominations to atest
-jq '.app_state["staking"]["params"]["bond_denom"]="atest"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="atest"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-jq '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="atest"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-jq '.app_state["evm"]["params"]["evm_denom"]="atest"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-jq '.app_state["mint"]["params"]["mint_denom"]="atest"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+# Change parameter token denominations to aguru
+jq '.app_state["staking"]["params"]["bond_denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq '.app_state["evm"]["params"]["evm_denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+jq '.app_state["mint"]["params"]["mint_denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 # Enable precompiles in EVM params
 jq '.app_state["evm"]["params"]["active_static_precompiles"]=["0x0000000000000000000000000000000000000100","0x0000000000000000000000000000000000000400","0x0000000000000000000000000000000000000800","0x0000000000000000000000000000000000000801","0x0000000000000000000000000000000000000802","0x0000000000000000000000000000000000000803","0x0000000000000000000000000000000000000804"]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -93,11 +93,11 @@ jq '.app_state["feemarket"]["params"]["base_fee"]="'${BASEFEE}'"' "$GENESIS" >"$
 sed -i.bak 's/create_empty_blocks = true/create_empty_blocks = false/g' "$CONFIG_TOML"
 
 # Allocate genesis accounts (cosmos formatted addresses)
-evmd genesis add-genesis-account "$(evmd keys show "$VAL_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 100000000000000000000000000atest --keyring-backend "$KEYRING" --home "$CHAINDIR"
-evmd genesis add-genesis-account "$(evmd keys show "$USER1_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 1000000000000000000000atest --keyring-backend "$KEYRING" --home "$CHAINDIR"
-evmd genesis add-genesis-account "$(evmd keys show "$USER2_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 1000000000000000000000atest --keyring-backend "$KEYRING" --home "$CHAINDIR"
-evmd genesis add-genesis-account "$(evmd keys show "$USER3_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 1000000000000000000000atest --keyring-backend "$KEYRING" --home "$CHAINDIR"
-evmd genesis add-genesis-account "$(evmd keys show "$USER4_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 1000000000000000000000atest --keyring-backend "$KEYRING" --home "$CHAINDIR"
+gurud genesis add-genesis-account "$(gurud keys show "$VAL_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 100000000000000000000000000aguru --keyring-backend "$KEYRING" --home "$CHAINDIR"
+gurud genesis add-genesis-account "$(gurud keys show "$USER1_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 1000000000000000000000aguru --keyring-backend "$KEYRING" --home "$CHAINDIR"
+gurud genesis add-genesis-account "$(gurud keys show "$USER2_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 1000000000000000000000aguru --keyring-backend "$KEYRING" --home "$CHAINDIR"
+gurud genesis add-genesis-account "$(gurud keys show "$USER3_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 1000000000000000000000aguru --keyring-backend "$KEYRING" --home "$CHAINDIR"
+gurud genesis add-genesis-account "$(gurud keys show "$USER4_KEY" -a --keyring-backend "$KEYRING" --home "$CHAINDIR")" 1000000000000000000000aguru --keyring-backend "$KEYRING" --home "$CHAINDIR"
 
 # set custom pruning settings
 if [ "$PRUNING" = "custom" ]; then
@@ -114,13 +114,13 @@ sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
 sed -i.bak 's/timeout_commit = "5s"/timeout_commit = "100ms"/g' "$CONFIG_TOML"
 
 # Sign genesis transaction
-evmd genesis gentx "$VAL_KEY" 1000000000000000000000atest --gas-prices ${BASEFEE}atest --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$CHAINDIR"
+gurud genesis gentx "$VAL_KEY" 1000000000000000000000aguru --gas-prices ${BASEFEE}aguru --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$CHAINDIR"
 ## In case you want to create multiple validators at genesis
-## 1. Back to `evmd keys add` step, init more keys
-## 2. Back to `evmd add-genesis-account` step, add balance for those
-## 3. Clone this ~/.evmd home directory into some others, let's say `~/.clonedosd`
+## 1. Back to `gurud keys add` step, init more keys
+## 2. Back to `gurud add-genesis-account` step, add balance for those
+## 3. Clone this ~/.gurud home directory into some others, let's say `~/.clonedosd`
 ## 4. Run `gentx` in each of those folders
-## 5. Copy the `gentx-*` folders under `~/.clonedosd/config/gentx/` folders into the original `~/.evmd/config/gentx`
+## 5. Copy the `gentx-*` folders under `~/.clonedosd/config/gentx/` folders into the original `~/.gurud/config/gentx`
 
 # Enable the APIs for the tests to be successful
 sed -i.bak 's/enable = false/enable = true/g' "$APP_TOML"
@@ -129,15 +129,15 @@ sed -i.bak 's/enable = false/enable = true/g' "$APP_TOML"
 grep -q -F '[memiavl]' "$APP_TOML" && sed -i.bak '/\[memiavl\]/,/^\[/ s/enable = true/enable = false/' "$APP_TOML"
 
 # Collect genesis tx
-evmd genesis collect-gentxs --home "$CHAINDIR"
+gurud genesis collect-gentxs --home "$CHAINDIR"
 
 # Run this to ensure everything worked and that the genesis file is setup correctly
-evmd genesis validate-genesis --home "$CHAINDIR"
+gurud genesis validate-genesis --home "$CHAINDIR"
 
 # Start the node
-evmd start "$TRACE" \
+gurud start "$TRACE" \
 	--log_level $LOGLEVEL \
-	--minimum-gas-prices=0.0001utest \
+	--minimum-gas-prices=0.0001uguru \
 	--json-rpc.api eth,txpool,personal,net,debug,web3 \
 	--chain-id "$CHAINID" \
 	--home "$CHAINDIR"

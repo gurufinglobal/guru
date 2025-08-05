@@ -12,16 +12,16 @@ const (
 	DefaultGasPrice = 20
 
 	// ExampleAttoDenom provides an example denom for use in tests
-	ExampleAttoDenom = "aatom"
+	ExampleAttoDenom = "aguru"
 
 	// ExampleMicroDenom provides an example denom for use in tests
-	ExampleMicroDenom = "uatom"
+	ExampleMicroDenom = "uguru"
 
 	// ExampleDisplayDenom provides an example display denom for use in tests
-	ExampleDisplayDenom = "atom"
+	ExampleDisplayDenom = "guru"
 
 	// ExampleBech32Prefix provides an example Bech32 prefix for use in tests
-	ExampleBech32Prefix = "cosmos"
+	ExampleBech32Prefix = "guru"
 
 	// ExampleEIP155ChainID provides an example EIP-155 chain ID for use in tests
 	ExampleEIP155ChainID = 9001
@@ -43,7 +43,7 @@ type ChainID struct {
 
 var (
 	// ExampleChainIDPrefix provides a chain ID prefix for EIP-155 that can be used in tests
-	ExampleChainIDPrefix = "cosmos"
+	ExampleChainIDPrefix = "guru"
 
 	// ExampleChainID provides a chain ID that can be used in tests
 	ExampleChainID = ChainID{
