@@ -51,13 +51,13 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 )
 
-// NewRootCmd creates a new root command for evmd. It is called once in the
+// NewRootCmd creates a new root command for gurud. It is called once in the
 // main function.
 func NewRootCmd() *cobra.Command {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
 	// and the CLI options for the modules
 	// add keyring to autocli opts
-	tempApp := evmd.NewExampleApp(
+	tempApp := gurud.NewExampleApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
 		nil,
@@ -82,14 +82,14 @@ func NewRootCmd() *cobra.Command {
 		WithInput(os.Stdin).
 		WithAccountRetriever(authtypes.AccountRetriever{}).
 		WithBroadcastMode(flags.FlagBroadcastMode).
-		WithHomeDir(evmd.DefaultNodeHome).
+		WithHomeDir(gurud.DefaultNodeHome).
 		WithViper(""). // In simapp, we don't use any prefix for env variables.
 		// Cosmos EVM specific setup
 		WithKeyringOptions(cosmosevmkeyring.Option()).
 		WithLedgerHasProtobuf(true)
 
 	rootCmd := &cobra.Command{
-		Use:   "evmd",
+		Use:   "gurud",
 		Short: "exemplary Cosmos EVM app",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
@@ -149,7 +149,7 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	if initClientCtx.ChainID != "" {
-		if err := evmd.EvmAppOptions(cosmosevmserverconfig.DefaultEVMChainID); err != nil {
+		if err := gurud.EvmAppOptions(cosmosevmserverconfig.DefaultEVMChainID); err != nil {
 			panic(err)
 		}
 	}
@@ -220,27 +220,27 @@ func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(
 			osApp.BasicModuleManager,
-			evmd.DefaultNodeHome,
+			gurud.DefaultNodeHome,
 		),
-		genutilcli.Commands(osApp.TxConfig(), osApp.BasicModuleManager, evmd.DefaultNodeHome),
+		genutilcli.Commands(osApp.TxConfig(), osApp.BasicModuleManager, gurud.DefaultNodeHome),
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
 		confixcmd.ConfigCommand(),
-		pruning.Cmd(newApp, evmd.DefaultNodeHome),
+		pruning.Cmd(newApp, gurud.DefaultNodeHome),
 		snapshot.Cmd(newApp),
 	)
 
 	// add Cosmos EVM' flavored TM commands to start server, etc.
 	cosmosevmserver.AddCommands(
 		rootCmd,
-		cosmosevmserver.NewDefaultStartOptions(newApp, evmd.DefaultNodeHome),
+		cosmosevmserver.NewDefaultStartOptions(newApp, gurud.DefaultNodeHome),
 		appExport,
 		addModuleInitFlags,
 	)
 
 	// add Cosmos EVM key commands
 	rootCmd.AddCommand(
-		cosmosevmcmd.KeyCommands(evmd.DefaultNodeHome, true),
+		cosmosevmcmd.KeyCommands(gurud.DefaultNodeHome, true),
 	)
 
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
@@ -369,11 +369,11 @@ func newApp(
 		app.SetProcessProposal(handler.ProcessProposalHandler())
 	})
 
-	return evmd.NewExampleApp(
+	return gurud.NewExampleApp(
 		logger, db, traceStore, true,
 		appOpts,
 		gurudconfig.EVMChainID,
-		evmd.EvmAppOptions,
+		gurud.EvmAppOptions,
 		baseappOptions...,
 	)
 }
@@ -414,13 +414,13 @@ func appExport(
 	}
 
 	if height != -1 {
-		exampleApp = evmd.NewExampleApp(logger, db, traceStore, false, appOpts, gurudconfig.EVMChainID, evmd.EvmAppOptions, baseapp.SetChainID(chainID))
+		exampleApp = gurud.NewExampleApp(logger, db, traceStore, false, appOpts, gurudconfig.EVMChainID, gurud.EvmAppOptions, baseapp.SetChainID(chainID))
 
 		if err := exampleApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		exampleApp = evmd.NewExampleApp(logger, db, traceStore, true, appOpts, gurudconfig.EVMChainID, evmd.EvmAppOptions, baseapp.SetChainID(chainID))
+		exampleApp = gurud.NewExampleApp(logger, db, traceStore, true, appOpts, gurudconfig.EVMChainID, gurud.EvmAppOptions, baseapp.SetChainID(chainID))
 	}
 
 	return exampleApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
