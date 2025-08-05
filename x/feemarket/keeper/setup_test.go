@@ -27,7 +27,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	keyring := testkeyring.New(2)
 	nw := network.NewUnitTestNetwork(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
-		network.WithCustomBaseAppOpts(baseapp.SetMinGasPrices("10aatom")),
+		network.WithCustomBaseAppOpts(baseapp.SetMinGasPrices("10aguru")),
 	)
 	grpcHandler := grpc.NewIntegrationHandler(nw)
 	txFactory := factory.New(nw, grpcHandler)
