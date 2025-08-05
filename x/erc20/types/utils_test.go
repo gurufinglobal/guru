@@ -66,14 +66,14 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"equal metadata",
 			banktypes.Metadata{
-				Base:        "aatom",
+				Base:        "aguru",
 				Display:     "atom",
 				Name:        "Cosmos EVM",
 				Symbol:      "ATOM",
 				Description: "EVM, staking and governance denom of Cosmos EVM",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aatom",
+						Denom:    "aguru",
 						Exponent: 0,
 						Aliases:  []string{"atto atom"},
 					},
@@ -84,14 +84,14 @@ func TestEqualMetadata(t *testing.T) {
 				},
 			},
 			banktypes.Metadata{
-				Base:        "aatom",
+				Base:        "aguru",
 				Display:     "atom",
 				Name:        "Cosmos EVM",
 				Symbol:      "ATOM",
 				Description: "EVM, staking and governance denom of Cosmos EVM",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aatom",
+						Denom:    "aguru",
 						Exponent: 0,
 						Aliases:  []string{"atto atom"},
 					},
@@ -106,24 +106,24 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"different base field",
 			banktypes.Metadata{
-				Base: "aatom",
+				Base: "aguru",
 			},
 			banktypes.Metadata{
-				Base: "taatom",
+				Base: "taguru",
 			},
 			true,
 		},
 		{
 			"different denom units length",
 			banktypes.Metadata{
-				Base:        "aatom",
+				Base:        "aguru",
 				Display:     "atom",
 				Name:        "Cosmos EVM",
 				Symbol:      "ATOM",
 				Description: "EVM, staking and governance denom of Cosmos EVM",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aatom",
+						Denom:    "aguru",
 						Exponent: 0,
 						Aliases:  []string{"atto atom"},
 					},
@@ -134,14 +134,14 @@ func TestEqualMetadata(t *testing.T) {
 				},
 			},
 			banktypes.Metadata{
-				Base:        "aatom",
+				Base:        "aguru",
 				Display:     "atom",
 				Name:        "Cosmos EVM",
 				Symbol:      "ATOM",
 				Description: "EVM, staking and governance denom of Cosmos EVM",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aatom",
+						Denom:    "aguru",
 						Exponent: 0,
 						Aliases:  []string{"atto atom"},
 					},
@@ -152,14 +152,14 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"different denom units",
 			banktypes.Metadata{
-				Base:        "aatom",
+				Base:        "aguru",
 				Display:     "atom",
 				Name:        "Cosmos EVM",
 				Symbol:      "ATOM",
 				Description: "EVM, staking and governance denom of Cosmos EVM",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aatom",
+						Denom:    "aguru",
 						Exponent: 0,
 						Aliases:  []string{"atto atom"},
 					},
@@ -175,14 +175,14 @@ func TestEqualMetadata(t *testing.T) {
 				},
 			},
 			banktypes.Metadata{
-				Base:        "aatom",
+				Base:        "aguru",
 				Display:     "atom",
 				Name:        "Cosmos EVM",
 				Symbol:      "ATOM",
 				Description: "EVM, staking and governance denom of Cosmos EVM",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aatom",
+						Denom:    "aguru",
 						Exponent: 0,
 						Aliases:  []string{"atto atom"},
 					},
@@ -238,14 +238,14 @@ func TestEqualAliases(t *testing.T) {
 		},
 		{
 			"same values, unsorted",
-			[]string{"atto atom", "aatom"},
-			[]string{"aatom", "atto atom"},
+			[]string{"atto atom", "aguru"},
+			[]string{"aguru", "atto atom"},
 			false,
 		},
 		{
 			"same values, sorted",
-			[]string{"aatom", "atto atom"},
-			[]string{"aatom", "atto atom"},
+			[]string{"aguru", "atto atom"},
+			[]string{"aguru", "atto atom"},
 			true,
 		},
 	}

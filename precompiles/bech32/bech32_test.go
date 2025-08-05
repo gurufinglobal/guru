@@ -129,7 +129,7 @@ func (s *PrecompileTestSuite) TestRun() {
 			"",
 		},
 		{
-			"pass - hex to bech32 validator operator (cosmosvaloper)",
+			"pass - hex to bech32 validator operator (guruvaloper)",
 			func() *vm.Contract {
 				valAddrCodec := s.network.App.StakingKeeper.ValidatorAddressCodec()
 				valAddrBz, err := valAddrCodec.StringToBytes(s.network.GetValidators()[0].GetOperator())

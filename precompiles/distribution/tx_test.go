@@ -677,7 +677,7 @@ func (s *PrecompileTestSuite) TestDepositValidatorRewardsPoolMethod() {
 				s.Require().True(success, "expected true, got false")
 
 				val := s.network.GetValidators()[0]
-				valCodec := address.NewBech32Codec("cosmosvaloper")
+				valCodec := address.NewBech32Codec("guruvaloper")
 				valBz, err := valCodec.StringToBytes(val.GetOperator())
 				s.Require().NoError(err)
 

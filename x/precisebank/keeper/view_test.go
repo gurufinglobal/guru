@@ -263,7 +263,7 @@ func TestHiddenReserve(t *testing.T) {
 		expectedBalance sdk.Coin
 	}{
 		{
-			"aatom",
+			"aguru",
 			types.ExtendedCoinDenom(),
 			sdk.NewCoin(types.ExtendedCoinDenom(), sdkmath.ZeroInt()),
 		},

@@ -374,7 +374,7 @@ func TestDeriveDecimalsFromDenom(t *testing.T) {
 		},
 		{
 			name:      "success: atto 'a' prefix",
-			baseDenom: "aatom",
+			baseDenom: "aguru",
 			expDec:    18,
 			expFail:   false,
 			expErrMsg: "",

@@ -132,7 +132,7 @@ $ %s debug addr 0x00000Be6819f41400225702D32d3dd23663Dd690 --prefix cosmosevmtyp
 		},
 	}
 
-	cmd.Flags().String(flagPrefix, "", "Bech32 encoded account prefix, for example cosmosevmtypes, cosmosvaloper")
+	cmd.Flags().String(flagPrefix, "", "Bech32 encoded account prefix, for example guruvmtypes, guruvaloper")
 	return cmd
 }
 
