@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/evm/testutil/constants"
 	utiltx "github.com/cosmos/evm/testutil/tx"
 	"github.com/cosmos/evm/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"cosmossdk.io/math"
 
@@ -38,7 +37,7 @@ var (
 
 	// feePayerAddress is the address of the fee payer used in EIP-712 tests.
 	feePayerAddress = fmt.Sprintf(
-		"%s17xpfvakm2amg962yls6f84z3kell8c5lserqta",
+		"%s17xpfvakm2amg962yls6f84z3kell8c5lgrrm6r",
 		constants.ExampleBech32Prefix,
 	)
 )
@@ -112,7 +111,7 @@ func TestLedgerPreprocessing(t *testing.T) {
 
 		require.Equal(t, txFeePayer, tc.expectedFeePayer)
 		require.Equal(t, tx.GetGas(), tc.expectedGas)
-		require.Equal(t, tx.GetFee().AmountOf(evmtypes.GetEVMCoinDenom()), tc.expectedFee)
+		require.Equal(t, tx.GetFee().AmountOf(constants.ExampleAttoDenom), tc.expectedFee)
 		require.Equal(t, tx.GetMemo(), tc.expectedMemo)
 
 		// Verify message is unchanged
@@ -210,7 +209,7 @@ func createPopulatedTestCase(t *testing.T) TestCaseStruct {
 
 	txBuilder.SetFeeAmount(sdk.NewCoins(
 		sdk.NewCoin(
-			evmtypes.GetEVMCoinDenom(),
+			constants.ExampleAttoDenom,
 			feeAmount,
 		)))
 
@@ -219,10 +218,10 @@ func createPopulatedTestCase(t *testing.T) TestCaseStruct {
 
 	msgSend := banktypes.MsgSend{
 		FromAddress: feePayerAddress,
-		ToAddress:   "cosmos12luku6uxehhak02py4rcz65zu0swh7wjun6msa",
+		ToAddress:   "guru12luku6uxehhak02py4rcz65zu0swh7wj8a5enl",
 		Amount: sdk.NewCoins(
 			sdk.NewCoin(
-				evmtypes.GetEVMCoinDenom(),
+				constants.ExampleAttoDenom,
 				math.NewInt(10000000),
 			),
 		),
