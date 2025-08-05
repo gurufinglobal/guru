@@ -78,7 +78,7 @@ func (suite *KeeperIntegrationTestSuite) TestSendCoinsFromModuleToAccount_Matchi
 	// we only are testing the errors/panics specific to the method and
 	// remaining logic is the same as SendCoins.
 
-	blockedMacAddrs := evmd.BlockedAddresses()
+	blockedMacAddrs := gurud.BlockedAddresses()
 	precisebankAddr := suite.network.App.AccountKeeper.GetModuleAddress(types.ModuleName)
 
 	var blockedAddr sdk.AccAddress
@@ -99,7 +99,7 @@ func (suite *KeeperIntegrationTestSuite) TestSendCoinsFromModuleToAccount_Matchi
 	// x/precisebank is blocked from use with SendCoinsFromModuleToAccount as we
 	// don't want external modules to modify x/precisebank balances.
 	var senderModuleName string
-	macPerms := evmd.GetMaccPerms()
+	macPerms := gurud.GetMaccPerms()
 	for moduleName := range macPerms {
 		if moduleName != types.ModuleName && moduleName != stakingtypes.BondedPoolName {
 			senderModuleName = moduleName

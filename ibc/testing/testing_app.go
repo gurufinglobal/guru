@@ -14,14 +14,14 @@ import (
 )
 
 func SetupExampleApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
-	app := evmd.NewExampleApp(
+	app := gurud.NewExampleApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
 		nil,
 		true,
 		simtestutil.EmptyAppOptions{},
 		9001,
-		evmd.EvmAppOptions,
+		gurud.EvmAppOptions,
 	)
 	// disable base fee for testing
 	genesisState := app.DefaultGenesis()
