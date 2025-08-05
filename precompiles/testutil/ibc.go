@@ -12,7 +12,7 @@ var (
 	UatomIbcDenom = UatomDenom.IBCDenom()
 
 	UAtomDenom    = transfertypes.NewDenom("aguru", transfertypes.NewHop(transfertypes.PortID, "channel-0"))
-	UAtomIbcDenom = UatomDenom.IBCDenom()
+	UAtomIbcDenom = UAtomDenom.IBCDenom()
 
 	UatomOsmoDenom = transfertypes.NewDenom(
 		"uatom",

@@ -306,14 +306,14 @@ func TestGetSentCoin(t *testing.T) {
 		expCoin   sdk.Coin
 	}{
 		{
-			"get unwrapped aatom coin",
+			"get unwrapped aguru coin",
 			baseDenom,
 			"10",
 			sdk.Coin{Denom: baseDenom, Amount: math.NewInt(10)},
 		},
 		{
-			"get ibc wrapped aatom coin",
-			"transfer/channel-0/aatom",
+			"get ibc wrapped aguru coin",
+			"transfer/channel-0/aguru",
 			"10",
 			sdk.Coin{Denom: precompilestestutil.AatomIbcDenom, Amount: math.NewInt(10)},
 		},
