@@ -70,7 +70,7 @@ func TestIsSupportedKeys(t *testing.T) {
 
 func TestGetAccAddressFromBech32(t *testing.T) {
 	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("cosmos", "cosmospub")
+	config.SetBech32PrefixForAccount("guru", "gurupub")
 
 	testCases := []struct {
 		name       string
@@ -98,20 +98,20 @@ func TestGetAccAddressFromBech32(t *testing.T) {
 		},
 		{
 			"evmos address",
-			"cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
-			"cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
+			"guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
+			"guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
 			false,
 		},
 		{
 			"cosmos address",
-			"cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
-			"cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
+			"guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
+			"guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
 			false,
 		},
 		{
 			"osmosis address",
 			"osmo1qql8ag4cluz6r4dz28p3w00dnc9w8ueuhnecd2",
-			"cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
+			"guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
 			false,
 		},
 	}
@@ -196,10 +196,10 @@ func TestAccAddressFromBech32(t *testing.T) {
 			"empty address string is not allowed",
 		},
 		{
-			"cosmos1xv9tklw7d82sezh9haa573wufgy59vmwe6xxe5",
+			"guru1xv9tklw7d82sezh9haa573wufgy59vmwpqxag2",
 			"stride",
 			true,
-			"invalid Bech32 prefix; expected stride, got cosmos",
+			"invalid Bech32 prefix; expected stride, got guru",
 		},
 		{
 			"cosmos1xv9tklw7d82sezh9haa573wufgy59vmw5",
@@ -234,10 +234,10 @@ func TestAccAddressFromBech32(t *testing.T) {
 
 func TestAddressConversion(t *testing.T) {
 	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("cosmos", "cosmospub")
+	config.SetBech32PrefixForAccount("guru", "gurupub")
 
 	hex := "0x7cB61D4117AE31a12E393a1Cfa3BaC666481D02E"
-	bech32 := "cosmos10jmp6sgh4cc6zt3e8gw05wavvejgr5pwsjskvv"
+	bech32 := "guru10jmp6sgh4cc6zt3e8gw05wavvejgr5pwggsdaj"
 
 	require.Equal(t, bech32, Bech32StringFromHexAddress(hex))
 	gotAddr, err := HexAddressFromBech32String(bech32)

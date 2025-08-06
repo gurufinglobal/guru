@@ -47,7 +47,7 @@ func TestFractionalBalances_Validate(t *testing.T) {
 				types.NewFractionalBalance(sdk.AccAddress{2}.String(), sdkmath.NewInt(-1)),
 				types.NewFractionalBalance(sdk.AccAddress{3}.String(), sdkmath.NewInt(100)),
 			},
-			"invalid fractional balance for cosmos1qgcgaq4k: non-positive amount -1",
+			"invalid fractional balance for guru1qg3k40zr: non-positive amount -1",
 		},
 		{
 			"invalid - duplicate address",
@@ -55,7 +55,7 @@ func TestFractionalBalances_Validate(t *testing.T) {
 				types.NewFractionalBalance(sdk.AccAddress{1}.String(), sdkmath.NewInt(100)),
 				types.NewFractionalBalance(sdk.AccAddress{1}.String(), sdkmath.NewInt(100)),
 			},
-			"duplicate address cosmos1qyfkm2y3",
+			"duplicate address guru1qyqgn9ny",
 		},
 		{
 			"invalid - duplicate address upper/lower case",
@@ -69,7 +69,7 @@ func TestFractionalBalances_Validate(t *testing.T) {
 					sdkmath.NewInt(100),
 				),
 			},
-			"duplicate address cosmos1qyfkm2y3",
+			"duplicate address guru1qyqgn9ny",
 		},
 	}
 
