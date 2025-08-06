@@ -19,7 +19,7 @@ import (
 var _ authante.SignatureVerificationGasConsumer = SigVerificationGasConsumer
 
 const (
-	Secp256k1VerifyCost uint64 = 21000
+	Secp256k1VerifyCost uint64 = 200
 )
 
 // SigVerificationGasConsumer is the Cosmos EVM implementation of SignatureVerificationGasConsumer. It consumes gas
