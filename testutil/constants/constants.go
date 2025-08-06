@@ -21,7 +21,7 @@ const (
 	ExampleDisplayDenom = "guru"
 
 	// ExampleBech32Prefix provides an example Bech32 prefix for use in tests
-	ExampleBech32Prefix = "guru"
+	ExampleBech32Prefix = "cosmos"
 
 	// ExampleEIP155ChainID provides an example EIP-155 chain ID for use in tests
 	ExampleEIP155ChainID = 9001

@@ -20,6 +20,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	chainconfig "github.com/cosmos/evm/cmd/gurud/config"
 )
 
 func (s *PrecompileTestSuite) TestSetWithdrawAddress() {
@@ -677,7 +678,7 @@ func (s *PrecompileTestSuite) TestDepositValidatorRewardsPoolMethod() {
 				s.Require().True(success, "expected true, got false")
 
 				val := s.network.GetValidators()[0]
-				valCodec := address.NewBech32Codec("guruvaloper")
+				valCodec := address.NewBech32Codec(chainconfig.Bech32PrefixValAddr)
 				valBz, err := valCodec.StringToBytes(val.GetOperator())
 				s.Require().NoError(err)
 

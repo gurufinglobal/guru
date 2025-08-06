@@ -138,13 +138,13 @@ func init() {
 
 	// get the user's home directory
 	var err error
-	DefaultNodeHome, err = clienthelpers.GetNodeHomeDirectory(".evmd")
+	DefaultNodeHome, err = clienthelpers.GetNodeHomeDirectory(".gurud")
 	if err != nil {
 		panic(err)
 	}
 }
 
-const appName = "evmd"
+const appName = "gurud"
 
 var (
 	// DefaultNodeHome default home directories for the application daemon
@@ -236,6 +236,7 @@ func NewExampleApp(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *EVMD {
 	encodingConfig := evmosencoding.MakeConfig(evmChainID)
+	// encodingConfig := evmosencoding.MakeConfigWithBech32Prefix(evmChainID, "cosmos")
 
 	appCodec := encodingConfig.Codec
 	legacyAmino := encodingConfig.Amino

@@ -2,7 +2,6 @@ package eip712_test
 
 import (
 	"encoding/hex"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -36,10 +35,8 @@ var (
 	)
 
 	// feePayerAddress is the address of the fee payer used in EIP-712 tests.
-	feePayerAddress = fmt.Sprintf(
-		"%s17xpfvakm2amg962yls6f84z3kell8c5lgrrm6r",
-		constants.ExampleBech32Prefix,
-	)
+	// Checksum should vary based on bech32 prefix.
+	feePayerAddress = "guru17xpfvakm2amg962yls6f84z3kell8c5lgrrm6r" //serqta, grrm6r
 )
 
 type TestCaseStruct struct {
