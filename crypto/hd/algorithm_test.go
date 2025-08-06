@@ -40,7 +40,7 @@ const (
 func TestKeyring(t *testing.T) {
 	dir := t.TempDir()
 	mockIn := strings.NewReader("")
-	kr, err := keyring.New("cosmos", keyring.BackendTest, dir, mockIn, TestCodec, EthSecp256k1Option())
+	kr, err := keyring.New("guru", keyring.BackendTest, dir, mockIn, TestCodec, EthSecp256k1Option())
 	require.NoError(t, err)
 
 	// fail in retrieving key

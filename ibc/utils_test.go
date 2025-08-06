@@ -19,7 +19,7 @@ import (
 
 func init() {
 	cfg := sdk.GetConfig()
-	cfg.SetBech32PrefixForAccount("cosmos", "cosmospub")
+	cfg.SetBech32PrefixForAccount("guru", "gurupub")
 }
 
 func TestGetTransferSenderRecipient(t *testing.T) {
@@ -41,7 +41,7 @@ func TestGetTransferSenderRecipient(t *testing.T) {
 			name: "invalid sender",
 			data: transfertypes.FungibleTokenPacketData{
 				Sender:   "cosmos1",
-				Receiver: "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy",
+				Receiver: "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
 				Amount:   "123456",
 			},
 			expSender:    "",
@@ -51,7 +51,7 @@ func TestGetTransferSenderRecipient(t *testing.T) {
 		{
 			name: "invalid recipient",
 			data: transfertypes.FungibleTokenPacketData{
-				Sender:   "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
+				Sender:   "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
 				Receiver: "cosmos1",
 				Amount:   "123456",
 			},
@@ -62,23 +62,23 @@ func TestGetTransferSenderRecipient(t *testing.T) {
 		{
 			name: "valid - cosmos sender, evmos recipient",
 			data: transfertypes.FungibleTokenPacketData{
-				Sender:   "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
+				Sender:   "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
 				Receiver: "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
 				Amount:   "123456",
 			},
-			expSender:    "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
-			expRecipient: "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy",
+			expSender:    "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
+			expRecipient: "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
 			expError:     false,
 		},
 		{
 			name: "valid - evmos sender, cosmos recipient",
 			data: transfertypes.FungibleTokenPacketData{
 				Sender:   "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
-				Receiver: "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
+				Receiver: "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
 				Amount:   "123456",
 			},
-			expSender:    "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy",
-			expRecipient: "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
+			expSender:    "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
+			expRecipient: "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
 			expError:     false,
 		},
 		{
@@ -88,8 +88,8 @@ func TestGetTransferSenderRecipient(t *testing.T) {
 				Receiver: "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
 				Amount:   "123456",
 			},
-			expSender:    "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
-			expRecipient: "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy",
+			expSender:    "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
+			expRecipient: "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
 			expError:     false,
 		},
 	}
@@ -130,8 +130,8 @@ func TestGetTransferAmount(t *testing.T) {
 			packet: channeltypes.Packet{
 				Data: transfertypes.ModuleCdc.MustMarshalJSON(
 					&transfertypes.FungibleTokenPacketData{
-						Sender:   "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
-						Receiver: "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy",
+						Sender:   "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
+						Receiver: "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
 						Amount:   "",
 					},
 				),
@@ -144,8 +144,8 @@ func TestGetTransferAmount(t *testing.T) {
 			packet: channeltypes.Packet{
 				Data: transfertypes.ModuleCdc.MustMarshalJSON(
 					&transfertypes.FungibleTokenPacketData{
-						Sender:   "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
-						Receiver: "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy",
+						Sender:   "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
+						Receiver: "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
 						Amount:   "test",
 					},
 				),
@@ -158,8 +158,8 @@ func TestGetTransferAmount(t *testing.T) {
 			packet: channeltypes.Packet{
 				Data: transfertypes.ModuleCdc.MustMarshalJSON(
 					&transfertypes.FungibleTokenPacketData{
-						Sender:   "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
-						Receiver: "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy",
+						Sender:   "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
+						Receiver: "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
 						Amount:   "10000",
 					},
 				),

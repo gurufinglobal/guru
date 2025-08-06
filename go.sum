@@ -660,8 +660,8 @@ github.com/DataDog/datadog-go v4.8.3+incompatible h1:fNGaYSuObuQb5nzeTQqowRAd9bp
 github.com/DataDog/datadog-go v4.8.3+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.5.7 h1:ybO8RBeh29qrxIhCA9E8gKY6xfONU9T6G6aP9DTKfLE=
 github.com/DataDog/zstd v1.5.7/go.mod h1:g4AWEaM3yOg3HYfnJ3YIawPnVdXJh9QME85blwSAmyw=
-github.com/Eddy-gurufin/cosmos-sdk v0.53.2-guru.1 h1:O3iPgIj8QXT5TMwXRUN0GO2ZkIqJBZ8hzx/J2eM3SCE=
-github.com/Eddy-gurufin/cosmos-sdk v0.53.2-guru.1/go.mod h1:90S054hIbadFB1MlXVZVC5w0QbKfd1P4b79zT+vvJxw=
+github.com/Eddy-gurufin/cosmos-sdk v0.53.4-guru.1 h1:uBwjYke6mMTMcCnSMM8bhzAxQCnQax0jvxFuCowWaVQ=
+github.com/Eddy-gurufin/cosmos-sdk v0.53.4-guru.1/go.mod h1:7U3+WHZtI44dEOnU46+lDzBb2tFh1QlMvi8Z5JugopI=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0 h1:ErKg/3iS1AKcTkf3yixlZ54f9U1rljCkQyEXWUnIUxc=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0/go.mod h1:yAZHSGnqScoU556rBOVkwLze6WP5N+U11RHuWaGVxwY=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.48.1 h1:UQ0AhxogsIRZDkElkblfnwjc3IaltCm2HUMvezQaL7s=

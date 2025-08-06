@@ -353,7 +353,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacketRegistered() {
 
 func (suite *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
 	var ctx sdk.Context
-	senderAddr := "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy"
+	senderAddr := "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6"
 
 	baseDenom, err := sdk.GetBaseDenom()
 	suite.Require().NoError(err)

@@ -237,7 +237,7 @@ func Bech32ToHexCmd() *cobra.Command {
 		Use:     "bech32-to-0x",
 		Short:   "Get the 0x address for a given bech32 address",
 		Long:    "Get the 0x address for a given bech32 address.",
-		Example: "gurud query evm bech32-to-0x cosmos10jmp6sgh4cc6zt3e8gw05wavvejgr5pwsjskvv",
+		Example: "gurud query evm bech32-to-0x guru10jmp6sgh4cc6zt3e8gw05wavvejgr5pwggsdaj",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			hex, err := utils.HexAddressFromBech32String(args[0])
