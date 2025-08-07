@@ -1,45 +1,114 @@
-# CHANGELOG
+<!--
+Guiding Principles:
 
-## UNRELEASED
+Changelogs are for humans, not machines.
+There should be an entry for every single version.
+The same types of changes should be grouped.
+Versions and sections should be linkable.
+The latest version comes first.
+The release date of each version is displayed.
+Mention whether you follow Semantic Versioning.
 
-### DEPENDENCIES
+Types of changes:
 
-- [\#31](https://github.com/cosmos/evm/pull/31) Migrated example_chain to evmd
-- Migrated evmos/go-ethereum to cosmos/go-ethereum
-- Migrated evmos/cosmos-sdk to cosmos/cosmos-sdk
-- [\#95](https://github.com/cosmos/evm/pull/95) Bump up ibc-go from v8 to v10
+[Added] for new features.
+[Changed] for changes in existing functionality.
+[Deprecated] for soon-to-be removed features.
+[Removed] for now removed features.
+[Fixed] for any bug fixes.
+[Security] in case of vulnerabilities.
 
-### BUG FIXES
+Ref: https://keepachangelog.com/en/1.1.0/
+-->
 
-- Fixed example chain's cmd by adding NoOpEVMOptions to tmpApp in root.go
-- Added RPC support for `--legacy` transactions (Non EIP-1559)
+# Changelog
 
-### IMPROVEMENTS
+## [v1.0.8] - 2025-07-10
 
-- [\#183](https://github.com/cosmos/evm/pull/183) Enforce `msg.sender == requester` on
-all precompiles (no more proxy calls)
+### Added
+- **Oracle System**: Comprehensive Oracle module & Daemon implementation
+  - Oracle daemon service for automated data processing and monitoring
+  - Event handling and subscription management system with real-time updates
+  - Job processing and worker management capabilities with scalable architecture
+  - Transaction sequence number synchronization for reliable execution
+  - Configuration management and enhanced error handling
+  - Comprehensive logging and monitoring capabilities for observability
+  - Integration with feemarket module for dynamic min_gas_price adjustment
 
-### FEATURES
+- **EIP-6780 Implementation**: Complete support for EIP-6780 (SELFDESTRUCT changes)
+  - Implementation of EIP-6780 core functionality for enhanced smart contract security
+  - Integration with Ethereum v1.12.1 upgrade for latest EVM compatibility
 
-- [\#69](https://github.com/cosmos/evm/pull/69) Add new `x/precisebank` module with bank decimal extension for EVM usage.
-- [\#84](https://github.com/cosmos/evm/pull/84) permissionless erc20 registration to cosmos coin conversion
+## [v1.0.7] - 2025-03-18
 
-### STATE BREAKING
+### Added
+- [[#30](https://github.com/GPTx-global/guru/pull/30)] Add EIP-5656 support
+  - EIP-5656: MCOPY opcode for efficient memory copying
+- [[#29](https://github.com/GPTx-global/guru/pull/29)] Add EIP-1153 support
+  - EIP-1153: Transient storage opcodes (TSTORE/TLOAD)
 
-- Refactored evmos/os into cosmos/evm
-- Renamed x/evm to x/vm
-- Renamed protobuf files from evmos to cosmos org
-- [\#83](https://github.com/cosmos/evm/pull/83) Remove base fee v1 from x/feemarket
-- [\#93](https://github.com/cosmos/evm/pull/93) Remove legacy subspaces
-- [\#95](https://github.com/cosmos/evm/pull/95) Replaced erc20/ with erc20 in native ERC20 denoms prefix for IBC v2
-- [\#62](https://github.com/cosmos/evm/pull/62) Remove x/authz dependency from precompiles
+### Changed
+- [[#28](https://github.com/GPTx-global/guru/pull/28)] Fix test RPC functionality
+- [[#27](https://github.com/GPTx-global/guru/pull/27)] Modify GitHub Actions test patterns
 
-### API-Breaking
+## [v1.0.6] - 2025-01-21
 
-- Refactored evmos/os into cosmos/evm
-- Renamed x/evm to x/vm
-- Renamed protobuf files from evmos to cosmos org
-- [\#95](https://github.com/cosmos/evm/pull/95) Updated ics20 precompile to use Denom instead of DenomTrace for IBC v2
-- [\#183](https://github.com/cosmos/evm/pull/183) **evidence precompile**
-    - `SubmitEvidence` now takes the `submitter` address as its first argument (was previously implicit),
-and will revert if not called directly by that EOA.
+### Added
+- [[#23](https://github.com/GPTx-global/guru/pull/23)] Add fee ratio functionality
+  - Distribution module moderator and base address configuration
+  - Enhanced fee distribution mechanisms with custom ratios
+
+### Changed
+- Update cosmos-sdk version to v0.46.13-ledger.3-guru.2
+- Improve distribution module with custom fee allocation logic
+- Add IBC-Go v6.1.1-guru.1 integration for enhanced cross-chain functionality
+- Update test suites to support new distribution functionality
+
+## [v1.0.5] - 2025-01-21
+
+### Added
+- [[#22](https://github.com/GPTx-global/guru/pull/22)] GitHub Actions CI/CD pipeline
+  - Automated build, test, and release workflows
+  - Dependency vulnerability checking and security scanning
+  - Go 1.22 support and tooling improvements
+  - Comprehensive test automation and coverage reporting
+- [[#21](https://github.com/GPTx-global/guru/pull/21)] Documentation improvements
+  - Updated CHANGELOG format following keepachangelog.com standards
+  - Enhanced CONTRIBUTING guidelines and development workflow
+  - Improved repository documentation and structure
+
+## [v1.0.4] - 2025-01-02
+
+### Changed
+- [[#13](https://github.com/GPTx-global/guru/pull/13)] Change gas config and params.
+
+
+## [v1.0.3] - 2025-01-02
+
+### Changed
+- Change module name.
+- [[#10](https://github.com/GPTx-global/guru/pull/10)] Change docker image name.
+
+### Removed
+- [[#9](https://github.com/GPTx-global/guru/pull/9)] Remove unnecessary files.
+
+
+## [v1.0.2] - 2024-12-24
+
+### Removed
+- Remove unnecessary Modules and Upgrades.
+
+
+## [v1.0.1] - 2024-12-23
+
+### Changed
+- Change daemon, denom, cmd and etc.
+- Change app name.
+
+
+## [v1.0.0] - 2024-12-23
+
+This is guru's basic version.
+
+## Evmos's changelog
+The changelog for evmos can be found [here](https://github.com/evmos/evmos/blob/main/CHANGELOG.md).
