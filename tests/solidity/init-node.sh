@@ -2,7 +2,7 @@
 
 # TODO: remove this script and just use the local node script for it, add flag to start node in given directory
 
-CHAINID="${CHAIN_ID:-cosmos_262144-1}"
+CHAINID="${CHAIN_ID:-guru_631-1}"
 MONIKER="localtestnet"
 KEYRING="test"          # remember to change to other types of keyring like 'file' in-case exposing to outside world, otherwise your balance will be wiped quickly. The keyring test does not require private key to steal tokens from you
 KEYALGO="eth_secp256k1" #gitleaks:allow

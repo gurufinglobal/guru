@@ -20,7 +20,7 @@ var (
 	// DefaultEVMDenom is the default value for the evm denom
 	DefaultEVMDenom = "aguru"
 	// DefaultEVMChainID is the default value for the evm chain ID
-	DefaultEVMChainID = "cosmos_262144-1"
+	DefaultEVMChainID = "guru_631-1"
 	// DefaultEVMDecimals is the default value for the evm denom decimal precision
 	DefaultEVMDecimals uint64 = 18
 	// DefaultAllowUnprotectedTxs rejects all unprotected txs (i.e false)

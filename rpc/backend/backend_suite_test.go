@@ -90,7 +90,7 @@ func (suite *BackendTestSuite) SetupTest() {
 	suite.backend.cfg.JSONRPC.GasCap = 0
 	suite.backend.cfg.JSONRPC.EVMTimeout = 0
 	suite.backend.cfg.JSONRPC.AllowInsecureUnlock = true
-	suite.backend.cfg.EVM.EVMChainID = 262144
+	suite.backend.cfg.EVM.EVMChainID = 631
 	suite.backend.queryClient.QueryClient = mocks.NewEVMQueryClient(suite.T())
 	suite.backend.queryClient.FeeMarket = mocks.NewFeeMarketQueryClient(suite.T())
 	suite.backend.ctx = rpctypes.ContextWithHeight(1)
