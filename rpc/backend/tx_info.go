@@ -147,13 +147,13 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 	res, err := b.GetTxByEthHash(hash)
 	if err != nil {
 		b.logger.Debug("tx not found", "hash", hexTx, "error", err.Error())
-		return nil, err
+		return nil, nil
 	}
 
 	resBlock, err := b.TendermintBlockByNumber(rpctypes.BlockNumber(res.Height))
 	if err != nil {
 		b.logger.Debug("block not found", "height", res.Height, "error", err.Error())
-		return nil, fmt.Errorf("block not found at height %d: %w", res.Height, err)
+		return nil, nil
 	}
 
 	tx, err := b.clientCtx.TxConfig.TxDecoder()(resBlock.Block.Txs[res.TxIndex])
