@@ -1,0 +1,101 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "guru/oracle/v1/oracle.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+
+option go_package = "github.com/GPTx-global/guru-v2/x/oracle/types";
+
+// Msg defines the oracle Msg service
+service Msg {
+  // RegisterOracleRequestDoc defines a method for registering a new oracle request document
+  rpc RegisterOracleRequestDoc(MsgRegisterOracleRequestDoc) returns (MsgRegisterOracleRequestDocResponse);
+  
+  // UpdateOracleRequestDoc defines a method for updating an existing oracle request document
+  rpc UpdateOracleRequestDoc(MsgUpdateOracleRequestDoc) returns (MsgUpdateOracleRequestDocResponse);
+  
+  // SubmitOracleData defines a method for submitting oracle data
+  rpc SubmitOracleData(MsgSubmitOracleData) returns (MsgSubmitOracleDataResponse);
+
+  // UpdateModeratorAddress defines a method for updating the moderator address
+  rpc UpdateModeratorAddress(MsgUpdateModeratorAddress) returns (MsgUpdateModeratorAddressResponse);
+}
+
+// MsgRegisterOracleRequestDoc represents a message to register a new oracle request document
+message MsgRegisterOracleRequestDoc {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // The oracle request document to be registered
+  OracleRequestDoc request_doc = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgRegisterOracleRequestDocResponse defines the Msg/RegisterOracleRequestDoc response type
+message MsgRegisterOracleRequestDocResponse {
+  // ID of the registered oracle request
+  uint64 request_id = 1;
+}
+
+// MsgUpdateOracleRequestDoc represents a message to update an existing oracle request document
+message MsgUpdateOracleRequestDoc {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // The updated oracle request document
+  OracleRequestDoc request_doc = 2 [(gogoproto.nullable) = false];
+  // Reason for the update
+  string reason = 3;
+}
+
+// MsgUpdateOracleRequestDocResponse defines the Msg/UpdateOracleRequestDoc response type
+message MsgUpdateOracleRequestDocResponse {
+  // ID of the updated oracle request
+  uint64 request_id = 1;
+}
+
+// MsgSubmitOracleData represents a message to submit oracle data
+message MsgSubmitOracleData {
+  option (cosmos.msg.v1.signer) = "authority_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string authority_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // The oracle data set to be submitted, containing the raw data and metadata
+  SubmitDataSet data_set = 2;
+}
+
+// MsgSubmitOracleDataResponse defines the Msg/SubmitOracleData response type
+message MsgSubmitOracleDataResponse {}
+
+// MsgUpdateModeratorAddress represents a message to update the moderator address
+message MsgUpdateModeratorAddress {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string new_moderator_address = 2
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgUpdateModeratorAddressResponse defines the Msg/UpdateModeratorAddress response type
+message MsgUpdateModeratorAddressResponse {} 

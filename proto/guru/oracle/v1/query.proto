@@ -1,0 +1,108 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "guru/oracle/v1/oracle.proto";
+import "guru/oracle/v1/genesis.proto";
+
+option go_package = "github.com/GPTx-global/guru-v2/x/oracle/types";
+
+// Query defines the gRPC querier service
+service Query {
+  // Parameters queries the parameters of the module
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/guru/oracle/params";
+  }
+  
+  // OracleSubmitData queries oracle data by ID
+  rpc OracleSubmitData(QueryOracleSubmitDataRequest) returns (QueryOracleSubmitDataResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/submit_data/{request_id}/{nonce}/{provider}";
+  }
+
+  // OracleData queries oracle data by ID
+  rpc OracleData(QueryOracleDataRequest) returns (QueryOracleDataResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/data/{request_id}";
+  }
+  
+  // OracleRequestDoc queries oracle request doc by ID
+  rpc OracleRequestDoc(QueryOracleRequestDocRequest) returns (QueryOracleRequestDocResponse) {
+    option (google.api.http).get = "/guru/oracle/request_doc/{request_id}";
+  }
+  
+  // OracleRequestDocs queries an oracle request document list
+  rpc OracleRequestDocs(QueryOracleRequestDocsRequest) returns (QueryOracleRequestDocsResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/request_docs";
+  }
+
+  // ModeratorAddress queries the moderator address
+  rpc ModeratorAddress(QueryModeratorAddressRequest) returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/moderator";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method
+message QueryParamsResponse {
+  // params holds all the parameters of this module
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryOracleSubmitDataRequest is request type for the Query/OracleSubmitData RPC method
+message QueryOracleSubmitDataRequest {
+  // request_id is the unique identifier of the oracle request
+  uint64 request_id = 1;
+  uint64 nonce = 2;
+  string provider = 3;
+}
+
+// QueryOracleSubmitDataResponse is response type for the Query/OracleSubmitData RPC method
+message QueryOracleSubmitDataResponse {
+  // submit_datas is the list of oracle submit data for the requested ID, nonce and provider
+  repeated SubmitDataSet submit_datas = 1;
+}
+
+// QueryOracleDataRequest is request type for the Query/OracleData RPC method
+message QueryOracleDataRequest {
+  // request_id is the unique identifier of the oracle request
+  uint64 request_id = 1;
+}
+
+// QueryOracleDataResponse is response type for the Query/OracleData RPC method
+message QueryOracleDataResponse {
+  // data is the oracle data for the requested ID
+  DataSet data_set = 1;
+}
+
+// QueryOracleRequestRequest is request type for the Query/OracleRequest RPC method
+message QueryOracleRequestDocRequest {
+  // request_id is the unique identifier of the oracle request
+  uint64 request_id = 1;
+}
+
+// QueryOracleRequestResponse is response type for the Query/OracleRequest RPC method
+message QueryOracleRequestDocResponse {
+  // request is the oracle request for the requested ID
+  OracleRequestDoc request_doc = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryOracleRequestDocRequest is the request type for the Query/OracleRequestDoc RPC method
+message QueryOracleRequestDocsRequest {
+  RequestStatus status = 1;
+}
+
+// QueryOracleRequestDocResponse is the response type for the Query/OracleRequestDoc RPC method
+message QueryOracleRequestDocsResponse {
+  repeated OracleRequestDoc oracle_request_docs = 1;
+} 
+
+// QueryModeratorAddressRequest is request type for the Query/ModeratorAddress RPC method
+message QueryModeratorAddressRequest {}
+
+// QueryModeratorAddressResponse is response type for the Query/ModeratorAddress RPC method
+message QueryModeratorAddressResponse {
+  // moderator_address is the address of the moderator
+  string moderator_address = 1;
+}
