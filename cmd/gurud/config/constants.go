@@ -21,6 +21,8 @@ const (
 
 	CosmosChainID = 262144
 
+	GuruChainID = 631
+
 	// TestChainID1 is test chain IDs for IBC E2E test
 	TestChainID1 = 9005
 	// TestChainID2 is test chain IDs for IBC E2E test

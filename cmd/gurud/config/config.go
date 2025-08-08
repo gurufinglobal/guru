@@ -23,6 +23,12 @@ var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 		DisplayDenom:  "guru",
 		Decimals:      evmtypes.EighteenDecimals,
 	},
+	GuruChainID: {
+		Denom:         "aguru",
+		ExtendedDenom: "aguru",
+		DisplayDenom:  "guru",
+		Decimals:      evmtypes.EighteenDecimals,
+	},
 	// SixDecimalsChainID provides a chain ID which is being set up with 6 decimals
 	SixDecimalsChainID: {
 		Denom:         "utest",
@@ -54,7 +60,7 @@ const (
 	// BaseDenomUnit defines the precision of the base denomination.
 	BaseDenomUnit = 18
 	// EVMChainID defines the EIP-155 replay-protection chain id for the current ethereum chain config.
-	EVMChainID = 630
+	EVMChainID = 631
 )
 
 // SetBech32Prefixes sets the global prefixes to be used when serializing addresses and public keys to Bech32 strings.
