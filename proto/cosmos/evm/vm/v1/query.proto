@@ -10,7 +10,7 @@ import "google/protobuf/timestamp.proto";
 import "cosmos/evm/vm/v1/evm.proto";
 import "cosmos/evm/vm/v1/tx.proto";
 
-option go_package = "github.com/cosmos/evm/x/vm/types";
+option go_package = "github.com/GPTx-global/guru-v2/x/vm/types";
 
 // Query defines the gRPC querier service.
 service Query {

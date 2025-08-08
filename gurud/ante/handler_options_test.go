@@ -5,11 +5,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/evm/ante"
-	ethante "github.com/cosmos/evm/ante/evm"
-	chainante "github.com/cosmos/evm/gurud/ante"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	"github.com/cosmos/evm/types"
+	"github.com/GPTx-global/guru-v2/ante"
+	ethante "github.com/GPTx-global/guru-v2/ante/evm"
+	chainante "github.com/GPTx-global/guru-v2/gurud/ante"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/types"
 )
 
 func TestValidateHandlerOptions(t *testing.T) {

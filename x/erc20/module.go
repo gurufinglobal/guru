@@ -11,9 +11,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/cosmos/evm/x/erc20/client/cli"
-	"github.com/cosmos/evm/x/erc20/keeper"
-	"github.com/cosmos/evm/x/erc20/types"
+	"github.com/GPTx-global/guru-v2/x/erc20/client/cli"
+	"github.com/GPTx-global/guru-v2/x/erc20/keeper"
+	"github.com/GPTx-global/guru-v2/x/erc20/types"
 
 	"cosmossdk.io/core/appmodule"
 

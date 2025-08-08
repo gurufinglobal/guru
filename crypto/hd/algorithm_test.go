@@ -8,9 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	cryptocodec "github.com/cosmos/evm/crypto/codec"
-	enccodec "github.com/cosmos/evm/encoding/codec"
-	cosmosevmtypes "github.com/cosmos/evm/types"
+	cryptocodec "github.com/GPTx-global/guru-v2/crypto/codec"
+	enccodec "github.com/GPTx-global/guru-v2/encoding/codec"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
 
 	amino "github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"

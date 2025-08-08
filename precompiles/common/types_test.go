@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/evm/precompiles/common"
-	"github.com/cosmos/evm/testutil/constants"
+	"github.com/GPTx-global/guru-v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/testutil/constants"
 
 	"cosmossdk.io/math"
 

@@ -12,10 +12,10 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/cosmos/evm/rpc/backend/mocks"
-	rpctypes "github.com/cosmos/evm/rpc/types"
-	utiltx "github.com/cosmos/evm/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/rpc/backend/mocks"
+	rpctypes "github.com/GPTx-global/guru-v2/rpc/types"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

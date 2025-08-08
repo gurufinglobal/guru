@@ -5,11 +5,11 @@
 package network
 
 import (
-	"github.com/cosmos/evm/cmd/gurud/config"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
-	"github.com/cosmos/evm/x/precisebank/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/cmd/gurud/config"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	erc20types "github.com/GPTx-global/guru-v2/x/erc20/types"
+	"github.com/GPTx-global/guru-v2/x/precisebank/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )

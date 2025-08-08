@@ -26,7 +26,7 @@ import (
 
 	stderrors "github.com/pkg/errors"
 
-	rpctypes "github.com/cosmos/evm/rpc/types"
+	rpctypes "github.com/GPTx-global/guru-v2/rpc/types"
 )
 
 // StartGoTrace turns on tracing, writing to the given file.

@@ -11,7 +11,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/any.proto";
 import "cosmos/evm/vm/v1/evm.proto";
 
-option go_package = "github.com/cosmos/evm/x/vm/types";
+option go_package = "github.com/GPTx-global/guru-v2/x/vm/types";
 
 // Msg defines the evm Msg service.
 service Msg {

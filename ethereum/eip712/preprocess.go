@@ -3,7 +3,7 @@ package eip712
 import (
 	"fmt"
 
-	"github.com/cosmos/evm/types"
+	"github.com/GPTx-global/guru-v2/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec/address"

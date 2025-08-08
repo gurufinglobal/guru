@@ -5,7 +5,7 @@ import (
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	ethutils "github.com/cosmos/evm/utils/eth"
+	ethutils "github.com/GPTx-global/guru-v2/utils/eth"
 )
 
 // GetChainID returns the chain id field from the derived signature values

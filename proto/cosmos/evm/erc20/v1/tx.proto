@@ -10,7 +10,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/cosmos/evm/x/erc20/types";
+option go_package = "github.com/GPTx-global/guru-v2/x/erc20/types";
 
 // Msg defines the erc20 Msg service.
 service Msg {

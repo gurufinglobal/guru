@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	"github.com/cosmos/evm/x/vm/statedb"
+	"github.com/GPTx-global/guru-v2/x/vm/statedb"
 
 	storetypes "cosmossdk.io/store/types"
 

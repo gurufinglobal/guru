@@ -5,8 +5,8 @@ import (
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	anteinterfaces "github.com/GPTx-global/guru-v2/ante/interfaces"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 

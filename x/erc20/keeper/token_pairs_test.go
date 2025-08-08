@@ -5,9 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	utiltx "github.com/cosmos/evm/testutil/tx"
-	"github.com/cosmos/evm/x/erc20/types"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/x/erc20/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

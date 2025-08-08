@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	erc20types "github.com/cosmos/evm/x/erc20/types"
+	erc20types "github.com/GPTx-global/guru-v2/x/erc20/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"github.com/cosmos/evm/x/vm/wrappers"
-	"github.com/cosmos/evm/x/vm/wrappers/testutil"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/x/vm/wrappers"
+	"github.com/GPTx-global/guru-v2/x/vm/wrappers/testutil"
 
 	sdkmath "cosmossdk.io/math"
 

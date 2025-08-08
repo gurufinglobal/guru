@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/evm/precompiles/gov"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/cosmos/evm/testutil/integration/os/grpc"
-	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
-	"github.com/cosmos/evm/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/precompiles/gov"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
+	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
 
 	"cosmossdk.io/math"
 

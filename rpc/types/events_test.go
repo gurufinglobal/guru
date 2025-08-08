@@ -9,7 +9,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 )
 
 func TestParseTxResult(t *testing.T) {

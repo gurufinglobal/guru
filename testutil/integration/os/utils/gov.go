@@ -7,10 +7,10 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
-	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	commonfactory "github.com/GPTx-global/guru-v2/testutil/integration/common/factory"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

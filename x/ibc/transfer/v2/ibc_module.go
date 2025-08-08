@@ -1,7 +1,7 @@
 package v2
 
 import (
-	"github.com/cosmos/evm/x/ibc/transfer/keeper"
+	"github.com/GPTx-global/guru-v2/x/ibc/transfer/keeper"
 	v2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 )

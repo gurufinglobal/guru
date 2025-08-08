@@ -182,7 +182,7 @@ def is_os_repo(path: Path) -> bool:
             if not line:
                 break
 
-            if "module github.com/cosmos/evm" in line:
+            if "module github.com/GPTx-global/guru-v2" in line:
                 return True
 
     return False

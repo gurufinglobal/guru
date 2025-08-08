@@ -7,9 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	app "github.com/cosmos/evm/gurud"
-	chainutil "github.com/cosmos/evm/gurud/testutil"
-	"github.com/cosmos/evm/precompiles/erc20"
+	app "github.com/GPTx-global/guru-v2/gurud"
+	chainutil "github.com/GPTx-global/guru-v2/gurud/testutil"
+	"github.com/GPTx-global/guru-v2/precompiles/erc20"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	sdkmath "cosmossdk.io/math"

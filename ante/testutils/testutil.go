@@ -5,17 +5,17 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/evm/ante"
-	evmante "github.com/cosmos/evm/ante/evm"
-	chainante "github.com/cosmos/evm/gurud/ante"
-	chainutil "github.com/cosmos/evm/gurud/testutil"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/cosmos/evm/testutil/integration/os/grpc"
-	"github.com/cosmos/evm/testutil/integration/os/keyring"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	"github.com/cosmos/evm/types"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/ante"
+	evmante "github.com/GPTx-global/guru-v2/ante/evm"
+	chainante "github.com/GPTx-global/guru-v2/gurud/ante"
+	chainutil "github.com/GPTx-global/guru-v2/gurud/testutil"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/types"
+	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

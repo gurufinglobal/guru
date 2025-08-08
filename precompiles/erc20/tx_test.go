@@ -6,11 +6,11 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	"github.com/cosmos/evm/precompiles/erc20"
-	"github.com/cosmos/evm/precompiles/testutil"
-	utiltx "github.com/cosmos/evm/testutil/tx"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
-	"github.com/cosmos/evm/x/vm/statedb"
+	"github.com/GPTx-global/guru-v2/precompiles/erc20"
+	"github.com/GPTx-global/guru-v2/precompiles/testutil"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	erc20types "github.com/GPTx-global/guru-v2/x/erc20/types"
+	"github.com/GPTx-global/guru-v2/x/vm/statedb"
 
 	"cosmossdk.io/math"
 

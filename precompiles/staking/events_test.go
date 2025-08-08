@@ -8,10 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	cmn "github.com/cosmos/evm/precompiles/common"
-	"github.com/cosmos/evm/precompiles/staking"
-	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
-	"github.com/cosmos/evm/x/vm/statedb"
+	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/precompiles/staking"
+	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/x/vm/statedb"
 
 	"cosmossdk.io/math"
 

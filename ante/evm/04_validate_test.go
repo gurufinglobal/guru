@@ -6,10 +6,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/cosmos/evm/ante/evm"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/ante/evm"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

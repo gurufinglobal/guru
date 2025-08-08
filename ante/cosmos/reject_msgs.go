@@ -1,7 +1,7 @@
 package cosmos
 
 import (
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 

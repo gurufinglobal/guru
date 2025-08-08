@@ -8,9 +8,9 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/cosmos/evm/contracts"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	evm "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/contracts"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	evm "github.com/GPTx-global/guru-v2/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) MintERC20Token(contractAddr, to common.Address, amount *big.Int) (abcitypes.ExecTxResult, error) {

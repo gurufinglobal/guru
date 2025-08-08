@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/cosmos/evm/x/erc20/types"
+	"github.com/GPTx-global/guru-v2/x/erc20/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

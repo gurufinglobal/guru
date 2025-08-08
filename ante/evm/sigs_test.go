@@ -3,8 +3,8 @@ package evm_test
 import (
 	"math/big"
 
-	utiltx "github.com/cosmos/evm/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 )
 
 func (suite *AnteTestSuite) TestSignatures() {

@@ -8,11 +8,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/evm/testutil/constants"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	"github.com/cosmos/evm/wallets/ledger"
-	"github.com/cosmos/evm/wallets/ledger/mocks"
-	"github.com/cosmos/evm/wallets/usbwallet"
+	"github.com/GPTx-global/guru-v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/wallets/ledger"
+	"github.com/GPTx-global/guru-v2/wallets/ledger/mocks"
+	"github.com/GPTx-global/guru-v2/wallets/usbwallet"
 
 	"cosmossdk.io/math"
 

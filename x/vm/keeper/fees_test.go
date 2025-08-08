@@ -9,9 +9,9 @@ import (
 	ethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 
-	utiltx "github.com/cosmos/evm/testutil/tx"
-	"github.com/cosmos/evm/x/vm/keeper"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/x/vm/keeper"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

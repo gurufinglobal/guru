@@ -12,12 +12,12 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/evm/crypto/ethsecp256k1"
-	"github.com/cosmos/evm/indexer"
-	"github.com/cosmos/evm/testutil/constants"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	utiltx "github.com/cosmos/evm/testutil/tx"
-	"github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/indexer"
+	"github.com/GPTx-global/guru-v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/log"
 

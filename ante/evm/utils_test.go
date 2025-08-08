@@ -8,12 +8,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 
-	"github.com/cosmos/evm/ante/testutils"
-	"github.com/cosmos/evm/crypto/ethsecp256k1"
-	"github.com/cosmos/evm/ethereum/eip712"
-	"github.com/cosmos/evm/testutil"
-	utiltx "github.com/cosmos/evm/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/ante/testutils"
+	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/ethereum/eip712"
+	"github.com/GPTx-global/guru-v2/testutil"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 	ibctypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 

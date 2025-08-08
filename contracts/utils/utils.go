@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 )
 
 // LoadContractFromJSONFile is a helper method to convert the embedded bytes from a JSON file,

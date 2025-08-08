@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"fmt"
 
-	utiltx "github.com/cosmos/evm/testutil/tx"
-	"github.com/cosmos/evm/x/erc20/types"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/x/erc20/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

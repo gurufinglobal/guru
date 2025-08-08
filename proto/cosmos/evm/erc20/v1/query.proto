@@ -9,7 +9,7 @@ import "google/api/annotations.proto";
 import "cosmos/evm/erc20/v1/erc20.proto";
 import "cosmos/evm/erc20/v1/genesis.proto";
 
-option go_package = "github.com/cosmos/evm/x/erc20/types";
+option go_package = "github.com/GPTx-global/guru-v2/x/erc20/types";
 
 // Query defines the gRPC querier service.
 service Query {

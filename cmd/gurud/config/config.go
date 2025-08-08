@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/cosmos/evm/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -9,12 +9,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	cmn "github.com/cosmos/evm/precompiles/common"
-	"github.com/cosmos/evm/precompiles/staking"
-	"github.com/cosmos/evm/precompiles/testutil"
-	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
-	cosmosevmutiltx "github.com/cosmos/evm/testutil/tx"
-	"github.com/cosmos/evm/x/vm/statedb"
+	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/precompiles/staking"
+	"github.com/GPTx-global/guru-v2/precompiles/testutil"
+	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
+	cosmosevmutiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/x/vm/statedb"
 
 	"cosmossdk.io/math"
 

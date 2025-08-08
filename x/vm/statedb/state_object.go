@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 
-	"github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

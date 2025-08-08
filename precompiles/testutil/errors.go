@@ -6,7 +6,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 )
 
 // CheckVMError is a helper function used to check if the transaction is reverted with the expected error message

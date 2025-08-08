@@ -29,12 +29,12 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/evm/cmd/gurud/config"
-	"github.com/cosmos/evm/indexer"
-	ethdebug "github.com/cosmos/evm/rpc/namespaces/ethereum/debug"
-	cosmosevmserverconfig "github.com/cosmos/evm/server/config"
-	srvflags "github.com/cosmos/evm/server/flags"
-	cosmosevmtypes "github.com/cosmos/evm/types"
+	"github.com/GPTx-global/guru-v2/cmd/gurud/config"
+	"github.com/GPTx-global/guru-v2/indexer"
+	ethdebug "github.com/GPTx-global/guru-v2/rpc/namespaces/ethereum/debug"
+	cosmosevmserverconfig "github.com/GPTx-global/guru-v2/server/config"
+	srvflags "github.com/GPTx-global/guru-v2/server/flags"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 	pruningtypes "cosmossdk.io/store/pruning/types"

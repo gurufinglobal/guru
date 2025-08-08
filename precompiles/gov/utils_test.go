@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 )
 
 // callType constants to differentiate between

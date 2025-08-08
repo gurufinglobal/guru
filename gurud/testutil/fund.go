@@ -1,7 +1,7 @@
 package testutil
 
 import (
-	"github.com/cosmos/evm/testutil/constants"
+	"github.com/GPTx-global/guru-v2/testutil/constants"
 
 	"cosmossdk.io/math"
 

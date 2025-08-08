@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	cosmosevmtypes "github.com/cosmos/evm/types"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 

@@ -5,9 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/params"
 
-	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
-	cosmosevmtypes "github.com/cosmos/evm/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	anteinterfaces "github.com/GPTx-global/guru-v2/ante/interfaces"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

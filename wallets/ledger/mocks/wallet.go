@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	accounts "github.com/cosmos/evm/wallets/accounts"
+	accounts "github.com/GPTx-global/guru-v2/wallets/accounts"
 	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
 
 	big "math/big"

@@ -9,8 +9,8 @@ import (
 	cmtypes "github.com/cometbft/cometbft/types"
 
 	dbm "github.com/cosmos/cosmos-db"
-	exampleapp "github.com/cosmos/evm/gurud"
-	cosmosevmtypes "github.com/cosmos/evm/types"
+	exampleapp "github.com/GPTx-global/guru-v2/gurud"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"

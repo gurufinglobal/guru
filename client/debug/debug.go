@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	gurudconfig "github.com/cosmos/evm/cmd/gurud/config"
-	"github.com/cosmos/evm/ethereum/eip712"
+	gurudconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
+	"github.com/GPTx-global/guru-v2/ethereum/eip712"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	cosmosclientdebug "github.com/cosmos/cosmos-sdk/client/debug"

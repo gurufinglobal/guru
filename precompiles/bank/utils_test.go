@@ -7,9 +7,9 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	"github.com/cosmos/evm/precompiles/bank"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/precompiles/bank"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

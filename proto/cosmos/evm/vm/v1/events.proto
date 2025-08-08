@@ -2,7 +2,7 @@
 syntax = "proto3";
 package cosmos.evm.vm.v1;
 
-option go_package = "github.com/cosmos/evm/x/vm/types";
+option go_package = "github.com/GPTx-global/guru-v2/x/vm/types";
 
 // EventEthereumTx defines the event for an Ethereum transaction
 message EventEthereumTx {

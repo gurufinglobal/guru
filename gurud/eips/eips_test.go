@@ -13,14 +13,14 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	"github.com/cosmos/evm/gurud/eips"
-	"github.com/cosmos/evm/gurud/eips/testdata"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/cosmos/evm/testutil/integration/os/grpc"
-	"github.com/cosmos/evm/testutil/integration/os/keyring"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	integrationutils "github.com/cosmos/evm/testutil/integration/os/utils"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/gurud/eips"
+	"github.com/GPTx-global/guru-v2/gurud/eips/testdata"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	integrationutils "github.com/GPTx-global/guru-v2/testutil/integration/os/utils"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 )

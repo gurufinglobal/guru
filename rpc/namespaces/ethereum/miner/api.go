@@ -4,7 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/cosmos/evm/rpc/backend"
+	"github.com/GPTx-global/guru-v2/rpc/backend"
 
 	"cosmossdk.io/log"
 

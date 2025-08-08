@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/evm/gurud"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	"github.com/GPTx-global/guru-v2/gurud"
+	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	"cosmossdk.io/log"

@@ -5,8 +5,8 @@ import (
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 
-	cosmosevmtypes "github.com/cosmos/evm/types"
-	"github.com/cosmos/evm/utils"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
+	"github.com/GPTx-global/guru-v2/utils"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

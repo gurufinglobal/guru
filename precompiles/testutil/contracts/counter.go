@@ -1,8 +1,8 @@
 package contracts
 
 import (
-	contractutils "github.com/cosmos/evm/contracts/utils"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	contractutils "github.com/GPTx-global/guru-v2/contracts/utils"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 )
 
 func LoadCounterContract() (evmtypes.CompiledContract, error) {

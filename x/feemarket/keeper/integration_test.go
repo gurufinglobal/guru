@@ -11,10 +11,10 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	"github.com/cosmos/evm/testutil/integration/common/factory"
-	testutils "github.com/cosmos/evm/testutil/integration/os/utils"
-	fmkttypes "github.com/cosmos/evm/x/feemarket/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/testutil/integration/common/factory"
+	testutils "github.com/GPTx-global/guru-v2/testutil/integration/os/utils"
+	fmkttypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

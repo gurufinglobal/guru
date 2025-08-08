@@ -7,12 +7,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	cmn "github.com/cosmos/evm/precompiles/common"
-	"github.com/cosmos/evm/precompiles/distribution"
-	"github.com/cosmos/evm/precompiles/testutil"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	utiltx "github.com/cosmos/evm/testutil/tx"
+	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/precompiles/distribution"
+	"github.com/GPTx-global/guru-v2/precompiles/testutil"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
 
 	"cosmossdk.io/math"
 
@@ -20,7 +20,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	chainconfig "github.com/cosmos/evm/cmd/gurud/config"
+	chainconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
 )
 
 func (s *PrecompileTestSuite) TestSetWithdrawAddress() {

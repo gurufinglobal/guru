@@ -3,8 +3,8 @@ package wrappers
 import (
 	"math/big"
 
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	"github.com/cosmos/evm/x/vm/types"
+	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
+	"github.com/GPTx-global/guru-v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

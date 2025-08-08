@@ -27,11 +27,11 @@ import (
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/cosmos/evm/rpc/ethereum/pubsub"
-	rpcfilters "github.com/cosmos/evm/rpc/namespaces/ethereum/eth/filters"
-	"github.com/cosmos/evm/rpc/types"
-	"github.com/cosmos/evm/server/config"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/rpc/ethereum/pubsub"
+	rpcfilters "github.com/GPTx-global/guru-v2/rpc/namespaces/ethereum/eth/filters"
+	"github.com/GPTx-global/guru-v2/rpc/types"
+	"github.com/GPTx-global/guru-v2/server/config"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/log"
 

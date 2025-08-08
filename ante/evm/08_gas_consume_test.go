@@ -3,14 +3,14 @@ package evm_test
 import (
 	"fmt"
 
-	evmante "github.com/cosmos/evm/ante/evm"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
-	testfactory "github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/cosmos/evm/testutil/integration/os/grpc"
-	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	evmante "github.com/GPTx-global/guru-v2/ante/evm"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	commonfactory "github.com/GPTx-global/guru-v2/testutil/integration/common/factory"
+	testfactory "github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
+	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

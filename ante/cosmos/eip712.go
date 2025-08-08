@@ -8,10 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
-	"github.com/cosmos/evm/crypto/ethsecp256k1"
-	"github.com/cosmos/evm/ethereum/eip712"
-	"github.com/cosmos/evm/types"
+	anteinterfaces "github.com/GPTx-global/guru-v2/ante/interfaces"
+	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/ethereum/eip712"
+	"github.com/GPTx-global/guru-v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 

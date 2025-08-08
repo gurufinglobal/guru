@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/cosmos/evm/x/feemarket/types"
+	"github.com/GPTx-global/guru-v2/x/feemarket/types"
 
 	"cosmossdk.io/math"
 

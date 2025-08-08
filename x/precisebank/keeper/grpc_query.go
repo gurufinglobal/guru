@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/cosmos/evm/x/precisebank/types"
+	"github.com/GPTx-global/guru-v2/x/precisebank/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

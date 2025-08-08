@@ -1,7 +1,7 @@
 package codec
 
 import (
-	"github.com/cosmos/evm/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"

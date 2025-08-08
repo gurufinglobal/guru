@@ -6,8 +6,8 @@ package gurud
 import (
 	"fmt"
 
-	"github.com/cosmos/evm/cmd/gurud/config"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/cmd/gurud/config"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

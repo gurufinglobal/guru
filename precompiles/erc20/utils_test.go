@@ -12,13 +12,13 @@ import (
 	//nolint:revive // dot imports are fine for Gomega
 	. "github.com/onsi/gomega"
 
-	"github.com/cosmos/evm/precompiles/erc20"
-	"github.com/cosmos/evm/precompiles/testutil"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	network "github.com/cosmos/evm/testutil/integration/os/network"
-	utiltx "github.com/cosmos/evm/testutil/tx"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/precompiles/erc20"
+	"github.com/GPTx-global/guru-v2/precompiles/testutil"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	network "github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	erc20types "github.com/GPTx-global/guru-v2/x/erc20/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

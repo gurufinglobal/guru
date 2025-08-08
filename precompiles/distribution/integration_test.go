@@ -12,16 +12,16 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	cmn "github.com/cosmos/evm/precompiles/common"
-	"github.com/cosmos/evm/precompiles/distribution"
-	"github.com/cosmos/evm/precompiles/staking"
-	"github.com/cosmos/evm/precompiles/testutil"
-	"github.com/cosmos/evm/precompiles/testutil/contracts"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	testutils "github.com/cosmos/evm/testutil/integration/os/utils"
-	testutiltx "github.com/cosmos/evm/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/precompiles/distribution"
+	"github.com/GPTx-global/guru-v2/precompiles/staking"
+	"github.com/GPTx-global/guru-v2/precompiles/testutil"
+	"github.com/GPTx-global/guru-v2/precompiles/testutil/contracts"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
+	testutils "github.com/GPTx-global/guru-v2/testutil/integration/os/utils"
+	testutiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

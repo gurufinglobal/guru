@@ -8,12 +8,12 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
 
-	cmn "github.com/cosmos/evm/precompiles/common"
-	testutil "github.com/cosmos/evm/testutil"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	"github.com/cosmos/evm/x/vm/statedb"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"github.com/cosmos/evm/x/vm/types/mocks"
+	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
+	testutil "github.com/GPTx-global/guru-v2/testutil"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/x/vm/statedb"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/x/vm/types/mocks"
 
 	storetypes "cosmossdk.io/store/types"
 

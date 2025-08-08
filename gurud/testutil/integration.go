@@ -5,8 +5,8 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/cosmos/evm/crypto/ethsecp256k1"
-	exampleapp "github.com/cosmos/evm/gurud"
+	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
+	exampleapp "github.com/GPTx-global/guru-v2/gurud"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

@@ -12,7 +12,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	contractutils "github.com/cosmos/evm/contracts/utils"
+	contractutils "github.com/GPTx-global/guru-v2/contracts/utils"
 )
 
 // MakeTopic converts a filter query argument into a filter topic.

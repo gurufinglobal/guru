@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	app "github.com/cosmos/evm/gurud"
-	"github.com/cosmos/evm/testutil/constants"
-	testutiltx "github.com/cosmos/evm/testutil/tx"
+	app "github.com/GPTx-global/guru-v2/gurud"
+	"github.com/GPTx-global/guru-v2/testutil/constants"
+	testutiltx "github.com/GPTx-global/guru-v2/testutil/tx"
 
 	"cosmossdk.io/math"
 

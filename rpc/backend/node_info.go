@@ -11,11 +11,11 @@ import (
 
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/cosmos/evm/crypto/ethsecp256k1"
-	rpctypes "github.com/cosmos/evm/rpc/types"
-	"github.com/cosmos/evm/server/config"
-	"github.com/cosmos/evm/testutil/constants"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
+	rpctypes "github.com/GPTx-global/guru-v2/rpc/types"
+	"github.com/GPTx-global/guru-v2/server/config"
+	"github.com/GPTx-global/guru-v2/testutil/constants"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

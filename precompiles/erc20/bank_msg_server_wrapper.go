@@ -3,8 +3,8 @@ package erc20
 import (
 	"context"
 
-	cmn "github.com/cosmos/evm/precompiles/common"
-	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
+	precisebankkeeper "github.com/GPTx-global/guru-v2/x/precisebank/keeper"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"

@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/x/vm/types"
 )
 
 func (suite *TxDataTestSuite) TestTxArgsString() {

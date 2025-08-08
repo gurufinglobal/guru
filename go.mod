@@ -1,4 +1,4 @@
-module github.com/cosmos/evm
+module github.com/GPTx-global/guru-v2
 
 go 1.23.8
 

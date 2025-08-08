@@ -6,7 +6,7 @@ import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/evm/vm/v1/evm.proto";
 
-option go_package = "github.com/cosmos/evm/x/vm/types";
+option go_package = "github.com/GPTx-global/guru-v2/x/vm/types";
 
 // GenesisState defines the evm module's genesis state.
 message GenesisState {

@@ -9,11 +9,11 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/cosmos/evm/crypto/ethsecp256k1"
-	exampleapp "github.com/cosmos/evm/gurud"
-	chainutil "github.com/cosmos/evm/gurud/testutil"
-	precompiletestutil "github.com/cosmos/evm/precompiles/testutil"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
+	exampleapp "github.com/GPTx-global/guru-v2/gurud"
+	chainutil "github.com/GPTx-global/guru-v2/gurud/testutil"
+	precompiletestutil "github.com/GPTx-global/guru-v2/precompiles/testutil"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

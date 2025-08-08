@@ -27,12 +27,12 @@ import (
 	cmtclient "github.com/cometbft/cometbft/rpc/client"
 
 	dbm "github.com/cosmos/cosmos-db"
-	chaincmd "github.com/cosmos/evm/cmd/gurud/cmd"
-	"github.com/cosmos/evm/crypto/hd"
-	exampleapp "github.com/cosmos/evm/gurud"
-	"github.com/cosmos/evm/server/config"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	cosmosevmtypes "github.com/cosmos/evm/types"
+	chaincmd "github.com/GPTx-global/guru-v2/cmd/gurud/cmd"
+	"github.com/GPTx-global/guru-v2/crypto/hd"
+	exampleapp "github.com/GPTx-global/guru-v2/gurud"
+	"github.com/GPTx-global/guru-v2/server/config"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"

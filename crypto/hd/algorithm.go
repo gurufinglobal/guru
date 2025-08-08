@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	bip39 "github.com/tyler-smith/go-bip39"
 
-	"github.com/cosmos/evm/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"

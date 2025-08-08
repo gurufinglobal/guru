@@ -3,7 +3,7 @@ package common
 import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 )
 
 // ReturnRevertError returns a ExecutionReverted error with revert reason
@@ -15,7 +15,7 @@ import (
 // Therefore, the returned error must be ABI-encoded and returned,
 // and the error type changed to ErrExecutionReverted.
 //
-// related issue: https://github.com/cosmos/evm/issues/223
+// related issue: https://github.com/GPTx-global/guru-v2/issues/223
 func ReturnRevertError(evm *vm.EVM, err error) ([]byte, error) {
 	revertReasonBz, encErr := evmtypes.RevertReasonBytes(err.Error())
 	if encErr != nil {

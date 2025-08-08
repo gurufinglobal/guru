@@ -13,10 +13,10 @@ import (
 
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	cosmosevmtypes "github.com/cosmos/evm/types"
-	"github.com/cosmos/evm/utils"
-	"github.com/cosmos/evm/x/vm/statedb"
-	"github.com/cosmos/evm/x/vm/types"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
+	"github.com/GPTx-global/guru-v2/utils"
+	"github.com/GPTx-global/guru-v2/x/vm/statedb"
+	"github.com/GPTx-global/guru-v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

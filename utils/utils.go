@@ -10,7 +10,7 @@ import (
 	"github.com/holiman/uint256"
 	"golang.org/x/exp/constraints"
 
-	"github.com/cosmos/evm/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	errorsmod "cosmossdk.io/errors"

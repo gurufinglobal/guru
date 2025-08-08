@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/evm/utils"
-	"github.com/cosmos/evm/x/vm/types"
+	"github.com/GPTx-global/guru-v2/utils"
+	"github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/core/address"
 

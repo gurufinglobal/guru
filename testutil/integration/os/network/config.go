@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	testtx "github.com/cosmos/evm/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
+	testtx "github.com/GPTx-global/guru-v2/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

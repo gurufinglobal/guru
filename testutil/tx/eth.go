@@ -9,9 +9,9 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	exampleapp "github.com/cosmos/evm/gurud"
-	"github.com/cosmos/evm/server/config"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	exampleapp "github.com/GPTx-global/guru-v2/gurud"
+	"github.com/GPTx-global/guru-v2/server/config"
+	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

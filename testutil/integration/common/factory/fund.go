@@ -3,7 +3,7 @@ package factory
 import (
 	"fmt"
 
-	"github.com/cosmos/evm/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
