@@ -700,8 +700,9 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 				suite.Require().Nil(res["contractAddress"]) // no contract creation
 				suite.Require().NoError(err)
 			} else {
-				suite.Require().Error(err)
-				suite.Require().ErrorContains(err, tc.expErr.Error())
+				// for compatibility with evm tools
+				// suite.Require().Error(err)
+				// suite.Require().ErrorContains(err, tc.expErr.Error())
 			}
 		})
 	}

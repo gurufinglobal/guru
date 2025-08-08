@@ -154,7 +154,7 @@ func (suite *BackendTestSuite) TestBaseFee() {
 }
 
 func (suite *BackendTestSuite) TestChainId() {
-	expChainID := (*hexutil.Big)(big.NewInt(262144))
+	expChainID := (*hexutil.Big)(big.NewInt(631))
 	testCases := []struct {
 		name         string
 		registerMock func()
