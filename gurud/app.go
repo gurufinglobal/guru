@@ -17,7 +17,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	dbm "github.com/cosmos/cosmos-db"
 	evmante "github.com/GPTx-global/guru-v2/ante"
 	cosmosevmante "github.com/GPTx-global/guru-v2/ante/evm"
 	evmosencoding "github.com/GPTx-global/guru-v2/encoding"
@@ -41,6 +40,7 @@ import (
 	"github.com/GPTx-global/guru-v2/x/vm"
 	evmkeeper "github.com/GPTx-global/guru-v2/x/vm/keeper"
 	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -153,7 +153,7 @@ var (
 	// module account permissions
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
+		distrtypes.ModuleName:          {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		minttypes.ModuleName:           {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
