@@ -15,6 +15,8 @@ var (
 	DefaultMinGasMultiplier = math.LegacyNewDecWithPrec(50, 2)
 	// DefaultMinGasPrice is 0 (i.e disabled)
 	DefaultMinGasPrice = math.LegacyZeroDec()
+	// DefaultMinGasPriceRate is 1.0 (i.e no adjustment)
+	DefaultMinGasPriceRate = math.LegacyOneDec()
 	// DefaultEnableHeight is 0 (i.e disabled)
 	DefaultEnableHeight = int64(0)
 	// DefaultNoBaseFee is false
@@ -32,6 +34,7 @@ func NewParams(
 	enableHeight int64,
 	minGasPrice math.LegacyDec,
 	minGasPriceMultiplier math.LegacyDec,
+	minGasPriceRate math.LegacyDec,
 ) Params {
 	return Params{
 		NoBaseFee:                noBaseFee,
@@ -41,6 +44,7 @@ func NewParams(
 		EnableHeight:             enableHeight,
 		MinGasPrice:              minGasPrice,
 		MinGasMultiplier:         minGasPriceMultiplier,
+		MinGasPriceRate:          minGasPriceRate,
 	}
 }
 
@@ -54,6 +58,7 @@ func DefaultParams() Params {
 		EnableHeight:             DefaultEnableHeight,
 		MinGasPrice:              DefaultMinGasPrice,
 		MinGasMultiplier:         DefaultMinGasMultiplier,
+		MinGasPriceRate:          DefaultMinGasPriceRate,
 	}
 }
 
@@ -79,7 +84,11 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	return validateMinGasPrice(p.MinGasPrice)
+	if err := validateMinGasPrice(p.MinGasPrice); err != nil {
+		return err
+	}
+
+	return validateMinGasPriceRate(p.MinGasPriceRate)
 }
 
 func (p *Params) IsBaseFeeEnabled(height int64) bool {
@@ -109,6 +118,18 @@ func validateMinGasMultiplier(multiplier math.LegacyDec) error {
 
 	if multiplier.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("value cannot be greater than 1: %s", multiplier)
+	}
+
+	return nil
+}
+
+func validateMinGasPriceRate(rate math.LegacyDec) error {
+	if rate.IsNil() {
+		return fmt.Errorf("invalid parameter: nil")
+	}
+
+	if rate.IsNegative() {
+		return fmt.Errorf("value cannot be negative: %s", rate)
 	}
 
 	return nil

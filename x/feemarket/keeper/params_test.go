@@ -18,6 +18,7 @@ func TestGetParams(t *testing.T) {
 	require.NotNil(t, params.BaseFee)
 	require.NotNil(t, params.MinGasPrice)
 	require.NotNil(t, params.MinGasMultiplier)
+	require.NotNil(t, params.MinGasPriceRate)
 }
 
 func TestSetGetParams(t *testing.T) {

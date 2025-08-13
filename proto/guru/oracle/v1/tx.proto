@@ -12,6 +12,7 @@ option go_package = "github.com/GPTx-global/guru-v2/x/oracle/types";
 
 // Msg defines the oracle Msg service
 service Msg {
+  option (cosmos.msg.v1.service) = true;
   // RegisterOracleRequestDoc defines a method for registering a new oracle request document
   rpc RegisterOracleRequestDoc(MsgRegisterOracleRequestDoc) returns (MsgRegisterOracleRequestDocResponse);
   

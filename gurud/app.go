@@ -17,7 +17,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	dbm "github.com/cosmos/cosmos-db"
 	evmante "github.com/GPTx-global/guru-v2/ante"
 	cosmosevmante "github.com/GPTx-global/guru-v2/ante/evm"
 	evmosencoding "github.com/GPTx-global/guru-v2/encoding"
@@ -35,12 +34,16 @@ import (
 	"github.com/GPTx-global/guru-v2/x/ibc/transfer" // NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
 	transferkeeper "github.com/GPTx-global/guru-v2/x/ibc/transfer/keeper"
 	transferv2 "github.com/GPTx-global/guru-v2/x/ibc/transfer/v2"
+	"github.com/GPTx-global/guru-v2/x/oracle"
+	oraclekeeper "github.com/GPTx-global/guru-v2/x/oracle/keeper"
+	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
 	"github.com/GPTx-global/guru-v2/x/precisebank"
 	precisebankkeeper "github.com/GPTx-global/guru-v2/x/precisebank/keeper"
 	precisebanktypes "github.com/GPTx-global/guru-v2/x/precisebank/types"
 	"github.com/GPTx-global/guru-v2/x/vm"
 	evmkeeper "github.com/GPTx-global/guru-v2/x/vm/keeper"
 	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -165,6 +168,7 @@ var (
 		feemarkettypes.ModuleName:   nil,
 		erc20types.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		precisebanktypes.ModuleName: {authtypes.Minter, authtypes.Burner},
+		oracletypes.ModuleName:      nil,
 	}
 )
 
@@ -212,6 +216,7 @@ type EVMD struct {
 	EVMKeeper         *evmkeeper.Keeper
 	Erc20Keeper       erc20keeper.Keeper
 	PreciseBankKeeper precisebankkeeper.Keeper
+	OracleKeeper      oraclekeeper.Keeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -296,6 +301,8 @@ func NewExampleApp(
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// Cosmos EVM store keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey,
+		// Oracle store key
+		oracletypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
@@ -519,6 +526,14 @@ func NewExampleApp(
 		&app.TransferKeeper,
 	)
 
+	oracleKeeper := oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey])
+	app.OracleKeeper = *oracleKeeper.SetHooks(
+		oraclekeeper.NewMultiOracleHooks(
+			// insert oracle hooks receivers here
+			app.FeeMarketKeeper.Hooks(),
+		),
+	)
+
 	// instantiate IBC transfer keeper AFTER the ERC-20 keeper to use it in the instantiation
 	app.TransferKeeper = transferkeeper.NewKeeper(
 		appCodec,
@@ -623,6 +638,7 @@ func NewExampleApp(
 		feemarket.NewAppModule(app.FeeMarketKeeper),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
+		oracle.NewAppModule(app.OracleKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager which is in charge of setting up basic,
@@ -674,6 +690,7 @@ func NewExampleApp(
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, consensusparamtypes.ModuleName,
 		precisebanktypes.ModuleName,
+		oracletypes.ModuleName,
 		vestingtypes.ModuleName,
 	)
 
@@ -693,6 +710,7 @@ func NewExampleApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName, paramstypes.ModuleName, upgradetypes.ModuleName, consensusparamtypes.ModuleName,
 		precisebanktypes.ModuleName,
+		oracletypes.ModuleName,
 		vestingtypes.ModuleName,
 	)
 
@@ -713,6 +731,7 @@ func NewExampleApp(
 		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
 		precisebanktypes.ModuleName,
+		oracletypes.ModuleName,
 
 		ibctransfertypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
