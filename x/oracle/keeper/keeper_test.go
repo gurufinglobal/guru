@@ -5,10 +5,13 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
+	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmdb "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,29 +21,35 @@ import (
 
 // setupKeeper creates a new Keeper instance and context for testing
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount("guru", "gurupub")
+
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
 	db := tmdb.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db, log.NewNopLogger(), nil)
-	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
-	stateStore.MountStoreWithDB(memStoreKey, storetypes.StoreTypeMemory, nil)
-	require.NoError(t, stateStore.LoadLatestVersion())
+	stateStore := store.NewCommitMultiStore(db, log.NewNopLogger(), metrics.NewNoOpMetrics())
+	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeDB, db)
+	err := stateStore.LoadLatestVersion()
+	require.NoError(t, err)
 
-	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
+	registry := codectypes.NewInterfaceRegistry()
+	cdc := codec.NewProtoCodec(registry)
 
-	cdc := codec.NewProtoCodec(nil)
+	keeper := NewKeeper(cdc, storeKey)
 
-	keeper := NewKeeper(
-		cdc,
-		storeKey,
-	)
+	ctx := sdk.NewContext(stateStore, tmproto.Header{ChainID: "test-chain"}, false, log.NewNopLogger()).
+		WithGasMeter(storetypes.NewInfiniteGasMeter())
+
+	// Pre-initialize store by setting default params to avoid nil pointer
+	defaultParams := types.DefaultParams()
+	err = keeper.SetParams(ctx, defaultParams)
+	require.NoError(t, err)
 
 	return keeper, ctx
 }
 
-// TestSetAndGetOracleRequestDocCount disabled temporarily due to store setup issues
-func testSetAndGetOracleRequestDocCount(t *testing.T) {
+// TestSetAndGetOracleRequestDocCount tests the setting and getting of oracle request document count
+func TestSetAndGetOracleRequestDocCount(t *testing.T) {
 	keeper, ctx := setupKeeper(t)
 
 	// Initial count should be 0
@@ -57,8 +66,7 @@ func testSetAndGetOracleRequestDocCount(t *testing.T) {
 }
 
 // TestSetAndGetOracleRequestDoc tests the setting and getting of oracle request documents
-// TestSetAndGetOracleRequestDoc disabled temporarily due to store setup issues
-func testSetAndGetOracleRequestDoc(t *testing.T) {
+func TestSetAndGetOracleRequestDoc(t *testing.T) {
 	keeper, ctx := setupKeeper(t)
 
 	// Create test document
@@ -100,8 +108,7 @@ func testSetAndGetOracleRequestDoc(t *testing.T) {
 }
 
 // TestSetAndGetModeratorAddress tests the setting and getting of moderator address
-// TestSetAndGetModeratorAddress disabled temporarily due to store setup issues
-func testSetAndGetModeratorAddress(t *testing.T) {
+func TestSetAndGetModeratorAddress(t *testing.T) {
 	keeper, ctx := setupKeeper(t)
 
 	// Initial address should be empty string
@@ -117,8 +124,8 @@ func testSetAndGetModeratorAddress(t *testing.T) {
 	assert.Equal(t, testAddress, retrievedAddress)
 }
 
-// TestGetOracleData disabled temporarily due to store setup issues
-func testGetOracleData(t *testing.T) {
+// TestGetOracleData tests the retrieval of oracle data
+func TestGetOracleData(t *testing.T) {
 	keeper, ctx := setupKeeper(t)
 
 	doc := types.OracleRequestDoc{
