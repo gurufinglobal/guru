@@ -111,7 +111,7 @@ var _ = Describe("Bank Extension -", func() {
 		contractData ContractData
 		passCheck    testutil.LogCheckArgs
 
-		cosmosEVMTotalSupply, _ = new(big.Int).SetString("200003000000000000000000", 10)
+		cosmosEVMTotalSupply, _ = new(big.Int).SetString("200002999871349625000001", 10)
 		xmplTotalSupply, _      = new(big.Int).SetString("200000000000000000000000", 10)
 	)
 
