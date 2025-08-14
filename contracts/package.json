@@ -3,7 +3,12 @@
   "version": "2.0.0",
   "description": "A collection of smart contracts used in the development of the Cosmos EVM blockchain.",
   "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
     "@openzeppelin/contracts": "^4.9.6",
+    "chai": "^5.2.1",
+    "ethereum-waffle": "^4.0.10",
+    "ethers": "^5.8.0",
     "hardhat": "^2.22.2"
   },
   "scripts": {
