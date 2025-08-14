@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+option go_package = "github.com/GPTx-global/guru-v2/x/feepolicy/types";
+
+import "guru/feepolicy/v1/feepolicy.proto";
+import "gogoproto/gogo.proto";
+
+// GenesisState defines the ibc-transfer genesis state
+message GenesisState {
+  string moderator_address = 1;
+  repeated AccountDiscount discounts = 2 [
+    (gogoproto.nullable)     = false,
+    (gogoproto.moretags)     = "yaml:\"discounts\""
+  ];
+}

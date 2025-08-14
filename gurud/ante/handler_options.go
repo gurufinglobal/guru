@@ -25,6 +25,7 @@ type HandlerOptions struct {
 	FeeMarketKeeper        anteinterfaces.FeeMarketKeeper
 	EvmKeeper              anteinterfaces.EVMKeeper
 	FeegrantKeeper         ante.FeegrantKeeper
+	FeePolicyKeeper        FeePolicyKeeper
 	ExtensionOptionChecker ante.ExtensionOptionChecker
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
@@ -60,6 +61,9 @@ func (options HandlerOptions) Validate() error {
 	}
 	if options.TxFeeChecker == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "tx fee checker is required for AnteHandler")
+	}
+	if options.FeePolicyKeeper == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "fee policy keeper is required for AnteHandler")
 	}
 	return nil
 }

@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "guru/feepolicy/v1/feepolicy.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/GPTx-global/guru-v2/x/feepolicy/types";
+
+// Query provides defines the gRPC querier service.
+service Query {
+  // ModeratorAddress returns the current moderator address
+  rpc ModeratorAddress(QueryModeratorAddressRequest) 
+        returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/feepolicy/v1/moderator_address";
+  }
+
+  // Discounts queries a denomination trace information.
+  rpc Discounts(QueryDiscountsRequest) returns (QueryDiscountsResponse) {
+    option (google.api.http).get = "/guru/feepolicy/v1/discounts";
+  }
+
+  // Discount queries a denomination trace information.
+  rpc Discount(QueryDiscountRequest) returns (QueryDiscountResponse) {
+    option (google.api.http).get = "/guru/feepolicy/v1/discounts/{address}";
+  }
+}
+
+// Request type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressRequest {
+}
+
+// Response type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressResponse {
+  string moderator_address = 1;
+}
+
+// QueryDiscountsRequest is the request type for the Query/Discounts RPC
+// method
+message QueryDiscountsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryDiscountsResponse is the response type for the Query/Discounts RPC
+// method.
+message QueryDiscountsResponse {
+  repeated AccountDiscount discounts = 1 [(gogoproto.nullable) = false];
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryDiscountRequest is the request type for the Query/Discount RPC
+// method
+message QueryDiscountRequest {
+  string address = 1;
+}
+
+// QueryDiscountResponse is the response type for the Query/Discount RPC
+// method.
+message QueryDiscountResponse {
+  AccountDiscount discount = 1 [(gogoproto.nullable) = false];
+}

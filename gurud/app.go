@@ -130,6 +130,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	// guru-v2 modules
+	"github.com/GPTx-global/guru-v2/x/feepolicy"
+	feepolicykeeper "github.com/GPTx-global/guru-v2/x/feepolicy/keeper"
+	feepolicytypes "github.com/GPTx-global/guru-v2/x/feepolicy/types"
 )
 
 func init() {
@@ -165,6 +170,9 @@ var (
 		feemarkettypes.ModuleName:   nil,
 		erc20types.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		precisebanktypes.ModuleName: {authtypes.Minter, authtypes.Burner},
+
+		// guru-v2 modules
+		feepolicytypes.ModuleName: nil,
 	}
 )
 
@@ -212,6 +220,9 @@ type EVMD struct {
 	EVMKeeper         *evmkeeper.Keeper
 	Erc20Keeper       erc20keeper.Keeper
 	PreciseBankKeeper precisebankkeeper.Keeper
+
+	// guru-v2 keepers
+	FeePolicyKeeper feepolicykeeper.Keeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -296,9 +307,11 @@ func NewExampleApp(
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// Cosmos EVM store keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey,
+		// guru-v2 store keys
+		feepolicytypes.StoreKey,
 	)
 
-	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
+	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey, feepolicytypes.TransientKey)
 
 	// load state streaming if enabled
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
@@ -533,6 +546,14 @@ func NewExampleApp(
 		authAddr,
 	)
 
+	// guru-v2 keepers
+	app.FeePolicyKeeper = feepolicykeeper.NewKeeper(
+		appCodec,
+		keys[feepolicytypes.StoreKey],
+		tkeys[feepolicytypes.TransientKey],
+		nil, // register module keepers
+	)
+
 	/*
 		Create Transfer Stack
 
@@ -623,6 +644,8 @@ func NewExampleApp(
 		feemarket.NewAppModule(app.FeeMarketKeeper),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
+		// guru-v2 modules
+		feepolicy.NewAppModule(app.FeePolicyKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager which is in charge of setting up basic,
@@ -667,6 +690,9 @@ func NewExampleApp(
 		erc20types.ModuleName, feemarkettypes.ModuleName,
 		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
 
+		// guru-v2 modules
+		feepolicytypes.ModuleName,
+
 		// TODO: remove no-ops? check if all are no-ops before removing
 		distrtypes.ModuleName, slashingtypes.ModuleName,
 		evidencetypes.ModuleName, stakingtypes.ModuleName,
@@ -685,6 +711,9 @@ func NewExampleApp(
 
 		// Cosmos EVM EndBlockers
 		evmtypes.ModuleName, erc20types.ModuleName, feemarkettypes.ModuleName,
+
+		// guru-v2 modules
+		feepolicytypes.ModuleName,
 
 		// no-ops
 		ibcexported.ModuleName, ibctransfertypes.ModuleName,
@@ -713,6 +742,9 @@ func NewExampleApp(
 		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
 		precisebanktypes.ModuleName,
+
+		// guru-v2 modules
+		feepolicytypes.ModuleName,
 
 		ibctransfertypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
@@ -820,6 +852,7 @@ func (app *EVMD) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) {
 		ExtensionOptionChecker: cosmosevmtypes.HasDynamicFeeExtensionOption,
 		EvmKeeper:              app.EVMKeeper,
 		FeegrantKeeper:         app.FeeGrantKeeper,
+		FeePolicyKeeper:        app.FeePolicyKeeper,
 		IBCKeeper:              app.IBCKeeper,
 		FeeMarketKeeper:        app.FeeMarketKeeper,
 		SignModeHandler:        txConfig.SignModeHandler(),
