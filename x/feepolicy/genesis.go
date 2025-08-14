@@ -12,6 +12,14 @@ import (
 
 // InitGenesis new feepolicy genesis
 func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data types.GenesisState) {
+	if data.ModeratorAddress == "" {
+		data.ModeratorAddress = keeper.GetAuthority()
+	}
+
+	if _, err := sdk.AccAddressFromBech32(data.ModeratorAddress); err != nil {
+		panic(fmt.Sprintf("invalid moderator address: %s. Error: %s", data.ModeratorAddress, err))
+	}
+
 	keeper.SetModeratorAddress(ctx, types.Moderator{Address: data.ModeratorAddress})
 	for _, discount := range data.Discounts {
 		keeper.SetAccountDiscounts(ctx, discount)

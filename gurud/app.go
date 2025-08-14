@@ -552,6 +552,7 @@ func NewExampleApp(
 		keys[feepolicytypes.StoreKey],
 		tkeys[feepolicytypes.TransientKey],
 		nil, // register module keepers
+		authAddr,
 	)
 
 	/*

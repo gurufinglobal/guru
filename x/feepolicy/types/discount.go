@@ -20,7 +20,7 @@ func ValidateFeeDiscount(discount Discount) error {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "msg type is required")
 	}
 
-	if discount.Amount.IsNegative() {
+	if discount.Amount.IsNegative() || discount.Amount.IsZero() {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "discount value must be greater than 0")
 	}
 

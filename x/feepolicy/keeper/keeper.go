@@ -25,6 +25,9 @@ type Keeper struct {
 
 	// module keepers
 	moduleKeepers map[string]types.ModuleKeeper
+
+	// authority defines the default moderatpr address
+	authority string
 }
 
 func NewKeeper(
@@ -32,6 +35,7 @@ func NewKeeper(
 	key storetypes.StoreKey,
 	transientKey storetypes.StoreKey,
 	moduleKeepers map[string]types.ModuleKeeper,
+	authority string,
 ) Keeper {
 
 	return Keeper{
@@ -39,12 +43,17 @@ func NewKeeper(
 		storeKey:      key,
 		transientKey:  transientKey,
 		moduleKeepers: moduleKeepers,
+		authority:     authority,
 	}
 }
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", types.ModuleName)
+}
+
+func (k Keeper) GetAuthority() string {
+	return k.authority
 }
 
 // GetModeratorAddress returns the current moderator address.
