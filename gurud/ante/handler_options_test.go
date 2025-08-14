@@ -127,6 +127,7 @@ func TestValidateHandlerOptions(t *testing.T) {
 				FeegrantKeeper:         nw.App.FeeGrantKeeper,
 				IBCKeeper:              nw.App.IBCKeeper,
 				FeeMarketKeeper:        nw.App.FeeMarketKeeper,
+				FeePolicyKeeper:        nw.App.FeePolicyKeeper,
 				SignModeHandler:        nw.GetEncodingConfig().TxConfig.SignModeHandler(),
 				SigGasConsumer:         ante.SigVerificationGasConsumer,
 				MaxTxGasWanted:         40000000,

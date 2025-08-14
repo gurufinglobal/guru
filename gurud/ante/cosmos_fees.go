@@ -12,7 +12,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -143,7 +142,7 @@ func (dfd DeductFeeDecorator) checkDeductFee(ctx sdk.Context, sdkTx sdk.Tx, fee 
 
 	// deduct the fees
 	if !fee.IsZero() {
-		err := ante.DeductFees(dfd.bankKeeper, ctx, deductFeesFromAcc, fee)
+		err := authante.DeductFees(dfd.bankKeeper, ctx, deductFeesFromAcc, fee)
 		if err != nil {
 			return err
 		}
