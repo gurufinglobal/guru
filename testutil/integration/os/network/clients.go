@@ -3,6 +3,7 @@ package network
 import (
 	erc20types "github.com/GPTx-global/guru-v2/x/erc20/types"
 	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
+	feepolicytypes "github.com/GPTx-global/guru-v2/x/feepolicy/types"
 	precisebankkeeper "github.com/GPTx-global/guru-v2/x/precisebank/keeper"
 	precisebanktypes "github.com/GPTx-global/guru-v2/x/precisebank/types"
 	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
@@ -60,6 +61,12 @@ func (n *IntegrationNetwork) GetFeeMarketClient() feemarkettypes.QueryClient {
 	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
 	feemarkettypes.RegisterQueryServer(queryHelper, n.app.FeeMarketKeeper)
 	return feemarkettypes.NewQueryClient(queryHelper)
+}
+
+func (n *IntegrationNetwork) GetFeePolicyClient() feepolicytypes.QueryClient {
+	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
+	feepolicytypes.RegisterQueryServer(queryHelper, n.app.FeePolicyKeeper)
+	return feepolicytypes.NewQueryClient(queryHelper)
 }
 
 func (n *IntegrationNetwork) GetAuthClient() authtypes.QueryClient {

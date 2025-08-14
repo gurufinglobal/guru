@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+option go_package = "github.com/GPTx-global/guru-v2/x/feepolicy/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+
+message Discount {
+  string discountType = 1;
+  string msgType = 2;
+  string amount = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)   = false
+  ];
+}
+
+message ModuleDiscount {
+  string module = 1;
+  repeated Discount discounts = 2 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message AccountDiscount {
+  string address = 1;
+  repeated ModuleDiscount modules = 2 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message AccountDiscounts {
+  repeated AccountDiscount discounts = 1 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message Moderator {
+  string address = 1;
+}
