@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 /**
  * @title TestContract
- * @dev Simple contract for testing EVM deployment on Guru network
+ * @dev Simple contract for testing EVM deployment on GXN network
  */
 contract TestContract {
     uint256 public value;

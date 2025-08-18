@@ -125,11 +125,11 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	gurud init $MONIKER -o --chain-id "$CHAINID" --home "$HOMEDIR"
 
 	# Change parameter token denominations to desired value
-	jq '.app_state["staking"]["params"]["bond_denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["gov"]["params"]["expedited_min_deposit"][0]["denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["evm_denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["staking"]["params"]["bond_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["gov"]["params"]["expedited_min_deposit"][0]["denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["evm"]["params"]["evm_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# feemarket: elasticity_multiplier = 1, base_fee = 6.3*10^-7, min_gas_price = 6.3*10^-7
 	jq '.app_state["feemarket"]["params"]["elasticity_multiplier"]="1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -149,16 +149,16 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["mint"]["params"]["inflation_max"]="0.000000000000000000"' "$GENESIS" > "$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["mint"]["params"]["inflation_min"]="0.000000000000000000"' "$GENESIS" > "$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"	
 	
-	jq '.app_state["mint"]["params"]["mint_denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["mint"]["params"]["mint_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# Add default token metadata to genesis
-	jq '.app_state["bank"]["denom_metadata"]=[{"description":"The native staking token for gurud.","denom_units":[{"denom":"aguru","exponent":0,"aliases":["attoguru"]},{"denom":"guru","exponent":18,"aliases":[]}],"base":"aguru","display":"guru","name":"Guru Token","symbol":"GURU","uri":"","uri_hash":""}]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["bank"]["denom_metadata"]=[{"description":"The native staking token for gurud.","denom_units":[{"denom":"agxn","exponent":0,"aliases":["attogxn"]},{"denom":"gxn","exponent":18,"aliases":[]}],"base":"agxn","display":"gxn","name":"GXN Token","symbol":"GXN","uri":"","uri_hash":""}]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# Enable precompiles in EVM params
 	jq '.app_state["evm"]["params"]["active_static_precompiles"]=["0x0000000000000000000000000000000000000100","0x0000000000000000000000000000000000000400","0x0000000000000000000000000000000000000800","0x0000000000000000000000000000000000000801","0x0000000000000000000000000000000000000802","0x0000000000000000000000000000000000000803","0x0000000000000000000000000000000000000804","0x0000000000000000000000000000000000000805","0x0000000000000000000000000000000000000806","0x0000000000000000000000000000000000000807"]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# Set EVM config
-	jq '.app_state["evm"]["params"]["evm_denom"]="aguru"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["evm"]["params"]["evm_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# Enable native denomination as a token pair for STRv2
 	jq '.app_state.erc20.native_precompiles=["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -221,14 +221,14 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	sed -i.bak 's/pruning-interval = "0"/pruning-interval = "10"/g' "$APP_TOML"
 
 	# Allocate genesis accounts (cosmos formatted addresses)
-	gurud genesis add-genesis-account "$VAL_KEY" 100000000000000000000000000aguru --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	gurud genesis add-genesis-account "$USER1_KEY" 1000000000000000000000aguru --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	gurud genesis add-genesis-account "$USER2_KEY" 1000000000000000000000aguru --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	gurud genesis add-genesis-account "$USER3_KEY" 1000000000000000000000aguru --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	gurud genesis add-genesis-account "$USER4_KEY" 1000000000000000000000aguru --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	gurud genesis add-genesis-account "$VAL_KEY" 100000000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	gurud genesis add-genesis-account "$USER1_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	gurud genesis add-genesis-account "$USER2_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	gurud genesis add-genesis-account "$USER3_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	gurud genesis add-genesis-account "$USER4_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
 
 	# Sign genesis transaction
-	gurud genesis gentx "$VAL_KEY" 1000000000000000000000aguru --gas-prices ${BASEFEE}aguru --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"  --gas-prices 630000000000aguru
+	gurud genesis gentx "$VAL_KEY" 1000000000000000000000agxn --gas-prices ${BASEFEE}agxn --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"  --gas-prices 630000000000agxn
 	## In case you want to create multiple validators at genesis
 	## 1. Back to `gurud keys add` step, init more keys
 	## 2. Back to `gurud add-genesis-account` step, add balance for those
@@ -250,7 +250,7 @@ fi
 # Start the node
 gurud start "$TRACE" \
 	--log_level $LOGLEVEL \
-	--minimum-gas-prices=0.0001aguru \
+	--minimum-gas-prices=0.0001agxn \
 	--home "$HOMEDIR" \
 	--json-rpc.api eth,txpool,personal,net,debug,web3 \
 	--chain-id "$CHAINID"

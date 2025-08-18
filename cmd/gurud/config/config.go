@@ -18,15 +18,15 @@ var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 		Decimals:      evmtypes.EighteenDecimals,
 	},
 	CosmosChainID: {
-		Denom:         "aguru",
-		ExtendedDenom: "aguru",
-		DisplayDenom:  "guru",
+		Denom:         "agxn",
+		ExtendedDenom: "agxn",
+		DisplayDenom:  "gxn",
 		Decimals:      evmtypes.EighteenDecimals,
 	},
 	GuruChainID: {
-		Denom:         "aguru",
-		ExtendedDenom: "aguru",
-		DisplayDenom:  "guru",
+		Denom:         "agxn",
+		ExtendedDenom: "agxn",
+		DisplayDenom:  "gxn",
 		Decimals:      evmtypes.EighteenDecimals,
 	},
 	// SixDecimalsChainID provides a chain ID which is being set up with 6 decimals
@@ -54,9 +54,9 @@ const (
 	// Bech32PrefixConsPub defines the Bech32 prefix of a consensus node public key.
 	Bech32PrefixConsPub = Bech32Prefix + sdk.PrefixValidator + sdk.PrefixConsensus + sdk.PrefixPublic
 	// DisplayDenom defines the denomination displayed to users in client applications.
-	DisplayDenom = "guru"
+	DisplayDenom = "gxn"
 	// BaseDenom defines to the default denomination used in the guru EVM example chain.
-	BaseDenom = "aguru"
+	BaseDenom = "agxn"
 	// BaseDenomUnit defines the precision of the base denomination.
 	BaseDenomUnit = 18
 	// EVMChainID defines the EIP-155 replay-protection chain id for the current ethereum chain config.

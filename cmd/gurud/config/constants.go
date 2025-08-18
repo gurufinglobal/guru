@@ -2,10 +2,10 @@ package config
 
 const (
 	// ExampleChainDenom is the denomination of the Cosmos EVM example chain's base coin.
-	ExampleChainDenom = "aguru"
+	ExampleChainDenom = "agxn"
 
 	// ExampleDisplayDenom is the display denomination of the Cosmos EVM example chain's base coin.
-	ExampleDisplayDenom = "guru"
+	ExampleDisplayDenom = "gxn"
 
 	// EighteenDecimalsChainID is the chain ID for the 18 decimals chain.
 	EighteenDecimalsChainID = 9001

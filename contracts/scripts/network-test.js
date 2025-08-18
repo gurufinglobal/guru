@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 
 async function main() {
-  console.log("🔌 Testing connection to Guru network...");
+  console.log("🔌 Testing connection to GXN network...");
   
   try {
     // Get provider
@@ -25,7 +25,7 @@ async function main() {
     console.log(`✅ Test account: ${deployer.address}`);
     
     const balance = await deployer.getBalance();
-    console.log(`✅ Account balance: ${ethers.utils.formatEther(balance)} GURU`);
+    console.log(`✅ Account balance: ${ethers.utils.formatEther(balance)} GXN`);
     
     // Test gas price
     const gasPrice = await provider.getGasPrice();

@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 
 async function main() {
-  console.log("🚀 Starting smart contract deployment test on Guru network...");
+  console.log("🚀 Starting smart contract deployment test on GXN network...");
   
   // Get the deployer account
   const [deployer] = await ethers.getSigners();
@@ -9,7 +9,7 @@ async function main() {
   
   // Check balance
   const balance = await deployer.getBalance();
-  console.log(`💰 Account balance: ${ethers.utils.formatEther(balance)} GURU`);
+  console.log(`💰 Account balance: ${ethers.utils.formatEther(balance)} GXN`);
   
   // Get network info
   const network = await ethers.provider.getNetwork();
@@ -21,7 +21,7 @@ async function main() {
   
   console.log("⏳ Deploying TestContract...");
   const initialValue = 42;
-  const initialMessage = "Hello Guru Network!";
+  const initialMessage = "Hello GXN Network!";
   
   // Deploy the contract
   const testContract = await TestContract.deploy(initialValue, initialMessage);

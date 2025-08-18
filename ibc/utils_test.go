@@ -306,14 +306,14 @@ func TestGetSentCoin(t *testing.T) {
 		expCoin   sdk.Coin
 	}{
 		{
-			"get unwrapped aguru coin",
+			"get unwrapped agxn coin",
 			baseDenom,
 			"10",
 			sdk.Coin{Denom: baseDenom, Amount: math.NewInt(10)},
 		},
 		{
-			"get ibc wrapped aguru coin",
-			"transfer/channel-0/aguru",
+			"get ibc wrapped agxn coin",
+			"transfer/channel-0/agxn",
 			"10",
 			sdk.Coin{Denom: precompilestestutil.AatomIbcDenom, Amount: math.NewInt(10)},
 		},
@@ -374,7 +374,7 @@ func TestDeriveDecimalsFromDenom(t *testing.T) {
 		},
 		{
 			name:      "success: atto 'a' prefix",
-			baseDenom: "aguru",
+			baseDenom: "agxn",
 			expDec:    18,
 			expFail:   false,
 			expErrMsg: "",

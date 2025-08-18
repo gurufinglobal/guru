@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 
 async function main() {
-  console.log("🚀 Starting ERC20 token deployment test on Guru network...");
+  console.log("🚀 Starting ERC20 token deployment test on GXN network...");
   
   // Get the deployer account
   const [deployer] = await ethers.getSigners();
@@ -9,14 +9,14 @@ async function main() {
   
   // Check balance
   const balance = await deployer.getBalance();
-  console.log(`💰 Account balance: ${ethers.utils.formatEther(balance)} GURU`);
+  console.log(`💰 Account balance: ${ethers.utils.formatEther(balance)} GXN`);
   
   // Get the ERC20MinterBurnerDecimals factory
   console.log("📦 Getting ERC20MinterBurnerDecimals factory...");
   const ERC20MinterBurnerDecimals = await ethers.getContractFactory("ERC20MinterBurnerDecimals");
   
   console.log("⏳ Deploying ERC20 token...");
-  const tokenName = "Guru Test Token";
+  const tokenName = "GXN Test Token";
   const tokenSymbol = "GTT";
   const decimals = 18;
   
@@ -88,7 +88,7 @@ async function main() {
   console.log(`   Decimals: ${tokenDecimals}`);
   console.log(`   Total Supply: ${ethers.utils.formatEther(newTotalSupply)} ${symbol}`);
   console.log(`   Deployer: ${deployer.address}`);
-  console.log(`   Network: Guru (631)`);
+  console.log(`   Network: GXN (631)`);
 }
 
 main()

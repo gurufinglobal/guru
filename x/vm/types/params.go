@@ -18,7 +18,7 @@ import (
 
 var (
 	// DefaultEVMDenom is the default value for the evm denom
-	DefaultEVMDenom = "aguru"
+	DefaultEVMDenom = "agxn"
 	// DefaultEVMChainID is the default value for the evm chain ID
 	DefaultEVMChainID = "guru_631-1"
 	// DefaultEVMDecimals is the default value for the evm denom decimal precision
