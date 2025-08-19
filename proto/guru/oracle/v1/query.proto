@@ -12,7 +12,7 @@ option go_package = "github.com/GPTx-global/guru-v2/x/oracle/types";
 service Query {
   // Parameters queries the parameters of the module
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/guru/oracle/params";
+    option (google.api.http).get = "/guru/oracle/v1/params";
   }
   
   // OracleSubmitData queries oracle data by ID
@@ -27,7 +27,7 @@ service Query {
   
   // OracleRequestDoc queries oracle request doc by ID
   rpc OracleRequestDoc(QueryOracleRequestDocRequest) returns (QueryOracleRequestDocResponse) {
-    option (google.api.http).get = "/guru/oracle/request_doc/{request_id}";
+    option (google.api.http).get = "/guru/oracle/v1/request_doc/{request_id}";
   }
   
   // OracleRequestDocs queries an oracle request document list

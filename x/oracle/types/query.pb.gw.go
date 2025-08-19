@@ -620,13 +620,13 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"guru", "oracle", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"guru", "oracle", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_OracleSubmitData_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"guru", "oracle", "v1", "submit_data", "request_id", "nonce", "provider"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_OracleData_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"guru", "oracle", "v1", "data", "request_id"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_OracleRequestDoc_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"guru", "oracle", "request_doc", "request_id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_OracleRequestDoc_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"guru", "oracle", "v1", "request_doc", "request_id"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_OracleRequestDocs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"guru", "oracle", "v1", "request_docs"}, "", runtime.AssumeColonVerbOpt(false)))
 
