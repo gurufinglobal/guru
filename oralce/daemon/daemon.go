@@ -11,17 +11,18 @@ import (
 	"time"
 
 	"cosmossdk.io/log"
+	guruconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
 	"github.com/GPTx-global/guru-v2/encoding"
 	"github.com/GPTx-global/guru-v2/oralce/config"
 	"github.com/GPTx-global/guru-v2/oralce/monitor"
 	"github.com/GPTx-global/guru-v2/oralce/submiter"
 	"github.com/GPTx-global/guru-v2/oralce/types"
 	"github.com/GPTx-global/guru-v2/oralce/worker"
-	guruconfig "github.com/GPTx-global/guru-v2/server/config"
 	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
 	comethttp "github.com/cometbft/cometbft/rpc/client/http"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
@@ -46,11 +47,10 @@ func NewDaemon(rootCtx context.Context) *Daemon {
 	d.rootCtx = rootCtx
 
 	// Setup encoding configuration with required interface registrations
-	encCfg := encoding.MakeConfig(guruconfig.DefaultEVMChainID)
+	encCfg := encoding.MakeConfig(guruconfig.GuruChainID)
 	authtypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 	banktypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 	oracletypes.RegisterInterfaces(encCfg.InterfaceRegistry)
-
 
 	// Create WebSocket client for real-time blockchain events
 	cometClient, err := comethttp.New(config.ChainEndpoint(), "/websocket")
@@ -72,7 +72,7 @@ func NewDaemon(rootCtx context.Context) *Daemon {
 		WithClient(cometClient).
 		WithFromAddress(config.Address()).
 		WithFromName(config.KeyName()).
-		WithBroadcastMode("sync")
+		WithBroadcastMode(flags.BroadcastSync)
 
 	// Initialize daemon components
 	d.clientCtx = clientCtx

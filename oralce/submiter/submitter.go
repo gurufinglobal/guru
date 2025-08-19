@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"cosmossdk.io/log"
-	cmdconfig"github.com/GPTx-global/guru-v2/cmd/gurud/config"
+	guruconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
 	"github.com/GPTx-global/guru-v2/oralce/config"
 	"github.com/GPTx-global/guru-v2/oralce/types"
 	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
@@ -125,7 +125,7 @@ func (s *Submitter) buildTransaction(jobResult types.OracleJobResult) (tx.Factor
 	}
 
 	// Parse gas prices from configuration
-	gasPrice, err := sdk.ParseDecCoin(config.GasPrices() + cmdconfig.BaseDenom) 
+	gasPrice, err := sdk.ParseDecCoin(config.GasPrices() + guruconfig.BaseDenom) 
 	
 	if err != nil {
 		s.logger.Error("failed to parse gas price", "error", err)
