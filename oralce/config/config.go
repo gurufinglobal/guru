@@ -148,7 +148,7 @@ func createDefaultConfig(path string) error {
 		Gas: gasConfig{
 			Limit:      70000,
 			Adjustment: 1.5,
-			Prices:     "630000000000aguru",
+			Prices:     "630000000000",
 		},
 		Retry: retryConfig{
 			MaxAttempts:       6,

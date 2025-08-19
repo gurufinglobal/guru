@@ -51,6 +51,7 @@ func NewDaemon(rootCtx context.Context) *Daemon {
 	banktypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 	oracletypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 
+
 	// Create WebSocket client for real-time blockchain events
 	cometClient, err := comethttp.New(config.ChainEndpoint(), "/websocket")
 	if err != nil {
@@ -196,7 +197,7 @@ func (d *Daemon) Monitor() {
 			// Update gas prices from network events
 			if gasPrices, ok := oracleEvent.Events[types.MinGasPrice]; ok {
 				for _, gasPrice := range gasPrices {
-					config.SetGasPrice(gasPrice + "aguru")
+					config.SetGasPrice(gasPrice)
 				}
 			}
 
