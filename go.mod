@@ -273,12 +273,13 @@ require (
 )
 
 replace (
+	cosmossdk.io/store v1.1.2 => github.com/GPTx-global/cosmos-sdk/store v1.1.2-guru.1
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// Pin this pebble version to avoid breaking compilation of geth
 	github.com/cockroachdb/pebble => github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593
 	// use guru fork of cosmos-sdk
-	github.com/cosmos/cosmos-sdk => github.com/GPTx-global/cosmos-sdk v0.53.4-guru.3
+	github.com/cosmos/cosmos-sdk => github.com/GPTx-global/cosmos-sdk v0.53.4-guru.4
 	// use Cosmos geth fork
 	github.com/ethereum/go-ethereum => github.com/cosmos/go-ethereum v1.15.11-cosmos-0
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
