@@ -346,16 +346,16 @@ cat > request.json << EOF
   "quorum": 3,
   "endpoints": [
     {
-		"url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
-		"parse_rule": "data.amount"
-	},
-	{
-		"url": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
-		"parse_rule": "data.amount"
-	}
+      "url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+      "parse_rule": "data.amount"
+    },
+    {
+      "url": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "parse_rule": "data.amount"
+    }
   ],
   "aggregation_rule": 1,
-  "status": 1,
+  "status": 1
 }
 EOF
 
@@ -380,16 +380,16 @@ cat > updated_request.json << EOF
   "quorum": 4,
   "endpoints": [
     {
-		"url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
-		"parse_rule": "data.amount"
-	},
-	{
-		"url": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
-		"parse_rule": "data.amount"
-	}
+      "url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+      "parse_rule": "data.amount"
+    },
+    {
+      "url": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      "parse_rule": "data.amount"
+    }
   ],
   "aggregation_rule": 4,
-  "status": 1,
+  "status": 1
 }
 EOF
 
