@@ -77,7 +77,7 @@ func (wp *WorkerPool) ProcessRequestDoc(requestDoc oracletypes.OracleRequestDoc)
 		URL:    requestDoc.Endpoints[index].Url,
 		Path:   requestDoc.Endpoints[index].ParseRule,
 		Nonce:  max(currentNonce, requestDoc.Nonce),
-		Delay:  time.Duration(requestDoc.Period) * time.Second,
+		Delay:  time.Duration(max(1, requestDoc.Period-1)) * time.Second,
 		Status: requestDoc.Status,
 	}
 
@@ -119,20 +119,24 @@ func (wp *WorkerPool) executeJob(job *types.OracleJob) {
 
 	// Execute job in worker goroutine with proper error handling
 	wp.workerFunc(func() error {
+		if 1 < task.Nonce {
+			time.Sleep(task.Delay)
+		}
+
 		reqID := strconv.FormatUint(task.ID, 10)
 
 		// Increment nonce for new execution
 		if stored, ok := wp.jobStore.Get(reqID); ok {
-			job.Nonce = stored.Nonce + 1
+			task.Nonce = stored.Nonce + 1
 		} else {
-			job.Nonce++
+			task.Nonce++
 		}
 
 		// Update job store with new nonce
-		wp.jobStore.Set(reqID, job)
+		wp.jobStore.Set(reqID, task)
 
 		// Fetch raw data from external API
-		rawData, err := wp.client.fetchRawData(job.URL)
+		rawData, err := wp.client.fetchRawData(task.URL)
 		if err != nil {
 			wp.logger.Error("failed to fetch raw data", "error", err)
 			return err
@@ -146,7 +150,7 @@ func (wp *WorkerPool) executeJob(job *types.OracleJob) {
 		}
 
 		// Extract specific data using configured path
-		result, err := wp.client.extractDataByPath(jsonData, job.Path)
+		result, err := wp.client.extractDataByPath(jsonData, task.Path)
 		if err != nil {
 			wp.logger.Error("failed to extract data by path", "error", err)
 			return err
@@ -154,9 +158,9 @@ func (wp *WorkerPool) executeJob(job *types.OracleJob) {
 
 		// Send result to channel for blockchain submission
 		wp.resultCh <- &types.OracleJobResult{
-			ID:    job.ID,
+			ID:    task.ID,
 			Data:  result,
-			Nonce: job.Nonce,
+			Nonce: task.Nonce,
 		}
 
 		return nil

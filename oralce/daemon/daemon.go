@@ -121,7 +121,7 @@ func (d *Daemon) ensureConnection() {
 	for {
 		select {
 		case <-d.rootCtx.Done():
-			d.logger.Debug("root context done")
+			d.logger.Info("root context done")
 			return
 
 		case <-ticker.C:
@@ -142,7 +142,7 @@ func (d *Daemon) ensureConnection() {
 
 					// Exponential backoff before next attempt
 					backoff := min(config.RetryInitialBackoffSec()<<failures, config.RetryMaxBackoffSec())
-					d.logger.Debug("retrying connection", "backoff_sec", backoff, "attempt", failures)
+					d.logger.Info("retrying connection", "backoff_sec", backoff, "attempt", failures)
 					time.Sleep(time.Duration(backoff) * time.Second)
 					continue
 				}
