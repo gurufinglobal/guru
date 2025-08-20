@@ -273,7 +273,7 @@ require (
 )
 
 replace (
-	cosmossdk.io/store v1.1.2 => github.com/GPTx-global/cosmos-sdk/store v1.1.2-guru.1
+	cosmossdk.io/store v1.1.2 => github.com/GPTx-global/cosmos-sdk/store v1.1.2-guru.2
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// Pin this pebble version to avoid breaking compilation of geth
