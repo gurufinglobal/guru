@@ -31,10 +31,13 @@ import (
 	"github.com/GPTx-global/guru-v2/x/feemarket"
 	feemarketkeeper "github.com/GPTx-global/guru-v2/x/feemarket/keeper"
 	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
+	feepolicymodule "github.com/GPTx-global/guru-v2/x/feepolicy"
+	feepolicykeeper "github.com/GPTx-global/guru-v2/x/feepolicy/keeper"
+	feepolicytypes "github.com/GPTx-global/guru-v2/x/feepolicy/types"
 	"github.com/GPTx-global/guru-v2/x/ibc/transfer" // NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
 	transferkeeper "github.com/GPTx-global/guru-v2/x/ibc/transfer/keeper"
 	transferv2 "github.com/GPTx-global/guru-v2/x/ibc/transfer/v2"
-	"github.com/GPTx-global/guru-v2/x/oracle"
+	oraclemodule "github.com/GPTx-global/guru-v2/x/oracle"
 	oraclekeeper "github.com/GPTx-global/guru-v2/x/oracle/keeper"
 	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
 	"github.com/GPTx-global/guru-v2/x/precisebank"
@@ -73,6 +76,9 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/GPTx-global/guru-v2/server/swagger"
+	"github.com/gorilla/mux"
+	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -133,11 +139,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	// guru-v2 modules
-	"github.com/GPTx-global/guru-v2/x/feepolicy"
-	feepolicykeeper "github.com/GPTx-global/guru-v2/x/feepolicy/keeper"
-	feepolicytypes "github.com/GPTx-global/guru-v2/x/feepolicy/types"
 )
 
 func init() {
@@ -661,8 +663,8 @@ func NewExampleApp(
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
 		// guru-v2 modules
-		oracle.NewAppModule(app.OracleKeeper),
-		feepolicy.NewAppModule(app.FeePolicyKeeper),
+		oraclemodule.NewAppModule(app.OracleKeeper),
+		feepolicymodule.NewAppModule(app.FeePolicyKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager which is in charge of setting up basic,
@@ -680,6 +682,8 @@ func NewExampleApp(
 				},
 			),
 			ibctransfertypes.ModuleName: transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
+			oracletypes.ModuleName:      oraclemodule.AppModuleBasic{},
+			feepolicytypes.ModuleName:   feepolicymodule.AppModuleBasic{},
 		},
 	)
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
@@ -1036,8 +1040,12 @@ func (app *EVMD) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfi
 	// Register grpc-gateway routes for all modules.
 	app.BasicModuleManager.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
+	// Register custom module routes explicitly for Swagger generation
+	oraclemodule.AppModuleBasic{}.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+	feepolicymodule.AppModuleBasic{}.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+
 	// register swagger API from root so that other applications can override easily
-	if err := server.RegisterSwaggerAPI(apiSvr.ClientCtx, apiSvr.Router, apiConfig.Swagger); err != nil {
+	if err := app.RegisterSwaggerAPI(apiSvr.ClientCtx, apiSvr.Router, apiConfig.Swagger, apiSvr.GRPCGatewayRouter); err != nil {
 		panic(err)
 	}
 }
@@ -1083,6 +1091,23 @@ func (app *EVMD) GetIBCKeeper() *ibckeeper.Keeper {
 // GetTxConfig implements the TestingApp interface.
 func (app *EVMD) GetTxConfig() client.TxConfig {
 	return app.txConfig
+}
+
+// RegisterSwaggerAPI provides a custom function which generates swagger route dynamically
+func (app *EVMD) RegisterSwaggerAPI(clientCtx client.Context, rtr *mux.Router, swaggerEnabled bool, grpcGateway *gwruntime.ServeMux) error {
+	if !swaggerEnabled {
+		return nil
+	}
+
+	// Register custom swagger API handler with dynamic proto-based content
+	swagger.RegisterCustomSwaggerAPI(rtr, grpcGateway)
+
+	// Use the default static swagger files for other endpoints
+	if err := server.RegisterSwaggerAPI(clientCtx, rtr, swaggerEnabled); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // AutoCliOpts returns the autocli options for the app.

@@ -4,6 +4,7 @@ package guru.oracle.v1;
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 import "guru/oracle/v1/oracle.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
@@ -14,16 +15,36 @@ option go_package = "github.com/GPTx-global/guru-v2/x/oracle/types";
 service Msg {
   option (cosmos.msg.v1.service) = true;
   // RegisterOracleRequestDoc defines a method for registering a new oracle request document
-  rpc RegisterOracleRequestDoc(MsgRegisterOracleRequestDoc) returns (MsgRegisterOracleRequestDocResponse);
+  rpc RegisterOracleRequestDoc(MsgRegisterOracleRequestDoc) returns (MsgRegisterOracleRequestDocResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/register_request_doc"
+      body: "*"
+    };
+  }
   
   // UpdateOracleRequestDoc defines a method for updating an existing oracle request document
-  rpc UpdateOracleRequestDoc(MsgUpdateOracleRequestDoc) returns (MsgUpdateOracleRequestDocResponse);
+  rpc UpdateOracleRequestDoc(MsgUpdateOracleRequestDoc) returns (MsgUpdateOracleRequestDocResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/update_request_doc"
+      body: "*"
+    };
+  }
   
   // SubmitOracleData defines a method for submitting oracle data
-  rpc SubmitOracleData(MsgSubmitOracleData) returns (MsgSubmitOracleDataResponse);
+  rpc SubmitOracleData(MsgSubmitOracleData) returns (MsgSubmitOracleDataResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/submit_data"
+      body: "*"
+    };
+  }
 
   // UpdateModeratorAddress defines a method for updating the moderator address
-  rpc UpdateModeratorAddress(MsgUpdateModeratorAddress) returns (MsgUpdateModeratorAddressResponse);
+  rpc UpdateModeratorAddress(MsgUpdateModeratorAddress) returns (MsgUpdateModeratorAddressResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/update_moderator"
+      body: "*"
+    };
+  }
 }
 
 // MsgRegisterOracleRequestDoc represents a message to register a new oracle request document
