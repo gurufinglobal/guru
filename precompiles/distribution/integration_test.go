@@ -1,6 +1,7 @@
 package distribution_test
 
 import (
+	"errors"
 	"math/big"
 	"testing"
 
@@ -47,6 +48,8 @@ var (
 	// outOfGasCheck defines the arguments to check if the precompile returns out of gas error
 	outOfGasCheck testutil.LogCheckArgs
 	// txArgs are the EVM transaction arguments to use in the transactions
+	intrinsicGasCheck testutil.LogCheckArgs
+	// govModuleAddr is the address of the gov module account
 	txArgs evmtypes.EvmTxArgs
 	// minExpRewardOrCommission is the minimun coins expected for validator's rewards or commission
 	// required for the tests
@@ -75,6 +78,7 @@ var _ = Describe("Calling distribution precompile from EOA", func() {
 		}
 		passCheck = defaultLogCheck.WithExpPass(true)
 		outOfGasCheck = defaultLogCheck.WithErrContains(vm.ErrOutOfGas.Error())
+		intrinsicGasCheck = defaultLogCheck.WithErrContains(errors.New("intrinsic gas too low").Error())
 
 		// reset tx args each test to avoid keeping custom
 		// values of previous tests (e.g. gasLimit)
@@ -96,7 +100,7 @@ var _ = Describe("Calling distribution precompile from EOA", func() {
 		})
 
 		It("should return error if the provided gasLimit is too low", func() {
-			txArgs.GasLimit = 30000
+			txArgs.GasLimit = 20000
 
 			callArgs.Args = []interface{}{
 				s.keyring.GetAddr(0),
@@ -106,7 +110,7 @@ var _ = Describe("Calling distribution precompile from EOA", func() {
 				s.keyring.GetPrivKey(0),
 				txArgs,
 				callArgs,
-				outOfGasCheck,
+				intrinsicGasCheck,
 			)
 			Expect(err).To(BeNil(), "error while calling the precompile")
 			Expect(s.network.NextBlock()).To(BeNil(), "error on NextBlock")
@@ -413,7 +417,7 @@ var _ = Describe("Calling distribution precompile from EOA", func() {
 		})
 
 		It("should return error if the provided gasLimit is too low", func() {
-			txArgs.GasLimit = 50000
+			txArgs.GasLimit = 20000
 			callArgs.Args = []interface{}{
 				s.network.GetValidators()[0].OperatorAddress,
 			}
@@ -422,7 +426,7 @@ var _ = Describe("Calling distribution precompile from EOA", func() {
 				s.validatorsKeys[0].Priv,
 				txArgs,
 				callArgs,
-				outOfGasCheck,
+				intrinsicGasCheck,
 			)
 			Expect(err).To(BeNil(), "error while calling the precompile")
 		})

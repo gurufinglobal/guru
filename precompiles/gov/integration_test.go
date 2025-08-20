@@ -2,6 +2,7 @@ package gov_test
 
 import (
 	"encoding/json"
+	"errors"
 	"math/big"
 	"testing"
 
@@ -49,6 +50,8 @@ var (
 	passCheck testutil.LogCheckArgs
 	// outOfGasCheck defines the arguments to check if the precompile returns out of gas error
 	outOfGasCheck testutil.LogCheckArgs
+	// intrinsicGasCheck defines the arguments to check if the precompile returns intrinsic gas too low error
+	intrinsicGasCheck testutil.LogCheckArgs
 	// govModuleAddr is the address of the gov module account
 	govModuleAddr sdk.AccAddress
 )
@@ -89,6 +92,7 @@ var _ = Describe("Calling governance precompile from EOA", func() {
 		}
 		passCheck = defaultLogCheck.WithExpPass(true)
 		outOfGasCheck = defaultLogCheck.WithErrContains(vm.ErrOutOfGas.Error())
+		intrinsicGasCheck = defaultLogCheck.WithErrContains(errors.New("intrinsic gas too low").Error())
 
 		// reset tx args each test to avoid keeping custom
 		// values of previous tests (e.g. gasLimit)
@@ -321,12 +325,12 @@ var _ = Describe("Calling governance precompile from EOA", func() {
 		})
 
 		It("should return error if the provided gasLimit is too low", func() {
-			txArgs.GasLimit = 30000
+			txArgs.GasLimit = 20000
 			callArgs.Args = []interface{}{
 				s.keyring.GetAddr(0), proposalID, option, metadata,
 			}
 
-			_, _, err := s.factory.CallContractAndCheckLogs(s.keyring.GetPrivKey(0), txArgs, callArgs, outOfGasCheck)
+			_, _, err := s.factory.CallContractAndCheckLogs(s.keyring.GetPrivKey(0), txArgs, callArgs, intrinsicGasCheck)
 			Expect(err).To(BeNil())
 
 			// tally result yes count should remain unchanged
@@ -374,7 +378,7 @@ var _ = Describe("Calling governance precompile from EOA", func() {
 		})
 
 		It("should return error if the provided gasLimit is too low", func() {
-			txArgs.GasLimit = 30000
+			txArgs.GasLimit = 20000
 			callArgs.Args = []interface{}{
 				s.keyring.GetAddr(0),
 				proposalID,
@@ -385,7 +389,7 @@ var _ = Describe("Calling governance precompile from EOA", func() {
 				metadata,
 			}
 
-			_, _, err := s.factory.CallContractAndCheckLogs(s.keyring.GetPrivKey(0), txArgs, callArgs, outOfGasCheck)
+			_, _, err := s.factory.CallContractAndCheckLogs(s.keyring.GetPrivKey(0), txArgs, callArgs, intrinsicGasCheck)
 			Expect(err).To(BeNil())
 
 			// tally result should remain unchanged
