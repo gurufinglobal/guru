@@ -12,7 +12,6 @@ import (
 	tmcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 
-	dbm "github.com/cosmos/cosmos-db"
 	cosmosevmcmd "github.com/GPTx-global/guru-v2/client"
 	gurudconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
 	cosmosevmkeyring "github.com/GPTx-global/guru-v2/crypto/keyring"
@@ -21,6 +20,7 @@ import (
 	cosmosevmserver "github.com/GPTx-global/guru-v2/server"
 	cosmosevmserverconfig "github.com/GPTx-global/guru-v2/server/config"
 	srvflags "github.com/GPTx-global/guru-v2/server/flags"
+	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
@@ -90,7 +90,7 @@ func NewRootCmd() *cobra.Command {
 
 	rootCmd := &cobra.Command{
 		Use:   "gurud",
-		Short: "exemplary Cosmos EVM app",
+		Short: "Gurufin app",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
 			cmd.SetOut(cmd.OutOrStdout())

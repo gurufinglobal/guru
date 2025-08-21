@@ -30,6 +30,4 @@ yarn.lock
 contracts/@openzeppelin/*
 
 # Build files
-evmd/build/
-
 build/

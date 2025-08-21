@@ -50,7 +50,7 @@ func (suite *TransferTestSuite) TestHandleMsgTransfer() {
 	)
 
 	// originally a basic test case from the IBC testing package, and it has been added as-is to ensure that
-	// it still works properly when invoked by evmd app.
+	// it still works properly when invoked by gurud app.
 	testCases := []struct {
 		name     string
 		malleate func()

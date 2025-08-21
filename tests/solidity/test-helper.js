@@ -32,7 +32,7 @@ function checkTestEnv () {
     )
     .describe('allowTests', 'only run specified tests. Separated by comma.')
     .boolean('verbose-log')
-    .describe('verbose-log', 'print evmd output, default false').argv
+    .describe('verbose-log', 'print gurud output, default false').argv
 
   if (!fs.existsSync(path.join(__dirname, './node_modules'))) {
     panic(
@@ -196,14 +196,14 @@ function setupNetwork ({ runConfig, timeout }) {
 
   const spawnPromise = new Promise((resolve, reject) => {
     const serverStartedLog = 'Starting JSON-RPC server'
-    const serverStartedMsg = 'evmd started'
+    const serverStartedMsg = 'gurud started'
 
     const osdProc = spawn('./init-node.sh', {
       cwd: __dirname,
       stdio: ['ignore', 'pipe', 'pipe']
     })
 
-    logger.info(`Starting evmd process... timeout: ${timeout}ms`)
+    logger.info(`Starting gurud process... timeout: ${timeout}ms`)
     if (runConfig.verboseLog) {
       osdProc.stdout.pipe(process.stdout)
     }
@@ -234,7 +234,7 @@ function setupNetwork ({ runConfig, timeout }) {
   })
 
   const timeoutPromise = new Promise((resolve, reject) => {
-    setTimeout(() => reject(new Error('Start evmd timeout!')), timeout)
+    setTimeout(() => reject(new Error('Start gurud timeout!')), timeout)
   })
   return Promise.race([spawnPromise, timeoutPromise])
 }

@@ -42,7 +42,7 @@ func (mpd MinGasPriceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 	feeCoins := feeTx.GetFee()
 	evmDenom := evmtypes.GetEVMCoinDenom()
 
-	// only allow user to pass in aguru and stake native token as transaction fees
+	// only allow user to pass in agxn and stake native token as transaction fees
 	// allow use stake native tokens for fees is just for unit tests to pass
 	//
 	// TODO: is the handling of stake necessary here? Why not adjust the tests to contain the correct denom?
