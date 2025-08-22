@@ -7,14 +7,7 @@ import (
 
 	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
 	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 )
-
-// SubscribeType defines the union type for Oracle event subscriptions
-// Allows type-safe handling of different event types from the blockchain
-type SubscribeType interface {
-	oracletypes.OracleRequestDoc | coretypes.ResultEvent
-}
 
 // Event type constants for blockchain event filtering and parsing
 // These map to specific Oracle module events emitted by the blockchain

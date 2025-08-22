@@ -16,6 +16,7 @@ import (
 	"github.com/GPTx-global/guru-v2/oralce/config"
 	"github.com/GPTx-global/guru-v2/oralce/monitor"
 	"github.com/GPTx-global/guru-v2/oralce/submiter"
+	"github.com/GPTx-global/guru-v2/oralce/subscriber"
 	"github.com/GPTx-global/guru-v2/oralce/types"
 	"github.com/GPTx-global/guru-v2/oralce/worker"
 	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
@@ -30,21 +31,24 @@ import (
 // Daemon is the main Oracle service that coordinates all Oracle operations
 // It manages blockchain connections, monitors events, processes data, and submits results
 type Daemon struct {
+	// ctx       context.Context
 	logger    log.Logger
-	rootCtx   context.Context
+	fatalCh   chan error
 	clientCtx client.Context
 
 	monitor   *monitor.Monitor
 	worker    *worker.WorkerPool
 	submitter *submiter.Submitter
+
+	subscriber *subscriber.Subscriber
 }
 
-// NewDaemon creates and initializes a new Oracle daemon instance
+// New creates and initializes a new Oracle daemon instance
 // Sets up all necessary components including encoding, client context, and sub-services
-func NewDaemon(rootCtx context.Context) *Daemon {
+func New(ctx context.Context) *Daemon {
 	d := new(Daemon)
 	d.logger = log.NewLogger(os.Stdout)
-	d.rootCtx = rootCtx
+	d.fatalCh = make(chan error, 1)
 
 	// Setup encoding configuration with required interface registrations
 	encCfg := encoding.MakeConfig(guruconfig.GuruChainID)
@@ -76,10 +80,12 @@ func NewDaemon(rootCtx context.Context) *Daemon {
 
 	// Initialize daemon components
 	d.clientCtx = clientCtx
-	d.monitor = monitor.New(d.logger, d.rootCtx, d.clientCtx)
-	d.worker = worker.New(d.logger, d.rootCtx)
-	d.submitter = submiter.NewSubmitter(d.logger, d.rootCtx, d.clientCtx)
+	d.monitor = monitor.New(d.logger, ctx, d.clientCtx)
+	d.worker = worker.New(d.logger, ctx)
+	d.submitter = submiter.NewSubmitter(d.logger, ctx, d.clientCtx)
 	d.logger.Info("daemon initialized")
+
+	d.subscriber = subscriber.New(ctx, d.logger, d.clientCtx)
 
 	return d
 }
@@ -90,6 +96,11 @@ func (d *Daemon) Start() {
 	// Start the CometBFT WebSocket client
 	if err := d.clientCtx.Client.(*comethttp.HTTP).Start(); err != nil {
 		d.logger.Error("failed to start comet client", "error", err)
+		// notify fatal to supervisor for restart
+		select {
+		case d.fatalCh <- fmt.Errorf("failed to start comet client: %w", err):
+		default:
+		}
 		return
 	}
 
@@ -111,16 +122,19 @@ func (d *Daemon) Stop() {
 	d.logger.Info("daemon stopped")
 }
 
+// Fatal returns a channel that signals unrecoverable errors to a supervisor
+func (d *Daemon) Fatal() <-chan error { return d.fatalCh }
+
 // ensureConnection monitors WebSocket health and handles reconnection
 // Runs in a separate goroutine to maintain reliable blockchain connectivity
-func (d *Daemon) ensureConnection() {
+func (d *Daemon) ensureConnection(ctx context.Context) {
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
 	failures := 0
 	for {
 		select {
-		case <-d.rootCtx.Done():
+		case <-ctx.Done():
 			d.logger.Info("root context done")
 			return
 
@@ -130,10 +144,14 @@ func (d *Daemon) ensureConnection() {
 				d.logger.Error("websocket connection is not healthy")
 				failures++
 
-				// Panic after max failures to trigger restart
+				// On too many failures, notify supervisor and exit
 				if failures >= config.RetryMaxAttempts() {
 					d.logger.Error("max failures reached, stopping daemon", "failures", failures)
-					panic("websocket connection failed") // TODO: 추후 수정
+					select {
+					case d.fatalCh <- fmt.Errorf("websocket connection failed after %d attempts", failures):
+					default:
+					}
+					return
 				}
 
 				// Attempt to recreate the WebSocket connection
@@ -174,7 +192,7 @@ func (d *Daemon) Monitor() {
 	// Main event monitoring loop
 	for {
 		select {
-		case <-d.rootCtx.Done():
+		case <-d.ctx.Done():
 			d.logger.Info("root context done")
 
 		default:
@@ -221,7 +239,7 @@ func (d *Daemon) Monitor() {
 func (d *Daemon) ServeOracleResult() {
 	for {
 		select {
-		case <-d.rootCtx.Done():
+		case <-d.ctx.Done():
 			d.logger.Info("root context done")
 			return
 
@@ -239,7 +257,7 @@ func (d *Daemon) ServeOracleResult() {
 // isWebSocketHealthy checks if WebSocket connection is working by attempting a lightweight operation
 // Returns true if the WebSocket client is running and can successfully call Status API
 func (d *Daemon) isWebSocketHealthy() bool {
-	ctx, cancel := context.WithTimeout(d.rootCtx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(d.ctx, 5*time.Second)
 	defer cancel()
 
 	client := d.clientCtx.Client.(*comethttp.HTTP)
@@ -259,39 +277,74 @@ func (d *Daemon) isWebSocketHealthy() bool {
 	return true
 }
 
-// recreateWebSocketClient completely recreates the WebSocket client connection
-// Used when connection becomes unhealthy to establish a fresh connection
-func (d *Daemon) recreateWebSocketClient() error {
-	d.logger.Info("recreating websocket client")
+func (d *Daemon) temp_loop(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			d.logger.Info("root context done")
+			return
 
-	// Stop existing client if it's running
-	if existingClient := d.clientCtx.Client.(*comethttp.HTTP); existingClient.IsRunning() {
-		if err := existingClient.Stop(); err != nil {
-			d.logger.Warn("error stopping existing client", "error", err)
+		case oracleEvent := <-d.subscriber.EventCh():
+			switch event := oracleEvent.(type) {
+			case error:
+				d.logger.Error("error", "error", event)
+				d.fatalCh <- event
+				return
+
+			case oracletypes.OracleRequestDoc:
+				d.logger.Info("process request doc", "id", event.RequestId)
+				d.worker.ProcessRequestDoc(event)
+
+			case coretypes.ResultEvent:
+				d.logger.Info("process complete", "id", event.Events[types.CompleteID], "nonce", event.Events[types.CompleteNonce])
+				// Update gas prices from network events
+				if gasPrices, ok := event.Events[types.MinGasPrice]; ok {
+					for _, gasPrice := range gasPrices {
+						config.SetGasPrice(gasPrice)
+					}
+				}
+
+				// Process completion events to update Oracle job nonces
+				for i, reqID := range event.Events[types.CompleteID] {
+					nonce, err := strconv.ParseUint(event.Events[types.CompleteNonce][i], 10, 64)
+					if err != nil {
+						d.logger.Error("failed to parse nonce", "error", err, "req_id", reqID)
+						continue
+					}
+
+					d.logger.Info("process complete", "id", reqID, "nonce", nonce)
+					d.worker.ProcessComplete(reqID, nonce)
+				}
+			}
 		}
 	}
+}
 
-	// Stop existing monitor to prevent event conflicts
-	d.monitor.Stop()
+func (d *Daemon) temp_healthcheck(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 
-	// Create a completely new WebSocket client
-	newClient, err := comethttp.New(config.ChainEndpoint(), "/websocket")
-	if err != nil {
-		return fmt.Errorf("failed to create new comet client: %w", err)
+	failures := 0
+	for {
+		select {
+		case <-ctx.Done():
+			d.logger.Info("root context done")
+			return
+
+		case <-ticker.C:
+			if d.isWebSocketHealthy() { // 건강함
+				failures = 0
+				continue
+			}
+
+			failures++
+			if failures <= 3 {
+				continue
+			}
+
+			d.logger.Error("붕괴됨")
+			d.fatalCh <- fmt.Errorf("websocket connection failed after %d attempts", failures)
+			return
+		}
 	}
-
-	// Start the new client
-	if err := newClient.Start(); err != nil {
-		return fmt.Errorf("failed to start new comet client: %w", err)
-	}
-
-	// Update client context with new client
-	d.clientCtx = d.clientCtx.WithClient(newClient)
-
-	// Create and start new monitor with fresh client
-	d.monitor = monitor.New(d.logger, d.rootCtx, d.clientCtx)
-	d.monitor.Start()
-
-	d.logger.Info("websocket client recreation completed")
-	return nil
 }

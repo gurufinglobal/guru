@@ -119,7 +119,7 @@ func (wp *WorkerPool) executeJob(job *types.OracleJob) {
 
 	// Execute job in worker goroutine with proper error handling
 	wp.workerFunc(func() error {
-		if 1 < task.Nonce {
+		if 0 < task.Nonce {
 			time.Sleep(task.Delay)
 		}
 
