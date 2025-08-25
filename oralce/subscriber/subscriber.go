@@ -11,7 +11,6 @@ import (
 	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
 	"github.com/cometbft/cometbft/rpc/client/http"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	"github.com/cosmos/cosmos-sdk/client"
 )
 
 type Subscriber struct {
@@ -19,23 +18,17 @@ type Subscriber struct {
 	eventCh chan any
 }
 
-// New creates a Subscriber, initializes clients, subscribes to events,
-// and starts the event loop. Returns nil if initialization fails.
-func New(ctx context.Context, logger log.Logger, clientCtx client.Context) *Subscriber {
+// New creates a Subscriber, subscribes to required queries, and starts the event loop.
+// It returns nil when subscriptions cannot be established.
+func New(ctx context.Context, logger log.Logger, subsClient *http.HTTP, queryClient oracletypes.QueryClient) *Subscriber {
 	s := &Subscriber{
 		logger:  logger,
 		eventCh: make(chan any, config.ChannelSize()),
 	}
 
-	subsClient, queryClient := s.initClients(clientCtx)
-	if subsClient == nil || queryClient == nil {
-		s.logger.Error("failed to initialize RPC and query clients")
-		return nil
-	}
-
 	registerCh, updateCh, completeCh := s.subscribeToEvents(ctx, subsClient)
 	if registerCh == nil || updateCh == nil || completeCh == nil {
-		s.logger.Error("failed to subscribe to event streams")
+		s.logger.Error("subscribe streams failed")
 		return nil
 	}
 
@@ -44,117 +37,116 @@ func New(ctx context.Context, logger log.Logger, clientCtx client.Context) *Subs
 	return s
 }
 
-// EventCh returns the read-only channel that delivers subscriber events.
+// EventCh returns a read-only channel producing subscription events.
 func (s *Subscriber) EventCh() <-chan any {
 	return s.eventCh
 }
 
-// initClients validates the RPC client and constructs an oracle query client.
-// Returns nils if the RPC client is not running.
-func (s *Subscriber) initClients(clientCtx client.Context) (*http.HTTP, oracletypes.QueryClient) {
-	subsClient := clientCtx.Client.(*http.HTTP)
-	if !subsClient.IsRunning() {
-		s.logger.Error("tendermint RPC client is not running")
-		return nil, nil
-	}
-
-	return subsClient, oracletypes.NewQueryClient(clientCtx)
-}
-
-// subscribeToEvents subscribes to register/update Tx events and the
-// completion event emitted on new blocks. It auto-unsubscribes on ctx cancel.
+// subscribeToEvents subscribes to register, update, and completion events.
+// It automatically unsubscribes when the context is canceled.
 func (s *Subscriber) subscribeToEvents(ctx context.Context, subsClient *http.HTTP) (<-chan coretypes.ResultEvent, <-chan coretypes.ResultEvent, <-chan coretypes.ResultEvent) {
 	go func() {
 		<-ctx.Done()
 		subsClient.UnsubscribeAll(ctx, "")
-		s.logger.Info("unsubscribed from all events")
+		s.logger.Info("unsubscribed all")
 	}()
 
 	registerCh, err := subsClient.Subscribe(ctx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'", config.ChannelSize())
 	if err != nil {
-		s.logger.Error("subscribe to register events failed", "error", err)
+		s.logger.Error("subscribe register failed", "error", err)
 		return nil, nil, nil
 	}
 
 	updateCh, err := subsClient.Subscribe(ctx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'", config.ChannelSize())
 	if err != nil {
-		s.logger.Error("subscribe to update events failed", "error", err)
+		s.logger.Error("subscribe update failed", "error", err)
 		return nil, nil, nil
 	}
 
-	completeCh, err := subsClient.Subscribe(ctx, "", "tm.event='NewBlock' AND guru.oracle.v1.EventCompleteOracleDataSet EXISTS", config.ChannelSize())
+	completeQuery := fmt.Sprintf("tm.event='NewBlock' AND %s.%s EXISTS", oracletypes.EventTypeCompleteOracleDataSet, oracletypes.AttributeKeyRequestId)
+	completeCh, err := subsClient.Subscribe(ctx, "", completeQuery, config.ChannelSize())
 	if err != nil {
-		s.logger.Error("subscribe to completion events failed", "error", err)
+		s.logger.Error("subscribe complete failed", "error", err)
 		return nil, nil, nil
 	}
 
 	return registerCh, updateCh, completeCh
 }
 
-// runEventLoop bootstraps existing docs, then listens and dispatches
-// incoming events onto the subscriber's channel. It closes the channel on exit.
+// runEventLoop boots current docs, then forwards subscription events to eventCh.
+// It closes the output channel when the loop exits.
 func (s *Subscriber) runEventLoop(ctx context.Context, queryClient oracletypes.QueryClient, registerCh <-chan coretypes.ResultEvent, updateCh <-chan coretypes.ResultEvent, completeCh <-chan coretypes.ResultEvent) {
 	defer func() {
 		close(s.eventCh)
-		s.logger.Info("event channel closed")
+		s.logger.Info("event monitor stopped")
 	}()
 
 	res, err := queryClient.OracleRequestDocs(ctx, &oracletypes.QueryOracleRequestDocsRequest{Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED})
 	if err != nil {
-		s.logger.Debug("query OracleRequestDocs failed", "error", err)
+		s.logger.Debug("query request docs error", "error", err)
 		s.eventCh <- err
 		return
 	}
 
 	for _, doc := range res.OracleRequestDocs {
-		s.logger.Debug("loaded existing request doc", "id", doc.RequestId)
+		s.logger.Info("loaded request", "id", doc.RequestId, "nonce", doc.Nonce)
 		s.eventCh <- *doc
 	}
+
+	s.logger.Info("event monitor started")
 
 	for {
 		select {
 		case <-ctx.Done():
-			s.logger.Info("subscriber context done")
+			s.logger.Info("subscriber done")
 			return
 
 		case event := <-registerCh:
 			requestId, err := parseRequestIDFromEvent(event, types.RegisterID)
 			if err != nil {
-				s.logger.Debug("invalid register event: request id error", "error", err)
+				s.logger.Debug("register event invalid", "error", err)
 				continue
 			}
 
 			queryRes, err := queryClient.OracleRequestDoc(ctx, &oracletypes.QueryOracleRequestDocRequest{RequestId: requestId})
 			if err != nil {
-				s.logger.Debug("query OracleRequestDoc failed", "error", err, "request_id", requestId)
+				s.logger.Debug("query request doc error", "error", err, "request_id", requestId)
 				continue
 			}
 
 			s.eventCh <- queryRes.RequestDoc
+			s.logger.Info("request watch", "id", queryRes.RequestDoc.RequestId, "nonce", queryRes.RequestDoc.Nonce)
 
 		case event := <-updateCh:
 			requestId, err := parseRequestIDFromEvent(event, types.UpdateID)
 			if err != nil {
-				s.logger.Debug("invalid update event: request id error", "error", err)
+				s.logger.Debug("update event invalid", "error", err)
 				continue
 			}
 
 			queryRes, err := queryClient.OracleRequestDoc(ctx, &oracletypes.QueryOracleRequestDocRequest{RequestId: requestId})
 			if err != nil {
-				s.logger.Debug("query OracleRequestDoc failed", "error", err, "request_id", requestId)
+				s.logger.Debug("query request doc error", "error", err, "request_id", requestId)
 				continue
 			}
 
 			s.eventCh <- queryRes.RequestDoc
+			s.logger.Info("update watch", "id", queryRes.RequestDoc.RequestId, "nonce", queryRes.RequestDoc.Nonce)
 
 		case event := <-completeCh:
+			if gasPrices, ok := event.Events[types.MinGasPrice]; ok {
+				gasPrice := gasPrices[0]
+				config.SetGasPrice(gasPrice)
+				s.logger.Debug("gas price updated", "gas_price", gasPrice)
+			}
+
 			s.eventCh <- event
+			s.logger.Info("complete watch", "id", event.Events[types.CompleteID][0], "nonce", event.Events[types.CompleteNonce][0])
 		}
 	}
 }
 
-// parseRequestIDFromEvent extracts the request id value from the event by key.
-// Returns an error if the field is missing or not a valid unsigned integer.
+// parseRequestIDFromEvent extracts a request ID by attribute key from the event map.
 func parseRequestIDFromEvent(event coretypes.ResultEvent, eventType string) (uint64, error) {
 	valsId, ok := event.Events[eventType]
 	if !ok || len(valsId) == 0 {

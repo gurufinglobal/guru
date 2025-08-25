@@ -86,6 +86,8 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 					sdk.NewAttribute(types.AttributeKeyRequestId, fmt.Sprintf("%d", doc.RequestId)),
 					sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprintf("%d", nextNonce)),
 					sdk.NewAttribute(types.AttributeKeyRawData, aggregatedValue),
+					sdk.NewAttribute(types.AttributeKeyBlockHeight, fmt.Sprintf("%d", ctx.BlockHeight())),
+					sdk.NewAttribute(types.AttributeKeyBlockTime, fmt.Sprintf("%d", ctx.BlockTime().Unix())),
 				),
 			},
 		)

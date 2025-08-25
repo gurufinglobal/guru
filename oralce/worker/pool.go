@@ -1,5 +1,3 @@
-// Package worker provides Oracle job processing and worker pool management
-// Handles concurrent execution of Oracle data fetching tasks
 package worker
 
 import (
@@ -17,151 +15,151 @@ import (
 	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
-// WorkerPool manages concurrent Oracle job execution
-// Provides job scheduling, result collection, and HTTP client management
 type WorkerPool struct {
-	logger      log.Logger                                   // Logger for worker operations
-	baseCtx     context.Context                              // Base context for cancellation
-	jobStore    cmap.ConcurrentMap[string, *types.OracleJob] // Thread-safe job storage
-	resultCh    chan *types.OracleJobResult                  // Channel for job results
-	workerFunc  taskgroup.StartFunc                          // Worker function for task execution
-	workerGroup *taskgroup.Group                             // Goroutine management
-	client      *httpClient                                  // HTTP client for data fetching
+	logger      log.Logger
+	jobStore    cmap.ConcurrentMap[string, *types.OracleJob]
+	resultCh    chan *types.OracleJobResult
+	workerFunc  taskgroup.StartFunc
+	workerGroup *taskgroup.Group
+	client      *httpClient
 }
 
-// New creates a new worker pool with configured concurrency and HTTP client
-// Sets up job storage, result channel, and worker goroutine management
-func New(logger log.Logger, baseCtx context.Context) *WorkerPool {
+func New(ctx context.Context, logger log.Logger) *WorkerPool {
 	wp := new(WorkerPool)
 	wp.logger = logger
-	wp.baseCtx = baseCtx
 
-	// Initialize concurrent job storage and result channel
 	wp.jobStore = cmap.New[*types.OracleJob]()
 	wp.resultCh = make(chan *types.OracleJobResult, config.ChannelSize())
 
-	// Setup worker group with CPU-based concurrency limit
 	wp.workerGroup, wp.workerFunc = taskgroup.New(nil).Limit(2 * runtime.NumCPU())
+	go func() {
+		<-ctx.Done()
+		wp.workerGroup.Wait()
+		close(wp.resultCh)
+	}()
 
-	// Create HTTP client for external data fetching
-	wp.client = newClient(wp.logger)
+	wp.client = newHTTPClient(wp.logger)
 
 	return wp
 }
 
-// ProcessRequestDoc converts Oracle request document into executable job
-// Determines endpoint assignment and creates job with proper nonce tracking
-func (wp *WorkerPool) ProcessRequestDoc(requestDoc oracletypes.OracleRequestDoc) {
-	// Find this Oracle's position in the account list
+// ProcessRequestDoc maps an Oracle request document to a scheduled job.
+// It selects the endpoint for this instance and computes initial delay.
+func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oracletypes.OracleRequestDoc, timestamp uint64) {
+	if requestDoc.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
+		wp.logger.Info("request document is not enabled", "request_id", requestDoc.RequestId)
+		return
+	}
+
 	index := slices.Index(requestDoc.AccountList, config.Address().String())
 	if index == -1 {
-		wp.logger.Error("request document not assigned to this oracle instance", "address", config.Address().String())
+		wp.logger.Info("request document not assigned to this oracle instance")
 		return
 	} else {
-		// Use next endpoint to distribute load among Oracles
 		index = (index + 1) % len(requestDoc.AccountList)
 	}
 
-	// Determine current nonce from existing job or request document
 	var currentNonce uint64
-	reqID := strconv.FormatUint(requestDoc.Nonce, 10)
-	if job, ok := wp.jobStore.Get(reqID); ok {
+	requestIDStr := strconv.FormatUint(requestDoc.RequestId, 10)
+	if job, ok := wp.jobStore.Get(requestIDStr); ok {
 		currentNonce = job.Nonce
 	} else {
 		currentNonce = requestDoc.Nonce
 	}
 
-	// Create Oracle job from request document
+	periodSec := uint64(requestDoc.Period)
+	nowSec := uint64(time.Now().Unix())
+	tsSec := uint64(timestamp)
+	dsec := int64(tsSec+periodSec) - int64(nowSec)
+
 	job := &types.OracleJob{
 		ID:     requestDoc.RequestId,
 		URL:    requestDoc.Endpoints[index].Url,
 		Path:   requestDoc.Endpoints[index].ParseRule,
 		Nonce:  max(currentNonce, requestDoc.Nonce),
-		Delay:  time.Duration(max(1, requestDoc.Period-1)) * time.Second,
+		Delay:  time.Duration(max(int64(0), dsec)) * time.Second,
+		Period: time.Duration(requestDoc.Period) * time.Second,
 		Status: requestDoc.Status,
 	}
 
-	// Only process enabled requests
-	if job.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
-		wp.logger.Info("request document is not enabled", "request_id", reqID)
-		return
-	}
-
-	wp.executeJob(job)
+	wp.executeJob(ctx, job)
 }
 
-// ProcessComplete updates job nonce based on completion events from blockchain
-// Ensures job execution continues with correct nonce after other Oracle submissions
-func (wp *WorkerPool) ProcessComplete(reqID string, nonce uint64) {
-	// Get existing job from storage
+// ProcessComplete updates a job state using on-chain completion event data.
+// It advances the nonce and reschedules the next execution based on block time.
+func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce uint64, timestamp uint64) {
 	job, ok := wp.jobStore.Get(reqID)
 	if !ok {
+		wp.logger.Debug("job not found", "request_id", reqID)
 		return
 	}
 
-	// Update nonce to latest completed value
 	job.Nonce = max(job.Nonce, nonce)
+	periodSec := uint64(job.Period)
+	nowSec := uint64(time.Now().Unix())
+	tsSec := uint64(timestamp)
+	dsec := int64(tsSec+periodSec) - int64(nowSec)
+	job.Delay = time.Duration(max(int64(0), dsec)) * time.Second
 
-	// Re-execute job with updated nonce
-	wp.executeJob(job)
+	wp.executeJob(ctx, job)
 }
 
-// Results returns a read-only channel for receiving completed Oracle job results
-// Used by daemon to get results for blockchain submission
+// Results relturns a read-only channel of completed job results.
+// The channe is closed when the worker pool is shut down.
 func (wp *WorkerPool) Results() <-chan *types.OracleJobResult {
 	return wp.resultCh
 }
 
-// executeJob runs a single Oracle job in a managed goroutine
-// Handles data fetching, parsing, extraction, and result submission
-func (wp *WorkerPool) executeJob(job *types.OracleJob) {
+// executeJob schedules a single job execution in a worker goroutine.
+// It honors ctx cancellation for delaying the first run.
+func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 	task := job
 
-	// Execute job in worker goroutine with proper error handling
 	wp.workerFunc(func() error {
-		if 0 < task.Nonce {
-			time.Sleep(task.Delay)
+		if 0 < task.Nonce && 0 < task.Delay {
+			select {
+			case <-time.After(task.Delay):
+			case <-ctx.Done():
+				return nil
+			}
 		}
 
 		reqID := strconv.FormatUint(task.ID, 10)
 
-		// Increment nonce for new execution
 		if stored, ok := wp.jobStore.Get(reqID); ok {
 			task.Nonce = stored.Nonce + 1
 		} else {
 			task.Nonce++
 		}
 
-		// Update job store with new nonce
 		wp.jobStore.Set(reqID, task)
 
-		// Fetch raw data from external API
 		rawData, err := wp.client.fetchRawData(task.URL)
 		if err != nil {
 			wp.logger.Error("failed to fetch raw data", "error", err)
+			wp.resultCh <- nil
 			return err
 		}
+		wp.logger.Debug("fetched raw data", "id", task.ID, "url", task.URL)
 
-		// Parse JSON response
 		jsonData, err := wp.client.parseRawData(rawData)
 		if err != nil {
 			wp.logger.Error("failed to parse raw data", "error", err)
 			return err
 		}
 
-		// Extract specific data using configured path
 		result, err := wp.client.extractDataByPath(jsonData, task.Path)
 		if err != nil {
 			wp.logger.Error("failed to extract data by path", "error", err)
 			return err
 		}
 
-		// Send result to channel for blockchain submission
 		wp.resultCh <- &types.OracleJobResult{
 			ID:    task.ID,
 			Data:  result,
 			Nonce: task.Nonce,
 		}
+		wp.logger.Debug("sent result to channel", "id", task.ID, "data", result)
 
 		return nil
 	})

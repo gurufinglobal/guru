@@ -36,6 +36,8 @@ const (
 	AttributeKeyRawData          = "raw_data"
 	AttributeKeyAggregationRule  = "aggregation_rule"
 	AttributeKeyQuorum           = "quorum"
+	AttributeKeyBlockHeight      = "block_height"
+	AttributeKeyBlockTime        = "block_time"
 )
 
 const (

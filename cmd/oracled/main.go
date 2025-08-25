@@ -19,22 +19,25 @@ func main() {
 
 	config.Load()
 	rootCtx := context.Background()
+	delay := 5 * time.Second
 
 	for {
 		ctx, cancel := context.WithCancel(rootCtx)
 		dmn := daemon.New(ctx)
-		dmn.Start()
+
+		if dmn == nil {
+			time.Sleep(delay)
+			continue
+		}
 
 		select {
 		case <-c:
 			fmt.Println("Thank you oracle daemon!!")
 			cancel()
-			dmn.Stop()
 			os.Exit(0)
 		case <-dmn.Fatal():
 			cancel()
-			dmn.Stop()
-			time.Sleep(5 * time.Second)
+			time.Sleep(delay)
 			dmn = nil
 			runtime.GC()
 			continue

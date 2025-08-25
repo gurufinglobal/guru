@@ -12,7 +12,7 @@ LOGLEVEL="info"
 # Set dedicated home directory for the gurud instance
 HOMEDIR="$HOME/.gurud"
 
-BASEFEE=10000000
+BASEFEE=630000000000
 
 # Path variables
 CONFIG=$HOMEDIR/config/config.toml
@@ -233,7 +233,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	gurud genesis add-genesis-account "$USER4_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
 
 	# Sign genesis transaction
-	gurud genesis gentx "$VAL_KEY" 1000000000000000000000agxn --gas-prices ${BASEFEE}agxn --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"  --gas-prices 630000000000agxn
+	gurud genesis gentx "$VAL_KEY" 1000000000000000000000agxn --gas-prices ${BASEFEE}agxn --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"
 	## In case you want to create multiple validators at genesis
 	## 1. Back to `gurud keys add` step, init more keys
 	## 2. Back to `gurud add-genesis-account` step, add balance for those
