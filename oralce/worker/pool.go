@@ -78,7 +78,7 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 		Path:   requestDoc.Endpoints[index].ParseRule,
 		Nonce:  max(currentNonce, requestDoc.Nonce),
 		Delay:  time.Duration(max(int64(0), dsec)) * time.Second,
-		Period: time.Duration(requestDoc.Period) * time.Second,
+		Period: time.Duration(requestDoc.Period),
 		Status: requestDoc.Status,
 	}
 
