@@ -84,7 +84,7 @@ func New(ctx context.Context) *Daemon {
 	d.worker = worker.New(ctx, d.logger)
 	d.submitter = submiter.NewSubmitter(d.logger, d.clientCtx)
 
-	go d.ServeOracleResult(ctx)
+	go d.serveOracleResult(ctx)
 	go d.runEventLoop(ctx, queryClient)
 	go func() {
 		<-ctx.Done()
@@ -163,13 +163,13 @@ func (d *Daemon) runEventLoop(ctx context.Context, queryClient oracletypes.Query
 	}
 }
 
-// ServeOracleResult processes completed Oracle jobs and submits results to blockchain
+// serveOracleResult processes completed Oracle jobs and submits results to blockchain
 // Runs in a separate goroutine to handle result submission asynchronously
-func (d *Daemon) ServeOracleResult(ctx context.Context) {
+func (d *Daemon) serveOracleResult(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			d.logger.Info("ServeOracleResult context done")
+			d.logger.Info("serveOracleResult context done")
 			return
 
 		case result, ok := <-d.worker.Results():

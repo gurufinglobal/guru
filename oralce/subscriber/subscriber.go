@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"cosmossdk.io/log"
 	"github.com/GPTx-global/guru-v2/oralce/config"
@@ -87,6 +88,8 @@ func (s *Subscriber) runEventLoop(ctx context.Context, queryClient oracletypes.Q
 		s.eventCh <- err
 		return
 	}
+
+	time.Sleep(time.Second * 5)
 
 	for _, doc := range res.OracleRequestDocs {
 		s.logger.Info("loaded request", "id", doc.RequestId, "nonce", doc.Nonce)
