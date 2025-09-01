@@ -2,7 +2,13 @@ package scheduler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"reflect"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -158,6 +164,28 @@ func (je *JobExecutor_impl) ExecuteAsync(ctx context.Context, job *OracleJob, re
 	})
 
 	return nil
+}
+
+// SubmitTask는 임의의 태스크를 비동기로 실행
+func (je *JobExecutor_impl) SubmitTask(task func() error) {
+	je.taskFunc(task)
+}
+
+// FetchData는 외부 URL에서 데이터를 가져옴 (HTTPClient 래퍼)
+func (je *JobExecutor_impl) FetchData(ctx context.Context, url string) ([]byte, error) {
+	return je.httpClient.FetchData(ctx, url)
+}
+
+// ParseAndExtract는 JSON 데이터를 파싱하고 경로에 따라 값을 추출
+func (je *JobExecutor_impl) ParseAndExtract(rawData []byte, parseRule string) (string, error) {
+	// 1. JSON 파싱
+	jsonData, err := je.httpClient.ParseJSON(rawData)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse JSON: %w", err)
+	}
+
+	// 2. 경로에 따라 데이터 추출
+	return je.httpClient.ExtractData(jsonData, parseRule)
 }
 
 // executeJob은 실제 작업 실행 로직
@@ -403,8 +431,9 @@ resultsLoop:
 
 // HTTPClient는 HTTP 요청을 처리하는 클라이언트
 type HTTPClient struct {
-	logger log.Logger
-	config *config.Config
+	logger     log.Logger
+	config     *config.Config
+	httpClient *http.Client
 }
 
 // NewHTTPClient는 새로운 HTTP 클라이언트를 생성
@@ -412,24 +441,209 @@ func NewHTTPClient(logger log.Logger, cfg *config.Config) *HTTPClient {
 	return &HTTPClient{
 		logger: logger,
 		config: cfg,
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second, // 30초 타임아웃
+		},
 	}
 }
 
-// FetchData는 URL에서 데이터를 가져옴
+// FetchData는 URL에서 데이터를 가져옴 (retry 전략 포함)
 func (hc *HTTPClient) FetchData(ctx context.Context, url string) ([]byte, error) {
-	// 실제 구현은 기존 worker/client.go의 fetchRawData와 유사
-	// 여기서는 인터페이스만 정의
-	return nil, fmt.Errorf("not implemented")
+	const (
+		maxRetries = 3
+		baseDelay  = 1 * time.Second
+		maxDelay   = 10 * time.Second
+	)
+
+	hc.logger.Debug("fetching data from URL", "url", url, "max_retries", maxRetries)
+
+	var lastErr error
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if attempt > 0 {
+			// 지수 백오프로 재시도 지연
+			delay := time.Duration(1<<uint(attempt-1)) * baseDelay
+			if delay > maxDelay {
+				delay = maxDelay
+			}
+
+			hc.logger.Debug("retrying request after delay",
+				"url", url,
+				"attempt", attempt,
+				"delay", delay)
+
+			select {
+			case <-time.After(delay):
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+		}
+
+		body, err := hc.performSingleRequest(ctx, url)
+		if err == nil {
+			hc.logger.Debug("successfully fetched data",
+				"url", url,
+				"attempts", attempt+1,
+				"response_size", len(body))
+			return body, nil
+		}
+
+		lastErr = err
+		hc.logger.Warn("HTTP request failed",
+			"url", url,
+			"attempt", attempt+1,
+			"error", err)
+
+		// 컨텍스트가 취소되었으면 재시도하지 않음
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+	}
+
+	return nil, fmt.Errorf("HTTP request failed after %d attempts: %w", maxRetries+1, lastErr)
+}
+
+// performSingleRequest는 단일 HTTP 요청을 수행
+func (hc *HTTPClient) performSingleRequest(ctx context.Context, url string) ([]byte, error) {
+	// HTTP GET 요청 생성
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	// User-Agent 헤더 설정
+	req.Header.Set("User-Agent", "Oracle-Daemon/1.0")
+	req.Header.Set("Accept", "application/json")
+
+	// 요청 실행
+	resp, err := hc.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 응답 상태 코드 확인
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP request failed with status: %d", resp.StatusCode)
+	}
+
+	// 응답 본문 읽기
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return body, nil
 }
 
 // ParseJSON은 JSON 데이터를 파싱
 func (hc *HTTPClient) ParseJSON(data []byte) (map[string]any, error) {
-	// 실제 구현은 기존 worker/client.go의 parseRawData와 유사
-	return nil, fmt.Errorf("not implemented")
+	if len(data) == 0 {
+		return nil, fmt.Errorf("empty data provided")
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal(data, &result); err != nil {
+		// JSON 파싱 실패 시 디버그 정보 로깅
+		hc.logger.Error("failed to parse JSON",
+			"error", err,
+			"data_preview", string(data[:min(len(data), 200)]))
+		return nil, fmt.Errorf("failed to parse JSON: %w", err)
+	}
+
+	hc.logger.Debug("successfully parsed JSON", "keys", getTopLevelKeys(result))
+	return result, nil
+}
+
+// getTopLevelKeys는 JSON 객체의 최상위 키들을 반환 (디버깅용)
+func getTopLevelKeys(data map[string]any) []string {
+	keys := make([]string, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 // ExtractData는 JSON에서 데이터를 추출
+// path는 점(.)으로 구분된 경로 (예: "rates.KRW", "data.price.usd")
 func (hc *HTTPClient) ExtractData(data map[string]any, path string) (string, error) {
-	// 실제 구현은 기존 worker/client.go의 extractDataByPath와 유사
-	return "", fmt.Errorf("not implemented")
+	if path == "" {
+		return "", fmt.Errorf("empty path provided")
+	}
+
+	hc.logger.Debug("extracting data from JSON", "path", path)
+
+	// 경로를 점(.)으로 분할
+	pathParts := strings.Split(path, ".")
+
+	// 현재 데이터 포인터
+	current := data
+
+	// 경로를 따라 탐색
+	for i, part := range pathParts {
+		if part == "" {
+			return "", fmt.Errorf("empty path segment at position %d", i)
+		}
+
+		// 현재 레벨에서 키 찾기
+		value, exists := current[part]
+		if !exists {
+			availableKeys := getTopLevelKeys(current)
+			return "", fmt.Errorf("key '%s' not found at path segment %d, available keys: %v",
+				part, i, availableKeys)
+		}
+
+		// 마지막 경로 세그먼트인 경우
+		if i == len(pathParts)-1 {
+			// 값을 문자열로 변환
+			return convertToString(value)
+		}
+
+		// 중간 경로인 경우, map으로 변환 시도
+		switch v := value.(type) {
+		case map[string]any:
+			current = v
+		default:
+			return "", fmt.Errorf("path segment '%s' at position %d is not an object (type: %T)",
+				part, i, value)
+		}
+	}
+
+	return "", fmt.Errorf("unexpected end of path traversal")
+}
+
+// convertToString은 다양한 타입의 값을 문자열로 변환
+func convertToString(value any) (string, error) {
+	if value == nil {
+		return "", fmt.Errorf("value is null")
+	}
+
+	switch v := value.(type) {
+	case string:
+		return v, nil
+	case int:
+		return strconv.Itoa(v), nil
+	case int64:
+		return strconv.FormatInt(v, 10), nil
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', -1, 32), nil
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64), nil
+	case bool:
+		return strconv.FormatBool(v), nil
+	case json.Number:
+		return string(v), nil
+	default:
+		// 복잡한 객체의 경우 JSON으로 마샬링
+		if reflect.TypeOf(value).Kind() == reflect.Map ||
+			reflect.TypeOf(value).Kind() == reflect.Slice {
+			jsonBytes, err := json.Marshal(value)
+			if err != nil {
+				return "", fmt.Errorf("failed to marshal value to JSON: %w", err)
+			}
+			return string(jsonBytes), nil
+		}
+
+		// 기본적으로 fmt.Sprintf 사용
+		return fmt.Sprintf("%v", value), nil
+	}
 }

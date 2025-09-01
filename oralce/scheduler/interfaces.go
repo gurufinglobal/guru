@@ -15,22 +15,19 @@ type EventScheduler interface {
 	Start(ctx context.Context) error
 
 	// Stop은 모든 작업을 중지하고 리소스를 정리
-	Stop() error
+	Stop(ctx context.Context) error
 
 	// ProcessEvent는 블록체인 이벤트를 처리하여 작업으로 변환
 	ProcessEvent(ctx context.Context, event coretypes.ResultEvent) error
 
-	// Results는 완료된 작업 결과를 전달하는 채널 반환
-	Results() <-chan *JobResult
+	// GetResultChannel는 완료된 작업 결과를 전달하는 채널 반환
+	GetResultChannel() <-chan *JobResult
 
 	// GetMetrics는 현재 스케줄러 메트릭을 반환
-	GetMetrics() SchedulerMetrics
+	GetMetrics() *SchedulerMetrics
 
 	// GetJobStatus는 특정 작업의 상태를 반환
 	GetJobStatus(jobID string) (JobStatus, bool)
-
-	// GetAllJobs는 모든 활성 작업들의 상태를 반환
-	GetAllJobs() map[string]JobStatus
 
 	// IsRunning은 스케줄러 실행 상태를 반환
 	IsRunning() bool
@@ -38,8 +35,8 @@ type EventScheduler interface {
 
 // JobStore는 작업 저장소 인터페이스
 type JobStore interface {
-	// Store는 작업을 저장
-	Store(job *OracleJob) error
+	// Store는 작업을 저장 (key, job)
+	Store(jobID string, job *OracleJob) error
 
 	// Get은 작업 ID로 작업을 조회
 	Get(jobID string) (*OracleJob, bool)
@@ -59,6 +56,9 @@ type JobStore interface {
 	// ListReadyJobs는 실행 준비된 작업들을 나열
 	ListReadyJobs(now time.Time) []*OracleJob
 
+	// GetReadyJobs는 실행 준비된 작업들을 반환 (alias)
+	GetReadyJobs(now time.Time) []*OracleJob
+
 	// Count는 총 작업 수를 반환
 	Count() int
 }
@@ -70,6 +70,15 @@ type JobExecutor interface {
 
 	// ExecuteAsync는 작업을 비동기로 실행
 	ExecuteAsync(ctx context.Context, job *OracleJob, resultCh chan<- *JobResult) error
+
+	// SubmitTask는 임의의 태스크를 비동기로 실행
+	SubmitTask(task func() error)
+
+	// FetchData는 외부 URL에서 데이터를 가져옴
+	FetchData(ctx context.Context, url string) ([]byte, error)
+
+	// ParseAndExtract는 JSON 데이터를 파싱하고 경로에 따라 값을 추출
+	ParseAndExtract(rawData []byte, parseRule string) (string, error)
 
 	// GetCapacity는 현재 실행 가능한 작업 수를 반환
 	GetCapacity() int

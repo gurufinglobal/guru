@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"fmt"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -12,130 +11,87 @@ import (
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
-// EventScheduler_impl는 이벤트 스케줄러의 메인 구현체
+// EventScheduler_impl는 이벤트 기반 스케줄러 구현
 type EventScheduler_impl struct {
-	logger log.Logger
-	config *config.Config
-
-	// 컴포넌트들
-	jobStore    JobStore
-	jobExecutor JobExecutor
+	// Core dependencies
 	eventParser EventParser
+	jobExecutor JobExecutor
+	jobStore    JobStore
+	config      config.Config
+	logger      log.Logger
 
-	// 결과 채널
+	// Channels
 	resultCh chan *JobResult
 
-	// 상태 관리
+	// State
 	isRunning atomic.Bool
 	startedAt time.Time
 
-	// 메트릭
-	metrics   SchedulerMetrics
-	metricsMu sync.RWMutex
+	// Scheduling
+	scheduleTicker *time.Ticker
 
-	// 스케줄링
-	schedulerTicker *time.Ticker
-	metricsTicker   *time.Ticker
-
-	// 종료 채널
-	shutdownCh chan struct{}
+	// Metrics
+	metrics *SchedulerMetrics
 }
 
 // NewEventScheduler는 새로운 이벤트 스케줄러를 생성
 func NewEventScheduler(
+	eventParser EventParser,
+	jobExecutor JobExecutor,
+	config config.Config,
+	resultCh chan *JobResult,
 	logger log.Logger,
-	cfg *config.Config,
-	queryClient QueryClient,
-) EventScheduler {
+) *EventScheduler_impl {
+	jobStore := NewJobStore(logger)
 
-	schedulerConfig := SchedulerConfig{
-		WorkerPoolSize:    cfg.WorkerPoolSize(),
-		ResultChannelSize: cfg.WorkerChannelSize(),
-		JobTimeout:        cfg.WorkerTimeout(),
-		RetryDelay:        cfg.RetryMaxDelay(),
-		MaxRetries:        cfg.RetryMaxAttempts(),
-		MetricsInterval:   10 * time.Second,
-		HealthCheckInt:    30 * time.Second,
-	}
-
-	scheduler := &EventScheduler_impl{
+	return &EventScheduler_impl{
+		eventParser: eventParser,
+		jobExecutor: jobExecutor,
+		jobStore:    jobStore,
+		config:      config,
+		resultCh:    resultCh,
 		logger:      logger,
-		config:      cfg,
-		jobStore:    NewConcurrentJobStore(logger),
-		jobExecutor: NewJobExecutor(logger, cfg),
-		eventParser: NewEventParser(logger, queryClient),
-		resultCh:    make(chan *JobResult, schedulerConfig.ResultChannelSize),
-		shutdownCh:  make(chan struct{}),
-		metrics: SchedulerMetrics{
+		metrics: &SchedulerMetrics{
 			StartedAt: time.Now(),
 		},
 	}
-
-	return scheduler
 }
 
-// Start는 스케줄러를 시작하고 기존 작업들을 로드
+// Start는 스케줄러를 시작
 func (s *EventScheduler_impl) Start(ctx context.Context) error {
 	if s.isRunning.Load() {
 		return fmt.Errorf("scheduler is already running")
 	}
 
 	s.startedAt = time.Now()
-	s.metricsMu.Lock()
-	s.metrics.StartedAt = s.startedAt
-	s.metricsMu.Unlock()
-
-	// 기존 활성 작업들 로드
-	if err := s.loadActiveJobs(ctx); err != nil {
-		return fmt.Errorf("failed to load active jobs: %w", err)
-	}
-
 	s.isRunning.Store(true)
 
-	// 백그라운드 작업들 시작
-	s.schedulerTicker = time.NewTicker(1 * time.Second) // 매초 스케줄링 체크
-	s.metricsTicker = time.NewTicker(10 * time.Second)  // 10초마다 메트릭 업데이트
+	// 기존 작업들을 chain에서 로드
+	if err := s.loadExistingJobs(ctx); err != nil {
+		s.logger.Error("failed to load existing jobs", "error", err)
+		return fmt.Errorf("failed to load existing jobs: %w", err)
+	}
 
-	go s.runJobScheduler(ctx)
-	go s.runMetricsUpdater(ctx)
-	go s.handleShutdown(ctx)
+	// 주기적 스케줄링 시작 (1초마다 체크)
+	s.scheduleTicker = time.NewTicker(1 * time.Second)
+	go s.runPeriodicScheduler(ctx)
 
-	s.logger.Info("event scheduler started",
-		"worker_pool_size", s.config.WorkerPoolSize(),
-		"result_channel_size", cap(s.resultCh))
-
+	s.logger.Info("event scheduler started")
 	return nil
 }
 
-// Stop은 모든 작업을 중지하고 리소스를 정리
-func (s *EventScheduler_impl) Stop() error {
-	if !s.isRunning.CompareAndSwap(true, false) {
+// Stop는 스케줄러를 중지
+func (s *EventScheduler_impl) Stop(ctx context.Context) error {
+	if !s.isRunning.Load() {
 		return fmt.Errorf("scheduler is not running")
 	}
 
-	s.logger.Info("stopping event scheduler...")
+	s.isRunning.Store(false)
 
-	// 타이머 정지
-	if s.schedulerTicker != nil {
-		s.schedulerTicker.Stop()
+	// 스케줄링 타이머 중지
+	if s.scheduleTicker != nil {
+		s.scheduleTicker.Stop()
 	}
-	if s.metricsTicker != nil {
-		s.metricsTicker.Stop()
-	}
-
-	// 종료 신호
-	close(s.shutdownCh)
-
-	// 실행기 종료
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := s.jobExecutor.Shutdown(ctx); err != nil {
-		s.logger.Error("failed to shutdown job executor", "error", err)
-	}
-
-	// 결과 채널 정리
-	close(s.resultCh)
 
 	s.logger.Info("event scheduler stopped",
 		"uptime", time.Since(s.startedAt),
@@ -145,7 +101,7 @@ func (s *EventScheduler_impl) Stop() error {
 	return nil
 }
 
-// ProcessEvent는 블록체인 이벤트를 처리하여 작업으로 변환
+// ProcessEvent는 블록체인 이벤트를 TaskGroup으로 즉시 처리
 func (s *EventScheduler_impl) ProcessEvent(ctx context.Context, event coretypes.ResultEvent) error {
 	if !s.isRunning.Load() {
 		return fmt.Errorf("scheduler is not running")
@@ -160,8 +116,209 @@ func (s *EventScheduler_impl) ProcessEvent(ctx context.Context, event coretypes.
 		return nil
 	}
 
-	s.logger.Debug("processing event", "query", event.Query)
+	s.logger.Debug("submitting event to taskgroup", "query", event.Query)
 
+	// TaskGroup에 이벤트 처리 작업 제출 (Job 등록/업데이트)
+	s.jobExecutor.SubmitTask(func() error {
+		return s.processEventToJob(ctx, event)
+	})
+
+	return nil
+}
+
+// processEventToJob는 이벤트를 Job으로 변환하고 저장
+func (s *EventScheduler_impl) processEventToJob(ctx context.Context, event coretypes.ResultEvent) error {
+	s.logger.Debug("processing event to job", "query", event.Query)
+
+	// 1. 이벤트 파싱 및 Job 생성
+	job, err := s.parseEventToJob(ctx, event)
+	if err != nil {
+		s.logger.Error("failed to parse event to job", "error", err)
+		s.updateMetrics(func(m *SchedulerMetrics) {
+			m.EventsFailed++
+		})
+		return nil
+	}
+
+	if job == nil {
+		// 이 노드가 담당하지 않는 job 또는 Complete 이벤트
+		s.logger.Debug("job not assigned to this node or complete event processed")
+		s.updateMetrics(func(m *SchedulerMetrics) {
+			m.EventsIgnored++
+		})
+		return nil
+	}
+
+	// 2. Job 저장 (RequestID 기반)
+	requestKey := fmt.Sprintf("req_%d", job.RequestID)
+
+	// 기존 job이 있는지 확인
+	if _, exists := s.jobStore.Get(requestKey); exists {
+		// 기존 job 업데이트 (nonce 및 일부 값만)
+		s.jobStore.Update(requestKey, func(j *OracleJob) error {
+			j.Nonce = job.Nonce
+			j.Status = job.Status
+			j.UpdatedAt = time.Now()
+			// Period와 URL 등은 변경되지 않음
+			return nil
+		})
+
+		s.logger.Info("updated existing job",
+			"request_id", job.RequestID,
+			"nonce", job.Nonce)
+	} else {
+		// 새 job 저장
+		job.NextRunTime = time.Now() // 즉시 실행 가능
+		if err := s.jobStore.Store(requestKey, job); err != nil {
+			s.logger.Error("failed to store job", "request_id", job.RequestID, "error", err)
+			s.updateMetrics(func(m *SchedulerMetrics) {
+				m.EventsFailed++
+			})
+			return nil
+		}
+
+		s.updateMetrics(func(m *SchedulerMetrics) {
+			m.TotalJobs++
+		})
+
+		s.logger.Info("stored new job",
+			"request_id", job.RequestID,
+			"period", job.Period,
+			"url", job.URL)
+	}
+
+	s.updateMetrics(func(m *SchedulerMetrics) {
+		m.EventsProcessed++
+	})
+
+	return nil
+}
+
+// executeJobToResult는 Job을 실행하여 결과까지 처리
+func (s *EventScheduler_impl) executeJobToResult(ctx context.Context, job *OracleJob) error {
+	startTime := time.Now()
+
+	s.logger.Info("executing job",
+		"request_id", job.RequestID,
+		"url", job.URL,
+		"parse_rule", job.ParseRule)
+
+	// 1. Job 상태 업데이트 (실행 중)
+	requestKey := fmt.Sprintf("req_%d", job.RequestID)
+	s.jobStore.Update(requestKey, func(j *OracleJob) error {
+		j.ExecutionState.Status = JobStatusExecuting
+		j.ExecutionState.StartTime = &startTime
+		j.ExecutionState.LastHeartbeat = &startTime
+		return nil
+	})
+
+	// 2. 외부 API에서 데이터 가져오기
+	rawData, err := s.jobExecutor.FetchData(ctx, job.URL)
+	if err != nil {
+		s.logger.Error("failed to fetch external data",
+			"request_id", job.RequestID,
+			"url", job.URL,
+			"error", err)
+
+		// 실패 상태 업데이트
+		s.jobStore.Update(requestKey, func(j *OracleJob) error {
+			j.ExecutionState.Status = JobStatusFailed
+			endTime := time.Now()
+			j.ExecutionState.EndTime = &endTime
+			j.FailureCount++
+			j.LastError = err.Error()
+			return nil
+		})
+
+		// 실패 결과 전송
+		s.sendJobResult(&JobResult{
+			JobID:      job.ID,
+			RequestID:  job.RequestID,
+			Data:       "",
+			Nonce:      job.Nonce,
+			Success:    false,
+			Error:      err,
+			ExecutedAt: startTime,
+			Duration:   time.Since(startTime),
+		})
+
+		s.updateMetrics(func(m *SchedulerMetrics) {
+			m.FailedJobs++
+		})
+		return nil
+	}
+
+	// 3. 데이터 파싱
+	extractedData, err := s.jobExecutor.ParseAndExtract(rawData, job.ParseRule)
+	if err != nil {
+		s.logger.Error("failed to parse and extract data",
+			"request_id", job.RequestID,
+			"parse_rule", job.ParseRule,
+			"error", err)
+
+		// 실패 상태 업데이트
+		s.jobStore.Update(requestKey, func(j *OracleJob) error {
+			j.ExecutionState.Status = JobStatusFailed
+			endTime := time.Now()
+			j.ExecutionState.EndTime = &endTime
+			j.FailureCount++
+			j.LastError = err.Error()
+			return nil
+		})
+
+		// 실패 결과 전송
+		s.sendJobResult(&JobResult{
+			JobID:      job.ID,
+			RequestID:  job.RequestID,
+			Data:       "",
+			Nonce:      job.Nonce,
+			Success:    false,
+			Error:      err,
+			ExecutedAt: startTime,
+			Duration:   time.Since(startTime),
+		})
+
+		s.updateMetrics(func(m *SchedulerMetrics) {
+			m.FailedJobs++
+		})
+		return nil
+	}
+
+	// 4. 성공 상태 업데이트
+	s.jobStore.Update(requestKey, func(j *OracleJob) error {
+		j.ExecutionState.Status = JobStatusCompleted
+		endTime := time.Now()
+		j.ExecutionState.EndTime = &endTime
+		j.RunCount++
+		return nil
+	})
+
+	// 5. 성공 결과 전송
+	s.sendJobResult(&JobResult{
+		JobID:      job.ID,
+		RequestID:  job.RequestID,
+		Data:       extractedData,
+		Nonce:      job.Nonce,
+		Success:    true,
+		Error:      nil,
+		ExecutedAt: startTime,
+		Duration:   time.Since(startTime),
+	})
+
+	s.updateMetrics(func(m *SchedulerMetrics) {
+		m.CompletedJobs++
+	})
+
+	s.logger.Info("job completed successfully",
+		"request_id", job.RequestID,
+		"duration", time.Since(startTime),
+		"data_length", len(extractedData))
+
+	return nil
+}
+
+// parseEventToJob은 이벤트를 OracleJob으로 변환
+func (s *EventScheduler_impl) parseEventToJob(ctx context.Context, event coretypes.ResultEvent) (*OracleJob, error) {
 	switch event.Query {
 	case "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'":
 		return s.handleRegisterEvent(ctx, event)
@@ -170,194 +327,158 @@ func (s *EventScheduler_impl) ProcessEvent(ctx context.Context, event coretypes.
 		return s.handleUpdateEvent(ctx, event)
 
 	case "tm.event='NewBlock' AND guru.oracle.v1.CompleteOracleDataSet.request_id EXISTS":
-		return s.handleCompleteEvent(ctx, event)
+		// Complete 이벤트는 별도 처리 (다음 실행 시간 계산)
+		return nil, s.handleCompleteEvent(ctx, event)
 
 	default:
-		s.logger.Debug("unknown event query", "query", event.Query)
-		s.updateMetrics(func(m *SchedulerMetrics) {
-			m.EventsIgnored++
-		})
-		return nil
+		s.logger.Debug("unsupported event type", "query", event.Query)
+		return nil, nil
 	}
 }
 
-// handleRegisterEvent는 등록 이벤트를 처리
-func (s *EventScheduler_impl) handleRegisterEvent(ctx context.Context, event coretypes.ResultEvent) error {
+// handleRegisterEvent는 등록 이벤트를 처리하여 Job 생성
+func (s *EventScheduler_impl) handleRegisterEvent(ctx context.Context, event coretypes.ResultEvent) (*OracleJob, error) {
 	doc, err := s.eventParser.ParseRegisterEvent(ctx, event)
 	if err != nil {
-		s.logger.Error("failed to parse register event", "error", err)
-		s.updateMetrics(func(m *SchedulerMetrics) {
-			m.EventsFailed++
-		})
-		return err
+		return nil, fmt.Errorf("failed to parse register event: %w", err)
 	}
 
-	// 작업으로 변환
 	job, err := s.eventParser.ConvertToJob(doc, s.config.Address().String(), time.Now())
 	if err != nil {
-		s.logger.Debug("job not assigned to this node or conversion failed", "error", err)
-		s.updateMetrics(func(m *SchedulerMetrics) {
-			m.EventsIgnored++
-		})
-		return nil // 이 노드 담당이 아니면 에러가 아님
+		// 이 노드가 담당하지 않는 job인 경우
+		s.logger.Debug("job not assigned to this node", "error", err)
+		return nil, nil
 	}
 
-	// 작업 저장
-	if err := s.jobStore.Store(job); err != nil {
-		s.logger.Error("failed to store job", "job_id", job.ID, "error", err)
-		s.updateMetrics(func(m *SchedulerMetrics) {
-			m.EventsFailed++
-		})
-		return err
-	}
-
-	s.logger.Info("job scheduled from register event",
-		"job_id", job.ID,
-		"request_id", job.RequestID,
-		"next_run", job.NextRunTime)
-
-	s.updateMetrics(func(m *SchedulerMetrics) {
-		m.EventsProcessed++
-		m.TotalJobs++
-		m.PendingJobs++
-	})
-
-	return nil
+	return job, nil
 }
 
-// handleUpdateEvent는 업데이트 이벤트를 처리
-func (s *EventScheduler_impl) handleUpdateEvent(ctx context.Context, event coretypes.ResultEvent) error {
+// handleUpdateEvent는 업데이트 이벤트를 처리하여 Job 생성
+func (s *EventScheduler_impl) handleUpdateEvent(ctx context.Context, event coretypes.ResultEvent) (*OracleJob, error) {
 	doc, err := s.eventParser.ParseUpdateEvent(ctx, event)
 	if err != nil {
-		s.logger.Error("failed to parse update event", "error", err)
-		s.updateMetrics(func(m *SchedulerMetrics) {
-			m.EventsFailed++
-		})
-		return err
+		return nil, fmt.Errorf("failed to parse update event: %w", err)
 	}
 
-	// 기존 작업 업데이트 또는 새 작업 생성
-	jobID := fmt.Sprintf("job_%d_%d", doc.RequestId, doc.Nonce)
-
-	_, exists := s.jobStore.Get(jobID)
-	if exists {
-		// 기존 작업 업데이트
-		err := s.jobStore.Update(jobID, func(job *OracleJob) error {
-			job.Status = doc.Status
-			job.Nonce = doc.Nonce
-			job.UpdatedAt = time.Now()
-			return nil
-		})
-
-		if err != nil {
-			s.logger.Error("failed to update job", "job_id", jobID, "error", err)
-			s.updateMetrics(func(m *SchedulerMetrics) {
-				m.EventsFailed++
-			})
-			return err
-		}
-
-		s.logger.Info("job updated from update event", "job_id", jobID)
-	} else {
-		// 새 작업 생성
-		job, err := s.eventParser.ConvertToJob(doc, s.config.Address().String(), time.Now())
-		if err != nil {
-			s.logger.Debug("job not assigned to this node", "error", err)
-			s.updateMetrics(func(m *SchedulerMetrics) {
-				m.EventsIgnored++
-			})
-			return nil
-		}
-
-		if err := s.jobStore.Store(job); err != nil {
-			s.logger.Error("failed to store new job", "job_id", job.ID, "error", err)
-			s.updateMetrics(func(m *SchedulerMetrics) {
-				m.EventsFailed++
-			})
-			return err
-		}
-
-		s.logger.Info("new job created from update event", "job_id", job.ID)
-		s.updateMetrics(func(m *SchedulerMetrics) {
-			m.TotalJobs++
-			m.PendingJobs++
-		})
+	job, err := s.eventParser.ConvertToJob(doc, s.config.Address().String(), time.Now())
+	if err != nil {
+		// 이 노드가 담당하지 않는 job인 경우
+		s.logger.Debug("job not assigned to this node", "error", err)
+		return nil, nil
 	}
 
-	s.updateMetrics(func(m *SchedulerMetrics) {
-		m.EventsProcessed++
-	})
-
-	return nil
+	return job, nil
 }
 
-// handleCompleteEvent는 완료 이벤트를 처리
+// handleCompleteEvent는 완료 이벤트를 처리하여 다음 실행 시간 계산
 func (s *EventScheduler_impl) handleCompleteEvent(ctx context.Context, event coretypes.ResultEvent) error {
 	completeData, err := s.eventParser.ParseCompleteEvent(event)
 	if err != nil {
 		s.logger.Error("failed to parse complete event", "error", err)
-		s.updateMetrics(func(m *SchedulerMetrics) {
-			m.EventsFailed++
-		})
 		return err
 	}
 
-	// 해당 작업 찾기 및 업데이트
-	jobID := fmt.Sprintf("job_%s_%d", completeData.RequestID, completeData.Nonce)
+	// RequestID 기반으로 Job 찾기
+	requestKey := fmt.Sprintf("req_%s", completeData.RequestID)
+	job, exists := s.jobStore.Get(requestKey)
+	if !exists {
+		s.logger.Debug("job not found for complete event", "request_id", completeData.RequestID)
+		return nil
+	}
 
-	err = s.jobStore.Update(jobID, func(job *OracleJob) error {
-		// Nonce 업데이트
-		job.Nonce = max(job.Nonce, completeData.Nonce)
+	// 다음 실행 시간 계산 (현재 시간 + period)
+	nextRunTime := time.Now().Add(time.Duration(job.Period) * time.Second)
 
-		// 다음 실행 시간 계산
-		job.NextRunTime = completeData.BlockTime.Add(job.Period)
-		job.UpdatedAt = time.Now()
-
-		// 상태 초기화
-		job.ExecutionState.Status = JobStatusPending
-		job.RetryAttempts = 0
-
+	// Job의 다음 실행 시간 업데이트
+	s.jobStore.Update(requestKey, func(j *OracleJob) error {
+		j.NextRunTime = nextRunTime
+		j.ExecutionState.Status = JobStatusPending
 		return nil
 	})
 
-	if err != nil {
-		s.logger.Debug("job not found for complete event",
-			"job_id", jobID, "request_id", completeData.RequestID)
-		// 완료 이벤트에 해당하는 작업이 없을 수 있음 (다른 노드가 처리한 경우)
-	} else {
-		s.logger.Info("job updated from complete event",
-			"job_id", jobID,
-			"new_nonce", completeData.Nonce,
-			"next_run", completeData.BlockTime.Add(time.Hour)) // 임시 period
-	}
-
-	s.updateMetrics(func(m *SchedulerMetrics) {
-		m.EventsProcessed++
-	})
+	s.logger.Info("scheduled next execution after complete event",
+		"request_id", completeData.RequestID,
+		"next_run_time", nextRunTime,
+		"period", job.Period)
 
 	return nil
 }
 
-// runJobScheduler는 주기적으로 실행 준비된 작업들을 찾아서 실행
-func (s *EventScheduler_impl) runJobScheduler(ctx context.Context) {
+// sendJobResult는 작업 결과를 결과 채널로 전송
+func (s *EventScheduler_impl) sendJobResult(result *JobResult) {
+	select {
+	case s.resultCh <- result:
+		s.logger.Debug("job result sent to channel",
+			"job_id", result.JobID,
+			"success", result.Success)
+	default:
+		s.logger.Warn("result channel is full, dropping result",
+			"job_id", result.JobID)
+	}
+}
+
+// GetResultChannel는 결과 채널을 반환
+func (s *EventScheduler_impl) GetResultChannel() <-chan *JobResult {
+	return s.resultCh
+}
+
+// GetMetrics는 현재 메트릭스를 반환
+func (s *EventScheduler_impl) GetMetrics() *SchedulerMetrics {
+	return s.metrics
+}
+
+// updateMetrics는 스레드 안전하게 메트릭스를 업데이트
+func (s *EventScheduler_impl) updateMetrics(updateFunc func(*SchedulerMetrics)) {
+	updateFunc(s.metrics)
+}
+
+// GetJobStatus는 특정 작업의 상태를 반환 (인터페이스 구현)
+func (s *EventScheduler_impl) GetJobStatus(jobID string) (JobStatus, bool) {
+	// 새로운 설계에서는 JobStore를 사용하지 않으므로 항상 false 반환
+	return JobStatus(0), false
+}
+
+// IsRunning은 스케줄러 실행 상태를 반환 (인터페이스 구현)
+func (s *EventScheduler_impl) IsRunning() bool {
+	return s.isRunning.Load()
+}
+
+// loadExistingJobs는 시작시 chain에서 기존 작업들을 로드
+func (s *EventScheduler_impl) loadExistingJobs(ctx context.Context) error {
+	s.logger.Info("loading existing jobs from chain")
+
+	// TODO: QueryClient를 통해 chain에서 현재 활성 Oracle 요청들을 조회
+	// 임시로 빈 구현 - 실제로는 QueryClient.OracleData() 등을 사용
+
+	s.logger.Info("loaded existing jobs", "count", 0)
+	return nil
+}
+
+// runPeriodicScheduler는 주기적으로 실행할 작업들을 체크
+func (s *EventScheduler_impl) runPeriodicScheduler(ctx context.Context) {
+	s.logger.Info("started periodic scheduler")
+
 	for {
 		select {
 		case <-ctx.Done():
-			s.logger.Debug("job scheduler stopped")
+			s.logger.Info("periodic scheduler stopped by context")
 			return
-		case <-s.shutdownCh:
-			s.logger.Debug("job scheduler shutdown")
-			return
-		case <-s.schedulerTicker.C:
-			s.processReadyJobs(ctx)
+
+		case <-s.scheduleTicker.C:
+			if !s.isRunning.Load() {
+				s.logger.Info("periodic scheduler stopped")
+				return
+			}
+
+			s.checkAndExecuteReadyJobs(ctx)
 		}
 	}
 }
 
-// processReadyJobs는 실행 준비된 작업들을 처리
-func (s *EventScheduler_impl) processReadyJobs(ctx context.Context) {
+// checkAndExecuteReadyJobs는 실행 준비된 작업들을 찾아서 실행
+func (s *EventScheduler_impl) checkAndExecuteReadyJobs(ctx context.Context) {
 	now := time.Now()
-	readyJobs := s.jobStore.ListReadyJobs(now)
+	readyJobs := s.jobStore.GetReadyJobs(now)
 
 	if len(readyJobs) == 0 {
 		return
@@ -365,162 +486,19 @@ func (s *EventScheduler_impl) processReadyJobs(ctx context.Context) {
 
 	s.logger.Debug("found ready jobs", "count", len(readyJobs))
 
-	// 실행 용량 확인
-	availableCapacity := s.jobExecutor.GetCapacity()
-	if availableCapacity <= 0 {
-		s.logger.Debug("no available execution capacity")
-		return
-	}
+	for _, job := range readyJobs {
+		// Job이 이미 실행 중인지 확인
+		if job.ExecutionState.Status == JobStatusExecuting {
+			s.logger.Debug("job already executing", "request_id", job.RequestID)
+			continue
+		}
 
-	// 용량만큼 작업 실행
-	jobsToExecute := readyJobs
-	if len(jobsToExecute) > availableCapacity {
-		jobsToExecute = readyJobs[:availableCapacity]
-	}
-
-	for _, job := range jobsToExecute {
-		// 작업 상태를 실행 중으로 변경
-		s.jobStore.Update(job.ID, func(j *OracleJob) error {
-			j.ExecutionState.Status = JobStatusExecuting
-			now := time.Now()
-			j.ExecutionState.StartTime = &now
-			j.ExecutionState.LastHeartbeat = &now
-			return nil
+		// TaskGroup에 실행 작업 제출
+		jobCopy := *job // job 복사
+		s.jobExecutor.SubmitTask(func() error {
+			return s.executeJobToResult(ctx, &jobCopy)
 		})
 
-		// 비동기 실행
-		if err := s.jobExecutor.ExecuteAsync(ctx, job, s.resultCh); err != nil {
-			s.logger.Error("failed to execute job", "job_id", job.ID, "error", err)
-
-			// 실행 실패 시 상태 복원
-			s.jobStore.Update(job.ID, func(j *OracleJob) error {
-				j.ExecutionState.Status = JobStatusFailed
-				j.ExecutionState.EndTime = &now
-				j.FailureCount++
-				j.LastError = err.Error()
-				return nil
-			})
-		}
-	}
-
-	s.updateMetrics(func(m *SchedulerMetrics) {
-		m.ActiveJobs = int64(s.jobExecutor.GetActiveJobs())
-	})
-}
-
-// Results는 완료된 작업 결과를 전달하는 채널 반환
-func (s *EventScheduler_impl) Results() <-chan *JobResult {
-	return s.resultCh
-}
-
-// GetMetrics는 현재 스케줄러 메트릭을 반환
-func (s *EventScheduler_impl) GetMetrics() SchedulerMetrics {
-	s.metricsMu.RLock()
-	defer s.metricsMu.RUnlock()
-
-	metrics := s.metrics
-	metrics.Uptime = time.Since(s.startedAt)
-
-	return metrics
-}
-
-// GetJobStatus는 특정 작업의 상태를 반환
-func (s *EventScheduler_impl) GetJobStatus(jobID string) (JobStatus, bool) {
-	job, exists := s.jobStore.Get(jobID)
-	if !exists {
-		return JobStatusPending, false
-	}
-
-	return job.ExecutionState.Status, true
-}
-
-// GetAllJobs는 모든 활성 작업들의 상태를 반환
-func (s *EventScheduler_impl) GetAllJobs() map[string]JobStatus {
-	jobs := s.jobStore.List()
-	result := make(map[string]JobStatus)
-
-	for _, job := range jobs {
-		result[job.ID] = job.ExecutionState.Status
-	}
-
-	return result
-}
-
-// IsRunning은 스케줄러 실행 상태를 반환
-func (s *EventScheduler_impl) IsRunning() bool {
-	return s.isRunning.Load()
-}
-
-// loadActiveJobs는 기존 활성 작업들을 로드 (미래 확장용)
-func (s *EventScheduler_impl) loadActiveJobs(ctx context.Context) error {
-	// 현재는 메모리 기반이므로 기존 작업 없음
-	// 미래에 영구 저장소 사용 시 여기서 로드
-	s.logger.Info("loading active jobs", "count", 0)
-	return nil
-}
-
-// runMetricsUpdater는 주기적으로 메트릭을 업데이트
-func (s *EventScheduler_impl) runMetricsUpdater(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			s.logger.Debug("metrics updater stopped")
-			return
-		case <-s.shutdownCh:
-			s.logger.Debug("metrics updater shutdown")
-			return
-		case <-s.metricsTicker.C:
-			s.updateJobMetrics()
-		}
-	}
-}
-
-// updateJobMetrics는 작업 기반 메트릭을 업데이트
-func (s *EventScheduler_impl) updateJobMetrics() {
-	jobs := s.jobStore.List()
-
-	var pending, active, completed, failed int64
-
-	for _, job := range jobs {
-		switch job.ExecutionState.Status {
-		case JobStatusPending, JobStatusScheduled:
-			pending++
-		case JobStatusExecuting, JobStatusRetrying:
-			active++
-		case JobStatusCompleted:
-			completed++
-		case JobStatusFailed, JobStatusCancelled:
-			failed++
-		}
-	}
-
-	s.updateMetrics(func(m *SchedulerMetrics) {
-		m.PendingJobs = pending
-		m.ActiveJobs = active
-		m.CompletedJobs = completed
-		m.FailedJobs = failed
-
-		// 성공률 계산
-		total := completed + failed
-		if total > 0 {
-			m.SuccessRate = float64(completed) / float64(total)
-		}
-	})
-}
-
-// updateMetrics는 메트릭을 안전하게 업데이트
-func (s *EventScheduler_impl) updateMetrics(updater func(*SchedulerMetrics)) {
-	s.metricsMu.Lock()
-	updater(&s.metrics)
-	s.metricsMu.Unlock()
-}
-
-// handleShutdown은 컨텍스트 취소 시 정리
-func (s *EventScheduler_impl) handleShutdown(ctx context.Context) {
-	<-ctx.Done()
-	s.logger.Info("shutdown signal received")
-
-	if s.isRunning.Load() {
-		s.Stop()
+		s.logger.Debug("submitted job for execution", "request_id", job.RequestID)
 	}
 }

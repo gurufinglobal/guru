@@ -19,8 +19,8 @@ type ConcurrentJobStore struct {
 	totalUpdated int64
 }
 
-// NewConcurrentJobStore는 새로운 동시성 작업 저장소를 생성
-func NewConcurrentJobStore(logger log.Logger) JobStore {
+// NewJobStore는 새로운 작업 저장소를 생성
+func NewJobStore(logger log.Logger) JobStore {
 	return &ConcurrentJobStore{
 		jobs:   make(map[string]*OracleJob),
 		logger: logger,
@@ -28,11 +28,11 @@ func NewConcurrentJobStore(logger log.Logger) JobStore {
 }
 
 // Store는 작업을 저장
-func (js *ConcurrentJobStore) Store(job *OracleJob) error {
+func (js *ConcurrentJobStore) Store(jobID string, job *OracleJob) error {
 	if job == nil {
 		return &JobStoreError{
 			Operation: "store",
-			JobID:     "",
+			JobID:     jobID,
 			Message:   "job cannot be nil",
 		}
 	}
@@ -349,6 +349,11 @@ func (e *JobStoreError) Error() string {
 // Unwrap은 원인 에러를 반환
 func (e *JobStoreError) Unwrap() error {
 	return e.Cause
+}
+
+// GetReadyJobs는 실행 준비된 작업들을 반환
+func (js *ConcurrentJobStore) GetReadyJobs(now time.Time) []*OracleJob {
+	return js.ListReadyJobs(now)
 }
 
 // JobStoreStats는 작업 저장소 통계를 나타내는 구조체

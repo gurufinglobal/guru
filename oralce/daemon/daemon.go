@@ -159,7 +159,11 @@ func (d *OracleDaemon) initializeComponents(ctx context.Context) error {
 
 	// Scheduler 생성
 	queryClientAdapter := &QueryClientAdapter{client: d.queryClient}
-	d.jobScheduler = scheduler.NewEventScheduler(d.logger, d.config, queryClientAdapter)
+	eventParser := scheduler.NewEventParser(d.logger, queryClientAdapter)
+	jobExecutor := scheduler.NewJobExecutor(d.logger, d.config)
+
+	resultCh := make(chan *scheduler.JobResult, 100)
+	d.jobScheduler = scheduler.NewEventScheduler(eventParser, jobExecutor, *d.config, resultCh, d.logger)
 
 	// Submitter 생성
 	resultSubmitter, err := submitter.NewJobResultSubmitter(d.logger, d.config, d.clientCtx)
@@ -306,7 +310,7 @@ func (d *OracleDaemon) runResultProcessor(ctx context.Context) {
 		case <-d.shutdownCh:
 			return
 
-		case result, ok := <-d.jobScheduler.Results():
+		case result, ok := <-d.jobScheduler.GetResultChannel():
 			if !ok {
 				d.handleFatalError(fmt.Errorf("job scheduler result channel closed"))
 				return
@@ -521,6 +525,7 @@ func (d *OracleDaemon) collectMetrics() {
 
 // Stop은 Oracle Daemon을 우아하게 종료
 func (d *OracleDaemon) Stop() error {
+	ctx := context.Background()
 	if !d.isRunning.CompareAndSwap(true, false) {
 		return fmt.Errorf("oracle daemon is not running")
 	}
@@ -542,7 +547,7 @@ func (d *OracleDaemon) Stop() error {
 	}
 
 	if d.jobScheduler != nil {
-		if err := d.jobScheduler.Stop(); err != nil {
+		if err := d.jobScheduler.Stop(ctx); err != nil {
 			d.logger.Error("failed to stop job scheduler", "error", err)
 		}
 	}
