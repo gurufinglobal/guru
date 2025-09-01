@@ -3,10 +3,8 @@ package keeper
 import (
 	"context"
 
-	errorsmod "cosmossdk.io/errors"
 	"github.com/GPTx-global/guru-v2/x/feepolicy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
@@ -24,6 +22,7 @@ func (k Keeper) ModeratorAddress(c context.Context, _ *types.QueryModeratorAddre
 	return &types.QueryModeratorAddressResponse{ModeratorAddress: moderator.Address}, nil
 }
 
+// Discounts returns the full list of registered discounts for all accounts.
 func (k Keeper) Discounts(c context.Context, _ *types.QueryDiscountsRequest) (*types.QueryDiscountsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	discounts, pageRes, err := k.GetPaginatedDiscounts(ctx, &query.PageRequest{})
@@ -33,11 +32,12 @@ func (k Keeper) Discounts(c context.Context, _ *types.QueryDiscountsRequest) (*t
 	return &types.QueryDiscountsResponse{Discounts: discounts, Pagination: pageRes}, nil
 }
 
+// Discount returns the discounts for a specific account.
 func (k Keeper) Discount(c context.Context, req *types.QueryDiscountRequest) (*types.QueryDiscountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	discount, ok := k.GetAccountDiscounts(ctx, req.Address)
 	if !ok {
-		return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, "discount not found")
+		return &types.QueryDiscountResponse{}, nil
 	}
 	return &types.QueryDiscountResponse{Discount: discount}, nil
 }

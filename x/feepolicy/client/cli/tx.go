@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewChangeModeratorTxCmd returns the cli command for changing the moderator address.
 func NewChangeModeratorTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "change_moderator [new_moderator_address] --from [moderator_address]",
@@ -40,6 +41,7 @@ func NewChangeModeratorTxCmd() *cobra.Command {
 	return cmd
 }
 
+// NewRegisterDiscountsTxCmd returns the cli command for registering discounts.
 func NewRegisterDiscountsTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register_discounts [path_to_json] --from [moderator_address]",
@@ -56,6 +58,7 @@ func NewRegisterDiscountsTxCmd() *cobra.Command {
 
 			var discounts types.AccountDiscounts
 
+			// read the json file
 			if err := cdc.UnmarshalJSON([]byte(args[0]), &discounts); err != nil {
 				// If that fails, treat it as a filepath
 				contents, err := ioutil.ReadFile(args[0])
@@ -79,11 +82,12 @@ func NewRegisterDiscountsTxCmd() *cobra.Command {
 	return cmd
 }
 
+// NewRemoveDiscountsTxCmd returns the cli command for removing discounts.
 func NewRemoveDiscountsTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove_discounts [discount_address] [module] [msg_type] --from [moderator_address]",
-		Short: "Remove discounts for the given address, module and msg type",
-		Args:  cobra.RangeArgs(1, 3),
+		Use:   "remove_discounts [discount_address] [module] --from [moderator_address]",
+		Short: "Remove discounts for the given address and module",
+		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -99,8 +103,6 @@ func NewRemoveDiscountsTxCmd() *cobra.Command {
 			msg := types.NewMsgRemoveDiscounts(clientCtx.GetFromAddress(), discountAddr, "", "")
 			if len(args) == 2 {
 				msg = types.NewMsgRemoveDiscounts(clientCtx.GetFromAddress(), discountAddr, args[1], "")
-			} else if len(args) == 3 {
-				msg = types.NewMsgRemoveDiscounts(clientCtx.GetFromAddress(), discountAddr, args[1], args[2])
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

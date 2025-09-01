@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// GetQueryCmd returns the cli query commands for the xmsquare module.
+// GetQueryCmd returns the cli query commands for the feepolicy module.
 func GetQueryCmd() *cobra.Command {
 	cexQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "Querying commands for the xmsquare module",
+		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -27,6 +27,7 @@ func GetQueryCmd() *cobra.Command {
 	return cexQueryCmd
 }
 
+// GetTxCmd returns the cli transaction commands for the feepolicy module.
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,

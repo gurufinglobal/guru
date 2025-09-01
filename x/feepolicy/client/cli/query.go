@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// GetCmdQueryModeratorAddress returns the cli command for querying the moderator address.
 func GetCmdQueryModeratorAddress() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "moderator_address",
@@ -37,6 +38,7 @@ func GetCmdQueryModeratorAddress() *cobra.Command {
 	return cmd
 }
 
+// GetCmdQueryDiscount returns the cli command for querying the discounts for an address.
 func GetCmdQueryDiscount() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "discount [address]",
@@ -64,6 +66,7 @@ func GetCmdQueryDiscount() *cobra.Command {
 	return cmd
 }
 
+// GetCmdQueryDiscounts returns the cli command for querying the discounts with pagination.
 func GetCmdQueryDiscounts() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "discounts",
