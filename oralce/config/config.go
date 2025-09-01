@@ -251,3 +251,28 @@ func RetryMaxAttempts() int  { return globalConfig.Retry.MaxAttempts }
 func RetryMaxDelaySec() time.Duration {
 	return time.Duration(globalConfig.Retry.MaxDelaySec) * time.Second
 }
+
+func TestConfig() error {
+	globalConfig = configData{
+		Chain: chainConfig{
+			ID:       "guru_631-1",
+			Endpoint: "http://localhost:26657",
+		},
+		Key: keyConfig{
+			Name:           "mykey",
+			KeyringDir:     Home(),
+			KeyringBackend: "test",
+		},
+		Gas: gasConfig{
+			Limit:      70000,
+			Adjustment: 1.5,
+			Prices:     "630000000000",
+		},
+		Retry: retryConfig{
+			MaxAttempts: 4,
+			MaxDelaySec: 10,
+		},
+	}
+
+	return nil
+}
