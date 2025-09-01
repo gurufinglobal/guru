@@ -14,6 +14,7 @@ import (
 	"github.com/GPTx-global/guru-v2/oralce/submiter"
 	"github.com/GPTx-global/guru-v2/oralce/subscriber"
 	"github.com/GPTx-global/guru-v2/oralce/types"
+	"github.com/GPTx-global/guru-v2/oralce/watcher"
 	"github.com/GPTx-global/guru-v2/oralce/worker"
 	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
 	comethttp "github.com/cometbft/cometbft/rpc/client/http"
@@ -35,6 +36,8 @@ type Daemon struct {
 	subscriber *subscriber.Subscriber
 	worker     *worker.WorkerPool
 	submitter  *submiter.Submitter
+
+	watcher *watcher.Watcher
 }
 
 // New creates and initializes a new Oracle daemon instance
@@ -83,6 +86,12 @@ func New(ctx context.Context) *Daemon {
 	d.subscriber = subscriber.New(ctx, d.logger, cometClient, queryClient)
 	d.worker = worker.New(ctx, d.logger)
 	d.submitter = submiter.NewSubmitter(d.logger, d.clientCtx)
+
+	d.watcher = watcher.New(ctx, d.logger, cometClient, config.ChannelSize())
+	if d.watcher == nil {
+		d.logger.Error("failed to create watcher")
+		return nil
+	}
 
 	go d.serveOracleResult(ctx)
 	go d.runEventLoop(ctx, queryClient)
@@ -246,4 +255,36 @@ func (d *Daemon) isWebSocketHealthy(ctx context.Context) bool {
 	d.logger.Debug("websocket healthy")
 
 	return true
+}
+
+func (d *Daemon) temp_receiveLoop(ctx context.Context) {
+	go d.runHealthcheck(ctx)
+
+	for {
+		select {
+		case <-ctx.Done():
+			d.logger.Info("temp_mainLoop done")
+			return
+
+		case event, ok := <-d.watcher.EventCh():
+			if !ok {
+				d.logger.Info("watcher event channel closed")
+				return
+			}
+
+			_ = event
+
+			/*
+				go func() {
+					1. evevn to job
+					2. job to worker
+					3. worker to submit
+				}()
+			*/
+		}
+	}
+}
+
+func (d *Daemon) temp_sendLoop(ctx context.Context) {
+	_ = ctx
 }

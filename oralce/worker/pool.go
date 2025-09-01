@@ -134,7 +134,7 @@ func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 
 		wp.jobStore.Set(reqID, task)
 
-		rawData, err := wp.client.fetchRawData(task.URL)
+		rawData, err := wp.client.fetchRawData(ctx, task.URL)
 		if err != nil {
 			wp.logger.Error("failed to fetch raw data", "error", err)
 			wp.resultCh <- nil

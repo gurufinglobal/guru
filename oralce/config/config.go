@@ -56,6 +56,7 @@ type retryConfig struct {
 // If the configuration file does not exist, it creates a default one
 // This function panics on any configuration errors to prevent daemon startup with invalid config
 func Load() {
+	flag.Parse()
 	path := filepath.Join(Home(), "config.toml")
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {

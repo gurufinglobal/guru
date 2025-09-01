@@ -82,14 +82,15 @@ func (s *Subscriber) runEventLoop(ctx context.Context, queryClient oracletypes.Q
 		s.logger.Info("event monitor stopped")
 	}()
 
+	// Waiting enough time for the chain to reliably receive transactions
+	time.Sleep(5 * time.Second)
+
 	res, err := queryClient.OracleRequestDocs(ctx, &oracletypes.QueryOracleRequestDocsRequest{Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED})
 	if err != nil {
 		s.logger.Debug("query request docs error", "error", err)
 		s.eventCh <- err
 		return
 	}
-
-	time.Sleep(time.Second * 5)
 
 	for _, doc := range res.OracleRequestDocs {
 		s.logger.Info("loaded request", "id", doc.RequestId, "nonce", doc.Nonce)
@@ -137,6 +138,8 @@ func (s *Subscriber) runEventLoop(ctx context.Context, queryClient oracletypes.Q
 			s.logger.Info("update watch", "id", queryRes.RequestDoc.RequestId, "nonce", queryRes.RequestDoc.Nonce)
 
 		case event := <-completeCh:
+			fmt.Println("complete event", event.Query)
+
 			if gasPrices, ok := event.Events[types.MinGasPrice]; ok {
 				gasPrice := gasPrices[0]
 				config.SetGasPrice(gasPrice)

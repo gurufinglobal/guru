@@ -18,13 +18,12 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	config.Load()
-	rootCtx := context.Background()
 	delay := 5 * time.Second
+	rootCtx := context.Background()
 
 	for {
 		ctx, cancel := context.WithCancel(rootCtx)
 		dmn := daemon.New(ctx)
-
 		if dmn == nil {
 			time.Sleep(delay)
 			continue
@@ -32,9 +31,10 @@ func main() {
 
 		select {
 		case <-c:
-			fmt.Println("Thank you oracle daemon!!")
 			cancel()
+			fmt.Println("Thank you oracle daemon!!")
 			os.Exit(0)
+
 		case <-dmn.Fatal():
 			cancel()
 			time.Sleep(delay)

@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -43,7 +44,7 @@ func newHTTPClient(logger log.Logger) *httpClient {
 }
 
 // fetchRawData retrieves bytes from an external endpoint with bounded retries.
-func (hc *httpClient) fetchRawData(url string) ([]byte, error) {
+func (hc *httpClient) fetchRawData(ctx context.Context, url string) ([]byte, error) {
 	maxAttempts := max(1, config.RetryMaxAttempts())
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		if 0 < attempt {
@@ -51,7 +52,7 @@ func (hc *httpClient) fetchRawData(url string) ([]byte, error) {
 			time.Sleep(max(retryDelay, config.RetryMaxDelaySec()))
 		}
 
-		req, err := http.NewRequest(http.MethodGet, url, nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
 			return nil, err
 		}
