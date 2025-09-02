@@ -20,6 +20,7 @@ import (
 	"github.com/GPTx-global/guru-v2/cmd/gurud/config"
 	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
 	"github.com/GPTx-global/guru-v2/gurud"
+	"github.com/GPTx-global/guru-v2/ibc/simapp"
 	"github.com/GPTx-global/guru-v2/testutil/tx"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -28,7 +29,6 @@ import (
 	"github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	"github.com/cosmos/ibc-go/v10/testing/simapp"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

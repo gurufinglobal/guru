@@ -3,14 +3,15 @@ package types
 // cex module event types
 const (
 	// event types
-	EventTypeRegisterDiscounts = ModuleName + "_register_discounts"
-	EventTypeRemoveDiscounts   = ModuleName + "_remove_discounts"
-	EventTypeChangeModerator   = ModuleName + "_change_moderator_address"
+	EventTypeRegisterDiscounts = "register_discounts"
+	EventTypeRemoveDiscounts   = "remove_discounts"
+	EventTypeChangeModerator   = "change_moderator_address"
 
 	// event attributes
-	AttributeKeyAddress   = "address"
-	AttributeKeyModerator = "moderator"
-	AttributeKeyModule    = "module"
-	AttributeKeyMsgType   = "msg_type"
-	AttributeKeyAmount    = "amount"
+	AttributeKeyAddress      = "address"
+	AttributeKeyModerator    = "moderator"
+	AttributeKeyModule       = "module"
+	AttributeKeyMsgType      = "msg_type"
+	AttributeKeyDiscountType = "discount_type"
+	AttributeKeyAmount       = "amount"
 )

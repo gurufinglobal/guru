@@ -11,6 +11,8 @@ const (
 	FeeDiscountTypeFixed   = "fixed"
 )
 
+// ValidateFeeDiscount validates a fee discount
+// Discount is the basic type for registering a single discount
 func ValidateFeeDiscount(discount Discount) error {
 	if discount.DiscountType != FeeDiscountTypePercent && discount.DiscountType != FeeDiscountTypeFixed {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid discount type. accepted types are: "+FeeDiscountTypePercent+", "+FeeDiscountTypeFixed)
@@ -27,6 +29,8 @@ func ValidateFeeDiscount(discount Discount) error {
 	return nil
 }
 
+// ValidateAccountDiscount validates an account discount
+// AccountDiscount contains all discounts for a single account
 func ValidateAccountDiscount(discount AccountDiscount) error {
 	_, err := sdk.AccAddressFromBech32(discount.Address)
 	if err != nil {

@@ -48,7 +48,7 @@ func NewCoordinator(t *testing.T, nEVMChains, mCosmosChains int) *Coordinator {
 	}
 
 	// setup Cosmos chains
-	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
+	ibctesting.DefaultTestingAppInit = SetupTestingApp
 	for j := 1 + nEVMChains; j <= nEVMChains+mCosmosChains; j++ {
 		chainID := GetChainID(j)
 		chains[chainID] = NewTestChain(t, false, coord, chainID)

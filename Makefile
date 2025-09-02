@@ -106,7 +106,7 @@ test-all: test-unit test-race
 
 # For unit tests we don't want to execute the upgrade tests in tests/e2e but
 # we want to include all unit tests in the subfolders (tests/e2e/*)
-PACKAGES_UNIT=$(shell go list ./... | grep -v '/tests/e2e$$' | grep -v '/tests/ibc$$' | grep -v '/ante/evm$$')
+PACKAGES_UNIT=$(shell go list ./... | grep -v '/tests/e2e$$')
 TEST_PACKAGES=./...
 TEST_TARGETS := test-unit test-unit-cover test-race
 

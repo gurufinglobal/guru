@@ -1,22 +1,3 @@
-// Copyright 2024 Gurufin
-// This file is part of the Gurux packages.
-
-// Gurux is proprietary software: you are not allowed to redistribute, modify,
-// or use it for any purpose without explicit permission from Gurufin. Any unauthorized
-// use of the software, including but not limited to copying, distribution, or modification,
-// is strictly prohibited.
-//
-// The Gurux packages are provided "as is", without any warranty or guarantee of
-// any kind, either express or implied, including but not limited to the implied
-// warranties of merchantability, fitness for a particular purpose, or non-infringement.
-// Gurux does not take responsibility for any damage, loss, or inconvenience caused by the use
-// of this software.
-//
-// You may not reverse-engineer, decompile, or disassemble the software without express permission
-// from Gurux. The software may only be used in accordance with the terms set by Gurux, and all rights
-// to the software remain solely with Gurux.
-//
-// For more information, please contact Gurufin at: <contact@gurufin.com>
 package types
 
 import (
