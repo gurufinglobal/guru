@@ -26,6 +26,7 @@ type Parameter struct {
 }
 
 // ScanModulesInProtoDir scans proto/guru/ directory for module subdirectories
+// Deprecated: Use ScanModulesInEmbeddedProtoDir for embedded filesystem support
 func ScanModulesInProtoDir(protoDir string) ([]string, error) {
 	var modules []string
 

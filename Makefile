@@ -78,7 +78,7 @@ build: BUILD_ARGS=-o $(BUILDDIR)/
 build-linux:
 	GOOS=linux GOARCH=amd64 $(MAKE) build
 
-$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+$(BUILD_TARGETS): swagger-gen go.sum $(BUILDDIR)/
 	CGO_ENABLED="1" go $@ $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 
 $(BUILDDIR)/:
@@ -233,6 +233,10 @@ proto-gen:
 	@$(protoImage) sh ./scripts/generate_protos.sh
 	@$(protoImage) sh ./scripts/generate_protos_pulsar.sh
 
+swagger-gen:
+	@echo "generating embedded proto files for swagger"
+	@cd server/swagger && go run generate_embedded_protos.go
+
 proto-format:
 	@echo "formatting Protobuf files"
 	@$(protoImage) find ./ -name *.proto -exec clang-format -i {} \;
@@ -246,7 +250,7 @@ proto-check-breaking:
 	@echo "checking Protobuf files for breaking changes"
 	@$(protoImage) buf breaking --against $(HTTPS_GIT)#branch=main
 
-.PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking
+.PHONY: proto-all proto-gen swagger-gen proto-format proto-lint proto-check-breaking
 
 ###############################################################################
 ###                                Releasing                                ###

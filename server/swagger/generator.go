@@ -2,7 +2,6 @@ package swagger
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/docs"
@@ -47,18 +46,18 @@ func MergeSwaggerContent(staticSwagger, customPaths string) string {
 	return before + customPaths + "\n" + after
 }
 
-// GenerateCustomPathsFromProto reads proto files from proto/guru/ and generates Swagger paths
+// GenerateCustomPathsFromProto reads proto files from embedded proto/guru/ and generates Swagger paths
 func GenerateCustomPathsFromProto() (string, error) {
 	var paths strings.Builder
-	paths.WriteString("  # Guru Module endpoints (generated from proto files)\n")
+	paths.WriteString("  # Guru Module endpoints (generated from embedded proto files)\n")
 
-	// Process proto/guru/ directory
+	// Process embedded proto/guru/ directory
 	protoDir := "proto/guru"
 
-	// Scan for modules in proto/guru/ directory
-	modules, err := ScanModulesInProtoDir(protoDir)
+	// Scan for modules in embedded proto/guru/ directory
+	modules, err := ScanModulesInEmbeddedProtoDir(protoDir)
 	if err != nil {
-		return "", fmt.Errorf("failed to scan modules in %s: %v", protoDir, err)
+		return "", fmt.Errorf("failed to scan modules in embedded %s: %v", protoDir, err)
 	}
 
 	for _, module := range modules {
@@ -68,20 +67,20 @@ func GenerateCustomPathsFromProto() (string, error) {
 		for _, protoFile := range protoFiles {
 			protoPath := fmt.Sprintf("%s/%s/v1/%s", protoDir, module, protoFile)
 
-			// Check if the proto file exists
-			if _, err := os.Stat(protoPath); err != nil {
+			// Check if the proto file exists in embedded filesystem
+			if !CheckEmbeddedProtoFileExists(protoPath) {
 				continue // Skip if file doesn't exist
 			}
 
-			// Read the proto file
-			content, err := os.ReadFile(protoPath)
+			// Read the proto file from embedded filesystem
+			content, err := ReadEmbeddedProtoFile(protoPath)
 			if err != nil {
-				fmt.Printf("Warning: Could not read %s: %v\n", protoPath, err)
+				fmt.Printf("Warning: Could not read embedded %s: %v\n", protoPath, err)
 				continue
 			}
 
 			// Parse RPC methods and their HTTP annotations
-			rpcMethods := ParseRPCMethods(string(content), module)
+			rpcMethods := ParseRPCMethods(content, module)
 
 			// Generate Swagger paths for each RPC method
 			for _, rpcMethod := range rpcMethods {
