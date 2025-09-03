@@ -31,4 +31,3 @@ contracts/@openzeppelin/*
 
 # Build files
 build/
-server/swagger/embedded_protos_generated.go
