@@ -34,8 +34,8 @@ func (k Keeper) AfterOracleEnd(ctx sdk.Context, dataSet oracletypes.DataSet) {
 		return
 	}
 
-	newMinGasPrice := minGasPriceRate.Quo(rawDataDec)
-	params.MinGasPrice = newMinGasPrice
+	newMinGasPrice := minGasPriceRate.Quo(rawDataDec).TruncateInt()
+	params.MinGasPrice = math.LegacyNewDecFromInt(newMinGasPrice)
 
 	k.SetParams(ctx, params)
 
