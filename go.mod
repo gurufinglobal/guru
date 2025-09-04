@@ -93,12 +93,13 @@ require (
 	github.com/bits-and-blooms/bitset v1.22.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
-	github.com/bytedance/sonic v1.13.2 // indirect
-	github.com/bytedance/sonic/loader v0.2.4 // indirect
+	github.com/bytedance/gopkg v0.1.3 // indirect
+	github.com/bytedance/sonic v1.14.1 // indirect
+	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
-	github.com/cloudwego/base64x v0.1.5 // indirect
+	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/cncf/xds/go v0.0.0-20250501225837-2ac532fd4443 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/cockroachdb/errors v1.12.0 // indirect
@@ -145,7 +146,7 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
@@ -166,7 +167,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-getter v1.7.8 // indirect
+	github.com/hashicorp/go-getter v1.7.9 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-plugin v1.6.3 // indirect
@@ -197,7 +198,6 @@ require (
 	github.com/mdp/qrterminal/v3 v3.2.1 // indirect
 	github.com/minio/highwayhash v1.0.3 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
