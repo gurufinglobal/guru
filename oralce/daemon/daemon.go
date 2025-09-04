@@ -41,7 +41,7 @@ type Daemon struct {
 // Sets up all necessary components including encoding, client context, and sub-services
 func New(ctx context.Context) *Daemon {
 	d := new(Daemon)
-	d.logger = log.NewLogger(os.Stdout, log.LevelOption(zerolog.DebugLevel))
+	d.logger = log.NewLogger(os.Stdout, log.LevelOption(zerolog.DebugLevel), log.TimeFormatOption(time.RFC3339), log.OutputJSONOption())
 	d.fatalCh = make(chan error, 1)
 
 	encCfg := encoding.MakeConfig(guruconfig.GuruChainID)
