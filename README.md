@@ -2,7 +2,7 @@ This is forked from cosmos/evm [v0.3.1](https://github.com/cosmos/evm/tree/v0.3.
 
 # Guru Chain
 
-[![version](https://img.shields.io/github/tag/guru-v2/guru-core.svg)](https://github.com/GPTx-global/guru-v2/releases/latest)
+[![version](https://img.shields.io/github/v/tag/GPTx-global/guru-v2.svg)](https://github.com/GPTx-global/guru-v2/releases/latest)
 [![Go version](https://img.shields.io/badge/go-1.23+-blue.svg)](https://github.com/moovweb/gvm)
 
 [Guru Chain](https://github.com/GPTx-global/guru-v2/PAPER.md) is forked from Cosmos EVM [v0.3.1](https://github.com/cosmos/evm/releases/tag/v0.3.1) on 2025-08.
@@ -46,6 +46,7 @@ ps -ef | grep gurud | grep -v grep
 
 Benchmarking is provided by [`tm-load-test`](https://github.com/informalsystems/tm-load-test).
 
+For more detailed information, please refer to the [Guru documentation](https://docs.gurufin.com).
 
 ## Applications
 
