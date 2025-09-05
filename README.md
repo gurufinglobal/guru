@@ -3,7 +3,7 @@ This is forked from cosmos/evm [v0.3.1](https://github.com/cosmos/evm/tree/v0.3.
 # Guru Chain
 
 [![version](https://img.shields.io/github/v/tag/GPTx-global/guru-v2.svg)](https://github.com/GPTx-global/guru-v2/releases/latest)
-[![Go version](https://img.shields.io/badge/go-1.23+-green.svg)](https://github.com/moovweb/gvm)
+[![Go version](https://img.shields.io/badge/go-1.24.6+-green.svg)](https://github.com/moovweb/gvm)
 <!-- admin widget setting: https://shields.io/badges/discord
 
 [![Discord chat](https://img.shields.io/discord/1109002731580051466
@@ -19,9 +19,9 @@ Please do not depend on `main` as your production branch. Use [releases](https:/
 
 ## Minimum requirements
 
-| Requirement | Notes            |
-| ----------- |------------------|
-| Go version  | Go1.23 or higher |
+| Requirement | Notes              |
+| ----------- |--------------------|
+| Go version  | Go1.24.6 or higher |
 
 
 # Quick Start
