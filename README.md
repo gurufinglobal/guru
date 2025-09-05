@@ -29,6 +29,13 @@ Please do not depend on `main` as your production branch. Use [releases](https:/
 ```
 git clone https://github.com/GPTx-global/guru-v2.git
 ```
+
+## Test & Cover
+```
+make test
+make test-unit-cover
+```
+
 ## Build
 ```
 make build
