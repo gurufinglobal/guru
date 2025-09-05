@@ -3,7 +3,13 @@ This is forked from cosmos/evm [v0.3.1](https://github.com/cosmos/evm/tree/v0.3.
 # Guru Chain
 
 [![version](https://img.shields.io/github/v/tag/GPTx-global/guru-v2.svg)](https://github.com/GPTx-global/guru-v2/releases/latest)
-[![Go version](https://img.shields.io/badge/go-1.23+-blue.svg)](https://github.com/moovweb/gvm)
+[![Go version](https://img.shields.io/badge/go-1.23+-green.svg)](https://github.com/moovweb/gvm)
+<!-- admin widget setting: https://shields.io/badges/discord
+
+[![Discord chat](https://img.shields.io/discord/1109002731580051466
+.svg)](https://discord.gg/FJBTMgHEJg)
+-->
+
 
 [Guru Chain](https://github.com/GPTx-global/guru-v2/PAPER.md) is forked from Cosmos EVM [v0.3.1](https://github.com/cosmos/evm/releases/tag/v0.3.1) on 2025-08.
 
