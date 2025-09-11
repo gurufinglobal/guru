@@ -5,8 +5,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	chainconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
-	"github.com/GPTx-global/guru-v2/precompiles/bech32"
+	chainconfig "github.com/GPTx-global/guru-v2/v2/cmd/gurud/config"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/bech32"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

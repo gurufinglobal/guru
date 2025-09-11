@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/x/precisebank/types"
+	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
 
 	sdkmath "cosmossdk.io/math"
 )

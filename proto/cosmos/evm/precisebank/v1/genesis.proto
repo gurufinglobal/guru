@@ -4,7 +4,7 @@ package cosmos.evm.precisebank.v1;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/GPTx-global/guru-v2/x/precisebank/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/precisebank/types";
 
 // GenesisState defines the precisebank module's genesis state.
 message GenesisState {

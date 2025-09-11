@@ -3,7 +3,7 @@ package snapshotkv
 import (
 	"fmt"
 
-	"github.com/GPTx-global/guru-v2/x/vm/store/types"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/store/types"
 
 	"cosmossdk.io/store/cachekv"
 	storetypes "cosmossdk.io/store/types"

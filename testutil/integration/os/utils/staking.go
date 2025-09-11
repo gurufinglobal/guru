@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
 
 	errorsmod "cosmossdk.io/errors"
 

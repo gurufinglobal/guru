@@ -10,8 +10,8 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	protov2 "google.golang.org/protobuf/proto"
 
-	evmapi "github.com/GPTx-global/guru-v2/api/cosmos/evm/vm/v1"
-	"github.com/GPTx-global/guru-v2/types"
+	evmapi "github.com/GPTx-global/guru-v2/v2/api/cosmos/evm/vm/v1"
+	"github.com/GPTx-global/guru-v2/v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

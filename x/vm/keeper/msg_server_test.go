@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"math/big"
 
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/utils"
-	"github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/utils"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

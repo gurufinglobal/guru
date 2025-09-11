@@ -6,7 +6,7 @@ import (
 
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 
-	"github.com/GPTx-global/guru-v2/server/config"
+	"github.com/GPTx-global/guru-v2/v2/server/config"
 
 	"github.com/cosmos/cosmos-sdk/client"
 )

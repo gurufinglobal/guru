@@ -16,12 +16,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GPTx-global/guru-v2.git"
+    "url": "git+https://github.com/GPTx-global/guru-v2/v2.git"
   },
   "author": "Evmos Core Team",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/GPTx-global/guru-v2/issues"
+    "url": "https://github.com/GPTx-global/guru-v2/v2/issues"
   },
-  "homepage": "https://github.com/GPTx-global/guru-v2#readme"
+  "homepage": "https://github.com/GPTx-global/guru-v2/v2#readme"
 }

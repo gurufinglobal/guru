@@ -3,7 +3,7 @@ package keeper
 import (
 	"testing"
 
-	"github.com/GPTx-global/guru-v2/x/oracle/types"
+	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )

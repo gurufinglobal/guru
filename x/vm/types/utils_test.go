@@ -8,9 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/encoding"
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/encoding"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/cosmos/cosmos-sdk/client"

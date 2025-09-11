@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/GPTx-global/guru-v2/precompiles/staking"
-	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
-	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/staking"
+	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
+	testkeyring "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
 
 	sdkmath "cosmossdk.io/math"
 

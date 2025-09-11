@@ -9,10 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
-	transferkeeper "github.com/GPTx-global/guru-v2/x/ibc/transfer/keeper"
-	evmkeeper "github.com/GPTx-global/guru-v2/x/vm/keeper"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	transferkeeper "github.com/GPTx-global/guru-v2/v2/x/ibc/transfer/keeper"
+	evmkeeper "github.com/GPTx-global/guru-v2/v2/x/vm/keeper"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
 	storetypes "cosmossdk.io/store/types"

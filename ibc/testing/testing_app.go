@@ -3,14 +3,14 @@ package ibctesting
 import (
 	"encoding/json"
 
-	"github.com/GPTx-global/guru-v2/gurud"
-	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
+	"github.com/GPTx-global/guru-v2/v2/gurud"
+	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
 	dbm "github.com/cosmos/cosmos-db"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	"cosmossdk.io/log"
 
-	"github.com/GPTx-global/guru-v2/ibc/simapp"
+	"github.com/GPTx-global/guru-v2/v2/ibc/simapp"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 )
 

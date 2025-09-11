@@ -9,8 +9,8 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 
-	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
-	"github.com/GPTx-global/guru-v2/crypto/hd"
+	"github.com/GPTx-global/guru-v2/v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/v2/crypto/hd"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/input"

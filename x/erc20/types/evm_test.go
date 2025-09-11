@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/x/erc20/types"
+	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
 )
 
 func TestNewERC20Data(t *testing.T) {

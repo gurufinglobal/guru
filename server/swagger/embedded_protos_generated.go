@@ -11,7 +11,7 @@ import "google/api/annotations.proto";
 import "guru/oracle/v1/oracle.proto";
 import "guru/oracle/v1/genesis.proto";
 
-option go_package = "github.com/GPTx-global/guru-v2/x/oracle/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/oracle/types";
 
 // Query defines the gRPC querier service
 service Query {
@@ -125,7 +125,7 @@ import "guru/oracle/v1/oracle.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 
-option go_package = "github.com/GPTx-global/guru-v2/x/oracle/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/oracle/types";
 
 // Msg defines the oracle Msg service
 service Msg {
@@ -249,7 +249,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "guru/feepolicy/v1/feepolicy.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/GPTx-global/guru-v2/x/feepolicy/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types";
 
 // Query provides defines the gRPC querier service.
 service Query {
@@ -312,7 +312,7 @@ const feepolicyTxProto = `syntax = "proto3";
 
 package guru.feepolicy.v1;
 
-option go_package = "github.com/GPTx-global/guru-v2/x/feepolicy/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types";
 
 import "guru/feepolicy/v1/feepolicy.proto";
 import "gogoproto/gogo.proto";

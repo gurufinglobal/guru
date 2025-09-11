@@ -2,8 +2,8 @@ package oracle
 
 import (
 	errorsmod "cosmossdk.io/errors"
-	"github.com/GPTx-global/guru-v2/x/oracle/keeper"
-	"github.com/GPTx-global/guru-v2/x/oracle/types"
+	"github.com/GPTx-global/guru-v2/v2/x/oracle/keeper"
+	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 )

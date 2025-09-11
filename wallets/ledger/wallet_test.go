@@ -7,9 +7,9 @@ import (
 	gethaccounts "github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/GPTx-global/guru-v2/ethereum/eip712"
-	"github.com/GPTx-global/guru-v2/wallets/accounts"
-	"github.com/GPTx-global/guru-v2/wallets/ledger/mocks"
+	"github.com/GPTx-global/guru-v2/v2/ethereum/eip712"
+	"github.com/GPTx-global/guru-v2/v2/wallets/accounts"
+	"github.com/GPTx-global/guru-v2/v2/wallets/ledger/mocks"
 )
 
 func RegisterDerive(mockWallet *mocks.Wallet, addr common.Address, publicKey *ecdsa.PublicKey) {

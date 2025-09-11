@@ -18,8 +18,8 @@ import (
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
 	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
-	"github.com/GPTx-global/guru-v2/rpc/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/rpc/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/log"
 

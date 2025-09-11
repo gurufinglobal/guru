@@ -13,12 +13,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
-	"github.com/GPTx-global/guru-v2/encoding"
-	exampleapp "github.com/GPTx-global/guru-v2/gurud"
-	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/v2/encoding"
+	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
+	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

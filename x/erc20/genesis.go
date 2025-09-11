@@ -5,8 +5,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/GPTx-global/guru-v2/x/erc20/keeper"
-	"github.com/GPTx-global/guru-v2/x/erc20/types"
+	"github.com/GPTx-global/guru-v2/v2/x/erc20/keeper"
+	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"

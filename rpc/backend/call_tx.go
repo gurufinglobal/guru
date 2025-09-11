@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	rpctypes "github.com/GPTx-global/guru-v2/rpc/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	rpctypes "github.com/GPTx-global/guru-v2/v2/rpc/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 

@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/GPTx-global/guru-v2/ibc"
+	"github.com/GPTx-global/guru-v2/v2/ibc"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

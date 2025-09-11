@@ -8,13 +8,13 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	"github.com/GPTx-global/guru-v2/ante/evm"
-	anteinterfaces "github.com/GPTx-global/guru-v2/ante/interfaces"
-	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	"github.com/GPTx-global/guru-v2/types"
-	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/ante/evm"
+	anteinterfaces "github.com/GPTx-global/guru-v2/v2/ante/interfaces"
+	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/v2/types"
+	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"

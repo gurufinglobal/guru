@@ -18,5 +18,5 @@ for dir in $proto_dirs; do
 done
 
 # move proto files to the right places
-cp -r github.com/GPTx-global/guru-v2/* ./
+cp -r github.com/GPTx-global/guru-v2/v2/* ./
 rm -rf github.com

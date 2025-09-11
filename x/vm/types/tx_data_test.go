@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	ethutils "github.com/GPTx-global/guru-v2/utils/eth"
+	ethutils "github.com/GPTx-global/guru-v2/v2/utils/eth"
 
 	sdkmath "cosmossdk.io/math"
 )

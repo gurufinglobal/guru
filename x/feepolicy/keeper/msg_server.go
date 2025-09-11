@@ -4,7 +4,7 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/GPTx-global/guru-v2/x/feepolicy/types"
+	"github.com/GPTx-global/guru-v2/v2/x/feepolicy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

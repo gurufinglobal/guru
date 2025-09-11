@@ -14,14 +14,14 @@ import (
 
 	"github.com/cometbft/cometbft/crypto"
 
-	exampleapp "github.com/GPTx-global/guru-v2/gurud"
-	"github.com/GPTx-global/guru-v2/precompiles/p256"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
-	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/utils"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/p256"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
+	testkeyring "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/utils"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 )
 
 type IntegrationTestSuite struct {

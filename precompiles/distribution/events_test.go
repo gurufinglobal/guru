@@ -8,12 +8,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	chainconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
-	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/precompiles/distribution"
-	"github.com/GPTx-global/guru-v2/precompiles/testutil"
-	"github.com/GPTx-global/guru-v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/x/vm/statedb"
+	chainconfig "github.com/GPTx-global/guru-v2/v2/cmd/gurud/config"
+	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/distribution"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"

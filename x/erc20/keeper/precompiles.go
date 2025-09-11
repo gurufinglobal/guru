@@ -7,9 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/GPTx-global/guru-v2/precompiles/erc20"
-	"github.com/GPTx-global/guru-v2/precompiles/werc20"
-	"github.com/GPTx-global/guru-v2/x/erc20/types"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/erc20"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/werc20"
+	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"

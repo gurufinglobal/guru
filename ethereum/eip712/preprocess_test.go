@@ -7,11 +7,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/encoding"
-	"github.com/GPTx-global/guru-v2/ethereum/eip712"
-	"github.com/GPTx-global/guru-v2/testutil/constants"
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/types"
+	"github.com/GPTx-global/guru-v2/v2/encoding"
+	"github.com/GPTx-global/guru-v2/v2/ethereum/eip712"
+	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/v2/types"
 
 	"cosmossdk.io/math"
 

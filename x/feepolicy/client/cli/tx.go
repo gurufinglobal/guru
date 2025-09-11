@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/GPTx-global/guru-v2/x/feepolicy/types"
+	"github.com/GPTx-global/guru-v2/v2/x/feepolicy/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"

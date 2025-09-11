@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/GPTx-global/guru-v2/oralce/config"
-	"github.com/GPTx-global/guru-v2/oralce/daemon"
+	"github.com/GPTx-global/guru-v2/v2/oralce/config"
+	"github.com/GPTx-global/guru-v2/v2/oralce/daemon"
 )
 
 func main() {

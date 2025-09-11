@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/GPTx-global/guru-v2/cmd/gurud/cmd"
-	gurudconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
-	examplechain "github.com/GPTx-global/guru-v2/gurud"
+	"github.com/GPTx-global/guru-v2/v2/cmd/gurud/cmd"
+	gurudconfig "github.com/GPTx-global/guru-v2/v2/cmd/gurud/config"
+	examplechain "github.com/GPTx-global/guru-v2/v2/gurud"
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -3,8 +3,8 @@ package testutil
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	anteinterfaces "github.com/GPTx-global/guru-v2/ante/interfaces"
-	"github.com/GPTx-global/guru-v2/x/vm/statedb"
+	anteinterfaces "github.com/GPTx-global/guru-v2/v2/ante/interfaces"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

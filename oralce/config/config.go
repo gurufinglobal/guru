@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/GPTx-global/guru-v2/crypto/hd"
-	"github.com/GPTx-global/guru-v2/encoding"
-	guruconfig "github.com/GPTx-global/guru-v2/server/config"
+	"github.com/GPTx-global/guru-v2/v2/crypto/hd"
+	"github.com/GPTx-global/guru-v2/v2/encoding"
+	guruconfig "github.com/GPTx-global/guru-v2/v2/server/config"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pelletier/go-toml/v2"

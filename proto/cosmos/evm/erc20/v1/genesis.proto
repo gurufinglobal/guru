@@ -6,7 +6,7 @@ import "amino/amino.proto";
 import "cosmos/evm/erc20/v1/erc20.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/GPTx-global/guru-v2/x/erc20/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/erc20/types";
 
 // GenesisState defines the module's genesis state.
 message GenesisState {

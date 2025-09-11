@@ -17,9 +17,9 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	stderrors "github.com/pkg/errors"
 
-	"github.com/GPTx-global/guru-v2/rpc/backend"
-	rpctypes "github.com/GPTx-global/guru-v2/rpc/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/rpc/backend"
+	rpctypes "github.com/GPTx-global/guru-v2/v2/rpc/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/log"
 

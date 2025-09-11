@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/GPTx-global/guru-v2/x/oracle/types"
 	errorsmod "cosmossdk.io/errors"
+	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 )
 

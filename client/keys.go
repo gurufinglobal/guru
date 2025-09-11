@@ -7,8 +7,8 @@ import (
 
 	"github.com/cometbft/cometbft/libs/cli"
 
-	clientkeys "github.com/GPTx-global/guru-v2/client/keys"
-	"github.com/GPTx-global/guru-v2/crypto/hd"
+	clientkeys "github.com/GPTx-global/guru-v2/v2/client/keys"
+	"github.com/GPTx-global/guru-v2/v2/crypto/hd"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

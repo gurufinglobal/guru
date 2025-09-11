@@ -10,10 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/GPTx-global/guru-v2/rpc/backend"
-	rpctypes "github.com/GPTx-global/guru-v2/rpc/types"
-	"github.com/GPTx-global/guru-v2/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/rpc/backend"
+	rpctypes "github.com/GPTx-global/guru-v2/v2/rpc/types"
+	"github.com/GPTx-global/guru-v2/v2/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/log"
 )

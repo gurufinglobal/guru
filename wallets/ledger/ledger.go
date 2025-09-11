@@ -9,9 +9,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/GPTx-global/guru-v2/ethereum/eip712"
-	"github.com/GPTx-global/guru-v2/wallets/accounts"
-	"github.com/GPTx-global/guru-v2/wallets/usbwallet"
+	"github.com/GPTx-global/guru-v2/v2/ethereum/eip712"
+	"github.com/GPTx-global/guru-v2/v2/wallets/accounts"
+	"github.com/GPTx-global/guru-v2/v2/wallets/usbwallet"
 
 	sdkledger "github.com/cosmos/cosmos-sdk/crypto/ledger"
 	sdk "github.com/cosmos/cosmos-sdk/types"

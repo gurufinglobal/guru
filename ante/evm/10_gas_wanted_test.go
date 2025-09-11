@@ -3,14 +3,14 @@ package evm_test
 import (
 	"fmt"
 
-	"github.com/GPTx-global/guru-v2/ante/evm"
-	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
-	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	integrationutils "github.com/GPTx-global/guru-v2/testutil/integration/os/utils"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/ante/evm"
+	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
+	testkeyring "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	integrationutils "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/utils"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	storetypes "cosmossdk.io/store/types"
 

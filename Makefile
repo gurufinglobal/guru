@@ -7,7 +7,7 @@ COMMIT := $(shell git log -1 --format='%H')
 BINDIR ?= $(GOPATH)/bin
 EXAMPLE_BINARY = gurud
 BUILDDIR ?= $(CURDIR)/build
-HTTPS_GIT := https://github.com/GPTx-global/guru-v2.git
+HTTPS_GIT := https://github.com/GPTx-global/guru-v2/v2.git
 DOCKER := $(shell which docker)
 
 export GO111MODULE = on
@@ -256,7 +256,7 @@ proto-check-breaking:
 ###                                Releasing                                ###
 ###############################################################################
 
-PACKAGE_NAME:=github.com/GPTx-global/guru-v2
+PACKAGE_NAME:=github.com/GPTx-global/guru-v2/v2
 GOLANG_CROSS_VERSION  = v1.22
 GOPATH ?= '$(HOME)/go'
 release-dry-run:

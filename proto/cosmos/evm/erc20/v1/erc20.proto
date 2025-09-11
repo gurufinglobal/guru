@@ -4,7 +4,7 @@ package cosmos.evm.erc20.v1;
 
 import "cosmos/bank/v1beta1/bank.proto";
 import "gogoproto/gogo.proto";
-option go_package = "github.com/GPTx-global/guru-v2/x/erc20/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/erc20/types";
 
 // Owner enumerates the ownership of a ERC20 contract.
 enum Owner {

@@ -8,8 +8,8 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/GPTx-global/guru-v2/x/vm/keeper"
-	"github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/keeper"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/x/oracle/types"
+	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 )
 
 // setupKeeper creates a new Keeper instance and context for testing

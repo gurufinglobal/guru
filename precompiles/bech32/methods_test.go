@@ -5,9 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	chainconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
-	"github.com/GPTx-global/guru-v2/precompiles/bech32"
-	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
+	chainconfig "github.com/GPTx-global/guru-v2/v2/cmd/gurud/config"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/bech32"
+	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
