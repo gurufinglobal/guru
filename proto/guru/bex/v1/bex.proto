@@ -1,0 +1,103 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/GPTx-global/guru-v2/x/bex/types";
+
+// Exchange represents an exchange pair configuration between two assets.
+message Exchange {
+
+  // Unique identifier for this exchange pair
+  string id = 1  [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Admin for the exchange
+  string admin_address = 2;
+
+  // Address where reserves are stored
+  string reserve_address = 3;
+
+  // First coin denomination
+  string denom_a = 4;
+  string ibc_denom_a = 5;
+  string port_a = 6;
+  string channel_a = 7;
+
+  // Second coin denomination
+  string denom_b = 8;
+  string ibc_denom_b = 9;
+  string port_b = 10;
+  string channel_b = 11;
+
+  // Exchange rate: 1 (in first coin) * rate = result (in second coin)
+  string rate = 12 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)   = false
+  ];
+
+  // Fee applied to the exchange in percentage
+  // If the value of fee = 0.5 => calculatedFee = exchangeAmount * 0.005
+  string fee = 13 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)   = false
+  ];
+
+  // Maximum allowed amount for exchange operations for the first coin 
+  // second coin limit = limit * rate
+  string limit = 14 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // Total accumulated fee for this exchange
+  // Admin can withdraw the accumulated fee to the given address 
+  repeated cosmos.base.v1beta1.Coin accumulated_fee = 15 [
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true,
+    (amino.encoding)         = "legacy_coins",
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+
+  // oracle request id used by hook to update rate
+  uint64 oracle_request_id = 16;
+
+  // Current status of the exchange
+  string status = 17;
+
+  // Additional metadata for future extensibility (optional)
+  map<string, string> metadata = 18;
+}
+
+message Ratemeter {
+  // request for each address 
+  uint64 request_count_limit = 1;
+
+  // Time window for enforcing the limit (e.g. 1h, 24h).
+  google.protobuf.Duration request_period = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true,
+    (gogoproto.jsontag) = "duration,omitempty",
+    (gogoproto.moretags) = "yaml:\"duration\""
+  ];
+}
+
+message RateRegistry {
+  // defines the number of requests from the address
+  uint64 request_count = 1;
+
+  // defines the start window for counting
+  int64 start_window = 2;
+}

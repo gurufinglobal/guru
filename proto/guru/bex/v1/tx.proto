@@ -1,0 +1,181 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "guru/bex/v1/bex.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/GPTx-global/guru-v2/x/bex/types";
+
+// Msg defines the bex module Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  
+  // RegisterAdmin registers new admin for the module 
+  rpc RegisterAdmin(MsgRegisterAdmin) returns (MsgRegisterAdminResponse);
+
+  // RemoveAdmin revekoes the admin privileges 
+  rpc RemoveAdmin(MsgRemoveAdmin) returns (MsgRemoveAdminResponse);
+
+  // RegisterExchange registers new exchange from json file
+  rpc RegisterExchange(MsgRegisterExchange) returns (MsgRegisterExchangeResponse);
+
+  // UpdateExchange updates the existinge xchnage from json file 
+  rpc UpdateExchange(MsgUpdateExchange) returns (MsgUpdateExchangeResponse);
+
+  // UpdateRatemeter changes the state of current ratemeter
+  rpc UpdateRatemeter(MsgUpdateRatemeter) returns (MsgUpdateRatemeterResponse);
+
+  // WithdrawFees allows the admin to withdraw collected fees from exchange
+  rpc WithdrawFees(MsgWithdrawFees) returns (MsgWithdrawFeesResponse);
+
+  // ChangeModerator changes the state of current moderator 
+  rpc ChangeModerator(MsgChangeBexModerator) returns (MsgChangeBexModeratorResponse);
+}
+
+// msg declaration for registering admin.
+message MsgRegisterAdmin {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // new admin address
+  string admin_address = 2;
+  string exchange_id = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Response type for the Msg/RegisterAdmin.
+message MsgRegisterAdminResponse {
+}
+
+// msg declaration for registering admin.
+message MsgRemoveAdmin {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // admin address to remove
+  string admin_address = 2;
+}
+
+// Response type for the Msg/RegisterAdmin.
+message MsgRemoveAdminResponse {
+}
+
+// msg declaration for registering admin.
+message MsgRegisterExchange {
+  option (cosmos.msg.v1.signer) = "admin_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   admin_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // exchange
+  Exchange exchange = 3;
+}
+
+// Response type for the Msg/RegisterAdmin.
+message MsgRegisterExchangeResponse {
+}
+
+// msg declaration for updating the rate.
+message MsgUpdateExchange {
+  option (cosmos.msg.v1.signer) = "admin_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   admin_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // exchnage id 
+  string exchange_id = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // key to udpate
+  string key = 3;
+
+  // new value
+  string value = 4;
+}
+
+// Response type for the Msg/UpdateRate.
+message MsgUpdateExchangeResponse {
+}
+
+// msg declaration for updating the rate.
+message MsgUpdateRatemeter {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // ratemeter
+  Ratemeter ratemeter = 2;
+}
+
+// Response type for the Msg/UpdateRate.
+message MsgUpdateRatemeterResponse {
+}
+
+// msg declaration for withdrawing the collected fees.
+message MsgWithdrawFees {
+  option (cosmos.msg.v1.signer) = "admin_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string admin_address = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // ID for the existing coin pair
+  string exchange_id = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string withdraw_address = 3
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// Response type for the Msg/WithdrawFees.
+message MsgWithdrawFeesResponse {
+}
+
+// msg declaration for changing the moderator.
+message MsgChangeBexModerator {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string   new_moderator_address     = 2 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// Response type for the Msg/ChangeModerator.
+message MsgChangeBexModeratorResponse {
+}

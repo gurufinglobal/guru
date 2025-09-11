@@ -139,7 +139,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	// guru-v2 modules
+	"github.com/GPTx-global/guru-v2/x/bex"
+	bexkeeper "github.com/GPTx-global/guru-v2/x/bex/keeper"
+	bextypes "github.com/GPTx-global/guru-v2/x/bex/types"
 )
 
 func init() {
@@ -179,6 +183,7 @@ var (
 		// guru-v2 modules
 		oracletypes.ModuleName:    nil,
 		feepolicytypes.ModuleName: nil,
+		bextypes.ModuleName:       nil,
 	}
 )
 
@@ -229,6 +234,7 @@ type EVMD struct {
 	OracleKeeper      oraclekeeper.Keeper
 
 	// guru-v2 keepers
+	BexKeeper       bexkeeper.Keeper
 	FeePolicyKeeper feepolicykeeper.Keeper
 
 	// the module manager
@@ -318,6 +324,7 @@ func NewExampleApp(
 		oracletypes.StoreKey,
 		// guru-v2 store keys
 		feepolicytypes.StoreKey,
+		bextypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey, feepolicytypes.TransientKey)
@@ -549,6 +556,10 @@ func NewExampleApp(
 		),
 	)
 
+	app.BexKeeper = bexkeeper.NewKeeper(
+		appCodec, keys[bextypes.StoreKey], app.AccountKeeper, app.BankKeeper, authAddr,
+	)
+
 	// instantiate IBC transfer keeper AFTER the ERC-20 keeper to use it in the instantiation
 	app.TransferKeeper = transferkeeper.NewKeeper(
 		appCodec,
@@ -665,6 +676,7 @@ func NewExampleApp(
 		// guru-v2 modules
 		oraclemodule.NewAppModule(app.OracleKeeper),
 		feepolicymodule.NewAppModule(app.FeePolicyKeeper),
+		bex.NewAppModule(app.BexKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager which is in charge of setting up basic,
@@ -713,6 +725,7 @@ func NewExampleApp(
 
 		// guru-v2 modules
 		feepolicytypes.ModuleName,
+		bextypes.ModuleName,
 
 		// TODO: remove no-ops? check if all are no-ops before removing
 		distrtypes.ModuleName, slashingtypes.ModuleName,
@@ -736,6 +749,7 @@ func NewExampleApp(
 
 		// guru-v2 modules
 		feepolicytypes.ModuleName,
+		bextypes.ModuleName,
 
 		// no-ops
 		ibcexported.ModuleName, ibctransfertypes.ModuleName,
@@ -769,6 +783,7 @@ func NewExampleApp(
 
 		// guru-v2 modules
 		feepolicytypes.ModuleName,
+		bextypes.ModuleName,
 
 		ibctransfertypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
