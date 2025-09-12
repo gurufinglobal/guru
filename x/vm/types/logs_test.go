@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/x/vm/types"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
 )
 
 func TestTransactionLogsValidate(t *testing.T) {

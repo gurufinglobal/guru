@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
-	"github.com/GPTx-global/guru-v2/x/erc20/types"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/v2/types"
+	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
 
 	"cosmossdk.io/store/prefix"
 

@@ -11,11 +11,11 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/GPTx-global/guru-v2/precompiles/testutil"
-	commonfactory "github.com/GPTx-global/guru-v2/testutil/integration/common/factory"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	commonfactory "github.com/GPTx-global/guru-v2/v2/testutil/integration/common/factory"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 	"github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"

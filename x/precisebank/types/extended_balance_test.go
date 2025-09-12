@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/x/precisebank/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

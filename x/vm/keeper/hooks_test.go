@@ -8,9 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/GPTx-global/guru-v2/x/vm/keeper"
-	"github.com/GPTx-global/guru-v2/x/vm/statedb"
-	"github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/keeper"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

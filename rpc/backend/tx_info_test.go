@@ -14,12 +14,12 @@ import (
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cometbft/cometbft/types"
 
+	"github.com/GPTx-global/guru-v2/v2/indexer"
+	"github.com/GPTx-global/guru-v2/v2/rpc/backend/mocks"
+	rpctypes "github.com/GPTx-global/guru-v2/v2/rpc/types"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/v2/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/GPTx-global/guru-v2/indexer"
-	"github.com/GPTx-global/guru-v2/rpc/backend/mocks"
-	rpctypes "github.com/GPTx-global/guru-v2/rpc/types"
-	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"

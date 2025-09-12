@@ -11,16 +11,16 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	"github.com/GPTx-global/guru-v2/precompiles/bank"
-	"github.com/GPTx-global/guru-v2/precompiles/bank/testdata"
-	"github.com/GPTx-global/guru-v2/precompiles/testutil"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	testutils "github.com/GPTx-global/guru-v2/testutil/integration/os/utils"
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/bank"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/bank/testdata"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	testutils "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/utils"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

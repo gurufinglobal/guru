@@ -28,13 +28,13 @@ import (
 	"github.com/cometbft/cometbft/rpc/client/local"
 	cmttypes "github.com/cometbft/cometbft/types"
 
+	"github.com/GPTx-global/guru-v2/v2/cmd/gurud/config"
+	"github.com/GPTx-global/guru-v2/v2/indexer"
+	ethdebug "github.com/GPTx-global/guru-v2/v2/rpc/namespaces/ethereum/debug"
+	cosmosevmserverconfig "github.com/GPTx-global/guru-v2/v2/server/config"
+	srvflags "github.com/GPTx-global/guru-v2/v2/server/flags"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/v2/types"
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/GPTx-global/guru-v2/cmd/gurud/config"
-	"github.com/GPTx-global/guru-v2/indexer"
-	ethdebug "github.com/GPTx-global/guru-v2/rpc/namespaces/ethereum/debug"
-	cosmosevmserverconfig "github.com/GPTx-global/guru-v2/server/config"
-	srvflags "github.com/GPTx-global/guru-v2/server/flags"
-	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
 
 	errorsmod "cosmossdk.io/errors"
 	pruningtypes "cosmossdk.io/store/pruning/types"
@@ -187,7 +187,7 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().String(srvflags.JSONRPCAddress, cosmosevmserverconfig.DefaultJSONRPCAddress, "the JSON-RPC server address to listen on")
 	cmd.Flags().String(srvflags.JSONWsAddress, cosmosevmserverconfig.DefaultJSONRPCWsAddress, "the JSON-RPC WS server address to listen on")
 	cmd.Flags().StringSlice(srvflags.JSONRPCWSOrigins, cosmosevmserverconfig.GetDefaultWSOrigins(), "Defines a list of WebSocket origins that should be allowed to connect")
-	cmd.Flags().Uint64(srvflags.JSONRPCGasCap, cosmosevmserverconfig.DefaultGasCap, "Sets a cap on gas that can be used in eth_call/estimateGas unit is agxn (0=infinite)")                         //nolint:lll
+	cmd.Flags().Uint64(srvflags.JSONRPCGasCap, cosmosevmserverconfig.DefaultGasCap, "Sets a cap on gas that can be used in eth_call/estimateGas unit is agxn (0=infinite)")                          //nolint:lll
 	cmd.Flags().Bool(srvflags.JSONRPCAllowInsecureUnlock, cosmosevmserverconfig.DefaultJSONRPCAllowInsecureUnlock, "Allow insecure account unlocking when account-related RPCs are exposed by http") //nolint:lll
 	cmd.Flags().Float64(srvflags.JSONRPCTxFeeCap, cosmosevmserverconfig.DefaultTxFeeCap, "Sets a cap on transaction fee that can be sent via the RPC APIs (1 = default 1 evmos)")                    //nolint:lll
 	cmd.Flags().Int32(srvflags.JSONRPCFilterCap, cosmosevmserverconfig.DefaultFilterCap, "Sets the global cap for total number of filters that can be created")

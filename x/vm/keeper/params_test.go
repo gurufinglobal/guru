@@ -1,8 +1,8 @@
 package keeper_test
 
 import (
-	exampleapp "github.com/GPTx-global/guru-v2/gurud"
-	"github.com/GPTx-global/guru-v2/x/vm/types"
+	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) TestParams() {

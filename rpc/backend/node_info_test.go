@@ -11,11 +11,11 @@ import (
 
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 
-	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
-	"github.com/GPTx-global/guru-v2/rpc/backend/mocks"
-	"github.com/GPTx-global/guru-v2/server/config"
-	"github.com/GPTx-global/guru-v2/testutil/constants"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/v2/rpc/backend/mocks"
+	"github.com/GPTx-global/guru-v2/v2/server/config"
+	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

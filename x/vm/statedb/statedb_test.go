@@ -14,8 +14,8 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/GPTx-global/guru-v2/x/vm/statedb"
-	"github.com/GPTx-global/guru-v2/x/vm/types/mocks"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/types/mocks"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -9,13 +9,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	gomock "go.uber.org/mock/gomock"
 
-	"github.com/GPTx-global/guru-v2/testutil/integration/common/factory"
-	testutils "github.com/GPTx-global/guru-v2/testutil/integration/os/utils"
-	"github.com/GPTx-global/guru-v2/x/erc20/keeper"
-	"github.com/GPTx-global/guru-v2/x/erc20/types"
-	erc20mocks "github.com/GPTx-global/guru-v2/x/erc20/types/mocks"
-	"github.com/GPTx-global/guru-v2/x/vm/statedb"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/common/factory"
+	testutils "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/utils"
+	"github.com/GPTx-global/guru-v2/v2/x/erc20/keeper"
+	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
+	erc20mocks "github.com/GPTx-global/guru-v2/v2/x/erc20/types/mocks"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

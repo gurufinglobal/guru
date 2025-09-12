@@ -5,7 +5,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/GPTx-global/guru-v2/x/precisebank/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/precisebank/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // Query defines the gRPC querier service for precisebank module

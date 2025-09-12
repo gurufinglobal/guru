@@ -6,9 +6,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 )
 
 // callType constants to differentiate between

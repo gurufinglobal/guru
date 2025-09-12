@@ -6,10 +6,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 
-	anteinterfaces "github.com/GPTx-global/guru-v2/ante/interfaces"
-	"github.com/GPTx-global/guru-v2/utils"
-	"github.com/GPTx-global/guru-v2/x/vm/statedb"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	anteinterfaces "github.com/GPTx-global/guru-v2/v2/ante/interfaces"
+	"github.com/GPTx-global/guru-v2/v2/utils"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 

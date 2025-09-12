@@ -3,7 +3,7 @@ package ante
 import (
 	"fmt"
 
-	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/v2/crypto/ethsecp256k1"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"

@@ -7,9 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	app "github.com/GPTx-global/guru-v2/gurud"
-	chainutil "github.com/GPTx-global/guru-v2/gurud/testutil"
-	"github.com/GPTx-global/guru-v2/precompiles/erc20"
+	app "github.com/GPTx-global/guru-v2/v2/gurud"
+	chainutil "github.com/GPTx-global/guru-v2/v2/gurud/testutil"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/erc20"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	sdkmath "cosmossdk.io/math"
@@ -26,7 +26,7 @@ var (
 	// validDenom is a denomination with a valid IBC voucher name
 	validDenom = types.NewDenom("uosmo", types.NewHop(types.PortID, "channel-0"))
 	// validAttoDenom is a denomination with a valid IBC voucher name and 18 decimals
-			validAttoDenom = types.NewDenom("agxn", types.NewHop(types.PortID, "channel-0"))
+	validAttoDenom = types.NewDenom("agxn", types.NewHop(types.PortID, "channel-0"))
 	// validDenomNoMicroAtto is a denomination with a valid IBC voucher name but no micro or atto prefix
 	validDenomNoMicroAtto = types.NewDenom("matom", types.NewHop(types.PortID, "channel-0"))
 

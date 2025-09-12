@@ -3,11 +3,11 @@ package gurud
 import (
 	"encoding/json"
 
-	"github.com/GPTx-global/guru-v2/cmd/gurud/config"
-	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
-	erc20types "github.com/GPTx-global/guru-v2/x/erc20/types"
-	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/cmd/gurud/config"
+	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	erc20types "github.com/GPTx-global/guru-v2/v2/x/erc20/types"
+	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 )

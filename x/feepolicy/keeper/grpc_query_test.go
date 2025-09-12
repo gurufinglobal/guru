@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	"github.com/GPTx-global/guru-v2/x/feepolicy/types"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/v2/x/feepolicy/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"

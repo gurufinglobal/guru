@@ -5,9 +5,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/x/erc20/types"
-	"github.com/GPTx-global/guru-v2/x/vm/statedb"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
 
 	"cosmossdk.io/math"
 

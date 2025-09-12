@@ -12,7 +12,7 @@ import (
 	gethaccounts "github.com/ethereum/go-ethereum/accounts"
 	usb "github.com/zondax/hid"
 
-	"github.com/GPTx-global/guru-v2/wallets/accounts"
+	"github.com/GPTx-global/guru-v2/v2/wallets/accounts"
 )
 
 const (

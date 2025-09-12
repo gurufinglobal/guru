@@ -10,11 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
-	servercfg "github.com/GPTx-global/guru-v2/server/config"
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/x/vm/keeper/testdata"
-	"github.com/GPTx-global/guru-v2/x/vm/statedb"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	servercfg "github.com/GPTx-global/guru-v2/v2/server/config"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/keeper/testdata"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

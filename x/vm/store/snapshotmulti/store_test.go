@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/GPTx-global/guru-v2/v2/x/vm/store/snapshotmulti"
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/GPTx-global/guru-v2/x/vm/store/snapshotmulti"
 
 	"cosmossdk.io/store/cachekv"
 	"cosmossdk.io/store/dbadapter"

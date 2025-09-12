@@ -12,11 +12,11 @@ import (
 
 	address "cosmossdk.io/core/address"
 	math "cosmossdk.io/math"
+	types3 "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	types0 "github.com/cosmos/cosmos-sdk/x/auth/types"
 	types1 "github.com/cosmos/cosmos-sdk/x/bank/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/staking/types"
-	types3 "github.com/GPTx-global/guru-v2/x/feemarket/types"
 	common "github.com/ethereum/go-ethereum/common"
 	core "github.com/ethereum/go-ethereum/core"
 	types4 "github.com/ethereum/go-ethereum/core/types"

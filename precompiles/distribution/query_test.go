@@ -6,9 +6,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/precompiles/distribution"
-	testutiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/distribution"
+	testutiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
 
 	"cosmossdk.io/math"
 

@@ -11,13 +11,13 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
+	"github.com/GPTx-global/guru-v2/v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/v2/indexer"
+	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
 	dbm "github.com/cosmos/cosmos-db"
-	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
-	"github.com/GPTx-global/guru-v2/indexer"
-	"github.com/GPTx-global/guru-v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/x/vm/types"
 
 	"cosmossdk.io/log"
 

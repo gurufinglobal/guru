@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"cosmossdk.io/log"
-	guruconfig "github.com/GPTx-global/guru-v2/cmd/gurud/config"
-	"github.com/GPTx-global/guru-v2/encoding"
-	"github.com/GPTx-global/guru-v2/oralce/config"
-	"github.com/GPTx-global/guru-v2/oralce/submiter"
-	"github.com/GPTx-global/guru-v2/oralce/subscriber"
-	"github.com/GPTx-global/guru-v2/oralce/types"
-	"github.com/GPTx-global/guru-v2/oralce/worker"
-	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
+	guruconfig "github.com/GPTx-global/guru-v2/v2/cmd/gurud/config"
+	"github.com/GPTx-global/guru-v2/v2/encoding"
+	"github.com/GPTx-global/guru-v2/v2/oralce/config"
+	"github.com/GPTx-global/guru-v2/v2/oralce/submiter"
+	"github.com/GPTx-global/guru-v2/v2/oralce/subscriber"
+	"github.com/GPTx-global/guru-v2/v2/oralce/types"
+	"github.com/GPTx-global/guru-v2/v2/oralce/worker"
+	oracletypes "github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 	comethttp "github.com/cometbft/cometbft/rpc/client/http"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -41,7 +41,7 @@ type Daemon struct {
 // Sets up all necessary components including encoding, client context, and sub-services
 func New(ctx context.Context) *Daemon {
 	d := new(Daemon)
-	d.logger = log.NewLogger(os.Stdout, log.LevelOption(zerolog.DebugLevel))
+	d.logger = log.NewLogger(os.Stdout, log.LevelOption(zerolog.DebugLevel), log.TimeFormatOption(time.RFC3339), log.OutputJSONOption())
 	d.fatalCh = make(chan error, 1)
 
 	encCfg := encoding.MakeConfig(guruconfig.GuruChainID)

@@ -3,7 +3,7 @@ package keeper
 import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	storetypes "cosmossdk.io/store/types"
 

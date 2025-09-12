@@ -7,7 +7,7 @@ COMMIT := $(shell git log -1 --format='%H')
 BINDIR ?= $(GOPATH)/bin
 EXAMPLE_BINARY = gurud
 BUILDDIR ?= $(CURDIR)/build
-HTTPS_GIT := https://github.com/GPTx-global/guru-v2.git
+HTTPS_GIT := https://github.com/GPTx-global/guru-v2/v2.git
 DOCKER := $(shell which docker)
 
 export GO111MODULE = on
@@ -78,7 +78,7 @@ build: BUILD_ARGS=-o $(BUILDDIR)/
 build-linux:
 	GOOS=linux GOARCH=amd64 $(MAKE) build
 
-$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+$(BUILD_TARGETS): swagger-gen go.sum $(BUILDDIR)/
 	CGO_ENABLED="1" go $@ $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 
 $(BUILDDIR)/:
@@ -106,7 +106,7 @@ test-all: test-unit test-race
 
 # For unit tests we don't want to execute the upgrade tests in tests/e2e but
 # we want to include all unit tests in the subfolders (tests/e2e/*)
-PACKAGES_UNIT=$(shell go list ./... | grep -v '/tests/e2e$$' | grep -v '/tests/ibc$$' | grep -v '/ante/evm$$')
+PACKAGES_UNIT=$(shell go list ./... | grep -v '/tests/e2e$$')
 TEST_PACKAGES=./...
 TEST_TARGETS := test-unit test-unit-cover test-race
 
@@ -233,6 +233,10 @@ proto-gen:
 	@$(protoImage) sh ./scripts/generate_protos.sh
 	@$(protoImage) sh ./scripts/generate_protos_pulsar.sh
 
+swagger-gen:
+	@echo "generating embedded proto files for swagger"
+	@cd server/swagger && go run generate_embedded_protos.go
+
 proto-format:
 	@echo "formatting Protobuf files"
 	@$(protoImage) find ./ -name *.proto -exec clang-format -i {} \;
@@ -246,13 +250,13 @@ proto-check-breaking:
 	@echo "checking Protobuf files for breaking changes"
 	@$(protoImage) buf breaking --against $(HTTPS_GIT)#branch=main
 
-.PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking
+.PHONY: proto-all proto-gen swagger-gen proto-format proto-lint proto-check-breaking
 
 ###############################################################################
 ###                                Releasing                                ###
 ###############################################################################
 
-PACKAGE_NAME:=github.com/GPTx-global/guru-v2
+PACKAGE_NAME:=github.com/GPTx-global/guru-v2/v2
 GOLANG_CROSS_VERSION  = v1.22
 GOPATH ?= '$(HOME)/go'
 release-dry-run:

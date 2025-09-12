@@ -7,8 +7,8 @@ import (
 
 	"github.com/hashicorp/go-metrics"
 
-	"github.com/GPTx-global/guru-v2/x/precisebank/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

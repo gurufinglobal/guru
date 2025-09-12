@@ -6,15 +6,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/GPTx-global/guru-v2/ante/evm"
-	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
-	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	"github.com/GPTx-global/guru-v2/x/precisebank/types"
-	"github.com/GPTx-global/guru-v2/x/vm/statedb"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/ante/evm"
+	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
+	testkeyring "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
+	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

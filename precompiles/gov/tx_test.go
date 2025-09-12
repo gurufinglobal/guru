@@ -6,10 +6,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/precompiles/gov"
-	"github.com/GPTx-global/guru-v2/precompiles/testutil"
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/gov"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
 
 	"cosmossdk.io/math"
 

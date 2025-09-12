@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/ante"
-	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
-	"github.com/GPTx-global/guru-v2/encoding"
-	"github.com/GPTx-global/guru-v2/server/config"
+	"github.com/GPTx-global/guru-v2/v2/ante"
+	"github.com/GPTx-global/guru-v2/v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/v2/encoding"
+	"github.com/GPTx-global/guru-v2/v2/server/config"
 
 	storetypes "cosmossdk.io/store/types"
 

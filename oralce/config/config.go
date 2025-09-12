@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/GPTx-global/guru-v2/crypto/hd"
-	"github.com/GPTx-global/guru-v2/encoding"
-	guruconfig "github.com/GPTx-global/guru-v2/server/config"
+	"github.com/GPTx-global/guru-v2/v2/crypto/hd"
+	"github.com/GPTx-global/guru-v2/v2/encoding"
+	guruconfig "github.com/GPTx-global/guru-v2/v2/server/config"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pelletier/go-toml/v2"
@@ -250,4 +250,29 @@ func ChannelSize() int       { return 1 << 10 }
 func RetryMaxAttempts() int  { return globalConfig.Retry.MaxAttempts }
 func RetryMaxDelaySec() time.Duration {
 	return time.Duration(globalConfig.Retry.MaxDelaySec) * time.Second
+}
+
+func TestConfig() error {
+	globalConfig = configData{
+		Chain: chainConfig{
+			ID:       "guru_631-1",
+			Endpoint: "http://localhost:26657",
+		},
+		Key: keyConfig{
+			Name:           "mykey",
+			KeyringDir:     Home(),
+			KeyringBackend: "test",
+		},
+		Gas: gasConfig{
+			Limit:      70000,
+			Adjustment: 1.5,
+			Prices:     "630000000000",
+		},
+		Retry: retryConfig{
+			MaxAttempts: 4,
+			MaxDelaySec: 10,
+		},
+	}
+
+	return nil
 }

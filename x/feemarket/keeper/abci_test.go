@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
 
 	storetypes "cosmossdk.io/store/types"
 

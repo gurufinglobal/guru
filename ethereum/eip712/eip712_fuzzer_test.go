@@ -9,7 +9,7 @@ import (
 
 	rand "github.com/cometbft/cometbft/libs/rand"
 
-	"github.com/GPTx-global/guru-v2/ethereum/eip712"
+	"github.com/GPTx-global/guru-v2/v2/ethereum/eip712"
 )
 
 type EIP712FuzzTestParams struct {

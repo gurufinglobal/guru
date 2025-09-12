@@ -11,10 +11,10 @@ import (
 	"github.com/cometbft/cometbft/libs/bytes"
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 
-	"github.com/GPTx-global/guru-v2/rpc/backend/mocks"
-	rpctypes "github.com/GPTx-global/guru-v2/rpc/types"
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/rpc/backend/mocks"
+	rpctypes "github.com/GPTx-global/guru-v2/v2/rpc/types"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )

@@ -6,7 +6,7 @@ import "guru/oracle/v1/oracle.proto";
 import "cosmos_proto/cosmos.proto";
 import "amino/amino.proto";
 
-option go_package = "github.com/GPTx-global/guru-v2/x/oracle/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/oracle/types";
 
 // GenesisState defines the oracle module's genesis state
 message GenesisState {

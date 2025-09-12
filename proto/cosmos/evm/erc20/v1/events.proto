@@ -2,7 +2,7 @@
 syntax = "proto3";
 package cosmos.evm.erc20.v1;
 
-option go_package = "github.com/GPTx-global/guru-v2/x/erc20/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/erc20/types";
 
 // EventRegisterPair is an event emitted when a coin is registered.
 message EventRegisterPair {

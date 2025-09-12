@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
-	"github.com/GPTx-global/guru-v2/x/feemarket/types"
-	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
+	"github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
+	oracletypes "github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -34,8 +34,8 @@ func (k Keeper) AfterOracleEnd(ctx sdk.Context, dataSet oracletypes.DataSet) {
 		return
 	}
 
-	newMinGasPrice := minGasPriceRate.Quo(rawDataDec)
-	params.MinGasPrice = newMinGasPrice
+	newMinGasPrice := minGasPriceRate.Quo(rawDataDec).TruncateInt()
+	params.MinGasPrice = math.LegacyNewDecFromInt(newMinGasPrice)
 
 	k.SetParams(ctx, params)
 

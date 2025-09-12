@@ -1,9 +1,9 @@
 package backend
 
 import (
-	"github.com/GPTx-global/guru-v2/rpc/backend/mocks"
-	rpc "github.com/GPTx-global/guru-v2/rpc/types"
-	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
+	"github.com/GPTx-global/guru-v2/v2/rpc/backend/mocks"
+	rpc "github.com/GPTx-global/guru-v2/v2/rpc/types"
+	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )

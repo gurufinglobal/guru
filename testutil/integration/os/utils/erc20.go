@@ -5,9 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	erc20types "github.com/GPTx-global/guru-v2/x/erc20/types"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	erc20types "github.com/GPTx-global/guru-v2/v2/x/erc20/types"
 
 	errorsmod "cosmossdk.io/errors"
 

@@ -7,9 +7,9 @@ import (
 
 	"fmt"
 
-	"github.com/GPTx-global/guru-v2/x/oracle/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	errorsmod "cosmossdk.io/errors"
+	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 )
 

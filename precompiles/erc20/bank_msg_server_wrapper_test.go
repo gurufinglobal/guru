@@ -1,10 +1,10 @@
 package erc20_test
 
 import (
-	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/precompiles/common/mocks"
-	"github.com/GPTx-global/guru-v2/precompiles/erc20"
-	vmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/common/mocks"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/erc20"
+	vmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

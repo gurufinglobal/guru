@@ -5,10 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/precompiles/slashing"
-	"github.com/GPTx-global/guru-v2/precompiles/testutil"
-	utiltx "github.com/GPTx-global/guru-v2/testutil/tx"
+	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/slashing"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

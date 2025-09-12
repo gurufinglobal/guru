@@ -8,10 +8,10 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
+	rpctypes "github.com/GPTx-global/guru-v2/v2/rpc/types"
+	cosmosevmtypes "github.com/GPTx-global/guru-v2/v2/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 	dbm "github.com/cosmos/cosmos-db"
-	rpctypes "github.com/GPTx-global/guru-v2/rpc/types"
-	cosmosevmtypes "github.com/GPTx-global/guru-v2/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"

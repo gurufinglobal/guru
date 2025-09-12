@@ -9,12 +9,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	chainutil "github.com/GPTx-global/guru-v2/gurud/testutil"
-	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/precompiles/distribution"
-	"github.com/GPTx-global/guru-v2/precompiles/testutil"
-	"github.com/GPTx-global/guru-v2/testutil/constants"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	chainutil "github.com/GPTx-global/guru-v2/v2/gurud/testutil"
+	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/distribution"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/gurud"
+	"github.com/GPTx-global/guru-v2/v2/gurud"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 )
 
@@ -48,7 +48,7 @@ func NewCoordinator(t *testing.T, nEVMChains, mCosmosChains int) *Coordinator {
 	}
 
 	// setup Cosmos chains
-	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
+	ibctesting.DefaultTestingAppInit = SetupTestingApp
 	for j := 1 + nEVMChains; j <= nEVMChains+mCosmosChains; j++ {
 		chainID := GetChainID(j)
 		chains[chainID] = NewTestChain(t, false, coord, chainID)

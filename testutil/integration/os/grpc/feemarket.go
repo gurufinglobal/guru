@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	feemarkettypes "github.com/GPTx-global/guru-v2/x/feemarket/types"
+	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
 )
 
 // GetBaseFee returns the base fee from the feemarket module.

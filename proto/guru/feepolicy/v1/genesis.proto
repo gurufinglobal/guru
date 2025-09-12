@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package guru.feepolicy.v1;
 
-option go_package = "github.com/GPTx-global/guru-v2/x/feepolicy/types";
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types";
 
 import "guru/feepolicy/v1/feepolicy.proto";
 import "gogoproto/gogo.proto";

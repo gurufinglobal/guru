@@ -1,7 +1,7 @@
 package ante
 
 import (
-	anteinterfaces "github.com/GPTx-global/guru-v2/ante/interfaces"
+	anteinterfaces "github.com/GPTx-global/guru-v2/v2/ante/interfaces"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	errorsmod "cosmossdk.io/errors"

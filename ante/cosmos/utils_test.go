@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/GPTx-global/guru-v2/ante/testutils"
-	"github.com/GPTx-global/guru-v2/crypto/ethsecp256k1"
+	"github.com/GPTx-global/guru-v2/v2/ante/testutils"
+	"github.com/GPTx-global/guru-v2/v2/crypto/ethsecp256k1"
 
 	sdkmath "cosmossdk.io/math"
 

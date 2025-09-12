@@ -14,14 +14,14 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	cmn "github.com/GPTx-global/guru-v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/precompiles/gov"
-	"github.com/GPTx-global/guru-v2/precompiles/testutil"
-	"github.com/GPTx-global/guru-v2/precompiles/testutil/contracts"
-	commonfactory "github.com/GPTx-global/guru-v2/testutil/integration/common/factory"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/factory"
-	testutiltx "github.com/GPTx-global/guru-v2/testutil/tx"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/gov"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil/contracts"
+	commonfactory "github.com/GPTx-global/guru-v2/v2/testutil/integration/common/factory"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
+	testutiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

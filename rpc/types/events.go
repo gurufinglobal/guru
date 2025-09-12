@@ -9,8 +9,8 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
-	"github.com/GPTx-global/guru-v2/types"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	"github.com/GPTx-global/guru-v2/v2/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

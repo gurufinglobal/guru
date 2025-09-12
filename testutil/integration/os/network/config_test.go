@@ -5,11 +5,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	testconstants "github.com/GPTx-global/guru-v2/testutil/constants"
-	grpchandler "github.com/GPTx-global/guru-v2/testutil/integration/os/grpc"
-	testkeyring "github.com/GPTx-global/guru-v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/testutil/integration/os/network"
-	evmtypes "github.com/GPTx-global/guru-v2/x/vm/types"
+	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	grpchandler "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
+	testkeyring "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
+	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 
