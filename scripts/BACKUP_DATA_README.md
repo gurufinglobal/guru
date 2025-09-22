@@ -106,6 +106,9 @@ cd /path/to/guru-v2
 
 # Run script with custom local retention period
 ./scripts/backup_data.sh --retention-days 7
+
+# Test what would be done without actual execution (dry-run)
+./scripts/backup_data.sh --dry-run
 ```
 
 ### 2. Command Line Options
@@ -115,6 +118,7 @@ cd /path/to/guru-v2
 | `--home PATH` | GURU_HOME directory | `/guru` | ❌ |
 | `--bucket NAME` | S3 bucket name | `guru-backup-data-bucket` | ❌ |
 | `--retention-days N` | Local backup retention period in days | `30` | ❌ |
+| `--dry-run` | Show what would be done without performing actual operations | - | ❌ |
 | `-h, --help` | Show help message | - | ❌ |
 
 ### 3. Environment Variable Options
@@ -147,6 +151,64 @@ export S3_PREFIX="production/daily-backups"
 export S3_BUCKET="my-gurud-backups"
 export AWS_PROFILE="production"
 ./scripts/backup_data.sh --retention-days 90
+
+# Test configuration without actual execution
+export S3_BUCKET="my-gurud-backups"
+./scripts/backup_data.sh --retention-days 7 --dry-run
+```
+
+## Dry-Run Mode
+
+### Overview
+The `--dry-run` option allows you to test the backup script without performing any actual operations. This is useful for:
+- Testing configuration before running actual backups
+- Verifying which files would be cleaned up
+- Debugging script behavior
+- Training and documentation purposes
+
+### What Dry-Run Does
+When `--dry-run` is enabled, the script will:
+- ✅ **Show all operations** that would be performed
+- ✅ **Log detailed commands** that would be executed
+- ✅ **Check prerequisites** (AWS CLI, directories, permissions)
+- ✅ **Calculate file sizes** and show backup estimates
+- ✅ **List files** that would be cleaned up
+- ❌ **NOT stop/start** the gurud node
+- ❌ **NOT create** actual backup files
+- ❌ **NOT upload** anything to S3
+- ❌ **NOT delete** any files
+
+### Usage Examples
+
+```bash
+# Test basic backup configuration
+./scripts/backup_data.sh --bucket test-bucket --dry-run
+
+# Test with custom retention period
+./scripts/backup_data.sh --bucket test-bucket --retention-days 7 --dry-run
+
+# Test with custom home directory
+./scripts/backup_data.sh --home /custom/path --bucket test-bucket --dry-run
+```
+
+### Sample Dry-Run Output
+```
+[2024-01-15 10:30:00] === Starting gurud data backup process ===
+[2024-01-15 10:30:00] GURU_HOME: /guru
+[2024-01-15 10:30:00] DATA_DIR: /guru/home/data
+[2024-01-15 10:30:00] S3_BUCKET: test-bucket
+[2024-01-15 10:30:00] S3_PREFIX: gurud-v2.0.1-data-backup
+[2024-01-15 10:30:00] RETENTION_DAYS: 30
+[2024-01-15 10:30:00] DRY_RUN: true
+[2024-01-15 10:30:00] [DRY-RUN] *** DRY RUN MODE - NO ACTUAL OPERATIONS WILL BE PERFORMED ***
+[2024-01-15 10:30:00] [DRY-RUN] Would stop gurud node using: /guru/stop.sh
+[2024-01-15 10:30:00] Data directory size: 2.5G
+[2024-01-15 10:30:00] [DRY-RUN] Would create tar backup: tar -cf "/guru/data_backups/gurud_v2.0.1_data_backup_20240115_103000.tar" -C "/guru" home/data
+[2024-01-15 10:30:00] [DRY-RUN] Estimated archive size: 2.5G (similar to source)
+[2024-01-15 10:30:00] [DRY-RUN] Would upload backup: aws s3 cp "/guru/data_backups/gurud_v2.0.1_data_backup_20240115_103000.tar" "s3://test-bucket/gurud-v2.0.1-data-backup/gurud_v2.0.1_data_backup_20240115_103000.tar"
+[2024-01-15 10:30:00] [DRY-RUN] Would start gurud node using: /guru/start.sh
+[2024-01-15 10:30:00] [DRY-RUN] Would remove old local backup: ./gurud_v2.0.1_data_backup_20231201_020000.tar
+[2024-01-15 10:30:00] [DRY-RUN] Would execute: find . -name "gurud_*_data_backup_*.tar" -type f -mmin +43200 -exec rm -f {} \;
 ```
 
 ## Automation Setup
@@ -304,8 +366,11 @@ sudo logrotate -f /etc/logrotate.d/gurud-backup
 # Check help
 ./scripts/backup_data.sh --help
 
-# Dry run (test without actual backup)
-# You can modify the script to use echo commands instead of actual operations for testing
+# Test script configuration without actual execution
+./scripts/backup_data.sh --bucket test-bucket --dry-run
+
+# Test with specific settings
+./scripts/backup_data.sh --home /custom/path --bucket test-bucket --retention-days 7 --dry-run
 ```
 
 ### 3. Backup Verification

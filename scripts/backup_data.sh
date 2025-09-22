@@ -9,6 +9,7 @@ set -e  # Exit on any error
 DEFAULT_GURU_HOME="/guru"
 GURU_VERSION="v2.0.1"
 DEFAULT_RETENTION_DAYS=30
+DRY_RUN=false
 
 # Parse command line arguments
 parse_args() {
@@ -25,6 +26,10 @@ parse_args() {
             --retention-days)
                 RETENTION_DAYS="$2"
                 shift 2
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
                 ;;
             -h|--help)
                 usage
@@ -65,6 +70,22 @@ BACKUP_PATH="$BACKUP_DIR/$BACKUP_FILENAME"
 # Logging function
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a $GURU_HOME/logs/gurud_${GURU_VERSION}_backup.log
+}
+
+# Dry-run aware execution function
+dry_run_exec() {
+    local command="$1"
+    local description="$2"
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "[DRY-RUN] Would execute: $description"
+        log "[DRY-RUN] Command: $command"
+        return 0
+    else
+        log "Executing: $description"
+        eval "$command"
+        return $?
+    fi
 }
 
 # Error handling function
@@ -116,6 +137,11 @@ create_backup_dir() {
 
 # Stop gurud node
 stop_gurud() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "[DRY-RUN] Would stop gurud node using: $STOP_SCRIPT"
+        return 0
+    fi
+    
     log "Stopping gurud node..."
     if bash "$STOP_SCRIPT"; then
         log "gurud node stopped successfully"
@@ -136,6 +162,12 @@ create_backup() {
     DATA_SIZE=$(du -sh "$DATA_DIR" | cut -f1)
     log "Data directory size: $DATA_SIZE"
     
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "[DRY-RUN] Would create tar backup: tar -cf \"$BACKUP_PATH\" -C \"$GURU_HOME\" home/data"
+        log "[DRY-RUN] Estimated archive size: $DATA_SIZE (similar to source)"
+        return 0
+    fi
+    
     # Create tar backup (without compression)
     if tar -cf "$BACKUP_PATH" -C "$GURU_HOME" home/data; then
         BACKUP_SIZE=$(du -sh "$BACKUP_PATH" | cut -f1)
@@ -153,6 +185,12 @@ upload_to_s3() {
     
     log "Uploading to: $S3_URL"
     
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "[DRY-RUN] Would upload backup: aws s3 cp \"$BACKUP_PATH\" \"$S3_URL\""
+        log "[DRY-RUN] Would verify upload: aws s3 ls \"$S3_URL\""
+        return 0
+    fi
+    
     if aws s3 cp "$BACKUP_PATH" "$S3_URL"; then
         log "Backup uploaded to S3 successfully"
         # Verify upload
@@ -168,6 +206,12 @@ upload_to_s3() {
 
 # Start gurud node
 start_gurud() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "[DRY-RUN] Would start gurud node using: $START_SCRIPT"
+        log "[DRY-RUN] Would wait 10 seconds and check if gurud process is running"
+        return 0
+    fi
+    
     log "Starting gurud node..."
     if bash "$START_SCRIPT"; then
         log "gurud node started successfully"
@@ -188,26 +232,29 @@ cleanup_local_backups() {
     log "Cleaning up old local backups (older than $RETENTION_DAYS days)..."
     cd "$BACKUP_DIR"
     
-    # Calculate cutoff date based on retention days
-    CUTOFF_DATE=$(date -d "$RETENTION_DAYS days ago" +%s)
+    # Calculate retention period in minutes (days * 24 * 60)
+    RETENTION_MINUTES=$(( RETENTION_DAYS * 24 * 60 ))
     
-    # Find and remove old backup files
-    find . -name "gurud_*_data_backup_*.tar" -type f 2>/dev/null | while read -r backup_file; do
-        # Get file modification time
-        if command -v gstat &> /dev/null; then
-            # macOS with GNU stat (via brew install coreutils)
-            file_date=$(gstat -c %Y "$backup_file" 2>/dev/null || echo "0")
-        else
-            # Linux stat
-            file_date=$(stat -c %Y "$backup_file" 2>/dev/null || echo "0")
-        fi
+    # Find and log files to be deleted before deletion
+    OLD_FILES=$(find . -name "gurud_*_data_backup_*.tar" -type f -mmin +$RETENTION_MINUTES 2>/dev/null)
+    if [[ -n "$OLD_FILES" ]]; then
+        echo "$OLD_FILES" | while read -r backup_file; do
+            if [[ "$DRY_RUN" == "true" ]]; then
+                log "[DRY-RUN] Would remove old local backup: $backup_file"
+            else
+                log "Removing old local backup: $backup_file"
+            fi
+        done
         
-        # Delete if file is older than cutoff date
-        if [[ "$file_date" -lt "$CUTOFF_DATE" && "$file_date" -gt "0" ]]; then
-            log "Removing old local backup: $backup_file (age: $(( ($(date +%s) - file_date) / 86400 )) days)"
-            rm -f "$backup_file"
+        if [[ "$DRY_RUN" == "true" ]]; then
+            log "[DRY-RUN] Would execute: find . -name \"gurud_*_data_backup_*.tar\" -type f -mmin +$RETENTION_MINUTES -exec rm -f {} \\;"
+        else
+            # Remove old backup files
+            find . -name "gurud_*_data_backup_*.tar" -type f -mmin +$RETENTION_MINUTES -exec rm -f {} \; 2>/dev/null
         fi
-    done
+    else
+        log "No old local backups found to clean up"
+    fi
     
     log "Local backup cleanup completed"
 }
@@ -238,11 +285,16 @@ cleanup_s3_backups() {
         
         # Delete if file is older than cutoff date
         if [[ "$file_date" -lt "$CUTOFF_DATE" && "$file_date" -gt "0" ]]; then
-            log "Deleting old S3 backup: $key (modified: $last_modified)"
-            if aws s3 rm "s3://$S3_BUCKET/$key"; then
-                log "Successfully deleted: $key"
+            if [[ "$DRY_RUN" == "true" ]]; then
+                log "[DRY-RUN] Would delete old S3 backup: $key (modified: $last_modified)"
+                log "[DRY-RUN] Command: aws s3 rm \"s3://$S3_BUCKET/$key\""
             else
-                log "WARNING: Failed to delete: $key"
+                log "Deleting old S3 backup: $key (modified: $last_modified)"
+                if aws s3 rm "s3://$S3_BUCKET/$key"; then
+                    log "Successfully deleted: $key"
+                else
+                    log "WARNING: Failed to delete: $key"
+                fi
             fi
         fi
     done
@@ -258,6 +310,11 @@ main() {
     log "S3_BUCKET: $S3_BUCKET"
     log "S3_PREFIX: $S3_PREFIX"
     log "RETENTION_DAYS: $RETENTION_DAYS"
+    log "DRY_RUN: $DRY_RUN"
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "[DRY-RUN] *** DRY RUN MODE - NO ACTUAL OPERATIONS WILL BE PERFORMED ***"
+    fi
     
     # Trap to ensure gurud is restarted even if script fails
     trap 'log "Script interrupted, attempting to restart gurud..."; bash "$START_SCRIPT" 2>/dev/null || true' INT TERM
@@ -271,7 +328,7 @@ main() {
     upload_to_s3
     start_gurud
     cleanup_local_backups
-    cleanup_s3_backups
+    # cleanup_s3_backups
     
     log "=== Backup process completed successfully ==="
     log "Backup file: $BACKUP_FILENAME"
@@ -286,6 +343,7 @@ usage() {
     echo "  --home PATH         Set GURU_HOME directory (default: /guru)"
     echo "  --bucket NAME       Set S3 bucket name (default: guru-backup-data-bucket)"
     echo "  --retention-days N  Set local backup retention period in days (default: 30)"
+    echo "  --dry-run           Show what would be done without performing actual operations"
     echo "  -h, --help          Show this help message"
     echo ""
     echo "Environment variables:"
@@ -310,6 +368,9 @@ usage() {
     echo "  # With AWS profile and custom local retention"
     echo "  export AWS_PROFILE=production"
     echo "  $0 --home ~/.gurud --bucket production-gurud-backups --retention-days 60"
+    echo ""
+    echo "  # Test what would be done without actual execution"
+    echo "  $0 --bucket my-gurud-backups --dry-run"
 }
 
 # Parse command line arguments first
