@@ -1,76 +1,77 @@
-# Gurud Data Backup Script 사용법
+# Gurud Data Backup Script Usage Guide
 
-## 개요
+## Overview
 
-`backup_data.sh`는 gurud 노드의 데이터를 안전하게 백업하고 AWS S3에 업로드하는 자동화된 스크립트입니다. 이 스크립트는 백업 과정에서 노드를 안전하게 중지하고 백업 완료 후 다시 시작하여 데이터 무결성을 보장합니다.
+`backup_data.sh` is an automated script that safely backs up gurud node data and uploads it to AWS S3. This script ensures data integrity by safely stopping the node during backup and restarting it after completion.
 
-## 주요 기능
+## Key Features
 
-- ✅ **안전한 노드 중지/재시작**: 백업 전후로 gurud 노드를 안전하게 제어
-- ✅ **데이터 압축**: 효율적인 저장을 위한 tar.gz 압축
-- ✅ **S3 업로드**: AWS S3에 자동 백업 파일 업로드
-- ✅ **로컬 정리**: 디스크 공간 절약을 위한 오래된 백업 파일 자동 삭제
-- ✅ **상세 로깅**: 모든 작업에 대한 상세한 로그 기록
-- ✅ **에러 처리**: 백업 실패 시에도 노드가 안전하게 재시작
+- ✅ **Safe Node Stop/Restart**: Safely controls gurud node before and after backup
+- ✅ **Data Compression**: tar.gz compression for efficient storage
+- ✅ **S3 Upload**: Automatic backup file upload to AWS S3
+- ✅ **Local Cleanup**: Automatic deletion of old local backup files based on retention period (configurable)
+- ✅ **S3 Cleanup**: Automatic deletion of S3 backup files older than 30 days (fixed policy)
+- ✅ **Detailed Logging**: Comprehensive logging of all operations
+- ✅ **Error Handling**: Safe node restart even when backup fails
 
-## 전제 조건
+## Prerequisites
 
-### 1. 시스템 요구사항
-- Linux/Unix 환경
+### 1. System Requirements
+- Linux/Unix environment
 - Bash shell
-- 충분한 디스크 공간 (데이터 폴더 크기의 2배 이상 권장)
+- Sufficient disk space (recommended 2x the size of data folder)
 
-### 2. 필수 소프트웨어
-- **AWS CLI**: S3 업로드를 위해 필요
+### 2. Required Software
+- **AWS CLI**: Required for S3 upload
   ```bash
-  # AWS CLI 설치 (Ubuntu/Debian)
+  # Install AWS CLI (Ubuntu/Debian)
   sudo apt-get update
   sudo apt-get install awscli
   
-  # AWS CLI 설치 (CentOS/RHEL)
+  # Install AWS CLI (CentOS/RHEL)
   sudo yum install awscli
   
-  # 또는 pip로 설치
+  # Or install via pip
   pip install awscli
   ```
 
-### 3. 디렉토리 및 파일 구조
-다음 파일들이 존재해야 합니다:
-- `/guru/stop.sh` - gurud 노드 중지 스크립트
-- `/guru/start.sh` - gurud 노드 시작 스크립트
-- `/guru/home/data/` - 백업할 데이터 디렉토리
+### 3. Directory and File Structure
+The following files must exist:
+- `/guru/stop.sh` - Script to stop gurud node
+- `/guru/start.sh` - Script to start gurud node
+- `/guru/home/data/` - Data directory to backup
 
-## 설정
+## Configuration
 
-### 1. AWS 인증 설정
+### 1. AWS Authentication Setup
 
-다음 중 하나의 방법으로 AWS 인증을 설정하세요:
+Configure AWS authentication using one of the following methods:
 
-#### 방법 A: AWS Profile 사용 (권장)
+#### Method A: AWS Profile Usage (Recommended)
 ```bash
 aws configure --profile gurud-backup
-# AWS Access Key ID, Secret Access Key, Region 입력
+# Enter AWS Access Key ID, Secret Access Key, Region
 ```
 
-#### 방법 B: 환경 변수 사용
+#### Method B: Environment Variables
 ```bash
 export AWS_ACCESS_KEY_ID="your-access-key"
 export AWS_SECRET_ACCESS_KEY="your-secret-key"
-export AWS_DEFAULT_REGION="ap-northeast-2"  # 서울 리전
+export AWS_DEFAULT_REGION="ap-northeast-2"  # Seoul region
 ```
 
-#### 방법 C: IAM Role 사용 (EC2에서 실행 시)
-EC2 인스턴스에 적절한 S3 권한이 있는 IAM Role을 연결
+#### Method C: IAM Role Usage (When running on EC2)
+Attach an IAM Role with appropriate S3 permissions to your EC2 instance
 
-### 2. S3 버킷 준비
+### 2. S3 Bucket Setup
 
-백업을 저장할 S3 버킷을 생성하고 적절한 권한을 설정하세요:
+Create an S3 bucket to store backups and configure appropriate permissions:
 
 ```bash
-# S3 버킷 생성
+# Create S3 bucket
 aws s3 mb s3://your-gurud-backup-bucket
 
-# 버킷 정책 예시 (선택사항)
+# Example bucket policy (optional)
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -90,104 +91,122 @@ aws s3 mb s3://your-gurud-backup-bucket
 }
 ```
 
-## 사용법
+## Usage
 
-### 1. 기본 실행
+### 1. Basic Execution
 
 ```bash
-# 환경 변수 설정
+# Set environment variables
 export S3_BUCKET="your-gurud-backup-bucket"
-export AWS_PROFILE="gurud-backup"  # 선택사항
+export AWS_PROFILE="gurud-backup"  # Optional
 
-# 스크립트 실행
+# Run script with default settings (30 days retention)
 cd /path/to/guru-v2
 ./scripts/backup_data.sh
+
+# Run script with custom local retention period
+./scripts/backup_data.sh --retention-days 7
 ```
 
-### 2. 환경 변수 옵션
+### 2. Command Line Options
 
-| 환경 변수 | 설명 | 기본값 | 필수 |
-|-----------|------|--------|------|
-| `S3_BUCKET` | S3 버킷 이름 | - | ✅ |
-| `S3_PREFIX` | S3 내 폴더 경로 | `gurud-backups` | ❌ |
-| `AWS_PROFILE` | AWS 프로필 이름 | - | ❌ |
+| Option | Description | Default Value | Required |
+|--------|-------------|---------------|----------|
+| `--home PATH` | GURU_HOME directory | `/guru` | ❌ |
+| `--bucket NAME` | S3 bucket name | `guru-backup-data-bucket` | ❌ |
+| `--retention-days N` | Local backup retention period in days | `30` | ❌ |
+| `-h, --help` | Show help message | - | ❌ |
 
-### 3. 실행 예시
+### 3. Environment Variable Options
+
+| Environment Variable | Description | Default Value | Required |
+|---------------------|-------------|---------------|----------|
+| `S3_BUCKET` | S3 bucket name | - | ✅ |
+| `S3_PREFIX` | S3 folder path | `gurud-v2.0.1-data-backup` | ❌ |
+| `AWS_PROFILE` | AWS profile name | - | ❌ |
+
+### 4. Execution Examples
 
 ```bash
-# 기본 설정으로 실행
+# Run with default settings (30 days retention)
 export S3_BUCKET="my-gurud-backups"
 ./scripts/backup_data.sh
 
-# 커스텀 S3 경로 지정
+# Specify custom local retention period (7 days)
+./scripts/backup_data.sh --bucket my-gurud-backups --retention-days 7
+
+# Use command line arguments with custom home directory and local retention
+./scripts/backup_data.sh --home /custom/guru/path --bucket my-gurud-backups --retention-days 60
+
+# Specify custom S3 path via environment variable with local retention
 export S3_BUCKET="my-gurud-backups"
 export S3_PREFIX="production/daily-backups"
-./scripts/backup_data.sh
+./scripts/backup_data.sh --retention-days 14
 
-# 특정 AWS 프로필 사용
+# Use specific AWS profile with custom local retention
 export S3_BUCKET="my-gurud-backups"
 export AWS_PROFILE="production"
-./scripts/backup_data.sh
+./scripts/backup_data.sh --retention-days 90
 ```
 
-## 자동화 설정
+## Automation Setup
 
-### Cron을 사용한 주기적 백업
+### Periodic Backups Using Cron
 
-#### 1. Crontab 편집
+#### 1. Edit Crontab
 ```bash
 crontab -e
 ```
 
-#### 2. 백업 스케줄 추가
+#### 2. Add Backup Schedule
 
 ```bash
-# 매일 새벽 2시에 백업 실행
+# Run backup daily at 2 AM
 0 2 * * * cd /path/to/guru-v2 && export S3_BUCKET="your-bucket" && export AWS_PROFILE="default" && ./scripts/backup_data.sh >> /var/log/gurud_backup_cron.log 2>&1
 
-# 매주 일요일 새벽 3시에 백업 실행
+# Run backup every Sunday at 3 AM
 0 3 * * 0 cd /path/to/guru-v2 && export S3_BUCKET="your-bucket" && ./scripts/backup_data.sh
 
-# 매월 1일 새벽 1시에 백업 실행
+# Run backup on 1st of every month at 1 AM
 0 1 1 * * cd /path/to/guru-v2 && export S3_BUCKET="your-bucket" && ./scripts/backup_data.sh
 ```
 
-#### 3. Cron 스크립트 파일 생성 (권장)
+#### 3. Create Cron Script File (Recommended)
 
 ```bash
-# /etc/cron.d/gurud-backup 파일 생성
+# Create /etc/cron.d/gurud-backup file
 sudo tee /etc/cron.d/gurud-backup << EOF
-# Gurud 데이터 백업 - 매일 새벽 2시
+# Gurud data backup - Daily at 2 AM
 0 2 * * * root cd /path/to/guru-v2 && S3_BUCKET="your-bucket" AWS_PROFILE="default" ./scripts/backup_data.sh
 EOF
 ```
 
-## 로그 및 모니터링
+## Logging and Monitoring
 
-### 1. 로그 파일 위치
-- **메인 로그**: `/var/log/gurud_backup.log`
-- **Cron 로그**: `/var/log/gurud_backup_cron.log` (cron 설정에 따라)
+### 1. Log File Locations
+- **Main Log**: `/var/log/gurud_backup.log`
+- **Cron Log**: `/var/log/gurud_backup_cron.log` (depending on cron configuration)
 
-### 2. 로그 확인 명령어
+### 2. Log Checking Commands
 
 ```bash
-# 최근 백업 로그 확인
+# Check recent backup logs
 tail -f /var/log/gurud_backup.log
 
-# 특정 날짜의 백업 로그 확인
+# Check backup logs for specific date
 grep "2024-01-15" /var/log/gurud_backup.log
 
-# 에러 로그만 확인
+# Check error logs only
 grep "ERROR" /var/log/gurud_backup.log
 
-# 백업 완료 확인
+# Check backup completion
 grep "completed successfully" /var/log/gurud_backup.log
 ```
 
-### 3. 로그 로테이션 설정
+### 3. Log Rotation Setup
 
 ```bash
-# /etc/logrotate.d/gurud-backup 파일 생성
+# Create /etc/logrotate.d/gurud-backup file
 sudo tee /etc/logrotate.d/gurud-backup << EOF
 /var/log/gurud_backup.log {
     daily
@@ -201,107 +220,161 @@ sudo tee /etc/logrotate.d/gurud-backup << EOF
 EOF
 ```
 
-## 백업 파일 관리
+## Backup File Management
 
-### 1. 백업 파일 명명 규칙
+### 1. Backup File Naming Convention
 ```
 gurud_data_backup_YYYYMMDD_HHMMSS.tar.gz
 ```
-예: `gurud_data_backup_20240115_020000.tar.gz`
+Example: `gurud_data_backup_20240115_020000.tar.gz`
 
-### 2. S3 저장 경로
+### 2. S3 Storage Path
 ```
 s3://your-bucket/gurud-backups/gurud_data_backup_20240115_020000.tar.gz
 ```
 
-### 3. 로컬 백업 파일 정리
-- 스크립트는 자동으로 최근 3개의 백업 파일만 로컬에 보관
-- 임시 백업 디렉토리: `/tmp/gurud_backups`
+### 3. Local Backup File Cleanup
+- Script automatically deletes local backup files older than specified retention period (default: 30 days)
+- Retention period can be customized using `--retention-days` option
+- Cleanup runs after each successful backup upload
 
-### 4. 백업 복원 방법
+### 4. S3 Backup File Cleanup
+- Script automatically deletes S3 backup files older than 30 days (fixed policy)
+- Cleanup runs after each successful backup upload
+- Only affects files in the configured S3 prefix path
+
+### 5. Backup Restoration Method
 
 ```bash
-# S3에서 백업 파일 다운로드
+# Download backup file from S3
 aws s3 cp s3://your-bucket/gurud-backups/gurud_data_backup_20240115_020000.tar.gz ./
 
-# gurud 중지
+# Stop gurud
 /guru/stop.sh
 
-# 기존 데이터 백업 (안전을 위해)
+# Backup existing data (for safety)
 mv /guru/home/data /guru/home/data.old
 
-# 백업 파일 복원
+# Restore backup file
 tar -xzf gurud_data_backup_20240115_020000.tar.gz -C /guru/home/
 
-# gurud 재시작
+# Restart gurud
 /guru/start.sh
 ```
 
-## 문제 해결
+## Troubleshooting
 
-### 1. 일반적인 에러 및 해결책
+### 1. Common Errors and Solutions
 
-#### AWS CLI 에러
+#### AWS CLI Errors
 ```bash
-# 에러: AWS CLI not found
+# Error: AWS CLI not found
 sudo apt-get install awscli
 
-# 에러: Invalid credentials
+# Error: Invalid credentials
 aws configure list
 aws sts get-caller-identity
 ```
 
-#### 권한 에러
+#### Permission Errors
 ```bash
-# 스크립트 실행 권한 확인
+# Check script execution permissions
 chmod +x ./scripts/backup_data.sh
 
-# 로그 파일 권한 확인
+# Check log file permissions
 sudo touch /var/log/gurud_backup.log
 sudo chmod 644 /var/log/gurud_backup.log
 ```
 
-#### 디스크 공간 부족
+#### Insufficient Disk Space
 ```bash
-# 디스크 공간 확인
+# Check disk space
 df -h
 
-# 임시 백업 디렉토리 정리
+# Clean temporary backup directory
 rm -rf /tmp/gurud_backups/*
 
-# 오래된 로그 파일 정리
+# Clean old log files
 sudo logrotate -f /etc/logrotate.d/gurud-backup
 ```
 
-### 2. 스크립트 테스트
+### 2. Script Testing
 
 ```bash
-# 도움말 확인
+# Check help
 ./scripts/backup_data.sh --help
 
-# 드라이런 (실제 백업 없이 테스트)
-# 스크립트를 수정하여 실제 작업 대신 echo 명령어로 테스트 가능
+# Dry run (test without actual backup)
+# You can modify the script to use echo commands instead of actual operations for testing
 ```
 
-### 3. 백업 검증
+### 3. Backup Verification
 
 ```bash
-# S3에 업로드된 파일 확인
+# Check files uploaded to S3
 aws s3 ls s3://your-bucket/gurud-backups/
 
-# 백업 파일 무결성 확인
+# Check backup file integrity
 tar -tzf /tmp/gurud_backups/gurud_data_backup_20240115_020000.tar.gz | head -10
 ```
 
-## 보안 고려사항
+## S3 Backup Management
 
-### 1. AWS 인증 보안
-- IAM 사용자에게 최소 권한만 부여
-- Access Key 대신 IAM Role 사용 권장 (EC2 환경)
-- 정기적인 Access Key 로테이션
+### 1. Automatic Cleanup Policy
+The script includes an automatic cleanup feature that:
+- **Local Backup Cleanup**: Deletes local backup files older than the specified retention period (default: 30 days)
+  - Retention period can be customized using the `--retention-days` command line option
+  - Runs after each successful backup upload
+- **S3 Backup Cleanup**: Deletes S3 backup files older than 30 days (fixed policy)
+  - Only affects files within the configured S3 prefix path
+  - Runs after each successful backup upload
+- Logs all deletion operations for audit purposes
 
-### 2. 백업 파일 암호화
-S3 버킷에서 서버 측 암호화 활성화:
+### 2. Manual S3 Cleanup
+To manually clean up old backups:
+```bash
+# List all backup files with their dates
+aws s3 ls s3://your-bucket/gurud-backups/ --recursive
+
+# Manually delete specific backup file
+aws s3 rm s3://your-bucket/gurud-backups/gurud_data_backup_20240101_020000.tar
+
+# Delete all backups older than specific date (be careful!)
+aws s3 ls s3://your-bucket/gurud-backups/ --recursive | \
+  awk '$1 < "2024-01-01" {print $4}' | \
+  xargs -I {} aws s3 rm s3://your-bucket/{}
+```
+
+### 3. Local Backup Retention Configuration
+You can customize the local backup retention period using the command line option:
+```bash
+# Keep local backups for 60 days
+./scripts/backup_data.sh --bucket my-bucket --retention-days 60
+
+# Keep local backups for 7 days only
+./scripts/backup_data.sh --bucket my-bucket --retention-days 7
+
+# Keep local backups for 1 year (365 days)
+./scripts/backup_data.sh --bucket my-bucket --retention-days 365
+```
+
+For cron jobs, you can specify the local retention period:
+```bash
+# Cron entry with 14-day local retention
+0 2 * * * cd /path/to/guru-v2 && ./scripts/backup_data.sh --bucket my-bucket --retention-days 14
+```
+
+**Note**: S3 backup retention is fixed at 30 days and cannot be changed via command line options.
+
+## Security Considerations
+
+### 1. AWS Authentication Security
+- Grant minimal permissions to IAM users
+- Prefer IAM Roles over Access Keys (in EC2 environment)
+- Regular Access Key rotation
+
+### 2. Backup File Encryption
+Enable server-side encryption on S3 bucket:
 ```bash
 aws s3api put-bucket-encryption \
   --bucket your-gurud-backup-bucket \
@@ -316,41 +389,41 @@ aws s3api put-bucket-encryption \
   }'
 ```
 
-### 3. 네트워크 보안
-- VPC 엔드포인트 사용으로 인터넷 트래픽 최소화
-- 방화벽 규칙으로 불필요한 포트 차단
+### 3. Network Security
+- Use VPC endpoints to minimize internet traffic
+- Block unnecessary ports with firewall rules
 
-## 성능 최적화
+## Performance Optimization
 
-### 1. 압축 최적화
-더 빠른 압축을 원하는 경우 스크립트 수정:
+### 1. Compression Optimization
+For faster compression, modify the script:
 ```bash
-# gzip 대신 lz4 사용 (더 빠름, 압축률 낮음)
+# Use lz4 instead of gzip (faster, lower compression ratio)
 tar --lz4 -cf "$BACKUP_PATH" -C "$GURU_HOME" data
 
-# 또는 압축 레벨 조정
+# Or adjust compression level
 tar -czf "$BACKUP_PATH" --use-compress-program="gzip -1" -C "$GURU_HOME" data
 ```
 
-### 2. 병렬 업로드
-대용량 파일의 경우 멀티파트 업로드 설정:
+### 2. Parallel Upload
+Configure multipart upload for large files:
 ```bash
 aws configure set default.s3.multipart_threshold 64MB
 aws configure set default.s3.multipart_chunksize 16MB
 aws configure set default.s3.max_concurrent_requests 10
 ```
 
-## 지원 및 문의
+## Support and Contact
 
-백업 스크립트 관련 문제가 발생하면:
-1. 로그 파일 확인 (`/var/log/gurud_backup.log`)
-2. AWS 인증 상태 확인 (`aws sts get-caller-identity`)
-3. 디스크 공간 및 권한 확인
-4. 개발팀에 로그와 함께 문의
+If you encounter issues with the backup script:
+1. Check log files (`/var/log/gurud_backup.log`)
+2. Check AWS authentication status (`aws sts get-caller-identity`)
+3. Check disk space and permissions
+4. Contact development team with logs
 
 ---
 
-**⚠️ 주의사항**
-- 백업 과정에서 gurud 노드가 중지되므로 서비스 다운타임이 발생합니다
-- 충분한 디스크 공간을 확보한 후 백업을 실행하세요
-- 정기적으로 백업 파일의 복원 가능성을 테스트하세요
+**⚠️ Important Notes**
+- The gurud node will be stopped during backup, causing service downtime
+- Ensure sufficient disk space before running backup
+- Regularly test backup file restoration capabilities
