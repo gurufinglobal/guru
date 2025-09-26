@@ -80,10 +80,8 @@ func (s *Submitter) BroadcastTxWithRetry(ctx context.Context, jobResult types.Or
 
 			s.logger.Info("sequence number rolled back", "failed_seq", failedSeq, "new_seq", s.sequenceN)
 			time.Sleep(time.Second)
-			continue
 		default:
 			s.logger.Error("unexpected error code", "attempt", attempt+1, "max_attempts", maxAttempts, "code", res.Code, "raw_log", res.RawLog)
-			return
 		}
 	}
 

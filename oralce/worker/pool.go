@@ -54,9 +54,21 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 	index := slices.Index(requestDoc.AccountList, config.Address().String())
 	if index == -1 {
 		wp.logger.Info("request document not assigned to this oracle instance")
+		reqID := strconv.FormatUint(requestDoc.RequestId, 10)
+		_, ok := wp.jobStore.Get(reqID)
+		if ok {
+			wp.jobStore.Remove(reqID)
+			wp.logger.Info("removed job from store", "request_id", requestDoc.RequestId)
+		}
 		return
 	} else {
-		index = (index + 1) % len(requestDoc.AccountList)
+		length := len(requestDoc.Endpoints)
+		if length == 0 {
+			wp.logger.Info("no endpoints found", "request_id", requestDoc.RequestId)
+			return
+		}
+
+		index %= len(requestDoc.Endpoints)
 	}
 
 	var currentNonce uint64
