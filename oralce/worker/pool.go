@@ -128,14 +128,6 @@ func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 	task := job
 
 	wp.workerFunc(func() error {
-		if 0 < task.Nonce && 0 < task.Delay {
-			select {
-			case <-time.After(task.Delay):
-			case <-ctx.Done():
-				return nil
-			}
-		}
-
 		reqID := strconv.FormatUint(task.ID, 10)
 
 		if stored, ok := wp.jobStore.Get(reqID); ok {
@@ -145,6 +137,14 @@ func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 		}
 
 		wp.jobStore.Set(reqID, task)
+
+		if 0 < task.Nonce && 0 < task.Delay {
+			select {
+			case <-time.After(task.Delay):
+			case <-ctx.Done():
+				return nil
+			}
+		}
 
 		rawData, err := wp.client.fetchRawData(task.URL)
 		if err != nil {
