@@ -163,7 +163,7 @@ func (d *OracleDaemon) initializeComponents(ctx context.Context) error {
 	jobExecutor := scheduler.NewJobExecutor(d.logger, d.config)
 
 	resultCh := make(chan *scheduler.JobResult, 100)
-	d.jobScheduler = scheduler.NewEventScheduler(eventParser, jobExecutor, *d.config, resultCh, d.logger)
+	d.jobScheduler = scheduler.NewEventScheduler(eventParser, jobExecutor, queryClientAdapter, *d.config, resultCh, d.logger)
 
 	// Submitter 생성
 	resultSubmitter, err := submitter.NewJobResultSubmitter(d.logger, d.config, d.clientCtx)
@@ -246,7 +246,8 @@ func (d *OracleDaemon) runEventProcessor(ctx context.Context) {
 
 		case event, ok := <-d.eventWatcher.EventCh():
 			if !ok {
-				d.handleFatalError(fmt.Errorf("event watcher channel closed"))
+				// 채널이 정상적으로 닫힌 경우 (Watcher 종료)
+				d.logger.Debug("event watcher channel closed")
 				return
 			}
 
@@ -312,7 +313,8 @@ func (d *OracleDaemon) runResultProcessor(ctx context.Context) {
 
 		case result, ok := <-d.jobScheduler.GetResultChannel():
 			if !ok {
-				d.handleFatalError(fmt.Errorf("job scheduler result channel closed"))
+				// 채널이 정상적으로 닫힌 경우 (Scheduler 종료)
+				d.logger.Debug("job scheduler result channel closed")
 				return
 			}
 

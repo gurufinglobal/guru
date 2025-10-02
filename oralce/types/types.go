@@ -17,10 +17,10 @@ var (
 	UpdateQuery = "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'"
 	UpdateID    = oracletypes.EventTypeUpdateOracleRequestDoc + "." + oracletypes.AttributeKeyRequestId
 
-	CompleteQuery = fmt.Sprintf("tm.event='NewBlock' AND %s.%s EXISTS", oracletypes.EventTypeCompleteOracleDataSet, oracletypes.AttributeKeyRequestId)
-	CompleteID    = oracletypes.EventTypeCompleteOracleDataSet + "." + oracletypes.AttributeKeyRequestId
-	CompleteNonce = oracletypes.EventTypeCompleteOracleDataSet + "." + oracletypes.AttributeKeyNonce
-	CompleteTime  = oracletypes.EventTypeCompleteOracleDataSet + "." + oracletypes.AttributeKeyBlockTime
+	CompleteQuery = "tm.event='NewBlock' AND complete_oracle_data_set.request_id EXISTS"
+	CompleteID    = "complete_oracle_data_set.request_id"
+	CompleteNonce = "complete_oracle_data_set.nonce"
+	CompleteTime  = "complete_oracle_data_set.block_time"
 
 	MinGasPrice = feemarkettypes.EventTypeChangeMinGasPrice + "." + feemarkettypes.AttributeKeyMinGasPrice
 )

@@ -451,7 +451,8 @@ func (s *JobResultSubmitter_impl) handleTransactionError(ctx context.Context, tx
 		s.updateMetrics(func(m *SubmitterMetrics) {
 			m.InsufficientFeeErrs++
 		})
-		// TODO: 가스 가격 조정 로직
+		// 가스 가격 부족 시 로깅만 수행 (설정에서 충분한 가스를 설정해야 함)
+		s.logger.Error("insufficient gas fee, please increase gas prices in config")
 		return nil
 
 	default:

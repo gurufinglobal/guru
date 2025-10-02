@@ -3,11 +3,13 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 
 	"cosmossdk.io/log"
 	"github.com/GPTx-global/guru-v2/oralce/config"
+	oracletypes "github.com/GPTx-global/guru-v2/x/oracle/types"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
@@ -17,6 +19,7 @@ type EventScheduler_impl struct {
 	eventParser EventParser
 	jobExecutor JobExecutor
 	jobStore    JobStore
+	queryClient QueryClient
 	config      config.Config
 	logger      log.Logger
 
@@ -29,6 +32,7 @@ type EventScheduler_impl struct {
 
 	// Scheduling
 	scheduleTicker *time.Ticker
+	scheduleWg     sync.WaitGroup
 
 	// Metrics
 	metrics *SchedulerMetrics
@@ -38,6 +42,7 @@ type EventScheduler_impl struct {
 func NewEventScheduler(
 	eventParser EventParser,
 	jobExecutor JobExecutor,
+	queryClient QueryClient,
 	config config.Config,
 	resultCh chan *JobResult,
 	logger log.Logger,
@@ -48,6 +53,7 @@ func NewEventScheduler(
 		eventParser: eventParser,
 		jobExecutor: jobExecutor,
 		jobStore:    jobStore,
+		queryClient: queryClient,
 		config:      config,
 		resultCh:    resultCh,
 		logger:      logger,
@@ -74,6 +80,7 @@ func (s *EventScheduler_impl) Start(ctx context.Context) error {
 
 	// 주기적 스케줄링 시작 (1초마다 체크)
 	s.scheduleTicker = time.NewTicker(1 * time.Second)
+	s.scheduleWg.Add(1)
 	go s.runPeriodicScheduler(ctx)
 
 	s.logger.Info("event scheduler started")
@@ -91,6 +98,21 @@ func (s *EventScheduler_impl) Stop(ctx context.Context) error {
 	// 스케줄링 타이머 중지
 	if s.scheduleTicker != nil {
 		s.scheduleTicker.Stop()
+	}
+
+	// 주기적 스케줄러 종료 대기
+	s.scheduleWg.Wait()
+
+	// JobExecutor 종료 (TaskGroup 대기)
+	if s.jobExecutor != nil {
+		if err := s.jobExecutor.Shutdown(ctx); err != nil {
+			s.logger.Error("failed to shutdown job executor", "error", err)
+		}
+	}
+
+	// Result 채널 닫기 (더 이상 결과를 전송하지 않음)
+	if s.resultCh != nil {
+		close(s.resultCh)
 	}
 
 	s.logger.Info("event scheduler stopped",
@@ -154,18 +176,23 @@ func (s *EventScheduler_impl) processEventToJob(ctx context.Context, event coret
 
 	// 기존 job이 있는지 확인
 	if _, exists := s.jobStore.Get(requestKey); exists {
-		// 기존 job 업데이트 (nonce 및 일부 값만)
+		// 기존 job 업데이트 (Update 이벤트인 경우 모든 필드 업데이트)
 		s.jobStore.Update(requestKey, func(j *OracleJob) error {
-			j.Nonce = job.Nonce
+			j.URL = job.URL
+			j.ParseRule = job.ParseRule
+			j.Period = job.Period
 			j.Status = job.Status
+			j.AccountList = job.AccountList
+			j.AssignedIndex = job.AssignedIndex
 			j.UpdatedAt = time.Now()
-			// Period와 URL 등은 변경되지 않음
+			// Nonce는 Complete 이벤트에서만 업데이트
 			return nil
 		})
 
 		s.logger.Info("updated existing job",
 			"request_id", job.RequestID,
-			"nonce", job.Nonce)
+			"url", job.URL,
+			"period", job.Period)
 	} else {
 		// 새 job 저장
 		job.NextRunTime = time.Now() // 즉시 실행 가능
@@ -220,28 +247,19 @@ func (s *EventScheduler_impl) executeJobToResult(ctx context.Context, job *Oracl
 			"url", job.URL,
 			"error", err)
 
-		// 실패 상태 업데이트
+		// 실패 상태 업데이트 - 1분 후 재시도 가능하도록 설정
 		s.jobStore.Update(requestKey, func(j *OracleJob) error {
 			j.ExecutionState.Status = JobStatusFailed
 			endTime := time.Now()
 			j.ExecutionState.EndTime = &endTime
 			j.FailureCount++
 			j.LastError = err.Error()
+			// 실패 시 1분 후 재시도 가능하도록 설정
+			j.NextRunTime = time.Now().Add(1 * time.Minute)
 			return nil
 		})
 
-		// 실패 결과 전송
-		s.sendJobResult(&JobResult{
-			JobID:      job.ID,
-			RequestID:  job.RequestID,
-			Data:       "",
-			Nonce:      job.Nonce,
-			Success:    false,
-			Error:      err,
-			ExecutedAt: startTime,
-			Duration:   time.Since(startTime),
-		})
-
+		// 실패 결과는 전송하지 않음 (재시도 예정)
 		s.updateMetrics(func(m *SchedulerMetrics) {
 			m.FailedJobs++
 		})
@@ -256,40 +274,35 @@ func (s *EventScheduler_impl) executeJobToResult(ctx context.Context, job *Oracl
 			"parse_rule", job.ParseRule,
 			"error", err)
 
-		// 실패 상태 업데이트
+		// 실패 상태 업데이트 - 1분 후 재시도 가능하도록 설정
 		s.jobStore.Update(requestKey, func(j *OracleJob) error {
 			j.ExecutionState.Status = JobStatusFailed
 			endTime := time.Now()
 			j.ExecutionState.EndTime = &endTime
 			j.FailureCount++
 			j.LastError = err.Error()
+			// 파싱 실패는 보통 재시도해도 같은 결과이므로 더 긴 지연 적용
+			j.NextRunTime = time.Now().Add(5 * time.Minute)
 			return nil
 		})
 
-		// 실패 결과 전송
-		s.sendJobResult(&JobResult{
-			JobID:      job.ID,
-			RequestID:  job.RequestID,
-			Data:       "",
-			Nonce:      job.Nonce,
-			Success:    false,
-			Error:      err,
-			ExecutedAt: startTime,
-			Duration:   time.Since(startTime),
-		})
-
+		// 실패 결과는 전송하지 않음 (재시도 예정)
 		s.updateMetrics(func(m *SchedulerMetrics) {
 			m.FailedJobs++
 		})
 		return nil
 	}
 
-	// 4. 성공 상태 업데이트
+	// 4. 성공 상태 업데이트 및 다음 실행 시간 계산
 	s.jobStore.Update(requestKey, func(j *OracleJob) error {
-		j.ExecutionState.Status = JobStatusCompleted
+		j.ExecutionState.Status = JobStatusCompleted // Complete 이벤트 대기
 		endTime := time.Now()
 		j.ExecutionState.EndTime = &endTime
+		j.LastRunAt = &endTime
 		j.RunCount++
+		j.LastError = "" // 에러 초기화
+		// NextRunTime을 먼 미래로 설정하여 Complete 이벤트 전까지 재실행 방지
+		j.NextRunTime = time.Now().Add(24 * time.Hour)
 		return nil
 	})
 
@@ -298,7 +311,7 @@ func (s *EventScheduler_impl) executeJobToResult(ctx context.Context, job *Oracl
 		JobID:      job.ID,
 		RequestID:  job.RequestID,
 		Data:       extractedData,
-		Nonce:      job.Nonce,
+		Nonce:      job.Nonce + 1, // 다음 nonce로 전송
 		Success:    true,
 		Error:      nil,
 		ExecutedAt: startTime,
@@ -307,26 +320,28 @@ func (s *EventScheduler_impl) executeJobToResult(ctx context.Context, job *Oracl
 
 	s.updateMetrics(func(m *SchedulerMetrics) {
 		m.CompletedJobs++
+		m.LastJobAt = time.Now()
 	})
 
 	s.logger.Info("job completed successfully",
 		"request_id", job.RequestID,
 		"duration", time.Since(startTime),
-		"data_length", len(extractedData))
+		"data_length", len(extractedData),
+		"next_nonce", job.Nonce+1)
 
 	return nil
 }
 
 // parseEventToJob은 이벤트를 OracleJob으로 변환
 func (s *EventScheduler_impl) parseEventToJob(ctx context.Context, event coretypes.ResultEvent) (*OracleJob, error) {
-	switch event.Query {
-	case "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'":
+	switch {
+	case event.Query == "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'":
 		return s.handleRegisterEvent(ctx, event)
 
-	case "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'":
+	case event.Query == "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'":
 		return s.handleUpdateEvent(ctx, event)
 
-	case "tm.event='NewBlock' AND guru.oracle.v1.CompleteOracleDataSet.request_id EXISTS":
+	case event.Query == "tm.event='NewBlock' AND complete_oracle_data_set.request_id EXISTS":
 		// Complete 이벤트는 별도 처리 (다음 실행 시간 계산)
 		return nil, s.handleCompleteEvent(ctx, event)
 
@@ -379,27 +394,36 @@ func (s *EventScheduler_impl) handleCompleteEvent(ctx context.Context, event cor
 	}
 
 	// RequestID 기반으로 Job 찾기
-	requestKey := fmt.Sprintf("req_%s", completeData.RequestID)
+	requestKey := fmt.Sprintf("req_%d", completeData.RequestID)
 	job, exists := s.jobStore.Get(requestKey)
 	if !exists {
 		s.logger.Debug("job not found for complete event", "request_id", completeData.RequestID)
 		return nil
 	}
 
-	// 다음 실행 시간 계산 (현재 시간 + period)
-	nextRunTime := time.Now().Add(time.Duration(job.Period) * time.Second)
+	// 다음 실행 시간 계산 (블록 시간 + period)
+	nextRunTime := completeData.BlockTime.Add(job.Period)
+	now := time.Now()
 
-	// Job의 다음 실행 시간 업데이트
+	// 과거 시간이면 즉시 실행 가능하도록 현재 시간으로 설정
+	if nextRunTime.Before(now) {
+		nextRunTime = now
+	}
+
+	// Job의 다음 실행 시간 및 Nonce 업데이트
 	s.jobStore.Update(requestKey, func(j *OracleJob) error {
 		j.NextRunTime = nextRunTime
+		j.Nonce = completeData.Nonce // 완료된 nonce로 업데이트
 		j.ExecutionState.Status = JobStatusPending
 		return nil
 	})
 
 	s.logger.Info("scheduled next execution after complete event",
 		"request_id", completeData.RequestID,
+		"current_nonce", completeData.Nonce,
 		"next_run_time", nextRunTime,
-		"period", job.Period)
+		"period", job.Period,
+		"delay_from_now", nextRunTime.Sub(now))
 
 	return nil
 }
@@ -447,26 +471,73 @@ func (s *EventScheduler_impl) IsRunning() bool {
 func (s *EventScheduler_impl) loadExistingJobs(ctx context.Context) error {
 	s.logger.Info("loading existing jobs from chain")
 
-	// TODO: QueryClient를 통해 chain에서 현재 활성 Oracle 요청들을 조회
-	// 임시로 빈 구현 - 실제로는 QueryClient.OracleData() 등을 사용
+	// QueryClient를 통해 활성 상태의 Oracle 요청들을 조회
+	req := &oracletypes.QueryOracleRequestDocsRequest{
+		Status: oracletypes.RequestStatus_REQUEST_STATUS_ENABLED,
+	}
 
-	s.logger.Info("loaded existing jobs", "count", 0)
+	resp, err := s.queryClient.OracleRequestDocs(ctx, req)
+	if err != nil {
+		s.logger.Error("failed to query oracle request docs", "error", err)
+		// 에러가 발생해도 계속 진행 (빈 상태로 시작)
+		return nil
+	}
+
+	// 각 활성 요청을 Job으로 변환하고 저장
+	count := 0
+	myAddress := s.config.Address().String()
+	blockTime := time.Now()
+
+	for _, doc := range resp.OracleRequestDocs {
+		if doc == nil {
+			continue
+		}
+
+		// 이 노드가 담당하는 요청인지 확인하고 Job 생성
+		job, err := s.eventParser.ConvertToJob(doc, myAddress, blockTime)
+		if err != nil {
+			// 담당하지 않는 요청은 스킵
+			s.logger.Debug("skipping request not assigned to this node",
+				"request_id", doc.RequestId)
+			continue
+		}
+
+		// Job 저장
+		requestKey := fmt.Sprintf("req_%d", job.RequestID)
+		if err := s.jobStore.Store(requestKey, job); err != nil {
+			s.logger.Error("failed to store job",
+				"request_id", job.RequestID,
+				"error", err)
+			continue
+		}
+
+		count++
+		s.logger.Info("loaded existing job",
+			"request_id", job.RequestID,
+			"period", job.Period,
+			"url", job.URL)
+	}
+
+	s.updateMetrics(func(m *SchedulerMetrics) {
+		m.TotalJobs += int64(count)
+	})
+
+	s.logger.Info("loaded existing jobs from chain", "count", count)
 	return nil
 }
 
 // runPeriodicScheduler는 주기적으로 실행할 작업들을 체크
 func (s *EventScheduler_impl) runPeriodicScheduler(ctx context.Context) {
-	s.logger.Info("started periodic scheduler")
+	defer s.scheduleWg.Done()
+	defer s.logger.Info("periodic scheduler stopped")
 
 	for {
 		select {
 		case <-ctx.Done():
-			s.logger.Info("periodic scheduler stopped by context")
 			return
 
 		case <-s.scheduleTicker.C:
 			if !s.isRunning.Load() {
-				s.logger.Info("periodic scheduler stopped")
 				return
 			}
 

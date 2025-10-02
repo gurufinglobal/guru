@@ -1,6 +1,6 @@
 # GURU Oracle Daemon
 
-The GURU Oracle Daemon is a distributed oracle system designed to securely and reliably collect external data and submit it to the GURU blockchain network. It provides real-time event processing and high-performance data collection through a CPU-based worker pool architecture.
+The GURU Oracle Daemon is a distributed oracle system designed to securely and reliably collect external data and submit it to the GURU blockchain network. It provides real-time event processing and high-performance data collection through a TaskGroup-based concurrent execution architecture.
 
 ## System Architecture
 
@@ -16,18 +16,18 @@ The Oracle Daemon consists of four main components that work together to provide
 │      ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐      │
 │      │     Monitor     │    │   Scheduler     │    │   Submitter     │      │
 │      │                 │    │                 │    │                 │      │
-│      │ • Event Sub     │───▶│ • Job Queue     │───▶│ • Tx Building   │      │
-│      │ • Real-time     │    │ • Worker Pool   │    │ • Signing       │      │
-│      │   Monitoring    │    │ • CPU Scaling   │    │ • Broadcasting  │      │
+│      │ • Event Sub     │───▶│ • Job Store     │───▶│ • Tx Building   │      │
+│      │ • Real-time     │    │ • TaskGroup     │    │ • Signing       │      │
+│      │   Monitoring    │    │ • Periodic Exec │    │ • Broadcasting  │      │
 │      │ • Account Filter│    │ • Result Queue  │    │ • Sequence Mgmt │      │
 │      └─────────────────┘    └─────────────────┘    └─────────────────┘      │
 │                                                                             │
 │   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │                          Executor                                   │   │
+│   │                       Job Executor                                  │   │
 │   │                                                                     │   │
-│   │ • HTTP Client Pool    • JSON Parsing       • Data Extraction        │   │
+│   │ • HTTP Client         • JSON Parsing       • Data Extraction        │   │
 │   │ • Retry Mechanism     • Path Navigation    • Error Handling         │   │
-│   │ • Connection Reuse    • Array Support      • Type Conversion        │   │
+│   │ • TaskGroup Exec      • Array Support      • Type Conversion        │   │
 │   └─────────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
@@ -86,7 +86,7 @@ registerQuery := "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterO
 2. Extract account list from request document
 3. Verify if current daemon instance is assigned
 4. Extract endpoint URL and parsing rules
-5. Create Job object and submit to worker pool
+5. Create Job object and store in job store
 ```
 
 #### 2. Update Event (Oracle Request Update)

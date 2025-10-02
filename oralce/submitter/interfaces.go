@@ -200,7 +200,7 @@ type SequenceError struct {
 
 // Error는 error 인터페이스 구현
 func (e *SequenceError) Error() string {
-	return "sequence error: expected " + string(rune(e.ExpectedSeq)) + ", got " + string(rune(e.ActualSeq)) + ": " + e.Message
+	return fmt.Sprintf("sequence error: expected %d, got %d: %s", e.ExpectedSeq, e.ActualSeq, e.Message)
 }
 
 // Unwrap은 원본 에러를 반환

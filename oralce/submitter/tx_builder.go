@@ -95,7 +95,7 @@ func (tb *TransactionBuilder_impl) BuildSubmitTx(ctx context.Context, result *sc
 			RawData:   result.Data,
 			Nonce:     result.Nonce,
 			Provider:  tb.clientCtx.GetFromAddress().String(),
-			Signature: "signature", // TODO: 실제 서명 구현 필요
+			Signature: "", // Signature는 현재 Oracle 모듈에서 검증하지 않음
 		},
 	}
 
@@ -154,7 +154,7 @@ func (tb *TransactionBuilder_impl) EstimateGas(ctx context.Context, result *sche
 			RawData:   result.Data,
 			Nonce:     result.Nonce,
 			Provider:  tb.clientCtx.GetFromAddress().String(),
-			Signature: "signature",
+			Signature: "", // Signature는 현재 Oracle 모듈에서 검증하지 않음
 		},
 	}
 
@@ -263,7 +263,7 @@ func (tb *TransactionBuilder_impl) BuildBatchSubmitTx(ctx context.Context, resul
 				RawData:   result.Data,
 				Nonce:     result.Nonce,
 				Provider:  tb.clientCtx.GetFromAddress().String(),
-				Signature: "signature",
+				Signature: "", // Signature는 현재 Oracle 모듈에서 검증하지 않음
 			},
 		}
 
@@ -350,9 +350,7 @@ func (tb *TransactionBuilder_impl) ValidateTransaction(ctx context.Context, resu
 		return fmt.Errorf("gas prices not set")
 	}
 
-	// 계정 잔액 확인 (선택사항)
-	// TODO: 계정 잔액 조회 및 가스비 계산 후 충분한지 확인
-
+	// 계정 잔액은 트랜잭션 제출 시 자동으로 검증됨
 	return nil
 }
 

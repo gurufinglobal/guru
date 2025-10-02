@@ -188,7 +188,7 @@ type ExecutionState struct {
 
 // CompleteEventData는 완료 이벤트 데이터를 나타내는 구조체
 type CompleteEventData struct {
-	RequestID string    `json:"request_id"`
+	RequestID uint64    `json:"request_id"`
 	Nonce     uint64    `json:"nonce"`
 	Timestamp uint64    `json:"timestamp"`
 	BlockTime time.Time `json:"block_time"`

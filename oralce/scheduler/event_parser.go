@@ -145,7 +145,15 @@ func (ep *EventParser_impl) ParseCompleteEvent(event coretypes.ResultEvent) (*Co
 	}
 
 	// 첫 번째 항목 처리 (여러 개가 있을 수 있지만 하나씩 처리)
-	requestID := requestIDs[0]
+	requestID, err := strconv.ParseUint(requestIDs[0], 10, 64)
+	if err != nil {
+		return nil, &EventParseError{
+			EventType: "complete",
+			Query:     event.Query,
+			Message:   "invalid request ID format",
+			Cause:     err,
+		}
+	}
 
 	nonce, err := strconv.ParseUint(nonceStrs[0], 10, 64)
 	if err != nil {

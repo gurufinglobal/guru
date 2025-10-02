@@ -227,12 +227,16 @@ func (js *ConcurrentJobStore) isJobReady(job *OracleJob, now time.Time) bool {
 		return false
 	}
 
-	// 이미 실행 중인 작업은 실행하지 않음
+	// 실행 중이거나 완료 상태인 작업은 실행하지 않음
+	// Completed 상태: Complete 이벤트를 기다리는 중
+	// Executing/Retrying 상태: 현재 실행 중
 	if job.ExecutionState.Status == JobStatusExecuting ||
-		job.ExecutionState.Status == JobStatusRetrying {
+		job.ExecutionState.Status == JobStatusRetrying ||
+		job.ExecutionState.Status == JobStatusCompleted {
 		return false
 	}
 
+	// Pending 또는 Failed 상태인 경우 실행 시간 확인
 	// 실행 시간이 되지 않은 작업은 실행하지 않음
 	if job.NextRunTime.After(now) {
 		return false
