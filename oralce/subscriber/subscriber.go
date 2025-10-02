@@ -70,9 +70,14 @@ func (s *Subscriber) subscribeToEvents(ctx context.Context, subsClient *http.HTT
 	if err != nil {
 		s.logger.Error("subscribe update failed", "error", err)
 		// Cleanup already successful subscription
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		_ = subsClient.Unsubscribe(cleanupCtx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'")
+		err = subsClient.Unsubscribe(cleanupCtx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'")
+		if err != nil {
+			s.logger.Error("unsubscribe register failed", "error", err)
+		} else {
+			s.logger.Info("unsubscribed register")
+		}
 		return nil, nil, nil
 	}
 
@@ -81,10 +86,20 @@ func (s *Subscriber) subscribeToEvents(ctx context.Context, subsClient *http.HTT
 	if err != nil {
 		s.logger.Error("subscribe complete failed", "error", err)
 		// Cleanup already successful subscriptions
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		_ = subsClient.Unsubscribe(cleanupCtx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'")
-		_ = subsClient.Unsubscribe(cleanupCtx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'")
+		err = subsClient.Unsubscribe(cleanupCtx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'")
+		if err != nil {
+			s.logger.Error("unsubscribe register failed", "error", err)
+		} else {
+			s.logger.Info("unsubscribed register")
+		}
+		err = subsClient.Unsubscribe(cleanupCtx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'")
+		if err != nil {
+			s.logger.Error("unsubscribe update failed", "error", err)
+		} else {
+			s.logger.Info("unsubscribed update")
+		}
 		return nil, nil, nil
 	}
 
