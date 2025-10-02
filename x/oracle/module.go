@@ -35,17 +35,17 @@ var (
 	_ module.HasABCIGenesis     = AppModule{}
 )
 
-// AppModuleBasic defines the basic application module used by the cex module.
+// AppModuleBasic defines the basic application module used by the oracle module.
 type AppModuleBasic struct{}
 
 var _ module.AppModuleBasic = AppModuleBasic{}
 
-// Name returns the cex module's name.
+// Name returns the oracle module's name.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-// RegisterLegacyAminoCodec registers the cex module's types on the given LegacyAmino codec.
+// RegisterLegacyAminoCodec registers the oracle module's types on the given LegacyAmino codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	types.RegisterLegacyAminoCodec(cdc)
 }
@@ -58,13 +58,13 @@ func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) 
 	types.RegisterInterfaces(registry)
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the cex
+// DefaultGenesis returns default genesis state as raw bytes for the oracle
 // module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
-// ValidateGenesis performs genesis state validation for the cex module.
+// ValidateGenesis performs genesis state validation for the oracle module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
 	var genesisState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genesisState); err != nil {
@@ -74,24 +74,24 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncod
 	return genesisState.Validate()
 }
 
-// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the cex module.
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the oracle module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
 	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
 
-// GetTxCmd returns no root tx command for the cex module.
+// GetTxCmd returns no root tx command for the oracle module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
 }
 
-// GetQueryCmd returns the root query command for the cex module.
+// GetQueryCmd returns the root query command for the oracle module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
-// AppModule implements an application module for the cex module.
+// AppModule implements an application module for the oracle module.
 type AppModule struct {
 	AppModuleBasic
 
@@ -106,7 +106,7 @@ func NewAppModule(k keeper.Keeper) AppModule {
 	}
 }
 
-// Name returns the cex module's name.
+// Name returns the oracle module's name.
 func (AppModule) Name() string {
 	return types.ModuleName
 }
@@ -146,14 +146,14 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 	return cdc.MustMarshalJSON(&gs)
 }
 
-// GenerateGenesisState creates a randomized GenState of the cex module.
+// GenerateGenesisState creates a randomized GenState of the oracle module.
 func (AppModule) GenerateGenesisState(_ *module.SimulationState) {
 }
 
 // RegisterStoreDecoder registers a decoder for oracle module's types.
 func (am AppModule) RegisterStoreDecoder(sdr simtypes.StoreDecoderRegistry) {}
 
-// WeightedOperations doesn't return any cex module operation.
+// WeightedOperations doesn't return any oracle module operation.
 func (AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
 	return nil
 }
