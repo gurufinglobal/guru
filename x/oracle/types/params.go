@@ -13,7 +13,7 @@ func DefaultParams() Params {
 		SubmitWindow:          3600, // 1 hour in seconds
 		MinSubmitPerWindow:    sdkmath.LegacyNewDec(1),
 		SlashFractionDowntime: sdkmath.LegacyNewDecWithPrec(1, 2), // 1%
-		MaxAccountListSize:    100,                                // Maximum 100 accounts in account list (also max submissions) - for client validation
+		MaxAccountListSize:    1000,                               // Maximum 1000 accounts in account list (also max submissions) - for client validation
 	}
 }
 
@@ -35,8 +35,8 @@ func (p Params) Validate() error {
 		return fmt.Errorf("max account list size cannot be zero")
 	}
 
-	if p.MaxAccountListSize > 100 {
-		return fmt.Errorf("max account list size cannot exceed 100")
+	if p.MaxAccountListSize > 1000 {
+		return fmt.Errorf("max account list size cannot exceed 1000")
 	}
 
 	return nil
