@@ -176,6 +176,39 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 
 }
 
+// UpdateParams defines a method for updating oracle module parameters
+func (k Keeper) UpdateParams(c context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// Validate the authority address
+	if k.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(errortypes.ErrUnauthorized, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	}
+
+	// Validate the new parameters
+	if err := msg.Params.Validate(); err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	// Update the parameters
+	if err := k.SetParams(ctx, msg.Params); err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			"oracle_params_updated",
+			sdk.NewAttribute("authority", msg.Authority),
+			sdk.NewAttribute("submit_window", fmt.Sprintf("%d", msg.Params.SubmitWindow)),
+			sdk.NewAttribute("min_submit_per_window", msg.Params.MinSubmitPerWindow.String()),
+			sdk.NewAttribute("slash_fraction_downtime", msg.Params.SlashFractionDowntime.String()),
+		),
+	)
+
+	return &types.MsgUpdateParamsResponse{}, nil
+}
+
 // UpdateModeratorAddress defines a method for updating the moderator address
 func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateModeratorAddress) (*types.MsgUpdateModeratorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)

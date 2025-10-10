@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -31,6 +32,7 @@ func GetTxCmd() *cobra.Command {
 		NewUpdateOracleRequestDocCmd(),
 		NewSubmitOracleDataCmd(),
 		NewUpdateModeratorAddressCmd(),
+		NewUpdateParamsCmd(),
 	)
 
 	return cmd
@@ -180,4 +182,66 @@ func parseRequestDocJson(path string) (*types.OracleRequestDoc, error) {
 	}
 
 	return &doc, nil
+}
+
+// NewUpdateParamsCmd implements the update oracle parameters command for governance proposals
+func NewUpdateParamsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-params [submit-window] [min-submit-per-window] [slash-fraction-downtime]",
+		Short: "Generate governance proposal to update oracle module parameters",
+		Long: `Generate a governance proposal to update oracle module parameters.
+This command creates a MsgUpdateParams that must be submitted through governance.
+
+Example:
+  # Create a governance proposal JSON file
+  gurud tx oracle update-params 3600 1.0 0.01 --generate-only > update_params_proposal.json
+
+  # Submit the proposal through governance
+  gurud tx gov submit-proposal update_params_proposal.json --from proposer`,
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// Parse submit window
+			submitWindow, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "submit window must be a valid uint64")
+			}
+
+			// Parse min submit per window
+			minSubmitPerWindow, err := sdkmath.LegacyNewDecFromStr(args[1])
+			if err != nil {
+				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "min submit per window must be a valid decimal")
+			}
+
+			// Parse slash fraction downtime
+			slashFractionDowntime, err := sdkmath.LegacyNewDecFromStr(args[2])
+			if err != nil {
+				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "slash fraction downtime must be a valid decimal")
+			}
+
+			params := types.Params{
+				EnableOracle:          true, // Always enabled
+				SubmitWindow:          submitWindow,
+				MinSubmitPerWindow:    minSubmitPerWindow,
+				SlashFractionDowntime: slashFractionDowntime,
+			}
+
+			// Use governance module address as authority
+			govModuleAddr := "cosmos10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn" // This should be the governance module address
+
+			msg := &types.MsgUpdateParams{
+				Authority: govModuleAddr,
+				Params:    params,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }
