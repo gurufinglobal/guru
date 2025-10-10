@@ -24,6 +24,8 @@ func init() {
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgRegisterOracleRequestDoc{}, "oracle/RegisterOracleRequestDoc", nil)
 	cdc.RegisterConcrete(&MsgUpdateOracleRequestDoc{}, "oracle/UpdateOracleRequestDoc", nil)
+	cdc.RegisterConcrete(&MsgSubmitOracleData{}, "oracle/SubmitOracleData", nil)
+	cdc.RegisterConcrete(&MsgUpdateModeratorAddress{}, "oracle/UpdateModeratorAddress", nil)
 }
 
 // RegisterInterfaces registers the x/oracle interfaces types with the interface registry
@@ -31,6 +33,8 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgRegisterOracleRequestDoc{},
 		&MsgUpdateOracleRequestDoc{},
+		&MsgSubmitOracleData{},
+		&MsgUpdateModeratorAddress{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
