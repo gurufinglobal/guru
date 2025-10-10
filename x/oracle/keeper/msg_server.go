@@ -46,6 +46,13 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 		AggregationRule: doc.RequestDoc.AggregationRule,
 	}
 
+	// Validate the oracle request document with current parameters
+	params := k.GetParams(ctx)
+	err := oracleRequestDoc.ValidateWithParams(params)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
 	// Store the oracle request document
 	k.SetOracleRequestDoc(ctx, oracleRequestDoc)
 
