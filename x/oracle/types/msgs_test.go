@@ -47,6 +47,15 @@ func TestMsgSubmitOracleData(t *testing.T) {
 	}
 	require.NoError(t, validMsg.ValidateBasic())
 
+	// Test nil DataSet
+	nilDataSetMsg := MsgSubmitOracleData{
+		AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+		DataSet:          nil, // This should cause validation to fail
+	}
+	err := nilDataSetMsg.ValidateBasic()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "DataSet must be provided")
+
 	invalidMsg := MsgSubmitOracleData{
 		AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
 		DataSet: &SubmitDataSet{
