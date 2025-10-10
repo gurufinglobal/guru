@@ -93,6 +93,49 @@ func TestAggregateData(t *testing.T) {
 			want:    "",
 			wantErr: true,
 		},
+		// Test cases for invalid decimal numbers
+		{
+			name: "invalid_decimal_average",
+			rule: types.AggregationRule_AGGREGATION_RULE_AVG,
+			submitData: []*types.SubmitDataSet{
+				{RawData: "10.5"},
+				{RawData: "abc"}, // Invalid decimal
+				{RawData: "20.5"},
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "invalid_decimal_min",
+			rule: types.AggregationRule_AGGREGATION_RULE_MIN,
+			submitData: []*types.SubmitDataSet{
+				{RawData: "10.5"},
+				{RawData: "12,34"}, // Invalid decimal (comma instead of dot)
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "invalid_decimal_max",
+			rule: types.AggregationRule_AGGREGATION_RULE_MAX,
+			submitData: []*types.SubmitDataSet{
+				{RawData: "10.5"},
+				{RawData: "$15.50"}, // Invalid decimal (currency symbol)
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "invalid_decimal_median",
+			rule: types.AggregationRule_AGGREGATION_RULE_MEDIAN,
+			submitData: []*types.SubmitDataSet{
+				{RawData: "10.5"},
+				{RawData: "15.5"},
+				{RawData: "NaN"}, // Invalid decimal
+			},
+			want:    "",
+			wantErr: true,
+		},
 	}
 
 	_, k := setupTest(t)

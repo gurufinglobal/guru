@@ -1,6 +1,8 @@
 package types
 
 import (
+	"math/big"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -158,6 +160,11 @@ func (msg MsgSubmitOracleData) ValidateBasic() error {
 	}
 	if msg.DataSet.RawData == "" {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "raw data cannot be empty")
+	}
+	// Validate that RawData is a valid decimal number
+	if _, ok := new(big.Float).SetString(msg.DataSet.RawData); !ok {
+		return errorsmod.Wrapf(errortypes.ErrInvalidRequest,
+			"raw data must be a valid decimal number: %q", msg.DataSet.RawData)
 	}
 	if msg.DataSet.Signature == "" {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "signature cannot be empty")

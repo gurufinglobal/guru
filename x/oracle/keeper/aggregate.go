@@ -121,7 +121,9 @@ func (k Keeper) calculateMax(submitDatas []*types.SubmitDataSet) (string, error)
 	max := new(big.Float)
 	for _, data := range submitDatas {
 		value := new(big.Float)
-		value.SetString(data.RawData)
+		if _, ok := value.SetString(data.RawData); !ok {
+			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
+		}
 		if value.Cmp(max) > 0 {
 			max = value
 		}
@@ -137,7 +139,9 @@ func (k Keeper) calculateMin(submitDatas []*types.SubmitDataSet) (string, error)
 	min := new(big.Float).SetFloat64(math.MaxFloat64)
 	for _, data := range submitDatas {
 		value := new(big.Float)
-		value.SetString(data.RawData)
+		if _, ok := value.SetString(data.RawData); !ok {
+			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
+		}
 		if value.Cmp(min) < 0 {
 			min = value
 		}
@@ -154,7 +158,9 @@ func (k Keeper) calculateAverage(submitDatas []*types.SubmitDataSet) (string, er
 	sum := new(big.Float)
 	for _, data := range submitDatas {
 		value := new(big.Float)
-		value.SetString(data.RawData)
+		if _, ok := value.SetString(data.RawData); !ok {
+			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
+		}
 		sum.Add(sum, value)
 	}
 
@@ -171,7 +177,9 @@ func (k Keeper) calculateMedian(submitDatas []*types.SubmitDataSet) (string, err
 	values := make([]*big.Float, len(submitDatas))
 	for i, data := range submitDatas {
 		values[i] = new(big.Float)
-		values[i].SetString(data.RawData)
+		if _, ok := values[i].SetString(data.RawData); !ok {
+			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
+		}
 	}
 
 	// Sort values
