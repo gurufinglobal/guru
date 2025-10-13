@@ -254,7 +254,7 @@ func TestSDKTxFeeChecker(t *testing.T) {
 			} else {
 				cfg.LondonBlock = big.NewInt(0)
 			}
-			fees, priority, err := evm.NewDynamicFeeChecker(tc.keeper)(tc.ctx, tc.buildTx())
+			fees, _, priority, err := evm.NewDynamicFeeChecker(tc.keeper)(tc.ctx, tc.buildTx())
 			if tc.expSuccess {
 				require.Equal(t, tc.expFees, fees.String())
 				require.Equal(t, tc.expPriority, priority)

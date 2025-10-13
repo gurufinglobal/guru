@@ -1,6 +1,7 @@
 package ante
 
 import (
+	evmante "github.com/GPTx-global/guru-v2/v2/ante/evm"
 	anteinterfaces "github.com/GPTx-global/guru-v2/v2/ante/interfaces"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
@@ -30,7 +31,7 @@ type HandlerOptions struct {
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
-	TxFeeChecker           ante.TxFeeChecker
+	TxFeeChecker           evmante.TxFeeChecker
 }
 
 // Validate checks if the keepers are defined

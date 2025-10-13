@@ -2,6 +2,160 @@
 
 package swagger
 
+// feepolicyQueryProto contains the content of ../../proto/guru/feepolicy/v1/query.proto
+const feepolicyQueryProto = `syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "guru/feepolicy/v1/feepolicy.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types";
+
+// Query provides defines the gRPC querier service.
+service Query {
+  // ModeratorAddress returns the current moderator address
+  rpc ModeratorAddress(QueryModeratorAddressRequest) 
+        returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/feepolicy/v1/moderator_address";
+  }
+
+  // Discounts queries a denomination trace information.
+  rpc Discounts(QueryDiscountsRequest) returns (QueryDiscountsResponse) {
+    option (google.api.http).get = "/guru/feepolicy/v1/discounts";
+  }
+
+  // Discount queries a denomination trace information.
+  rpc Discount(QueryDiscountRequest) returns (QueryDiscountResponse) {
+    option (google.api.http).get = "/guru/feepolicy/v1/discounts/{address}";
+  }
+}
+
+// Request type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressRequest {
+}
+
+// Response type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressResponse {
+  string moderator_address = 1;
+}
+
+// QueryDiscountsRequest is the request type for the Query/Discounts RPC
+// method
+message QueryDiscountsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryDiscountsResponse is the response type for the Query/Discounts RPC
+// method.
+message QueryDiscountsResponse {
+  repeated AccountDiscount discounts = 1 [(gogoproto.nullable) = false];
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryDiscountRequest is the request type for the Query/Discount RPC
+// method
+message QueryDiscountRequest {
+  string address = 1;
+}
+
+// QueryDiscountResponse is the response type for the Query/Discount RPC
+// method.
+message QueryDiscountResponse {
+  AccountDiscount discount = 1 [(gogoproto.nullable) = false];
+}
+`
+
+// feepolicyTxProto contains the content of ../../proto/guru/feepolicy/v1/tx.proto
+const feepolicyTxProto = `syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+option go_package = "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types";
+
+import "guru/feepolicy/v1/feepolicy.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+
+// Msg defines the feepolicy Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  rpc RegisterDiscounts(MsgRegisterDiscounts) returns (MsgRegisterDiscountsResponse) {
+    option (google.api.http) = {
+      post: "/guru/feepolicy/v1/register_discounts"
+      body: "*"
+    };
+  }
+  rpc RemoveDiscounts(MsgRemoveDiscounts) returns (MsgRemoveDiscountsResponse) {
+    option (google.api.http) = {
+      post: "/guru/feepolicy/v1/remove_discounts"
+      body: "*"
+    };
+  }
+  rpc ChangeModerator(MsgChangeModerator) returns (MsgChangeModeratorResponse) {
+    option (google.api.http) = {
+      post: "/guru/feepolicy/v1/change_moderator"
+      body: "*"
+    };
+  }
+}
+
+message MsgRegisterDiscounts {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  repeated AccountDiscount discounts = 2 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgRegisterDiscountsResponse{
+}
+
+message MsgRemoveDiscounts {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  string address = 2;
+  string module = 3;
+  string msg_type = 4;
+}
+
+message MsgRemoveDiscountsResponse{
+}
+
+
+// msg declaration for changing the moderator.
+message MsgChangeModerator {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string   new_moderator_address     = 2 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// Response type for the Msg/ChangeModerator.
+message MsgChangeModeratorResponse {
+}`
+
 // oracleQueryProto contains the content of ../../proto/guru/oracle/v1/query.proto
 const oracleQueryProto = `syntax = "proto3";
 package guru.oracle.v1;
@@ -238,158 +392,4 @@ message MsgUpdateModeratorAddress {
 // MsgUpdateModeratorAddressResponse defines the Msg/UpdateModeratorAddress response type
 message MsgUpdateModeratorAddressResponse {} 
 `
-
-// feepolicyQueryProto contains the content of ../../proto/guru/feepolicy/v1/query.proto
-const feepolicyQueryProto = `syntax = "proto3";
-
-package guru.feepolicy.v1;
-
-import "gogoproto/gogo.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "guru/feepolicy/v1/feepolicy.proto";
-import "google/api/annotations.proto";
-
-option go_package = "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types";
-
-// Query provides defines the gRPC querier service.
-service Query {
-  // ModeratorAddress returns the current moderator address
-  rpc ModeratorAddress(QueryModeratorAddressRequest) 
-        returns (QueryModeratorAddressResponse) {
-    option (google.api.http).get = "/guru/feepolicy/v1/moderator_address";
-  }
-
-  // Discounts queries a denomination trace information.
-  rpc Discounts(QueryDiscountsRequest) returns (QueryDiscountsResponse) {
-    option (google.api.http).get = "/guru/feepolicy/v1/discounts";
-  }
-
-  // Discount queries a denomination trace information.
-  rpc Discount(QueryDiscountRequest) returns (QueryDiscountResponse) {
-    option (google.api.http).get = "/guru/feepolicy/v1/discounts/{address}";
-  }
-}
-
-// Request type for the Query/ModeratorAddress RPC method.
-message QueryModeratorAddressRequest {
-}
-
-// Response type for the Query/ModeratorAddress RPC method.
-message QueryModeratorAddressResponse {
-  string moderator_address = 1;
-}
-
-// QueryDiscountsRequest is the request type for the Query/Discounts RPC
-// method
-message QueryDiscountsRequest {
-  // pagination defines an optional pagination for the request.
-  cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
-
-// QueryDiscountsResponse is the response type for the Query/Discounts RPC
-// method.
-message QueryDiscountsResponse {
-  repeated AccountDiscount discounts = 1 [(gogoproto.nullable) = false];
-  // pagination defines the pagination in the response.
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
-
-// QueryDiscountRequest is the request type for the Query/Discount RPC
-// method
-message QueryDiscountRequest {
-  string address = 1;
-}
-
-// QueryDiscountResponse is the response type for the Query/Discount RPC
-// method.
-message QueryDiscountResponse {
-  AccountDiscount discount = 1 [(gogoproto.nullable) = false];
-}
-`
-
-// feepolicyTxProto contains the content of ../../proto/guru/feepolicy/v1/tx.proto
-const feepolicyTxProto = `syntax = "proto3";
-
-package guru.feepolicy.v1;
-
-option go_package = "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types";
-
-import "guru/feepolicy/v1/feepolicy.proto";
-import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
-import "cosmos/base/v1beta1/coin.proto";
-import "cosmos/msg/v1/msg.proto";
-import "cosmos_proto/cosmos.proto";
-
-// Msg defines the feepolicy Msg service.
-service Msg {
-  option (cosmos.msg.v1.service) = true;
-  rpc RegisterDiscounts(MsgRegisterDiscounts) returns (MsgRegisterDiscountsResponse) {
-    option (google.api.http) = {
-      post: "/guru/feepolicy/v1/register_discounts"
-      body: "*"
-    };
-  }
-  rpc RemoveDiscounts(MsgRemoveDiscounts) returns (MsgRemoveDiscountsResponse) {
-    option (google.api.http) = {
-      post: "/guru/feepolicy/v1/remove_discounts"
-      body: "*"
-    };
-  }
-  rpc ChangeModerator(MsgChangeModerator) returns (MsgChangeModeratorResponse) {
-    option (google.api.http) = {
-      post: "/guru/feepolicy/v1/change_moderator"
-      body: "*"
-    };
-  }
-}
-
-message MsgRegisterDiscounts {
-  option (cosmos.msg.v1.signer) = "moderator_address";
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string   moderator_address                 = 1 
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  repeated AccountDiscount discounts = 2 [
-    (gogoproto.nullable) = false
-  ];
-}
-
-message MsgRegisterDiscountsResponse{
-}
-
-message MsgRemoveDiscounts {
-  option (cosmos.msg.v1.signer) = "moderator_address";
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string   moderator_address                 = 1 
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  
-  string address = 2;
-  string module = 3;
-  string msg_type = 4;
-}
-
-message MsgRemoveDiscountsResponse{
-}
-
-
-// msg declaration for changing the moderator.
-message MsgChangeModerator {
-  option (cosmos.msg.v1.signer) = "moderator_address";
-
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string   moderator_address                 = 1 
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string   new_moderator_address     = 2 
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-}
-
-// Response type for the Msg/ChangeModerator.
-message MsgChangeModeratorResponse {
-}`
 
