@@ -78,7 +78,7 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 		Path:   requestDoc.Endpoints[index].ParseRule,
 		Nonce:  max(currentNonce, requestDoc.Nonce),
 		Delay:  time.Duration(max(int64(0), dsec)) * time.Second,
-		Period: time.Duration(requestDoc.Period),
+		Period: time.Duration(requestDoc.Period) * time.Second,
 		Status: requestDoc.Status,
 	}
 
@@ -95,7 +95,7 @@ func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce u
 	}
 
 	job.Nonce = max(job.Nonce, nonce)
-	periodSec := uint64(job.Period)
+	periodSec := uint64(job.Period / time.Second)
 	nowSec := uint64(time.Now().Unix())
 	tsSec := uint64(timestamp)
 	dsec := int64(tsSec+periodSec) - int64(nowSec)
