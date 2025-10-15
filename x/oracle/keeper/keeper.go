@@ -157,6 +157,13 @@ func (k Keeper) updateOracleRequestDoc(ctx sdk.Context, doc types.OracleRequestD
 		existingDoc.AggregationRule = doc.AggregationRule
 	}
 
+	// Validate the updated oracle request document with current parameters
+	params := k.GetParams(ctx)
+	err = existingDoc.ValidateWithParams(params)
+	if err != nil {
+		return fmt.Errorf("validation failed for updated document: %v", err)
+	}
+
 	// Store the updated oracle request document
 	k.SetOracleRequestDoc(ctx, *existingDoc)
 	return nil
