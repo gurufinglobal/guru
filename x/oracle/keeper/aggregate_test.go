@@ -95,11 +95,11 @@ func TestAggregateData(t *testing.T) {
 		},
 	}
 
-	_, k := setupTest(t)
+	ctx, k := setupTest(t)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := k.AggregateData(tt.rule, tt.submitData)
+			got, err := k.AggregateData(ctx, tt.rule, tt.submitData)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
