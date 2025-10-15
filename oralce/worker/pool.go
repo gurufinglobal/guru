@@ -129,6 +129,8 @@ func (wp *WorkerPool) Results() <-chan *types.OracleJobResult {
 
 // executeJob schedules a single job execution in a worker goroutine.
 // It honors ctx cancellation for delaying the first run.
+// The nonce is only incremented and persisted after all external operations succeed,
+// ensuring on-chain nonce consistency.
 func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 	task := job
 
@@ -150,17 +152,21 @@ func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 
 		reqID := strconv.FormatUint(task.ID, 10)
 
+		// Calculate next nonce but don't persist yet
+		var nextNonce uint64
 		if stored, ok := wp.jobStore.Get(reqID); ok {
-			task.Nonce = stored.Nonce + 1
+			nextNonce = stored.Nonce + 1
 		} else {
-			task.Nonce++
+			nextNonce = task.Nonce + 1
 		}
 
-		wp.jobStore.Set(reqID, task)
-
+		// Perform all external operations that may fail
 		rawData, err := wp.client.fetchRawData(task.URL)
 		if err != nil {
-			wp.logger.Error("failed to fetch raw data", "error", err)
+			wp.logger.Error("failed to fetch raw data",
+				"error", err,
+				"request_id", task.ID,
+				"nonce", nextNonce)
 			wp.resultCh <- nil
 			return err
 		}
@@ -168,22 +174,35 @@ func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 
 		jsonData, err := wp.client.parseRawData(rawData)
 		if err != nil {
-			wp.logger.Error("failed to parse raw data", "error", err)
+			wp.logger.Error("failed to parse raw data",
+				"error", err,
+				"request_id", task.ID,
+				"nonce", nextNonce)
 			return err
 		}
 
 		result, err := wp.client.extractDataByPath(jsonData, task.Path)
 		if err != nil {
-			wp.logger.Error("failed to extract data by path", "error", err)
+			wp.logger.Error("failed to extract data by path",
+				"error", err,
+				"request_id", task.ID,
+				"nonce", nextNonce)
 			return err
 		}
+
+		// All operations succeeded - now persist the nonce increment
+		task.Nonce = nextNonce
+		wp.jobStore.Set(reqID, task)
 
 		wp.resultCh <- &types.OracleJobResult{
 			ID:    task.ID,
 			Data:  result,
 			Nonce: task.Nonce,
 		}
-		wp.logger.Debug("sent result to channel", "id", task.ID, "data", result)
+		wp.logger.Debug("sent result to channel",
+			"id", task.ID,
+			"data", result,
+			"nonce", task.Nonce)
 
 		return nil
 	})
