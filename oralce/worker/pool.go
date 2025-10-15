@@ -34,8 +34,16 @@ func New(ctx context.Context, logger log.Logger) *WorkerPool {
 	wp.workerGroup, wp.workerFunc = taskgroup.New(nil).Limit(2 * runtime.NumCPU())
 	go func() {
 		<-ctx.Done()
-		wp.workerGroup.Wait()
+		wp.logger.Info("worker pool shutting down, waiting for active tasks to complete")
+
+		if err := wp.workerGroup.Wait(); err != nil {
+			wp.logger.Error("error during worker pool shutdown", "error", err)
+		} else {
+			wp.logger.Info("worker pool shutdown completed successfully")
+		}
+
 		close(wp.resultCh)
+		wp.logger.Debug("result channel closed")
 	}()
 
 	wp.client = newHTTPClient(wp.logger)
@@ -113,8 +121,8 @@ func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce u
 	wp.executeJob(ctx, job)
 }
 
-// Results relturns a read-only channel of completed job results.
-// The channe is closed when the worker pool is shut down.
+// Results returns a read-only channel of completed job results.
+// The channel is closed when the worker pool is shut down.
 func (wp *WorkerPool) Results() <-chan *types.OracleJobResult {
 	return wp.resultCh
 }
