@@ -48,7 +48,7 @@ func (hc *httpClient) fetchRawData(url string) ([]byte, error) {
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		if 0 < attempt {
 			retryDelay := time.Duration(1<<(attempt-1)) * time.Second
-			time.Sleep(max(retryDelay, config.RetryMaxDelaySec()))
+			time.Sleep(min(retryDelay, config.RetryMaxDelaySec()))
 		}
 
 		req, err := http.NewRequest(http.MethodGet, url, nil)

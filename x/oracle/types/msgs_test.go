@@ -35,34 +35,85 @@ func TestMsgRegisterOracleRequestDoc(t *testing.T) {
 }
 
 func TestMsgSubmitOracleData(t *testing.T) {
+	// Valid message with valid decimal RawData
 	validMsg := MsgSubmitOracleData{
 		AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
 		DataSet: &SubmitDataSet{
 			RequestId: 1,
 			Nonce:     1,
-			RawData:   "test data",
+			RawData:   "123.456",
 			Provider:  "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
 			Signature: "test signature",
 		},
 	}
 	require.NoError(t, validMsg.ValidateBasic())
 
-	// Test nil DataSet
-	nilDataSetMsg := MsgSubmitOracleData{
-		AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-		DataSet:          nil, // This should cause validation to fail
+	// Test various valid decimal formats
+	validDecimals := []string{
+		"123",
+		"123.456",
+		"0.123",
+		".123",
+		"123.",
+		"0",
+		"0.0",
+		"-123.456",
+		"+123.456",
+		"1e10",
+		"1.23e-4",
+		"1.23E+5",
 	}
-	err := nilDataSetMsg.ValidateBasic()
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "DataSet must be provided")
 
+	for _, decimal := range validDecimals {
+		msg := MsgSubmitOracleData{
+			AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+			DataSet: &SubmitDataSet{
+				RequestId: 1,
+				Nonce:     1,
+				RawData:   decimal,
+				Provider:  "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				Signature: "test signature",
+			},
+		}
+		require.NoError(t, msg.ValidateBasic(), "Expected %s to be valid decimal", decimal)
+	}
+
+	// Test invalid decimal formats
+	invalidDecimals := []string{
+		"abc",
+		"123abc",
+		"12.34.56",
+		"12,34",
+		"12 34",
+		"$123",
+		"123%",
+		"infinity",
+		"NaN",
+		"",
+	}
+
+	for _, decimal := range invalidDecimals {
+		msg := MsgSubmitOracleData{
+			AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+			DataSet: &SubmitDataSet{
+				RequestId: 1,
+				Nonce:     1,
+				RawData:   decimal,
+				Provider:  "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				Signature: "test signature",
+			},
+		}
+		require.Error(t, msg.ValidateBasic(), "Expected %s to be invalid decimal", decimal)
+	}
+
+	// Test other validation errors
 	invalidMsg := MsgSubmitOracleData{
 		AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
 		DataSet: &SubmitDataSet{
-			RequestId: 0,
-			RawData:   "",
-			Provider:  "invalid-address",
-			Signature: "",
+			RequestId: 0, // Invalid: zero request ID
+			RawData:   "123.456",
+			Provider:  "invalid-address", // Invalid: bad address format
+			Signature: "",                // Invalid: empty signature
 		},
 	}
 	require.Error(t, invalidMsg.ValidateBasic())

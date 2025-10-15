@@ -46,6 +46,13 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 		AggregationRule: doc.RequestDoc.AggregationRule,
 	}
 
+	// Validate the oracle request document with current parameters
+	params := k.GetParams(ctx)
+	err := oracleRequestDoc.ValidateWithParams(params)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
 	// Store the oracle request document
 	k.SetOracleRequestDoc(ctx, oracleRequestDoc)
 
@@ -53,7 +60,10 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 	k.SetOracleRequestDocCount(ctx, count+1)
 
 	// Marshal the endpoints to a JSON string
-	endpointsJson, _ := json.Marshal(oracleRequestDoc.Endpoints)
+	endpointsJson, err := json.Marshal(oracleRequestDoc.Endpoints)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "failed to marshal endpoints")
+	}
 
 	// Emit event for registering oracle request document
 	ctx.EventManager().EmitEvent(
@@ -95,7 +105,10 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 	}
 
 	// Marshal the endpoints to a JSON string
-	endpointsJson, _ := json.Marshal(doc.RequestDoc.Endpoints)
+	endpointsJson, err := json.Marshal(doc.RequestDoc.Endpoints)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "failed to marshal endpoints")
+	}
 
 	// Emit event for updating oracle request document
 	ctx.EventManager().EmitEvent(
@@ -140,10 +153,6 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document not found")
 	}
 
-	if requestDoc == nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document not found")
-	}
-
 	accountList := requestDoc.AccountList
 	fromAddress := msg.AuthorityAddress
 
@@ -174,6 +183,39 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 
 }
 
+// UpdateParams defines a method for updating oracle module parameters
+func (k Keeper) UpdateParams(c context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// Validate the authority address
+	if k.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(errortypes.ErrUnauthorized, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	}
+
+	// Validate the new parameters
+	if err := msg.Params.Validate(); err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	// Update the parameters
+	if err := k.SetParams(ctx, msg.Params); err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			"oracle_params_updated",
+			sdk.NewAttribute("authority", msg.Authority),
+			sdk.NewAttribute("submit_window", fmt.Sprintf("%d", msg.Params.SubmitWindow)),
+			sdk.NewAttribute("min_submit_per_window", msg.Params.MinSubmitPerWindow.String()),
+			sdk.NewAttribute("slash_fraction_downtime", msg.Params.SlashFractionDowntime.String()),
+		),
+	)
+
+	return &types.MsgUpdateParamsResponse{}, nil
+}
+
 // UpdateModeratorAddress defines a method for updating the moderator address
 func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateModeratorAddress) (*types.MsgUpdateModeratorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -190,12 +232,12 @@ func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateMo
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "new moderator address is same as current moderator address")
 	}
 
-	k.SetModeratorAddress(ctx, msg.ModeratorAddress)
+	k.SetModeratorAddress(ctx, msg.NewModeratorAddress)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeUpdateModeratorAddress,
-			sdk.NewAttribute(types.AttributeKeyModeratorAddress, msg.ModeratorAddress),
+			sdk.NewAttribute(types.AttributeKeyModeratorAddress, msg.NewModeratorAddress),
 		),
 	)
 

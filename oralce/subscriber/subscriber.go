@@ -48,8 +48,16 @@ func (s *Subscriber) EventCh() <-chan any {
 func (s *Subscriber) subscribeToEvents(ctx context.Context, subsClient *http.HTTP) (<-chan coretypes.ResultEvent, <-chan coretypes.ResultEvent, <-chan coretypes.ResultEvent) {
 	go func() {
 		<-ctx.Done()
-		subsClient.UnsubscribeAll(ctx, "")
-		s.logger.Info("unsubscribed all")
+		// Use a fresh background context with timeout for cleanup operations
+		// to ensure unsubscribe completes even after the original context is canceled
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := subsClient.UnsubscribeAll(cleanupCtx, ""); err != nil {
+			s.logger.Error("unsubscribe all failed", "error", err)
+		} else {
+			s.logger.Info("unsubscribed all")
+		}
 	}()
 
 	registerCh, err := subsClient.Subscribe(ctx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'", config.ChannelSize())
@@ -61,6 +69,15 @@ func (s *Subscriber) subscribeToEvents(ctx context.Context, subsClient *http.HTT
 	updateCh, err := subsClient.Subscribe(ctx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'", config.ChannelSize())
 	if err != nil {
 		s.logger.Error("subscribe update failed", "error", err)
+		// Cleanup already successful subscription
+		cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		err = subsClient.Unsubscribe(cleanupCtx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'")
+		if err != nil {
+			s.logger.Error("unsubscribe register failed", "error", err)
+		} else {
+			s.logger.Info("unsubscribed register")
+		}
 		return nil, nil, nil
 	}
 
@@ -68,6 +85,21 @@ func (s *Subscriber) subscribeToEvents(ctx context.Context, subsClient *http.HTT
 	completeCh, err := subsClient.Subscribe(ctx, "", completeQuery, config.ChannelSize())
 	if err != nil {
 		s.logger.Error("subscribe complete failed", "error", err)
+		// Cleanup already successful subscriptions
+		cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		err = subsClient.Unsubscribe(cleanupCtx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgRegisterOracleRequestDoc'")
+		if err != nil {
+			s.logger.Error("unsubscribe register failed", "error", err)
+		} else {
+			s.logger.Info("unsubscribed register")
+		}
+		err = subsClient.Unsubscribe(cleanupCtx, "", "tm.event='Tx' AND message.action='/guru.oracle.v1.MsgUpdateOracleRequestDoc'")
+		if err != nil {
+			s.logger.Error("unsubscribe update failed", "error", err)
+		} else {
+			s.logger.Info("unsubscribed update")
+		}
 		return nil, nil, nil
 	}
 
