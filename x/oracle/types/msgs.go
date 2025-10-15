@@ -96,9 +96,9 @@ func (msg MsgUpdateOracleRequestDoc) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid from address(Moderator) (%s)", err)
 	}
-	// if err := msg.RequestDoc.Validate(); err != nil {
-	// 	return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	// }
+	if err := msg.RequestDoc.Validate(); err != nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
 	return nil
 }
 
