@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"sort"
 
 	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,7 +51,7 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 		}
 
 		// Aggregate data based on AggregationRule
-		aggregatedValue, err := k.AggregateData(doc.AggregationRule, submitDatas)
+		aggregatedValue, err := k.AggregateData(ctx, doc.AggregationRule, submitDatas)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("failed to aggregate data for request_id %d: %v",
 				doc.RequestId, err))
@@ -98,7 +99,7 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 }
 
 // aggregateData aggregates the submitted data based on the aggregation rule
-func (k Keeper) AggregateData(rule types.AggregationRule, submitDatas []*types.SubmitDataSet) (string, error) {
+func (k Keeper) AggregateData(ctx sdk.Context, rule types.AggregationRule, submitDatas []*types.SubmitDataSet) (string, error) {
 	switch rule {
 	case types.AggregationRule_AGGREGATION_RULE_AVG:
 		return k.calculateAverage(submitDatas)
@@ -107,7 +108,7 @@ func (k Keeper) AggregateData(rule types.AggregationRule, submitDatas []*types.S
 	case types.AggregationRule_AGGREGATION_RULE_MAX:
 		return k.calculateMax(submitDatas)
 	case types.AggregationRule_AGGREGATION_RULE_MEDIAN:
-		return k.calculateMedian(submitDatas)
+		return k.calculateMedian(ctx, submitDatas)
 	default:
 		return "", fmt.Errorf("unsupported aggregation rule: %s", rule)
 	}
@@ -121,7 +122,9 @@ func (k Keeper) calculateMax(submitDatas []*types.SubmitDataSet) (string, error)
 	max := new(big.Float)
 	for _, data := range submitDatas {
 		value := new(big.Float)
-		value.SetString(data.RawData)
+		if _, ok := value.SetString(data.RawData); !ok {
+			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
+		}
 		if value.Cmp(max) > 0 {
 			max = value
 		}
@@ -137,7 +140,9 @@ func (k Keeper) calculateMin(submitDatas []*types.SubmitDataSet) (string, error)
 	min := new(big.Float).SetFloat64(math.MaxFloat64)
 	for _, data := range submitDatas {
 		value := new(big.Float)
-		value.SetString(data.RawData)
+		if _, ok := value.SetString(data.RawData); !ok {
+			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
+		}
 		if value.Cmp(min) < 0 {
 			min = value
 		}
@@ -154,7 +159,9 @@ func (k Keeper) calculateAverage(submitDatas []*types.SubmitDataSet) (string, er
 	sum := new(big.Float)
 	for _, data := range submitDatas {
 		value := new(big.Float)
-		value.SetString(data.RawData)
+		if _, ok := value.SetString(data.RawData); !ok {
+			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
+		}
 		sum.Add(sum, value)
 	}
 
@@ -163,25 +170,35 @@ func (k Keeper) calculateAverage(submitDatas []*types.SubmitDataSet) (string, er
 }
 
 // calculateMedian calculates the median of all submitted values
-func (k Keeper) calculateMedian(submitDatas []*types.SubmitDataSet) (string, error) {
+func (k Keeper) calculateMedian(ctx sdk.Context, submitDatas []*types.SubmitDataSet) (string, error) {
 	if len(submitDatas) == 0 {
 		return "", fmt.Errorf("no data to calculate median")
+	}
+
+	// Get oracle parameters for safety limits
+	params := k.GetParams(ctx)
+
+	// Safety check: prevent DoS attacks with too many submissions
+	// Since each account can only submit once, max submissions = max account list size
+	if uint64(len(submitDatas)) > params.MaxAccountListSize {
+		k.Logger(ctx).Error("too many submissions for median calculation",
+			"count", len(submitDatas),
+			"max_allowed", params.MaxAccountListSize)
+		return "", fmt.Errorf("too many submissions: %d, maximum allowed: %d", len(submitDatas), params.MaxAccountListSize)
 	}
 
 	values := make([]*big.Float, len(submitDatas))
 	for i, data := range submitDatas {
 		values[i] = new(big.Float)
-		values[i].SetString(data.RawData)
-	}
-
-	// Sort values
-	for i := 0; i < len(values)-1; i++ {
-		for j := i + 1; j < len(values); j++ {
-			if values[i].Cmp(values[j]) > 0 {
-				values[i], values[j] = values[j], values[i]
-			}
+		if _, ok := values[i].SetString(data.RawData); !ok {
+			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
 		}
 	}
+
+	// Use efficient O(n log n) sorting instead of O(n²) bubble sort
+	sort.Slice(values, func(i, j int) bool {
+		return values[i].Cmp(values[j]) < 0
+	})
 
 	// Calculate median
 	mid := len(values) / 2
