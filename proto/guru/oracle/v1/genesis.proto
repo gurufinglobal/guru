@@ -48,4 +48,8 @@ message Params {
     (amino.dont_omitempty) = true
   ];
 
+  // max_account_list_size defines the maximum size of the account list for oracle requests
+  // This also effectively limits the maximum submissions per aggregation since each account can only submit once(Updated when resubmitted)
+  uint64 max_account_list_size = 5;
+
 } 

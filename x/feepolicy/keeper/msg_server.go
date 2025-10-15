@@ -55,6 +55,10 @@ func (k Keeper) RegisterDiscounts(goCtx context.Context, msg *types.MsgRegisterD
 
 	// Set the discounts for the account
 	for _, discount := range msg.Discounts {
+		err := types.ValidateAccountDiscount(discount)
+		if err != nil {
+			return nil, err
+		}
 		k.SetAccountDiscounts(ctx, discount)
 	}
 

@@ -15,18 +15,21 @@ import (
 )
 
 type Keeper struct {
-	cdc      codec.BinaryCodec
-	storeKey storetypes.StoreKey
-	hooks    types.OracleHooks
+	cdc       codec.BinaryCodec
+	storeKey  storetypes.StoreKey
+	hooks     types.OracleHooks
+	authority string
 }
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
+	authority string,
 ) *Keeper {
 	return &Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
+		cdc:       cdc,
+		storeKey:  storeKey,
+		authority: authority,
 	}
 }
 
@@ -123,8 +126,9 @@ func (k Keeper) updateOracleRequestDoc(ctx sdk.Context, doc types.OracleRequestD
 	}
 
 	// Check if the existing document status is disabled
-	if existingDoc.Status == types.RequestStatus_REQUEST_STATUS_DISABLED {
-		return fmt.Errorf("cannot modify Request Doc with disabled status")
+	if existingDoc.Status == types.RequestStatus_REQUEST_STATUS_DISABLED &&
+		doc.Status == types.RequestStatus_REQUEST_STATUS_UNSPECIFIED {
+		return fmt.Errorf("cannot modify disabled Request Doc except status")
 	}
 
 	// Update the period if it is not empty
@@ -155,6 +159,13 @@ func (k Keeper) updateOracleRequestDoc(ctx sdk.Context, doc types.OracleRequestD
 	// Update the aggregation rule if it is not empty
 	if doc.AggregationRule != types.AggregationRule_AGGREGATION_RULE_UNSPECIFIED {
 		existingDoc.AggregationRule = doc.AggregationRule
+	}
+
+	// Validate the updated oracle request document with current parameters
+	params := k.GetParams(ctx)
+	err = existingDoc.ValidateWithParams(params)
+	if err != nil {
+		return fmt.Errorf("validation failed for updated document: %v", err)
 	}
 
 	// Store the updated oracle request document
