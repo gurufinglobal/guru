@@ -153,6 +153,15 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document not found")
 	}
 
+	if requestDoc == nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document not found")
+	}
+
+	// Check if RequestDoc status is ENABLED
+	if requestDoc.Status != types.RequestStatus_REQUEST_STATUS_ENABLED {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document is not enabled")
+	}
+
 	accountList := requestDoc.AccountList
 	fromAddress := msg.AuthorityAddress
 
