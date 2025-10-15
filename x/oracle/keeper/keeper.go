@@ -126,8 +126,9 @@ func (k Keeper) updateOracleRequestDoc(ctx sdk.Context, doc types.OracleRequestD
 	}
 
 	// Check if the existing document status is disabled
-	if existingDoc.Status == types.RequestStatus_REQUEST_STATUS_DISABLED {
-		return fmt.Errorf("cannot modify Request Doc with disabled status")
+	if existingDoc.Status == types.RequestStatus_REQUEST_STATUS_DISABLED &&
+		doc.Status == types.RequestStatus_REQUEST_STATUS_UNSPECIFIED {
+		return fmt.Errorf("cannot modify disabled Request Doc except status")
 	}
 
 	// Update the period if it is not empty
