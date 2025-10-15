@@ -136,6 +136,11 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleData) (*types.MsgSubmitOracleDataResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
+	// Validate that DataSet is provided
+	if msg.DataSet == nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "DataSet must be provided")
+	}
+
 	err := k.validateSubmitData(*msg.DataSet)
 	if err != nil {
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())

@@ -152,6 +152,11 @@ func (msg MsgSubmitOracleData) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface
 func (msg MsgSubmitOracleData) ValidateBasic() error {
+	// Validate that DataSet is provided
+	if msg.DataSet == nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "DataSet must be provided")
+	}
+
 	if _, err := sdk.AccAddressFromBech32(msg.DataSet.Provider); err != nil {
 		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid provider address (%s)", err)
 	}
