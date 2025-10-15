@@ -35,7 +35,7 @@ func setupTest(t *testing.T) (sdk.Context, *keeper.Keeper) {
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
 
-	k := keeper.NewKeeper(cdc, storeKey)
+	k := keeper.NewKeeper(cdc, storeKey, "cosmos1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft")
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{ChainID: "test-chain"}, false, log.NewNopLogger())
 

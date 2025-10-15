@@ -21,7 +21,7 @@ var (
 
 const (
 	// Amino names
-	updateParamsName = "os/feemarket/MsgUpdateParams"
+	updateParamsName = "cosmos/evm/x/feemarket/MsgUpdateParams"
 )
 
 // NOTE: This is required for the GetSignBytes function

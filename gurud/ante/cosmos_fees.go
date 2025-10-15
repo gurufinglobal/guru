@@ -71,8 +71,15 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	if err != nil {
 		return ctx, err
 	}
+	feeGranter := feePayer
+	if feeTx.FeeGranter() != nil {
+		feeGranter, err = addrCodec.BytesToString(feeTx.FeeGranter())
+		if err != nil {
+			return ctx, err
+		}
+	}
 
-	discount := dfd.feepolicyKeeper.GetDiscount(ctx, string(feePayer), tx.GetMsgs())
+	discount := dfd.feepolicyKeeper.GetDiscount(ctx, feeGranter, tx.GetMsgs())
 
 	// apply discounts
 	var deductedFee sdk.Coins

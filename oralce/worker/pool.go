@@ -34,8 +34,16 @@ func New(ctx context.Context, logger log.Logger) *WorkerPool {
 	wp.workerGroup, wp.workerFunc = taskgroup.New(nil).Limit(2 * runtime.NumCPU())
 	go func() {
 		<-ctx.Done()
-		wp.workerGroup.Wait()
+		wp.logger.Info("worker pool shutting down, waiting for active tasks to complete")
+
+		if err := wp.workerGroup.Wait(); err != nil {
+			wp.logger.Error("error during worker pool shutdown", "error", err)
+		} else {
+			wp.logger.Info("worker pool shutdown completed successfully")
+		}
+
 		close(wp.resultCh)
+		wp.logger.Debug("result channel closed")
 	}()
 
 	wp.client = newHTTPClient(wp.logger)
@@ -46,8 +54,11 @@ func New(ctx context.Context, logger log.Logger) *WorkerPool {
 // ProcessRequestDoc maps an Oracle request document to a scheduled job.
 // It selects the endpoint for this instance and computes initial delay.
 func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oracletypes.OracleRequestDoc, timestamp uint64) {
+	requestIDStr := strconv.FormatUint(requestDoc.RequestId, 10)
+
 	if requestDoc.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
-		wp.logger.Info("request document is not enabled", "request_id", requestDoc.RequestId)
+		wp.logger.Info("request document is not enabled, removing job", "request_id", requestDoc.RequestId, "status", requestDoc.Status)
+		wp.jobStore.Remove(requestIDStr)
 		return
 	}
 
@@ -60,7 +71,6 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 	}
 
 	var currentNonce uint64
-	requestIDStr := strconv.FormatUint(requestDoc.RequestId, 10)
 	if job, ok := wp.jobStore.Get(requestIDStr); ok {
 		currentNonce = job.Nonce
 	} else {
@@ -78,7 +88,7 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 		Path:   requestDoc.Endpoints[index].ParseRule,
 		Nonce:  max(currentNonce, requestDoc.Nonce),
 		Delay:  time.Duration(max(int64(0), dsec)) * time.Second,
-		Period: time.Duration(requestDoc.Period),
+		Period: time.Duration(requestDoc.Period) * time.Second,
 		Status: requestDoc.Status,
 	}
 
@@ -94,8 +104,15 @@ func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce u
 		return
 	}
 
+	// Check job status before rescheduling
+	if job.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
+		wp.logger.Debug("job is not enabled, skipping reschedule", "request_id", reqID, "status", job.Status)
+		wp.jobStore.Remove(reqID)
+		return
+	}
+
 	job.Nonce = max(job.Nonce, nonce)
-	periodSec := uint64(job.Period)
+	periodSec := uint64(job.Period / time.Second)
 	nowSec := uint64(time.Now().Unix())
 	tsSec := uint64(timestamp)
 	dsec := int64(tsSec+periodSec) - int64(nowSec)
@@ -104,8 +121,8 @@ func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce u
 	wp.executeJob(ctx, job)
 }
 
-// Results relturns a read-only channel of completed job results.
-// The channe is closed when the worker pool is shut down.
+// Results returns a read-only channel of completed job results.
+// The channel is closed when the worker pool is shut down.
 func (wp *WorkerPool) Results() <-chan *types.OracleJobResult {
 	return wp.resultCh
 }
@@ -122,6 +139,13 @@ func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 			case <-ctx.Done():
 				return nil
 			}
+		}
+
+		// Final status check before execution
+		if task.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
+			reqID := strconv.FormatUint(task.ID, 10)
+			wp.jobStore.Remove(reqID)
+			return nil
 		}
 
 		reqID := strconv.FormatUint(task.ID, 10)
