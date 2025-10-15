@@ -13,6 +13,16 @@ import (
 	"github.com/GPTx-global/guru-v2/v2/oralce/config"
 )
 
+const (
+	// maxResponseSize limits the maximum size of HTTP response bodies to prevent memory exhaustion.
+	// Oracle typically fetches JSON data (a few KB to hundreds of KB), so 10MB is generous.
+	maxResponseSize = 10 * 1024 * 1024 // 10MB
+
+	// maxErrorBodyPreview limits how much of the response body is included in error messages
+	// to prevent log flooding and disk space exhaustion.
+	maxErrorBodyPreview = 500 // 500 bytes
+)
+
 type httpClient struct {
 	logger log.Logger
 	client *http.Client
@@ -78,10 +88,23 @@ func (hc *httpClient) fetchRawData(url string) ([]byte, error) {
 			continue
 		}
 
-		body, err := io.ReadAll(res.Body)
+		// Check Content-Length header if present
+		if res.ContentLength > maxResponseSize {
+			res.Body.Close()
+			return nil, fmt.Errorf("response too large: Content-Length=%d bytes (max: %d)", res.ContentLength, maxResponseSize)
+		}
+
+		// Use LimitReader to enforce size limit during read
+		limitedReader := io.LimitReader(res.Body, maxResponseSize+1)
+		body, err := io.ReadAll(limitedReader)
 		res.Body.Close()
 		if err != nil {
 			return nil, fmt.Errorf("failed to read response body: %w", err)
+		}
+
+		// Verify actual size (handles missing/incorrect Content-Length)
+		if len(body) > maxResponseSize {
+			return nil, fmt.Errorf("response exceeded size limit: %d bytes (max: %d)", len(body), maxResponseSize)
 		}
 
 		switch {
@@ -115,7 +138,9 @@ func (hc *httpClient) fetchRawData(url string) ([]byte, error) {
 			continue
 
 		default:
-			return nil, fmt.Errorf("HTTP %d: %s", res.StatusCode, string(body))
+			// Truncate body in error message to prevent log flooding
+			preview := truncateForError(body, maxErrorBodyPreview)
+			return nil, fmt.Errorf("HTTP %d: %s", res.StatusCode, preview)
 		}
 	}
 
@@ -200,6 +225,20 @@ func parseArrayIndex(s string) (int, error) {
 	}
 
 	return index, nil
+}
+
+// truncateForError limits body size for error messages and provides clear indication of truncation.
+// This prevents log flooding and disk space exhaustion when large or malicious responses occur.
+func truncateForError(body []byte, maxLen int) string {
+	if len(body) == 0 {
+		return "(empty response)"
+	}
+
+	if len(body) <= maxLen {
+		return string(body)
+	}
+
+	return string(body[:maxLen]) + fmt.Sprintf("... (truncated, %d more bytes)", len(body)-maxLen)
 }
 
 // truncateString truncates a string to maxLen characters, appending "..." if truncated.
