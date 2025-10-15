@@ -185,12 +185,12 @@ func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateMo
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "new moderator address is same as current moderator address")
 	}
 
-	k.SetModeratorAddress(ctx, msg.ModeratorAddress)
+	k.SetModeratorAddress(ctx, msg.NewModeratorAddress)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeUpdateModeratorAddress,
-			sdk.NewAttribute(types.AttributeKeyModeratorAddress, msg.ModeratorAddress),
+			sdk.NewAttribute(types.AttributeKeyModeratorAddress, msg.NewModeratorAddress),
 		),
 	)
 
