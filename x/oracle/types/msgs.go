@@ -108,7 +108,7 @@ func NewMsgSubmitOracleData(
 	nonce uint64,
 	rawData string,
 	provider string,
-	signature string,
+	signature []byte,
 	authorityAddress string,
 ) *MsgSubmitOracleData {
 	return &MsgSubmitOracleData{
@@ -159,7 +159,7 @@ func (msg MsgSubmitOracleData) ValidateBasic() error {
 	if msg.DataSet.RawData == "" {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "raw data cannot be empty")
 	}
-	if msg.DataSet.Signature == "" {
+	if msg.DataSet.Signature == nil {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "signature cannot be empty")
 	}
 	return nil

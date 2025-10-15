@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/spf13/cobra"
 
 	errorsmod "cosmossdk.io/errors"
@@ -130,9 +131,25 @@ func NewSubmitOracleDataCmd() *cobra.Command {
 				nonceUint64,
 				rawData,
 				clientCtx.GetFromAddress().String(),
-				"NOT USED", // signature will be added by the client
+				nil,
 				clientCtx.GetFromAddress().String(),
 			)
+
+			dataset, err := msg.DataSet.Bytes()
+			if err != nil {
+				return err
+			}
+
+			signature, _, err := clientCtx.Keyring.Sign(
+				clientCtx.FromName,
+				dataset,
+				signing.SignMode_SIGN_MODE_DIRECT,
+			)
+			if err != nil {
+				return err
+			}
+
+			msg.DataSet.Signature = signature
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

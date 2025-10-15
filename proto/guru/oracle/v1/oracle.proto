@@ -96,7 +96,7 @@ message SubmitDataSet {
   // Address of the data provider
   string provider = 4;
   // Cryptographic signature of the data for verification
-  string signature = 5;
+  bytes signature = 5;
 }
 
 // DataSet defines the structure for oracle data sets

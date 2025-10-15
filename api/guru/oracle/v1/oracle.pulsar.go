@@ -1689,8 +1689,8 @@ func (x *fastReflection_SubmitDataSet) Range(f func(protoreflect.FieldDescriptor
 			return
 		}
 	}
-	if x.Signature != "" {
-		value := protoreflect.ValueOfString(x.Signature)
+	if len(x.Signature) != 0 {
+		value := protoreflect.ValueOfBytes(x.Signature)
 		if !f(fd_SubmitDataSet_signature, value) {
 			return
 		}
@@ -1719,7 +1719,7 @@ func (x *fastReflection_SubmitDataSet) Has(fd protoreflect.FieldDescriptor) bool
 	case "guru.oracle.v1.SubmitDataSet.provider":
 		return x.Provider != ""
 	case "guru.oracle.v1.SubmitDataSet.signature":
-		return x.Signature != ""
+		return len(x.Signature) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.SubmitDataSet"))
@@ -1745,7 +1745,7 @@ func (x *fastReflection_SubmitDataSet) Clear(fd protoreflect.FieldDescriptor) {
 	case "guru.oracle.v1.SubmitDataSet.provider":
 		x.Provider = ""
 	case "guru.oracle.v1.SubmitDataSet.signature":
-		x.Signature = ""
+		x.Signature = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.SubmitDataSet"))
@@ -1776,7 +1776,7 @@ func (x *fastReflection_SubmitDataSet) Get(descriptor protoreflect.FieldDescript
 		return protoreflect.ValueOfString(value)
 	case "guru.oracle.v1.SubmitDataSet.signature":
 		value := x.Signature
-		return protoreflect.ValueOfString(value)
+		return protoreflect.ValueOfBytes(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.SubmitDataSet"))
@@ -1806,7 +1806,7 @@ func (x *fastReflection_SubmitDataSet) Set(fd protoreflect.FieldDescriptor, valu
 	case "guru.oracle.v1.SubmitDataSet.provider":
 		x.Provider = value.Interface().(string)
 	case "guru.oracle.v1.SubmitDataSet.signature":
-		x.Signature = value.Interface().(string)
+		x.Signature = value.Bytes()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.SubmitDataSet"))
@@ -1859,7 +1859,7 @@ func (x *fastReflection_SubmitDataSet) NewField(fd protoreflect.FieldDescriptor)
 	case "guru.oracle.v1.SubmitDataSet.provider":
 		return protoreflect.ValueOfString("")
 	case "guru.oracle.v1.SubmitDataSet.signature":
-		return protoreflect.ValueOfString("")
+		return protoreflect.ValueOfBytes(nil)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.SubmitDataSet"))
@@ -2162,7 +2162,7 @@ func (x *fastReflection_SubmitDataSet) ProtoMethods() *protoiface.Methods {
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
 				}
-				var stringLen uint64
+				var byteLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -2172,23 +2172,25 @@ func (x *fastReflection_SubmitDataSet) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
+					byteLen |= int(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
+				if byteLen < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
-				postIndex := iNdEx + intStringLen
+				postIndex := iNdEx + byteLen
 				if postIndex < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Signature = string(dAtA[iNdEx:postIndex])
+				x.Signature = append(x.Signature[:0], dAtA[iNdEx:postIndex]...)
+				if x.Signature == nil {
+					x.Signature = []byte{}
+				}
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -3221,7 +3223,7 @@ type SubmitDataSet struct {
 	// Address of the data provider
 	Provider string `protobuf:"bytes,4,opt,name=provider,proto3" json:"provider,omitempty"`
 	// Cryptographic signature of the data for verification
-	Signature string `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+	Signature []byte `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
 }
 
 func (x *SubmitDataSet) Reset() {
@@ -3272,11 +3274,11 @@ func (x *SubmitDataSet) GetProvider() string {
 	return ""
 }
 
-func (x *SubmitDataSet) GetSignature() string {
+func (x *SubmitDataSet) GetSignature() []byte {
 	if x != nil {
 		return x.Signature
 	}
-	return ""
+	return nil
 }
 
 // DataSet defines the structure for oracle data sets
@@ -3405,7 +3407,7 @@ var file_guru_oracle_v1_oracle_proto_rawDesc = []byte{
 	0x09, 0x52, 0x07, 0x72, 0x61, 0x77, 0x44, 0x61, 0x74, 0x61, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x72,
 	0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x72,
 	0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x12, 0x1c, 0x0a, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74,
-	0x75, 0x72, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61,
+	0x75, 0x72, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61,
 	0x74, 0x75, 0x72, 0x65, 0x22, 0x9b, 0x01, 0x0a, 0x07, 0x44, 0x61, 0x74, 0x61, 0x53, 0x65, 0x74,
 	0x12, 0x1d, 0x0a, 0x0a, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x49, 0x64, 0x12,

@@ -12,21 +12,25 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
+	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
 )
 
 type Keeper struct {
-	cdc      codec.BinaryCodec
-	storeKey storetypes.StoreKey
-	hooks    types.OracleHooks
+	cdc           codec.BinaryCodec
+	storeKey      storetypes.StoreKey
+	hooks         types.OracleHooks
+	accountKeeper evmtypes.AccountKeeper
 }
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
+	accountKeeper evmtypes.AccountKeeper,
 ) *Keeper {
 	return &Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
+		cdc:           cdc,
+		storeKey:      storeKey,
+		accountKeeper: accountKeeper,
 	}
 }
 

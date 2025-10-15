@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/binary"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -67,4 +68,31 @@ func (doc OracleRequestDoc) Validate() error {
 		return fmt.Errorf("status cannot be empty")
 	}
 	return nil
+}
+
+// SignBytes returns the canonical, unhashed bytes to be signed for SubmitDataSet.
+// This encoding matches the Hash() preimage exactly, but without hashing.
+func (sds SubmitDataSet) Bytes() ([]byte, error) {
+	domain := []byte("guru.oracle.SubmitDataSet")
+
+	buf := make([]byte, 0, len(domain)+8+8+4+len(sds.RawData)+20)
+	buf = append(buf, domain...)
+
+	var u64 [8]byte
+	binary.BigEndian.PutUint64(u64[:], sds.RequestId)
+	buf = append(buf, u64[:]...)
+	binary.BigEndian.PutUint64(u64[:], sds.Nonce)
+	buf = append(buf, u64[:]...)
+
+	var l4 [4]byte
+	binary.BigEndian.PutUint32(l4[:], uint32(len(sds.RawData)))
+	buf = append(buf, l4[:]...)
+	buf = append(buf, []byte(sds.RawData)...)
+
+	acc, err := sdk.AccAddressFromBech32(sds.Provider)
+	if err != nil {
+		return nil, fmt.Errorf("invalid provider bech32: %w", err)
+	}
+
+	return append(buf, acc.Bytes()...), nil
 }

@@ -42,7 +42,7 @@ func TestMsgSubmitOracleData(t *testing.T) {
 			Nonce:     1,
 			RawData:   "test data",
 			Provider:  "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-			Signature: "test signature",
+			Signature: []byte("test signature"),
 		},
 	}
 	require.NoError(t, validMsg.ValidateBasic())
@@ -53,7 +53,7 @@ func TestMsgSubmitOracleData(t *testing.T) {
 			RequestId: 0,
 			RawData:   "",
 			Provider:  "invalid-address",
-			Signature: "",
+			Signature: nil,
 		},
 	}
 	require.Error(t, invalidMsg.ValidateBasic())
