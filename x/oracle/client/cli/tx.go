@@ -187,18 +187,18 @@ func parseRequestDocJson(path string) (*types.OracleRequestDoc, error) {
 // NewUpdateParamsCmd implements the update oracle parameters command for governance proposals
 func NewUpdateParamsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-params [submit-window] [min-submit-per-window] [slash-fraction-downtime]",
+		Use:   "update-params [submit-window] [min-submit-per-window] [slash-fraction-downtime] [max-account-list-size]",
 		Short: "Generate governance proposal to update oracle module parameters",
 		Long: `Generate a governance proposal to update oracle module parameters.
 This command creates a MsgUpdateParams that must be submitted through governance.
 
 Example:
   # Create a governance proposal JSON file
-  gurud tx oracle update-params 3600 1.0 0.01 --generate-only > update_params_proposal.json
+  gurud tx oracle update-params 3600 1.0 0.01 1000 --generate-only > update_params_proposal.json
 
   # Submit the proposal through governance
   gurud tx gov submit-proposal update_params_proposal.json --from proposer`,
-		Args: cobra.ExactArgs(3),
+		Args: cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -223,11 +223,18 @@ Example:
 				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "slash fraction downtime must be a valid decimal")
 			}
 
+			// Parse max account list size
+			maxAccountListSize, err := strconv.ParseUint(args[3], 10, 64)
+			if err != nil {
+				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "max account list size must be a valid uint64")
+			}
+
 			params := types.Params{
 				EnableOracle:          true, // Always enabled
 				SubmitWindow:          submitWindow,
 				MinSubmitPerWindow:    minSubmitPerWindow,
 				SlashFractionDowntime: slashFractionDowntime,
+				MaxAccountListSize:    maxAccountListSize,
 			}
 
 			// Use governance module address as authority
