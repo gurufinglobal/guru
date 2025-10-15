@@ -53,7 +53,10 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 	k.SetOracleRequestDocCount(ctx, count+1)
 
 	// Marshal the endpoints to a JSON string
-	endpointsJson, _ := json.Marshal(oracleRequestDoc.Endpoints)
+	endpointsJson, err := json.Marshal(oracleRequestDoc.Endpoints)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "failed to marshal endpoints")
+	}
 
 	// Emit event for registering oracle request document
 	ctx.EventManager().EmitEvent(
@@ -95,7 +98,10 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 	}
 
 	// Marshal the endpoints to a JSON string
-	endpointsJson, _ := json.Marshal(doc.RequestDoc.Endpoints)
+	endpointsJson, err := json.Marshal(doc.RequestDoc.Endpoints)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "failed to marshal endpoints")
+	}
 
 	// Emit event for updating oracle request document
 	ctx.EventManager().EmitEvent(
