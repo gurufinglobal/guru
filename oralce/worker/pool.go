@@ -46,8 +46,11 @@ func New(ctx context.Context, logger log.Logger) *WorkerPool {
 // ProcessRequestDoc maps an Oracle request document to a scheduled job.
 // It selects the endpoint for this instance and computes initial delay.
 func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oracletypes.OracleRequestDoc, timestamp uint64) {
+	requestIDStr := strconv.FormatUint(requestDoc.RequestId, 10)
+
 	if requestDoc.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
-		wp.logger.Info("request document is not enabled", "request_id", requestDoc.RequestId)
+		wp.logger.Info("request document is not enabled, removing job", "request_id", requestDoc.RequestId, "status", requestDoc.Status)
+		wp.jobStore.Remove(requestIDStr)
 		return
 	}
 
@@ -60,7 +63,6 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 	}
 
 	var currentNonce uint64
-	requestIDStr := strconv.FormatUint(requestDoc.RequestId, 10)
 	if job, ok := wp.jobStore.Get(requestIDStr); ok {
 		currentNonce = job.Nonce
 	} else {
@@ -94,6 +96,13 @@ func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce u
 		return
 	}
 
+	// Check job status before rescheduling
+	if job.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
+		wp.logger.Debug("job is not enabled, skipping reschedule", "request_id", reqID, "status", job.Status)
+		wp.jobStore.Remove(reqID)
+		return
+	}
+
 	job.Nonce = max(job.Nonce, nonce)
 	periodSec := uint64(job.Period / time.Second)
 	nowSec := uint64(time.Now().Unix())
@@ -122,6 +131,13 @@ func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 			case <-ctx.Done():
 				return nil
 			}
+		}
+
+		// Final status check before execution
+		if task.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
+			reqID := strconv.FormatUint(task.ID, 10)
+			wp.jobStore.Remove(reqID)
+			return nil
 		}
 
 		reqID := strconv.FormatUint(task.ID, 10)
