@@ -17,6 +17,11 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 )
 
+// TxFeeChecker check if the provided fee is enough and returns the effective fee, total tip and tx priority,
+// the effective fee should be deducted later, and the priority should be returned in abci response.
+// the total tip should be deducted without discount
+type TxFeeChecker func(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, sdk.Coins, int64, error)
+
 // NewDynamicFeeChecker returns a `TxFeeChecker` that applies a dynamic fee to
 // Cosmos txs using the EIP-1559 fee market logic.
 // This can be called in both CheckTx and deliverTx modes.
@@ -25,11 +30,11 @@ import (
 // - when `ExtensionOptionDynamicFeeTx` is omitted, `tipFeeCap` defaults to `MaxInt64`.
 // - when london hardfork is not enabled, it falls back to SDK default behavior (validator min-gas-prices).
 // - Tx priority is set to `effectiveGasPrice / DefaultPriorityReduction`.
-func NewDynamicFeeChecker(k anteinterfaces.FeeMarketKeeper) authante.TxFeeChecker {
-	return func(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, int64, error) {
+func NewDynamicFeeChecker(k anteinterfaces.FeeMarketKeeper) TxFeeChecker {
+	return func(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, sdk.Coins, int64, error) {
 		feeTx, ok := tx.(sdk.FeeTx)
 		if !ok {
-			return sdk.Coins{}, 0, errorsmod.Wrap(errortypes.ErrTxDecode, "Tx must be a FeeTx")
+			return sdk.Coins{}, sdk.Coins{}, 0, errorsmod.Wrap(errortypes.ErrTxDecode, "Tx must be a FeeTx")
 		}
 
 		// TODO: in the e2e test, if the fee in the genesis transaction meet the baseFee and minGasPrice in the feemarket, we can remove this code
@@ -51,7 +56,7 @@ func FeeChecker(
 	denom string,
 	ethConfig *params.ChainConfig,
 	feeTx sdk.FeeTx,
-) (sdk.Coins, int64, error) {
+) (sdk.Coins, sdk.Coins, int64, error) {
 	if !evmtypes.IsLondon(ethConfig, ctx.BlockHeight()) {
 		// london hardfork is not enabled: fallback to min-gas-prices logic
 		return checkTxFeeWithValidatorMinGasPrices(ctx, feeTx)
@@ -83,12 +88,12 @@ func FeeChecker(
 
 	// priority fee cannot be negative
 	if maxPriorityPrice.IsNegative() {
-		return nil, 0, errorsmod.Wrapf(errortypes.ErrInsufficientFee, "max priority price cannot be negative")
+		return nil, nil, 0, errorsmod.Wrapf(errortypes.ErrInsufficientFee, "max priority price cannot be negative")
 	}
 
 	gas := sdkmath.NewIntFromUint64(feeTx.GetGas())
 	if gas.IsZero() {
-		return nil, 0, errorsmod.Wrap(errortypes.ErrInvalidRequest, "gas cannot be zero")
+		return nil, nil, 0, errorsmod.Wrap(errortypes.ErrInvalidRequest, "gas cannot be zero")
 	}
 
 	feeCoins := feeTx.GetFee()
@@ -97,17 +102,32 @@ func FeeChecker(
 	feeCap := feeAmtDec.QuoInt(gas)
 
 	if feeCap.LT(baseFee) {
-		return nil, 0, errorsmod.Wrapf(errortypes.ErrInsufficientFee, "gas prices too low, got: %s%s required: %s%s. Please retry using a higher gas price or a higher fee", feeCap, denom, baseFee, denom)
+		return nil, nil, 0, errorsmod.Wrapf(errortypes.ErrInsufficientFee, "gas prices too low, got: %s%s required: %s%s. Please retry using a higher gas price or a higher fee", feeCap, denom, baseFee, denom)
 	}
 
 	// calculate the effective gas price using the EIP-1559 logic.
 	effectivePrice := effectiveGasPriceLegacyDec(baseFee, feeCap, maxPriorityPrice)
 
 	// NOTE: create a new coins slice without having to validate the denom
+	effectiveFeeAmt := effectivePrice.MulInt(gas).Ceil().RoundInt()
 	effectiveFee := sdk.Coins{
 		{
 			Denom:  denom,
-			Amount: effectivePrice.MulInt(gas).Ceil().RoundInt(),
+			Amount: effectiveFeeAmt,
+		},
+	}
+
+	// calculate total tip = (effectivePrice - baseFee) * gas
+	totalTipAmt := effectivePrice.Sub(baseFee).MulInt(gas).Ceil().RoundInt()
+
+	// In case baseFee = 0
+	if totalTipAmt.Equal(effectiveFeeAmt) {
+		totalTipAmt = sdkmath.ZeroInt()
+	}
+	totalTip := sdk.Coins{
+		{
+			Denom:  denom,
+			Amount: totalTipAmt,
 		},
 	}
 
@@ -118,12 +138,12 @@ func FeeChecker(
 		priority = priorityInt.Int64()
 	}
 
-	return effectiveFee, priority, nil
+	return effectiveFee, totalTip, priority, nil
 }
 
 // checkTxFeeWithValidatorMinGasPrices implements the default fee logic, where the minimum price per
 // unit of gas is fixed and set by each validator, and the tx priority is computed from the gas price.
-func checkTxFeeWithValidatorMinGasPrices(ctx sdk.Context, tx sdk.FeeTx) (sdk.Coins, int64, error) {
+func checkTxFeeWithValidatorMinGasPrices(ctx sdk.Context, tx sdk.FeeTx) (sdk.Coins, sdk.Coins, int64, error) {
 	feeCoins := tx.GetFee()
 	minGasPrices := ctx.MinGasPrices()
 	gas := int64(tx.GetGas()) //#nosec G115 -- checked for int overflow on ValidateBasic()
@@ -143,12 +163,12 @@ func checkTxFeeWithValidatorMinGasPrices(ctx sdk.Context, tx sdk.FeeTx) (sdk.Coi
 		}
 
 		if !feeCoins.IsAnyGTE(requiredFees) {
-			return nil, 0, errorsmod.Wrapf(errortypes.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeCoins, requiredFees)
+			return nil, nil, 0, errorsmod.Wrapf(errortypes.ErrInsufficientFee, "insufficient fees; got: %s required: %s", feeCoins, requiredFees)
 		}
 	}
 
 	priority := getTxPriority(feeCoins, gas)
-	return feeCoins, priority, nil
+	return feeCoins, sdk.Coins{}, priority, nil
 }
 
 // getTxPriority returns a naive tx priority based on the amount of the smallest denomination of the gas price

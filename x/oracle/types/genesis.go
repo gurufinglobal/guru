@@ -22,15 +22,21 @@ func DefaultGenesisState() *GenesisState {
 		Params:                DefaultParams(),
 		OracleRequestDocCount: 0,
 		OracleRequestDocs:     []OracleRequestDoc{},
-		ModeratorAddress:      "guru10jmp6sgh4cc6zt3e8gw05wavvejgr5pwggsdaj", // This is a test address
+		ModeratorAddress:      "",
 	}
 }
 
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
+	// Validate params
 	if err := gs.Params.Validate(); err != nil {
-		return err
+		return fmt.Errorf("invalid params: %w", err)
+	}
+
+	// Validate moderator address
+	if gs.ModeratorAddress == "" {
+		return fmt.Errorf("moderator address must be set in genesis")
 	}
 
 	// Validate each request oracle doc
@@ -38,11 +44,6 @@ func (gs GenesisState) Validate() error {
 		if err := doc.Validate(); err != nil {
 			return fmt.Errorf("invalid request oracle doc: %w", err)
 		}
-	}
-
-	// Validate params
-	if err := gs.Params.Validate(); err != nil {
-		return fmt.Errorf("invalid params: %w", err)
 	}
 
 	// Validate moderator address if provided

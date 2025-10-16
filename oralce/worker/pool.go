@@ -34,8 +34,16 @@ func New(ctx context.Context, logger log.Logger) *WorkerPool {
 	wp.workerGroup, wp.workerFunc = taskgroup.New(nil).Limit(2 * runtime.NumCPU())
 	go func() {
 		<-ctx.Done()
-		wp.workerGroup.Wait()
+		wp.logger.Info("worker pool shutting down, waiting for active tasks to complete")
+
+		if err := wp.workerGroup.Wait(); err != nil {
+			wp.logger.Error("error during worker pool shutdown", "error", err)
+		} else {
+			wp.logger.Info("worker pool shutdown completed successfully")
+		}
+
 		close(wp.resultCh)
+		wp.logger.Debug("result channel closed")
 	}()
 
 	wp.client = newHTTPClient(wp.logger)
@@ -46,8 +54,11 @@ func New(ctx context.Context, logger log.Logger) *WorkerPool {
 // ProcessRequestDoc maps an Oracle request document to a scheduled job.
 // It selects the endpoint for this instance and computes initial delay.
 func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oracletypes.OracleRequestDoc, timestamp uint64) {
+	requestIDStr := strconv.FormatUint(requestDoc.RequestId, 10)
+
 	if requestDoc.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
-		wp.logger.Info("request document is not enabled", "request_id", requestDoc.RequestId)
+		wp.logger.Info("request document is not enabled, removing job", "request_id", requestDoc.RequestId, "status", requestDoc.Status)
+		wp.jobStore.Remove(requestIDStr)
 		return
 	}
 
@@ -60,7 +71,6 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 	}
 
 	var currentNonce uint64
-	requestIDStr := strconv.FormatUint(requestDoc.RequestId, 10)
 	if job, ok := wp.jobStore.Get(requestIDStr); ok {
 		currentNonce = job.Nonce
 	} else {
@@ -78,7 +88,7 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 		Path:   requestDoc.Endpoints[index].ParseRule,
 		Nonce:  max(currentNonce, requestDoc.Nonce),
 		Delay:  time.Duration(max(int64(0), dsec)) * time.Second,
-		Period: time.Duration(requestDoc.Period),
+		Period: time.Duration(requestDoc.Period) * time.Second,
 		Status: requestDoc.Status,
 	}
 
@@ -94,8 +104,15 @@ func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce u
 		return
 	}
 
+	// Check job status before rescheduling
+	if job.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
+		wp.logger.Debug("job is not enabled, skipping reschedule", "request_id", reqID, "status", job.Status)
+		wp.jobStore.Remove(reqID)
+		return
+	}
+
 	job.Nonce = max(job.Nonce, nonce)
-	periodSec := uint64(job.Period)
+	periodSec := uint64(job.Period / time.Second)
 	nowSec := uint64(time.Now().Unix())
 	tsSec := uint64(timestamp)
 	dsec := int64(tsSec+periodSec) - int64(nowSec)
@@ -104,14 +121,16 @@ func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce u
 	wp.executeJob(ctx, job)
 }
 
-// Results relturns a read-only channel of completed job results.
-// The channe is closed when the worker pool is shut down.
+// Results returns a read-only channel of completed job results.
+// The channel is closed when the worker pool is shut down.
 func (wp *WorkerPool) Results() <-chan *types.OracleJobResult {
 	return wp.resultCh
 }
 
 // executeJob schedules a single job execution in a worker goroutine.
 // It honors ctx cancellation for delaying the first run.
+// The nonce is only incremented and persisted after all external operations succeed,
+// ensuring on-chain nonce consistency.
 func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 	task := job
 
@@ -124,19 +143,30 @@ func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 			}
 		}
 
-		reqID := strconv.FormatUint(task.ID, 10)
-
-		if stored, ok := wp.jobStore.Get(reqID); ok {
-			task.Nonce = stored.Nonce + 1
-		} else {
-			task.Nonce++
+		// Final status check before execution
+		if task.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
+			reqID := strconv.FormatUint(task.ID, 10)
+			wp.jobStore.Remove(reqID)
+			return nil
 		}
 
-		wp.jobStore.Set(reqID, task)
+		reqID := strconv.FormatUint(task.ID, 10)
 
+		// Calculate next nonce but don't persist yet
+		var nextNonce uint64
+		if stored, ok := wp.jobStore.Get(reqID); ok {
+			nextNonce = stored.Nonce + 1
+		} else {
+			nextNonce = task.Nonce + 1
+		}
+
+		// Perform all external operations that may fail
 		rawData, err := wp.client.fetchRawData(task.URL)
 		if err != nil {
-			wp.logger.Error("failed to fetch raw data", "error", err)
+			wp.logger.Error("failed to fetch raw data",
+				"error", err,
+				"request_id", task.ID,
+				"nonce", nextNonce)
 			wp.resultCh <- nil
 			return err
 		}
@@ -144,22 +174,35 @@ func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
 
 		jsonData, err := wp.client.parseRawData(rawData)
 		if err != nil {
-			wp.logger.Error("failed to parse raw data", "error", err)
+			wp.logger.Error("failed to parse raw data",
+				"error", err,
+				"request_id", task.ID,
+				"nonce", nextNonce)
 			return err
 		}
 
 		result, err := wp.client.extractDataByPath(jsonData, task.Path)
 		if err != nil {
-			wp.logger.Error("failed to extract data by path", "error", err)
+			wp.logger.Error("failed to extract data by path",
+				"error", err,
+				"request_id", task.ID,
+				"nonce", nextNonce)
 			return err
 		}
+
+		// All operations succeeded - now persist the nonce increment
+		task.Nonce = nextNonce
+		wp.jobStore.Set(reqID, task)
 
 		wp.resultCh <- &types.OracleJobResult{
 			ID:    task.ID,
 			Data:  result,
 			Nonce: task.Nonce,
 		}
-		wp.logger.Debug("sent result to channel", "id", task.ID, "data", result)
+		wp.logger.Debug("sent result to channel",
+			"id", task.ID,
+			"data", result,
+			"nonce", task.Nonce)
 
 		return nil
 	})

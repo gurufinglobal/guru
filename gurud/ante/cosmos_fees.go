@@ -6,6 +6,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+	evmante "github.com/GPTx-global/guru-v2/v2/ante/evm"
 	feepolicytypes "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types"
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -23,11 +24,11 @@ type DeductFeeDecorator struct {
 	accountKeeper   authante.AccountKeeper
 	bankKeeper      types.BankKeeper
 	feegrantKeeper  authante.FeegrantKeeper
-	txFeeChecker    authante.TxFeeChecker
+	txFeeChecker    evmante.TxFeeChecker
 	feepolicyKeeper FeePolicyKeeper
 }
 
-func NewDeductFeeDecorator(ak authante.AccountKeeper, bk types.BankKeeper, fk authante.FeegrantKeeper, tfc authante.TxFeeChecker, fpk FeePolicyKeeper) DeductFeeDecorator {
+func NewDeductFeeDecorator(ak authante.AccountKeeper, bk types.BankKeeper, fk authante.FeegrantKeeper, tfc evmante.TxFeeChecker, fpk FeePolicyKeeper) DeductFeeDecorator {
 	if tfc == nil {
 		tfc = checkTxFeeWithValidatorMinGasPrices
 	}
@@ -57,8 +58,9 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	)
 
 	fee := feeTx.GetFee()
+	tips := sdk.Coins{}
 	if !simulate {
-		fee, priority, err = dfd.txFeeChecker(ctx, tx)
+		fee, tips, priority, err = dfd.txFeeChecker(ctx, tx)
 		if err != nil {
 			return ctx, err
 		}
@@ -71,28 +73,41 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	if err != nil {
 		return ctx, err
 	}
+	feeGranter := feePayer
+	if feeTx.FeeGranter() != nil {
+		feeGranter, err = addrCodec.BytesToString(feeTx.FeeGranter())
+		if err != nil {
+			return ctx, err
+		}
+	}
 
-	discount := dfd.feepolicyKeeper.GetDiscount(ctx, string(feePayer), tx.GetMsgs())
+	discount := dfd.feepolicyKeeper.GetDiscount(ctx, feeGranter, tx.GetMsgs())
 
 	// apply discounts
 	var deductedFee sdk.Coins
+	baseFee := fee.Sub(tips...)
 
 	if discount.DiscountType == feepolicytypes.FeeDiscountTypePercent {
-		for _, f := range fee {
-			// type: "percent"
-			// fee calculation: (100 - amount) % => if discount is 30%, then 70% of the fee is deducted
-			deductedFee = deductedFee.Add(sdk.NewCoin(f.Denom, f.Amount.MulRaw(math.LegacyNewDec(100).Sub(discount.Amount).TruncateInt64()).QuoRaw(100)))
+		for _, f := range baseFee {
+			// Calculate percentage multiplier as (100 - discountAmount) / 100
+			// Example: if discount = 25.5%, multiplier = 0.745
+			discountMultiplier := math.LegacyNewDec(100).Sub(discount.Amount).Quo(math.LegacyNewDec(100))
+
+			// Apply multiplier to base fee amount
+			finalAmt := math.LegacyNewDecFromInt(f.Amount).Mul(discountMultiplier).TruncateInt()
+
+			deductedFee = deductedFee.Add(sdk.NewCoin(f.Denom, finalAmt))
 		}
 	} else if discount.DiscountType == feepolicytypes.FeeDiscountTypeFixed {
-		for _, f := range fee {
+		for _, f := range baseFee {
 			// type: "fixed"
-			// fee calculation: fixed amount
 			deductedFee = deductedFee.Add(sdk.NewCoin(f.Denom, discount.Amount.TruncateInt()))
 		}
 	} else {
 		// if no discount, deduct full fee
-		deductedFee = fee
+		deductedFee = baseFee
 	}
+	deductedFee = deductedFee.Add(tips...)
 
 	if err = dfd.checkDeductFee(ctx, tx, deductedFee); err != nil {
 		return ctx, err
