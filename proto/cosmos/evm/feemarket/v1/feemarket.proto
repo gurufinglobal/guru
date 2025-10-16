@@ -45,7 +45,15 @@ message Params {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-  string min_gas_price_rate = 9 [
+  // gas_price_adjustment_factor defines the factor by which the gas price is adjusted
+  string gas_price_adjustment_factor = 9 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // max_change_rate defines the maximum rate at which the min gas price can change
+  // between blocks as a percentage (e.g., 0.125 for 12.5%)
+  string max_change_rate = 10 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
