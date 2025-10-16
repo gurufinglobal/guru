@@ -55,7 +55,7 @@ func TestSubmitOracleDataValidDataSet(t *testing.T) {
 			Nonce:     1,
 			RawData:   "123.456",
 			Provider:  moderatorAddr,
-			Signature: "test signature",
+			Signature: []byte("test signature"),
 		},
 	}
 
@@ -98,7 +98,7 @@ func TestSubmitOracleDataEdgeCases(t *testing.T) {
 					Nonce:     1,
 					RawData:   "",
 					Provider:  "",
-					Signature: "",
+					Signature: nil,
 				},
 			},
 			expectError: true,
