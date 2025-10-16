@@ -114,12 +114,16 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	USER4_KEY="dev3"
 	USER4_MNEMONIC="doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch"
 
+	MODERATOR_KEY="moderator"
+	MODERATOR_MNEMONIC="piece edge candy scare bicycle grass tackle have mango virus either erosion setup tuition inmate choice sun rule depth suffer debris purse whale napkin"
+
 	# Import keys from mnemonics
 	echo "$VAL_MNEMONIC" | gurud keys add "$VAL_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 	echo "$USER1_MNEMONIC" | gurud keys add "$USER1_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 	echo "$USER2_MNEMONIC" | gurud keys add "$USER2_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 	echo "$USER3_MNEMONIC" | gurud keys add "$USER3_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 	echo "$USER4_MNEMONIC" | gurud keys add "$USER4_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
+	echo "$MODERATOR_MNEMONIC" | gurud keys add "$MODERATOR_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 
 	# Set moniker and chain-id for the example chain (Moniker can be anything, chain-id must be an integer)
 	gurud init $MONIKER -o --chain-id "$CHAINID" --home "$HOMEDIR"
@@ -169,12 +173,15 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.consensus.params.block.max_gas="10000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# Set distribution addresses
-	jq -r --arg moderator_address "$(gurud keys show dev2 --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq -r --arg moderator_address "$(gurud keys show moderator --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq -r --arg base_address "$(gurud keys show dev3 --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["base_address"] = $base_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# Set feepolicy addresses
-	jq -r --arg moderator_address "$(gurud keys show dev2 --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["feepolicy"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq -r --arg moderator_address "$(gurud keys show moderator --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["feepolicy"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	
+	# Set oracle moderator address
+	jq -r --arg moderator_address "$(gurud keys show moderator --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["oracle"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
 	# Set auth module parameters for transaction costs
 	jq '.app_state["auth"]["params"]["tx_size_cost_per_byte"]="2"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["auth"]["params"]["sig_verify_cost_ed25519"]="118"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -232,6 +239,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	gurud genesis add-genesis-account "$USER2_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
 	gurud genesis add-genesis-account "$USER3_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
 	gurud genesis add-genesis-account "$USER4_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	gurud genesis add-genesis-account "$MODERATOR_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
 
 	# Sign genesis transaction
 	gurud genesis gentx "$VAL_KEY" 1000000000000000000000agxn --gas-prices ${BASEFEE}agxn --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"
