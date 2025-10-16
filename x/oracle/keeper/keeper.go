@@ -15,21 +15,24 @@ import (
 )
 
 type Keeper struct {
-	cdc       codec.BinaryCodec
-	storeKey  storetypes.StoreKey
-	hooks     types.OracleHooks
-	authority string
+	cdc           codec.BinaryCodec
+	storeKey      storetypes.StoreKey
+	hooks         types.OracleHooks
+	authority     string
+	accountKeeper types.AccountKeeper
 }
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	authority string,
+	accountKeeper types.AccountKeeper,
 ) *Keeper {
 	return &Keeper{
-		cdc:       cdc,
-		storeKey:  storeKey,
-		authority: authority,
+		cdc:           cdc,
+		storeKey:      storeKey,
+		authority:     authority,
+		accountKeeper: accountKeeper,
 	}
 }
 

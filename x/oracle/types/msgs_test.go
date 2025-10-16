@@ -43,7 +43,7 @@ func TestMsgSubmitOracleData(t *testing.T) {
 			Nonce:     1,
 			RawData:   "123.456",
 			Provider:  "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-			Signature: "test signature",
+			Signature: []byte("test signature"),
 		},
 	}
 	require.NoError(t, validMsg.ValidateBasic())
@@ -72,7 +72,7 @@ func TestMsgSubmitOracleData(t *testing.T) {
 				Nonce:     1,
 				RawData:   decimal,
 				Provider:  "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				Signature: "test signature",
+				Signature: []byte("test signature"),
 			},
 		}
 		require.NoError(t, msg.ValidateBasic(), "Expected %s to be valid decimal", decimal)
@@ -100,7 +100,7 @@ func TestMsgSubmitOracleData(t *testing.T) {
 				Nonce:     1,
 				RawData:   decimal,
 				Provider:  "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				Signature: "test signature",
+				Signature: []byte("test signature"),
 			},
 		}
 		require.Error(t, msg.ValidateBasic(), "Expected %s to be invalid decimal", decimal)
@@ -113,7 +113,7 @@ func TestMsgSubmitOracleData(t *testing.T) {
 			RequestId: 0, // Invalid: zero request ID
 			RawData:   "123.456",
 			Provider:  "invalid-address", // Invalid: bad address format
-			Signature: "",                // Invalid: empty signature
+			Signature: nil,               // Invalid: empty signature
 		},
 	}
 	require.Error(t, invalidMsg.ValidateBasic())

@@ -93,17 +93,6 @@ func (s *Submitter) BroadcastTxWithRetry(ctx context.Context, jobResult types.Or
 // buildTransaction creates an unsigned transaction for Oracle data submission
 // Configures all transaction parameters including gas, fees, and message data
 func (s *Submitter) buildTransaction(jobResult types.OracleJobResult) (tx.Factory, client.TxBuilder) {
-	msg := &oracletypes.MsgSubmitOracleData{
-		AuthorityAddress: s.clientCtx.GetFromAddress().String(),
-		DataSet: &oracletypes.SubmitDataSet{
-			RequestId: jobResult.ID,
-			RawData:   jobResult.Data,
-			Nonce:     jobResult.Nonce,
-			Provider:  s.clientCtx.GetFromAddress().String(),
-			Signature: "signature",
-		},
-	}
-
 	gasPrice, err := sdk.ParseDecCoin(config.GasPrices() + guruconfig.BaseDenom)
 	if err != nil {
 		s.logger.Error("failed to parse gas price", "error", err)
@@ -121,6 +110,30 @@ func (s *Submitter) buildTransaction(jobResult types.OracleJobResult) (tx.Factor
 		WithAccountNumber(s.accountN).
 		WithSequence(s.sequenceN).
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
+
+	msg := &oracletypes.MsgSubmitOracleData{
+		AuthorityAddress: s.clientCtx.GetFromAddress().String(),
+		DataSet: &oracletypes.SubmitDataSet{
+			RequestId: jobResult.ID,
+			RawData:   jobResult.Data,
+			Nonce:     jobResult.Nonce,
+			Provider:  s.clientCtx.GetFromAddress().String(),
+			Signature: nil,
+		},
+	}
+
+	signBytes, err := msg.DataSet.Bytes()
+	if err != nil {
+		s.logger.Error("failed to get sign bytes", "error", err)
+		return tx.Factory{}, nil
+	}
+
+	signature, _, err := s.clientCtx.Keyring.Sign(config.KeyName(), signBytes, factory.SignMode())
+	if err != nil {
+		s.logger.Error("failed to sign tx", "error", err)
+		return tx.Factory{}, nil
+	}
+	msg.DataSet.Signature = signature
 
 	txBuilder, err := factory.BuildUnsignedTx(msg)
 	if err != nil {

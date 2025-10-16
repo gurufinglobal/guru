@@ -541,7 +541,8 @@ func NewExampleApp(
 		&app.TransferKeeper,
 	)
 
-	oracleKeeper := oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], authAddr)
+	oracleKeeper := oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], authAddr, app.AccountKeeper)
+	app.OracleKeeper = *oracleKeeper
 	app.OracleKeeper = *oracleKeeper.SetHooks(
 		oraclekeeper.NewMultiOracleHooks(
 			// insert oracle hooks receivers here

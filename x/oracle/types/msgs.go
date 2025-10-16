@@ -49,7 +49,7 @@ func (msg MsgRegisterOracleRequestDoc) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid from address(Moderator) (%s)", err)
 	}
-	if err := msg.RequestDoc.Validate(); err != nil {
+	if err := msg.RequestDoc.ValidateWithParams(DefaultParams()); err != nil {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
 	}
 	return nil
@@ -98,7 +98,7 @@ func (msg MsgUpdateOracleRequestDoc) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid from address(Moderator) (%s)", err)
 	}
-	if err := msg.RequestDoc.Validate(); err != nil {
+	if err := msg.RequestDoc.ValidateWithParams(DefaultParams()); err != nil {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
 	}
 	return nil
@@ -110,7 +110,7 @@ func NewMsgSubmitOracleData(
 	nonce uint64,
 	rawData string,
 	provider string,
-	signature string,
+	signature []byte,
 	authorityAddress string,
 ) *MsgSubmitOracleData {
 	return &MsgSubmitOracleData{
@@ -171,7 +171,8 @@ func (msg MsgSubmitOracleData) ValidateBasic() error {
 		return errorsmod.Wrapf(errortypes.ErrInvalidRequest,
 			"raw data must be a valid decimal number: %q", msg.DataSet.RawData)
 	}
-	if msg.DataSet.Signature == "" {
+
+	if msg.DataSet.Signature == nil {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "signature cannot be empty")
 	}
 	return nil

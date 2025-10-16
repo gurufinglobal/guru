@@ -35,7 +35,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
 
-	keeper := NewKeeper(cdc, storeKey, "cosmos1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft")
+	keeper := NewKeeper(cdc, storeKey, "cosmos1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft", nil)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{ChainID: "test-chain"}, false, log.NewNopLogger()).
 		WithGasMeter(storetypes.NewInfiniteGasMeter())

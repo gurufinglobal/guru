@@ -11,6 +11,7 @@ import (
 	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // MsgServer implementation
@@ -176,6 +177,11 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "nonce is not correct")
 	}
 
+	err = k.verifySubmitData(ctx, msg)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
 	k.SetSubmitData(ctx, *msg.DataSet)
 
 	ctx.EventManager().EmitEvent(
@@ -251,4 +257,45 @@ func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateMo
 	)
 
 	return &types.MsgUpdateModeratorAddressResponse{}, nil
+}
+
+func (k Keeper) verifySubmitData(ctx context.Context, msg *types.MsgSubmitOracleData) error {
+	if msg == nil || msg.DataSet == nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "missing dataset")
+	}
+
+	signBytes, err := msg.DataSet.Bytes()
+	if err != nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	sig := msg.DataSet.Signature
+	if len(sig) != crypto.SignatureLength {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid signature length")
+	}
+	if sig[64] >= 27 {
+		sig[64] -= 27
+	}
+	if sig[64] != 0 && sig[64] != 1 {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid signature recovery id")
+	}
+
+	providerAcc, err := sdk.AccAddressFromBech32(msg.DataSet.Provider)
+	if err != nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidAddress, "invalid provider address")
+	}
+
+	acc := k.accountKeeper.GetAccount(ctx, providerAcc)
+	if acc == nil {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "account not found")
+	}
+	if acc.GetPubKey() == nil {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "public key not found")
+	}
+
+	if !acc.GetPubKey().VerifySignature(signBytes, sig) {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid dataset signature")
+	}
+
+	return nil
 }
