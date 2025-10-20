@@ -3,10 +3,10 @@ package keeper_test
 import (
 	"fmt"
 
-	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"

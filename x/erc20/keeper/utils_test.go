@@ -5,11 +5,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/GPTx-global/guru-v2/v2/contracts"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/v2/x/erc20/keeper/testdata"
-	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
-	evm "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/contracts"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/x/erc20/keeper/testdata"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	evm "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

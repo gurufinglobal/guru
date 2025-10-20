@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 
 	sdkmath "cosmossdk.io/math"
 

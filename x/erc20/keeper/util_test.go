@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func TestValidateApprovalEventDoesNotExist(t *testing.T) {

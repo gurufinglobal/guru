@@ -13,9 +13,9 @@ import (
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
-	rpctypes "github.com/GPTx-global/guru-v2/v2/rpc/types"
-	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	cosmosevmibc "github.com/GPTx-global/guru-v2/v2/ibc"
-	precompilestestutil "github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	cosmosevmibc "github.com/gurufinglobal/guru/v2/ibc"
+	precompilestestutil "github.com/gurufinglobal/guru/v2/precompiles/testutil"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"

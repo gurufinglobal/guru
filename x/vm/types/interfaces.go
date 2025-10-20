@@ -10,7 +10,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/math"

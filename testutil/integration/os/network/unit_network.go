@@ -3,8 +3,8 @@ package network
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"

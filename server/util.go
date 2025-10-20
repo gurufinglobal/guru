@@ -13,7 +13,7 @@ import (
 	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 
-	"github.com/GPTx-global/guru-v2/v2/server/config"
+	"github.com/gurufinglobal/guru/v2/server/config"
 
 	"cosmossdk.io/log"
 

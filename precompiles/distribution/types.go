@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
-	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/v2/utils"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	"github.com/gurufinglobal/guru/v2/utils"
 
 	"cosmossdk.io/math"
 

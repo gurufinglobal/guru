@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/GPTx-global/guru-v2/v2/x/ibc/transfer/types"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transfer/types"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"

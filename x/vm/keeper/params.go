@@ -7,8 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/GPTx-global/guru-v2/v2/utils"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/utils"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

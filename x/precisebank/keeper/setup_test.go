@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 const SEED = int64(42)

@@ -3,9 +3,9 @@ package evm
 import (
 	"math/big"
 
-	anteinterfaces "github.com/GPTx-global/guru-v2/v2/ante/interfaces"
-	"github.com/GPTx-global/guru-v2/v2/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
+	"github.com/gurufinglobal/guru/v2/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 

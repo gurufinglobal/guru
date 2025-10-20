@@ -1,12 +1,12 @@
 package utils
 
 import (
-	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
-	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	testkeyring "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	erc20types "github.com/GPTx-global/guru-v2/v2/x/erc20/types"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

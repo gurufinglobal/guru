@@ -658,10 +658,6 @@ github.com/DataDog/datadog-go v4.8.3+incompatible h1:fNGaYSuObuQb5nzeTQqowRAd9bp
 github.com/DataDog/datadog-go v4.8.3+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.5.7 h1:ybO8RBeh29qrxIhCA9E8gKY6xfONU9T6G6aP9DTKfLE=
 github.com/DataDog/zstd v1.5.7/go.mod h1:g4AWEaM3yOg3HYfnJ3YIawPnVdXJh9QME85blwSAmyw=
-github.com/GPTx-global/cosmos-sdk v0.53.4-guru.5 h1:qoTxPkfOMMTiOuJzh/OKPrPW0Gx9O6dB3mQLnPIGPmw=
-github.com/GPTx-global/cosmos-sdk v0.53.4-guru.5/go.mod h1:3donIPR3M7z+kLUhEUKehbROiPurEFF3algZlkFiVyo=
-github.com/GPTx-global/cosmos-sdk/store v1.1.2-guru.2 h1:oEWdxS3YeiiP4S0vVzkwvLThD94lectx8iYJM08Nz8o=
-github.com/GPTx-global/cosmos-sdk/store v1.1.2-guru.2/go.mod h1:7a15p+QsM5UXf7VMhO3ylmqj85k9UBN/h1kwMcLiffA=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0 h1:ErKg/3iS1AKcTkf3yixlZ54f9U1rljCkQyEXWUnIUxc=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0/go.mod h1:yAZHSGnqScoU556rBOVkwLze6WP5N+U11RHuWaGVxwY=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.48.1 h1:UQ0AhxogsIRZDkElkblfnwjc3IaltCm2HUMvezQaL7s=
@@ -1233,6 +1229,10 @@ github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0/go.mod h1:hgWBS7lorOAVIJEQMi4Zs
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3/go.mod h1:o//XUCC/F+yRGJoPO/VU0GSB0f8Nhgmxx0VIRUvaC0w=
 github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c h1:6rhixN/i8ZofjG1Y75iExal34USq5p+wiN1tpie8IrU=
 github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c/go.mod h1:NMPJylDgVpX0MLRlPy15sqSwOFv/U1GZ2m21JhFfek0=
+github.com/gurufinglobal/cosmos-sdk v0.53.4-guru.5 h1:ZFdzgvb/fbR4wZU4PRtr7mNPEnj0jOQ3/otq1jpP2YA=
+github.com/gurufinglobal/cosmos-sdk v0.53.4-guru.5/go.mod h1:3donIPR3M7z+kLUhEUKehbROiPurEFF3algZlkFiVyo=
+github.com/gurufinglobal/cosmos-sdk/store v1.1.2-guru.2 h1:N5Uxi10EBaxjQO6C/Ydk7rLx1ormlxQBvetBg+yaCPw=
+github.com/gurufinglobal/cosmos-sdk/store v1.1.2-guru.2/go.mod h1:7a15p+QsM5UXf7VMhO3ylmqj85k9UBN/h1kwMcLiffA=
 github.com/hashicorp/consul/api v1.3.0/go.mod h1:MmDNSzIMUjNpY/mQ398R4bk2FnqQLoPndWW5VkKPlCE=
 github.com/hashicorp/consul/sdk v0.3.0/go.mod h1:VKf9jXwCTEY1QZP2MOLRhb5i/I/ssyNV1vwHyQBF0x8=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=

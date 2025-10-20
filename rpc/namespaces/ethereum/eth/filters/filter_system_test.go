@@ -13,7 +13,7 @@ import (
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 
-	"github.com/GPTx-global/guru-v2/v2/rpc/ethereum/pubsub"
+	"github.com/gurufinglobal/guru/v2/rpc/ethereum/pubsub"
 
 	"cosmossdk.io/log"
 )

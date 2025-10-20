@@ -1,9 +1,9 @@
 package ante
 
 import (
-	cosmosante "github.com/GPTx-global/guru-v2/v2/ante/cosmos"
-	evmante "github.com/GPTx-global/guru-v2/v2/ante/evm"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

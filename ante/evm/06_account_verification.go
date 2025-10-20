@@ -3,10 +3,10 @@ package evm
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	anteinterfaces "github.com/GPTx-global/guru-v2/v2/ante/interfaces"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/keeper"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
+	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

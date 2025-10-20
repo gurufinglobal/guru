@@ -9,9 +9,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/client/cli"
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/keeper"
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/client/cli"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 
 	"cosmossdk.io/core/appmodule"
 

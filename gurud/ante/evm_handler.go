@@ -1,7 +1,7 @@
 package ante
 
 import (
-	evmante "github.com/GPTx-global/guru-v2/v2/ante/evm"
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

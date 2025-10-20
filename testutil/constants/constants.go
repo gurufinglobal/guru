@@ -1,8 +1,8 @@
 package constants
 
 import (
-	erc20types "github.com/GPTx-global/guru-v2/v2/x/erc20/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 )

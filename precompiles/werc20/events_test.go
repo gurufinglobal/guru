@@ -8,13 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
-	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/werc20"
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	"github.com/gurufinglobal/guru/v2/precompiles/werc20"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 )
 
 type PrecompileUnitTestSuite struct {

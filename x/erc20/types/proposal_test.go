@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 
 	length "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )

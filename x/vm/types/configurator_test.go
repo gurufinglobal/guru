@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/require"
 
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func TestEVMConfigurator(t *testing.T) {

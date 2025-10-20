@@ -7,12 +7,12 @@ import (
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	ethante "github.com/GPTx-global/guru-v2/v2/ante/evm"
-	"github.com/GPTx-global/guru-v2/v2/ante/testutils"
-	"github.com/GPTx-global/guru-v2/v2/testutil"
-	testutiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	ethante "github.com/gurufinglobal/guru/v2/ante/evm"
+	"github.com/gurufinglobal/guru/v2/ante/testutils"
+	"github.com/gurufinglobal/guru/v2/testutil"
+	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"

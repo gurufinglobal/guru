@@ -13,16 +13,16 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/distribution"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/staking"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil/contracts"
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	testutils "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/utils"
-	testutiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
+	"github.com/gurufinglobal/guru/v2/precompiles/staking"
+	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
+	"github.com/gurufinglobal/guru/v2/precompiles/testutil/contracts"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
+	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

@@ -5,8 +5,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/GPTx-global/guru-v2/v2/wallets/accounts"
-	"github.com/GPTx-global/guru-v2/v2/wallets/ledger"
+	"github.com/gurufinglobal/guru/v2/wallets/accounts"
+	"github.com/gurufinglobal/guru/v2/wallets/ledger"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"

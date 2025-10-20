@@ -8,7 +8,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/evm/feemarket/v1/feemarket.proto";
 
-option go_package = "github.com/GPTx-global/guru-v2/v2/x/feemarket/types";
+option go_package = "github.com/gurufinglobal/guru/v2/x/feemarket/types";
 
 // Msg defines the feemarket Msg service.
 service Msg {

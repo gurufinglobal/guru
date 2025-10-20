@@ -3,8 +3,8 @@ package tx
 import (
 	protov2 "google.golang.org/protobuf/proto"
 
-	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
-	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
 
 	sdkmath "cosmossdk.io/math"
 

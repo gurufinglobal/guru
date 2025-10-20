@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/GPTx-global/guru-v2/v2/precompiles/erc20"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
+	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 )
 
 //nolint:dupl // tests are not duplicate between the functions

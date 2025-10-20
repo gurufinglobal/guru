@@ -1,8 +1,8 @@
 package network
 
 import (
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 type CoinInfo struct {

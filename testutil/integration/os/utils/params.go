@@ -3,11 +3,11 @@ package utils
 import (
 	"fmt"
 
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	erc20types "github.com/GPTx-global/guru-v2/v2/x/erc20/types"
-	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

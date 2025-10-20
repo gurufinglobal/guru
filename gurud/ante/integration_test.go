@@ -6,13 +6,13 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	commonfactory "github.com/GPTx-global/guru-v2/v2/testutil/integration/common/factory"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
-	testkeyring "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	integrationutils "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/utils"
-	testutiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	integrationutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
+	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 
 	"cosmossdk.io/math"
 

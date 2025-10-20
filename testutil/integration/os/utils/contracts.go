@@ -6,8 +6,8 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // CheckTxTopics checks if all expected topics are present in the transaction response

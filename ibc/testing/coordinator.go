@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/gurud"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 )
 

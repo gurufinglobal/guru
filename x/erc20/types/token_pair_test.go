@@ -9,8 +9,8 @@ import (
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 
-	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 type TokenPairTestSuite struct {

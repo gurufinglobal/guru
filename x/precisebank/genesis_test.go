@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank"
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/x/precisebank"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 
 	sdkmath "cosmossdk.io/math"
 

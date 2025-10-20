@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	serverconfig "github.com/GPTx-global/guru-v2/v2/server/config"
-	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	serverconfig "github.com/gurufinglobal/guru/v2/server/config"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
 func TestDefaultConfig(t *testing.T) {

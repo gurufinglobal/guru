@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GPTx-global/guru-v2/v2/x/vm/store/snapshotkv"
+	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotkv"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/store/cachekv"

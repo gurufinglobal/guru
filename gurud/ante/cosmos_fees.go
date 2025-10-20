@@ -6,7 +6,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-	feepolicytypes "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types"
+	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 

@@ -8,10 +8,10 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/keeper/testdata"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/vm/keeper/testdata"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

@@ -3,11 +3,11 @@ package keeper_test
 import (
 	"testing"
 
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/keeper"
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types/mocks"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types/mocks"
 
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"

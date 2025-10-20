@@ -5,9 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/slashing"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	"github.com/gurufinglobal/guru/v2/precompiles/slashing"
+	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"

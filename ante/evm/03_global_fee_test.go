@@ -1,7 +1,7 @@
 package evm_test
 
 import (
-	"github.com/GPTx-global/guru-v2/v2/ante/evm"
+	"github.com/gurufinglobal/guru/v2/ante/evm"
 
 	sdkmath "cosmossdk.io/math"
 

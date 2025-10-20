@@ -3,7 +3,7 @@ package oracle
 import (
 	"testing"
 
-	"github.com/GPTx-global/guru-v2/v2/x/oracle/keeper"
+	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}

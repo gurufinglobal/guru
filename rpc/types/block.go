@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cast"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/GPTx-global/guru-v2/v2/types"
+	"github.com/gurufinglobal/guru/v2/types"
 
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 )

@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "guru/oracle/v1/oracle.proto";
 import "guru/oracle/v1/genesis.proto";
 
-option go_package = "github.com/GPTx-global/guru-v2/v2/x/oracle/types";
+option go_package = "github.com/gurufinglobal/guru/v2/x/oracle/types";
 
 // Query defines the gRPC querier service
 service Query {

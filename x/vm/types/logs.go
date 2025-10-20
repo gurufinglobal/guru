@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	cosmosevmtypes "github.com/GPTx-global/guru-v2/v2/types"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 )
 
 // NewTransactionLogs creates a new NewTransactionLogs instance.

@@ -11,9 +11,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/GPTx-global/guru-v2/v2/x/vm/client/cli"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/keeper"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/client/cli"
+	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/core/appmodule"

@@ -6,14 +6,14 @@ import (
 
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/GPTx-global/guru-v2/v2/ante/evm"
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
-	testkeyring "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/ante/evm"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

@@ -3,7 +3,7 @@ package hd
 import (
 	"testing"
 
-	"github.com/GPTx-global/guru-v2/v2/types"
+	"github.com/gurufinglobal/guru/v2/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 )

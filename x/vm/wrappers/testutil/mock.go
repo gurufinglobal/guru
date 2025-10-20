@@ -12,7 +12,7 @@ import (
 
 	address "cosmossdk.io/core/address"
 	math "cosmossdk.io/math"
-	types3 "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
+	types3 "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	types0 "github.com/cosmos/cosmos-sdk/x/auth/types"
 	types1 "github.com/cosmos/cosmos-sdk/x/bank/types"

@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	config2 "github.com/GPTx-global/guru-v2/v2/cmd/gurud/config"
-	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	config2 "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
 func TestRequireSameTestDenom(t *testing.T) {

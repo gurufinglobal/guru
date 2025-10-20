@@ -5,14 +5,14 @@ import (
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/GPTx-global/guru-v2/v2/ante/evm"
-	"github.com/GPTx-global/guru-v2/v2/ante/testutils"
-	"github.com/GPTx-global/guru-v2/v2/server/config"
-	"github.com/GPTx-global/guru-v2/v2/testutil"
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	"github.com/GPTx-global/guru-v2/v2/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/ante/evm"
+	"github.com/gurufinglobal/guru/v2/ante/testutils"
+	"github.com/gurufinglobal/guru/v2/server/config"
+	"github.com/gurufinglobal/guru/v2/testutil"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

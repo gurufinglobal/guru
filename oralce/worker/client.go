@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"cosmossdk.io/log"
-	"github.com/GPTx-global/guru-v2/v2/oralce/config"
+	"github.com/gurufinglobal/guru/v2/oralce/config"
 )
 
 type httpClient struct {

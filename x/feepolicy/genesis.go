@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/GPTx-global/guru-v2/v2/x/feepolicy/keeper"
-	"github.com/GPTx-global/guru-v2/v2/x/feepolicy/types"
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/keeper"
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 )

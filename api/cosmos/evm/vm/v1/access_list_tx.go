@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	ethutils "github.com/GPTx-global/guru-v2/v2/utils/eth"
+	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
 )
 
 // GetChainID returns the chain id field from the AccessListTx

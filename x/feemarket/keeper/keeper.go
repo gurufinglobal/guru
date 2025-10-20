@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
+	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"

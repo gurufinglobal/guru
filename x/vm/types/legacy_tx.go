@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/GPTx-global/guru-v2/v2/types"
-	ethutils "github.com/GPTx-global/guru-v2/v2/utils/eth"
+	"github.com/gurufinglobal/guru/v2/types"
+	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
 
 	errorsmod "cosmossdk.io/errors"
 
