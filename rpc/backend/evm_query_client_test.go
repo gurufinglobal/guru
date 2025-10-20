@@ -15,11 +15,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/GPTx-global/guru-v2/v2/rpc/backend/mocks"
-	rpc "github.com/GPTx-global/guru-v2/v2/rpc/types"
-	"github.com/GPTx-global/guru-v2/v2/server/config"
-	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
+	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
+	"github.com/gurufinglobal/guru/v2/server/config"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

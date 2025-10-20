@@ -9,9 +9,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/GPTx-global/guru-v2/v2/x/oracle/client/cli"
-	"github.com/GPTx-global/guru-v2/v2/x/oracle/keeper"
-	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
+	"github.com/gurufinglobal/guru/v2/x/oracle/client/cli"
+	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 
 	"cosmossdk.io/core/appmodule"
 

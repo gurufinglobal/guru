@@ -5,7 +5,7 @@ package cosmos.evm.types.v1;
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/GPTx-global/guru-v2/v2/types";
+option go_package = "github.com/gurufinglobal/guru/v2/types";
 
 // ExtensionOptionDynamicFeeTx is an extension option that specifies the
 // maxPrioPrice for cosmos tx

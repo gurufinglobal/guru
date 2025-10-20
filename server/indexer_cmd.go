@@ -9,7 +9,7 @@ import (
 	sm "github.com/cometbft/cometbft/state"
 	cmtstore "github.com/cometbft/cometbft/store"
 
-	"github.com/GPTx-global/guru-v2/v2/indexer"
+	"github.com/gurufinglobal/guru/v2/indexer"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"

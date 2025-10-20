@@ -1,7 +1,7 @@
 package evm
 
 import (
-	anteinterfaces "github.com/GPTx-global/guru-v2/v2/ante/interfaces"
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 
 	errorsmod "cosmossdk.io/errors"
 

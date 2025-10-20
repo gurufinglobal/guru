@@ -5,9 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/GPTx-global/guru-v2/v2/precompiles/bank"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	cosmosevmutiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/precompiles/bank"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	cosmosevmutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 
 	"cosmossdk.io/math"
 

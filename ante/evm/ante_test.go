@@ -11,9 +11,9 @@ import (
 	ethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

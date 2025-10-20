@@ -1,7 +1,7 @@
 package ante
 
 import (
-	feepolicytypes "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types"
+	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

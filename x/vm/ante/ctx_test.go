@@ -1,8 +1,8 @@
 package ante_test
 
 import (
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	evmante "github.com/GPTx-global/guru-v2/v2/x/vm/ante"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	evmante "github.com/gurufinglobal/guru/v2/x/vm/ante"
 
 	storetypes "cosmossdk.io/store/types"
 )

@@ -5,17 +5,17 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/GPTx-global/guru-v2/v2/ante"
-	evmante "github.com/GPTx-global/guru-v2/v2/ante/evm"
-	chainante "github.com/GPTx-global/guru-v2/v2/gurud/ante"
-	chainutil "github.com/GPTx-global/guru-v2/v2/gurud/testutil"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	"github.com/GPTx-global/guru-v2/v2/types"
-	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/ante"
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
+	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

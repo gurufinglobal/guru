@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -61,10 +61,7 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 	k.SetOracleRequestDocCount(ctx, count+1)
 
 	// Marshal the endpoints to a JSON string
-	endpointsJson, err := json.Marshal(oracleRequestDoc.Endpoints)
-	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "failed to marshal endpoints")
-	}
+	endpointsJson, _ := json.Marshal(oracleRequestDoc.Endpoints)
 
 	// Emit event for registering oracle request document
 	ctx.EventManager().EmitEvent(
@@ -106,10 +103,7 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 	}
 
 	// Marshal the endpoints to a JSON string
-	endpointsJson, err := json.Marshal(doc.RequestDoc.Endpoints)
-	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "failed to marshal endpoints")
-	}
+	endpointsJson, _ := json.Marshal(doc.RequestDoc.Endpoints)
 
 	// Emit event for updating oracle request document
 	ctx.EventManager().EmitEvent(

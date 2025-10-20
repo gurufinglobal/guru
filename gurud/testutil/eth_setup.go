@@ -8,8 +8,8 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmtypes "github.com/cometbft/cometbft/types"
 
-	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
-	cosmosevmtypes "github.com/GPTx-global/guru-v2/v2/types"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"

@@ -1,8 +1,8 @@
 package factory
 
 import (
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/grpc"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 )
 
 const (

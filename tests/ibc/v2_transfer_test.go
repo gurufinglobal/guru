@@ -19,8 +19,8 @@ import (
 
 	testifysuite "github.com/stretchr/testify/suite"
 
-	"github.com/GPTx-global/guru-v2/v2/gurud"
-	evmibctesting "github.com/GPTx-global/guru-v2/v2/ibc/testing"
+	"github.com/gurufinglobal/guru/v2/gurud"
+	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"

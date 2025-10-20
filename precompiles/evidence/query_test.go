@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/evidence"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	"github.com/gurufinglobal/guru/v2/precompiles/evidence"
+	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 
 	evidencetypes "cosmossdk.io/x/evidence/types"
 

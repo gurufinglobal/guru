@@ -21,10 +21,10 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	cosmosevmtypes "github.com/GPTx-global/guru-v2/v2/types"
-	evmante "github.com/GPTx-global/guru-v2/v2/x/vm/ante"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	evmante "github.com/gurufinglobal/guru/v2/x/vm/ante"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 

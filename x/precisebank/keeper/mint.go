@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

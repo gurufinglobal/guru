@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/GPTx-global/guru-v2/v2/x/precisebank/types"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

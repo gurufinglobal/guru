@@ -2,7 +2,7 @@ This is forked from cosmos/evm [v0.3.1](https://github.com/cosmos/evm/tree/v0.3.
 
 # Guru Chain
 
-[![version](https://img.shields.io/github/v/tag/GPTx-global/guru-v2.svg)](https://github.com/GPTx-global/guru-v2/v2/releases/latest)
+[![version](https://img.shields.io/github/v/tag/gurufinglobal/guru.svg)](https://github.com/gurufinglobal/guru/v2/releases/latest)
 [![Go version](https://img.shields.io/badge/go-1.24.6+-green.svg)](https://github.com/moovweb/gvm)
 <!-- admin widget setting: https://shields.io/badges/discord
 
@@ -11,11 +11,11 @@ This is forked from cosmos/evm [v0.3.1](https://github.com/cosmos/evm/tree/v0.3.
 -->
 
 
-[Guru Chain](https://github.com/GPTx-global/guru-v2/v2/PAPER.md) is forked from Cosmos EVM [v0.3.1](https://github.com/cosmos/evm/releases/tag/v0.3.1) on 2025-08.
+[Guru Chain](https://github.com/gurufinglobal/guru/v2/PAPER.md) is forked from Cosmos EVM [v0.3.1](https://github.com/cosmos/evm/releases/tag/v0.3.1) on 2025-08.
 
 ## Releases
 
-Please do not depend on `main` as your production branch. Use [releases](https://github.com/GPTx-global/guru-v2/v2/releases) instead.
+Please do not depend on `main` as your production branch. Use [releases](https://github.com/gurufinglobal/guru/v2/releases) instead.
 
 ## Minimum requirements
 
@@ -27,7 +27,7 @@ Please do not depend on `main` as your production branch. Use [releases](https:/
 # Quick Start
 ## git clone
 ```
-git clone https://github.com/GPTx-global/guru-v2/v2.git
+git clone https://github.com/gurufinglobal/guru/v2.git
 ```
 
 ## Test & Cover

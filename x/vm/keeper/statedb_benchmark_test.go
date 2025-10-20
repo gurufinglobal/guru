@@ -10,7 +10,7 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
 
-	utiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 )
 
 func BenchmarkCreateAccountNew(b *testing.B) {

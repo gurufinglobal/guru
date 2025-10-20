@@ -11,9 +11,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
-	"github.com/GPTx-global/guru-v2/v2/testutil/tx"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/cosmos/cosmos-sdk/codec"

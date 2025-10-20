@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/tracing"
 
-	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"

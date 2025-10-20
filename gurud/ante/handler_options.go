@@ -1,9 +1,9 @@
 package ante
 
 import (
-	evmante "github.com/GPTx-global/guru-v2/v2/ante/evm"
-	anteinterfaces "github.com/GPTx-global/guru-v2/v2/ante/interfaces"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"

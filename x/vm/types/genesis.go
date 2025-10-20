@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/GPTx-global/guru-v2/v2/types"
+	"github.com/gurufinglobal/guru/v2/types"
 )
 
 // Validate performs a basic validation of a GenesisAccount fields.

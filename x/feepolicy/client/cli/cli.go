@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/GPTx-global/guru-v2/v2/x/feepolicy/types"
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 )

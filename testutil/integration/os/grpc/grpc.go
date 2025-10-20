@@ -3,10 +3,10 @@ package grpc
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	commongrpc "github.com/GPTx-global/guru-v2/v2/testutil/integration/common/grpc"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	commongrpc "github.com/gurufinglobal/guru/v2/testutil/integration/common/grpc"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"

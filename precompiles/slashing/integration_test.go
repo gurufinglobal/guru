@@ -10,12 +10,12 @@ import (
 	//nolint:revive,ST1001 // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/slashing/testdata"
-	"github.com/GPTx-global/guru-v2/v2/precompiles/testutil"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/factory"
-	testutils "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/utils"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	"github.com/gurufinglobal/guru/v2/precompiles/slashing/testdata"
+	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

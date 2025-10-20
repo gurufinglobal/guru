@@ -1,9 +1,9 @@
 package keeper_test
 
 import (
-	testkeyring "github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/network"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) TestEndBlock() {

@@ -3,8 +3,8 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
-	transferkeeper "github.com/GPTx-global/guru-v2/v2/x/ibc/transfer/keeper"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"

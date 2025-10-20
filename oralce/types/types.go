@@ -3,8 +3,8 @@ package types
 import (
 	"time"
 
-	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
-	oracletypes "github.com/GPTx-global/guru-v2/v2/x/oracle/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 var (

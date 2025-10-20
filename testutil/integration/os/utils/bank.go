@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	cmnfactory "github.com/GPTx-global/guru-v2/v2/testutil/integration/common/factory"
-	cmnnet "github.com/GPTx-global/guru-v2/v2/testutil/integration/common/network"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
+	cmnfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
+	cmnnet "github.com/gurufinglobal/guru/v2/testutil/integration/common/network"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 
 	"cosmossdk.io/math"
 

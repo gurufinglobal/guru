@@ -8,9 +8,9 @@ import (
 
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/GPTx-global/guru-v2/v2/rpc/backend/mocks"
-	ethrpc "github.com/GPTx-global/guru-v2/v2/rpc/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
+	ethrpc "github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func (suite *BackendTestSuite) TestGetLogs() {

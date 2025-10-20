@@ -14,8 +14,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"github.com/GPTx-global/guru-v2/v2/x/oracle/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

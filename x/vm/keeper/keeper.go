@@ -11,10 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 
-	"github.com/GPTx-global/guru-v2/v2/utils"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/statedb"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/wrappers"
+	"github.com/gurufinglobal/guru/v2/utils"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/wrappers"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"

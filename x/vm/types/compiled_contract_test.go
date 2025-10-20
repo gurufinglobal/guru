@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func TestHardhatCompiledContract(t *testing.T) {

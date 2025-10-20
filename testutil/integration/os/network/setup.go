@@ -9,12 +9,12 @@ import (
 
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	exampleapp "github.com/GPTx-global/guru-v2/v2/gurud"
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	cosmosevmtypes "github.com/GPTx-global/guru-v2/v2/types"
-	erc20types "github.com/GPTx-global/guru-v2/v2/x/erc20/types"
-	feemarkettypes "github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"

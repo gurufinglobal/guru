@@ -1,8 +1,8 @@
 package distribution_test
 
 import (
-	"github.com/GPTx-global/guru-v2/v2/precompiles/staking"
-	"github.com/GPTx-global/guru-v2/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/precompiles/staking"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 
 	"cosmossdk.io/math"
 

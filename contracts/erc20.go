@@ -3,8 +3,8 @@ package contracts
 import (
 	_ "embed"
 
-	contractutils "github.com/GPTx-global/guru-v2/v2/contracts/utils"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	contractutils "github.com/gurufinglobal/guru/v2/contracts/utils"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 var (

@@ -3,7 +3,7 @@ package erc20_test
 import (
 	"math/big"
 
-	"github.com/GPTx-global/guru-v2/v2/precompiles/erc20"
+	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 )
 
 func (s *PrecompileTestSuite) TestIsTransaction() {

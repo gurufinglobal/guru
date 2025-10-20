@@ -11,12 +11,12 @@ for dir in $proto_dirs; do
 	proto_files=$(find "${dir}" -maxdepth 1 -name '*.proto')
 	for file in $proto_files; do
 		# Check if the go_package in the file is pointing to guru
-		if grep -q "option go_package.*guru-v2" "$file"; then
+		if grep -q "option go_package.*guru" "$file"; then
 			buf generate --template proto/buf.gen.gogo.yaml "$file"
 		fi
 	done
 done
 
 # move proto files to the right places
-cp -r github.com/GPTx-global/guru-v2/v2/* ./
+cp -r github.com/gurufinglobal/guru/v2/* ./
 rm -rf github.com

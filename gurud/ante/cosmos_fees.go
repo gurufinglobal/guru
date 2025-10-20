@@ -6,10 +6,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-	evmante "github.com/GPTx-global/guru-v2/v2/ante/evm"
-	feepolicytypes "github.com/GPTx-global/guru-v2/v2/x/feepolicy/types"
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

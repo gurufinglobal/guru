@@ -5,9 +5,9 @@ import (
 	"io"
 	"sort"
 
-	"github.com/GPTx-global/guru-v2/v2/x/vm/store/snapshotkv"
-	"github.com/GPTx-global/guru-v2/v2/x/vm/store/types"
-	vmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotkv"
+	"github.com/gurufinglobal/guru/v2/x/vm/store/types"
+	vmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	storetypes "cosmossdk.io/store/types"
 )

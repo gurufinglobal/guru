@@ -18,7 +18,7 @@ import (
 
 	"github.com/cometbft/cometbft/crypto"
 
-	"github.com/GPTx-global/guru-v2/v2/precompiles/p256"
+	"github.com/gurufinglobal/guru/v2/precompiles/p256"
 )
 
 var s *PrecompileTestSuite

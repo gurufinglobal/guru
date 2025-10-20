@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 

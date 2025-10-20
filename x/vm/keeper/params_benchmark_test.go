@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func BenchmarkSetParams(b *testing.B) {

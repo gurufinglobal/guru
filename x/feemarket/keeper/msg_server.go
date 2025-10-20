@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/GPTx-global/guru-v2/v2/x/feemarket/types"
+	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 
 	errorsmod "cosmossdk.io/errors"
 

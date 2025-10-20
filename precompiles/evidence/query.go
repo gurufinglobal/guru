@@ -8,7 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
-	cmn "github.com/GPTx-global/guru-v2/v2/precompiles/common"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 	evidencetypes "cosmossdk.io/x/evidence/types"

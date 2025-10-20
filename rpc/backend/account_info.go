@@ -11,8 +11,8 @@ import (
 
 	"github.com/cometbft/cometbft/libs/bytes"
 
-	rpctypes "github.com/GPTx-global/guru-v2/v2/rpc/types"
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

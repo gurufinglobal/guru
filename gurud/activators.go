@@ -3,7 +3,7 @@ package gurud
 import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/GPTx-global/guru-v2/v2/gurud/eips"
+	"github.com/gurufinglobal/guru/v2/gurud/eips"
 )
 
 // cosmosEVMActivators defines a map of opcode modifiers associated

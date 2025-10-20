@@ -1,9 +1,9 @@
 package keyring
 
 import (
-	"github.com/GPTx-global/guru-v2/v2/crypto/ethsecp256k1"
-	"github.com/GPTx-global/guru-v2/v2/crypto/hd"
-	"github.com/GPTx-global/guru-v2/v2/wallets/ledger"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
+	"github.com/gurufinglobal/guru/v2/crypto/hd"
+	"github.com/gurufinglobal/guru/v2/wallets/ledger"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmosLedger "github.com/cosmos/cosmos-sdk/crypto/ledger"

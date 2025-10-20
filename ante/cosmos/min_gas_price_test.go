@@ -3,10 +3,10 @@ package cosmos_test
 import (
 	"fmt"
 
-	cosmosante "github.com/GPTx-global/guru-v2/v2/ante/cosmos"
-	"github.com/GPTx-global/guru-v2/v2/testutil"
-	"github.com/GPTx-global/guru-v2/v2/testutil/constants"
-	testutiltx "github.com/GPTx-global/guru-v2/v2/testutil/tx"
+	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
+	"github.com/gurufinglobal/guru/v2/testutil"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 
 	"cosmossdk.io/math"
 

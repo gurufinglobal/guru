@@ -1,8 +1,8 @@
 package codec
 
 import (
-	cryptocodec "github.com/GPTx-global/guru-v2/v2/crypto/codec"
-	"github.com/GPTx-global/guru-v2/v2/types"
+	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
+	"github.com/gurufinglobal/guru/v2/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

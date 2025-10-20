@@ -8,7 +8,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	rpctypes "github.com/GPTx-global/guru-v2/v2/rpc/types"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 
 	types "github.com/ethereum/go-ethereum/core/types"
 )

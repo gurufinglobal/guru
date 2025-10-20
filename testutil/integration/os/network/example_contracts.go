@@ -1,7 +1,7 @@
 package network
 
 import (
-	testconstants "github.com/GPTx-global/guru-v2/v2/testutil/constants"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
 // chainsWEVMOSHex is an utility map used to retrieve the WEVMOS contract

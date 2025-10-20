@@ -8,7 +8,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	evmtypes "github.com/GPTx-global/guru-v2/v2/x/vm/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // CheckLogs checks the logs for the given events and whether the transaction was successful or not.

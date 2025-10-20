@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
-	cosmosevmtypes "github.com/GPTx-global/guru-v2/v2/types"
-	"github.com/GPTx-global/guru-v2/v2/x/erc20/types"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 
 	"cosmossdk.io/math"
 
