@@ -74,6 +74,10 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return params
 }
 
+func (k Keeper) GetAuthority() string {
+	return k.authority
+}
+
 // SetModeratorAddress stores the moderator address in the state store
 func (k Keeper) SetModeratorAddress(ctx sdk.Context, address string) error {
 	store := ctx.KVStore(k.storeKey)

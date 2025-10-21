@@ -2,10 +2,10 @@ package oracle
 
 import (
 	errorsmod "cosmossdk.io/errors"
-	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // InitGenesis new oracle genesis
@@ -20,7 +20,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
 	// Set moderator address
 	moderatorAddress := data.ModeratorAddress
 	if moderatorAddress == "" {
-		panic(errorsmod.Wrapf(errortypes.ErrInvalidRequest, "%s: moderator address cannot be empty", types.ModuleName))
+		moderatorAddress = k.GetAuthority()
+	}
+
+	if _, err := sdk.AccAddressFromBech32(moderatorAddress); err != nil {
+		panic(errorsmod.Wrapf(err, "invalid moderator address"))
 	}
 
 	err = k.SetModeratorAddress(ctx, moderatorAddress)
