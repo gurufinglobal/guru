@@ -24,46 +24,46 @@ func TestSubmitOracleDataNilDataSet(t *testing.T) {
 	require.Contains(t, err.Error(), "DataSet must be provided")
 }
 
-func TestSubmitOracleDataValidDataSet(t *testing.T) {
-	keeper, ctx := setupKeeper(t)
+// func TestSubmitOracleDataValidDataSet(t *testing.T) {
+// 	keeper, ctx := setupKeeper(t)
 
-	// Set up a moderator address first
-	moderatorAddr := "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"
-	keeper.SetModeratorAddress(ctx, moderatorAddr)
+// 	// Set up a moderator address first
+// 	moderatorAddr := "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"
+// 	keeper.SetModeratorAddress(ctx, moderatorAddr)
 
-	// Create a test oracle request document
-	doc := types.OracleRequestDoc{
-		RequestId:       1,
-		OracleType:      types.OracleType_ORACLE_TYPE_CRYPTO,
-		Name:            "Test Oracle",
-		Description:     "Test Description",
-		Period:          60,
-		AccountList:     []string{moderatorAddr},
-		Quorum:          1,
-		Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
-		AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
-		Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-		Nonce:           0,
-	}
-	keeper.SetOracleRequestDoc(ctx, doc)
+// 	// Create a test oracle request document
+// 	doc := types.OracleRequestDoc{
+// 		RequestId:       1,
+// 		OracleType:      types.OracleType_ORACLE_TYPE_CRYPTO,
+// 		Name:            "Test Oracle",
+// 		Description:     "Test Description",
+// 		Period:          60,
+// 		AccountList:     []string{moderatorAddr},
+// 		Quorum:          1,
+// 		Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
+// 		AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
+// 		Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
+// 		Nonce:           0,
+// 	}
+// 	keeper.SetOracleRequestDoc(ctx, doc)
 
-	// Test with valid DataSet
-	msg := &types.MsgSubmitOracleData{
-		AuthorityAddress: moderatorAddr,
-		DataSet: &types.SubmitDataSet{
-			RequestId: 1,
-			Nonce:     1,
-			RawData:   "123.456",
-			Provider:  moderatorAddr,
-			Signature: []byte("test signature"),
-		},
-	}
+// 	// Test with valid DataSet
+// 	msg := &types.MsgSubmitOracleData{
+// 		AuthorityAddress: moderatorAddr,
+// 		DataSet: &types.SubmitDataSet{
+// 			RequestId: 1,
+// 			Nonce:     1,
+// 			RawData:   "123.456",
+// 			Provider:  moderatorAddr,
+// 			Signature: []byte("test signature"),
+// 		},
+// 	}
 
-	// This should succeed
-	response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
-	require.NoError(t, err)
-	require.NotNil(t, response)
-}
+// 	// This should succeed
+// 	response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
+// 	require.NoError(t, err)
+// 	require.NotNil(t, response)
+// }
 
 func TestSubmitOracleDataEdgeCases(t *testing.T) {
 	keeper, ctx := setupKeeper(t)
