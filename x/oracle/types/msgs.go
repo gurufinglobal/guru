@@ -1,6 +1,8 @@
 package types
 
 import (
+	"math/big"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -47,7 +49,7 @@ func (msg MsgRegisterOracleRequestDoc) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid from address(Moderator) (%s)", err)
 	}
-	if err := msg.RequestDoc.Validate(); err != nil {
+	if err := msg.RequestDoc.ValidateWithParams(DefaultParams()); err != nil {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
 	}
 	return nil
@@ -96,9 +98,9 @@ func (msg MsgUpdateOracleRequestDoc) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid from address(Moderator) (%s)", err)
 	}
-	// if err := msg.RequestDoc.Validate(); err != nil {
-	// 	return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	// }
+	if err := msg.RequestDoc.ValidateWithParams(DefaultParams()); err != nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
 	return nil
 }
 
@@ -108,7 +110,7 @@ func NewMsgSubmitOracleData(
 	nonce uint64,
 	rawData string,
 	provider string,
-	signature string,
+	signature []byte,
 	authorityAddress string,
 ) *MsgSubmitOracleData {
 	return &MsgSubmitOracleData{
@@ -150,6 +152,11 @@ func (msg MsgSubmitOracleData) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface
 func (msg MsgSubmitOracleData) ValidateBasic() error {
+	// Validate that DataSet is provided
+	if msg.DataSet == nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "DataSet must be provided")
+	}
+
 	if _, err := sdk.AccAddressFromBech32(msg.DataSet.Provider); err != nil {
 		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid provider address (%s)", err)
 	}
@@ -159,7 +166,13 @@ func (msg MsgSubmitOracleData) ValidateBasic() error {
 	if msg.DataSet.RawData == "" {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "raw data cannot be empty")
 	}
-	if msg.DataSet.Signature == "" {
+	// Validate that RawData is a valid decimal number
+	if _, ok := new(big.Float).SetString(msg.DataSet.RawData); !ok {
+		return errorsmod.Wrapf(errortypes.ErrInvalidRequest,
+			"raw data must be a valid decimal number: %q", msg.DataSet.RawData)
+	}
+
+	if msg.DataSet.Signature == nil {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "signature cannot be empty")
 	}
 	return nil

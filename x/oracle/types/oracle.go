@@ -1,13 +1,14 @@
 package types
 
 import (
+	"encoding/binary"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Validate performs basic validation on OracleRequestDoc
-func (doc OracleRequestDoc) Validate() error {
+// ValidateWithParams performs validation on OracleRequestDoc with parameter-based limits
+func (doc OracleRequestDoc) ValidateWithParams(params Params) error {
 	// Check if oracle type is unspecified
 	if doc.OracleType == OracleType_ORACLE_TYPE_UNSPECIFIED {
 		return fmt.Errorf("oracle type cannot be unspecified")
@@ -44,6 +45,12 @@ func (doc OracleRequestDoc) Validate() error {
 	if len(doc.AccountList) == 0 {
 		return fmt.Errorf("account list cannot be empty")
 	}
+
+	// Safety check: prevent DoS attacks with too many accounts (parameter-based)
+	if uint64(len(doc.AccountList)) > params.MaxAccountListSize {
+		return fmt.Errorf("account list size exceeds maximum allowed: %d, maximum: %d", len(doc.AccountList), params.MaxAccountListSize)
+	}
+
 	// Validate each account in the account list
 	for _, account := range doc.AccountList {
 		if _, err := sdk.AccAddressFromBech32(account); err != nil {
@@ -58,6 +65,12 @@ func (doc OracleRequestDoc) Validate() error {
 	if doc.Quorum > uint32(len(doc.AccountList)) {
 		return fmt.Errorf("quorum cannot be greater than account list length")
 	}
+
+	// Safety check: prevent excessive quorum that could lead to performance issues (parameter-based)
+	if uint64(doc.Quorum) > params.MaxAccountListSize {
+		return fmt.Errorf("quorum exceeds maximum allowed: %d, maximum: %d", doc.Quorum, params.MaxAccountListSize)
+	}
+
 	// Check if status is unspecified
 	if doc.Status == RequestStatus_REQUEST_STATUS_UNSPECIFIED {
 		return fmt.Errorf("status cannot be unspecified")
@@ -66,5 +79,40 @@ func (doc OracleRequestDoc) Validate() error {
 	if doc.Status == 0 {
 		return fmt.Errorf("status cannot be empty")
 	}
+
 	return nil
+}
+
+// Validate performs basic validation on OracleRequestDoc with default limits
+func (doc OracleRequestDoc) Validate() error {
+	// Use default parameters for validation
+	defaultParams := DefaultParams()
+	return doc.ValidateWithParams(defaultParams)
+}
+
+// SignBytes returns the canonical, unhashed bytes to be signed for SubmitDataSet.
+// This encoding matches the Hash() preimage exactly, but without hashing.
+func (sds SubmitDataSet) Bytes() ([]byte, error) {
+	domain := []byte("guru.oracle.SubmitDataSet")
+
+	buf := make([]byte, 0, len(domain)+8+8+4+len(sds.RawData)+20)
+	buf = append(buf, domain...)
+
+	var u64 [8]byte
+	binary.BigEndian.PutUint64(u64[:], sds.RequestId)
+	buf = append(buf, u64[:]...)
+	binary.BigEndian.PutUint64(u64[:], sds.Nonce)
+	buf = append(buf, u64[:]...)
+
+	var l4 [4]byte
+	binary.BigEndian.PutUint32(l4[:], uint32(len(sds.RawData)))
+	buf = append(buf, l4[:]...)
+	buf = append(buf, []byte(sds.RawData)...)
+
+	acc, err := sdk.AccAddressFromBech32(sds.Provider)
+	if err != nil {
+		return nil, fmt.Errorf("invalid provider bech32: %w", err)
+	}
+
+	return append(buf, acc.Bytes()...), nil
 }

@@ -1,8 +1,9 @@
 package ante
 
 import (
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
@@ -30,7 +31,7 @@ type HandlerOptions struct {
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
-	TxFeeChecker           ante.TxFeeChecker
+	TxFeeChecker           evmante.TxFeeChecker
 }
 
 // Validate checks if the keepers are defined

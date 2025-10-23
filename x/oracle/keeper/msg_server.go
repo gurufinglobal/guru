@@ -11,6 +11,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // MsgServer implementation
@@ -44,6 +45,13 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 		Quorum:          doc.RequestDoc.Quorum,
 		Endpoints:       doc.RequestDoc.Endpoints,
 		AggregationRule: doc.RequestDoc.AggregationRule,
+	}
+
+	// Validate the oracle request document with current parameters
+	params := k.GetParams(ctx)
+	err := oracleRequestDoc.ValidateWithParams(params)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
 	}
 
 	// Store the oracle request document
@@ -123,6 +131,11 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleData) (*types.MsgSubmitOracleDataResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
+	// Validate that DataSet is provided
+	if msg.DataSet == nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "DataSet must be provided")
+	}
+
 	err := k.validateSubmitData(*msg.DataSet)
 	if err != nil {
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
@@ -139,6 +152,11 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document not found")
 	}
 
+	// Check if RequestDoc status is ENABLED
+	if requestDoc.Status != types.RequestStatus_REQUEST_STATUS_ENABLED {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document is not enabled")
+	}
+
 	accountList := requestDoc.AccountList
 	fromAddress := msg.AuthorityAddress
 
@@ -151,6 +169,11 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 
 	if msg.DataSet.Nonce != nonce+1 {
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "nonce is not correct")
+	}
+
+	err = k.verifySubmitData(ctx, msg)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
 	}
 
 	k.SetSubmitData(ctx, *msg.DataSet)
@@ -169,6 +192,39 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 
 }
 
+// UpdateParams defines a method for updating oracle module parameters
+func (k Keeper) UpdateParams(c context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// Validate the authority address
+	if k.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(errortypes.ErrUnauthorized, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	}
+
+	// Validate the new parameters
+	if err := msg.Params.Validate(); err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	// Update the parameters
+	if err := k.SetParams(ctx, msg.Params); err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	// Emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			"oracle_params_updated",
+			sdk.NewAttribute("authority", msg.Authority),
+			sdk.NewAttribute("submit_window", fmt.Sprintf("%d", msg.Params.SubmitWindow)),
+			sdk.NewAttribute("min_submit_per_window", msg.Params.MinSubmitPerWindow.String()),
+			sdk.NewAttribute("slash_fraction_downtime", msg.Params.SlashFractionDowntime.String()),
+		),
+	)
+
+	return &types.MsgUpdateParamsResponse{}, nil
+}
+
 // UpdateModeratorAddress defines a method for updating the moderator address
 func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateModeratorAddress) (*types.MsgUpdateModeratorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
@@ -185,14 +241,55 @@ func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateMo
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "new moderator address is same as current moderator address")
 	}
 
-	k.SetModeratorAddress(ctx, msg.ModeratorAddress)
+	k.SetModeratorAddress(ctx, msg.NewModeratorAddress)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeUpdateModeratorAddress,
-			sdk.NewAttribute(types.AttributeKeyModeratorAddress, msg.ModeratorAddress),
+			sdk.NewAttribute(types.AttributeKeyModeratorAddress, msg.NewModeratorAddress),
 		),
 	)
 
 	return &types.MsgUpdateModeratorAddressResponse{}, nil
+}
+
+func (k Keeper) verifySubmitData(ctx context.Context, msg *types.MsgSubmitOracleData) error {
+	if msg == nil || msg.DataSet == nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "missing dataset")
+	}
+
+	signBytes, err := msg.DataSet.Bytes()
+	if err != nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	sig := msg.DataSet.Signature
+	if len(sig) != crypto.SignatureLength {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid signature length")
+	}
+	if sig[64] >= 27 {
+		sig[64] -= 27
+	}
+	if sig[64] != 0 && sig[64] != 1 {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid signature recovery id")
+	}
+
+	providerAcc, err := sdk.AccAddressFromBech32(msg.DataSet.Provider)
+	if err != nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidAddress, "invalid provider address")
+	}
+
+	acc := k.accountKeeper.GetAccount(ctx, providerAcc)
+	if acc == nil {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "account not found")
+	}
+	if acc.GetPubKey() == nil {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "public key not found")
+	}
+
+	if !acc.GetPubKey().VerifySignature(signBytes, sig) {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid dataset signature")
+	}
+
+	return nil
 }

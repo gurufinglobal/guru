@@ -94,7 +94,56 @@ func TestRegisterDiscounts(t *testing.T) {
 					},
 				},
 			},
+
 			expectErr: false,
+		},
+		{
+			name: "fail - invalid msg - negative amount",
+			request: &types.MsgRegisterDiscounts{
+				ModeratorAddress: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+				Discounts: []types.AccountDiscount{
+					{
+						Address: "guru1gzsvk8rruqn2sx64acfsskrwy8hvrmaf6dvhj3",
+						Modules: []types.ModuleDiscount{
+							{
+								Module: "bank",
+								Discounts: []types.Discount{
+									{
+										DiscountType: "percent",
+										MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+										Amount:       math.LegacyNewDec(-100),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name: "fail - invalid msg - 0 amount",
+			request: &types.MsgRegisterDiscounts{
+				ModeratorAddress: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+				Discounts: []types.AccountDiscount{
+					{
+						Address: "guru1gzsvk8rruqn2sx64acfsskrwy8hvrmaf6dvhj3",
+						Modules: []types.ModuleDiscount{
+							{
+								Module: "bank",
+								Discounts: []types.Discount{
+									{
+										DiscountType: "percent",
+										MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+										Amount:       math.LegacyNewDec(0),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectErr: true,
 		},
 	}
 

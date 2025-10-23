@@ -392,4 +392,3 @@ message MsgChangeModerator {
 // Response type for the Msg/ChangeModerator.
 message MsgChangeModeratorResponse {
 }`
-
