@@ -1229,8 +1229,8 @@ github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0/go.mod h1:hgWBS7lorOAVIJEQMi4Zs
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3/go.mod h1:o//XUCC/F+yRGJoPO/VU0GSB0f8Nhgmxx0VIRUvaC0w=
 github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c h1:6rhixN/i8ZofjG1Y75iExal34USq5p+wiN1tpie8IrU=
 github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c/go.mod h1:NMPJylDgVpX0MLRlPy15sqSwOFv/U1GZ2m21JhFfek0=
-github.com/gurufinglobal/cosmos-sdk v0.53.4-guru.5 h1:ZFdzgvb/fbR4wZU4PRtr7mNPEnj0jOQ3/otq1jpP2YA=
-github.com/gurufinglobal/cosmos-sdk v0.53.4-guru.5/go.mod h1:3donIPR3M7z+kLUhEUKehbROiPurEFF3algZlkFiVyo=
+github.com/gurufinglobal/cosmos-sdk v0.53.4-guru.6 h1:Np8LIg3AIIESUDxRD+yxZMnYVmiwIn6mq9ke6Rihw+I=
+github.com/gurufinglobal/cosmos-sdk v0.53.4-guru.6/go.mod h1:3donIPR3M7z+kLUhEUKehbROiPurEFF3algZlkFiVyo=
 github.com/gurufinglobal/cosmos-sdk/store v1.1.2-guru.2 h1:N5Uxi10EBaxjQO6C/Ydk7rLx1ormlxQBvetBg+yaCPw=
 github.com/gurufinglobal/cosmos-sdk/store v1.1.2-guru.2/go.mod h1:7a15p+QsM5UXf7VMhO3ylmqj85k9UBN/h1kwMcLiffA=
 github.com/hashicorp/consul/api v1.3.0/go.mod h1:MmDNSzIMUjNpY/mQ398R4bk2FnqQLoPndWW5VkKPlCE=
