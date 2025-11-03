@@ -31,11 +31,6 @@ func (app EVMD) RegisterUpgradeHandlers() {
 			// into GasPriceAdjustmentFactor automatically by protobuf
 			oldMinGasPriceRate := params.GasPriceAdjustmentFactor
 
-			sdkCtx.Logger().Info("Current params",
-				"gas_price_adjustment_factor", params.GasPriceAdjustmentFactor.String(),
-				"max_change_rate", params.MaxChangeRate.String(),
-			)
-
 			// If GasPriceAdjustmentFactor is loaded from old min_gas_price_rate,
 			// it should already have the value. If it's zero, set default.
 			if params.GasPriceAdjustmentFactor.IsZero() {
@@ -49,11 +44,17 @@ func (app EVMD) RegisterUpgradeHandlers() {
 				)
 			}
 
-			// If MaxChangeRate is not set (zero), use default value (0.1 = 10%)
-			if params.MaxChangeRate.IsZero() {
-				params.MaxChangeRate = math.LegacyNewDecWithPrec(1, 1) // 0.1
+			// Initialize MaxChangeRate if it's nil or zero (new field in v202)
+			// Check for nil first to avoid panic
+			if params.MaxChangeRate.IsNil() || params.MaxChangeRate.IsZero() {
+				params.MaxChangeRate = math.LegacyNewDecWithPrec(1, 1) // 0.1 = 10%
 				sdkCtx.Logger().Info("Set MaxChangeRate to default", "value", params.MaxChangeRate.String())
 			}
+
+			sdkCtx.Logger().Info("Migration completed",
+				"gas_price_adjustment_factor", params.GasPriceAdjustmentFactor.String(),
+				"max_change_rate", params.MaxChangeRate.String(),
+			)
 
 			// Save updated params
 			if err := app.FeeMarketKeeper.SetParams(sdkCtx, params); err != nil {
