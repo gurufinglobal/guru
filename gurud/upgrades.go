@@ -10,7 +10,7 @@ import (
 )
 
 func (app EVMD) RegisterUpgradeHandlers() {
-	// v201-to-v202 upgrade handler
+	// upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		"v201-to-v202",
 		func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
