@@ -1,0 +1,114 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "guru/bex/v1/bex.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/bex/types";
+
+// Query provides defines the gRPC querier service.
+service Query {
+ 
+  // ModeratorAddress returns the current moderator address
+  rpc ModeratorAddress(QueryModeratorAddressRequest) 
+        returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/bex/v1/moderator_address";
+  }
+
+  // Exchanges returns the list of available exchanges
+  // Or one exchange by given id
+  rpc Exchanges(QueryExchangesRequest) returns (QueryExchangesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges"; // optional parameter: id
+  }
+
+  // IsAdmin checks if the given address is admin 
+  rpc IsAdmin(QueryIsAdminRequest) returns (QueryIsAdminResponse) {
+    option (google.api.http).get = "/guru/bex/v1/isadmin/{address}";
+  }
+
+  // NextExchangeId returns the id for the new exchange to be created next
+  rpc NextExchangeId(QueryNextExchangeIdRequest) returns (QueryNextExchangeIdResponse) {
+    option (google.api.http).get = "/guru/bex/v1/next_exchange_id";
+  }
+
+  // Ratemeter returns the current ratemeter state
+  rpc Ratemeter(QueryRatemeterRequest) returns (QueryRatemeterResponse) {
+    option (google.api.http).get = "/guru/bex/v1/ratemeter";
+  }
+
+  // CollectedFees returns the colelcted fees for given exchange
+  rpc CollectedFees(QueryCollectedFeesRequest) returns (QueryCollectedFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/collected_fees"; // optional parameter: exchangeId
+  }
+
+}
+
+// Request type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressRequest {
+}
+
+// Response type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressResponse {
+  string moderator_address = 1;
+}
+
+// Request type for the Query/Exchanges RPC method.
+message QueryExchangesRequest {
+  string id = 1;
+}
+
+// Response type for the Query/Exchanges RPC method.
+message QueryExchangesResponse {
+  repeated Exchange exchanges = 1 [
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// Request type for the Query/IsAdmin RPC method.
+message QueryIsAdminRequest {
+  string address  = 1;
+}
+
+// Response type for the Query/IsAdmin RPC method.
+message QueryIsAdminResponse {
+  bool is_admin = 1;
+}
+
+// Request type for the Query/NextExchangeId RPC method.
+message QueryNextExchangeIdRequest {
+}
+
+// Response type for the Query/NextExchangeId RPC method.
+message QueryNextExchangeIdResponse {
+  string id = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Request type for the Query/Ratemeter RPC method.
+message QueryRatemeterRequest {
+}
+
+// Response type for the Query/Ratemeter RPC method.
+message QueryRatemeterResponse {
+  Ratemeter ratemeter = 1 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Request type for the Query/CollectedFees RPC method.
+message QueryCollectedFeesRequest {
+  string exchangeId = 1;
+}
+
+// Response type for the Query/CollectedFees RPC method.
+message QueryCollectedFeesResponse {
+  repeated cosmos.base.v1beta1.Coin coins = 1 [
+    (gogoproto.nullable)   = false
+  ];
+}
