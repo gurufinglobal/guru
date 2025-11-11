@@ -144,6 +144,11 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/bex"
 	bexkeeper "github.com/gurufinglobal/guru/v2/x/bex/keeper"
 	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
+
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap"
+	transwapkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
+	transwaptypes "github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
+	transwapv2 "github.com/gurufinglobal/guru/v2/x/ibc/transwap/v2"
 )
 
 func init() {
@@ -169,6 +174,7 @@ var (
 		authtypes.FeeCollectorName:     nil,
 		distrtypes.ModuleName:          {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		transwaptypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		minttypes.ModuleName:           {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
@@ -225,6 +231,7 @@ type EVMD struct {
 	// IBC keepers
 	IBCKeeper      *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	TransferKeeper transferkeeper.Keeper
+	TranswapKeeper transwapkeeper.Keeper
 
 	// Cosmos EVM keepers
 	FeeMarketKeeper   feemarketkeeper.Keeper
@@ -317,7 +324,7 @@ func NewExampleApp(
 		govtypes.StoreKey, paramstypes.StoreKey, consensusparamtypes.StoreKey,
 		upgradetypes.StoreKey, feegrant.StoreKey, evidencetypes.StoreKey, authzkeeper.StoreKey,
 		// ibc keys
-		ibcexported.StoreKey, ibctransfertypes.StoreKey,
+		ibcexported.StoreKey, ibctransfertypes.StoreKey, transwaptypes.StoreKey,
 		// Cosmos EVM store keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey,
 		// Oracle store key
@@ -575,6 +582,20 @@ func NewExampleApp(
 		authAddr,
 	)
 
+	app.TranswapKeeper = transwapkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[transwaptypes.StoreKey]),
+		app.GetSubspace(transwaptypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.MsgServiceRouter(),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.BexKeeper,
+		app.OracleKeeper,
+		authAddr,
+	)
+
 	// guru-v2 keepers
 	app.FeePolicyKeeper = feepolicykeeper.NewKeeper(
 		appCodec,
@@ -600,19 +621,26 @@ func NewExampleApp(
 
 	// create IBC module from top to bottom of stack
 	var transferStack porttypes.IBCModule
+	var transwapStack porttypes.IBCModule
 
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
 	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
+	transwapStack = transwap.NewIBCModule(app.TranswapKeeper)
 
 	var transferStackV2 ibcapi.IBCModule
+	var transwapStackV2 ibcapi.IBCModule
 	transferStackV2 = transferv2.NewIBCModule(app.TransferKeeper)
 	transferStackV2 = erc20v2.NewIBCMiddleware(transferStackV2, app.Erc20Keeper)
+	transwapStackV2 = transwapv2.NewIBCModule(app.TranswapKeeper)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
+	ibcRouter.AddRoute(transwaptypes.ModuleName, transwapStack)
+
 	ibcRouterV2 := ibcapi.NewRouter()
 	ibcRouterV2.AddRoute(ibctransfertypes.ModuleName, transferStackV2)
+	ibcRouterV2.AddRoute(transwaptypes.ModuleName, transwapStackV2)
 
 	app.IBCKeeper.SetRouter(ibcRouter)
 	app.IBCKeeper.SetRouterV2(ibcRouterV2)
@@ -624,6 +652,7 @@ func NewExampleApp(
 
 	// Override the ICS20 app module
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
+	transwapModule := transwap.NewAppModule(app.TranswapKeeper)
 
 	// NOTE: we are adding all available Cosmos EVM EVM extensions.
 	// Not all of them need to be enabled, which can be configured on a per-chain basis.
@@ -669,6 +698,7 @@ func NewExampleApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		ibctm.NewAppModule(tmLightClientModule),
 		transferModule,
+		transwapModule,
 		// Cosmos EVM modules
 		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
 		feemarket.NewAppModule(app.FeeMarketKeeper),
@@ -695,6 +725,7 @@ func NewExampleApp(
 				},
 			),
 			ibctransfertypes.ModuleName: transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
+			transwaptypes.ModuleName:    transwap.AppModuleBasic{},
 			oracletypes.ModuleName:      oraclemodule.AppModuleBasic{},
 			feepolicytypes.ModuleName:   feepolicymodule.AppModuleBasic{},
 		},
@@ -718,7 +749,7 @@ func NewExampleApp(
 		minttypes.ModuleName,
 
 		// IBC modules
-		ibcexported.ModuleName, ibctransfertypes.ModuleName,
+		ibcexported.ModuleName, ibctransfertypes.ModuleName, transwaptypes.ModuleName,
 
 		// Cosmos EVM BeginBlockers
 		erc20types.ModuleName, feemarkettypes.ModuleName,
@@ -753,7 +784,7 @@ func NewExampleApp(
 		bextypes.ModuleName,
 
 		// no-ops
-		ibcexported.ModuleName, ibctransfertypes.ModuleName,
+		ibcexported.ModuleName, ibctransfertypes.ModuleName, transwaptypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName, minttypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
@@ -787,6 +818,7 @@ func NewExampleApp(
 		bextypes.ModuleName,
 
 		ibctransfertypes.ModuleName,
+		transwaptypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 	}

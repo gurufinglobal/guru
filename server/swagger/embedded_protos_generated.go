@@ -2,243 +2,6 @@
 
 package swagger
 
-// oracleQueryProto contains the content of ../../proto/guru/oracle/v1/query.proto
-const oracleQueryProto = `syntax = "proto3";
-package guru.oracle.v1;
-
-import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
-import "guru/oracle/v1/oracle.proto";
-import "guru/oracle/v1/genesis.proto";
-
-option go_package = "github.com/gurufinglobal/guru/v2/x/oracle/types";
-
-// Query defines the gRPC querier service
-service Query {
-  // Parameters queries the parameters of the module
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/params";
-  }
-  
-  // OracleSubmitData queries oracle data by ID
-  rpc OracleSubmitData(QueryOracleSubmitDataRequest) returns (QueryOracleSubmitDataResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/submit_data/{request_id}/{nonce}/{provider}";
-  }
-
-  // OracleData queries oracle data by ID
-  rpc OracleData(QueryOracleDataRequest) returns (QueryOracleDataResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/data/{request_id}";
-  }
-  
-  // OracleRequestDoc queries oracle request doc by ID
-  rpc OracleRequestDoc(QueryOracleRequestDocRequest) returns (QueryOracleRequestDocResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/request_doc/{request_id}";
-  }
-  
-  // OracleRequestDocs queries an oracle request document list
-  rpc OracleRequestDocs(QueryOracleRequestDocsRequest) returns (QueryOracleRequestDocsResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/request_docs";
-  }
-
-  // ModeratorAddress queries the moderator address
-  rpc ModeratorAddress(QueryModeratorAddressRequest) returns (QueryModeratorAddressResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/moderator";
-  }
-}
-
-// QueryParamsRequest is request type for the Query/Params RPC method
-message QueryParamsRequest {}
-
-// QueryParamsResponse is response type for the Query/Params RPC method
-message QueryParamsResponse {
-  // params holds all the parameters of this module
-  Params params = 1 [(gogoproto.nullable) = false];
-}
-
-// QueryOracleSubmitDataRequest is request type for the Query/OracleSubmitData RPC method
-message QueryOracleSubmitDataRequest {
-  // request_id is the unique identifier of the oracle request
-  uint64 request_id = 1;
-  uint64 nonce = 2;
-  string provider = 3;
-}
-
-// QueryOracleSubmitDataResponse is response type for the Query/OracleSubmitData RPC method
-message QueryOracleSubmitDataResponse {
-  // submit_datas is the list of oracle submit data for the requested ID, nonce and provider
-  repeated SubmitDataSet submit_datas = 1;
-}
-
-// QueryOracleDataRequest is request type for the Query/OracleData RPC method
-message QueryOracleDataRequest {
-  // request_id is the unique identifier of the oracle request
-  uint64 request_id = 1;
-}
-
-// QueryOracleDataResponse is response type for the Query/OracleData RPC method
-message QueryOracleDataResponse {
-  // data is the oracle data for the requested ID
-  DataSet data_set = 1;
-}
-
-// QueryOracleRequestRequest is request type for the Query/OracleRequest RPC method
-message QueryOracleRequestDocRequest {
-  // request_id is the unique identifier of the oracle request
-  uint64 request_id = 1;
-}
-
-// QueryOracleRequestResponse is response type for the Query/OracleRequest RPC method
-message QueryOracleRequestDocResponse {
-  // request is the oracle request for the requested ID
-  OracleRequestDoc request_doc = 1 [(gogoproto.nullable) = false];
-}
-
-// QueryOracleRequestDocRequest is the request type for the Query/OracleRequestDoc RPC method
-message QueryOracleRequestDocsRequest {
-  RequestStatus status = 1;
-}
-
-// QueryOracleRequestDocResponse is the response type for the Query/OracleRequestDoc RPC method
-message QueryOracleRequestDocsResponse {
-  repeated OracleRequestDoc oracle_request_docs = 1;
-} 
-
-// QueryModeratorAddressRequest is request type for the Query/ModeratorAddress RPC method
-message QueryModeratorAddressRequest {}
-
-// QueryModeratorAddressResponse is response type for the Query/ModeratorAddress RPC method
-message QueryModeratorAddressResponse {
-  // moderator_address is the address of the moderator
-  string moderator_address = 1;
-}
-`
-
-// oracleTxProto contains the content of ../../proto/guru/oracle/v1/tx.proto
-const oracleTxProto = `syntax = "proto3";
-package guru.oracle.v1;
-
-import "cosmos/msg/v1/msg.proto";
-import "cosmos_proto/cosmos.proto";
-import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
-import "guru/oracle/v1/oracle.proto";
-import "cosmos/base/v1beta1/coin.proto";
-
-
-option go_package = "github.com/gurufinglobal/guru/v2/x/oracle/types";
-
-// Msg defines the oracle Msg service
-service Msg {
-  option (cosmos.msg.v1.service) = true;
-  // RegisterOracleRequestDoc defines a method for registering a new oracle request document
-  rpc RegisterOracleRequestDoc(MsgRegisterOracleRequestDoc) returns (MsgRegisterOracleRequestDocResponse) {
-    option (google.api.http) = {
-      post: "/guru/oracle/v1/register_request_doc"
-      body: "*"
-    };
-  }
-  
-  // UpdateOracleRequestDoc defines a method for updating an existing oracle request document
-  rpc UpdateOracleRequestDoc(MsgUpdateOracleRequestDoc) returns (MsgUpdateOracleRequestDocResponse) {
-    option (google.api.http) = {
-      post: "/guru/oracle/v1/update_request_doc"
-      body: "*"
-    };
-  }
-  
-  // SubmitOracleData defines a method for submitting oracle data
-  rpc SubmitOracleData(MsgSubmitOracleData) returns (MsgSubmitOracleDataResponse) {
-    option (google.api.http) = {
-      post: "/guru/oracle/v1/submit_data"
-      body: "*"
-    };
-  }
-
-  // UpdateModeratorAddress defines a method for updating the moderator address
-  rpc UpdateModeratorAddress(MsgUpdateModeratorAddress) returns (MsgUpdateModeratorAddressResponse) {
-    option (google.api.http) = {
-      post: "/guru/oracle/v1/update_moderator"
-      body: "*"
-    };
-  }
-}
-
-// MsgRegisterOracleRequestDoc represents a message to register a new oracle request document
-message MsgRegisterOracleRequestDoc {
-  option (cosmos.msg.v1.signer) = "moderator_address";
-
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string moderator_address = 1
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-
-  // The oracle request document to be registered
-  OracleRequestDoc request_doc = 2 [(gogoproto.nullable) = false];
-}
-
-// MsgRegisterOracleRequestDocResponse defines the Msg/RegisterOracleRequestDoc response type
-message MsgRegisterOracleRequestDocResponse {
-  // ID of the registered oracle request
-  uint64 request_id = 1;
-}
-
-// MsgUpdateOracleRequestDoc represents a message to update an existing oracle request document
-message MsgUpdateOracleRequestDoc {
-  option (cosmos.msg.v1.signer) = "moderator_address";
-
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string moderator_address = 1
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-
-  // The updated oracle request document
-  OracleRequestDoc request_doc = 2 [(gogoproto.nullable) = false];
-  // Reason for the update
-  string reason = 3;
-}
-
-// MsgUpdateOracleRequestDocResponse defines the Msg/UpdateOracleRequestDoc response type
-message MsgUpdateOracleRequestDocResponse {
-  // ID of the updated oracle request
-  uint64 request_id = 1;
-}
-
-// MsgSubmitOracleData represents a message to submit oracle data
-message MsgSubmitOracleData {
-  option (cosmos.msg.v1.signer) = "authority_address";
-
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string authority_address = 1
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-
-  // The oracle data set to be submitted, containing the raw data and metadata
-  SubmitDataSet data_set = 2;
-}
-
-// MsgSubmitOracleDataResponse defines the Msg/SubmitOracleData response type
-message MsgSubmitOracleDataResponse {}
-
-// MsgUpdateModeratorAddress represents a message to update the moderator address
-message MsgUpdateModeratorAddress {
-  option (cosmos.msg.v1.signer) = "moderator_address";
-
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string moderator_address = 1
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string new_moderator_address = 2
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-}
-
-// MsgUpdateModeratorAddressResponse defines the Msg/UpdateModeratorAddress response type
-message MsgUpdateModeratorAddressResponse {} 
-`
-
 // feepolicyQueryProto contains the content of ../../proto/guru/feepolicy/v1/query.proto
 const feepolicyQueryProto = `syntax = "proto3";
 
@@ -392,3 +155,265 @@ message MsgChangeModerator {
 // Response type for the Msg/ChangeModerator.
 message MsgChangeModeratorResponse {
 }`
+
+// oracleQueryProto contains the content of ../../proto/guru/oracle/v1/query.proto
+const oracleQueryProto = `syntax = "proto3";
+package guru.oracle.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "guru/oracle/v1/oracle.proto";
+import "guru/oracle/v1/genesis.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/oracle/types";
+
+// Query defines the gRPC querier service
+service Query {
+  // Parameters queries the parameters of the module
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/params";
+  }
+  
+  // OracleSubmitData queries oracle data by ID
+  rpc OracleSubmitData(QueryOracleSubmitDataRequest) returns (QueryOracleSubmitDataResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/submit_data/{request_id}/{nonce}/{provider}";
+  }
+
+  // OracleData queries oracle data by ID
+  rpc OracleData(QueryOracleDataRequest) returns (QueryOracleDataResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/data/{request_id}";
+  }
+  
+  // OracleRequestDoc queries oracle request doc by ID
+  rpc OracleRequestDoc(QueryOracleRequestDocRequest) returns (QueryOracleRequestDocResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/request_doc/{request_id}";
+  }
+  
+  // OracleRequestDocs queries an oracle request document list
+  rpc OracleRequestDocs(QueryOracleRequestDocsRequest) returns (QueryOracleRequestDocsResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/request_docs";
+  }
+
+  // ModeratorAddress queries the moderator address
+  rpc ModeratorAddress(QueryModeratorAddressRequest) returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/moderator";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method
+message QueryParamsResponse {
+  // params holds all the parameters of this module
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryOracleSubmitDataRequest is request type for the Query/OracleSubmitData RPC method
+message QueryOracleSubmitDataRequest {
+  // request_id is the unique identifier of the oracle request
+  uint64 request_id = 1;
+  uint64 nonce = 2;
+  string provider = 3;
+}
+
+// QueryOracleSubmitDataResponse is response type for the Query/OracleSubmitData RPC method
+message QueryOracleSubmitDataResponse {
+  // submit_datas is the list of oracle submit data for the requested ID, nonce and provider
+  repeated SubmitDataSet submit_datas = 1;
+}
+
+// QueryOracleDataRequest is request type for the Query/OracleData RPC method
+message QueryOracleDataRequest {
+  // request_id is the unique identifier of the oracle request
+  uint64 request_id = 1;
+}
+
+// QueryOracleDataResponse is response type for the Query/OracleData RPC method
+message QueryOracleDataResponse {
+  // data is the oracle data for the requested ID
+  DataSet data_set = 1;
+}
+
+// QueryOracleRequestRequest is request type for the Query/OracleRequest RPC method
+message QueryOracleRequestDocRequest {
+  // request_id is the unique identifier of the oracle request
+  uint64 request_id = 1;
+}
+
+// QueryOracleRequestResponse is response type for the Query/OracleRequest RPC method
+message QueryOracleRequestDocResponse {
+  // request is the oracle request for the requested ID
+  OracleRequestDoc request_doc = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryOracleRequestDocRequest is the request type for the Query/OracleRequestDoc RPC method
+message QueryOracleRequestDocsRequest {
+  RequestStatus status = 1;
+}
+
+// QueryOracleRequestDocResponse is the response type for the Query/OracleRequestDoc RPC method
+message QueryOracleRequestDocsResponse {
+  repeated OracleRequestDoc oracle_request_docs = 1;
+} 
+
+// QueryModeratorAddressRequest is request type for the Query/ModeratorAddress RPC method
+message QueryModeratorAddressRequest {}
+
+// QueryModeratorAddressResponse is response type for the Query/ModeratorAddress RPC method
+message QueryModeratorAddressResponse {
+  // moderator_address is the address of the moderator
+  string moderator_address = 1;
+}
+`
+
+// oracleTxProto contains the content of ../../proto/guru/oracle/v1/tx.proto
+const oracleTxProto = `syntax = "proto3";
+package guru.oracle.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "guru/oracle/v1/oracle.proto";
+import "guru/oracle/v1/genesis.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/oracle/types";
+
+// Msg defines the oracle Msg service
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  // RegisterOracleRequestDoc defines a method for registering a new oracle request document
+  rpc RegisterOracleRequestDoc(MsgRegisterOracleRequestDoc) returns (MsgRegisterOracleRequestDocResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/register_request_doc"
+      body: "*"
+    };
+  }
+  
+  // UpdateOracleRequestDoc defines a method for updating an existing oracle request document
+  rpc UpdateOracleRequestDoc(MsgUpdateOracleRequestDoc) returns (MsgUpdateOracleRequestDocResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/update_request_doc"
+      body: "*"
+    };
+  }
+  
+  // SubmitOracleData defines a method for submitting oracle data
+  rpc SubmitOracleData(MsgSubmitOracleData) returns (MsgSubmitOracleDataResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/submit_data"
+      body: "*"
+    };
+  }
+
+  // UpdateModeratorAddress defines a method for updating the moderator address
+  rpc UpdateModeratorAddress(MsgUpdateModeratorAddress) returns (MsgUpdateModeratorAddressResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/update_moderator"
+      body: "*"
+    };
+  }
+
+  // UpdateParams defines a governance operation for updating the oracle module parameters
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/update_params"
+      body: "*"
+    };
+  }
+}
+
+// MsgRegisterOracleRequestDoc represents a message to register a new oracle request document
+message MsgRegisterOracleRequestDoc {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // The oracle request document to be registered
+  OracleRequestDoc request_doc = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgRegisterOracleRequestDocResponse defines the Msg/RegisterOracleRequestDoc response type
+message MsgRegisterOracleRequestDocResponse {
+  // ID of the registered oracle request
+  uint64 request_id = 1;
+}
+
+// MsgUpdateOracleRequestDoc represents a message to update an existing oracle request document
+message MsgUpdateOracleRequestDoc {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // The updated oracle request document
+  OracleRequestDoc request_doc = 2 [(gogoproto.nullable) = false];
+  // Reason for the update
+  string reason = 3;
+}
+
+// MsgUpdateOracleRequestDocResponse defines the Msg/UpdateOracleRequestDoc response type
+message MsgUpdateOracleRequestDocResponse {
+  // ID of the updated oracle request
+  uint64 request_id = 1;
+}
+
+// MsgSubmitOracleData represents a message to submit oracle data
+message MsgSubmitOracleData {
+  option (cosmos.msg.v1.signer) = "authority_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string authority_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // The oracle data set to be submitted, containing the raw data and metadata
+  SubmitDataSet data_set = 2;
+}
+
+// MsgSubmitOracleDataResponse defines the Msg/SubmitOracleData response type
+message MsgSubmitOracleDataResponse {}
+
+// MsgUpdateModeratorAddress represents a message to update the moderator address
+message MsgUpdateModeratorAddress {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string new_moderator_address = 2
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgUpdateModeratorAddressResponse defines the Msg/UpdateModeratorAddress response type
+message MsgUpdateModeratorAddressResponse {}
+
+// MsgUpdateParams defines a Msg for updating the oracle module parameters
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address of the governance account
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the oracle parameters to update
+  // NOTE: All parameters must be supplied
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a MsgUpdateParams message
+message MsgUpdateParamsResponse {} 
+`
+
