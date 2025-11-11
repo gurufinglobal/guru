@@ -115,10 +115,6 @@ func (k Keeper) OnRecvExchangePacket(
 	destPort string,
 	destChannel string,
 ) error {
-
-	k.Logger(ctx).Info("\n\n\n\n\n\n\n\n")
-	k.Logger(ctx).Info("OnRecvExchangePacket", "data", data)
-
 	// validate packet data upon receiving
 	if err := data.ValidateBasic(); err != nil {
 		return errorsmod.Wrapf(err, "error validating ICS-20 transfer packet data")
@@ -143,8 +139,6 @@ func (k Keeper) OnRecvExchangePacket(
 		return errorsmod.Wrapf(bextypes.ErrInvalidDenom, "exchange does not support the given denom: %s", sourceDenom)
 	}
 
-	k.Logger(ctx).Info("Exchange data", "exchange", exchange)
-
 	// backup the receiver address
 	destReceiver := data.Receiver
 
@@ -158,18 +152,14 @@ func (k Keeper) OnRecvExchangePacket(
 
 	// step 2: prepare the swap data
 
-	// oracleData, err := k.OracleKeeper.GetOracleData(ctx, exchange.OracleRequestId)
-	// if err != nil {
-	// 	return errorsmod.Wrapf(err, "failed to get oracle data: %d", exchange.OracleRequestId)
-	// }
-
-	// rate, err := sdkmath.LegacyNewDecFromStr(oracleData.DataSet.RawData)
-	// if err != nil {
-	// 	return errorsmod.Wrapf(err, "failed to parse rate: %s", oracleData.DataSet.RawData)
-	// }
-	rate, err := sdkmath.LegacyNewDecFromStr("1450.0")
+	oracleData, err := k.OracleKeeper.GetOracleData(ctx, exchange.OracleRequestId)
 	if err != nil {
-		return errorsmod.Wrapf(err, "failed to parse rate: %s", "1450.0")
+		return errorsmod.Wrapf(err, "failed to get oracle data: %d", exchange.OracleRequestId)
+	}
+
+	rate, err := sdkmath.LegacyNewDecFromStr(oracleData.DataSet.RawData)
+	if err != nil {
+		return errorsmod.Wrapf(err, "failed to parse rate: %s", oracleData.DataSet.RawData)
 	}
 
 	swapChannel, swapPort, swapDenom, rate, err := exchange.GetSwapDataWithRate(sourceDenom, rate)
@@ -192,13 +182,6 @@ func (k Keeper) OnRecvExchangePacket(
 
 	swapAmountDec := recvAmountDec.Sub(feeDec).Mul(rate)
 	swapAmountInt := swapAmountDec.TruncateInt()
-
-	k.Logger(ctx).Info("Calculations", "recvAmount", recvAmountDec.String())
-	k.Logger(ctx).Info("Calculations", "fee dec", feeDec.String())
-	k.Logger(ctx).Info("Calculations", "fee int", feeInt.String())
-	k.Logger(ctx).Info("Calculations", "to swap amount", recvAmountDec.Sub(feeDec).String())
-	k.Logger(ctx).Info("Calculations", "swapAmount", swapAmountInt.String())
-	k.Logger(ctx).Info("Calculations", "swapAmount dec", swapAmountDec.String())
 
 	coin, err := sdk.ParseCoinNormalized(swapAmountInt.String() + swapDenom)
 	if err != nil {
@@ -230,30 +213,25 @@ func (k Keeper) OnRecvExchangePacket(
 	}
 
 	packetData := types.NewFungibleTokenPacketData(token.Denom.Path(), token.Amount, exchange.ReserveAddress, destReceiver, "Station exchange")
-	k.Logger(ctx).Info("Packet data", "packetData", packetData)
 
 	// step 3: send the tokens to the destination
 	// if a channel exists with source channel, then use IBC V1 protocol
 	// otherwise use IBC V2 protocol
 	channel, isIBCV1 := k.channelKeeper.GetChannel(ctx, swapPort, swapChannel)
 
-	var sequence uint64
 	if isIBCV1 {
 		// if a V1 channel exists for the source channel, then use IBC V1 protocol
-		k.Logger(ctx).Info("Sending IBC V1 packet", "swapChannel", swapChannel, "token", token, "timeoutHeight", uint64(time.Now().Add(10*time.Minute).UnixNano()))
-		sequence, err = k.transferV1Packet(ctx, swapChannel, token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
+		_, err = k.transferV1Packet(ctx, swapChannel, token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
 		// telemetry for transfer occurs here, in IBC V2 this is done in the onSendPacket callback
 		telemetry.ReportTransfer(swapPort, swapChannel, channel.Counterparty.PortId, channel.Counterparty.ChannelId, token)
 	} else {
 		// otherwise try to send an IBC V2 packet, if the sourceChannel is not a IBC V2 client
 		// then core IBC will return a CounterpartyNotFound error
-		k.Logger(ctx).Info("Sending IBC V2 packet", "swapChannel", swapChannel, "token", token, "timeoutTimestamp", uint64(time.Now().Add(10*time.Minute).UnixNano()))
-		sequence, err = k.transferV2Packet(ctx, "", swapChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
+		_, err = k.transferV2Packet(ctx, "", swapChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
 	}
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send swap tokens: %s", coin.Denom)
 	}
-	k.Logger(ctx).Info("Sequence", "sequence", sequence)
 
 	// step 4: set refund info in store
 	oppCoin, err := sdk.ParseCoinNormalized(data.Token.Amount + oppDenom)
@@ -282,11 +260,9 @@ func (k Keeper) OnRecvExchangePacket(
 		feeCoin,
 		exchangeId.String(),
 	)
-	k.Logger(ctx).Info("Refund packet data", "refundMsg", refundMsg)
 
 	k.SetRefundPacketData(ctx, destReceiver, &refundMsg)
 
-	k.Logger(ctx).Info("\n\n\n\n\n\n\n\n")
 	// The ibc_module.go module will return the proper ack.
 	return nil
 }
@@ -330,22 +306,16 @@ func (k Keeper) OnTimeoutExchangePacket(
 
 func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransferRepresentation) error {
 
-	k.Logger(ctx).Info("\n\n\n\n\n\n\n\n\n\n")
-	k.Logger(ctx).Info("PERFORM EXCHANGE REFUND", "data", data)
-
 	// refund to original source chain
 	refundPacket, err := k.GetRefundPacketData(ctx, data.Receiver)
 	if err != nil {
 		return err
 	}
 
-	k.Logger(ctx).Info("REFUND PACKET DATA", "refundPacket", refundPacket)
-
 	senderAcc, err := sdk.AccAddressFromBech32(refundPacket.Sender)
 	if err != nil {
 		return errorsmod.Wrapf(err, "invalid sender address: %s", refundPacket.Sender)
 	}
-	k.Logger(ctx).Info("SENDER ACC", "senderAcc", senderAcc)
 
 	// return the fees from module to reserve address
 	err = k.BankKeeper.SendCoinsFromModuleToAccount(ctx, bextypes.ModuleName, senderAcc, sdk.NewCoins(refundPacket.Fee))
@@ -358,22 +328,17 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransf
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to deduct fees from collected fees: %s", refundPacket.Fee.Denom)
 	}
-	k.Logger(ctx).Info("FEES DEDUCTED", "fees", refundPacket.Fee)
 
 	// send back to original chain
 	_, isIBCV1 := k.channelKeeper.GetChannel(ctx, refundPacket.SourcePort, refundPacket.SourceChannel)
 	packetData := types.NewFungibleTokenPacketData(refundPacket.Token.Denom.Path(), refundPacket.Token.Amount, refundPacket.Sender, refundPacket.Receiver, refundPacket.Memo)
 
-	k.Logger(ctx).Info("IS IBC V1", "isIBCV1", isIBCV1)
-
 	if isIBCV1 {
 		// if a V1 channel exists for the source channel, then use IBC V1 protocol
-		k.Logger(ctx).Info("SENDING IBC V1 PACKET", "packetData", packetData)
 		_, err = k.transferV1Packet(ctx, refundPacket.SourceChannel, refundPacket.Token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
 	} else {
 		// otherwise try to send an IBC V2 packet, if the sourceChannel is not a IBC V2 client
 		// then core IBC will return a CounterpartyNotFound error
-		k.Logger(ctx).Info("SENDING IBC V2 PACKET", "packetData", packetData)
 		_, err = k.transferV2Packet(ctx, "", refundPacket.SourceChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
 	}
 	if err != nil {
@@ -382,9 +347,6 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransf
 
 	// delete refund info from store
 	k.DeleteRefundPacketData(ctx, data.Receiver)
-
-	k.Logger(ctx).Info("PERFORM EXCHANGE REFUND COMPLETED")
-	k.Logger(ctx).Info("\n\n\n\n\n\n\n\n\n\n")
 
 	return nil
 }
