@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	errorsmod "cosmossdk.io/errors"
@@ -273,7 +274,7 @@ func (k Keeper) WithdrawFees(goCtx context.Context, msg *types.MsgWithdrawFees) 
 	// 	),
 	// )
 
-	return &types.MsgWithdrawFeesResponse{}, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 // ChangeModerator implements types.MsgServer.
