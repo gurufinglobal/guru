@@ -9,10 +9,10 @@ import (
 
 const (
 	// ModuleName defines the IBC transfer name
-	ModuleName = "swapt"
+	ModuleName = "transwap"
 
 	// PortID is the default port id that transfer module binds to
-	PortID = "swapt"
+	PortID = "transwap"
 
 	// StoreKey is the store key string for IBC transfer
 	StoreKey = ModuleName

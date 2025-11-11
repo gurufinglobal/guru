@@ -7,7 +7,7 @@ import (
 // GetQueryCmd returns the query commands for IBC connections
 func GetQueryCmd() *cobra.Command {
 	queryCmd := &cobra.Command{
-		Use:                        "ibc-swapt",
+		Use:                        "ibc-transwap",
 		Short:                      "IBC fungible token transfer query subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
