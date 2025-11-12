@@ -20,6 +20,7 @@ const (
 	prefixRatemeter
 	prefixAddressRateRegistry
 	prefixCollectedFees
+	prefixLockedFees
 )
 
 // KV Store key prefixes
@@ -31,6 +32,7 @@ var (
 	KeyRatemeter           = []byte{prefixRatemeter}
 	KeyAddressRateRegistry = []byte{prefixAddressRateRegistry}
 	KeyCollectedFees       = []byte{prefixCollectedFees}
+	KeyLockedFees          = []byte{prefixLockedFees}
 )
 
 // default keys
