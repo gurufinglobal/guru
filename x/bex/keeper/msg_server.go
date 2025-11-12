@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	errorsmod "cosmossdk.io/errors"
@@ -247,34 +246,38 @@ func (k Keeper) UpdateRatemeter(goCtx context.Context, msg *types.MsgUpdateRatem
 
 // WithdrawFees implements types.MsgServer.
 func (k Keeper) WithdrawFees(goCtx context.Context, msg *types.MsgWithdrawFees) (*types.MsgWithdrawFeesResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// exchange, err := k.GetExchange(ctx, msg.ExchangeId)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	exchange, err := k.GetExchange(ctx, msg.ExchangeId)
+	if err != nil {
+		return nil, err
+	}
 
-	// // validate the admin address
-	// if msg.AdminAddress != exchange.AdminAddress {
-	// 	return nil, errorsmod.Wrapf(types.ErrWrongAdmin, " expected: %s, got: %s", exchange.AdminAddress, msg.AdminAddress)
-	// }
+	// validate the admin address
+	if msg.AdminAddress != exchange.AdminAddress {
+		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, " expected: %s, got: %s", exchange.AdminAddress, msg.AdminAddress)
+	}
 
-	// err = k.WithdrawExchangeFees(ctx, msg.ExchangeId.String(), msg.WithdrawAddress)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	fees, err := k.GetExchangeFees(ctx, msg.ExchangeId.String())
+	if err != nil {
+		return nil, err
+	}
+	err = k.WithdrawExchangeFees(ctx, msg.ExchangeId.String(), msg.WithdrawAddress)
+	if err != nil {
+		return nil, err
+	}
 
-	// ctx.EventManager().EmitEvent(
-	// 	sdk.NewEvent(
-	// 		types.EventTypeWithdrawFees,
-	// 		sdk.NewAttribute(types.AttributeKeyAdmin, msg.AdminAddress),
-	// 		sdk.NewAttribute(types.AttributeKeyExchangeId, msg.ExchangeId.String()),
-	// 		sdk.NewAttribute(types.AttributeKeyWithdrawAddress, msg.WithdrawAddress),
-	// 		sdk.NewAttribute(types.AttributeKeyAmount, exchange.AccumulatedFee.String()),
-	// 	),
-	// )
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeWithdrawFees,
+			sdk.NewAttribute(types.AttributeKeyAdmin, msg.AdminAddress),
+			sdk.NewAttribute(types.AttributeKeyExchangeId, msg.ExchangeId.String()),
+			sdk.NewAttribute(types.AttributeKeyWithdrawAddress, msg.WithdrawAddress),
+			sdk.NewAttribute(types.AttributeKeyAmount, fees.String()),
+		),
+	)
 
-	return nil, fmt.Errorf("not implemented")
+	return &types.MsgWithdrawFeesResponse{}, nil
 }
 
 // ChangeModerator implements types.MsgServer.

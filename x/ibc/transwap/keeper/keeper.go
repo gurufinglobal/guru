@@ -297,6 +297,13 @@ func (k Keeper) SetRefundPacketData(ctx sdk.Context, key string, packet *types.T
 	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	bz := k.cdc.MustMarshal(packet)
 	store.Set([]byte(key), bz)
+
+	// lock the exchange fees
+	err := k.BexKeeper.LockExchangeFees(ctx, packet.ExchangeId, sdk.NewCoins(packet.Fee))
+	if err != nil {
+		return fmt.Errorf("failed to lock exchange fees: %s", packet.ExchangeId)
+	}
+
 	return nil
 }
 
@@ -314,5 +321,13 @@ func (k Keeper) GetRefundPacketData(ctx sdk.Context, key string) (*types.Transfe
 
 func (k Keeper) DeleteRefundPacketData(ctx sdk.Context, key string) {
 	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	packet, err := k.GetRefundPacketData(ctx, key)
+	if err != nil {
+		return
+	}
+	err = k.BexKeeper.ReleaseExchangeFees(ctx, packet.ExchangeId, sdk.NewCoins(packet.Fee))
+	if err != nil {
+		k.Logger(ctx).Error("Failed to release exchange fees", "error", err)
+	}
 	store.Delete([]byte(key))
 }

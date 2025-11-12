@@ -27,7 +27,6 @@ func (k Keeper) receiveTokens(
 ) error {
 	receiver, err := sdk.AccAddressFromBech32(data.Receiver)
 	if err != nil {
-		k.Logger(ctx).Error("Failed to parse receiver", "error", err)
 		return errorsmod.Wrapf(err, "failed to parse receiver: %s", data.Receiver)
 	}
 

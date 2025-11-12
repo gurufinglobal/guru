@@ -169,8 +169,11 @@ func (k Keeper) IncrementAddressRequestCount(ctx sdk.Context, address string) er
 
 // WithdrawExchangeFees withdraws the accumulated fees from the reserve address to the given address
 func (k Keeper) WithdrawExchangeFees(ctx sdk.Context, exchangeId string, withdrawAddress string) error {
-	fees := k.bankKeeper.GetAllBalances(ctx, k.GetModuleAddress())
-	if fees.Empty() {
+	fees, err := k.GetExchangeFees(ctx, exchangeId)
+	if err != nil {
+		return err
+	}
+	if fees == nil {
 		return fmt.Errorf("no fees to withdraw")
 	}
 
@@ -217,6 +220,14 @@ func (k Keeper) GetExchangeFees(ctx sdk.Context, exchangeId string) (sdk.Coins, 
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal collected fees for exchange: %s", exchangeId)
 	}
+
+	// subtract the locked fees from the collected fees to get the available fees
+	lockedFees, err := k.getLockedFees(ctx, exchangeId)
+	if err != nil {
+		return nil, err
+	}
+	fees = fees.Sub(lockedFees...)
+
 	return fees, nil
 }
 
@@ -248,4 +259,57 @@ func (k Keeper) DeleteExchangeFees(ctx sdk.Context, exchangeId string) {
 	store := ctx.KVStore(k.storeKey)
 	exchangeIdStore := prefix.NewStore(store, types.KeyCollectedFees)
 	exchangeIdStore.Delete([]byte(exchangeId))
+}
+
+// GetLockedFees returns the locked fees for the given exchange id
+func (k Keeper) getLockedFees(ctx sdk.Context, exchangeId string) (sdk.Coins, error) {
+	store := ctx.KVStore(k.storeKey)
+	lockedFeesStore := prefix.NewStore(store, types.KeyLockedFees)
+	bz := lockedFeesStore.Get([]byte(exchangeId))
+	if bz == nil {
+		return sdk.Coins{}, nil
+	}
+	lockedFees := sdk.Coins{}
+	err := json.Unmarshal(bz, &lockedFees)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal locked fees for exchange: %s", exchangeId)
+	}
+	return lockedFees, nil
+}
+
+// LockExchangeFees locks the given fees for the given exchange id
+func (k Keeper) LockExchangeFees(ctx sdk.Context, exchangeId string, fees sdk.Coins) error {
+	store := ctx.KVStore(k.storeKey)
+	lockedFeesStore := prefix.NewStore(store, types.KeyLockedFees)
+	lockedFees, err := k.getLockedFees(ctx, exchangeId)
+	if err != nil {
+		return err
+	}
+	lockedFees = lockedFees.Add(fees...)
+	bz, err := json.Marshal(lockedFees)
+	if err != nil {
+		return err
+	}
+	lockedFeesStore.Set([]byte(exchangeId), bz)
+	return nil
+}
+
+// ReleaseExchangeFees releases the given fees from the collected fees for the given exchange id
+func (k Keeper) ReleaseExchangeFees(ctx sdk.Context, exchangeId string, fees sdk.Coins) error {
+	store := ctx.KVStore(k.storeKey)
+	lockedFeesStore := prefix.NewStore(store, types.KeyLockedFees)
+	lockedFees, err := k.getLockedFees(ctx, exchangeId)
+	if err != nil {
+		return err
+	}
+	if !lockedFees.IsAllGTE(fees) {
+		return fmt.Errorf("fees to release are less than the locked fees for exchange: %s", exchangeId)
+	}
+	lockedFees = lockedFees.Sub(fees...)
+	bz, err := json.Marshal(lockedFees)
+	if err != nil {
+		return err
+	}
+	lockedFeesStore.Set([]byte(exchangeId), bz)
+	return nil
 }

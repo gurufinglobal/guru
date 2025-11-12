@@ -218,9 +218,8 @@ func (im IBCModule) OnRecvPacket(
 	ack = channeltypes.NewResultAcknowledgement([]byte{byte(1)})
 
 	telemetry.ReportOnRecvPacket(packet.SourcePort, packet.SourceChannel, packet.DestinationPort, packet.DestinationChannel, data.Token)
-	im.keeper.Logger(ctx).Info("Test 7")
+
 	im.keeper.Logger(ctx).Info("successfully handled ICS-20 packet", "sequence", packet.Sequence)
-	im.keeper.Logger(ctx).Info("Returning ack", "ack", ack)
 
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	return ack

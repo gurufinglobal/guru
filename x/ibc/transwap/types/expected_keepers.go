@@ -50,6 +50,8 @@ type BexKeeper interface {
 	GetExchange(ctx sdk.Context, exchangeId math.Int) (*bextypes.Exchange, error)
 	AddExchangeFees(ctx sdk.Context, exchangeId string, fees sdk.Coins) error
 	DeductExchangeFees(ctx sdk.Context, exchangeId string, fees sdk.Coins) error
+	LockExchangeFees(ctx sdk.Context, exchangeId string, fees sdk.Coins) error
+	ReleaseExchangeFees(ctx sdk.Context, exchangeId string, fees sdk.Coins) error
 }
 
 type OracleKeeper interface {
