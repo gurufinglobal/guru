@@ -122,6 +122,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "guru/oracle/v1/oracle.proto";
+import "guru/oracle/v1/genesis.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 
@@ -158,6 +159,14 @@ service Msg {
   rpc UpdateModeratorAddress(MsgUpdateModeratorAddress) returns (MsgUpdateModeratorAddressResponse) {
     option (google.api.http) = {
       post: "/guru/oracle/v1/update_moderator"
+      body: "*"
+    };
+  }
+
+  // UpdateParams defines a governance operation for updating the oracle module parameters
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse) {
+    option (google.api.http) = {
+      post: "/guru/oracle/v1/update_params"
       body: "*"
     };
   }
@@ -236,7 +245,22 @@ message MsgUpdateModeratorAddress {
 }
 
 // MsgUpdateModeratorAddressResponse defines the Msg/UpdateModeratorAddress response type
-message MsgUpdateModeratorAddressResponse {} 
+message MsgUpdateModeratorAddressResponse {}
+
+// MsgUpdateParams defines a Msg for updating the oracle module parameters
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address of the governance account
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the oracle parameters to update
+  // NOTE: All parameters must be supplied
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a MsgUpdateParams message
+message MsgUpdateParamsResponse {} 
 `
 
 // feepolicyQueryProto contains the content of ../../proto/guru/feepolicy/v1/query.proto
@@ -392,3 +416,4 @@ message MsgChangeModerator {
 // Response type for the Msg/ChangeModerator.
 message MsgChangeModeratorResponse {
 }`
+
