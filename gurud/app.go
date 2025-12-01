@@ -17,6 +17,19 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/gogoproto/proto"
+	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v10/modules/core"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	evmante "github.com/gurufinglobal/guru/v2/ante"
 	cosmosevmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	evmosencoding "github.com/gurufinglobal/guru/v2/encoding"
@@ -46,19 +59,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/vm"
 	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/gogoproto/proto"
-	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v10/modules/core"
-	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -76,9 +76,9 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/gurufinglobal/guru/v2/server/swagger"
 	"github.com/gorilla/mux"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/gurufinglobal/guru/v2/server/swagger"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -139,7 +139,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	// guru-v2 modules
+
+	// guru modules
+	"github.com/gurufinglobal/guru/v2/x/bex"
+	bexkeeper "github.com/gurufinglobal/guru/v2/x/bex/keeper"
+	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
+
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap"
+	transwapkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
+	transwaptypes "github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
+	transwapv2 "github.com/gurufinglobal/guru/v2/x/ibc/transwap/v2"
 )
 
 func init() {
@@ -165,6 +174,7 @@ var (
 		authtypes.FeeCollectorName:     nil,
 		distrtypes.ModuleName:          {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		transwaptypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		minttypes.ModuleName:           {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
@@ -179,6 +189,7 @@ var (
 		// guru-v2 modules
 		oracletypes.ModuleName:    nil,
 		feepolicytypes.ModuleName: nil,
+		bextypes.ModuleName:       nil,
 	}
 )
 
@@ -220,6 +231,7 @@ type EVMD struct {
 	// IBC keepers
 	IBCKeeper      *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	TransferKeeper transferkeeper.Keeper
+	TranswapKeeper transwapkeeper.Keeper
 
 	// Cosmos EVM keepers
 	FeeMarketKeeper   feemarketkeeper.Keeper
@@ -230,6 +242,7 @@ type EVMD struct {
 
 	// guru-v2 keepers
 	FeePolicyKeeper feepolicykeeper.Keeper
+	BexKeeper       bexkeeper.Keeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -311,13 +324,14 @@ func NewExampleApp(
 		govtypes.StoreKey, paramstypes.StoreKey, consensusparamtypes.StoreKey,
 		upgradetypes.StoreKey, feegrant.StoreKey, evidencetypes.StoreKey, authzkeeper.StoreKey,
 		// ibc keys
-		ibcexported.StoreKey, ibctransfertypes.StoreKey,
+		ibcexported.StoreKey, ibctransfertypes.StoreKey, transwaptypes.StoreKey,
 		// Cosmos EVM store keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey,
 		// Oracle store key
 		oracletypes.StoreKey,
 		// guru-v2 store keys
 		feepolicytypes.StoreKey,
+		bextypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey, feepolicytypes.TransientKey)
@@ -550,6 +564,10 @@ func NewExampleApp(
 		),
 	)
 
+	app.BexKeeper = bexkeeper.NewKeeper(
+		appCodec, keys[bextypes.StoreKey], app.AccountKeeper, app.BankKeeper, authAddr,
+	)
+
 	// instantiate IBC transfer keeper AFTER the ERC-20 keeper to use it in the instantiation
 	app.TransferKeeper = transferkeeper.NewKeeper(
 		appCodec,
@@ -561,6 +579,20 @@ func NewExampleApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
+		authAddr,
+	)
+
+	app.TranswapKeeper = transwapkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[transwaptypes.StoreKey]),
+		app.GetSubspace(transwaptypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.MsgServiceRouter(),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.BexKeeper,
+		app.OracleKeeper,
 		authAddr,
 	)
 
@@ -589,19 +621,26 @@ func NewExampleApp(
 
 	// create IBC module from top to bottom of stack
 	var transferStack porttypes.IBCModule
+	var transwapStack porttypes.IBCModule
 
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
 	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
+	transwapStack = transwap.NewIBCModule(app.TranswapKeeper)
 
 	var transferStackV2 ibcapi.IBCModule
+	var transwapStackV2 ibcapi.IBCModule
 	transferStackV2 = transferv2.NewIBCModule(app.TransferKeeper)
 	transferStackV2 = erc20v2.NewIBCMiddleware(transferStackV2, app.Erc20Keeper)
+	transwapStackV2 = transwapv2.NewIBCModule(app.TranswapKeeper)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
+	ibcRouter.AddRoute(transwaptypes.ModuleName, transwapStack)
+
 	ibcRouterV2 := ibcapi.NewRouter()
 	ibcRouterV2.AddRoute(ibctransfertypes.ModuleName, transferStackV2)
+	ibcRouterV2.AddRoute(transwaptypes.ModuleName, transwapStackV2)
 
 	app.IBCKeeper.SetRouter(ibcRouter)
 	app.IBCKeeper.SetRouterV2(ibcRouterV2)
@@ -613,6 +652,7 @@ func NewExampleApp(
 
 	// Override the ICS20 app module
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
+	transwapModule := transwap.NewAppModule(app.TranswapKeeper)
 
 	// NOTE: we are adding all available Cosmos EVM EVM extensions.
 	// Not all of them need to be enabled, which can be configured on a per-chain basis.
@@ -658,6 +698,7 @@ func NewExampleApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		ibctm.NewAppModule(tmLightClientModule),
 		transferModule,
+		transwapModule,
 		// Cosmos EVM modules
 		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
 		feemarket.NewAppModule(app.FeeMarketKeeper),
@@ -666,6 +707,7 @@ func NewExampleApp(
 		// guru-v2 modules
 		oraclemodule.NewAppModule(app.OracleKeeper),
 		feepolicymodule.NewAppModule(app.FeePolicyKeeper),
+		bex.NewAppModule(app.BexKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager which is in charge of setting up basic,
@@ -683,6 +725,7 @@ func NewExampleApp(
 				},
 			),
 			ibctransfertypes.ModuleName: transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
+			transwaptypes.ModuleName:    transwap.AppModuleBasic{},
 			oracletypes.ModuleName:      oraclemodule.AppModuleBasic{},
 			feepolicytypes.ModuleName:   feepolicymodule.AppModuleBasic{},
 		},
@@ -706,7 +749,7 @@ func NewExampleApp(
 		minttypes.ModuleName,
 
 		// IBC modules
-		ibcexported.ModuleName, ibctransfertypes.ModuleName,
+		ibcexported.ModuleName, ibctransfertypes.ModuleName, transwaptypes.ModuleName,
 
 		// Cosmos EVM BeginBlockers
 		erc20types.ModuleName, feemarkettypes.ModuleName,
@@ -714,6 +757,7 @@ func NewExampleApp(
 
 		// guru-v2 modules
 		feepolicytypes.ModuleName,
+		bextypes.ModuleName,
 
 		// TODO: remove no-ops? check if all are no-ops before removing
 		distrtypes.ModuleName, slashingtypes.ModuleName,
@@ -737,9 +781,10 @@ func NewExampleApp(
 
 		// guru-v2 modules
 		feepolicytypes.ModuleName,
+		bextypes.ModuleName,
 
 		// no-ops
-		ibcexported.ModuleName, ibctransfertypes.ModuleName,
+		ibcexported.ModuleName, ibctransfertypes.ModuleName, transwaptypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName, minttypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
@@ -770,8 +815,10 @@ func NewExampleApp(
 
 		// guru-v2 modules
 		feepolicytypes.ModuleName,
+		bextypes.ModuleName,
 
 		ibctransfertypes.ModuleName,
+		transwaptypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 	}
