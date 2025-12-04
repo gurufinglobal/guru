@@ -31,3 +31,6 @@ contracts/@openzeppelin/*
 
 # Build files
 build/
+
+# Generated files
+server/swagger/embedded_protos_generated.go
