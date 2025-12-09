@@ -8,11 +8,10 @@ import (
 	"testing"
 
 	"github.com/gorilla/websocket"
+	"github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/stretchr/testify/require"
 
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-
-	"github.com/gurufinglobal/guru/v2/server/config"
 
 	"cosmossdk.io/log"
 

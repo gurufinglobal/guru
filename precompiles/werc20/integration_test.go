@@ -5,12 +5,6 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/ginkgo/v2"
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/gomega"
-
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	"github.com/gurufinglobal/guru/v2/precompiles/werc20"
@@ -25,6 +19,11 @@ import (
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/gomega"
 
 	"cosmossdk.io/math"
 

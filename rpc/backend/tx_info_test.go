@@ -7,6 +7,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/gurufinglobal/guru/v2/indexer"
+	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/metadata"
 
@@ -14,11 +19,6 @@ import (
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cometbft/cometbft/types"
 
-	"github.com/gurufinglobal/guru/v2/indexer"
-	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"

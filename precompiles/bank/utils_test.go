@@ -3,13 +3,12 @@ package bank_test
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/gomega"
-
 	"github.com/gurufinglobal/guru/v2/precompiles/bank"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/gomega"
 
 	"cosmossdk.io/math"
 

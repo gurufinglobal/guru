@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/holiman/uint256"
 	"golang.org/x/exp/constraints"
 
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	errorsmod "cosmossdk.io/errors"

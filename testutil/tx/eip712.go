@@ -5,7 +5,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-
 	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"

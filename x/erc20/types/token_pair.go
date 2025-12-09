@@ -2,11 +2,10 @@ package types
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/cometbft/cometbft/crypto/tmhash"
-
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	"github.com/gurufinglobal/guru/v2/utils"
+
+	"github.com/cometbft/cometbft/crypto/tmhash"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

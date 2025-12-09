@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/gurud"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 )
 

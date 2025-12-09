@@ -5,10 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/go-metrics"
-
 	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/hashicorp/go-metrics"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

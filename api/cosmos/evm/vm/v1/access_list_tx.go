@@ -5,7 +5,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
 )
 

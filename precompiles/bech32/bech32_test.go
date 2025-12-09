@@ -3,10 +3,9 @@ package bech32_test
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/holiman/uint256"
-
 	chainconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/precompiles/bech32"
+	"github.com/holiman/uint256"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

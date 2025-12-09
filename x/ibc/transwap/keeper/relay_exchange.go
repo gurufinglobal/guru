@@ -4,17 +4,19 @@ import (
 	"strings"
 	"time"
 
+	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/telemetry"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
+
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
-	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/telemetry"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 
 func (k Keeper) receiveTokens(
@@ -304,7 +306,6 @@ func (k Keeper) OnTimeoutExchangePacket(
 }
 
 func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransferRepresentation) error {
-
 	// refund to original source chain
 	refundPacket, err := k.GetRefundPacketData(ctx, data.Receiver)
 	if err != nil {

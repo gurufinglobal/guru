@@ -4,9 +4,9 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
-
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
+
+	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
 )
 
 // Hash returns the hex bytes of the SHA256 hash of the DenomTrace fields using the following formula:

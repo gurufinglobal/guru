@@ -3,13 +3,12 @@ package slashing_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/gurufinglobal/guru/v2/precompiles/slashing"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

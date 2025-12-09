@@ -98,11 +98,12 @@ func GenerateSwaggerPath(method RPCMethod) string {
 
 	// Determine the appropriate tag
 	var tag string
-	if method.ServiceType == "Service" {
+	switch method.ServiceType {
+	case "Service":
 		tag = "Service"
-	} else if method.ServiceType == "Query" {
+	case "Query":
 		tag = "Query"
-	} else {
+	default:
 		tag = "Guru Module" // fallback
 	}
 

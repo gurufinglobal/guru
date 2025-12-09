@@ -6,11 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"

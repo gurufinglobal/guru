@@ -5,16 +5,15 @@ import (
 	"testing"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
+	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
+	fmkttypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/ginkgo/v2"
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
-
-	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
-	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
-	fmkttypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

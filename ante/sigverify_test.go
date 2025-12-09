@@ -3,12 +3,11 @@ package ante_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/gurufinglobal/guru/v2/ante"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/encoding"
 	"github.com/gurufinglobal/guru/v2/server/config"
+	"github.com/stretchr/testify/require"
 
 	storetypes "cosmossdk.io/store/types"
 

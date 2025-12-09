@@ -8,18 +8,17 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
+	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
+	"github.com/gurufinglobal/guru/v2/server/config"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-
-	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
-	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
-	"github.com/gurufinglobal/guru/v2/server/config"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

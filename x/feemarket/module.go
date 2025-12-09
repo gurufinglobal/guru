@@ -7,13 +7,12 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/spf13/cobra"
-
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/gurufinglobal/guru/v2/x/feemarket/client/cli"
 	"github.com/gurufinglobal/guru/v2/x/feemarket/keeper"
 	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	"github.com/spf13/cobra"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"cosmossdk.io/core/appmodule"
 

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	dbm "github.com/cosmos/cosmos-db"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 

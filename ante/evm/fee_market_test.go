@@ -4,7 +4,6 @@ import (
 	"math/big"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	"github.com/gurufinglobal/guru/v2/ante/testutils"
 	"github.com/gurufinglobal/guru/v2/server/config"

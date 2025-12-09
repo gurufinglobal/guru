@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/gurufinglobal/guru/v2/server"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"golang.org/x/sync/errgroup"
 
 	cmtcfg "github.com/cometbft/cometbft/config"
@@ -18,9 +20,6 @@ import (
 	"github.com/cometbft/cometbft/rpc/client/local"
 	"github.com/cometbft/cometbft/types"
 	cmttime "github.com/cometbft/cometbft/types/time"
-
-	"github.com/gurufinglobal/guru/v2/server"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/log"
 

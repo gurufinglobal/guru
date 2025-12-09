@@ -1,10 +1,10 @@
 package feemarket
 
 import (
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/gurufinglobal/guru/v2/x/feemarket/keeper"
 	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	errorsmod "cosmossdk.io/errors"
 

@@ -3,13 +3,12 @@ package network_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	grpchandler "github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
 

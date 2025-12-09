@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/testutil"
@@ -15,6 +14,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"

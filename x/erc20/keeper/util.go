@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-
 	types2 "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
 

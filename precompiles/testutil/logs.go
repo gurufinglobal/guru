@@ -5,10 +5,9 @@ import (
 	"slices"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // CheckLogs checks the logs for the given events and whether the transaction was successful or not.

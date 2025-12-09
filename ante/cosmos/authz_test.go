@@ -7,16 +7,15 @@ import (
 	"time"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/stretchr/testify/require"
-
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/stretchr/testify/require"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"cosmossdk.io/math"
 

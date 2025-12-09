@@ -8,10 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	protov2 "google.golang.org/protobuf/proto"
-
 	evmapi "github.com/gurufinglobal/guru/v2/api/cosmos/evm/vm/v1"
 	"github.com/gurufinglobal/guru/v2/types"
+	protov2 "google.golang.org/protobuf/proto"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

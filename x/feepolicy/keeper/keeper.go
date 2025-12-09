@@ -1,11 +1,13 @@
 package keeper
 
 import (
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -37,7 +39,6 @@ func NewKeeper(
 	moduleKeepers map[string]types.ModuleKeeper,
 	authority string,
 ) Keeper {
-
 	return Keeper{
 		cdc:           cdc,
 		storeKey:      key,
@@ -175,7 +176,6 @@ func (k Keeper) DeleteMsgTypeDiscounts(ctx sdk.Context, accStr, msgType string) 
 }
 
 func (k Keeper) GetDiscount(ctx sdk.Context, feePayerAddr string, msgs []sdk.Msg) types.Discount {
-
 	accDiscount, ok := k.GetAccountDiscounts(ctx, feePayerAddr)
 	if !ok {
 		return types.Discount{}

@@ -5,7 +5,6 @@ import (
 	"math/rand"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/gurufinglobal/guru/v2/contracts"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"

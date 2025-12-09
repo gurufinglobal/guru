@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	"github.com/gurufinglobal/guru/v2/wallets/accounts"
 	"github.com/gurufinglobal/guru/v2/wallets/usbwallet"

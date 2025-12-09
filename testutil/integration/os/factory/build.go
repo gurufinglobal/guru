@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/gurufinglobal/guru/v2/server/config"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 

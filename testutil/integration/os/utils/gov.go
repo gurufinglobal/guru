@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-
 	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	abcitypes "github.com/cometbft/cometbft/abci/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

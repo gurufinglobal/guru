@@ -6,7 +6,13 @@ import (
 	"fmt"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/client/cli"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/simulation"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 	"github.com/spf13/cobra"
+
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 
 	"cosmossdk.io/core/appmodule"
 
@@ -16,12 +22,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/client/cli"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/simulation"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 
 var (

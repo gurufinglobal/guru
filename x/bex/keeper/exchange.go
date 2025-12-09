@@ -1,12 +1,14 @@
 package keeper
 
 import (
+	"github.com/gurufinglobal/guru/v2/x/bex/types"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
 func (k Keeper) GetExchange(ctx sdk.Context, id math.Int) (*types.Exchange, error) {

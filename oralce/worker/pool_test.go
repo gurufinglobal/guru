@@ -8,16 +8,18 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/oralce/config"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	"github.com/gurufinglobal/guru/v2/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"cosmossdk.io/log"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type PoolTestSuite struct {

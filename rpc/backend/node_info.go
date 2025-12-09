@@ -8,14 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-
-	cmttypes "github.com/cometbft/cometbft/types"
-
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

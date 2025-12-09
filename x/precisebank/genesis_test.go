@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/x/precisebank"
 	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	"github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
 

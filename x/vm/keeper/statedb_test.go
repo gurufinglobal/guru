@@ -12,9 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	ethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/holiman/uint256"
-	"github.com/stretchr/testify/require"
-
 	"github.com/gurufinglobal/guru/v2/contracts"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	testfactory "github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -24,6 +21,8 @@ import (
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/holiman/uint256"
+	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"

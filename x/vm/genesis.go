@@ -5,11 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

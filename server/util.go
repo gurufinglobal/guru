@@ -6,14 +6,13 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/netutil"
 
 	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-
-	"github.com/gurufinglobal/guru/v2/server/config"
 
 	"cosmossdk.io/log"
 

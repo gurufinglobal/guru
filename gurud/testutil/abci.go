@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	app "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/testutil/tx"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
-
-	app "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/testutil/tx"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

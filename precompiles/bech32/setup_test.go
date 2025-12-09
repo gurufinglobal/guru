@@ -3,11 +3,10 @@ package bech32_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/gurufinglobal/guru/v2/precompiles/bech32"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/stretchr/testify/suite"
 )
 
 var s *PrecompileTestSuite

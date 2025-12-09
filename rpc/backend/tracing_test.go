@@ -5,15 +5,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
+	"github.com/gurufinglobal/guru/v2/indexer"
+	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cometbft/cometbft/types"
 
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-	"github.com/gurufinglobal/guru/v2/indexer"
-	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"

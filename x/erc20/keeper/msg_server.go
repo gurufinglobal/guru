@@ -5,10 +5,9 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/hashicorp/go-metrics"
-
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	"github.com/hashicorp/go-metrics"
 
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/math"

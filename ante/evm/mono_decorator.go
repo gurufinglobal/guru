@@ -5,7 +5,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"

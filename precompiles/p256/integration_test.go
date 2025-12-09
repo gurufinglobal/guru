@@ -6,14 +6,6 @@ import (
 	"crypto/rand"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/ginkgo/v2"
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/gomega"
-
-	"github.com/cometbft/cometbft/crypto"
-
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/precompiles/p256"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -22,6 +14,13 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/gomega"
+
+	"github.com/cometbft/cometbft/crypto"
 )
 
 type IntegrationTestSuite struct {

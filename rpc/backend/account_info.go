@@ -7,12 +7,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/pkg/errors"
 
 	"github.com/cometbft/cometbft/libs/bytes"
-
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

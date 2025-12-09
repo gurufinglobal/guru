@@ -3,9 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
 

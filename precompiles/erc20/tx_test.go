@@ -4,13 +4,12 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/holiman/uint256"
-
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/holiman/uint256"
 
 	"cosmossdk.io/math"
 

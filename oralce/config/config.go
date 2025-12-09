@@ -11,9 +11,10 @@ import (
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/encoding"
 	guruconfig "github.com/gurufinglobal/guru/v2/server/config"
+	"github.com/pelletier/go-toml/v2"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/pelletier/go-toml/v2"
 )
 
 var home = flag.String("home", homeDir(), "oracle daemon home directory")
@@ -95,7 +96,7 @@ func homeDir() string {
 // Used when no configuration file exists on first startup
 func createDefaultConfig(path string) error {
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
 
@@ -125,7 +126,7 @@ func createDefaultConfig(path string) error {
 		return fmt.Errorf("failed to marshal TOML: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 

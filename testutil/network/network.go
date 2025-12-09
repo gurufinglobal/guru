@@ -18,6 +18,12 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
+	chaincmd "github.com/gurufinglobal/guru/v2/cmd/gurud/cmd"
+	"github.com/gurufinglobal/guru/v2/crypto/hd"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/server/config"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -26,12 +32,6 @@ import (
 	"github.com/cometbft/cometbft/node"
 	cmtclient "github.com/cometbft/cometbft/rpc/client"
 
-	chaincmd "github.com/gurufinglobal/guru/v2/cmd/gurud/cmd"
-	"github.com/gurufinglobal/guru/v2/crypto/hd"
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/server/config"
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"

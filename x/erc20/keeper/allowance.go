@@ -4,7 +4,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 
 	errorsmod "cosmossdk.io/errors"

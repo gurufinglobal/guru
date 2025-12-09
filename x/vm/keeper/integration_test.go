@@ -5,14 +5,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/ginkgo/v2"
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/gomega"
-
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -21,6 +13,13 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	integrationutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/gomega"
+
+	abcitypes "github.com/cometbft/cometbft/abci/types"
 
 	"cosmossdk.io/math"
 

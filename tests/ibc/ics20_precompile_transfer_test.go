@@ -11,13 +11,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/gurufinglobal/guru/v2/gurud"
 	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
 	"github.com/gurufinglobal/guru/v2/precompiles/ics20"
 	evmante "github.com/gurufinglobal/guru/v2/x/vm/ante"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/stretchr/testify/suite"
+
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 

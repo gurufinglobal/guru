@@ -3,20 +3,22 @@ package keeper
 import (
 	"testing"
 
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
+	tmdb "github.com/cosmos/cosmos-db"
+
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmdb "github.com/cosmos/cosmos-db"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // setupKeeper creates a new Keeper instance and context for testing

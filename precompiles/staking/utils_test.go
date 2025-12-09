@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
-
-	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 
 	"cosmossdk.io/math"
 

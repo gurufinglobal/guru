@@ -1,9 +1,10 @@
 package ante
 
 import (
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
+
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"

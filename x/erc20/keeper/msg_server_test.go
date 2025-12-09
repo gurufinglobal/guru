@@ -5,10 +5,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/holiman/uint256"
-	"github.com/stretchr/testify/mock"
-	gomock "go.uber.org/mock/gomock"
-
 	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	"github.com/gurufinglobal/guru/v2/x/erc20/keeper"
@@ -16,6 +12,9 @@ import (
 	erc20mocks "github.com/gurufinglobal/guru/v2/x/erc20/types/mocks"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/holiman/uint256"
+	"github.com/stretchr/testify/mock"
+	gomock "go.uber.org/mock/gomock"
 
 	"cosmossdk.io/math"
 

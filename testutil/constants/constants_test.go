@@ -3,10 +3,9 @@ package constants_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	config2 "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRequireSameTestDenom(t *testing.T) {

@@ -6,10 +6,10 @@ import (
 	"math/rand"
 	"strings"
 
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
+
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 
 // Simulation parameter constants

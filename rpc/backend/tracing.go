@@ -6,13 +6,12 @@ import (
 	"math"
 
 	"github.com/ethereum/go-ethereum/common"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/pkg/errors"
 
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

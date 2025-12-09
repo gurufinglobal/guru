@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	app "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
 

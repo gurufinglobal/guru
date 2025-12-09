@@ -11,12 +11,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 

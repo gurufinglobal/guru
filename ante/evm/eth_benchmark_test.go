@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	ethante "github.com/gurufinglobal/guru/v2/ante/evm"
 	"github.com/gurufinglobal/guru/v2/ante/testutils"
 	"github.com/gurufinglobal/guru/v2/testutil"

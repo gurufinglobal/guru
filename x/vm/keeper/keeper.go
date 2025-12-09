@@ -9,12 +9,11 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/holiman/uint256"
-
 	"github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/wrappers"
+	"github.com/holiman/uint256"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"

@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	errorsmod "cosmossdk.io/errors"

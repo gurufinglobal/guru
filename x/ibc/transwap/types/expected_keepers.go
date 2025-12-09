@@ -3,18 +3,20 @@ package types
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 
-	"cosmossdk.io/math"
 	clienttypesv2 "github.com/cosmos/ibc-go/v10/modules/core/02-client/v2/types"
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
-	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
-	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
+
+	"cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.

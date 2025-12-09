@@ -5,17 +5,18 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/gurufinglobal/guru/v2/x/bex/types"
+	"github.com/spf13/cobra"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/spf13/cobra"
 )
 
 func NewRegisterAdminTxCmd() *cobra.Command {
@@ -24,7 +25,6 @@ func NewRegisterAdminTxCmd() *cobra.Command {
 		Short: "Register a new admin or reset admin for exchange with given id",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -60,7 +60,6 @@ func NewRemoveAdminTxCmd() *cobra.Command {
 		Short: "remove the admin_address from admin list",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -87,7 +86,6 @@ func NewRegisterExchangeTxCmd() *cobra.Command {
 		Short: "Register a new exchange from json file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -126,7 +124,6 @@ func NewUpdateExchangeTxCmd() *cobra.Command {
 		Short: "Update the exchange attribute by given id",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -215,7 +212,6 @@ func NewChangeModeratorTxCmd() *cobra.Command {
 		Short: "Change the moderator address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err

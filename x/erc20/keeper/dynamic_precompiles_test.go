@@ -3,11 +3,10 @@ package keeper_test
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/holiman/uint256"
-
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/holiman/uint256"
 
 	"cosmossdk.io/math"
 

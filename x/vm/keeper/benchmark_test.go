@@ -6,12 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/stretchr/testify/require"
-
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/vm/keeper/testdata"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
 

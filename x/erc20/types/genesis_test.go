@@ -3,10 +3,9 @@ package types_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	"github.com/stretchr/testify/suite"
 
 	"cosmossdk.io/math"
 )

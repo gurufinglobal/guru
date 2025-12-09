@@ -4,10 +4,9 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/holiman/uint256"
-
 	"github.com/gurufinglobal/guru/v2/utils"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/holiman/uint256"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"

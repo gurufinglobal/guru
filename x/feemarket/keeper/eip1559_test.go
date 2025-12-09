@@ -3,11 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/stretchr/testify/require"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 
 	"cosmossdk.io/math"
 

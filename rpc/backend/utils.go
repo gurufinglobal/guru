@@ -11,15 +11,14 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus/misc/eip1559"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
 	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-
-	"github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/log"
 

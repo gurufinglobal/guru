@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	"github.com/gurufinglobal/guru/v2/x/bex/types"
+
 	"cosmossdk.io/store/prefix"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
 func (k Keeper) AddAdmin(ctx sdk.Context, adminAddr string) {

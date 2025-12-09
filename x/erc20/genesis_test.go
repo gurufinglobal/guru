@@ -4,6 +4,12 @@ import (
 	"testing"
 	"time"
 
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/erc20"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
@@ -11,12 +17,6 @@ import (
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	"github.com/cometbft/cometbft/version"
 
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/erc20"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"cosmossdk.io/math"

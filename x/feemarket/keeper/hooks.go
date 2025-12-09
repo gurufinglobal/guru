@@ -1,9 +1,11 @@
 package keeper
 
 import (
-	"cosmossdk.io/math"
 	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
+
+	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

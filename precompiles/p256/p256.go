@@ -21,7 +21,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-
 	"github.com/gurufinglobal/guru/v2/crypto/secp256r1"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )

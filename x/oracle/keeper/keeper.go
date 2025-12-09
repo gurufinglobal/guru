@@ -5,13 +5,14 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type Keeper struct {

@@ -3,10 +3,11 @@ package bex
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/gurufinglobal/guru/v2/x/bex/keeper"
 	"github.com/gurufinglobal/guru/v2/x/bex/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
 // InitGenesis new bex genesis

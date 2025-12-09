@@ -3,11 +3,10 @@ package factory
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	abcitypes "github.com/cometbft/cometbft/abci/types"
 
 	errorsmod "cosmossdk.io/errors"
 

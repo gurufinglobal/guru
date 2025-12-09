@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/core/tracing"
-
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

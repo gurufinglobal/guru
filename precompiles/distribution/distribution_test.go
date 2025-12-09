@@ -7,14 +7,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/holiman/uint256"
-
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/holiman/uint256"
 
 	"cosmossdk.io/math"
 

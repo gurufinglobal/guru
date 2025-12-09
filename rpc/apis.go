@@ -4,9 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/rpc"
-
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/debug"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/eth"
@@ -17,6 +14,8 @@ import (
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/txpool"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/web3"
 	"github.com/gurufinglobal/guru/v2/types"
+
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"

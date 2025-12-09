@@ -6,11 +6,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/holiman/uint256"
-
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/holiman/uint256"
 
 	"cosmossdk.io/math"
 

@@ -7,15 +7,15 @@ import (
 	"sort"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
 	cmttypes "github.com/cometbft/cometbft/types"
 
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewDenom creates a new Denom instance given the base denomination and a variable number of hops.

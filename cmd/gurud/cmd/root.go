@@ -5,13 +5,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
-	tmcfg "github.com/cometbft/cometbft/config"
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
-
 	cosmosevmcmd "github.com/gurufinglobal/guru/v2/client"
 	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
@@ -20,6 +13,13 @@ import (
 	cosmosevmserver "github.com/gurufinglobal/guru/v2/server"
 	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
 	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
+	"github.com/spf13/cast"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	tmcfg "github.com/cometbft/cometbft/config"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
+
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"

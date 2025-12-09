@@ -8,14 +8,13 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/pkg/errors"
 
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	"cosmossdk.io/math"
 

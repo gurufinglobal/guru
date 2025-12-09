@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func setupTest(t *testing.T) (sdk.Context, *Keeper) {

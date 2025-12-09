@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"strconv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EmitTransferEvent emits a ibc transfer event on successful transfers.

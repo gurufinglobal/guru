@@ -11,10 +11,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/gurufinglobal/guru/v2/types"
 	"github.com/spf13/cast"
 	"google.golang.org/grpc/metadata"
-
-	"github.com/gurufinglobal/guru/v2/types"
 
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 )

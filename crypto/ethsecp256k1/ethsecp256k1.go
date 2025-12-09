@@ -7,10 +7,9 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 
 	tmcrypto "github.com/cometbft/cometbft/crypto"
-
-	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 
 	errorsmod "cosmossdk.io/errors"
 

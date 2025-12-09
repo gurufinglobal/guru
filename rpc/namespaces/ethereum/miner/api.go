@@ -3,7 +3,6 @@ package miner
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 
 	"cosmossdk.io/log"

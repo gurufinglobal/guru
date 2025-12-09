@@ -3,8 +3,6 @@ package testutils
 import (
 	"math"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/gurufinglobal/guru/v2/ante"
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
@@ -16,6 +14,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
 

@@ -5,7 +5,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/params"
-
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"

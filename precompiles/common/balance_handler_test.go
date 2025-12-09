@@ -5,15 +5,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
-	"github.com/holiman/uint256"
-	"github.com/stretchr/testify/require"
-
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	testutil "github.com/gurufinglobal/guru/v2/testutil"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/types/mocks"
+	"github.com/holiman/uint256"
+	"github.com/stretchr/testify/require"
 
 	storetypes "cosmossdk.io/store/types"
 

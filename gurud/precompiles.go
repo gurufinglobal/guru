@@ -6,7 +6,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-
 	bankprecompile "github.com/gurufinglobal/guru/v2/precompiles/bank"
 	"github.com/gurufinglobal/guru/v2/precompiles/bech32"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
@@ -20,6 +19,7 @@ import (
 	erc20Keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
+
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"

@@ -9,14 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	"github.com/gurufinglobal/guru/v2/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/pkg/errors"
 
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	"github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 

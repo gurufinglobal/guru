@@ -8,6 +8,11 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
+	"github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/ibc/simapp"
+	"github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -17,11 +22,6 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	cmtversion "github.com/cometbft/cometbft/version"
 
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-	"github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/ibc/simapp"
-	"github.com/gurufinglobal/guru/v2/testutil/tx"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"

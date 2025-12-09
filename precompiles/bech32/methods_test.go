@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	chainconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/precompiles/bech32"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"

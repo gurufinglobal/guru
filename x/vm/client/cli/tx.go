@@ -7,11 +7,10 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-
 	"github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 
 	"cosmossdk.io/core/address"
 

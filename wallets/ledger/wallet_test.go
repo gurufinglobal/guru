@@ -6,7 +6,6 @@ import (
 
 	gethaccounts "github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	"github.com/gurufinglobal/guru/v2/wallets/accounts"
 	"github.com/gurufinglobal/guru/v2/wallets/ledger/mocks"

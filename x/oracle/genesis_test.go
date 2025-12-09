@@ -5,17 +5,19 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"github.com/stretchr/testify/require"
+
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
+	tmdb "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"
-
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmdb "github.com/cosmos/cosmos-db"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 func setupTest(t *testing.T) (sdk.Context, *keeper.Keeper) {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
-
 	"github.com/gurufinglobal/guru/v2/server/config"
+
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
 
 	"github.com/cosmos/cosmos-sdk/client"
 )

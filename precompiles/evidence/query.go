@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"

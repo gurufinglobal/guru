@@ -7,12 +7,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
-
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/ginkgo/v2"
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/gomega"
-
 	"github.com/gurufinglobal/guru/v2/gurud/eips"
 	"github.com/gurufinglobal/guru/v2/gurud/eips/testdata"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -21,6 +15,11 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	integrationutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/gomega"
 
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 )

@@ -6,7 +6,6 @@ import (
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
-
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 

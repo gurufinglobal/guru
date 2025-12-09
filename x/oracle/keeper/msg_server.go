@@ -3,15 +3,16 @@ package keeper
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
-	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // MsgServer implementation
@@ -189,7 +190,6 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 	)
 
 	return &types.MsgSubmitOracleDataResponse{}, nil
-
 }
 
 // UpdateParams defines a method for updating oracle module parameters

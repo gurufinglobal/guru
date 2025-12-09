@@ -12,8 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	ethlogger "github.com/ethereum/go-ethereum/eth/tracers/logger"
 	ethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/holiman/uint256"
-
 	"github.com/gurufinglobal/guru/v2/server/config"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -25,6 +23,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/vm/keeper/testdata"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/holiman/uint256"
 
 	sdkmath "cosmossdk.io/math"
 

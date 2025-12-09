@@ -2,7 +2,6 @@ package keeper
 
 import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	storetypes "cosmossdk.io/store/types"

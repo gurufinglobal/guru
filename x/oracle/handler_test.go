@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

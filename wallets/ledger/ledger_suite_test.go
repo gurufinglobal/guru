@@ -6,13 +6,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/wallets/ledger"
 	"github.com/gurufinglobal/guru/v2/wallets/ledger/mocks"
 	"github.com/gurufinglobal/guru/v2/wallets/usbwallet"
+	"github.com/stretchr/testify/suite"
 
 	"cosmossdk.io/math"
 

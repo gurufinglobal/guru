@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
+
+	"github.com/cosmos/cosmos-sdk/client"
 )
 
 // GetQueryCmd returns the cli query commands for the feepolicy module.

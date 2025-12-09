@@ -9,6 +9,13 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	clientkeys "github.com/gurufinglobal/guru/v2/client/keys"
+	"github.com/gurufinglobal/guru/v2/crypto/hd"
+	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/tests/integration/ledger/mocks"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 
@@ -22,14 +29,6 @@ import (
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	"github.com/cometbft/cometbft/version"
-
-	clientkeys "github.com/gurufinglobal/guru/v2/client/keys"
-	"github.com/gurufinglobal/guru/v2/crypto/hd"
-	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/tests/integration/ledger/mocks"
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

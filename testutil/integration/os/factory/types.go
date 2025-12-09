@@ -2,7 +2,6 @@ package factory
 
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
-
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"

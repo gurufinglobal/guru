@@ -3,8 +3,10 @@ package keeper
 import (
 	"context"
 
-	errorsmod "cosmossdk.io/errors"
 	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

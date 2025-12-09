@@ -3,9 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
 )

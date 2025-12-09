@@ -10,12 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
-	"google.golang.org/grpc/metadata"
-
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"google.golang.org/grpc/metadata"
 
 	"cosmossdk.io/math"
 

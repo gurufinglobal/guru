@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
 

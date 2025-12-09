@@ -4,11 +4,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/holiman/uint256"
-
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/slashing"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/holiman/uint256"
 
 	storetypes "cosmossdk.io/store/types"
 

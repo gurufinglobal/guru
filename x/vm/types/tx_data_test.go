@@ -4,9 +4,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
+	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
 )

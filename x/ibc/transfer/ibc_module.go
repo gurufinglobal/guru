@@ -2,6 +2,7 @@ package transfer
 
 import (
 	"github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
+
 	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 )

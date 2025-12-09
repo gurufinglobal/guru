@@ -7,18 +7,19 @@ import (
 	"slices"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/telemetry"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/telemetry"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (

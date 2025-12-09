@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/hashicorp/go-metrics"
-
 	"github.com/gurufinglobal/guru/v2/ibc"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	"github.com/hashicorp/go-metrics"
+
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/cosmos/ibc-go/v10/modules/core/exported"

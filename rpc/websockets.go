@@ -22,16 +22,15 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
-
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	cmttypes "github.com/cometbft/cometbft/types"
-
 	"github.com/gurufinglobal/guru/v2/rpc/ethereum/pubsub"
 	rpcfilters "github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/eth/filters"
 	"github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/pkg/errors"
+
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	"cosmossdk.io/log"
 

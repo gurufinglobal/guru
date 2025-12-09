@@ -8,14 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
-
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	abcitypes "github.com/cometbft/cometbft/abci/types"
+
 	"github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"

@@ -5,11 +5,10 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func TestParseTxResult(t *testing.T) {

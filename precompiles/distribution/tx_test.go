@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-
+	chainconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
@@ -16,7 +16,6 @@ import (
 
 	"cosmossdk.io/math"
 
-	chainconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"

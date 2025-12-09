@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
 	rand "github.com/cometbft/cometbft/libs/rand"
-
-	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 )
 
 type EIP712FuzzTestParams struct {

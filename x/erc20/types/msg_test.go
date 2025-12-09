@@ -4,10 +4,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/suite"
-
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	"github.com/stretchr/testify/suite"
 
 	"cosmossdk.io/math"
 

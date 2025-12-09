@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/spf13/cobra"
-
 	"github.com/gurufinglobal/guru/v2/x/oracle/client/cli"
 	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"github.com/spf13/cobra"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"cosmossdk.io/core/appmodule"
 

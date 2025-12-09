@@ -4,10 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
@@ -15,6 +11,9 @@ import (
 	"github.com/gurufinglobal/guru/v2/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/stretchr/testify/require"
+
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"

@@ -7,9 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/holiman/uint256"
-
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/holiman/uint256"
 
 	storetypes "cosmossdk.io/store/types"
 

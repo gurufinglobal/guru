@@ -7,16 +7,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/stretchr/testify/suite"
-	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
-
 	chainconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/stretchr/testify/suite"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 
 	"cosmossdk.io/math"
 

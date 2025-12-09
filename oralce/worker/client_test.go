@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
 	"github.com/gurufinglobal/guru/v2/oralce/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"cosmossdk.io/log"
 )
 
 type ClientTestSuite struct {

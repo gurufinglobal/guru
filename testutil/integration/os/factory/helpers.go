@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 

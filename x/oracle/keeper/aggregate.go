@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

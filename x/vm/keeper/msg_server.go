@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/hashicorp/go-metrics"
 
 	cmttypes "github.com/cometbft/cometbft/types"
-
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

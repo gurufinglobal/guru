@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"

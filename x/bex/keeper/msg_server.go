@@ -4,11 +4,13 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/gurufinglobal/guru/v2/x/bex/types"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
 // MsgServer implementation
@@ -137,7 +139,8 @@ func (k Keeper) UpdateExchange(goCtx context.Context, msg *types.MsgUpdateExchan
 	}
 
 	// key is admin address
-	if msg.Key == types.ExchangeKeyAdminAddress {
+	switch msg.Key {
+	case types.ExchangeKeyAdminAddress:
 		_, err := sdk.AccAddressFromBech32(msg.Value)
 		if err != nil {
 			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " admin address: %s", err)
@@ -145,7 +148,7 @@ func (k Keeper) UpdateExchange(goCtx context.Context, msg *types.MsgUpdateExchan
 		exchange.AdminAddress = msg.Value
 
 		// key is reserve address
-	} else if msg.Key == types.ExchangeKeyReserveAddress {
+	case types.ExchangeKeyReserveAddress:
 		_, err := sdk.AccAddressFromBech32(msg.Value)
 		if err != nil {
 			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " reserve address: %s", err)
@@ -153,7 +156,7 @@ func (k Keeper) UpdateExchange(goCtx context.Context, msg *types.MsgUpdateExchan
 		exchange.ReserveAddress = msg.Value
 
 		// key is fee
-	} else if msg.Key == types.ExchangeKeyFee {
+	case types.ExchangeKeyFee:
 		feeDec, err := math.LegacyNewDecFromStr(msg.Value)
 		if err != nil {
 			return nil, errorsmod.Wrapf(types.ErrInvalidFee, " %s", err)
@@ -164,7 +167,7 @@ func (k Keeper) UpdateExchange(goCtx context.Context, msg *types.MsgUpdateExchan
 		exchange.Fee = feeDec
 
 		// key is limit
-	} else if msg.Key == types.ExchangeKeyLimit {
+	case types.ExchangeKeyLimit:
 		limitDec, err := math.LegacyNewDecFromStr(msg.Value)
 		if err != nil {
 			return nil, errorsmod.Wrapf(types.ErrInvalidLimit, " %s", err)
@@ -175,14 +178,14 @@ func (k Keeper) UpdateExchange(goCtx context.Context, msg *types.MsgUpdateExchan
 		exchange.Limit = limitDec
 
 		// key is status
-	} else if msg.Key == types.ExchangeKeyStatus {
+	case types.ExchangeKeyStatus:
 		if err := types.ValidateExchangeStatus(msg.Value); err != nil {
 			return nil, err
 		}
 		exchange.Status = msg.Value
 
 		// key is metadata
-	} else if msg.Key == types.ExchangeKeyMetadata {
+	case types.ExchangeKeyMetadata:
 		metadataMap, err := types.ValidateAndUnmarshalExchangeMetedataFromStr(msg.Value)
 		if err != nil {
 			return nil, err

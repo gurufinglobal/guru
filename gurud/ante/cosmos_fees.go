@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/codec/address"
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/codec/address"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -87,7 +88,8 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	var deductedFee sdk.Coins
 	baseFee := fee.Sub(tips...)
 
-	if discount.DiscountType == feepolicytypes.FeeDiscountTypePercent {
+	switch discount.DiscountType {
+	case feepolicytypes.FeeDiscountTypePercent:
 		for _, f := range baseFee {
 			// Calculate percentage multiplier as (100 - discountAmount) / 100
 			// Example: if discount = 25.5%, multiplier = 0.745
@@ -98,12 +100,12 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 
 			deductedFee = deductedFee.Add(sdk.NewCoin(f.Denom, finalAmt))
 		}
-	} else if discount.DiscountType == feepolicytypes.FeeDiscountTypeFixed {
+	case feepolicytypes.FeeDiscountTypeFixed:
 		for _, f := range baseFee {
 			// type: "fixed"
 			deductedFee = deductedFee.Add(sdk.NewCoin(f.Denom, discount.Amount.TruncateInt()))
 		}
-	} else {
+	default:
 		// if no discount, deduct full fee
 		deductedFee = baseFee
 	}
@@ -116,7 +118,6 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	newCtx := ctx.WithPriority(priority)
 
 	return next(newCtx, tx, simulate)
-
 }
 
 func (dfd DeductFeeDecorator) checkDeductFee(ctx sdk.Context, sdkTx sdk.Tx, fee sdk.Coins) error {

@@ -1,10 +1,9 @@
 package tx
 
 import (
-	protov2 "google.golang.org/protobuf/proto"
-
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	protov2 "google.golang.org/protobuf/proto"
 
 	sdkmath "cosmossdk.io/math"
 

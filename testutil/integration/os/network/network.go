@@ -7,14 +7,6 @@ import (
 	"time"
 
 	gethparams "github.com/ethereum/go-ethereum/params"
-
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	cmttypes "github.com/cometbft/cometbft/types"
-	"github.com/cometbft/cometbft/version"
-
 	app "github.com/gurufinglobal/guru/v2/gurud"
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	commonnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/common/network"
@@ -22,6 +14,13 @@ import (
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+
+	abcitypes "github.com/cometbft/cometbft/abci/types"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	cmttypes "github.com/cometbft/cometbft/types"
+	"github.com/cometbft/cometbft/version"
 
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"

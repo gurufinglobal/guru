@@ -3,14 +3,16 @@ package cli
 import (
 	"io/ioutil"
 
-	errorsmod "cosmossdk.io/errors"
 	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+	"github.com/spf13/cobra"
+
+	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cobra"
 )
 
 // NewChangeModeratorTxCmd returns the cli command for changing the moderator address.
@@ -20,7 +22,6 @@ func NewChangeModeratorTxCmd() *cobra.Command {
 		Short: "Change the moderator address for the cex module",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -48,7 +49,6 @@ func NewRegisterDiscountsTxCmd() *cobra.Command {
 		Short: "Register discounts from json file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -89,7 +89,6 @@ func NewRemoveDiscountsTxCmd() *cobra.Command {
 		Short: "Remove discounts for the given address and module",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err

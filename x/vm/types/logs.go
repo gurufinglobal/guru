@@ -6,7 +6,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 )
 

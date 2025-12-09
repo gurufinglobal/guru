@@ -7,11 +7,10 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/holiman/uint256"
-
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/holiman/uint256"
 
 	"cosmossdk.io/math"
 

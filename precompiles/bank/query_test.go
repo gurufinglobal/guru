@@ -4,7 +4,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/gurufinglobal/guru/v2/precompiles/bank"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	cosmosevmutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"

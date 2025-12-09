@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	testifysuite "github.com/stretchr/testify/suite"
-
 	"github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/ibc"
 	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
@@ -15,6 +13,8 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/erc20"
 	erc20Keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	testifysuite "github.com/stretchr/testify/suite"
+
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"

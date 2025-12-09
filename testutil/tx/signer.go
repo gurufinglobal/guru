@@ -5,7 +5,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"

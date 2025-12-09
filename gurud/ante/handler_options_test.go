@@ -3,13 +3,12 @@ package ante_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/gurufinglobal/guru/v2/ante"
 	ethante "github.com/gurufinglobal/guru/v2/ante/evm"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateHandlerOptions(t *testing.T) {

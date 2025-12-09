@@ -6,15 +6,14 @@ import (
 	"strings"
 
 	"github.com/cosmos/gogoproto/proto"
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
-
-	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InternalTransferRepresentation defines a struct used internally by the transfer application to represent a fungible token transfer

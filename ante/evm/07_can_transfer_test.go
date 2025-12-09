@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"

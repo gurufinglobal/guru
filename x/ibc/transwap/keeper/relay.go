@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
+
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 
 // SendTransfer handles transfer sending logic. There are 2 possible cases:

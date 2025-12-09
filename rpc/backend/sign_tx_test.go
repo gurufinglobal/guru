@@ -8,12 +8,11 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	goethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"google.golang.org/grpc/metadata"
-
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"google.golang.org/grpc/metadata"
 
 	"cosmossdk.io/math"
 

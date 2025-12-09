@@ -12,6 +12,12 @@ import (
 	"time"
 
 	ethmetricsexp "github.com/ethereum/go-ethereum/metrics/exp"
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	"github.com/gurufinglobal/guru/v2/indexer"
+	ethdebug "github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/debug"
+	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
+	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -28,12 +34,6 @@ import (
 	"github.com/cometbft/cometbft/rpc/client/local"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	"github.com/gurufinglobal/guru/v2/indexer"
-	ethdebug "github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/debug"
-	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
-	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	errorsmod "cosmossdk.io/errors"

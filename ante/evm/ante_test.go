@@ -9,11 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	ethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/holiman/uint256"
-
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/holiman/uint256"
 
 	sdkmath "cosmossdk.io/math"
 

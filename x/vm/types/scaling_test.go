@@ -5,11 +5,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/holiman/uint256"
-	"github.com/stretchr/testify/require"
-
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/holiman/uint256"
+	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
 

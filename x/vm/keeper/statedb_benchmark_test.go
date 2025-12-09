@@ -7,10 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
-
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 )
 
 func BenchmarkCreateAccountNew(b *testing.B) {

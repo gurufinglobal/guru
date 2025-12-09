@@ -3,10 +3,10 @@ package testutil
 import (
 	"strconv"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

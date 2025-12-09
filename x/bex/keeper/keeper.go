@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gurufinglobal/guru/v2/x/bex/types"
+
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
 // Keeper of the xmsquare store
@@ -39,7 +41,6 @@ func NewKeeper(
 	bk types.BankKeeper,
 	authority string,
 ) Keeper {
-
 	// ensure bex module account is set
 	addr := ak.GetModuleAddress(types.ModuleName)
 	if addr == nil {

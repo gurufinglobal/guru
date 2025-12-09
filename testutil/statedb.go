@@ -2,7 +2,6 @@ package testutil
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 

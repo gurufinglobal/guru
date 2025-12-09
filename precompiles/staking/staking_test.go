@@ -8,8 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/holiman/uint256"
-
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
@@ -17,6 +15,7 @@ import (
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/holiman/uint256"
 
 	"cosmossdk.io/math"
 

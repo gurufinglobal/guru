@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gurufinglobal/guru/v2/x/bex/types"
+
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
 // QueryServer implementation

@@ -10,12 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	cmttypes "github.com/cometbft/cometbft/types"
-
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
