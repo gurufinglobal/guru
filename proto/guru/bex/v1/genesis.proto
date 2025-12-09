@@ -1,0 +1,20 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "guru/bex/v1/bex.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/bex/types";
+
+// GenesisState define the bex module's genesis state.
+message GenesisState {
+
+  // module mdoerator address
+  string moderator_address = 1;
+
+  // Ratemeter for setting limits
+  Ratemeter ratemeter = 2 [(gogoproto.nullable) = false];
+
+  // Existing exchanges list
+  repeated Exchange exchanges = 3 [(gogoproto.nullable) = false];
+}
