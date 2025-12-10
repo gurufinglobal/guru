@@ -251,7 +251,7 @@ func checkTxBytes(app *app.EVMD, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.Respo
 	}
 
 	if res.Code != 0 {
-		return abci.ResponseCheckTx{}, errorsmod.Wrapf(errortypes.ErrInvalidRequest, res.Log)
+		return abci.ResponseCheckTx{}, errorsmod.Wrapf(errortypes.ErrInvalidRequest, "check tx failed: %s", res.Log)
 	}
 
 	return *res, nil
