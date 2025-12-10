@@ -1,6 +1,0 @@
-# Gitleaks ignore file
-# Ignore test addresses used in oracle module tests
-# Format: filepath:rule:line
-
-# Test authority address in msg_server_test.go
-x/oracle/keeper/msg_server_test.go:generic-api-key:12
