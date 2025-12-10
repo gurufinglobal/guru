@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"time"
@@ -159,7 +160,13 @@ func (d *Daemon) runEventLoop(ctx context.Context, queryClient oracletypes.Query
 						continue
 					}
 
-					d.worker.ProcessComplete(ctx, reqID, nonce, int64(timestamp)) //nolint:gosec // timestamp is always positive
+					// Check for overflow before converting uint64 to int64
+					if timestamp > math.MaxInt64 {
+						d.logger.Error("timestamp overflow", "timestamp", timestamp, "req_id", reqID)
+						continue
+					}
+
+					d.worker.ProcessComplete(ctx, reqID, nonce, int64(timestamp))
 				}
 			}
 		}
