@@ -1,6 +1,6 @@
 module github.com/gurufinglobal/guru/v2
 
-go 1.23.8
+go 1.24.11
 
 require (
 	cosmossdk.io/api v0.9.2
