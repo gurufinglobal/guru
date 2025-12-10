@@ -1,0 +1,5 @@
+# Gitleaks ignore file
+# Ignore test addresses used in oracle module tests
+
+# Test authority address in msg_server_test.go
+x/oracle/keeper/msg_server_test.go:12:guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft

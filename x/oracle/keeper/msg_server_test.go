@@ -7,12 +7,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	// testAuthorityAddr is a test address for oracle authority
+	testAuthorityAddr = "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"
+)
+
 func TestSubmitOracleDataNilDataSet(t *testing.T) {
 	keeper, ctx := setupKeeper(t)
 
 	// Test with nil DataSet - should return error, not panic
 	msg := &types.MsgSubmitOracleData{
-		AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+		AuthorityAddress: testAuthorityAddr,
 		DataSet:          nil, // This should cause validation to fail
 	}
 
@@ -82,7 +87,7 @@ func TestSubmitOracleDataEdgeCases(t *testing.T) {
 		{
 			name: "nil DataSet",
 			msg: &types.MsgSubmitOracleData{
-				AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				AuthorityAddress: testAuthorityAddr,
 				DataSet:          nil,
 			},
 			expectError: true,
@@ -91,7 +96,7 @@ func TestSubmitOracleDataEdgeCases(t *testing.T) {
 		{
 			name: "valid DataSet structure but invalid content",
 			msg: &types.MsgSubmitOracleData{
-				AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				AuthorityAddress: testAuthorityAddr,
 				DataSet: &types.SubmitDataSet{
 					RequestId: 0, // Invalid: zero request ID
 					Nonce:     1,
