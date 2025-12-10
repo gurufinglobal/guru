@@ -4,15 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 )
 
 // BurnCoins burns coins deletes coins from the balance of the module account.

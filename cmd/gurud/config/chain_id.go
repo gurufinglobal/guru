@@ -3,9 +3,8 @@ package config
 import (
 	"path/filepath"
 
-	"github.com/spf13/viper"
-
 	"github.com/cosmos/cosmos-sdk/client/config"
+	"github.com/spf13/viper"
 )
 
 // GetChainIDFromHome returns the chain ID from the client configuration

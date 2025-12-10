@@ -5,15 +5,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/server"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/gorilla/mux"
 	"github.com/gurufinglobal/guru/v2/rpc"
 	serverconfig "github.com/gurufinglobal/guru/v2/server/config"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	"github.com/rs/cors"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/server"
 )
 
 // StartJSONRPC starts the JSON-RPC server

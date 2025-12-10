@@ -3,9 +3,8 @@ package types
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"cosmossdk.io/math"
+	"github.com/stretchr/testify/suite"
 )
 
 type ParamsTestSuite struct {

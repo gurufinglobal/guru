@@ -3,15 +3,13 @@ package keeper
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 // GetAllowance returns the allowance of the given owner and spender

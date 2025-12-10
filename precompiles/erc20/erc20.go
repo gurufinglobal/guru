@@ -4,16 +4,14 @@ import (
 	"embed"
 	"fmt"
 
+	storetypes "cosmossdk.io/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
-
-	storetypes "cosmossdk.io/store/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (

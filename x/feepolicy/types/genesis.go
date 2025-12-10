@@ -2,15 +2,14 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(moderator_address string, discounts []AccountDiscount) GenesisState {
+func NewGenesisState(moderatorAddress string, discounts []AccountDiscount) GenesisState {
 	return GenesisState{
-		ModeratorAddress: moderator_address,
+		ModeratorAddress: moderatorAddress,
 		Discounts:        discounts,
 	}
 }

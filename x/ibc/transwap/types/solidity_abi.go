@@ -3,9 +3,8 @@ package types
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
-
 	errorsmod "cosmossdk.io/errors"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 // getICS20ABI returns an abi.Arguments slice describing the Solidity types of the struct.

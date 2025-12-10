@@ -3,9 +3,8 @@ package types
 import (
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/params"
-
 	"cosmossdk.io/math"
+	"github.com/ethereum/go-ethereum/params"
 )
 
 var (

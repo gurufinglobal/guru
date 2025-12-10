@@ -3,11 +3,10 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	"github.com/stretchr/testify/require"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSendCoinsFromAccountToModule_BlockedReserve(t *testing.T) {

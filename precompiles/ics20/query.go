@@ -3,12 +3,10 @@ package ics20
 import (
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
-
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (

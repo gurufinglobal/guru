@@ -1,18 +1,16 @@
 package cli
 
 import (
-	"io/ioutil"
-
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-	"github.com/spf13/cobra"
+	"os"
 
 	errorsmod "cosmossdk.io/errors"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+	"github.com/spf13/cobra"
 )
 
 // NewChangeModeratorTxCmd returns the cli command for changing the moderator address.
@@ -61,13 +59,13 @@ func NewRegisterDiscountsTxCmd() *cobra.Command {
 			// read the json file
 			if err := cdc.UnmarshalJSON([]byte(args[0]), &discounts); err != nil {
 				// If that fails, treat it as a filepath
-				contents, err := ioutil.ReadFile(args[0])
+				contents, err := os.ReadFile(args[0])
 				if err != nil {
-					return errorsmod.Wrapf(types.ErrInvalidJsonFile, "%s", err)
+					return errorsmod.Wrapf(types.ErrInvalidJSONFile, "%s", err)
 				}
 
 				if err := cdc.UnmarshalJSON(contents, &discounts); err != nil {
-					return errorsmod.Wrapf(types.ErrInvalidJsonFile, "%s", err)
+					return errorsmod.Wrapf(types.ErrInvalidJSONFile, "%s", err)
 				}
 
 			}

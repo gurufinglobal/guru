@@ -4,6 +4,13 @@ import (
 	"fmt"
 	"maps"
 
+	evidencekeeper "cosmossdk.io/x/evidence/keeper"
+	"github.com/cosmos/cosmos-sdk/codec"
+	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	bankprecompile "github.com/gurufinglobal/guru/v2/precompiles/bank"
@@ -19,16 +26,6 @@ import (
 	erc20Keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
-
-	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
-
-	evidencekeeper "cosmossdk.io/x/evidence/keeper"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 )
 
 const bech32PrecompileBaseGas = 6_000

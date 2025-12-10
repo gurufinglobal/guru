@@ -6,20 +6,18 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/gurufinglobal/guru/v2/utils"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-
 	"cosmossdk.io/core/address"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/gurufinglobal/guru/v2/utils"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
 // NewTxCmd returns a root CLI command handler for evm module transaction commands

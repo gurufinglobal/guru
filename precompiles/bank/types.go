@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Balance contains the amount for a corresponding ERC-20 contract address.

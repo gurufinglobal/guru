@@ -5,14 +5,12 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 type Keeper struct {
@@ -233,32 +231,32 @@ func (k Keeper) SetSubmitData(ctx sdk.Context, data types.SubmitDataSet) {
 	store.Set(key, bz)
 }
 
-func (k Keeper) GetSubmitData(ctx sdk.Context, requestId uint64, nonce uint64, provider string) ([]*types.SubmitDataSet, error) {
+func (k Keeper) GetSubmitData(ctx sdk.Context, requestID uint64, nonce uint64, provider string) ([]*types.SubmitDataSet, error) {
 	store := ctx.KVStore(k.storeKey)
 	var datas []*types.SubmitDataSet
 	if provider == "" {
-		datas, err := k.GetSubmitDatas(ctx, requestId, nonce)
+		datas, err := k.GetSubmitDatas(ctx, requestID, nonce)
 		if err != nil {
 			return nil, err
 		}
 		return datas, nil
-	} else {
-		key := types.GetSubmitDataKeyByProvider(requestId, nonce, provider)
-		bz := store.Get(key)
-		if len(bz) == 0 {
-			return nil, fmt.Errorf("not exist SubmitData(req_id: %d, nonce: %d, provider: %s)", requestId, nonce, provider)
-		}
-
-		var data types.SubmitDataSet
-		k.cdc.MustUnmarshal(bz, &data)
-		datas = append(datas, &data)
 	}
+
+	key := types.GetSubmitDataKeyByProvider(requestID, nonce, provider)
+	bz := store.Get(key)
+	if len(bz) == 0 {
+		return nil, fmt.Errorf("not exist SubmitData(req_id: %d, nonce: %d, provider: %s)", requestID, nonce, provider)
+	}
+
+	var data types.SubmitDataSet
+	k.cdc.MustUnmarshal(bz, &data)
+	datas = append(datas, &data)
 	return datas, nil
 }
 
-func (k Keeper) GetSubmitDatas(ctx sdk.Context, requestId uint64, nonce uint64) ([]*types.SubmitDataSet, error) {
+func (k Keeper) GetSubmitDatas(ctx sdk.Context, requestID uint64, nonce uint64) ([]*types.SubmitDataSet, error) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := storetypes.KVStorePrefixIterator(store, types.GetSubmitDataKey(requestId, nonce))
+	iterator := storetypes.KVStorePrefixIterator(store, types.GetSubmitDataKey(requestID, nonce))
 	defer iterator.Close()
 
 	var datas []*types.SubmitDataSet
@@ -279,11 +277,11 @@ func (k Keeper) SetDataSet(ctx sdk.Context, dataSet types.DataSet) {
 	store.Set(types.GetDataSetKey(dataSet.RequestId, dataSet.Nonce), bz)
 }
 
-func (k Keeper) GetDataSet(ctx sdk.Context, requestId uint64, nonce uint64) (*types.DataSet, error) {
+func (k Keeper) GetDataSet(ctx sdk.Context, requestID uint64, nonce uint64) (*types.DataSet, error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetDataSetKey(requestId, nonce))
+	bz := store.Get(types.GetDataSetKey(requestID, nonce))
 	if len(bz) == 0 {
-		return nil, fmt.Errorf("not exist DataSet(req_id: %d, nonce: %d)", requestId, nonce)
+		return nil, fmt.Errorf("not exist DataSet(req_id: %d, nonce: %d)", requestID, nonce)
 	}
 
 	var dataSet types.DataSet
@@ -307,7 +305,7 @@ func (k Keeper) checkAccountAuthorized(accountList []string, fromAddress string)
 
 func (k Keeper) validateSubmitData(data types.SubmitDataSet) error {
 	if data.RequestId == 0 {
-		return errorsmod.Wrapf(types.ErrInvalidRequestId, "request id is 0")
+		return errorsmod.Wrapf(types.ErrInvalidRequestID, "request id is 0")
 	}
 	if data.Nonce == 0 {
 		return errorsmod.Wrapf(types.ErrInvalidNonce, "nonce is 0")
@@ -322,9 +320,9 @@ func (k Keeper) validateSubmitData(data types.SubmitDataSet) error {
 }
 
 // GetOracleData retrieves the oracle data by request ID
-func (k Keeper) GetOracleData(ctx sdk.Context, requestId uint64) (*types.QueryOracleDataResponse, error) {
+func (k Keeper) GetOracleData(ctx sdk.Context, requestID uint64) (*types.QueryOracleDataResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	doc, err := k.GetOracleRequestDoc(sdkCtx, requestId)
+	doc, err := k.GetOracleRequestDoc(sdkCtx, requestID)
 	if err != nil {
 		return nil, err
 	}

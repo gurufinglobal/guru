@@ -1,15 +1,13 @@
 package ante
 
 import (
-	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
-	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
+	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // newCosmosAnteHandler creates the default ante handler for Cosmos transactions

@@ -8,6 +8,9 @@ import (
 	"math/big"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
@@ -22,12 +25,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
-	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ types.QueryServer = Keeper{}

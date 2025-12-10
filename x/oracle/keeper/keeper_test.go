@@ -3,26 +3,23 @@ package keeper
 import (
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
-	tmdb "github.com/cosmos/cosmos-db"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
-
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmdb "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // setupKeeper creates a new Keeper instance and context for testing
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
+	t.Helper()
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount("guru", "gurupub")
 
@@ -119,7 +116,8 @@ func TestSetAndGetModeratorAddress(t *testing.T) {
 
 	// Set address
 	testAddress := "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"
-	keeper.SetModeratorAddress(ctx, testAddress)
+	err := keeper.SetModeratorAddress(ctx, testAddress)
+	require.NoError(t, err)
 
 	// Verify the set address
 	retrievedAddress := keeper.GetModeratorAddress(ctx)

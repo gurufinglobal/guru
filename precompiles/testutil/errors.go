@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	abci "github.com/cometbft/cometbft/abci/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // CheckVMError is a helper function used to check if the transaction is reverted with the expected error message

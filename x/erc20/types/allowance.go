@@ -3,12 +3,10 @@ package types
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func NewAllowance(erc20 common.Address, owner common.Address, spender common.Address, value *big.Int) Allowance {

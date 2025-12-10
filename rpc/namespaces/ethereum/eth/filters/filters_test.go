@@ -6,6 +6,9 @@ import (
 	"math/big"
 	"testing"
 
+	"cosmossdk.io/log"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/filters"
@@ -13,11 +16,6 @@ import (
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	comettypes "github.com/cometbft/cometbft/types"
-
-	"cosmossdk.io/log"
 )
 
 type MockBackend struct {

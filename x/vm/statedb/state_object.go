@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"sort"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/holiman/uint256"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Account is the Ethereum consensus representation of accounts.

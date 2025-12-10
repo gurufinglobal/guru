@@ -6,12 +6,10 @@ package gurud
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EVMOptionsFn defines a function type for setting app options specifically for

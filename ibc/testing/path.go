@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-
 	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"

@@ -17,18 +17,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gurufinglobal/guru/v2/gurud"
-	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
-	testifysuite "github.com/stretchr/testify/suite"
-
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
-
-	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/gurud"
+	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
+	testifysuite "github.com/stretchr/testify/suite"
 )
 
 const testclientid = "testclientid"

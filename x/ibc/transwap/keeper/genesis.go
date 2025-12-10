@@ -1,9 +1,8 @@
 package keeper
 
 import (
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 
 // InitGenesis initializes the ibc-transfer state and binds to PortID.

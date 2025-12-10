@@ -5,20 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/telemetry"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
-
+	errorsmod "cosmossdk.io/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	"github.com/cosmos/ibc-go/v10/modules/core/api"
 	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
-
-	errorsmod "cosmossdk.io/errors"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/telemetry"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 
 var _ api.IBCModule = (*IBCModule)(nil)

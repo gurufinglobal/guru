@@ -3,14 +3,12 @@ package types
 import (
 	"math/big"
 
+	errorsmod "cosmossdk.io/errors"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/gurufinglobal/guru/v2/types"
 	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
-
-	errorsmod "cosmossdk.io/errors"
-
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func NewLegacyTx(tx *ethtypes.Transaction) (*LegacyTx, error) {

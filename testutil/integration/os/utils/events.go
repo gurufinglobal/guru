@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
-
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 )
 

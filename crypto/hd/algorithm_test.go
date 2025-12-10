@@ -5,15 +5,14 @@ import (
 	"strings"
 	"testing"
 
+	amino "github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/ethereum/go-ethereum/common"
 	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
 	enccodec "github.com/gurufinglobal/guru/v2/encoding/codec"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	"github.com/stretchr/testify/require"
-
-	amino "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 )
 
 var TestCodec amino.Codec

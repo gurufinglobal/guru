@@ -6,17 +6,15 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/spf13/cobra"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"github.com/spf13/cobra"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -52,7 +50,7 @@ func NewRegisterOracleRequestDocCmd() *cobra.Command {
 				return err
 			}
 
-			requestDoc, err := parseRequestDocJson(args[0])
+			requestDoc, err := parseRequestDocJSON(args[0])
 			if err != nil {
 				return err
 			}
@@ -82,7 +80,7 @@ func NewUpdateOracleRequestDocCmd() *cobra.Command {
 				return err
 			}
 
-			requestDoc, err := parseRequestDocJson(args[0])
+			requestDoc, err := parseRequestDocJSON(args[0])
 			if err != nil {
 				return err
 			}
@@ -115,11 +113,11 @@ func NewSubmitOracleDataCmd() *cobra.Command {
 				return err
 			}
 
-			requestId := args[0]
+			requestIDStr := args[0]
 			nonce := args[1]
 			rawData := args[2]
 
-			requestIdUint64, err := strconv.ParseUint(requestId, 10, 64)
+			requestID, err := strconv.ParseUint(requestIDStr, 10, 64)
 			if err != nil {
 				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "request id is not a valid uint64")
 			}
@@ -130,7 +128,7 @@ func NewSubmitOracleDataCmd() *cobra.Command {
 			}
 
 			msg := types.NewMsgSubmitOracleData(
-				requestIdUint64,
+				requestID,
 				nonceUint64,
 				rawData,
 				clientCtx.GetFromAddress().String(),
@@ -186,7 +184,7 @@ func NewUpdateModeratorAddressCmd() *cobra.Command {
 	return cmd
 }
 
-func parseRequestDocJson(path string) (*types.OracleRequestDoc, error) {
+func parseRequestDocJSON(path string) (*types.OracleRequestDoc, error) {
 	var doc types.OracleRequestDoc
 
 	contents, err := os.ReadFile(path)

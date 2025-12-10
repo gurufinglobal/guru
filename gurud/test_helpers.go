@@ -5,19 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	"github.com/stretchr/testify/require"
-
-	abci "github.com/cometbft/cometbft/abci/types"
-	cmttypes "github.com/cometbft/cometbft/types"
-
-	dbm "github.com/cosmos/cosmos-db"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-
+	abci "github.com/cometbft/cometbft/abci/types"
+	cmttypes "github.com/cometbft/cometbft/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -28,6 +20,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	"github.com/stretchr/testify/require"
 )
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.

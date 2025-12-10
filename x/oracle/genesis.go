@@ -1,13 +1,11 @@
 package oracle
 
 import (
-	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-
 	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // InitGenesis new oracle genesis

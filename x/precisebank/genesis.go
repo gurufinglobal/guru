@@ -3,12 +3,10 @@ package precisebank
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
 	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-
-	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the store state from a genesis state.

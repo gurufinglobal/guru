@@ -64,6 +64,12 @@ linters:
       - std-error-handling
     rules:
       - linters:
+          - revive
+        text: "var-naming: avoid meaningless package names"
+      - linters:
+          - revive
+        text: "var-naming: avoid package names that conflict with Go standard library"
+      - linters:
           - gosec
         text: Use of weak random number generator
       - linters:
@@ -82,6 +88,10 @@ linters:
           - staticcheck
         path: migrations
         text: 'SA1019:'
+      - linters:
+          - staticcheck
+        path: ibc/simapp
+        text: 'SA1019:'
     paths:
       - x/vm/core
       - third_party$
@@ -94,20 +104,6 @@ formatters:
   enable:
     - gci
     - gofumpt
-  settings:
-    gci:
-      sections:
-        - standard
-        - default
-        - blank
-        - dot
-        - prefix(github.com/cometbft/cometbft)
-        - prefix(github.com/cosmos)
-        - prefix(cosmossdk.io)
-        - prefix(github.com/cosmos/cosmos-sdk)
-        - prefix(github.com/CosmWasm/wasmd)
-        - prefix(github.com/cosmos/gaia)
-      custom-order: true
   exclusions:
     generated: lax
     paths:

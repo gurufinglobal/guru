@@ -1,14 +1,13 @@
 package ledger_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	gethaccounts "github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gurufinglobal/guru/v2/wallets/accounts"
 	"github.com/gurufinglobal/guru/v2/wallets/ledger"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 )
 
 func (suite *LedgerTestSuite) TestEvmLedgerDerivation() {

@@ -4,18 +4,16 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/gurufinglobal/guru/v2/contracts"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-	"github.com/hashicorp/go-metrics"
-
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/gurufinglobal/guru/v2/contracts"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	"github.com/hashicorp/go-metrics"
 )
 
 var _ types.MsgServer = &Keeper{}

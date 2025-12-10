@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-	"github.com/stretchr/testify/require"
-
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsSupportedKeys(t *testing.T) {

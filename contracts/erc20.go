@@ -1,10 +1,10 @@
 package contracts
 
 import (
+	_ "embed"
+
 	contractutils "github.com/gurufinglobal/guru/v2/contracts/utils"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	_ "embed"
 )
 
 var (

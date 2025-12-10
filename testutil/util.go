@@ -1,9 +1,8 @@
 package testutil
 
 import (
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 )
 
 func GeneratePrivKeyAddressPairs(accCount int) ([]*ethsecp256k1.PrivKey, []sdk.AccAddress, error) {

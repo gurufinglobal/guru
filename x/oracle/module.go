@@ -5,22 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/gurufinglobal/guru/v2/x/oracle/client/cli"
-	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/spf13/cobra"
-
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"cosmossdk.io/core/appmodule"
-
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/gurufinglobal/guru/v2/x/oracle/client/cli"
+	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"github.com/spf13/cobra"
 )
 
 // consensusVersion defines the current x/oracle module consensus version.
@@ -112,6 +109,8 @@ func (AppModule) Name() string {
 }
 
 // RegisterInvariants registers the module invariants. No-op for oracle.
+//
+//nolint:staticcheck // required by SDK interface, will be removed when x/crisis is removed
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // RegisterServices registers a gRPC query service to respond to the

@@ -1,17 +1,15 @@
 package keeper
 
 import (
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
 // Keeper of the xmsquare store
@@ -77,7 +75,7 @@ func (k Keeper) SetModeratorAddress(ctx sdk.Context, moderator types.Moderator) 
 
 func (k Keeper) GetPaginatedDiscounts(ctx sdk.Context, pagination *query.PageRequest) ([]types.AccountDiscount, *query.PageResponse, error) {
 	store := ctx.KVStore(k.storeKey)
-	discountStore := prefix.NewStore(store, []byte(types.KeyDiscounts))
+	discountStore := prefix.NewStore(store, types.KeyDiscounts)
 
 	discounts := []types.AccountDiscount{}
 
@@ -199,10 +197,9 @@ func (k Keeper) GetDiscount(ctx sdk.Context, feePayerAddr string, msgs []sdk.Msg
 	// check if the module has additional checker layers
 	if k.moduleKeepers[module] == nil {
 		return discount
-	} else {
-		if k.moduleKeepers[module].CheckDiscount(ctx, discount, msgs) {
-			return discount
-		}
+	}
+	if k.moduleKeepers[module].CheckDiscount(ctx, discount, msgs) {
+		return discount
 	}
 
 	return types.Discount{}

@@ -8,28 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	clientkeys "github.com/gurufinglobal/guru/v2/client/keys"
-	"github.com/gurufinglobal/guru/v2/crypto/hd"
-	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/tests/integration/ledger/mocks"
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/spf13/cobra"
-	"github.com/stretchr/testify/suite"
-
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/ginkgo/v2"
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/gomega"
-
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	"github.com/cometbft/cometbft/version"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -39,6 +22,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/ethereum/go-ethereum/common"
+	clientkeys "github.com/gurufinglobal/guru/v2/client/keys"
+	"github.com/gurufinglobal/guru/v2/crypto/hd"
+	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/tests/integration/ledger/mocks"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/gomega"
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/suite"
 )
 
 var s *LedgerTestSuite

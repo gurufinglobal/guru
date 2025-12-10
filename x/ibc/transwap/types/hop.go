@@ -3,9 +3,8 @@ package types
 import (
 	fmt "fmt"
 
-	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
-
 	errorsmod "cosmossdk.io/errors"
+	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 )
 
 // NewHop creates a Hop with the given port ID and channel ID.

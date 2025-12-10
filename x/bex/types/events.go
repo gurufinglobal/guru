@@ -16,7 +16,7 @@ const (
 	AttributeKeyAddress           = "address"
 	AttributeKeyModerator         = "moderator"
 	AttributeKeyAdmin             = "admin"
-	AttributeKeyExchangeId        = "exchange_id"
+	AttributeKeyExchangeID        = "exchange_id"
 	AttributeKeyKey               = "key"
 	AttributeKeyValue             = "value"
 	AttributeKeyRequestCountLimit = "request_count_limit"

@@ -1,13 +1,6 @@
 package network
 
 import (
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
-	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
@@ -23,6 +16,12 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
+	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func getQueryHelper(ctx sdktypes.Context, encCfg testutil.TestEncodingConfig) *baseapp.QueryServiceTestHelper {

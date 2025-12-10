@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"testing"
 
+	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gurufinglobal/guru/v2/contracts"
 	testcontracts "github.com/gurufinglobal/guru/v2/precompiles/testutil/contracts"
@@ -13,15 +15,10 @@ import (
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	testnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	//nolint:revive // okay to use dot imports for Ginkgo
 	. "github.com/onsi/ginkgo/v2"
 	//nolint:revive // okay to use dot imports for Ginkgo
 	. "github.com/onsi/gomega"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestNestedEVMExtensionCall(t *testing.T) {

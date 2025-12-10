@@ -1,9 +1,8 @@
 package keeper_test
 
 import (
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 func (suite *KeeperTestSuite) TestParams() {

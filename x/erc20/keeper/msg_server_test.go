@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
@@ -15,12 +19,6 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/mock"
 	gomock "go.uber.org/mock/gomock"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 func (suite *KeeperTestSuite) TestConvertERC20NativeERC20() {

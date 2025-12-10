@@ -1,11 +1,10 @@
 package keeper
 
 import (
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
 )
 
 type Precompiles struct {

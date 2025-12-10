@@ -4,13 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/gurufinglobal/guru/v2/x/bex/types"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
 // MsgServer implementation
@@ -19,9 +17,9 @@ var _ types.MsgServer = &Keeper{}
 // RegisterAdmin implements types.MsgServer.
 func (k Keeper) RegisterAdmin(goCtx context.Context, msg *types.MsgRegisterAdmin) (*types.MsgRegisterAdminResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	moderator_address := k.GetModeratorAddress(ctx)
-	if moderator_address != msg.ModeratorAddress {
-		return nil, errorsmod.Wrapf(types.ErrWrongModerator, ", expected: %s, got: %s", moderator_address, msg.ModeratorAddress)
+	moderatorAddr := k.GetModeratorAddress(ctx)
+	if moderatorAddr != msg.ModeratorAddress {
+		return nil, errorsmod.Wrapf(types.ErrWrongModerator, ", expected: %s, got: %s", moderatorAddr, msg.ModeratorAddress)
 	}
 
 	_, err := sdk.AccAddressFromBech32(msg.AdminAddress)
@@ -30,9 +28,9 @@ func (k Keeper) RegisterAdmin(goCtx context.Context, msg *types.MsgRegisterAdmin
 	}
 
 	k.AddAdmin(ctx, msg.AdminAddress)
-	exchangeId := ""
+	exchangeID := ""
 	if !msg.ExchangeId.IsNil() && !msg.ExchangeId.IsZero() {
-		exchangeId = msg.ExchangeId.String()
+		exchangeID = msg.ExchangeId.String()
 		exchange, err := k.GetExchange(ctx, msg.ExchangeId)
 		if err != nil {
 			return nil, err
@@ -47,9 +45,9 @@ func (k Keeper) RegisterAdmin(goCtx context.Context, msg *types.MsgRegisterAdmin
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeRegisterAdmin,
-			sdk.NewAttribute(types.AttributeKeyModerator, moderator_address),
+			sdk.NewAttribute(types.AttributeKeyModerator, moderatorAddr),
 			sdk.NewAttribute(types.AttributeKeyAddress, msg.AdminAddress),
-			sdk.NewAttribute(types.AttributeKeyExchangeId, exchangeId),
+			sdk.NewAttribute(types.AttributeKeyExchangeID, exchangeID),
 		),
 	)
 
@@ -59,9 +57,9 @@ func (k Keeper) RegisterAdmin(goCtx context.Context, msg *types.MsgRegisterAdmin
 // RemoveAdmin implements types.MsgServer.
 func (k Keeper) RemoveAdmin(goCtx context.Context, msg *types.MsgRemoveAdmin) (*types.MsgRemoveAdminResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	moderator_address := k.GetModeratorAddress(ctx)
-	if moderator_address != msg.ModeratorAddress {
-		return nil, errorsmod.Wrapf(types.ErrWrongModerator, ", expected: %s, got: %s", moderator_address, msg.ModeratorAddress)
+	moderatorAddr := k.GetModeratorAddress(ctx)
+	if moderatorAddr != msg.ModeratorAddress {
+		return nil, errorsmod.Wrapf(types.ErrWrongModerator, ", expected: %s, got: %s", moderatorAddr, msg.ModeratorAddress)
 	}
 
 	_, err := sdk.AccAddressFromBech32(msg.AdminAddress)
@@ -74,7 +72,7 @@ func (k Keeper) RemoveAdmin(goCtx context.Context, msg *types.MsgRemoveAdmin) (*
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeRemoveAdmin,
-			sdk.NewAttribute(types.AttributeKeyModerator, moderator_address),
+			sdk.NewAttribute(types.AttributeKeyModerator, moderatorAddr),
 			sdk.NewAttribute(types.AttributeKeyAddress, msg.AdminAddress),
 		),
 	)
@@ -100,12 +98,12 @@ func (k Keeper) RegisterExchange(goCtx context.Context, msg *types.MsgRegisterEx
 	}
 
 	// validate the ID
-	nextExchangeId, err := k.GetNextExchangeId(ctx)
+	nextExchangeID, err := k.GetNextExchangeID(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !msg.Exchange.Id.Equal(nextExchangeId) {
-		return nil, errorsmod.Wrapf(types.ErrInvalidId, " expected: %s, got: %s", nextExchangeId, msg.Exchange.Id)
+	if !msg.Exchange.Id.Equal(nextExchangeID) {
+		return nil, errorsmod.Wrapf(types.ErrInvalidID, " expected: %s, got: %s", nextExchangeID, msg.Exchange.Id)
 	}
 
 	err = k.SetExchange(ctx, msg.Exchange)
@@ -117,7 +115,7 @@ func (k Keeper) RegisterExchange(goCtx context.Context, msg *types.MsgRegisterEx
 		sdk.NewEvent(
 			types.EventTypeRegisterExchange,
 			sdk.NewAttribute(types.AttributeKeyAdmin, msg.AdminAddress),
-			sdk.NewAttribute(types.AttributeKeyExchangeId, msg.Exchange.Id.String()),
+			sdk.NewAttribute(types.AttributeKeyExchangeID, msg.Exchange.Id.String()),
 		),
 	)
 
@@ -204,7 +202,7 @@ func (k Keeper) UpdateExchange(goCtx context.Context, msg *types.MsgUpdateExchan
 		sdk.NewEvent(
 			types.EventTypeUpdateExchange,
 			sdk.NewAttribute(types.AttributeKeyAdmin, msg.AdminAddress),
-			sdk.NewAttribute(types.AttributeKeyExchangeId, msg.ExchangeId.String()),
+			sdk.NewAttribute(types.AttributeKeyExchangeID, msg.ExchangeId.String()),
 			sdk.NewAttribute(types.AttributeKeyKey, msg.Key),
 			sdk.NewAttribute(types.AttributeKeyValue, msg.Value),
 		),
@@ -274,7 +272,7 @@ func (k Keeper) WithdrawFees(goCtx context.Context, msg *types.MsgWithdrawFees) 
 		sdk.NewEvent(
 			types.EventTypeWithdrawFees,
 			sdk.NewAttribute(types.AttributeKeyAdmin, msg.AdminAddress),
-			sdk.NewAttribute(types.AttributeKeyExchangeId, msg.ExchangeId.String()),
+			sdk.NewAttribute(types.AttributeKeyExchangeID, msg.ExchangeId.String()),
 			sdk.NewAttribute(types.AttributeKeyWithdrawAddress, msg.WithdrawAddress),
 			sdk.NewAttribute(types.AttributeKeyAmount, fees.String()),
 		),
@@ -286,9 +284,9 @@ func (k Keeper) WithdrawFees(goCtx context.Context, msg *types.MsgWithdrawFees) 
 // ChangeModerator implements types.MsgServer.
 func (k Keeper) ChangeModerator(goCtx context.Context, msg *types.MsgChangeBexModerator) (*types.MsgChangeBexModeratorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	moderator_address := k.GetModeratorAddress(ctx)
-	if msg.ModeratorAddress != moderator_address {
-		return nil, errorsmod.Wrapf(types.ErrWrongModerator, ", expected: %s, got: %s", moderator_address, msg.ModeratorAddress)
+	moderatorAddr := k.GetModeratorAddress(ctx)
+	if msg.ModeratorAddress != moderatorAddr {
+		return nil, errorsmod.Wrapf(types.ErrWrongModerator, ", expected: %s, got: %s", moderatorAddr, msg.ModeratorAddress)
 	}
 
 	_, err := sdk.AccAddressFromBech32(msg.NewModeratorAddress)

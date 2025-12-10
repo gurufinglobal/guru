@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/server/config"
-
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
-
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/gurufinglobal/guru/v2/server/config"
 )
 
 // PublicAPI is the eth_ prefixed set of APIs in the Web3 JSON-RPC spec.

@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 var _ types.BankWrapper = BankWrapper{}

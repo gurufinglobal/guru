@@ -3,11 +3,10 @@ package vmv1
 import (
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"google.golang.org/protobuf/reflect/protoreflect"
-
-	sdkmath "cosmossdk.io/math"
 )
 
 var (

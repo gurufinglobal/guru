@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	app "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/stretchr/testify/require"
-
 	"cosmossdk.io/math"
-
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	app "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/stretchr/testify/require"
 )
 
 // PrepareAccountsForDelegationRewards prepares the test suite for testing to withdraw delegation rewards.

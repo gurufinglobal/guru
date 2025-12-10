@@ -4,10 +4,9 @@ import (
 	"math/big"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
 	"github.com/stretchr/testify/require"
-
-	sdkmath "cosmossdk.io/math"
 )
 
 func TestTxData_chainID(t *testing.T) {

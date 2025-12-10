@@ -5,8 +5,6 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/stretchr/testify/require"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestSubmitOracleDataNilDataSet(t *testing.T) {
@@ -19,7 +17,7 @@ func TestSubmitOracleDataNilDataSet(t *testing.T) {
 	}
 
 	// This should not panic and should return an error
-	response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
+	response, err := keeper.SubmitOracleData(ctx, msg)
 	require.Error(t, err)
 	require.Nil(t, response)
 	require.Contains(t, err.Error(), "DataSet must be provided")
@@ -61,7 +59,7 @@ func TestSubmitOracleDataNilDataSet(t *testing.T) {
 // 	}
 
 // 	// This should succeed
-// 	response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
+// 	response, err := keeper.SubmitOracleData(ctx, msg)
 // 	require.NoError(t, err)
 // 	require.NotNil(t, response)
 // }
@@ -114,7 +112,7 @@ func TestSubmitOracleDataEdgeCases(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), tc.msg)
+			response, err := keeper.SubmitOracleData(ctx, tc.msg)
 
 			if tc.expectError {
 				require.Error(t, err)

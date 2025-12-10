@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txTypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
 
 type aminoMessage struct {

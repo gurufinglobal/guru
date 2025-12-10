@@ -5,13 +5,12 @@
 package network
 
 import (
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // updateErc20GenesisStateForChainID modify the default genesis state for the

@@ -1,16 +1,14 @@
 package types
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	erc20api "github.com/gurufinglobal/guru/v2/api/cosmos/evm/erc20/v1"
-	protov2 "google.golang.org/protobuf/proto"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	txsigning "cosmossdk.io/x/tx/signing"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/common"
+	erc20api "github.com/gurufinglobal/guru/v2/api/cosmos/evm/erc20/v1"
+	protov2 "google.golang.org/protobuf/proto"
 )
 
 var (

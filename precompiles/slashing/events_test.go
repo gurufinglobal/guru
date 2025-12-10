@@ -1,6 +1,8 @@
 package slashing_test
 
 import (
+	storetypes "cosmossdk.io/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -8,10 +10,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/precompiles/slashing"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/holiman/uint256"
-
-	storetypes "cosmossdk.io/store/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (s *PrecompileTestSuite) TestUnjailEvent() {

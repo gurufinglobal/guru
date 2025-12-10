@@ -3,11 +3,10 @@ package common
 import (
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/core/tracing"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/ethereum/go-ethereum/core/tracing"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 )
 
 // BalanceHandler is a struct that handles balance changes in the Cosmos SDK context.

@@ -4,13 +4,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-
 	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 )
 
 // WaitToAccrueRewards is a helper function that waits for rewards to

@@ -9,9 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gurufinglobal/guru/v2/oralce/config"
-
 	"cosmossdk.io/log"
+	"github.com/gurufinglobal/guru/v2/oralce/config"
 )
 
 const (

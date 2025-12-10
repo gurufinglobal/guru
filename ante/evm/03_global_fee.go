@@ -3,7 +3,6 @@ package evm
 import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 )
 

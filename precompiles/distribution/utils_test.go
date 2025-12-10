@@ -1,15 +1,13 @@
 package distribution_test
 
 import (
-	"github.com/gurufinglobal/guru/v2/precompiles/staking"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-
 	"cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/gurufinglobal/guru/v2/precompiles/staking"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 )
 
 type stakingRewards struct {

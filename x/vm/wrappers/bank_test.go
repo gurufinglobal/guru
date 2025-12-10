@@ -7,16 +7,14 @@ import (
 	"math/big"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/wrappers"
 	"github.com/gurufinglobal/guru/v2/x/vm/wrappers/testutil"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-
-	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // --------------------------------------TRANSACTIONS-----------------------------------------------

@@ -1,12 +1,10 @@
 package oracle
 
 import (
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-
 	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // NewHandler creates a new handler for oracle messages.
@@ -17,16 +15,16 @@ func NewHandler(msgServer types.MsgServer) func(ctx sdk.Context, msg sdk.Msg) (*
 
 		switch msg := msg.(type) {
 		case *types.MsgRegisterOracleRequestDoc:
-			res, err := msgServer.RegisterOracleRequestDoc(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.RegisterOracleRequestDoc(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgUpdateOracleRequestDoc:
-			res, err := msgServer.UpdateOracleRequestDoc(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.UpdateOracleRequestDoc(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSubmitOracleData:
-			res, err := msgServer.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.SubmitOracleData(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgUpdateModeratorAddress:
-			res, err := msgServer.UpdateModeratorAddress(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.UpdateModeratorAddress(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			err := errorsmod.Wrapf(errortypes.ErrUnknownRequest, "unrecognized %s message type: %T", types.ModuleName, msg)

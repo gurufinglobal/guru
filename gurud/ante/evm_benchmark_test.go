@@ -5,6 +5,10 @@ import (
 	"math/big"
 	"testing"
 
+	"cosmossdk.io/errors"
+	"cosmossdk.io/math"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/gurufinglobal/guru/v2/ante"
 	ethante "github.com/gurufinglobal/guru/v2/ante/evm"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
@@ -15,12 +19,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/errors"
-	"cosmossdk.io/math"
-
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 type benchmarkSuite struct {

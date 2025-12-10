@@ -4,7 +4,6 @@ import (
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -107,7 +106,7 @@ func (msg MsgUpdateOracleRequestDoc) ValidateBasic() error {
 
 // NewMsgSubmitOracleData creates a new MsgSubmitOracleData instance
 func NewMsgSubmitOracleData(
-	requestId uint64,
+	requestID uint64,
 	nonce uint64,
 	rawData string,
 	provider string,
@@ -117,7 +116,7 @@ func NewMsgSubmitOracleData(
 	return &MsgSubmitOracleData{
 		AuthorityAddress: authorityAddress,
 		DataSet: &SubmitDataSet{
-			RequestId: requestId,
+			RequestId: requestID,
 			Nonce:     nonce,
 			RawData:   rawData,
 			Provider:  provider,

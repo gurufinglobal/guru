@@ -3,15 +3,13 @@ package utils
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-
-	errorsmod "cosmossdk.io/errors"
-
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // ERC20RegistrationData is the necessary data to provide in order to register an ERC20 token.

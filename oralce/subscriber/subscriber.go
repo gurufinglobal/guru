@@ -6,14 +6,12 @@ import (
 	"strconv"
 	"time"
 
+	"cosmossdk.io/log"
+	"github.com/cometbft/cometbft/rpc/client/http"
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/gurufinglobal/guru/v2/oralce/config"
 	"github.com/gurufinglobal/guru/v2/oralce/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-
-	"github.com/cometbft/cometbft/rpc/client/http"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-
-	"cosmossdk.io/log"
 )
 
 type Subscriber struct {
@@ -83,7 +81,7 @@ func (s *Subscriber) subscribeToEvents(ctx context.Context, subsClient *http.HTT
 		return nil, nil, nil
 	}
 
-	completeQuery := fmt.Sprintf("tm.event='NewBlock' AND %s.%s EXISTS", oracletypes.EventTypeCompleteOracleDataSet, oracletypes.AttributeKeyRequestId)
+	completeQuery := fmt.Sprintf("tm.event='NewBlock' AND %s.%s EXISTS", oracletypes.EventTypeCompleteOracleDataSet, oracletypes.AttributeKeyRequestID)
 	completeCh, err := subsClient.Subscribe(ctx, "", completeQuery, config.ChannelSize())
 	if err != nil {
 		s.logger.Error("subscribe complete failed", "error", err)
@@ -139,15 +137,15 @@ func (s *Subscriber) runEventLoop(ctx context.Context, queryClient oracletypes.Q
 			return
 
 		case event := <-registerCh:
-			requestId, err := parseRequestIDFromEvent(event, types.RegisterID)
+			requestID, err := parseRequestIDFromEvent(event, types.RegisterID)
 			if err != nil {
 				s.logger.Debug("register event invalid", "error", err)
 				continue
 			}
 
-			queryRes, err := queryClient.OracleRequestDoc(ctx, &oracletypes.QueryOracleRequestDocRequest{RequestId: requestId})
+			queryRes, err := queryClient.OracleRequestDoc(ctx, &oracletypes.QueryOracleRequestDocRequest{RequestId: requestID})
 			if err != nil {
-				s.logger.Debug("query request doc error", "error", err, "request_id", requestId)
+				s.logger.Debug("query request doc error", "error", err, "request_id", requestID)
 				continue
 			}
 
@@ -155,15 +153,15 @@ func (s *Subscriber) runEventLoop(ctx context.Context, queryClient oracletypes.Q
 			s.logger.Info("request watch", "id", queryRes.RequestDoc.RequestId, "nonce", queryRes.RequestDoc.Nonce)
 
 		case event := <-updateCh:
-			requestId, err := parseRequestIDFromEvent(event, types.UpdateID)
+			requestID, err := parseRequestIDFromEvent(event, types.UpdateID)
 			if err != nil {
 				s.logger.Debug("update event invalid", "error", err)
 				continue
 			}
 
-			queryRes, err := queryClient.OracleRequestDoc(ctx, &oracletypes.QueryOracleRequestDocRequest{RequestId: requestId})
+			queryRes, err := queryClient.OracleRequestDoc(ctx, &oracletypes.QueryOracleRequestDocRequest{RequestId: requestID})
 			if err != nil {
-				s.logger.Debug("query request doc error", "error", err, "request_id", requestId)
+				s.logger.Debug("query request doc error", "error", err, "request_id", requestID)
 				continue
 			}
 
@@ -185,15 +183,15 @@ func (s *Subscriber) runEventLoop(ctx context.Context, queryClient oracletypes.Q
 
 // parseRequestIDFromEvent extracts a request ID by attribute key from the event map.
 func parseRequestIDFromEvent(event coretypes.ResultEvent, eventType string) (uint64, error) {
-	valsId, ok := event.Events[eventType]
-	if !ok || len(valsId) == 0 {
+	valsID, ok := event.Events[eventType]
+	if !ok || len(valsID) == 0 {
 		return 0, fmt.Errorf("event '%s' missing request id", eventType)
 	}
 
-	requestId, err := strconv.ParseUint(valsId[0], 10, 64)
+	requestID, err := strconv.ParseUint(valsID[0], 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("invalid request id value for '%s': %w", eventType, err)
 	}
 
-	return requestId, nil
+	return requestID, nil
 }

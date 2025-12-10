@@ -5,6 +5,12 @@ import (
 	"fmt"
 	"math/big"
 
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	"github.com/cometbft/cometbft/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/gurufinglobal/guru/v2/indexer"
@@ -14,15 +20,6 @@ import (
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/metadata"
-
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	"github.com/cometbft/cometbft/types"
-
-	dbm "github.com/cosmos/cosmos-db"
-
-	"cosmossdk.io/log"
-	"cosmossdk.io/math"
 )
 
 func (suite *BackendTestSuite) TestGetTransactionByHash() {
@@ -699,10 +696,10 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 				}
 				suite.Require().Nil(res["contractAddress"]) // no contract creation
 				suite.Require().NoError(err)
-			} else {
-				// for compatibility with evm tools
-				// suite.Require().Error(err)
-				// suite.Require().ErrorContains(err, tc.expErr.Error())
+				// } else {
+				// 	// for compatibility with evm tools
+				// 	// suite.Require().Error(err)
+				// 	// suite.Require().ErrorContains(err, tc.expErr.Error())
 			}
 		})
 	}

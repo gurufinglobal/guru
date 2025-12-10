@@ -1,12 +1,10 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k Keeper) BeforeOracleStart(_ sdk.Context, _ oracletypes.DataSet) {
@@ -66,7 +64,11 @@ func (k Keeper) AfterOracleEnd(ctx sdk.Context, dataSet oracletypes.DataSet) {
 
 	params.MinGasPrice = math.LegacyNewDecFromInt(newMinGasPrice)
 
-	k.SetParams(ctx, params)
+	err = k.SetParams(ctx, params)
+	if err != nil {
+		logger.Error("Failed to set params", "error", err)
+		return
+	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

@@ -2,7 +2,6 @@ package ante
 
 import (
 	storetypes "cosmossdk.io/store/types"
-
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 )
 

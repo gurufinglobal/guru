@@ -5,14 +5,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/spf13/cobra"
-
 	errorsmod "cosmossdk.io/errors"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"github.com/spf13/cobra"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -77,13 +75,13 @@ func GetCmdQueryOracleRequestDoc() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			requestId, err := strconv.ParseUint(args[0], 10, 64)
+			requestID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
-				return errorsmod.Wrapf(types.ErrInvalidRequestId, "args[0] parse error: %s", args[0])
+				return errorsmod.Wrapf(types.ErrInvalidRequestID, "args[0] parse error: %s", args[0])
 			}
 
 			res, err := queryClient.OracleRequestDoc(cmd.Context(), &types.QueryOracleRequestDocRequest{
-				RequestId: requestId,
+				RequestId: requestID,
 			})
 			if err != nil {
 				return err
@@ -111,13 +109,13 @@ func GetCmdQueryOracleData() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			requestId, err := strconv.ParseUint(args[0], 10, 64)
+			requestID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
-				return errorsmod.Wrapf(types.ErrInvalidRequestId, "args[0] parse error: %s", args[0])
+				return errorsmod.Wrapf(types.ErrInvalidRequestID, "args[0] parse error: %s", args[0])
 			}
 
 			res, err := queryClient.OracleData(cmd.Context(), &types.QueryOracleDataRequest{
-				RequestId: requestId,
+				RequestId: requestID,
 			})
 			if err != nil {
 				return err
@@ -155,9 +153,9 @@ Description:
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			requestId, err := strconv.ParseUint(args[0], 10, 64)
+			requestID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
-				return errorsmod.Wrapf(types.ErrInvalidRequestId, "args[0] parse error: %s", args[0])
+				return errorsmod.Wrapf(types.ErrInvalidRequestID, "args[0] parse error: %s", args[0])
 			}
 
 			nonce, err := strconv.ParseUint(args[1], 10, 64)
@@ -171,7 +169,7 @@ Description:
 			}
 
 			res, err := queryClient.OracleSubmitData(cmd.Context(), &types.QueryOracleSubmitDataRequest{
-				RequestId: requestId,
+				RequestId: requestID,
 				Nonce:     nonce,
 				Provider:  provider,
 			})
@@ -200,7 +198,7 @@ func GetCmdQueryOracleRequestDocs() *cobra.Command {
 				return err
 			}
 
-			var status int64 = 0
+			var status int64
 			if len(args) > 0 {
 				status, err = strconv.ParseInt(args[0], 10, 32)
 				if err != nil {
@@ -210,7 +208,7 @@ func GetCmdQueryOracleRequestDocs() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.OracleRequestDocs(cmd.Context(), &types.QueryOracleRequestDocsRequest{
-				Status: types.RequestStatus(status),
+				Status: types.RequestStatus(status), //nolint:gosec // status is always positive
 			})
 			if err != nil {
 				return err

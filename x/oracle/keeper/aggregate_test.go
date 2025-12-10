@@ -3,13 +3,13 @@ package keeper
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/stretchr/testify/require"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func setupTest(t *testing.T) (sdk.Context, *Keeper) {
+	t.Helper()
 	keeper, ctx := setupKeeper(t)
 	return ctx, keeper
 }
@@ -155,7 +155,7 @@ func TestAggregateData(t *testing.T) {
 }
 
 // TestProcessOracleDataSetAggregation disabled temporarily due to store setup issues
-func testProcessOracleDataSetAggregation(t *testing.T) {
+func TestProcessOracleDataSetAggregation(t *testing.T) {
 	ctx, k := setupTest(t)
 
 	// Create test oracle request document
@@ -207,7 +207,7 @@ func testProcessOracleDataSetAggregation(t *testing.T) {
 }
 
 // TestProcessOracleDataSetAggregationWithInsufficientQuorum disabled temporarily due to store setup issues
-func testProcessOracleDataSetAggregationWithInsufficientQuorum(t *testing.T) {
+func TestProcessOracleDataSetAggregationWithInsufficientQuorum(t *testing.T) {
 	ctx, k := setupTest(t)
 
 	// Create test oracle request document with quorum 2
@@ -251,7 +251,7 @@ func testProcessOracleDataSetAggregationWithInsufficientQuorum(t *testing.T) {
 }
 
 // TestProcessOracleDataSetAggregationWithDisabledStatus disabled temporarily due to store setup issues
-func testProcessOracleDataSetAggregationWithDisabledStatus(t *testing.T) {
+func TestProcessOracleDataSetAggregationWithDisabledStatus(t *testing.T) {
 	ctx, k := setupTest(t)
 
 	// Create test oracle request document with disabled status

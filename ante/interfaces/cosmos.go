@@ -5,7 +5,6 @@ import (
 	"time"
 
 	addresscodec "cosmossdk.io/core/address"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )

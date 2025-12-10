@@ -1,12 +1,10 @@
 package keeper
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-
 	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // GetCoinbaseAddress returns the block proposer's validator operator address.

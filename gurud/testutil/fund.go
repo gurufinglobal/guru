@@ -1,13 +1,11 @@
 package testutil
 
 import (
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-
 	"cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
 // FundAccount is a utility function that funds an account by minting and

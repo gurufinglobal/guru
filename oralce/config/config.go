@@ -8,13 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/encoding"
 	guruconfig "github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/pelletier/go-toml/v2"
-
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var home = flag.String("home", homeDir(), "oracle daemon home directory")
@@ -126,7 +125,7 @@ func createDefaultConfig(path string) error {
 		return fmt.Errorf("failed to marshal TOML: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o600); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 

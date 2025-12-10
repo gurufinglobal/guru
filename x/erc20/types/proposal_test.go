@@ -4,11 +4,10 @@ import (
 	"strings"
 	"testing"
 
+	length "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/stretchr/testify/suite"
-
-	length "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 type ProposalTestSuite struct {

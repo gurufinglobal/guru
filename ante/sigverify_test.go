@@ -3,14 +3,7 @@ package ante_test
 import (
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/ante"
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-	"github.com/gurufinglobal/guru/v2/encoding"
-	"github.com/gurufinglobal/guru/v2/server/config"
-	"github.com/stretchr/testify/require"
-
 	storetypes "cosmossdk.io/store/types"
-
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -20,6 +13,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/gurufinglobal/guru/v2/ante"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
+	"github.com/gurufinglobal/guru/v2/encoding"
+	"github.com/gurufinglobal/guru/v2/server/config"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConsumeSignatureVerificationGas(t *testing.T) {

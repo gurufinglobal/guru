@@ -4,17 +4,15 @@ import (
 	"bytes"
 	"fmt"
 
-	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
-	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
 // DeductFeeDecorator deducts fees from the fee payer. The fee payer is the fee granter (if specified) or first signer of the tx.

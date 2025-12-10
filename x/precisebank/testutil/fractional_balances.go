@@ -5,13 +5,11 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	"github.com/stretchr/testify/require"
-
 	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	"github.com/stretchr/testify/require"
 )
 
 // randRange returns a random number in the range [minVal, maxVal)

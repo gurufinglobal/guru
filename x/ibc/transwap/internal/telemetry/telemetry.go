@@ -3,14 +3,11 @@ package telemetry
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/telemetry"
+	coremetrics "github.com/cosmos/ibc-go/v10/modules/core/metrics"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 	"github.com/hashicorp/go-metrics"
-
-	coremetrics "github.com/cosmos/ibc-go/v10/modules/core/metrics"
-
-	sdkmath "cosmossdk.io/math"
-
-	"github.com/cosmos/cosmos-sdk/telemetry"
 )
 
 func ReportTransfer(sourcePort, sourceChannel, destinationPort, destinationChannel string, token types.Token) {

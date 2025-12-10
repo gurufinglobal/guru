@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"cosmossdk.io/log"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -13,10 +15,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 	"github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/pkg/errors"
-
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-
-	"cosmossdk.io/log"
 )
 
 // BloomIV represents the bit indexes and value inside the bloom filter that belong

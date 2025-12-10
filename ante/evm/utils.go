@@ -4,15 +4,13 @@ import (
 	"math"
 	"math/big"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // DecoratorUtils contain a bunch of relevant variables used for a variety of checks

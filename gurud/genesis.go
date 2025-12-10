@@ -3,13 +3,12 @@ package gurud
 import (
 	"encoding/json"
 
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 )
 
 // GenesisState of the blockchain is represented here as a map of raw json

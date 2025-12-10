@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-
 	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // MsgServer implementation
@@ -62,19 +60,19 @@ func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegist
 	k.SetOracleRequestDocCount(ctx, count+1)
 
 	// Marshal the endpoints to a JSON string
-	endpointsJson, _ := json.Marshal(oracleRequestDoc.Endpoints)
+	endpointsJSON, _ := json.Marshal(oracleRequestDoc.Endpoints)
 
 	// Emit event for registering oracle request document
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeRegisterOracleRequestDoc,
-			sdk.NewAttribute(types.AttributeKeyRequestId, fmt.Sprint(oracleRequestDoc.RequestId)),
+			sdk.NewAttribute(types.AttributeKeyRequestID, fmt.Sprint(oracleRequestDoc.RequestId)),
 			sdk.NewAttribute(types.AttributeKeyOracleType, string(oracleRequestDoc.OracleType)),
 			sdk.NewAttribute(types.AttributeKeyName, oracleRequestDoc.Name),
 			sdk.NewAttribute(types.AttributeKeyDescription, oracleRequestDoc.Description),
 			sdk.NewAttribute(types.AttributeKeyPeriod, fmt.Sprint(oracleRequestDoc.Period)),
 			sdk.NewAttribute(types.AttributeKeyAccountList, strings.Join(oracleRequestDoc.AccountList, ",")),
-			sdk.NewAttribute(types.AttributeKeyEndpoints, string(endpointsJson)),
+			sdk.NewAttribute(types.AttributeKeyEndpoints, string(endpointsJSON)),
 			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(oracleRequestDoc.AggregationRule)),
 			sdk.NewAttribute(types.AttributeKeyStatus, string(oracleRequestDoc.Status)),
 		),
@@ -104,19 +102,19 @@ func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOr
 	}
 
 	// Marshal the endpoints to a JSON string
-	endpointsJson, _ := json.Marshal(doc.RequestDoc.Endpoints)
+	endpointsJSON, _ := json.Marshal(doc.RequestDoc.Endpoints)
 
 	// Emit event for updating oracle request document
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeUpdateOracleRequestDoc,
-			sdk.NewAttribute(types.AttributeKeyRequestId, fmt.Sprint(doc.RequestDoc.RequestId)),
+			sdk.NewAttribute(types.AttributeKeyRequestID, fmt.Sprint(doc.RequestDoc.RequestId)),
 			sdk.NewAttribute(types.AttributeKeyOracleType, string(doc.RequestDoc.OracleType)),
 			sdk.NewAttribute(types.AttributeKeyName, doc.RequestDoc.Name),
 			sdk.NewAttribute(types.AttributeKeyDescription, doc.RequestDoc.Description),
 			sdk.NewAttribute(types.AttributeKeyPeriod, fmt.Sprint(doc.RequestDoc.Period)),
 			sdk.NewAttribute(types.AttributeKeyAccountList, strings.Join(doc.RequestDoc.AccountList, ",")),
-			sdk.NewAttribute(types.AttributeKeyEndpoints, string(endpointsJson)),
+			sdk.NewAttribute(types.AttributeKeyEndpoints, string(endpointsJSON)),
 			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(doc.RequestDoc.AggregationRule)),
 			sdk.NewAttribute(types.AttributeKeyStatus, string(doc.RequestDoc.Status)),
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(doc.RequestDoc.Nonce)),
@@ -142,9 +140,9 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
 	}
 
-	requestId := msg.DataSet.RequestId
+	requestID := msg.DataSet.RequestId
 
-	requestDoc, err := k.GetOracleRequestDoc(ctx, requestId)
+	requestDoc, err := k.GetOracleRequestDoc(ctx, requestID)
 	if err != nil {
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document not found")
 	}
@@ -182,7 +180,7 @@ func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleDa
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeSubmitOracleData,
-			sdk.NewAttribute(types.AttributeKeyRequestId, fmt.Sprint(requestId)),
+			sdk.NewAttribute(types.AttributeKeyRequestID, fmt.Sprint(requestID)),
 			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(msg.DataSet.Nonce)),
 			sdk.NewAttribute(types.AttributeKeyRawData, msg.DataSet.RawData),
 			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAddress),
@@ -241,7 +239,10 @@ func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateMo
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "new moderator address is same as current moderator address")
 	}
 
-	k.SetModeratorAddress(ctx, msg.NewModeratorAddress)
+	err := k.SetModeratorAddress(ctx, msg.NewModeratorAddress)
+	if err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

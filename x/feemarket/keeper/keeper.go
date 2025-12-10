@@ -1,13 +1,11 @@
 package keeper
 
 import (
-	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
-
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 )
 
 // Keeper grants access to the Fee Market module state.

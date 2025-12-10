@@ -1,11 +1,9 @@
 package keeper
 
 import (
-	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
-
 	"cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 )
 
 // GetParams returns the total set of fee market parameters.

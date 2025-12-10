@@ -5,21 +5,18 @@ import (
 	"fmt"
 	"strconv"
 
-	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-
+	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // SubmitProposal is a helper function to submit a governance proposal and
