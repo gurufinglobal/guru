@@ -65,6 +65,8 @@ func (p *PoolTestSuite) TearDownSuite() {
 	p.T().Log("tearing down pool test suite")
 	if p.cancelFunc != nil {
 		p.cancelFunc()
+		// goroutine이 로그를 출력하고 종료할 시간을 줌
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	// Clean up temporary directory
