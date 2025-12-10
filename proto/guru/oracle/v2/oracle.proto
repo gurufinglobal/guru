@@ -1,0 +1,72 @@
+syntax = "proto3";
+package guru.oracle.v2;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/y/oracle/types";
+
+// Status defines the status of an oracle request.
+enum Status {
+  // STATUS_UNSPECIFIED defines an invalid status.
+  STATUS_UNSPECIFIED = 0;
+  // STATUS_ACTIVE defines the active status.
+  STATUS_ACTIVE = 1;
+  // STATUS_INACTIVE defines the inactive status.
+  STATUS_INACTIVE = 2;
+}
+
+// Category defines the category of an oracle request.
+enum Category {
+  // CATEGORY_UNSPECIFIED defines an invalid category.
+  CATEGORY_UNSPECIFIED = 0;
+  // CATEGORY_CRYPTO defines the crypto category.
+  CATEGORY_CRYPTO = 1;
+  // CATEGORY_CURRENCY defines the currency category.
+  CATEGORY_CURRENCY = 2;
+}
+
+// OracleRequest defines a request for oracle data.
+message OracleRequest {
+  // id is the unique identifier of the request.
+  uint64 id = 1;
+  // category is the category of the request.
+  Category category = 2;
+  // symbol is the symbol of the request (e.g. "BTC/USD").
+  string symbol = 3;
+  // count is the number of validators required to submit a report.
+  int64 count = 4;
+  // period is the number of blocks between each report execution.
+  uint64 period = 5;
+  // status is the status of the request.
+  Status status = 6;
+  // nonce is the current nonce of the request, incremented for each execution.
+  uint64 nonce = 7;
+}
+
+// OracleReport defines a report submitted by a validator.
+message OracleReport {
+  // request_id is the unique identifier of the request.
+  uint64 request_id = 1;
+  // provider is the address of the validator submitting the report.
+  string provider = 2;
+  // raw_data is the raw data reported by the validator (e.g. price).
+  string raw_data = 3;
+  // nonce is the nonce of the request for which the report is submitted.
+  uint64 nonce = 4;
+  // signature is the signature of the provider to verify authenticity.
+  bytes signature = 5;
+}
+
+// OracleResult defines the aggregated result of an oracle request.
+message OracleResult {
+  // request_id is the unique identifier of the request.
+  uint64 request_id = 1;
+  // aggregated_data is the aggregated data (e.g. median).
+  string aggregated_data = 2;
+  // aggregated_height is the block height at which the result was aggregated.
+  uint64 aggregated_height = 3;
+  // aggregated_time is the block time at which the result was aggregated.
+  uint64 aggregated_time = 4;
+  // nonce is the nonce of the request for which the result is aggregated.
+  uint64 nonce = 5;
+}

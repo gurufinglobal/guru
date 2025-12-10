@@ -1,0 +1,189 @@
+syntax = "proto3";
+package guru.oracle.v2;
+
+import "gogoproto/gogo.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+import "guru/oracle/v2/oracle.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/y/oracle/types";
+
+// Msg defines the oracle Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+    // rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse) {
+    //   option (google.api.http) = {
+    //     post: "/guru/oracle/v2/update_params"
+    //     body: "*"
+    //   };
+    // }
+
+  // UpdateModeratorAddress defines a method to update the moderator address.
+  rpc UpdateModeratorAddress(MsgUpdateModeratorAddress)
+      returns (MsgUpdateModeratorAddressResponse) {
+    option (google.api.http) = {
+      post : "/guru/oracle/v2/update_moderator_address"
+      body : "*"
+    };
+  }
+
+  // RegisterOracleRequest defines a method to register a new oracle request.
+  rpc RegisterOracleRequest(MsgRegisterOracleRequest)
+      returns (MsgRegisterOracleRequestResponse) {
+    option (google.api.http) = {
+      post : "/guru/oracle/v2/register_oracle_request"
+      body : "*"
+    };
+  }
+
+  // UpdateOracleRequest defines a method to update an existing oracle request.
+  rpc UpdateOracleRequest(MsgUpdateOracleRequest)
+      returns (MsgUpdateOracleRequestResponse) {
+    option (google.api.http) = {
+      post : "/guru/oracle/v2/update_oracle_request"
+      body : "*"
+    };
+  }
+
+  // SubmitOracleReport defines a method to submit a report for an oracle request.
+  rpc SubmitOracleReport(MsgSubmitOracleReport)
+      returns (MsgSubmitOracleReportResponse) {
+    option (google.api.http) = {
+      post : "/guru/oracle/v2/submit_oracle_report"
+      body : "*"
+    };
+  };
+
+  // Add an address to the oracle whitelist (moderator only).
+  rpc AddToWhitelist(MsgAddToWhitelist) returns (MsgAddToWhitelistResponse) {
+    option (google.api.http) = {
+      post : "/guru/oracle/v2/whitelist/add"
+      body : "*"
+    };
+  };
+
+  // Remove an address from the oracle whitelist (moderator only).
+  rpc RemoveFromWhitelist(MsgRemoveFromWhitelist)
+      returns (MsgRemoveFromWhitelistResponse) {
+    option (google.api.http) = {
+      post : "/guru/oracle/v2/whitelist/remove"
+      body : "*"
+    };
+  };
+}
+
+// message MsgUpdateParams {
+//   option (cosmos.msg.v1.signer) = "moderator_address";
+
+//   Params params = 1 [(gogoproto.nullable) = false];
+// }
+
+// message MsgUpdateParamsResponse {}
+
+// MsgUpdateModeratorAddress defines the Msg/UpdateModeratorAddress request type.
+message MsgUpdateModeratorAddress {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // moderator_address is the current moderator address.
+  string moderator_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // new_moderator_address is the new moderator address to set.
+  string new_moderator_address = 2
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+message MsgUpdateModeratorAddressResponse {}
+
+// MsgRegisterOracleRequest defines the Msg/RegisterOracleRequest request type.
+message MsgRegisterOracleRequest {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // moderator_address is the address of the moderator.
+  string moderator_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // category is the category of the request.
+  Category category = 2;
+  // symbol is the symbol of the request.
+  string symbol = 3;
+  // count is the number of validators required for the request.
+  uint64 count = 4;
+  // period is the execution period (in blocks).
+  uint64 period = 5;
+}
+
+// MsgRegisterOracleRequestResponse defines the response type for Msg/RegisterOracleRequest.
+message MsgRegisterOracleRequestResponse { 
+  // request_id is the unique identifier of the registered request.
+  uint64 request_id = 1; 
+}
+
+// MsgUpdateOracleRequest defines the Msg/UpdateOracleRequest request type.
+message MsgUpdateOracleRequest {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // moderator_address is the address of the moderator.
+  string moderator_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // request_id is the unique identifier of the request to update.
+  uint64 request_id = 2;
+  // count is the new number of validators required (optional, 0 to skip).
+  uint64 count = 3;
+  // period is the new execution period (optional, 0 to skip).
+  uint64 period = 4;
+  // status is the new status (optional, STATUS_UNSPECIFIED to skip).
+  Status status = 5;
+}
+
+message MsgUpdateOracleRequestResponse {}
+
+// MsgSubmitOracleReport defines the Msg/SubmitOracleReport request type.
+message MsgSubmitOracleReport {
+  option (cosmos.msg.v1.signer) = "provider_address";
+
+  // provider_address is the address of the validator submitting the report.
+  string provider_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // request_id is the unique identifier of the request.
+  uint64 request_id = 2;
+  // raw_data is the raw confirmed data.
+  string raw_data = 3;
+  // nonce is the nonce of the request.
+  uint64 nonce = 4;
+  // signature is the signature of the provider.
+  bytes signature = 5;
+}
+
+message MsgSubmitOracleReportResponse {}
+
+// MsgAddToWhitelist adds a provider address to the whitelist.
+message MsgAddToWhitelist {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  string moderator_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+message MsgAddToWhitelistResponse {}
+
+// MsgRemoveFromWhitelist removes a provider address from the whitelist.
+message MsgRemoveFromWhitelist {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  string moderator_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+message MsgRemoveFromWhitelistResponse {}

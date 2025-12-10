@@ -1,0 +1,153 @@
+syntax = "proto3";
+package guru.oracle.v2;
+
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+import "guru/oracle/v2/oracle.proto";
+import "guru/oracle/v2/params.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/y/oracle/types";
+
+// Query defines the gRPC querier service for the oracle module.
+service Query {
+  // Params returns the current module parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http) = {
+      get : "/guru/oracle/v2/params"
+    };
+  }
+
+  // ModeratorAddress returns the oracle moderator address.
+  rpc ModeratorAddress(QueryModeratorAddressRequest)
+      returns (QueryModeratorAddressResponse) {
+    option (google.api.http) = {
+      get : "/guru/oracle/v2/moderator_address"
+    };
+  }
+
+  // OracleRequest returns a single oracle request by id.
+  rpc OracleRequest(QueryOracleRequestRequest)
+      returns (QueryOracleRequestResponse) {
+    option (google.api.http) = {
+      get : "/guru/oracle/v2/requests/{request_id}"
+    };
+  }
+
+  // OracleRequests returns oracle requests with optional filters.
+  rpc OracleRequests(QueryOracleRequestsRequest)
+      returns (QueryOracleRequestsResponse) {
+    option (google.api.http) = {
+      get : "/guru/oracle/v2/requests"
+    };
+  }
+
+  // OracleReports queries individual reports submitted for a specific request.
+  rpc OracleReports(QueryOracleReportsRequest)
+      returns (QueryOracleReportsResponse) {
+    option (google.api.http) = {
+      get : "/guru/oracle/v2/requests/{request_id}/reports"
+    };
+  }
+
+  // OracleResult returns a specific aggregated result (single lookup).
+  // It is used to query the latest result or a result at a specific nonce.
+  rpc OracleResult(QueryOracleResultRequest)
+      returns (QueryOracleResultResponse) {
+    option (google.api.http) = {
+      get : "/guru/oracle/v2/requests/{request_id}/result"
+    };
+  }
+
+  // OracleResults queries the history of results for a specific request.
+  // The path is defined as requests/{request_id}/results to reflect the history nature.
+  rpc OracleResults(QueryOracleResultsRequest)
+      returns (QueryOracleResultsResponse) {
+    option (google.api.http) = {
+      get : "/guru/oracle/v2/requests/{request_id}/results"
+    };
+  }
+
+  // Categories returns enabled categories.
+  rpc Categories(QueryCategoriesRequest) returns (QueryCategoriesResponse) {
+    option (google.api.http) = {
+      get : "/guru/oracle/v2/categories"
+    };
+  }
+
+  // Whitelist returns whitelisted provider addresses and count.
+  rpc Whitelist(QueryWhitelistRequest) returns (QueryWhitelistResponse) {
+    option (google.api.http) = {
+      get : "/guru/oracle/v2/whitelist"
+    };
+  }
+}
+
+// ... (QueryParamsRequest, Response, ModeratorAddress etc.) ...
+
+message QueryParamsRequest {}
+message QueryParamsResponse {
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryModeratorAddressRequest {}
+message QueryModeratorAddressResponse {
+  string moderator_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+message QueryOracleRequestRequest { uint64 request_id = 1; }
+message QueryOracleRequestResponse {
+  OracleRequest request = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryOracleRequestsRequest {
+  Category category = 1;
+  Status status = 2;
+}
+
+message QueryOracleRequestsResponse {
+  repeated OracleRequest requests = 1 [ (gogoproto.nullable) = false ];
+}
+
+// OracleReportsRequest is the request type for the OracleReports RPC.
+message QueryOracleReportsRequest {
+  uint64 request_id = 1; // required
+  uint64 nonce = 2;
+  string provider = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+message QueryOracleReportsResponse {
+  repeated OracleReport reports = 1 [ (gogoproto.nullable) = false ];
+}
+
+// OracleResultRequest is the request type for the OracleResult RPC.
+message QueryOracleResultRequest {
+  uint64 request_id = 1;
+  uint64 nonce = 2; // 0 for latest
+}
+
+message QueryOracleResultResponse {
+  OracleResult result = 1 [ (gogoproto.nullable) = false ];
+}
+
+// OracleResultsRequest is the request type for the OracleResults RPC (History).
+message QueryOracleResultsRequest {
+  uint64 request_id = 1; // required to query history
+}
+
+message QueryOracleResultsResponse {
+  repeated OracleResult results = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryCategoriesRequest {}
+message QueryCategoriesResponse { repeated Category categories = 1; }
+
+message QueryWhitelistRequest {
+}
+
+message QueryWhitelistResponse {
+  repeated string addresses = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  uint64 count = 2;
+}

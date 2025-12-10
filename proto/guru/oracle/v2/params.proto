@@ -1,0 +1,25 @@
+syntax = "proto3";
+package guru.oracle.v2;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/y/oracle/types";
+
+// Params defines module parameters.
+message Params {
+  // enable toggles oracle functionality.
+  bool enable = 1;
+
+  // quorum_ratio defines the minimum ratio of whitelist providers required
+  // for aggregation. Stored as decimal string (e.g., "0.67" for 2/3).
+  string quorum_ratio = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // report_retention_blocks defines the number of blocks after which
+  // old reports are automatically deleted.
+  uint64 report_retention_blocks = 3;
+}
