@@ -607,8 +607,7 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID rpc.ID, extra interfac
 				for idx, subtopic := range subtopicsList {
 					tstr, ok := subtopic.(string)
 					if !ok {
-						// Only log type information to prevent log injection attacks
-						api.logger.Error("invalid subtopic type", "expected", "string", "got", fmt.Sprintf("%T", subtopic))
+						api.logger.Error("invalid subtopic: expected string type")
 						return nil, errors.New("invalid subtopic: expected string type")
 					}
 
