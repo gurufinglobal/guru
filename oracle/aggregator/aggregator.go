@@ -9,21 +9,22 @@ import (
 	"cosmossdk.io/log"
 	"github.com/gurufinglobal/guru/v2/oracle/provider"
 	"github.com/gurufinglobal/guru/v2/oracle/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
 )
 
 type Aggregator struct {
 	logger     log.Logger
-	pvRegistry provider.Registry
+	pvRegistry *provider.Registry
 }
 
-func NewAggregator(logger log.Logger, pvRegistry provider.Registry) *Aggregator {
+func NewAggregator(logger log.Logger, pvRegistry *provider.Registry) *Aggregator {
 	return &Aggregator{
 		logger:     logger,
 		pvRegistry: pvRegistry,
 	}
 }
 
-func (a *Aggregator) Start(ctx context.Context, taskChan <-chan types.OracleTask, resultCh chan<- types.OracleTaskResult) {
+func (a *Aggregator) Start(ctx context.Context, taskChan <-chan types.OracleTask, resultCh chan<- oracletypes.OracleReport) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -40,8 +41,8 @@ func (a *Aggregator) Start(ctx context.Context, taskChan <-chan types.OracleTask
 }
 
 // processTask fetches data from providers for a single task and emits result.
-func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, resultCh chan<- types.OracleTaskResult) {
-	providers := a.pvRegistry.GetProviders(task.Category)
+func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, resultCh chan<- oracletypes.OracleReport) {
+	providers := a.pvRegistry.GetProviders(int32(task.Category))
 	if len(providers) == 0 {
 		a.logger.Warn("no providers for category", "category", task.Category)
 		return
@@ -80,9 +81,10 @@ func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, res
 		return
 	}
 
-	resultCh <- types.OracleTaskResult{
-		Id:        task.Id,
-		Value:     median.Text('f', -1),
+	resultCh <- oracletypes.OracleReport{
+		RequestId: task.Id,
+		RawData:   median.Text('f', -1),
+		Provider:  "",
 		Nonce:     task.Nonce,
 		Signature: []byte{},
 	}

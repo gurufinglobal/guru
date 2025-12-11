@@ -21,8 +21,8 @@ type Registry struct {
 	providers map[int32][]Provider
 }
 
-func New(logger log.Logger, categories []oracletypes.Category, providers ...Provider) Registry {
-	registry := Registry{
+func New(logger log.Logger, categories []oracletypes.Category, providers ...Provider) *Registry {
+	registry := &Registry{
 		logger:    logger,
 		providers: make(map[int32][]Provider),
 	}

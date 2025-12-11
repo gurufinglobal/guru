@@ -6,10 +6,3 @@ type OracleTask struct {
 	Symbol   string
 	Nonce    uint64
 }
-
-type OracleTaskResult struct {
-	Id        uint64
-	Value     string
-	Nonce     uint64
-	Signature []byte
-}

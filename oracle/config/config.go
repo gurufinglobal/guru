@@ -8,18 +8,27 @@ import (
 )
 
 type Config struct {
-	Chain ChainConfig
+	Home    string
+	Chain   ChainConfig
+	Keyring KeyringConfig
+	Gas     GasConfig
 }
 
 type ChainConfig struct {
-	RPCAddr       string
-	GRPCAddr      string
-	ChainID       string
-	KeyName       string
-	KeyringDir    string
-	KeyPassphrase string
-	GasAdjustment float64
-	GasPrices     string
+	ChainID  string `toml:"chain_id"`
+	Endpoint string `toml:"endpoint"`
+}
+
+type KeyringConfig struct {
+	Backend    string `toml:"backend"`
+	Name       string `toml:"name"`
+	Passphrase string `toml:"passphrase"`
+}
+
+type GasConfig struct {
+	Limit      uint64  `toml:"limit"`
+	Adjustment float64 `toml:"adjustment"`
+	Denom      string  `toml:"denom"`
 }
 
 func LoadFile(path string) (*Config, error) {
@@ -41,16 +50,25 @@ func LoadFile(path string) (*Config, error) {
 
 func WriteDefaultFile(path string) error {
 	defaultConfig := []byte(`# Oracle Daemon Configuration
+
 [chain]
-rpc_addr = "tcp://localhost:26657"
-grpc_addr = "localhost:9090"
-chain_id = "guru-1"
-key_name = "oracle_feeder"
-keyring_dir = "~/.guru/keyring-test"
-key_passphrase = "password"
-gas_adjustment = 1.5
-gas_prices = "0.025uguru"
+chain_id = "guru_631-1"
+endpoint = "http://localhost:26657"
+
+[keyring]
+name = "oracle_feeder"
+backend = "test"
+passphrase = "password"
+
+[gas]
+limit = 70000
+adjustment = 1.5
+denom = "agxn"
 `)
 
-	return os.WriteFile(path, defaultConfig, 0644)
+	if err := os.WriteFile(path, defaultConfig, 0644); err != nil {
+		return fmt.Errorf("failed to write config file: %w", err)
+	}
+
+	return nil
 }
