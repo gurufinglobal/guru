@@ -41,7 +41,11 @@ func (s *Submitter) Start(ctx context.Context, resultCh <-chan oracletypes.Oracl
 		select {
 		case <-ctx.Done():
 			return
-		case result := <-resultCh:
+		case result, ok := <-resultCh:
+			if !ok {
+				s.logger.Info("result channel closed, stopping submitter")
+				return
+			}
 			s.submit(ctx, result)
 		}
 	}

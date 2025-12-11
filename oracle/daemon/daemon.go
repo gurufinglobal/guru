@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -32,8 +33,9 @@ import (
 )
 
 type Daemon struct {
-	logger    log.Logger
-	clientCtx client.Context
+	logger      log.Logger
+	clientCtx   client.Context
+	cometClient *comethttp.HTTP
 
 	reqIDCh  chan uint64
 	taskCh   chan types.OracleTask
@@ -52,18 +54,18 @@ const (
 	defaultHTTPTimeout = 30 * time.Second
 )
 
-func New(cfg *config.Config) *Daemon {
+func New(cfg *config.Config) (*Daemon, error) {
 	logger := newLogger()
 	encCfg := newEncodingConfig()
 
 	cometClient, err := newCometClient(cfg, logger)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("create comet client: %w", err)
 	}
 
 	kr, address, err := newKeyring(cfg, encCfg, logger)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("init keyring: %w", err)
 	}
 
 	clientCtx := newClientContext(encCfg, cfg, cometClient, kr, address)
@@ -73,7 +75,7 @@ func New(cfg *config.Config) *Daemon {
 	categories, err := oracleQueryClient.Categories(ctx, &oracletypes.QueryCategoriesRequest{})
 	if err != nil {
 		logger.Error("get categories", "error", err)
-		return nil
+		return nil, fmt.Errorf("query categories: %w", err)
 	}
 
 	httpClient := &http.Client{Timeout: defaultHTTPTimeout}
@@ -84,17 +86,18 @@ func New(cfg *config.Config) *Daemon {
 	authQueryClient := authtypes.NewQueryClient(clientCtx)
 	accountInfo, err := fetchAccountInfo(ctx, authQueryClient, address, logger)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("fetch account info: %w", err)
 	}
 
 	baseFactory, err := buildTxFactory(ctx, clientCtx, cfg, accountInfo, logger)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("build tx factory: %w", err)
 	}
 
 	return &Daemon{
 		logger:            logger,
 		clientCtx:         clientCtx,
+		cometClient:       cometClient,
 		reqIDCh:           make(chan uint64, channelBuffer),
 		taskCh:            make(chan types.OracleTask, channelBuffer),
 		resultCh:          make(chan oracletypes.OracleReport, channelBuffer),
@@ -103,19 +106,26 @@ func New(cfg *config.Config) *Daemon {
 		submitter:         submitter.New(logger, cfg.Keyring.Name, address.String(), clientCtx.TxConfig, accountInfo, baseFactory, clientCtx),
 		authQueryClient:   authQueryClient,
 		oracleQueryClient: oracleQueryClient,
-	}
+	}, nil
 }
 
-func (d *Daemon) Start(ctx context.Context) {
+func (d *Daemon) Start(ctx context.Context) error {
 	go d.submitter.Start(ctx, d.resultCh)
 	go d.aggregator.Start(ctx, d.taskCh, d.resultCh)
 
 	if err := d.listener.Start(ctx, d.clientCtx.Client.(*comethttp.HTTP), d.reqIDCh); err != nil {
 		d.logger.Error("start listener", "error", err)
-		return
+		return fmt.Errorf("start listener: %w", err)
 	}
 
 	go d.mainLoop(ctx)
+
+	go func() {
+		<-ctx.Done()
+		d.stop()
+	}()
+
+	return nil
 }
 
 func (d *Daemon) mainLoop(ctx context.Context) {
@@ -137,6 +147,16 @@ func (d *Daemon) mainLoop(ctx context.Context) {
 				Nonce:    res.Request.Nonce,
 			}
 		}
+	}
+}
+
+func (d *Daemon) stop() {
+	if d.cometClient == nil || !d.cometClient.IsRunning() {
+		return
+	}
+
+	if err := d.cometClient.Stop(); err != nil {
+		d.logger.Error("stop comet client", "error", err)
 	}
 }
 

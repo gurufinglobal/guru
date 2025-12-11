@@ -69,24 +69,34 @@ func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, res
 
 	wg.Wait()
 
+	successCount := countNonNil(results)
+	if successCount == 0 {
+		a.logger.Error("all provider requests failed", "symbol", task.Symbol, "category", task.Category)
+		return
+	}
+
 	median := selectMiddleValue(results)
 	if median == nil {
 		a.logger.Error("failed to select middle value", "symbol", task.Symbol, "category", task.Category)
 		return
 	}
 
-	a.logger.Info("selected middle value", "symbol", task.Symbol, "category", task.Category, "value", median.Text('f', -1))
+	a.logger.Info("selected middle value", "symbol", task.Symbol, "category", task.Category, "value", median.Text('f', -1), "success_count", successCount, "total_providers", len(providers))
 
 	if resultCh == nil {
 		return
 	}
 
-	resultCh <- oracletypes.OracleReport{
+	select {
+	case <-ctx.Done():
+		a.logger.Debug("context canceled before emitting result", "symbol", task.Symbol, "category", task.Category)
+	case resultCh <- oracletypes.OracleReport{
 		RequestId: task.Id,
 		RawData:   median.Text('f', -1),
 		Provider:  "",
 		Nonce:     task.Nonce,
-		Signature: []byte{},
+		Signature: nil,
+	}:
 	}
 }
 
@@ -96,8 +106,18 @@ func selectMiddleValue(values []*big.Float) *big.Float {
 		return nil
 	}
 
-	sorted := make([]*big.Float, len(values))
-	copy(sorted, values)
+	valid := make([]*big.Float, 0, len(values))
+	for _, v := range values {
+		if v != nil {
+			valid = append(valid, v)
+		}
+	}
+	if len(valid) == 0 {
+		return nil
+	}
+
+	sorted := make([]*big.Float, len(valid))
+	copy(sorted, valid)
 
 	sort.Slice(sorted, func(i, j int) bool {
 		return sorted[i].Cmp(sorted[j]) < 0
@@ -108,4 +128,14 @@ func selectMiddleValue(values []*big.Float) *big.Float {
 		return sorted[mid-1]
 	}
 	return sorted[mid]
+}
+
+func countNonNil(values []*big.Float) int {
+	count := 0
+	for _, v := range values {
+		if v != nil {
+			count++
+		}
+	}
+	return count
 }

@@ -27,6 +27,9 @@ func New(logger log.Logger) *Listener {
 }
 
 func (l *Listener) Start(ctx context.Context, client MonitoringClient, reqIDCh chan<- uint64) error {
+	if client == nil {
+		return fmt.Errorf("monitoring client is nil")
+	}
 	query := fmt.Sprintf("tm.event='Tx' AND message.action='/%s.EventTypeOracleTask'", oracletypes.ModuleName)
 	subscriber := "oracle-listener"
 
@@ -37,7 +40,7 @@ func (l *Listener) Start(ctx context.Context, client MonitoringClient, reqIDCh c
 
 	go l.listenLoop(ctx, client, subscriber, query, eventCh, reqIDCh)
 
-	l.logger.Info("oracle listener started")
+	l.logger.Info("oracle listener started", "query", query)
 
 	return nil
 }
