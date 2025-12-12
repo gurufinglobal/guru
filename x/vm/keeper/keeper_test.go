@@ -3,13 +3,15 @@ package keeper_test
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/holiman/uint256"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/holiman/uint256"
 )
 
 func (suite *KeeperTestSuite) TestBaseFee() {

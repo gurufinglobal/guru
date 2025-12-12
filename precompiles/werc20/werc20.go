@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	erc20 "github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"

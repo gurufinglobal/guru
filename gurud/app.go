@@ -8,6 +8,31 @@ import (
 	"os"
 	"sort"
 
+	corevm "github.com/ethereum/go-ethereum/core/vm"
+	"github.com/gorilla/mux"
+	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cast"
+
+	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
+	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/gogoproto/proto"
+	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v10/modules/core"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
@@ -24,8 +49,7 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	abci "github.com/cometbft/cometbft/abci/types"
-	dbm "github.com/cosmos/cosmos-db"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -85,24 +109,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v10/modules/core"
-	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	corevm "github.com/ethereum/go-ethereum/core/vm"
-	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
-	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
-	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
-	"github.com/gorilla/mux"
-	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
+
 	evmante "github.com/gurufinglobal/guru/v2/ante"
 	cosmosevmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	evmosencoding "github.com/gurufinglobal/guru/v2/encoding"
@@ -141,7 +148,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/vm"
 	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/spf13/cast"
 )
 
 func init() {

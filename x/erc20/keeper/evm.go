@@ -3,12 +3,15 @@ package keeper
 import (
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"

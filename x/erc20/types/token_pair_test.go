@@ -4,11 +4,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/cometbft/cometbft/crypto/tmhash"
+
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type TokenPairTestSuite struct {

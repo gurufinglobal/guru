@@ -2,6 +2,7 @@ package testutil
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 )
 

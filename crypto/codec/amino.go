@@ -5,6 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 )
 

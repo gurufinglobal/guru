@@ -5,12 +5,15 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func TestConvertEvmCoinFrom18Decimals(t *testing.T) {

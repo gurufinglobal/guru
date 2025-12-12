@@ -3,10 +3,13 @@ package evidence
 import (
 	"fmt"
 
-	evidencekeeper "cosmossdk.io/x/evidence/keeper"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	evidencekeeper "cosmossdk.io/x/evidence/keeper"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 

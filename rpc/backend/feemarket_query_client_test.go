@@ -2,6 +2,7 @@ package backend
 
 import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"

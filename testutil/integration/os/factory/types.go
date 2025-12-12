@@ -1,9 +1,12 @@
 package factory
 
 import (
-	sdkmath "cosmossdk.io/math"
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+
+	sdkmath "cosmossdk.io/math"
+
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 

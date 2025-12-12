@@ -104,6 +104,19 @@ formatters:
   enable:
     - gci
     - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard                              # standard library
+        - default                               # third-party
+        - blank                                 # blank lines
+        - dot                                   # dot imports
+        - prefix(github.com/cometbft/cometbft)  # CometBFT
+        - prefix(github.com/cosmos)             # Cosmos
+        - prefix(cosmossdk.io)                  # Cosmos SDK
+        - prefix(github.com/cosmos/cosmos-sdk)  # Cosmos SDK
+        - prefix(github.com/gurufinglobal)      # Guru project internal
+      custom-order: true
   exclusions:
     generated: lax
     paths:

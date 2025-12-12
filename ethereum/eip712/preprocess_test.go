@@ -5,7 +5,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -14,12 +17,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/gurufinglobal/guru/v2/encoding"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/types"
-	"github.com/stretchr/testify/require"
 )
 
 // Testing Constants

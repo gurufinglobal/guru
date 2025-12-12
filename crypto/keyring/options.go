@@ -4,6 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmosLedger "github.com/cosmos/cosmos-sdk/crypto/ledger"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
+
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/wallets/ledger"

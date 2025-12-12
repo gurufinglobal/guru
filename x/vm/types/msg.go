@@ -5,9 +5,15 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	protov2 "google.golang.org/protobuf/proto"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	txsigning "cosmossdk.io/x/tx/signing"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -17,12 +23,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	evmapi "github.com/gurufinglobal/guru/v2/api/cosmos/evm/vm/v1"
 	"github.com/gurufinglobal/guru/v2/types"
-	protov2 "google.golang.org/protobuf/proto"
 )
 
 var (

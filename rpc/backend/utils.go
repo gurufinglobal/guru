@@ -7,20 +7,24 @@ import (
 	"sort"
 	"strings"
 
-	"cosmossdk.io/log"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/proto/tendermint/crypto"
-	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus/misc/eip1559"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/proto/tendermint/crypto"
+	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+
+	"cosmossdk.io/log"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 type txGasAndReward struct {

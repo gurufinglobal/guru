@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"cosmossdk.io/log"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"golang.org/x/sync/errgroup"
+
 	cmtcfg "github.com/cometbft/cometbft/config"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/node"
@@ -16,6 +18,9 @@ import (
 	"github.com/cometbft/cometbft/rpc/client/local"
 	"github.com/cometbft/cometbft/types"
 	cmttime "github.com/cometbft/cometbft/types/time"
+
+	"cosmossdk.io/log"
+
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
@@ -29,10 +34,9 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/gurufinglobal/guru/v2/server"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"golang.org/x/sync/errgroup"
 )
 
 func startInProcess(cfg Config, val *Validator) error {

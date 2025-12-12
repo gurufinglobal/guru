@@ -3,20 +3,23 @@ package common_test
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
+	"github.com/holiman/uint256"
+	"github.com/stretchr/testify/require"
+
 	storetypes "cosmossdk.io/store/types"
+
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/tracing"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	testutil "github.com/gurufinglobal/guru/v2/testutil"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/types/mocks"
-	"github.com/holiman/uint256"
-	"github.com/stretchr/testify/require"
 )
 
 func setupBalanceHandlerTest(t *testing.T) {

@@ -3,9 +3,11 @@ package keyring
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 )
 

@@ -6,6 +6,7 @@ import (
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/gurufinglobal/guru/v2/ante"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 )

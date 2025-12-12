@@ -2,8 +2,10 @@ package erc20_test
 
 import (
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/common/mocks"
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"

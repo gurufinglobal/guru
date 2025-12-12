@@ -4,19 +4,23 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/math"
-	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc/metadata"
+
+	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/spf13/viper"
-	"google.golang.org/grpc/metadata"
 )
 
 func (suite *BackendTestSuite) TestRPCMinGasPrice() {

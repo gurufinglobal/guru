@@ -5,6 +5,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
 	"github.com/gurufinglobal/guru/v2/types"
 )

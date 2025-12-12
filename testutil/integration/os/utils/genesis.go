@@ -3,6 +3,7 @@ package utils
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"

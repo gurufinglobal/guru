@@ -5,17 +5,21 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/ethereum/go-ethereum/common"
+
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibcgotesting "github.com/cosmos/ibc-go/v10/testing"
 	ibcmock "github.com/cosmos/ibc-go/v10/testing/mock"
-	"github.com/ethereum/go-ethereum/common"
+
+	"cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/testutil"

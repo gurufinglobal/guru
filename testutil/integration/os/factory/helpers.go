@@ -3,8 +3,10 @@ package factory
 import (
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
 	"github.com/ethereum/go-ethereum/common"
+
+	errorsmod "cosmossdk.io/errors"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )

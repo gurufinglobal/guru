@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"math/big"
 
+	gethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	gethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"

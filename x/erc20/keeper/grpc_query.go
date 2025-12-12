@@ -3,13 +3,16 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"cosmossdk.io/store/prefix"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 var _ types.QueryServer = Keeper{}

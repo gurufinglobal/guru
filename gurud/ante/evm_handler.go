@@ -2,6 +2,7 @@ package ante
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 )
 

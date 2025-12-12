@@ -3,6 +3,7 @@ package codec
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 )
 

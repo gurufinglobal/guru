@@ -1,10 +1,13 @@
 package miner
 
 import (
-	"cosmossdk.io/log"
-	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+
+	"cosmossdk.io/log"
+
+	"github.com/cosmos/cosmos-sdk/server"
+
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 )
 

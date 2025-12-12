@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/spf13/cobra"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/spf13/cobra"
 )
 
 // GetQueryCmd returns the parent command for all x/bank CLi query commands.

@@ -4,9 +4,10 @@ import (
 	"errors"
 	"math/big"
 
+	gethparams "github.com/ethereum/go-ethereum/params"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	gethparams "github.com/ethereum/go-ethereum/params"
 )
 
 // testChainID represents the ChainID used for the purpose of testing.

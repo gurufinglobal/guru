@@ -6,11 +6,13 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )

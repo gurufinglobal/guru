@@ -3,10 +3,13 @@ package gov_test
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/gov"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"

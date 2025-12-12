@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/gurufinglobal/guru/v2/precompiles/werc20"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"

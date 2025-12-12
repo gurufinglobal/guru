@@ -9,11 +9,13 @@ import (
 	"embed"
 	"fmt"
 
-	storetypes "cosmossdk.io/store/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	storetypes "cosmossdk.io/store/types"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	erc20keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"

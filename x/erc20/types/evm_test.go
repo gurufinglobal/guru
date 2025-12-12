@@ -3,8 +3,9 @@ package types_test
 import (
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 func TestNewERC20Data(t *testing.T) {

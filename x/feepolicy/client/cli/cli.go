@@ -3,9 +3,11 @@ package cli
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 	"github.com/spf13/cobra"
+
+	"github.com/cosmos/cosmos-sdk/client"
+
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
 // GetQueryCmd returns the cli query commands for the feepolicy module.

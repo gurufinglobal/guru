@@ -3,9 +3,11 @@ package backend
 import (
 	"encoding/json"
 
-	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
+	cmttypes "github.com/cometbft/cometbft/types"
+
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	ethrpc "github.com/gurufinglobal/guru/v2/rpc/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"

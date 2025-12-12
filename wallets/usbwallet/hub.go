@@ -10,8 +10,9 @@ import (
 	"time"
 
 	gethaccounts "github.com/ethereum/go-ethereum/accounts"
-	"github.com/gurufinglobal/guru/v2/wallets/accounts"
 	usb "github.com/zondax/hid"
+
+	"github.com/gurufinglobal/guru/v2/wallets/accounts"
 )
 
 const (

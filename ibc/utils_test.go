@@ -3,15 +3,19 @@ package ibc_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	cosmosevmibc "github.com/gurufinglobal/guru/v2/ibc"
 	precompilestestutil "github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/stretchr/testify/require"
 )
 
 func init() {

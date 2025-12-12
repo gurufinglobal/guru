@@ -5,16 +5,21 @@ import (
 	"math/big"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/vm"
+
 	abcitypes "github.com/cometbft/cometbft/abci/types"
+
+	"github.com/cosmos/gogoproto/proto"
+
+	errorsmod "cosmossdk.io/errors"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	testutiltypes "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/gogoproto/proto"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/vm"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"

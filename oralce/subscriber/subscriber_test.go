@@ -7,11 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/stretchr/testify/assert"
 	grpc "google.golang.org/grpc"
+
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+
+	"cosmossdk.io/log"
+
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // mockQueryClient implements oracletypes.QueryClient for unit tests

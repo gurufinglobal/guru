@@ -1,9 +1,11 @@
 package grpc
 
 import (
+	"github.com/ethereum/go-ethereum/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/ethereum/go-ethereum/common"
+
 	commongrpc "github.com/gurufinglobal/guru/v2/testutil/integration/common/grpc"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"

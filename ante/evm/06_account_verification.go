@@ -1,11 +1,14 @@
 package evm
 
 import (
+	"github.com/ethereum/go-ethereum/common"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/common"
+
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"

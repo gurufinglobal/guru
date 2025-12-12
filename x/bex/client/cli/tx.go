@@ -5,16 +5,19 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/gurufinglobal/guru/v2/x/bex/types"
-	"github.com/spf13/cobra"
 )
 
 func NewRegisterAdminTxCmd() *cobra.Command {

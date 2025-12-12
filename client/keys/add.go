@@ -8,6 +8,10 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/spf13/cobra"
+
+	bip39 "github.com/cosmos/go-bip39"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/input"
@@ -17,9 +21,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bip39 "github.com/cosmos/go-bip39"
+
 	cryptohd "github.com/gurufinglobal/guru/v2/crypto/hd"
-	"github.com/spf13/cobra"
 )
 
 const (

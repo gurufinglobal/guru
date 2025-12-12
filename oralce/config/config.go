@@ -8,12 +8,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pelletier/go-toml/v2"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/encoding"
 	guruconfig "github.com/gurufinglobal/guru/v2/server/config"
-	"github.com/pelletier/go-toml/v2"
 )
 
 var home = flag.String("home", homeDir(), "oracle daemon home directory")

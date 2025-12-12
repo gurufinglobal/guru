@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 

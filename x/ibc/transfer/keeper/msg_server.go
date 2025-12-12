@@ -4,13 +4,17 @@ import (
 	"context"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/hashicorp/go-metrics"
+
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+
 	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	"github.com/hashicorp/go-metrics"
 )
 
 var _ types.MsgServer = Keeper{}

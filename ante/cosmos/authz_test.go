@@ -6,22 +6,26 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/require"
+
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAuthzLimiterDecorator(t *testing.T) {

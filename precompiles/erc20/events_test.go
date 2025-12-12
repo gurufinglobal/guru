@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	erc20precompile "github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"

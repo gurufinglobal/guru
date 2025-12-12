@@ -8,6 +8,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"

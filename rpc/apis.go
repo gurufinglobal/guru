@@ -3,10 +3,13 @@ package rpc
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/rpc"
+
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/ethereum/go-ethereum/rpc"
+
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/debug"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/eth"

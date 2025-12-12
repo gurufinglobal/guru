@@ -2,6 +2,7 @@ package gurud
 
 import (
 	"github.com/ethereum/go-ethereum/core/vm"
+
 	"github.com/gurufinglobal/guru/v2/gurud/eips"
 )
 

@@ -2,6 +2,7 @@ package config
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )

@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/cometbft/cometbft/libs/bytes"
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"google.golang.org/grpc/metadata"
+
+	"github.com/cometbft/cometbft/libs/bytes"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"google.golang.org/grpc/metadata"
 )
 
 func (suite *BackendTestSuite) TestGetCode() {

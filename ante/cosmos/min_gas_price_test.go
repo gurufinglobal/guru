@@ -4,8 +4,10 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"

@@ -3,16 +3,21 @@ package indexer
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/log"
+	"github.com/ethereum/go-ethereum/common"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
+
 	dbm "github.com/cosmos/cosmos-db"
+
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/log"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-	"github.com/ethereum/go-ethereum/common"
+
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"

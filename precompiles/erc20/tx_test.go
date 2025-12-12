@@ -3,17 +3,20 @@ package erc20_test
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/holiman/uint256"
+
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	"github.com/ethereum/go-ethereum/core/vm"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	"github.com/holiman/uint256"
 )
 
 var (

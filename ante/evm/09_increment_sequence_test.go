@@ -3,6 +3,7 @@ package evm_test
 import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"

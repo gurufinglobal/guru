@@ -6,6 +6,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
 )

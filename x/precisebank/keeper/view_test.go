@@ -4,11 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestKeeper_GetBalance(t *testing.T) {

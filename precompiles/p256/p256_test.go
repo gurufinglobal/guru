@@ -5,9 +5,11 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 
-	"github.com/cometbft/cometbft/crypto"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/cometbft/cometbft/crypto"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/p256"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )

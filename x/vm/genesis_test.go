@@ -3,10 +3,14 @@ package vm_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/holiman/uint256"
+	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
@@ -17,8 +21,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/vm"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/holiman/uint256"
-	"github.com/stretchr/testify/require"
 )
 
 type GenesisTestSuite struct {

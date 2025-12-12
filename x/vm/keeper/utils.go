@@ -1,9 +1,12 @@
 package keeper
 
 import (
-	"cosmossdk.io/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	"cosmossdk.io/store/prefix"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 

@@ -5,8 +5,10 @@ import (
 	"slices"
 	"sort"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )

@@ -4,11 +4,14 @@ import (
 	"math"
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )

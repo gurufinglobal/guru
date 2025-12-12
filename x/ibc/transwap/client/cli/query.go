@@ -3,11 +3,13 @@ package cli
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
+
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
-	"github.com/spf13/cobra"
 )
 
 // GetCmdQueryDenom defines the command to query a denomination from a given hash or ibc denom.

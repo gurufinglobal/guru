@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"

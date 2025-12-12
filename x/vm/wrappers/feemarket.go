@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )

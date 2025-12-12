@@ -4,11 +4,13 @@ import (
 	"math"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestQueryModerator(t *testing.T) {

@@ -3,13 +3,15 @@ package client
 import (
 	"bufio"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/spf13/cobra"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/input"
 	"github.com/cosmos/cosmos-sdk/crypto"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
-	"github.com/spf13/cobra"
 )
 
 // UnsafeImportKeyCommand imports private keys from a keyfile.

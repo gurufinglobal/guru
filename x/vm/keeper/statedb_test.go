@@ -6,8 +6,18 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/tracing"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
+	ethparams "github.com/ethereum/go-ethereum/params"
+	"github.com/holiman/uint256"
+	"github.com/stretchr/testify/require"
+
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -16,12 +26,7 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/tracing"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/crypto"
-	ethparams "github.com/ethereum/go-ethereum/params"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	testfactory "github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -31,8 +36,6 @@ import (
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/holiman/uint256"
-	"github.com/stretchr/testify/require"
 )
 
 func (suite *KeeperTestSuite) TestCreateAccount() {

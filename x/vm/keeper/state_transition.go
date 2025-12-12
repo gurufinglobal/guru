@@ -3,12 +3,6 @@ package keeper
 import (
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
-	cmttypes "github.com/cometbft/cometbft/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/tracing"
@@ -16,6 +10,16 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
+
+	cmttypes "github.com/cometbft/cometbft/types"
+
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	"github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"

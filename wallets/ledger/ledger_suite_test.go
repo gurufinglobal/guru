@@ -6,7 +6,10 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codecTypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -16,12 +19,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	auxTx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/wallets/ledger"
 	"github.com/gurufinglobal/guru/v2/wallets/ledger/mocks"
 	"github.com/gurufinglobal/guru/v2/wallets/usbwallet"
-	"github.com/stretchr/testify/suite"
 )
 
 type LedgerTestSuite struct {

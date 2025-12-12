@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"io"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	cryptokeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"sigs.k8s.io/yaml"
 )
 
 // available output formats.

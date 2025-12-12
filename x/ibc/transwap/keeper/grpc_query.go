@@ -5,15 +5,19 @@ import (
 	"fmt"
 	"strings"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var _ types.QueryServer = (*Keeper)(nil)

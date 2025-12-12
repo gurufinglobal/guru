@@ -3,10 +3,13 @@ package evm
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/common"
+
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	"github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"

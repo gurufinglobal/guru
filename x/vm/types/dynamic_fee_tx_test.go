@@ -4,13 +4,15 @@ import (
 	"math/big"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type TxDataTestSuite struct {

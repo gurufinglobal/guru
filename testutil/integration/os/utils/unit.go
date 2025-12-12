@@ -7,11 +7,14 @@ package utils
 import (
 	"fmt"
 
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 )

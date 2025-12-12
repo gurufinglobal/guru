@@ -3,9 +3,11 @@ package keeper_test
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/x/erc20/keeper/testdata"

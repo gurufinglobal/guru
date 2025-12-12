@@ -3,11 +3,14 @@ package common_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/stretchr/testify/require"
 )
 
 var largeAmt, _ = math.NewIntFromString("1000000000000000000000000000000000000000")

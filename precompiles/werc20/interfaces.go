@@ -3,8 +3,9 @@ package werc20
 import (
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type Erc20Keeper interface {

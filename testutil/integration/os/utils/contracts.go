@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
+
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )

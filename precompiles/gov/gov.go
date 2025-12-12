@@ -4,15 +4,18 @@ import (
 	"embed"
 	"fmt"
 
-	"cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	"cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )

@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	evidencetypes "cosmossdk.io/x/evidence/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/ethereum/go-ethereum/common"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 

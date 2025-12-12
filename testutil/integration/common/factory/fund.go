@@ -5,6 +5,7 @@ import (
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 )
 

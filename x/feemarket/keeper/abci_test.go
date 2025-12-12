@@ -3,10 +3,13 @@ package keeper_test
 import (
 	"testing"
 
-	storetypes "cosmossdk.io/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/stretchr/testify/require"
+
+	storetypes "cosmossdk.io/store/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 )
 
 func TestEndBlock(t *testing.T) {

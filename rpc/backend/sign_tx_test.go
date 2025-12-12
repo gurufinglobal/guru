@@ -3,20 +3,23 @@ package backend
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/crypto"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	goethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"google.golang.org/grpc/metadata"
+
+	"cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/crypto"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
+
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"google.golang.org/grpc/metadata"
 )
 
 func (suite *BackendTestSuite) TestSendTransaction() {

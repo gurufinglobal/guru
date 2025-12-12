@@ -6,13 +6,19 @@ import (
 	"math/big"
 	"slices"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+
+	//nolint:revive // dot imports are fine for Gomega
+	. "github.com/onsi/gomega"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -20,8 +26,6 @@ import (
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	//nolint:revive // dot imports are fine for Gomega
-	. "github.com/onsi/gomega"
 )
 
 // CallType indicates which type of contract call is made during the integration tests.

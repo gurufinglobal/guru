@@ -3,17 +3,20 @@ package bank_test
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
+
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/bank"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	integrationutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
-	"github.com/stretchr/testify/suite"
 )
 
 var s *PrecompileTestSuite

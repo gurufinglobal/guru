@@ -4,18 +4,22 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/math"
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/pkg/errors"
+
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/pkg/errors"
 )
 
 // ChainID is the EIP-155 replay-protection chain id for the current ethereum chain config.

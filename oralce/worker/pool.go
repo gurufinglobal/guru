@@ -7,12 +7,14 @@ import (
 	"strconv"
 	"time"
 
-	"cosmossdk.io/log"
 	"github.com/creachadair/taskgroup"
+	cmap "github.com/orcaman/concurrent-map/v2"
+
+	"cosmossdk.io/log"
+
 	"github.com/gurufinglobal/guru/v2/oralce/config"
 	"github.com/gurufinglobal/guru/v2/oralce/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
 type Pool struct {

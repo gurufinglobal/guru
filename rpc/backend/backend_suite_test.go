@@ -7,14 +7,19 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/suite"
+
 	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+
 	dbm "github.com/cosmos/cosmos-db"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/encoding"
 	"github.com/gurufinglobal/guru/v2/indexer"
@@ -25,7 +30,6 @@ import (
 	testnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type BackendTestSuite struct {

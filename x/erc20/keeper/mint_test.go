@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )

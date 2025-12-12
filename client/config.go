@@ -4,10 +4,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cometbft/cometbft/libs/cli"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/cometbft/cometbft/libs/cli"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
 )
 
 // InitConfig adds the chain-id, encoding and output flags to the persistent flag set.

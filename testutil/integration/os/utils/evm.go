@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"

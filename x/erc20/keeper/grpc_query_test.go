@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"

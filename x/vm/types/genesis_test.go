@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 )
 
 type GenesisTestSuite struct {

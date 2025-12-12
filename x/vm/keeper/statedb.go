@@ -4,14 +4,17 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/holiman/uint256"
+
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/holiman/uint256"
 )
 
 var _ statedb.Keeper = &Keeper{}

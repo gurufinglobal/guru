@@ -3,17 +3,20 @@ package distribution_test
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/holiman/uint256"
+
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/ethereum/go-ethereum/core/vm"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/holiman/uint256"
 )
 
 var expValAmount int64 = 1

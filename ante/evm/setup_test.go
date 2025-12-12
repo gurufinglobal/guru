@@ -3,8 +3,9 @@ package evm_test
 import (
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/ante/testutils"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/gurufinglobal/guru/v2/ante/testutils"
 )
 
 type AnteTestSuite struct {

@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/suite"
+
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type UnitTestSuite struct {

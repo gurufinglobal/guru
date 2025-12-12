@@ -4,12 +4,17 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
@@ -17,7 +22,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/stretchr/testify/require"
 )
 
 var _ anteinterfaces.FeeMarketKeeper = MockFeemarketKeeper{}

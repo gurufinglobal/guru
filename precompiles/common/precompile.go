@@ -3,14 +3,17 @@ package common
 import (
 	"errors"
 
-	storetypes "cosmossdk.io/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/holiman/uint256"
+
+	storetypes "cosmossdk.io/store/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 )
 
 // Precompile is a common struct for all precompiles that holds the common data each

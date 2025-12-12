@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 

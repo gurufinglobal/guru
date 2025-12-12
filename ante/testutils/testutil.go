@@ -3,10 +3,14 @@ package testutils
 import (
 	"math"
 
+	"github.com/stretchr/testify/suite"
+
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+
 	"github.com/gurufinglobal/guru/v2/ante"
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
@@ -18,7 +22,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type AnteTestSuite struct {

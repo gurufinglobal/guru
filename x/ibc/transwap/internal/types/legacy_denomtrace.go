@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
+
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 

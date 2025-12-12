@@ -6,15 +6,18 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/spf13/cobra"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/spf13/cobra"
 )
 
 // GetTxCmd returns the transaction commands for this module

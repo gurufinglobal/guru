@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 

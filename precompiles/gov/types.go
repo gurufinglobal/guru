@@ -4,14 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+
 	sdkerrors "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/utils"
 )

@@ -3,10 +3,13 @@ package keeper_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 )
 
 func TestSetGetBlockGasWanted(t *testing.T) {

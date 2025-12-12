@@ -3,12 +3,14 @@ package testutil
 import (
 	"testing"
 
-	storetypes "cosmossdk.io/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
+
+	storetypes "cosmossdk.io/store/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewPrecompileContract creates a new precompile contract and sets the gas meter.

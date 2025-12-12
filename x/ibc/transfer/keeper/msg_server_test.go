@@ -4,20 +4,24 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stretchr/testify/mock"
+
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/stretchr/testify/mock"
 )
 
 func (suite *KeeperTestSuite) TestTransfer() {

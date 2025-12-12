@@ -7,17 +7,19 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	cosmosclientdebug "github.com/cosmos/cosmos-sdk/client/debug"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
-	"github.com/ethereum/go-ethereum/common"
+
 	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 )
 
 var flagPrefix = "prefix"

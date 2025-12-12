@@ -1,8 +1,10 @@
 package txpool
 
 import (
-	"cosmossdk.io/log"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+
+	"cosmossdk.io/log"
+
 	"github.com/gurufinglobal/guru/v2/rpc/types"
 )
 

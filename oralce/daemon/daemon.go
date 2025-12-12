@@ -8,13 +8,18 @@ import (
 	"strconv"
 	"time"
 
-	"cosmossdk.io/log"
+	"github.com/rs/zerolog"
+
 	comethttp "github.com/cometbft/cometbft/rpc/client/http"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+
+	"cosmossdk.io/log"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	guruconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/encoding"
 	"github.com/gurufinglobal/guru/v2/oralce/config"
@@ -23,7 +28,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/oralce/types"
 	"github.com/gurufinglobal/guru/v2/oralce/worker"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/rs/zerolog"
 )
 
 // Daemon is the main Oracle service that coordinates all Oracle operations

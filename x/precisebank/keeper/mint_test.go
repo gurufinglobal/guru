@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
 	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMintCoins_PanicValidations(t *testing.T) {

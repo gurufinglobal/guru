@@ -3,6 +3,7 @@ package web3
 import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/gurufinglobal/guru/v2/version"
 )
 

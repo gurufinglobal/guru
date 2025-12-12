@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 )
 

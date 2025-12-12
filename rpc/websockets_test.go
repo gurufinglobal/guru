@@ -7,12 +7,16 @@ import (
 	"strings"
 	"testing"
 
-	"cosmossdk.io/log"
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/gorilla/websocket"
-	"github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/stretchr/testify/require"
+
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+
+	"cosmossdk.io/log"
+
+	"github.com/cosmos/cosmos-sdk/client"
+
+	"github.com/gurufinglobal/guru/v2/server/config"
 )
 
 func newTestWebsocketServer() *websocketsServer {

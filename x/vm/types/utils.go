@@ -6,13 +6,16 @@ import (
 	"math/big"
 	"sort"
 
-	errorsmod "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/cosmos/gogoproto/proto"
+
+	errorsmod "cosmossdk.io/errors"
+	storetypes "cosmossdk.io/store/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (

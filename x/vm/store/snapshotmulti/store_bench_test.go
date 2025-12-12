@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"testing"
 
+	dbm "github.com/cosmos/cosmos-db"
+
 	"cosmossdk.io/store/cachekv"
 	"cosmossdk.io/store/dbadapter"
 	"cosmossdk.io/store/types"
-	dbm "github.com/cosmos/cosmos-db"
 )
 
 var (

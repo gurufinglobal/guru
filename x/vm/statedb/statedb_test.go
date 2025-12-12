@@ -5,17 +5,19 @@ import (
 	"math/big"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	ethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	"github.com/gurufinglobal/guru/v2/x/vm/types/mocks"
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/suite"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/gurufinglobal/guru/v2/x/vm/types/mocks"
 )
 
 var (

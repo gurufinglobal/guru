@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	cmnfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	cmnnet "github.com/gurufinglobal/guru/v2/testutil/integration/common/network"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"

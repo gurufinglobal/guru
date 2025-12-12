@@ -5,17 +5,21 @@ import (
 	"net/http"
 	"time"
 
-	"cosmossdk.io/log"
-	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	sdkserver "github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/gorilla/mux"
-	"github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/netutil"
+
+	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+
+	"cosmossdk.io/log"
+
+	sdkserver "github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/version"
+
+	"github.com/gurufinglobal/guru/v2/server/config"
 )
 
 // AddCommands adds server commands

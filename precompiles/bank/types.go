@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 

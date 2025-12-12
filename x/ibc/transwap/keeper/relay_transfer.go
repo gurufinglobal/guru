@@ -1,11 +1,14 @@
 package keeper
 
 import (
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )

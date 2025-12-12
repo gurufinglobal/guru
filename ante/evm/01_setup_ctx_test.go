@@ -4,7 +4,9 @@ import (
 	"math/big"
 
 	storetypes "cosmossdk.io/store/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"

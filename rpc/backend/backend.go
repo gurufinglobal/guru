@@ -6,19 +6,23 @@ import (
 	"math/big"
 	"time"
 
-	"cosmossdk.io/log"
-	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+
+	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+
+	"cosmossdk.io/log"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"

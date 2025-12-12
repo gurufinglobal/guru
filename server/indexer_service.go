@@ -8,6 +8,7 @@ import (
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cometbft/cometbft/types"
+
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 )
 

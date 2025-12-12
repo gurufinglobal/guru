@@ -4,7 +4,13 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/spf13/cobra"
+
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/ginkgo/v2"
+
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -14,15 +20,13 @@ import (
 	sdktestutilmod "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
+
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/encoding"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/gurufinglobal/guru/v2/tests/integration/ledger/mocks"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/ginkgo/v2"
-	"github.com/spf13/cobra"
 )
 
 var (

@@ -5,16 +5,19 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
+
+	proto "github.com/cosmos/gogoproto/proto"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	proto "github.com/cosmos/gogoproto/proto"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/encoding"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestEvmDataEncoding(t *testing.T) {

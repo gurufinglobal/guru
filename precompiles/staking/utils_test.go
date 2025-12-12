@@ -6,15 +6,19 @@ import (
 	"slices"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/gomega"
+
 	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/gomega"
 )
 
 // assertValidatorsResponse asserts all the fields on the validators response

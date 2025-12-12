@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"reflect"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 

@@ -3,8 +3,9 @@ package erc20
 import (
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // revive:disable-next-line exported

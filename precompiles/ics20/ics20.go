@@ -4,13 +4,17 @@ import (
 	"embed"
 	"fmt"
 
-	storetypes "cosmossdk.io/store/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
+
+	storetypes "cosmossdk.io/store/types"
+
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"

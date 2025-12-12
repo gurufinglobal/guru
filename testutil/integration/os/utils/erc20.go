@@ -3,10 +3,13 @@ package utils
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	errorsmod "cosmossdk.io/errors"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"

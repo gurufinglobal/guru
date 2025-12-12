@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 

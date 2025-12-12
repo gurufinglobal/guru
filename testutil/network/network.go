@@ -17,13 +17,21 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
-	"cosmossdk.io/math"
-	pruningtypes "cosmossdk.io/store/pruning/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cometbft/cometbft/node"
 	cmtclient "github.com/cometbft/cometbft/rpc/client"
+
 	dbm "github.com/cosmos/cosmos-db"
+
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
+	pruningtypes "cosmossdk.io/store/pruning/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -42,16 +50,13 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/ethereum/go-ethereum/ethclient"
+
 	chaincmd "github.com/gurufinglobal/guru/v2/cmd/gurud/cmd"
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	"github.com/spf13/cobra"
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
 )
 
 // package-wide network lock to only allow one test network at a time

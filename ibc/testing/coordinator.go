@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	"github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/stretchr/testify/require"
+
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+
+	"github.com/gurufinglobal/guru/v2/gurud"
 )
 
 var (

@@ -3,9 +3,11 @@ package types_test
 import (
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func newIntPtr(i int64) *sdkmath.Int {

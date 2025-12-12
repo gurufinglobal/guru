@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/types"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/evidence"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"

@@ -5,8 +5,9 @@ import (
 	"os"
 	"testing"
 
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/stretchr/testify/require"
+
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func TestHardhatCompiledContract(t *testing.T) {

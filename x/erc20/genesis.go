@@ -3,9 +3,11 @@ package erc20
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/x/erc20/keeper"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )

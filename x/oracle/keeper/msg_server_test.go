@@ -3,8 +3,9 @@ package keeper
 import (
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 const (

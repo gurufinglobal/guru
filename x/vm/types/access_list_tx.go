@@ -3,11 +3,14 @@ package types
 import (
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/gurufinglobal/guru/v2/types"
 	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
 )

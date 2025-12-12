@@ -3,10 +3,13 @@ package evm_test
 import (
 	"math/big"
 
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	"github.com/gurufinglobal/guru/v2/ante/testutils"
 	"github.com/gurufinglobal/guru/v2/server/config"

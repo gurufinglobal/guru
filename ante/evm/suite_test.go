@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/stretchr/testify/suite"
+
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
 // EvmAnteTestSuite aims to test all EVM ante handler unit functions.

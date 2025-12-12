@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func TestValidateApprovalEventDoesNotExist(t *testing.T) {

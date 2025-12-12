@@ -5,19 +5,22 @@ import (
 	"math/big"
 	"strconv"
 
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/trie"
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
+
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // BlockNumber returns the current block number in abci app state. Because abci

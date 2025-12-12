@@ -1,9 +1,12 @@
 package feemarket
 
 import (
-	errorsmod "cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/feemarket/keeper"
 	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 )

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/core/vm"
+
 	"github.com/gurufinglobal/guru/v2/ibc"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )

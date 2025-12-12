@@ -6,17 +6,21 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/holiman/uint256"
+	"golang.org/x/exp/constraints"
+
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+
 	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-	"github.com/holiman/uint256"
-	"golang.org/x/exp/constraints"
 )
 
 // Bech32StringFromHexAddress takes a given Hex string and derives a Cosmos SDK account address

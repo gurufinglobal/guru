@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+
 	"github.com/gurufinglobal/guru/v2/types"
 )
 

@@ -3,14 +3,17 @@ package cli
 import (
 	"os"
 
+	"github.com/spf13/cobra"
+
 	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-	"github.com/spf13/cobra"
 )
 
 // NewChangeModeratorTxCmd returns the cli command for changing the moderator address.

@@ -5,12 +5,15 @@ import (
 	"math/big"
 	"slices"
 
-	errorsmod "cosmossdk.io/errors"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
+
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
+
+	errorsmod "cosmossdk.io/errors"
+
 	"github.com/gurufinglobal/guru/v2/types"
 )
 

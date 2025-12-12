@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 

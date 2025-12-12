@@ -4,13 +4,17 @@ import (
 	"math"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
+
 	app "github.com/gurufinglobal/guru/v2/gurud"
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"

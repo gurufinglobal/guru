@@ -24,8 +24,9 @@ import (
 	"os"
 	"runtime/trace"
 
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	stderrors "github.com/pkg/errors"
+
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 )
 
 // StartGoTrace turns on tracing, writing to the given file.

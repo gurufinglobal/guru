@@ -6,13 +6,16 @@ import (
 	"os"
 	"time"
 
-	"cosmossdk.io/log"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	"cosmossdk.io/log"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 	"github.com/gurufinglobal/guru/v2/types"

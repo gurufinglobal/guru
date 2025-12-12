@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"math/big"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/holiman/uint256"
+
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ConvertAmountToLegacy18Decimals convert the given amount into a 18 decimals

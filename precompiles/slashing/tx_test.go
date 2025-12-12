@@ -3,8 +3,10 @@ package slashing_test
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/slashing"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"

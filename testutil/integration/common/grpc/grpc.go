@@ -6,6 +6,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/gurufinglobal/guru/v2/testutil/integration/common/network"
 )
 

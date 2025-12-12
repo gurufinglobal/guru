@@ -4,10 +4,18 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // dot imports are fine for Ginkgo
+	. "github.com/onsi/gomega"
+
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/bank"
 	"github.com/gurufinglobal/guru/v2/precompiles/bank/testdata"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
@@ -18,10 +26,6 @@ import (
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/ginkgo/v2"
-	//nolint:revive // dot imports are fine for Ginkgo
-	. "github.com/onsi/gomega"
 )
 
 var is *IntegrationTestSuite

@@ -5,10 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/holiman/uint256"
+
+	ibctypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	evtypes "cosmossdk.io/x/evidence/types"
 	"cosmossdk.io/x/feegrant"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -27,16 +34,13 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gurufinglobal/guru/v2/ante/testutils"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/holiman/uint256"
 )
 
 func (suite *AnteTestSuite) CreateTxBuilder(privKey cryptotypes.PrivKey, txArgs evmtypes.EvmTxArgs, unsetExtensionOptions ...bool) client.TxBuilder {

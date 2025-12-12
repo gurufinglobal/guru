@@ -5,16 +5,18 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/stretchr/testify/require"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
+
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/stretchr/testify/require"
 )
 
 var templateAccessListTx = &ethtypes.AccessListTx{

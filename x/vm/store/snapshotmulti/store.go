@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	storetypes "cosmossdk.io/store/types"
+
 	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotkv"
 	"github.com/gurufinglobal/guru/v2/x/vm/store/types"
 	vmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"

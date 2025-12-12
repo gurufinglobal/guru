@@ -13,8 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/gurufinglobal/guru/v2/wallets/accounts"
 	usb "github.com/zondax/hid"
+
+	"github.com/gurufinglobal/guru/v2/wallets/accounts"
 )
 
 // Maximum time between wallet health checks to detect USB unplugs.

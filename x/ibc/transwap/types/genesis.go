@@ -1,8 +1,9 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewGenesisState creates a new ibc-transfer GenesisState instance.

@@ -7,15 +7,18 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/gurufinglobal/guru/v2/precompiles/p256"
+	"github.com/stretchr/testify/suite"
+	"golang.org/x/crypto/cryptobyte"
+	"golang.org/x/crypto/cryptobyte/asn1"
+
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/ginkgo/v2"
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
-	"github.com/stretchr/testify/suite"
-	"golang.org/x/crypto/cryptobyte"
-	"golang.org/x/crypto/cryptobyte/asn1"
+
+	"github.com/cometbft/cometbft/crypto"
+
+	"github.com/gurufinglobal/guru/v2/precompiles/p256"
 )
 
 var s *PrecompileTestSuite
