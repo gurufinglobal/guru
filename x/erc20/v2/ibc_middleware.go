@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -14,6 +13,8 @@ import (
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 var _ ibcapi.IBCModule = &IBCMiddleware{}

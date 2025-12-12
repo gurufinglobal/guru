@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 )
 
 func TestFractionalBalanceKey(t *testing.T) {

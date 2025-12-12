@@ -11,14 +11,14 @@ import (
 
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 var _ types.MsgServer = &Keeper{}

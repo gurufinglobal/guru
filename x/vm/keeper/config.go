@@ -6,12 +6,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // EVMConfig creates the EVMConfig based on current state

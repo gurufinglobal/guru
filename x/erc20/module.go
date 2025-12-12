@@ -11,10 +11,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/gurufinglobal/guru/v2/x/erc20/client/cli"
-	"github.com/gurufinglobal/guru/v2/x/erc20/keeper"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-
 	"cosmossdk.io/core/appmodule"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -24,6 +20,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+
+	"github.com/gurufinglobal/guru/v2/x/erc20/client/cli"
+	"github.com/gurufinglobal/guru/v2/x/erc20/keeper"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 // consensusVersion defines the current x/erc20 module consensus version.

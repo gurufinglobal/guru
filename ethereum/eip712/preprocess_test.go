@@ -7,12 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/encoding"
-	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/types"
-
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -23,6 +17,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/gurufinglobal/guru/v2/encoding"
+	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/types"
 )
 
 // Testing Constants
@@ -36,7 +36,7 @@ var (
 
 	// feePayerAddress is the address of the fee payer used in EIP-712 tests.
 	// Checksum should vary based on bech32 prefix.
-	feePayerAddress = "guru17xpfvakm2amg962yls6f84z3kell8c5lgrrm6r" //serqta, grrm6r
+	feePayerAddress = "guru17xpfvakm2amg962yls6f84z3kell8c5lgrrm6r" // serqta, grrm6r
 )
 
 type TestCaseStruct struct {

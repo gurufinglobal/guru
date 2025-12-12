@@ -14,10 +14,10 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/suite"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/gurufinglobal/guru/v2/x/vm/types/mocks"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (

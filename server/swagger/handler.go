@@ -47,6 +47,10 @@ func RegisterCustomSwaggerAPI(rtr *mux.Router, grpcGateway *gwruntime.ServeMux) 
 
 		// Merge static swagger with custom paths
 		mergedSwagger := MergeSwaggerContent(staticSwagger, customPaths)
-		w.Write([]byte(mergedSwagger))
+		_, err = w.Write([]byte(mergedSwagger))
+		if err != nil {
+			http.Error(w, "Failed to write merged swagger content", http.StatusInternalServerError)
+			return
+		}
 	})
 }

@@ -8,12 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 
-	"github.com/gurufinglobal/guru/v2/ante/testutils"
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
-	"github.com/gurufinglobal/guru/v2/testutil"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	ibctypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 
@@ -40,6 +34,13 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/gurufinglobal/guru/v2/ante/testutils"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
+	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
+	"github.com/gurufinglobal/guru/v2/testutil"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func (suite *AnteTestSuite) CreateTxBuilder(privKey cryptotypes.PrivKey, txArgs evmtypes.EvmTxArgs, unsetExtensionOptions ...bool) client.TxBuilder {

@@ -5,10 +5,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	//nolint:revive,ST1001 // dot imports are fine for Ginkgo
+	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/ginkgo/v2"
-	//nolint:revive,ST1001 // dot imports are fine for Ginkgo
+	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/slashing/testdata"
@@ -16,10 +20,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestPrecompileIntegrationTestSuite(t *testing.T) {

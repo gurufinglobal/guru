@@ -20,7 +20,7 @@ const (
 
 // Event attribute keys
 const (
-	AttributeKeyRequestId        = "request_id"
+	AttributeKeyRequestID        = "request_id"
 	AttributeKeyOracleType       = "oracle_type"
 	AttributeKeyName             = "name"
 	AttributeKeyDescription      = "description"

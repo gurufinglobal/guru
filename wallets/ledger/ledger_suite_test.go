@@ -8,12 +8,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	"github.com/gurufinglobal/guru/v2/wallets/ledger"
-	"github.com/gurufinglobal/guru/v2/wallets/ledger/mocks"
-	"github.com/gurufinglobal/guru/v2/wallets/usbwallet"
-
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -25,6 +19,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	auxTx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/wallets/ledger"
+	"github.com/gurufinglobal/guru/v2/wallets/ledger/mocks"
+	"github.com/gurufinglobal/guru/v2/wallets/usbwallet"
 )
 
 type LedgerTestSuite struct {

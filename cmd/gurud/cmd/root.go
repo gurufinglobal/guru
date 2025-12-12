@@ -12,14 +12,6 @@ import (
 	tmcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 
-	cosmosevmcmd "github.com/gurufinglobal/guru/v2/client"
-	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
-	"github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/gurud/testutil"
-	cosmosevmserver "github.com/gurufinglobal/guru/v2/server"
-	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
-	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"
@@ -49,6 +41,15 @@ import (
 	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+
+	cosmosevmcmd "github.com/gurufinglobal/guru/v2/client"
+	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
+	"github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/gurud/testutil"
+	cosmosevmserver "github.com/gurufinglobal/guru/v2/server"
+	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
+	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
 )
 
 // NewRootCmd creates a new root command for gurud. It is called once in the

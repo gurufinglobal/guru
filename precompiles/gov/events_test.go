@@ -6,13 +6,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	"github.com/gurufinglobal/guru/v2/precompiles/gov"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-
 	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	"github.com/gurufinglobal/guru/v2/precompiles/gov"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 )
 
 func (s *PrecompileTestSuite) TestVoteEvent() {

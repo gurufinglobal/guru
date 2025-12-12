@@ -3,15 +3,16 @@ package keeper_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
 func TestChangeModerator(t *testing.T) {

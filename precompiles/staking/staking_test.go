@@ -10,6 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
@@ -17,11 +22,6 @@ import (
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (s *PrecompileTestSuite) TestIsTransaction() {

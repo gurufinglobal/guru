@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 )
 
 func TestQueryParams(t *testing.T) {

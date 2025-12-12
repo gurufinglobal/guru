@@ -10,13 +10,13 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/gurufinglobal/guru/v2/server/config"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+
+	"github.com/gurufinglobal/guru/v2/server/config"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func (tf *IntegrationTxFactory) GenerateDefaultTxTypeArgs(sender common.Address, txType int) (evmtypes.EvmTxArgs, error) {

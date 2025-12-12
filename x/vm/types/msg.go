@@ -10,9 +10,6 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	protov2 "google.golang.org/protobuf/proto"
 
-	evmapi "github.com/gurufinglobal/guru/v2/api/cosmos/evm/vm/v1"
-	"github.com/gurufinglobal/guru/v2/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	txsigning "cosmossdk.io/x/tx/signing"
@@ -26,6 +23,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+
+	evmapi "github.com/gurufinglobal/guru/v2/api/cosmos/evm/vm/v1"
+	"github.com/gurufinglobal/guru/v2/types"
 )
 
 var (

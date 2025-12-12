@@ -10,10 +10,10 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 
 const (

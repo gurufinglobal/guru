@@ -3,17 +3,17 @@ package keeper_test
 import (
 	"testing"
 
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	"github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types/mocks"
-
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types/mocks"
 )
 
 // testData defines necessary fields for testing keeper store methods and mocks

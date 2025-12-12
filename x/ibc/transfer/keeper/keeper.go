@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"github.com/gurufinglobal/guru/v2/x/ibc/transfer/types"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
@@ -10,6 +9,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/gurufinglobal/guru/v2/x/ibc/transfer/types"
 )
 
 // Keeper defines the modified IBC transfer keeper that embeds the original one.

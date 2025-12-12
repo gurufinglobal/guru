@@ -6,13 +6,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-
 	"cosmossdk.io/store/prefix"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 var _ types.QueryServer = Keeper{}

@@ -3,12 +3,12 @@ package keeper_test
 import (
 	"context"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 )
 
 func (suite *KeeperIntegrationTestSuite) TestQueryRemainder() {

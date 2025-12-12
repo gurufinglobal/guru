@@ -6,6 +6,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -13,7 +14,7 @@ import (
 // Validate validates the exchange
 func (e *Exchange) Validate() error {
 	// validate id
-	err := ValidateExchangeId(e.Id)
+	err := ValidateExchangeID(e.Id)
 	if err != nil {
 		return err
 	}
@@ -71,20 +72,16 @@ func (e *Exchange) Validate() error {
 	}
 
 	// validate status
-	if err := ValidateExchangeStatus(e.Status); err != nil {
-		return err
-	}
-
-	return nil
+	return ValidateExchangeStatus(e.Status)
 }
 
-// ValidateExchangeId validates the exchange id
-func ValidateExchangeId(id math.Int) error {
+// ValidateExchangeID validates the exchange id
+func ValidateExchangeID(id math.Int) error {
 	if id.IsNil() {
-		return errorsmod.Wrapf(ErrInvalidId, " exchange id is nil")
+		return errorsmod.Wrapf(ErrInvalidID, " exchange id is nil")
 	}
 	if id.IsZero() {
-		return errorsmod.Wrapf(ErrInvalidId, " exchange id is zero")
+		return errorsmod.Wrapf(ErrInvalidID, " exchange id is zero")
 	}
 	return nil
 }

@@ -13,6 +13,11 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
@@ -23,11 +28,6 @@ import (
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
 // General variables used for integration tests

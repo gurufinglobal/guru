@@ -4,9 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/gurufinglobal/guru/v2/ante/testutils"
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -16,6 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/authz"
+
+	"github.com/gurufinglobal/guru/v2/ante/testutils"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 )
 
 func (suite *AnteTestSuite) CreateTestCosmosTxBuilder(gasPrice sdkmath.Int, denom string, msgs ...sdk.Msg) client.TxBuilder {

@@ -8,14 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}

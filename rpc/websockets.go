@@ -27,15 +27,15 @@ import (
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	cmttypes "github.com/cometbft/cometbft/types"
 
+	"cosmossdk.io/log"
+
+	"github.com/cosmos/cosmos-sdk/client"
+
 	"github.com/gurufinglobal/guru/v2/rpc/ethereum/pubsub"
 	rpcfilters "github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/eth/filters"
 	"github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/log"
-
-	"github.com/cosmos/cosmos-sdk/client"
 )
 
 const (
@@ -536,18 +536,16 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID rpc.ID, extra interfac
 	if extra != nil {
 		params, ok := extra.(map[string]interface{})
 		if !ok {
-			err := errors.New("invalid criteria")
-			api.logger.Debug("invalid criteria", "type", fmt.Sprintf("%T", extra))
-			return nil, err
+			api.logger.Debug("invalid criteria: expected map[string]interface{}")
+			return nil, errors.New("invalid criteria: expected map[string]interface{}")
 		}
 
 		if params["address"] != nil {
 			address, isString := params["address"].(string)
 			addresses, isSlice := params["address"].([]interface{})
 			if !isString && !isSlice {
-				err := errors.New("invalid addresses; must be address or array of addresses")
-				api.logger.Debug("invalid addresses", "type", fmt.Sprintf("%T", params["address"]))
-				return nil, err
+				api.logger.Debug("invalid addresses: must be string or []interface{}")
+				return nil, errors.New("invalid addresses: must be address or array of addresses")
 			}
 
 			if isString {
@@ -559,9 +557,8 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID rpc.ID, extra interfac
 				for _, addr := range addresses {
 					address, ok := addr.(string)
 					if !ok {
-						err := errors.New("invalid address")
-						api.logger.Debug("invalid address", "type", fmt.Sprintf("%T", addr))
-						return nil, err
+						api.logger.Debug("invalid address: expected string type in address array")
+						return nil, errors.New("invalid address: expected string type")
 					}
 
 					crit.Addresses = append(crit.Addresses, common.HexToAddress(address))
@@ -572,9 +569,8 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID rpc.ID, extra interfac
 		if params["topics"] != nil {
 			topics, ok := params["topics"].([]interface{})
 			if !ok {
-				err := errors.Errorf("invalid topics: %s", topics)
-				api.logger.Error("invalid topics", "type", fmt.Sprintf("%T", topics))
-				return nil, err
+				api.logger.Error("invalid topics: expected []interface{}")
+				return nil, errors.New("invalid topics: expected array type")
 			}
 
 			crit.Topics = make([][]common.Hash, len(topics))
@@ -582,9 +578,8 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID rpc.ID, extra interfac
 			addCritTopic := func(topicIdx int, topic interface{}) error {
 				tstr, ok := topic.(string)
 				if !ok {
-					err := errors.Errorf("invalid topic: %s", topic)
-					api.logger.Error("invalid topic", "type", fmt.Sprintf("%T", topic))
-					return err
+					api.logger.Error("invalid topic: expected string type")
+					return errors.New("invalid topic: expected string type")
 				}
 
 				crit.Topics[topicIdx] = []common.Hash{common.HexToHash(tstr)}
@@ -608,18 +603,16 @@ func (api *pubSubAPI) subscribeLogs(wsConn *wsConn, subID rpc.ID, extra interfac
 				// in case we actually have a list of subtopics
 				subtopicsList, ok := subtopics.([]interface{})
 				if !ok {
-					err := errors.New("invalid subtopics")
-					api.logger.Error("invalid subtopic", "type", fmt.Sprintf("%T", subtopics))
-					return nil, err
+					api.logger.Error("invalid subtopics: expected []interface{}")
+					return nil, errors.New("invalid subtopics: expected array type")
 				}
 
 				subtopicsCollect := make([]common.Hash, len(subtopicsList))
 				for idx, subtopic := range subtopicsList {
 					tstr, ok := subtopic.(string)
 					if !ok {
-						err := errors.Errorf("invalid subtopic: %s", subtopic)
-						api.logger.Error("invalid subtopic", "type", fmt.Sprintf("%T", subtopic))
-						return nil, err
+						api.logger.Error("invalid subtopic: expected string type")
+						return nil, errors.New("invalid subtopic: expected string type")
 					}
 
 					subtopicsCollect[idx] = common.HexToHash(tstr)

@@ -15,10 +15,10 @@ import (
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	comettypes "github.com/cometbft/cometbft/types"
 
+	"cosmossdk.io/log"
+
 	filtermocks "github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/eth/filters/mocks"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-
-	"cosmossdk.io/log"
 )
 
 type MockBackend struct {

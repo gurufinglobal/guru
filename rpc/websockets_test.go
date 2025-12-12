@@ -12,11 +12,11 @@ import (
 
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 
-	"github.com/gurufinglobal/guru/v2/server/config"
-
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
+
+	"github.com/gurufinglobal/guru/v2/server/config"
 )
 
 func newTestWebsocketServer() *websocketsServer {

@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -13,6 +11,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 )
 
 // MintCoins creates new coins from thin air and adds it to the module account.

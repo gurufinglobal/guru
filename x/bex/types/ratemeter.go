@@ -7,7 +7,6 @@ import (
 )
 
 func ValidateRatemeter(ratemeter *Ratemeter) error {
-
 	if ratemeter.RequestCountLimit <= 0 {
 		return errorsmod.Wrapf(ErrInvalidRequestCountLimit, "request_count_limit should be greater than zero")
 	}

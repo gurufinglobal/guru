@@ -8,11 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/gurud"
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,6 +15,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/gurufinglobal/guru/v2/gurud"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func (suite *KeeperIntegrationTestSuite) TestSendCoinsFromAccountToModule_MatchingErrors() {

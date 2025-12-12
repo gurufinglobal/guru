@@ -4,8 +4,10 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
 // MsgServer implementation
@@ -99,11 +101,12 @@ func (k Keeper) RemoveDiscounts(goCtx context.Context, msg *types.MsgRemoveDisco
 	}
 
 	// update the KV store
-	if msg.Module == "" {
+	switch {
+	case msg.Module == "":
 		k.DeleteAccountDiscounts(ctx, msg.Address)
-	} else if msg.MsgType == "" {
+	case msg.MsgType == "":
 		k.DeleteModuleDiscounts(ctx, msg.Address, msg.Module)
-	} else {
+	default:
 		k.DeleteMsgTypeDiscounts(ctx, msg.Address, msg.MsgType)
 	}
 

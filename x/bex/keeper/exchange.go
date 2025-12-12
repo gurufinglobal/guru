@@ -4,8 +4,10 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
 	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
@@ -15,7 +17,7 @@ func (k Keeper) GetExchange(ctx sdk.Context, id math.Int) (*types.Exchange, erro
 
 	idBytes, err := id.Marshal()
 	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrInvalidId, "unable to marshal exchange id %v", err)
+		return nil, errorsmod.Wrapf(types.ErrInvalidID, "unable to marshal exchange id %v", err)
 	}
 
 	bz := exchangeStore.Get(idBytes)
@@ -49,7 +51,7 @@ func (k Keeper) GetPaginatedExchanges(ctx sdk.Context, pagination *query.PageReq
 	return exchanges, pageRes, nil
 }
 
-func (k Keeper) GetExchangesByOracleRequestId(ctx sdk.Context, oracleRequestId uint64) ([]types.Exchange, error) {
+func (k Keeper) GetExchangesByOracleRequestID(ctx sdk.Context, oracleRequestID uint64) ([]types.Exchange, error) {
 	allExchanges, _, err := k.GetPaginatedExchanges(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
 	if err != nil {
 		return nil, err
@@ -57,7 +59,7 @@ func (k Keeper) GetExchangesByOracleRequestId(ctx sdk.Context, oracleRequestId u
 
 	exchanges := []types.Exchange{}
 	for _, exchange := range allExchanges {
-		if exchange.OracleRequestId == oracleRequestId {
+		if exchange.OracleRequestId == oracleRequestID {
 			exchanges = append(exchanges, exchange)
 		}
 	}
@@ -70,7 +72,7 @@ func (k Keeper) SetExchange(ctx sdk.Context, exchange *types.Exchange) error {
 
 	idBytes, err := exchange.Id.Marshal()
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrInvalidId, "unable to marshal exchange id %v", err)
+		return errorsmod.Wrapf(types.ErrInvalidID, "unable to marshal exchange id %v", err)
 	}
 
 	// check if the exchange already exists
@@ -78,16 +80,16 @@ func (k Keeper) SetExchange(ctx sdk.Context, exchange *types.Exchange) error {
 	if bz == nil {
 
 		// check the next exchange id
-		nextId, err := k.GetNextExchangeId(ctx)
+		nextID, err := k.GetNextExchangeID(ctx)
 		if err != nil {
 			return err
 		}
-		if !nextId.Equal(exchange.Id) {
-			return errorsmod.Wrapf(types.ErrInvalidId, "expected: %v, got: %v", nextId, exchange.Id)
+		if !nextID.Equal(exchange.Id) {
+			return errorsmod.Wrapf(types.ErrInvalidID, "expected: %v, got: %v", nextID, exchange.Id)
 		}
 
 		// increment the next exchange id
-		err = k.IncrementNextExchangeId(ctx)
+		err = k.IncrementNextExchangeID(ctx)
 		if err != nil {
 			return err
 		}
@@ -99,9 +101,9 @@ func (k Keeper) SetExchange(ctx sdk.Context, exchange *types.Exchange) error {
 	return nil
 }
 
-func (k Keeper) GetNextExchangeId(ctx sdk.Context) (math.Int, error) {
+func (k Keeper) GetNextExchangeID(ctx sdk.Context) (math.Int, error) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.KeyNextExchangeId)
+	bz := store.Get(types.KeyNextExchangeID)
 	if bz == nil {
 		return math.NewInt(1), nil
 	}
@@ -109,25 +111,25 @@ func (k Keeper) GetNextExchangeId(ctx sdk.Context) (math.Int, error) {
 	var id math.Int
 	err := id.Unmarshal(bz)
 	if err != nil {
-		return math.NewInt(0), errorsmod.Wrapf(types.ErrInvalidId, "unable to unmarshal into exchange id %v", err)
+		return math.NewInt(0), errorsmod.Wrapf(types.ErrInvalidID, "unable to unmarshal into exchange id %v", err)
 	}
 
 	return id, nil
 }
 
-func (k Keeper) IncrementNextExchangeId(ctx sdk.Context) error {
+func (k Keeper) IncrementNextExchangeID(ctx sdk.Context) error {
 	store := ctx.KVStore(k.storeKey)
 
-	currentId, err := k.GetNextExchangeId(ctx)
+	currentID, err := k.GetNextExchangeID(ctx)
 	if err != nil {
 		return err
 	}
-	currentId = currentId.Add(math.NewInt(1))
-	idBytes, err := currentId.Marshal()
+	currentID = currentID.Add(math.NewInt(1))
+	idBytes, err := currentID.Marshal()
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrInvalidId, "unable to marshal exchange id %v", err)
+		return errorsmod.Wrapf(types.ErrInvalidID, "unable to marshal exchange id %v", err)
 	}
-	store.Set(types.KeyNextExchangeId, idBytes)
+	store.Set(types.KeyNextExchangeID, idBytes)
 
 	return nil
 }

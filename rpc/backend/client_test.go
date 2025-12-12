@@ -16,14 +16,14 @@ import (
 	"github.com/cometbft/cometbft/types"
 	"github.com/cometbft/cometbft/version"
 
-	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
-	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
+	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // Client defines a mocked object that implements the Tendermint JSON-RPC Client

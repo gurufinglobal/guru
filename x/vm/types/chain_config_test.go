@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdkmath "cosmossdk.io/math"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func newIntPtr(i int64) *sdkmath.Int {

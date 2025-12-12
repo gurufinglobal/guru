@@ -1,13 +1,14 @@
 package keeper
 
 import (
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
@@ -147,9 +148,5 @@ func (k Keeper) OnTimeoutTransferPacket(
 	}
 
 	// refund to original source chain
-	if err := k.performExchangeRefund(ctx, data); err != nil {
-		return err
-	}
-
-	return nil
+	return k.performExchangeRefund(ctx, data)
 }

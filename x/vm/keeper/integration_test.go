@@ -13,6 +13,10 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
+	"cosmossdk.io/math"
+
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -21,10 +25,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	integrationutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/math"
-
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
 )
 
 type IntegrationTestSuite struct {

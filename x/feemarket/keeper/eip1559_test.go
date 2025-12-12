@@ -7,11 +7,11 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 )
 
 func TestCalculateBaseFee(t *testing.T) {

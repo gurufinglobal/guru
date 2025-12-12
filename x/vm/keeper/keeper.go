@@ -11,11 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 
-	"github.com/gurufinglobal/guru/v2/utils"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/wrappers"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -24,6 +19,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/utils"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/wrappers"
 )
 
 // Keeper grants access to the EVM module state and implements the go-ethereum StateDB interface.

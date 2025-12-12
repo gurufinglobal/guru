@@ -3,10 +3,10 @@ package keeper
 import (
 	"github.com/ethereum/go-ethereum/common"
 
+	"cosmossdk.io/errors"
+
 	types2 "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/errors"
 )
 
 // validateApprovalEventDoesNotExist returns an error if the given transactions logs include

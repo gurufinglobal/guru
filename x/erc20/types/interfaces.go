@@ -8,8 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/tracing"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/cosmos/ibc-go/v10/modules/core/exported"
@@ -19,6 +17,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // AccountKeeper defines the expected interface needed to retrieve account info.

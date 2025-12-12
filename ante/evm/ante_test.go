@@ -11,10 +11,6 @@ import (
 	ethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
@@ -24,6 +20,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func (suite *AnteTestSuite) TestAnteHandler() {

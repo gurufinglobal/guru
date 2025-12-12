@@ -3,10 +3,10 @@ package snapshotkv
 import (
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/store/types"
-
 	"cosmossdk.io/store/cachekv"
 	storetypes "cosmossdk.io/store/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/store/types"
 )
 
 // Store manages a stack of nested cache store to

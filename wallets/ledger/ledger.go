@@ -9,12 +9,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
+	sdkledger "github.com/cosmos/cosmos-sdk/crypto/ledger"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	"github.com/gurufinglobal/guru/v2/wallets/accounts"
 	"github.com/gurufinglobal/guru/v2/wallets/usbwallet"
-
-	sdkledger "github.com/cosmos/cosmos-sdk/crypto/ledger"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Secp256k1DerivationFn defines the derivation function used on the Cosmos SDK Keyring.

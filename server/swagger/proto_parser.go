@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // RPCMethod represents a parsed RPC method from proto file
@@ -26,6 +29,7 @@ type Parameter struct {
 }
 
 // ScanModulesInProtoDir scans proto/guru/ directory for module subdirectories
+//
 // Deprecated: Use ScanModulesInEmbeddedProtoDir for embedded filesystem support
 func ScanModulesInProtoDir(protoDir string) ([]string, error) {
 	var modules []string
@@ -63,9 +67,9 @@ func ParseRPCMethods(content, module string) []RPCMethod {
 	lines := strings.Split(content, "\n")
 
 	// Determine service type from content
-	serviceType := "Query" // default
+	serviceType := ServiceType // default
 	if strings.Contains(content, "service Msg") {
-		serviceType = "Msg"
+		serviceType = MsgType
 	}
 
 	for i, line := range lines {
@@ -102,7 +106,7 @@ func ParseRPCMethods(content, module string) []RPCMethod {
 									end := strings.LastIndex(lines[k], `"`)
 									if start != -1 && end != -1 && start < end {
 										httpPath = lines[k][start+1 : end]
-										httpMethod = "POST"
+										httpMethod = HTTPPost
 									}
 									break
 								}
@@ -118,12 +122,13 @@ func ParseRPCMethods(content, module string) []RPCMethod {
 
 					var summary string
 					var tag string
-					if serviceType == "Msg" {
-						summary = fmt.Sprintf("%s %s transaction", strings.Title(module), methodName)
-						tag = "Service"
+					titleCaser := cases.Title(language.English)
+					if serviceType == MsgType {
+						summary = fmt.Sprintf("%s %s transaction", titleCaser.String(module), methodName)
+						tag = ServiceType
 					} else {
-						summary = fmt.Sprintf("Query %s %s", strings.Title(module), methodName)
-						tag = "Query"
+						summary = fmt.Sprintf("Query %s %s", titleCaser.String(module), methodName)
+						tag = QueryType
 					}
 
 					methods = append(methods, RPCMethod{
@@ -131,7 +136,7 @@ func ParseRPCMethods(content, module string) []RPCMethod {
 						HTTPPath:    httpPath,
 						HTTPMethod:  httpMethod,
 						Summary:     summary,
-						OperationID: fmt.Sprintf("%s%s", strings.Title(module), methodName),
+						OperationID: fmt.Sprintf("%s%s", titleCaser.String(module), methodName),
 						Parameters:  params,
 						Module:      module,
 						ServiceType: tag,

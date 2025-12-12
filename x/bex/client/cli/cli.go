@@ -3,9 +3,11 @@ package cli
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/gurufinglobal/guru/v2/x/bex/types"
 	"github.com/spf13/cobra"
+
+	"github.com/cosmos/cosmos-sdk/client"
+
+	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
 // GetQueryCmd returns the cli query commands for the xmsquare module.
@@ -22,7 +24,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryModeratorAddress(),
 		GetCmdQueryExchanges(),
 		GetCmdQueryIsAdmin(),
-		GetCmdQueryNextExchangeId(),
+		GetCmdQueryNextExchangeID(),
 		GetCmdQueryRatemeter(),
 		GetCmdQueryCollectedFees(),
 	)

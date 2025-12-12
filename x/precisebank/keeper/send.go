@@ -7,9 +7,6 @@ import (
 
 	"github.com/hashicorp/go-metrics"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -17,6 +14,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // IsSendEnabledCoins uses the parent x/bank keeper to check the coins provided

@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	testtx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -15,6 +11,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	testtx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // defaultChain represents the default chain ID used in the suite setup.

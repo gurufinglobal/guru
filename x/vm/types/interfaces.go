@@ -10,8 +10,6 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/math"
 
@@ -20,6 +18,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/consensus/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 )
 
 // AccountKeeper defines the expected account keeper interface

@@ -59,21 +59,24 @@ func ParseOracleDataKey(key []byte) (uint64, error) {
 	return binary.BigEndian.Uint64(key[1:]), nil
 }
 
-func GetSubmitDataKey(request_id uint64, nonce uint64) []byte {
-	KeyOracleDataForRequest := append(KeyOracleData, IDToBytes(request_id)...)
+func GetSubmitDataKey(requestID uint64, nonce uint64) []byte {
+	var keyOracleDataForRequest []byte
+	keyOracleDataForRequest = append(keyOracleDataForRequest, KeyOracleData...)
+	keyOracleDataForRequest = append(keyOracleDataForRequest, IDToBytes(requestID)...)
+
 	if nonce == 0 {
-		return KeyOracleDataForRequest
+		return keyOracleDataForRequest
 	}
-	return append(KeyOracleDataForRequest, IDToBytes(nonce)...)
+	return append(keyOracleDataForRequest, IDToBytes(nonce)...)
 }
 
-func GetSubmitDataKeyByProvider(request_id uint64, nonce uint64, provider string) []byte {
-	return append(GetSubmitDataKey(request_id, nonce), StringToBytes(provider)...)
+func GetSubmitDataKeyByProvider(requestID uint64, nonce uint64, provider string) []byte {
+	return append(GetSubmitDataKey(requestID, nonce), StringToBytes(provider)...)
 }
 
 // GetDataSetKey returns the key for storing a DataSet
-func GetDataSetKey(request_id uint64, nonce uint64) []byte {
-	return append(KeyOracleDataSet, IDToBytes(request_id)...)
+func GetDataSetKey(requestID uint64, nonce uint64) []byte {
+	return append(KeyOracleDataSet, IDToBytes(requestID)...)
 }
 
 func IDToBytes(id uint64) []byte {

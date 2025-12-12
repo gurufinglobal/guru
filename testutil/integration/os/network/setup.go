@@ -9,12 +9,6 @@ import (
 
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
@@ -37,6 +31,13 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // genSetupFn is the type for the module genesis setup functions

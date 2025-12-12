@@ -8,9 +8,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	errorsmod "cosmossdk.io/errors"
@@ -20,6 +17,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 const (

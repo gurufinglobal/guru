@@ -6,11 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
-	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -19,6 +14,11 @@ import (
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+
+	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
+	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/types"
 )
 
 type EIP712TxArgs struct {

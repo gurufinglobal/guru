@@ -9,15 +9,16 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
-	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
 	storetypes "cosmossdk.io/store/types"
 
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
+	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // PrecompileAddress of the ICS-20 EVM extension in hex format.

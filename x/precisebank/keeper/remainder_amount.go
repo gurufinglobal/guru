@@ -3,11 +3,11 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 )
 
 // GetRemainderAmount returns the internal remainder amount.

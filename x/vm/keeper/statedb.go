@@ -7,14 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 var _ statedb.Keeper = &Keeper{}

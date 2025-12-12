@@ -14,6 +14,13 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	compiledcontracts "github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
@@ -26,13 +33,6 @@ import (
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func TestPrecompileIntegrationTestSuite(t *testing.T) {

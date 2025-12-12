@@ -9,13 +9,13 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	precompiletestutil "github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Call is a helper function to call any arbitrary smart contract.

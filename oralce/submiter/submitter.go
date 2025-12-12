@@ -5,14 +5,16 @@ import (
 	"time"
 
 	"cosmossdk.io/log"
-	guruconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	"github.com/gurufinglobal/guru/v2/oralce/config"
-	"github.com/gurufinglobal/guru/v2/oralce/types"
-	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+
+	guruconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	"github.com/gurufinglobal/guru/v2/oralce/config"
+	"github.com/gurufinglobal/guru/v2/oralce/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 type Submitter struct {

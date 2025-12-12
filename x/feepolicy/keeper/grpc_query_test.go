@@ -1,17 +1,16 @@
 package keeper_test
 
 import (
-	"testing"
-
 	"math"
+	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
 func TestQueryModerator(t *testing.T) {
@@ -94,7 +93,6 @@ func TestQueryDiscounts(t *testing.T) {
 			} else {
 				require.Error(t, err)
 			}
-
 		})
 	}
 }

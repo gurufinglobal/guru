@@ -7,12 +7,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 const (

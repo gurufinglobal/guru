@@ -3,13 +3,13 @@ package evm
 import (
 	"strconv"
 
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // EthEmitEventDecorator emit events in ante handler in case of tx execution failed (out of block gas limit).

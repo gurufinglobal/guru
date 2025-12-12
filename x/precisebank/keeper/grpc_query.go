@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 )
 
 type queryServer struct {

@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	v1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 )
 
 // constants

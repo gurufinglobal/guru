@@ -5,11 +5,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/gurufinglobal/guru/v2/wallets/accounts"
-	"github.com/gurufinglobal/guru/v2/wallets/ledger"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
+
+	"github.com/gurufinglobal/guru/v2/wallets/accounts"
+	"github.com/gurufinglobal/guru/v2/wallets/ledger"
 )
 
 func (suite *LedgerTestSuite) TestEvmLedgerDerivation() {

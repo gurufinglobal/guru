@@ -3,6 +3,7 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -22,11 +23,11 @@ const (
 var _ sdk.Msg = &MsgRegisterAdmin{}
 
 // NewMsgRegisterAdmin - construct a msg.
-func NewMsgRegisterAdmin(modAddress, adminAddress sdk.AccAddress, exchangeId math.Int) *MsgRegisterAdmin {
+func NewMsgRegisterAdmin(modAddress, adminAddress sdk.AccAddress, exchangeID math.Int) *MsgRegisterAdmin {
 	return &MsgRegisterAdmin{
 		ModeratorAddress: modAddress.String(),
 		AdminAddress:     adminAddress.String(),
-		ExchangeId:       exchangeId,
+		ExchangeId:       exchangeID,
 	}
 }
 
@@ -144,10 +145,10 @@ func (msg MsgRegisterExchange) GetSigners() []sdk.AccAddress {
 var _ sdk.Msg = &MsgUpdateExchange{}
 
 // NewMsgUpdateExchange - construct a msg.
-func NewMsgUpdateExchange(adminAddress sdk.AccAddress, exchangeId math.Int, key, value string) *MsgUpdateExchange {
+func NewMsgUpdateExchange(adminAddress sdk.AccAddress, exchangeID math.Int, key, value string) *MsgUpdateExchange {
 	return &MsgUpdateExchange{
 		AdminAddress: adminAddress.String(),
-		ExchangeId:   exchangeId,
+		ExchangeId:   exchangeID,
 		Key:          key,
 		Value:        value,
 	}
@@ -165,7 +166,7 @@ func (msg MsgUpdateExchange) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " admin address, %s", err)
 	}
 
-	if err := ValidateExchangeId(msg.ExchangeId); err != nil {
+	if err := ValidateExchangeID(msg.ExchangeId); err != nil {
 		return errorsmod.Wrapf(ErrInvalidExchange, "%s", err)
 	}
 
@@ -236,10 +237,10 @@ func (msg MsgUpdateRatemeter) GetSigners() []sdk.AccAddress {
 var _ sdk.Msg = &MsgWithdrawFees{}
 
 // NewMsgWithdrawFees - construct a msg.
-func NewMsgWithdrawFees(adminAddress sdk.AccAddress, exchangeId math.Int, withdrawAddress sdk.AccAddress) *MsgWithdrawFees {
+func NewMsgWithdrawFees(adminAddress sdk.AccAddress, exchangeID math.Int, withdrawAddress sdk.AccAddress) *MsgWithdrawFees {
 	return &MsgWithdrawFees{
 		AdminAddress:    adminAddress.String(),
-		ExchangeId:      exchangeId,
+		ExchangeId:      exchangeID,
 		WithdrawAddress: withdrawAddress.String(),
 	}
 }
@@ -256,7 +257,7 @@ func (msg MsgWithdrawFees) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " admin address, %s", err)
 	}
 
-	if err := ValidateExchangeId(msg.ExchangeId); err != nil {
+	if err := ValidateExchangeID(msg.ExchangeId); err != nil {
 		return errorsmod.Wrapf(ErrInvalidExchange, "%s", err)
 	}
 

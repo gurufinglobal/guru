@@ -6,6 +6,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/mock"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	testfactory "github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
@@ -13,11 +18,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 	erc20mocks "github.com/gurufinglobal/guru/v2/x/erc20/types/mocks"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 const (

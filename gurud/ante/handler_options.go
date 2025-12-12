@@ -2,8 +2,6 @@ package ante
 
 import (
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
@@ -14,6 +12,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 )
 
 // HandlerOptions defines the list of module keepers required to run the Cosmos EVM

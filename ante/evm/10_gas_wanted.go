@@ -3,14 +3,14 @@ package evm
 import (
 	"math/big"
 
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	"github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
+	"github.com/gurufinglobal/guru/v2/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // GasWantedDecorator keeps track of the gasWanted amount on the current block in transient store

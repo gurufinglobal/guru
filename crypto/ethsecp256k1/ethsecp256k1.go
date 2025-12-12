@@ -10,13 +10,13 @@ import (
 
 	tmcrypto "github.com/cometbft/cometbft/crypto"
 
-	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
-
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 )
 
 const (

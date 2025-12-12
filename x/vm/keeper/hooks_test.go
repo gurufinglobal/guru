@@ -8,13 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // LogRecordHook records all the logs

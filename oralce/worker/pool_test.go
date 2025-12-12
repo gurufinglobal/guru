@@ -8,16 +8,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
+
 	"cosmossdk.io/log"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/oralce/config"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	"github.com/gurufinglobal/guru/v2/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 )
 
 type PoolTestSuite struct {
@@ -25,7 +28,7 @@ type PoolTestSuite struct {
 
 	ctx        context.Context
 	cancelFunc context.CancelFunc
-	pool       *WorkerPool
+	pool       *Pool
 
 	// Test addresses generated from testutil
 	testAddresses []sdk.AccAddress
@@ -43,7 +46,8 @@ func (p *PoolTestSuite) SetupSuite() {
 	p.tempDir = tempDir
 
 	// Initialize test configuration
-	config.TestConfig()
+	err = config.TestConfig()
+	p.Require().NoError(err)
 
 	// Create test key in the keyring using config's settings
 	p.createTestKey()
@@ -64,6 +68,8 @@ func (p *PoolTestSuite) TearDownSuite() {
 	p.T().Log("tearing down pool test suite")
 	if p.cancelFunc != nil {
 		p.cancelFunc()
+		// goroutine이 로그를 출력하고 종료할 시간을 줌
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	// Clean up temporary directory
@@ -84,7 +90,8 @@ func (p *PoolTestSuite) createTestKey() {
 	_, _, err := kr.NewMnemonic(keyName, keyring.English, types.BIP44HDPath, keyring.DefaultBIP39Passphrase, hd.EthSecp256k1)
 	if err != nil {
 		// If key already exists, delete it first and try again
-		kr.Delete(keyName)
+		err = kr.Delete(keyName)
+		p.Require().NoError(err)
 		_, _, err = kr.NewMnemonic(keyName, keyring.English, types.BIP44HDPath, keyring.DefaultBIP39Passphrase, hd.EthSecp256k1)
 		p.Require().NoError(err)
 	}
@@ -143,7 +150,7 @@ func (p *PoolTestSuite) TestProcessRequestDoc_StatusNotEnabled() {
 		}
 
 		// Should not panic or error, just return early
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 	}
 
 	// 2) Request status is PAUSED -> should return early
@@ -154,7 +161,7 @@ func (p *PoolTestSuite) TestProcessRequestDoc_StatusNotEnabled() {
 		}
 
 		// Should not panic or error, just return early
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 	}
 
 	// 3) Request status is UNSPECIFIED -> should return early
@@ -165,7 +172,7 @@ func (p *PoolTestSuite) TestProcessRequestDoc_StatusNotEnabled() {
 		}
 
 		// Should not panic or error, just return early
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 	}
 }
 
@@ -191,7 +198,7 @@ func (p *PoolTestSuite) TestProcessRequestDoc_AccountNotAssigned() {
 		}
 
 		// Should not panic or error, just return early
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 	}
 }
 
@@ -230,7 +237,7 @@ func (p *PoolTestSuite) TestProcessRequestDoc_ValidRequest() {
 		}
 
 		// Should not panic or error
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 
 		// Check if job was stored
 		time.Sleep(100 * time.Millisecond) // Allow goroutine to execute
@@ -265,7 +272,7 @@ func (p *PoolTestSuite) TestProcessRequestDoc_ValidRequest() {
 		}
 
 		// Should not panic or error
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 
 		// Check if job was stored
 		time.Sleep(100 * time.Millisecond) // Allow goroutine to execute
@@ -278,7 +285,7 @@ func (p *PoolTestSuite) TestProcessComplete_JobNotFound() {
 	// Process complete event for non-existent job -> should return early
 	{
 		// Should not panic or error, just return early with debug log
-		p.pool.ProcessComplete(p.ctx, "999", 5, uint64(time.Now().Unix()))
+		p.pool.ProcessComplete(p.ctx, "999", 5, time.Now().Unix())
 	}
 }
 
@@ -311,21 +318,21 @@ func (p *PoolTestSuite) TestProcessComplete_ValidJob() {
 			},
 		}
 
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 		time.Sleep(100 * time.Millisecond) // Allow job to be stored
 	}
 
 	// Now process complete event for the existing job
 	{
 		// Should update the job's nonce and reschedule
-		p.pool.ProcessComplete(p.ctx, "7", 3, uint64(time.Now().Unix()))
+		p.pool.ProcessComplete(p.ctx, "7", 3, time.Now().Unix())
 		time.Sleep(100 * time.Millisecond) // Allow processing
 	}
 
 	// Process complete with lower nonce -> should use max nonce
 	{
 		// Should not decrease the nonce
-		p.pool.ProcessComplete(p.ctx, "7", 2, uint64(time.Now().Unix()))
+		p.pool.ProcessComplete(p.ctx, "7", 2, time.Now().Unix())
 		time.Sleep(100 * time.Millisecond) // Allow processing
 	}
 }
@@ -336,7 +343,7 @@ func (p *PoolTestSuite) TestIntegration_FullJobExecution() {
 	// Create mock server that returns exchange rate data
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
+		_, err := w.Write([]byte(`{
 			"provider": "https://www.exchangerate-api.com",
 			"base": "USD",
 			"date": "2025-01-01",
@@ -346,6 +353,7 @@ func (p *PoolTestSuite) TestIntegration_FullJobExecution() {
 				"EUR": 0.856
 			}
 		}`))
+		assert.NoError(p.T(), err)
 	}))
 	defer server.Close()
 
@@ -376,7 +384,7 @@ func (p *PoolTestSuite) TestIntegration_FullJobExecution() {
 		}
 
 		// Process the request
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 
 		// Wait for job execution and result
 		select {
@@ -398,7 +406,8 @@ func (p *PoolTestSuite) TestIntegration_JobExecutionError() {
 	// Create mock server that returns error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Server Error"))
+		_, err := w.Write([]byte("Internal Server Error"))
+		assert.NoError(p.T(), err)
 	}))
 	defer server.Close()
 
@@ -429,7 +438,7 @@ func (p *PoolTestSuite) TestIntegration_JobExecutionError() {
 		}
 
 		// Process the request
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 
 		// Wait for job execution result (should be nil due to error)
 		select {
@@ -447,7 +456,7 @@ func (p *PoolTestSuite) TestIntegration_InvalidParseRule() {
 	// Create mock server that returns valid JSON
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
+		_, err := w.Write([]byte(`{
 			"provider": "https://www.exchangerate-api.com",
 			"base": "USD",
 			"rates": {
@@ -455,6 +464,7 @@ func (p *PoolTestSuite) TestIntegration_InvalidParseRule() {
 				"KRW": 1388.95
 			}
 		}`))
+		assert.NoError(p.T(), err)
 	}))
 	defer server.Close()
 
@@ -485,7 +495,7 @@ func (p *PoolTestSuite) TestIntegration_InvalidParseRule() {
 		}
 
 		// Process the request
-		p.pool.ProcessRequestDoc(p.ctx, requestDoc, uint64(time.Now().Unix()))
+		p.pool.ProcessRequestDoc(p.ctx, requestDoc, time.Now().Unix())
 
 		// Wait for job execution - should not produce result due to path error
 		select {

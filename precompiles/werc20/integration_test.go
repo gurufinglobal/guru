@@ -11,6 +11,10 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	"github.com/gurufinglobal/guru/v2/precompiles/werc20"
@@ -25,10 +29,6 @@ import (
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // -------------------------------------------------------------------------------------------------

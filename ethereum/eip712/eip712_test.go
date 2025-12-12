@@ -11,13 +11,6 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 
-	chainconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -32,6 +25,13 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	chainconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
+	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // Unit tests for single-signer EIP-712 signature verification. Multi-signature key verification tests are out-of-scope

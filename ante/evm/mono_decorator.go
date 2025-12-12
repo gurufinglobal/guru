@@ -6,16 +6,16 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
+
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
+	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // MonoDecorator is a single decorator that handles all the prechecks for

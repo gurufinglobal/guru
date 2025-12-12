@@ -7,15 +7,15 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	"github.com/gurufinglobal/guru/v2/precompiles/bank"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/math"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	"github.com/gurufinglobal/guru/v2/precompiles/bank"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // setupBankPrecompile is a helper function to set up an instance of the Bank precompile for

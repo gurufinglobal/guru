@@ -9,11 +9,11 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-
 	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 )
 
 // Precompile is a common struct for all precompiles that holds the common data each

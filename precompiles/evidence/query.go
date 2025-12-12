@@ -8,13 +8,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 	evidencetypes "cosmossdk.io/x/evidence/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 
 // Evidence implements the query logic for getting evidence by hash.

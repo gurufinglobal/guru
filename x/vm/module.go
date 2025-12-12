@@ -11,10 +11,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/client/cli"
-	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/core/appmodule"
 
@@ -24,6 +20,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/client/cli"
+	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // consensusVersion defines the current x/evm module consensus version.

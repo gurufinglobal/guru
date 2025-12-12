@@ -5,10 +5,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	chainconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/precompiles/bech32"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (s *PrecompileTestSuite) TestNewPrecompile() {
