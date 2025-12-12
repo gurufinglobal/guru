@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -97,7 +100,8 @@ func NewRootCmd() *cobra.Command {
 			cmd.SetErr(cmd.ErrOrStderr())
 
 			initClientCtx = initClientCtx.WithCmdContext(cmd.Context())
-			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
+			var err error
+			initClientCtx, err = client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -221,6 +225,34 @@ func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 		func() *cobra.Command {
 			initCmd := genutilcli.InitCmd(osApp.BasicModuleManager, gurud.DefaultNodeHome)
 			initCmd.MarkFlagRequired(flags.FlagChainID)
+
+			// Override RunE to update client.toml with chain-id
+			originalRunE := initCmd.RunE
+			initCmd.RunE = func(cmd *cobra.Command, args []string) error {
+				// Call original init logic
+				if err := originalRunE(cmd, args); err != nil {
+					return err
+				}
+
+				// Update client.toml with chain-id (preserving existing format)
+				chainID, err := cmd.Flags().GetString(flags.FlagChainID)
+				if err != nil {
+					return err
+				}
+
+				homeDir, err := cmd.Flags().GetString(flags.FlagHome)
+				if err != nil {
+					homeDir = gurud.DefaultNodeHome
+				}
+
+				clientTomlPath := filepath.Join(homeDir, "config", "client.toml")
+				if err := updateClientTomlChainID(clientTomlPath, chainID); err != nil {
+					return fmt.Errorf("failed to update chain-id in client.toml: %w", err)
+				}
+
+				return nil
+			}
+
 			return initCmd
 		}(),
 		genutilcli.Commands(osApp.TxConfig(), osApp.BasicModuleManager, gurud.DefaultNodeHome),
@@ -443,4 +475,49 @@ func getChainIDFromOpts(appOpts servertypes.AppOptions) (chainID string, err err
 	}
 
 	return
+}
+
+// updateClientTomlChainID updates the chain-id in client.toml file, preserving existing format
+func updateClientTomlChainID(clientTomlPath, chainID string) error {
+	// Read the existing file
+	content, err := os.ReadFile(clientTomlPath)
+	if err != nil {
+		return fmt.Errorf("failed to read client config file: %w", err)
+	}
+
+	// Split into lines
+	lines := strings.Split(string(content), "\n")
+	var newLines []string
+
+	// Find and replace chain-id line, keep everything else as-is
+	chainIDFound := false
+	for _, line := range lines {
+		// Check if this line contains chain-id
+		if strings.HasPrefix(strings.TrimSpace(line), "chain-id") {
+			// Replace with new chain-id, preserving any existing formatting
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) == 2 {
+				// Keep the format (spaces, quotes, etc.) but update the value
+				prefix := parts[0] // "chain-id"
+				newLines = append(newLines, fmt.Sprintf("%s= %q", strings.TrimSpace(prefix), chainID))
+			} else {
+				// Fallback: simple replacement
+				newLines = append(newLines, fmt.Sprintf("chain-id = %q", chainID))
+			}
+			chainIDFound = true
+		} else {
+			// Keep all other lines exactly as they are
+			newLines = append(newLines, line)
+		}
+	}
+
+	// If chain-id line wasn't found, add it at the end
+	if !chainIDFound {
+		newLines = append(newLines, "")
+		newLines = append(newLines, fmt.Sprintf("chain-id = %q", chainID))
+	}
+
+	// Write back to file
+	newContent := strings.Join(newLines, "\n")
+	return os.WriteFile(clientTomlPath, []byte(newContent), 0600)
 }
