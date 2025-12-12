@@ -12,6 +12,7 @@ import (
 	tmcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 
+	dbm "github.com/cosmos/cosmos-db"
 	cosmosevmcmd "github.com/gurufinglobal/guru/v2/client"
 	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
@@ -20,7 +21,6 @@ import (
 	cosmosevmserver "github.com/gurufinglobal/guru/v2/server"
 	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
 	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
-	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
@@ -218,10 +218,11 @@ func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 	cfg.Seal()
 
 	rootCmd.AddCommand(
-		genutilcli.InitCmd(
-			osApp.BasicModuleManager,
-			gurud.DefaultNodeHome,
-		),
+		func() *cobra.Command {
+			initCmd := genutilcli.InitCmd(osApp.BasicModuleManager, gurud.DefaultNodeHome)
+			initCmd.MarkFlagRequired(flags.FlagChainID)
+			return initCmd
+		}(),
 		genutilcli.Commands(osApp.TxConfig(), osApp.BasicModuleManager, gurud.DefaultNodeHome),
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		debug.Cmd(),
