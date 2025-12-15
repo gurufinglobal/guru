@@ -5,6 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
+
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
+
 	corestore "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
@@ -16,10 +21,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
-
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	"github.com/cosmos/ibc-go/v10/modules/core/exported"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 

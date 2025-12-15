@@ -8,8 +8,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmtypes "github.com/cometbft/cometbft/types"
 
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"
@@ -26,6 +24,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in

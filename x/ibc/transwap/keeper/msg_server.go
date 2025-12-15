@@ -2,19 +2,19 @@ package keeper
 
 import (
 	"github.com/cosmos/gogoproto/proto"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
 
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
-	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 
-func (k Keeper) transferV1Packet(ctx sdk.Context, sourceChannel string, token types.Token, timeoutTimestamp uint64, packetData types.FungibleTokenPacketData) (uint64, error) {
+func (k Keeper) transferV1Packet(ctx sdk.Context, sourceChannel string, token types.Token, timeoutTimestamp uint64, packetData types.FungibleTokenPacketData) (uint64, error) { //nolint:unparam
 	if err := k.SendTransfer(ctx, types.PortID, sourceChannel, token, sdk.MustAccAddressFromBech32(packetData.Sender)); err != nil {
 		return 0, err
 	}
@@ -31,7 +31,7 @@ func (k Keeper) transferV1Packet(ctx sdk.Context, sourceChannel string, token ty
 	return sequence, nil
 }
 
-func (k Keeper) transferV2Packet(ctx sdk.Context, encoding, sourceChannel string, timeoutTimestamp uint64, packetData types.FungibleTokenPacketData) (uint64, error) {
+func (k Keeper) transferV2Packet(ctx sdk.Context, encoding, sourceChannel string, timeoutTimestamp uint64, packetData types.FungibleTokenPacketData) (uint64, error) { //nolint:unparam
 	if encoding == "" {
 		encoding = types.EncodingJSON
 	}

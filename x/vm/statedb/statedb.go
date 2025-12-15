@@ -18,14 +18,14 @@ import (
 	"github.com/ethereum/go-ethereum/trie/utils"
 	"github.com/holiman/uint256"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotmulti"
-	vmstoretypes "github.com/gurufinglobal/guru/v2/x/vm/store/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotmulti"
+	vmstoretypes "github.com/gurufinglobal/guru/v2/x/vm/store/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // revision is the identifier of a version of state.

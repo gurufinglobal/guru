@@ -7,15 +7,17 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/creachadair/taskgroup"
+	cmap "github.com/orcaman/concurrent-map/v2"
+
 	"cosmossdk.io/log"
+
 	"github.com/gurufinglobal/guru/v2/oralce/config"
 	"github.com/gurufinglobal/guru/v2/oralce/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/creachadair/taskgroup"
-	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
-type WorkerPool struct {
+type Pool struct {
 	logger      log.Logger
 	jobStore    cmap.ConcurrentMap[string, *types.OracleJob]
 	resultCh    chan *types.OracleJobResult
@@ -24,8 +26,8 @@ type WorkerPool struct {
 	client      *httpClient
 }
 
-func New(ctx context.Context, logger log.Logger) *WorkerPool {
-	wp := new(WorkerPool)
+func New(ctx context.Context, logger log.Logger) *Pool {
+	wp := new(Pool)
 	wp.logger = logger
 
 	wp.jobStore = cmap.New[*types.OracleJob]()
@@ -53,7 +55,7 @@ func New(ctx context.Context, logger log.Logger) *WorkerPool {
 
 // ProcessRequestDoc maps an Oracle request document to a scheduled job.
 // It selects the endpoint for this instance and computes initial delay.
-func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oracletypes.OracleRequestDoc, timestamp uint64) {
+func (wp *Pool) ProcessRequestDoc(ctx context.Context, requestDoc oracletypes.OracleRequestDoc, timestamp int64) {
 	requestIDStr := strconv.FormatUint(requestDoc.RequestId, 10)
 
 	if requestDoc.Status != oracletypes.RequestStatus_REQUEST_STATUS_ENABLED {
@@ -66,9 +68,8 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 	if index == -1 {
 		wp.logger.Info("request document not assigned to this oracle instance")
 		return
-	} else {
-		index = (index + 1) % len(requestDoc.AccountList)
 	}
+	index = (index + 1) % len(requestDoc.AccountList)
 
 	var currentNonce uint64
 	if job, ok := wp.jobStore.Get(requestIDStr); ok {
@@ -77,10 +78,10 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 		currentNonce = requestDoc.Nonce
 	}
 
-	periodSec := uint64(requestDoc.Period)
-	nowSec := uint64(time.Now().Unix())
-	tsSec := uint64(timestamp)
-	dsec := int64(tsSec+periodSec) - int64(nowSec)
+	periodSec := int64(requestDoc.Period)
+	nowSec := (time.Now().Unix())
+	tsSec := timestamp
+	dsec := (tsSec + periodSec) - (nowSec)
 
 	job := &types.OracleJob{
 		ID:     requestDoc.RequestId,
@@ -97,7 +98,7 @@ func (wp *WorkerPool) ProcessRequestDoc(ctx context.Context, requestDoc oraclety
 
 // ProcessComplete updates a job state using on-chain completion event data.
 // It advances the nonce and reschedules the next execution based on block time.
-func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce uint64, timestamp uint64) {
+func (wp *Pool) ProcessComplete(ctx context.Context, reqID string, nonce uint64, timestamp int64) {
 	job, ok := wp.jobStore.Get(reqID)
 	if !ok {
 		wp.logger.Debug("job not found", "request_id", reqID)
@@ -112,10 +113,10 @@ func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce u
 	}
 
 	job.Nonce = max(job.Nonce, nonce)
-	periodSec := uint64(job.Period / time.Second)
-	nowSec := uint64(time.Now().Unix())
-	tsSec := uint64(timestamp)
-	dsec := int64(tsSec+periodSec) - int64(nowSec)
+	periodSec := int64(job.Period / time.Second)
+	nowSec := (time.Now().Unix())
+	tsSec := timestamp
+	dsec := (tsSec + periodSec) - (nowSec)
 	job.Delay = time.Duration(max(int64(0), dsec)) * time.Second
 
 	wp.executeJob(ctx, job)
@@ -123,7 +124,7 @@ func (wp *WorkerPool) ProcessComplete(ctx context.Context, reqID string, nonce u
 
 // Results returns a read-only channel of completed job results.
 // The channel is closed when the worker pool is shut down.
-func (wp *WorkerPool) Results() <-chan *types.OracleJobResult {
+func (wp *Pool) Results() <-chan *types.OracleJobResult {
 	return wp.resultCh
 }
 
@@ -131,7 +132,7 @@ func (wp *WorkerPool) Results() <-chan *types.OracleJobResult {
 // It honors ctx cancellation for delaying the first run.
 // The nonce is only incremented and persisted after all external operations succeed,
 // ensuring on-chain nonce consistency.
-func (wp *WorkerPool) executeJob(ctx context.Context, job *types.OracleJob) {
+func (wp *Pool) executeJob(ctx context.Context, job *types.OracleJob) {
 	task := job
 
 	wp.workerFunc(func() error {

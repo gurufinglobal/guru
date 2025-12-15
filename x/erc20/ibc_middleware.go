@@ -3,8 +3,6 @@ package erc20
 import (
 	"errors"
 
-	"github.com/gurufinglobal/guru/v2/ibc"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
@@ -14,6 +12,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/gurufinglobal/guru/v2/ibc"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 var _ porttypes.IBCModule = &IBCMiddleware{}

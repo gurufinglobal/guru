@@ -11,12 +11,6 @@ import (
 
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	"github.com/gurufinglobal/guru/v2/server/config"
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -28,6 +22,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	"github.com/gurufinglobal/guru/v2/server/config"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // Accounts returns the list of accounts available to this node.

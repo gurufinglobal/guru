@@ -7,9 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	app "github.com/gurufinglobal/guru/v2/gurud"
-	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
-	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	sdkmath "cosmossdk.io/math"
@@ -17,6 +14,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	app "github.com/gurufinglobal/guru/v2/gurud"
+	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
+	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 )
 
 // Define useful variables for tests here.

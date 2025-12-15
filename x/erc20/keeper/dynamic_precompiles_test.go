@@ -5,15 +5,15 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 )
 
 func (suite *KeeperTestSuite) TestRegisterERC20CodeHash() {

@@ -16,14 +16,6 @@ import (
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 
 	dbm "github.com/cosmos/cosmos-db"
-	cosmosevmcmd "github.com/gurufinglobal/guru/v2/client"
-	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
-	"github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/gurud/testutil"
-	cosmosevmserver "github.com/gurufinglobal/guru/v2/server"
-	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
-	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
@@ -52,6 +44,15 @@ import (
 	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+
+	cosmosevmcmd "github.com/gurufinglobal/guru/v2/client"
+	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
+	"github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/gurud/testutil"
+	cosmosevmserver "github.com/gurufinglobal/guru/v2/server"
+	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
+	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
 )
 
 // NewRootCmd creates a new root command for gurud. It is called once in the
@@ -224,7 +225,9 @@ func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 	rootCmd.AddCommand(
 		func() *cobra.Command {
 			initCmd := genutilcli.InitCmd(osApp.BasicModuleManager, gurud.DefaultNodeHome)
-			initCmd.MarkFlagRequired(flags.FlagChainID)
+			if err := initCmd.MarkFlagRequired(flags.FlagChainID); err != nil {
+				panic(err)
+			}
 
 			// Override RunE to update client.toml with chain-id
 			originalRunE := initCmd.RunE
@@ -519,5 +522,5 @@ func updateClientTomlChainID(clientTomlPath, chainID string) error {
 
 	// Write back to file
 	newContent := strings.Join(newLines, "\n")
-	return os.WriteFile(clientTomlPath, []byte(newContent), 0600)
+	return os.WriteFile(clientTomlPath, []byte(newContent), 0o600)
 }

@@ -7,9 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-metrics"
 
-	"github.com/gurufinglobal/guru/v2/contracts"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 
@@ -17,6 +14,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
+	"github.com/gurufinglobal/guru/v2/contracts"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 var _ types.MsgServer = &Keeper{}

@@ -11,10 +11,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/gurufinglobal/guru/v2/x/bex/client/cli"
-	"github.com/gurufinglobal/guru/v2/x/bex/keeper"
-	"github.com/gurufinglobal/guru/v2/x/bex/types"
-
 	"cosmossdk.io/core/appmodule"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -23,6 +19,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+
+	"github.com/gurufinglobal/guru/v2/x/bex/client/cli"
+	"github.com/gurufinglobal/guru/v2/x/bex/keeper"
+	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
 // consensusVersion defines the current x/bex module consensus version.

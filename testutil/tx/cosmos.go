@@ -3,9 +3,6 @@ package tx
 import (
 	protov2 "google.golang.org/protobuf/proto"
 
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -14,6 +11,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
 var DefaultFee = sdk.NewCoin(constants.ExampleAttoDenom, sdkmath.NewInt(1e16)) // 0.01 AATOM

@@ -6,15 +6,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	"github.com/gurufinglobal/guru/v2/utils"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
+	"github.com/gurufinglobal/guru/v2/utils"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // CanTransfer checks if the sender is allowed to transfer funds according to the EVM block

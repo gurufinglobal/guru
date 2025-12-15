@@ -7,15 +7,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/x/vm/wrappers"
 	"github.com/gurufinglobal/guru/v2/x/vm/wrappers/testutil"
-
-	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestGetBaseFee(t *testing.T) {

@@ -8,15 +8,15 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/vm/keeper/testdata"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/vm/keeper/testdata"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func SetupContract(b *testing.B) (*KeeperTestSuite, common.Address) {

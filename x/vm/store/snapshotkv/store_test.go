@@ -6,11 +6,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotkv"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/store/cachekv"
 	"cosmossdk.io/store/dbadapter"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotkv"
 )
 
 func newSnapshotKV() *snapshotkv.Store {

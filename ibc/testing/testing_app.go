@@ -3,15 +3,16 @@ package ibctesting
 import (
 	"encoding/json"
 
-	"github.com/gurufinglobal/guru/v2/gurud"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	dbm "github.com/cosmos/cosmos-db"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	"cosmossdk.io/log"
 
-	"github.com/gurufinglobal/guru/v2/ibc/simapp"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+
+	"github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/ibc/simapp"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 )
 
 func SetupExampleApp() (ibctesting.TestingApp, map[string]json.RawMessage) {

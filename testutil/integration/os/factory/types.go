@@ -3,11 +3,11 @@ package factory
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
+
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // CosmosTxArgs contains the params to create a cosmos tx

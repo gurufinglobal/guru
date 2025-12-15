@@ -23,14 +23,6 @@ import (
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	"github.com/cometbft/cometbft/version"
 
-	clientkeys "github.com/gurufinglobal/guru/v2/client/keys"
-	"github.com/gurufinglobal/guru/v2/crypto/hd"
-	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/tests/integration/ledger/mocks"
-	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -40,6 +32,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+
+	clientkeys "github.com/gurufinglobal/guru/v2/client/keys"
+	"github.com/gurufinglobal/guru/v2/crypto/hd"
+	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/tests/integration/ledger/mocks"
+	"github.com/gurufinglobal/guru/v2/testutil/constants"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 )
 
 var s *LedgerTestSuite

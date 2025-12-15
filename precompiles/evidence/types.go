@@ -6,12 +6,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-
 	evidencetypes "cosmossdk.io/x/evidence/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 
 const (

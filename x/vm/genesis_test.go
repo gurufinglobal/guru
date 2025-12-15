@@ -9,6 +9,8 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
@@ -19,8 +21,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/vm"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type GenesisTestSuite struct {

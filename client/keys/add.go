@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cryptohd "github.com/gurufinglobal/guru/v2/crypto/hd"
 	bip39 "github.com/cosmos/go-bip39"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -22,6 +21,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	cryptohd "github.com/gurufinglobal/guru/v2/crypto/hd"
 )
 
 const (

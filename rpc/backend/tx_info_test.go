@@ -14,15 +14,16 @@ import (
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cometbft/cometbft/types"
 
+	dbm "github.com/cosmos/cosmos-db"
+
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
+
 	"github.com/gurufinglobal/guru/v2/indexer"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	dbm "github.com/cosmos/cosmos-db"
-
-	"cosmossdk.io/log"
-	"cosmossdk.io/math"
 )
 
 func (suite *BackendTestSuite) TestGetTransactionByHash() {
@@ -699,10 +700,10 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 				}
 				suite.Require().Nil(res["contractAddress"]) // no contract creation
 				suite.Require().NoError(err)
-			} else {
-				// for compatibility with evm tools
-				// suite.Require().Error(err)
-				// suite.Require().ErrorContains(err, tc.expErr.Error())
+				// } else {
+				// 	// for compatibility with evm tools
+				// 	// suite.Require().Error(err)
+				// 	// suite.Require().ErrorContains(err, tc.expErr.Error())
 			}
 		})
 	}

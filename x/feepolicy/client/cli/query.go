@@ -3,11 +3,13 @@ package cli
 import (
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+	"github.com/spf13/cobra"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/spf13/cobra"
+
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
 // GetCmdQueryModeratorAddress returns the cli command for querying the moderator address.

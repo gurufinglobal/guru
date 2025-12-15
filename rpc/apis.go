@@ -7,6 +7,9 @@ import (
 
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/server"
+
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/debug"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/eth"
@@ -17,9 +20,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/txpool"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/web3"
 	"github.com/gurufinglobal/guru/v2/types"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/server"
 )
 
 // RPC namespaces and API version

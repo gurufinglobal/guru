@@ -6,10 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
-	"github.com/gurufinglobal/guru/v2/oralce/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"cosmossdk.io/log"
+
+	"github.com/gurufinglobal/guru/v2/oralce/config"
 )
 
 type ClientTestSuite struct {
@@ -22,7 +24,8 @@ func (c *ClientTestSuite) SetupSuite() {
 	c.T().Log("setting up client test suite")
 
 	// Initialize test configuration
-	config.TestConfig()
+	err := config.TestConfig()
+	assert.NoError(c.T(), err)
 
 	c.client = newHTTPClient(log.NewTestLogger(c.T()))
 }
@@ -58,7 +61,8 @@ func (c *ClientTestSuite) TestFetchRawData_Success() {
 			assert.Equal(c.T(), "Guru-V2-Oracle/1.0", r.Header.Get("User-Agent"))
 			assert.Equal(c.T(), "application/json", r.Header.Get("Accept"))
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"rates":{"KRW":1388.95,"USD":1}}`))
+			_, err := w.Write([]byte(`{"rates":{"KRW":1388.95,"USD":1}}`))
+			assert.NoError(c.T(), err)
 		}))
 		defer server.Close()
 
@@ -73,7 +77,8 @@ func (c *ClientTestSuite) TestFetchRawData_Success() {
 	{
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"provider":"https://www.exchangerate-api.com","base":"USD","date":"2025-01-01","rates":{"USD":1,"KRW":1388.95,"EUR":0.856}}`))
+			_, err := w.Write([]byte(`{"provider":"https://www.exchangerate-api.com","base":"USD","date":"2025-01-01","rates":{"USD":1,"KRW":1388.95,"EUR":0.856}}`))
+			assert.NoError(c.T(), err)
 		}))
 		defer server.Close()
 
@@ -92,7 +97,8 @@ func (c *ClientTestSuite) TestFetchRawData_HTTPErrors() {
 	{
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte("Not Found"))
+			_, err := w.Write([]byte("Not Found"))
+			assert.NoError(c.T(), err)
 		}))
 		defer server.Close()
 
@@ -106,7 +112,8 @@ func (c *ClientTestSuite) TestFetchRawData_HTTPErrors() {
 	{
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Bad Request"))
+			_, err := w.Write([]byte("Bad Request"))
+			assert.NoError(c.T(), err)
 		}))
 		defer server.Close()
 
@@ -120,7 +127,8 @@ func (c *ClientTestSuite) TestFetchRawData_HTTPErrors() {
 	{
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal Server Error"))
+			_, err := w.Write([]byte("Internal Server Error"))
+			assert.NoError(c.T(), err)
 		}))
 		defer server.Close()
 
@@ -134,7 +142,8 @@ func (c *ClientTestSuite) TestFetchRawData_HTTPErrors() {
 	{
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusTooManyRequests)
-			w.Write([]byte("Too Many Requests"))
+			_, err := w.Write([]byte("Too Many Requests"))
+			assert.NoError(c.T(), err)
 		}))
 		defer server.Close()
 
@@ -532,7 +541,7 @@ func (c *ClientTestSuite) TestIntegration_FetchParseExtract() {
 	// Mock server that returns exchange rate data
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
+		_, err := w.Write([]byte(`{
 			"provider": "https://www.exchangerate-api.com",
 			"base": "USD",
 			"date": "2025-01-01",
@@ -542,6 +551,7 @@ func (c *ClientTestSuite) TestIntegration_FetchParseExtract() {
 				"EUR": 0.856
 			}
 		}`))
+		assert.NoError(c.T(), err)
 	}))
 	defer server.Close()
 

@@ -10,12 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	testifysuite "github.com/stretchr/testify/suite"
 
-	"github.com/gurufinglobal/guru/v2/gurud"
-	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
-	"github.com/gurufinglobal/guru/v2/testutil"
-	erc20Keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-	v2 "github.com/gurufinglobal/guru/v2/x/erc20/v2"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	channeltypesv2 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/v2/types"
@@ -25,6 +19,13 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/gurud"
+	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
+	"github.com/gurufinglobal/guru/v2/testutil"
+	erc20Keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
+	v2 "github.com/gurufinglobal/guru/v2/x/erc20/v2"
 )
 
 // MiddlewareTestSuite tests the v2 IBC middleware for the ERC20 module.

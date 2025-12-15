@@ -6,21 +6,20 @@ import (
 	"strings"
 
 	"github.com/cosmos/gogoproto/proto"
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
-
-	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InternalTransferRepresentation defines a struct used internally by the transfer application to represent a fungible token transfer
 type InternalTransferRepresentation struct {
 	// the exchange id
-	ExchangeId string
+	ExchangeID string
 	// the tokens to be transferred
 	Token Token
 	// the sender address
@@ -66,7 +65,7 @@ func NewTransferPacketData(
 	memo string,
 	timeoutTimestamp uint64,
 	fee sdk.Coin,
-	exchangeId string,
+	exchangeID string,
 ) TransferPacketData {
 	return TransferPacketData{
 		SourcePort:       sourcePort,
@@ -77,7 +76,7 @@ func NewTransferPacketData(
 		Memo:             memo,
 		TimeoutTimestamp: timeoutTimestamp,
 		Fee:              fee,
-		ExchangeId:       exchangeId,
+		ExchangeId:       exchangeID,
 	}
 }
 
@@ -149,13 +148,13 @@ func (ftpd FungibleTokenPacketData) GetCustomPacketData(key string) any {
 
 // NewInternalTransferRepresentation constructs a new InternalTransferRepresentation instance
 func NewInternalTransferRepresentation(
-	exchangeId string,
+	exchangeID string,
 	token Token,
 	sender, receiver string,
 	memo string,
 ) InternalTransferRepresentation {
 	return InternalTransferRepresentation{
-		ExchangeId: exchangeId,
+		ExchangeID: exchangeID,
 		Token:      token,
 		Sender:     sender,
 		Receiver:   receiver,
@@ -167,9 +166,9 @@ func NewInternalTransferRepresentation(
 // NOTE: The addresses formats are not validated as the sender and recipient can have different
 // formats defined by their corresponding chains that are not known to IBC.
 func (ftpd InternalTransferRepresentation) ValidateBasic() error {
-	_, ok := sdkmath.NewIntFromString(ftpd.ExchangeId)
+	_, ok := sdkmath.NewIntFromString(ftpd.ExchangeID)
 	if !ok {
-		return errorsmod.Wrapf(ErrInvalidAmount, "unable to parse exchange id: %s", ftpd.ExchangeId)
+		return errorsmod.Wrapf(ErrInvalidAmount, "unable to parse exchange id: %s", ftpd.ExchangeID)
 	}
 
 	if strings.TrimSpace(ftpd.Sender) == "" {
@@ -315,7 +314,7 @@ func PacketDataV1ToV2(packetData FungibleTokenPacketData) (InternalTransferRepre
 
 	denom := ExtractDenomFromPath(packetData.Denom)
 	return InternalTransferRepresentation{
-		ExchangeId: packetData.ExchangeId,
+		ExchangeID: packetData.ExchangeId,
 		Token: Token{
 			Denom:  denom,
 			Amount: packetData.Amount,
@@ -327,5 +326,5 @@ func PacketDataV1ToV2(packetData FungibleTokenPacketData) (InternalTransferRepre
 }
 
 func (ftpd InternalTransferRepresentation) IsTransferPacket() bool {
-	return ftpd.ExchangeId == "0"
+	return ftpd.ExchangeID == "0"
 }

@@ -16,7 +16,7 @@ const (
 	prefixModeratorAddress = iota + 1
 	prefixExchanges
 	prefixAdmins
-	prefixNextExchangeId
+	prefixNextExchangeID
 	prefixRatemeter
 	prefixAddressRateRegistry
 	prefixCollectedFees
@@ -28,7 +28,7 @@ var (
 	KeyModeratorAddress    = []byte{prefixModeratorAddress}
 	KeyExchanges           = []byte{prefixExchanges}
 	KeyAdmins              = []byte{prefixAdmins}
-	KeyNextExchangeId      = []byte{prefixNextExchangeId}
+	KeyNextExchangeID      = []byte{prefixNextExchangeID}
 	KeyRatemeter           = []byte{prefixRatemeter}
 	KeyAddressRateRegistry = []byte{prefixAddressRateRegistry}
 	KeyCollectedFees       = []byte{prefixCollectedFees}

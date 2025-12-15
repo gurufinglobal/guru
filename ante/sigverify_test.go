@@ -5,11 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/ante"
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
-	"github.com/gurufinglobal/guru/v2/encoding"
-	"github.com/gurufinglobal/guru/v2/server/config"
-
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -21,6 +16,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/gurufinglobal/guru/v2/ante"
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
+	"github.com/gurufinglobal/guru/v2/encoding"
+	"github.com/gurufinglobal/guru/v2/server/config"
 )
 
 func TestConsumeSignatureVerificationGas(t *testing.T) {

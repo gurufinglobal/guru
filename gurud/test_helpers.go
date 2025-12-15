@@ -10,8 +10,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	dbm "github.com/cosmos/cosmos-db"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
@@ -28,6 +26,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 )
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.

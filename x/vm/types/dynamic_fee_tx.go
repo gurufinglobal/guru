@@ -6,13 +6,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/gurufinglobal/guru/v2/types"
-	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/gurufinglobal/guru/v2/types"
+	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
 )
 
 func NewDynamicFeeTx(tx *ethtypes.Transaction) (*DynamicFeeTx, error) {
