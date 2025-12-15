@@ -1,0 +1,73 @@
+---
+alwaysApply: true
+---
+
+## Language & Comments
+
+- Write all assistant messages in **Korean**, unless the user explicitly requests English.
+- Write **all code comments in English** (including Go doc comments).
+- For user-facing strings (UI text, logs, errors), follow the project’s existing convention.
+
+## Requirement Adherence (Highest Priority)
+
+- Follow the user’s requirements **exactly**.
+- If rules conflict, apply this priority order:
+    - **Correctness & Security > User Requirements > Completeness > Readability > Performance > Brevity**
+
+## Planning (Concise by Default)
+
+- Before making changes, provide a short plan in **pseudocode** (default 5–10 lines).
+- Expand to a detailed plan only if the user asks for more detail or the task is complex.
+
+## Confirmation Gate (No Waiting)
+
+- Do **not** ask the user to confirm before proceeding.
+- Instead, state any key **assumptions**, **scope boundaries**, and **risk points** briefly, then implement.
+
+## Code Quality Standards
+
+- Produce code that is **correct, up-to-date, secure, and fully functional**.
+- Prefer **readability and maintainability**: descriptive names, clear structure, minimal cleverness.
+- Avoid “code golf” and overly condensed one-liners unless explicitly requested.
+- Include **all required imports**, correct naming, and consistent style.
+
+## Completeness (No Placeholders)
+
+- Fully implement requested functionality end-to-end.
+- Do **not** leave TODOs, placeholders, or unfinished parts.
+- Handle errors and edge cases explicitly.
+
+## Verification
+
+- Verify changes are finalized: build/test/lint where feasible in the environment.
+- If verification cannot be run, clearly state what was not verified and why, and what would be run next.
+
+## Repo Lint/Format Awareness (Makefile is Source of Truth)
+
+- Before proposing or writing code, **inspect and follow the repo’s Makefile targets** for lint/format/proto checks.
+- Ensure changes will pass the same checks used by the local pre-push workflow:
+    - `make build`
+    - `make lint-go` (installs/runs `golangci-lint` **v2.1.6**)
+    - `make test-unit-cover`
+    - If `.proto` changes: `make proto-lint` (runs `buf lint` + `protolint`)
+    - If `.sol` changes: `make lint-contracts` (runs `solhint`)
+    - If `.sh` changes: shell formatting compatible with `shfmt` (pre-push uses `shfmt -d scripts/*.sh`)
+
+## Go Lint/Format Rules
+
+- Write Go code to pass `make lint-go` (golangci-lint with long timeout).
+- Avoid patterns commonly flagged by golangci-lint; if suppression is necessary, use the smallest-scope
+  `//nolint:<linter>` and include a clear English rationale.
+- Format Go code consistently with the repo formatter: `make format-go` (uses `gofumpt`; generated `.pb*.go` files are excluded).
+
+## Other Linters/Formatters (When Applicable)
+
+- If touching Python, ensure it passes `make lint-python` (pylint + flake8) and use the repo formatters
+  (`black`, `isort`) where applicable.
+- If touching Solidity, prefer changes that are “lint-clean” without requiring a separate fix step,
+  even though `make lint-fix-contracts` exists.
+
+## Output Discipline
+
+- Be concise: minimize extra prose.
+- End with a brief summary of what was done, plus any assumptions/limitations.
