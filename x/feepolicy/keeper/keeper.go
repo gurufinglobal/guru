@@ -163,10 +163,10 @@ func (k Keeper) DeleteMsgTypeDiscounts(ctx sdk.Context, accStr, msgType string) 
 		return
 	}
 
-	for _, moduleDiscount := range discounts.Modules {
-		for j, discount := range moduleDiscount.Discounts {
+	for i := range discounts.Modules {
+		for j, discount := range discounts.Modules[i].Discounts {
 			if discount.MsgType == msgType {
-				moduleDiscount.Discounts = append(moduleDiscount.Discounts[:j], moduleDiscount.Discounts[j+1:]...)
+				discounts.Modules[i].Discounts = append(discounts.Modules[i].Discounts[:j], discounts.Modules[i].Discounts[j+1:]...)
 				break
 			}
 		}
