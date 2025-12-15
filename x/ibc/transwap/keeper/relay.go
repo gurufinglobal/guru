@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 
@@ -237,17 +238,17 @@ func (k Keeper) DenomPathFromHash(ctx sdk.Context, ibcDenom string) (string, err
 }
 
 // createPacketDataBytesFromVersion creates the packet data bytes to be sent based on the application version.
-func createPacketDataBytesFromVersion(appVersion, sender, receiver, memo string, token types.Token) ([]byte, error) {
-	switch appVersion {
-	case types.V1:
-		packetData := types.NewFungibleTokenPacketData(token.Denom.Path(), token.Amount, sender, receiver, memo)
+// func createPacketDataBytesFromVersion(appVersion, sender, receiver, memo string, token types.Token) ([]byte, error) {
+// 	switch appVersion {
+// 	case types.V1:
+// 		packetData := types.NewFungibleTokenPacketData(token.Denom.Path(), token.Amount, sender, receiver, memo)
 
-		if err := packetData.ValidateBasic(); err != nil {
-			return nil, errorsmod.Wrapf(err, "failed to validate %s packet data", types.V1)
-		}
+// 		if err := packetData.ValidateBasic(); err != nil {
+// 			return nil, errorsmod.Wrapf(err, "failed to validate %s packet data", types.V1)
+// 		}
 
-		return packetData.GetBytes(), nil
-	default:
-		return nil, errorsmod.Wrapf(types.ErrInvalidVersion, "app version must be one of %s", types.SupportedVersions)
-	}
-}
+// 		return packetData.GetBytes(), nil
+// 	default:
+// 		return nil, errorsmod.Wrapf(types.ErrInvalidVersion, "app version must be one of %s", types.SupportedVersions)
+// 	}
+// }

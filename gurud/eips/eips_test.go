@@ -13,6 +13,8 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
+	"github.com/cosmos/cosmos-sdk/crypto/types"
+
 	"github.com/gurufinglobal/guru/v2/gurud/eips"
 	"github.com/gurufinglobal/guru/v2/gurud/eips/testdata"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -21,8 +23,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	integrationutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"github.com/cosmos/cosmos-sdk/crypto/types"
 )
 
 // Below tests are divided in 3 steps:

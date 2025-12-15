@@ -15,17 +15,17 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
-	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
-	"github.com/gurufinglobal/guru/v2/server/config"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
+
+	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
+	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
+	"github.com/gurufinglobal/guru/v2/server/config"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // QueryClient defines a mocked object that implements the Cosmos EVM GRPC

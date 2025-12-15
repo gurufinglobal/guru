@@ -13,13 +13,13 @@ import (
 	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 
-	"github.com/gurufinglobal/guru/v2/server/config"
-
 	"cosmossdk.io/log"
 
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/version"
+
+	"github.com/gurufinglobal/guru/v2/server/config"
 )
 
 // AddCommands adds server commands

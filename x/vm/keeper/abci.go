@@ -3,11 +3,11 @@ package keeper
 import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // BeginBlock emits a base fee event which will be adjusted to the evm decimals

@@ -14,10 +14,10 @@ import (
 
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
+	"cosmossdk.io/log"
+
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 	"github.com/gurufinglobal/guru/v2/rpc/types"
-
-	"cosmossdk.io/log"
 )
 
 // BloomIV represents the bit indexes and value inside the bloom filter that belong

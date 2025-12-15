@@ -17,13 +17,13 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	stderrors "github.com/pkg/errors"
 
-	"github.com/gurufinglobal/guru/v2/rpc/backend"
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/server"
+
+	"github.com/gurufinglobal/guru/v2/rpc/backend"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // HandlerT keeps track of the cpu profiler and trace execution

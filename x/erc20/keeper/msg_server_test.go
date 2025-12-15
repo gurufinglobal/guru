@@ -9,6 +9,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	gomock "go.uber.org/mock/gomock"
 
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
 	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	"github.com/gurufinglobal/guru/v2/x/erc20/keeper"
@@ -16,12 +22,6 @@ import (
 	erc20mocks "github.com/gurufinglobal/guru/v2/x/erc20/types/mocks"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 func (suite *KeeperTestSuite) TestConvertERC20NativeERC20() {

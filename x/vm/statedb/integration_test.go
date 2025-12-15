@@ -12,6 +12,10 @@ import (
 	//nolint:revive // okay to use dot imports for Ginkgo
 	. "github.com/onsi/gomega"
 
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	testcontracts "github.com/gurufinglobal/guru/v2/precompiles/testutil/contracts"
 	testfactory "github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -19,10 +23,6 @@ import (
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	testnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestNestedEVMExtensionCall(t *testing.T) {

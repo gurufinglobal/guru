@@ -1,13 +1,13 @@
 package codec
 
 import (
-	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
-	"github.com/gurufinglobal/guru/v2/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
+	"github.com/gurufinglobal/guru/v2/types"
 )
 
 // RegisterLegacyAminoCodec registers Interfaces from types, crypto, and SDK std.

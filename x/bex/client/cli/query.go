@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+
 	"github.com/gurufinglobal/guru/v2/x/bex/types"
-	"github.com/spf13/cobra"
 )
 
 func GetCmdQueryModeratorAddress() *cobra.Command {
@@ -91,7 +93,7 @@ func GetCmdQueryIsAdmin() *cobra.Command {
 	return cmd
 }
 
-func GetCmdQueryNextExchangeId() *cobra.Command {
+func GetCmdQueryNextExchangeID() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "next-exchange-id",
 		Short: "Query the exchange id for registering new exchange",
@@ -154,12 +156,12 @@ func GetCmdQueryCollectedFees() *cobra.Command {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
-			exchangeId := ""
+			exchangeID := ""
 			if len(args) > 0 {
-				exchangeId = args[0]
+				exchangeID = args[0]
 			}
 
-			req := &types.QueryCollectedFeesRequest{ExchangeId: exchangeId}
+			req := &types.QueryCollectedFeesRequest{ExchangeId: exchangeID}
 			res, err := queryClient.CollectedFees(cmd.Context(), req)
 			if err != nil {
 				return err

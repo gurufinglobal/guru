@@ -3,12 +3,13 @@ package transfer
 import (
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
+
+	"github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 )
 
 var (

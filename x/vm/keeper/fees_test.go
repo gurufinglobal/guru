@@ -9,13 +9,13 @@ import (
 	ethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) TestCheckSenderBalance() {

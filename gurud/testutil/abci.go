@@ -8,15 +8,15 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	app "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/testutil/tx"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
+	app "github.com/gurufinglobal/guru/v2/gurud"
+	"github.com/gurufinglobal/guru/v2/testutil/tx"
 )
 
 // Commit commits a block at a given time. Reminder: At the end of each
@@ -254,7 +254,7 @@ func checkTxBytes(app *app.EVMD, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.Respo
 	}
 
 	if res.Code != 0 {
-		return abci.ResponseCheckTx{}, errorsmod.Wrapf(errortypes.ErrInvalidRequest, res.Log)
+		return abci.ResponseCheckTx{}, errorsmod.Wrapf(errortypes.ErrInvalidRequest, "check tx failed: %s", res.Log)
 	}
 
 	return *res, nil
