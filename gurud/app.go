@@ -9,6 +9,8 @@ import (
 	"sort"
 
 	corevm "github.com/ethereum/go-ethereum/core/vm"
+	"github.com/gorilla/mux"
+	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
@@ -30,35 +32,6 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	evmante "github.com/gurufinglobal/guru/v2/ante"
-	cosmosevmante "github.com/gurufinglobal/guru/v2/ante/evm"
-	evmosencoding "github.com/gurufinglobal/guru/v2/encoding"
-	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
-	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	cosmosevmutils "github.com/gurufinglobal/guru/v2/utils"
-	"github.com/gurufinglobal/guru/v2/x/erc20"
-	erc20keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	erc20v2 "github.com/gurufinglobal/guru/v2/x/erc20/v2"
-	"github.com/gurufinglobal/guru/v2/x/feemarket"
-	feemarketkeeper "github.com/gurufinglobal/guru/v2/x/feemarket/keeper"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	feepolicymodule "github.com/gurufinglobal/guru/v2/x/feepolicy"
-	feepolicykeeper "github.com/gurufinglobal/guru/v2/x/feepolicy/keeper"
-	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-	"github.com/gurufinglobal/guru/v2/x/ibc/transfer" // NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
-	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
-	transferv2 "github.com/gurufinglobal/guru/v2/x/ibc/transfer/v2"
-	oraclemodule "github.com/gurufinglobal/guru/v2/x/oracle"
-	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
-	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/gurufinglobal/guru/v2/x/precisebank"
-	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
-	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	"github.com/gurufinglobal/guru/v2/x/vm"
-	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -76,9 +49,6 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/gorilla/mux"
-	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/gurufinglobal/guru/v2/server/swagger"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -140,15 +110,44 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	evmante "github.com/gurufinglobal/guru/v2/ante"
+	cosmosevmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	evmosencoding "github.com/gurufinglobal/guru/v2/encoding"
+	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
+	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
+	"github.com/gurufinglobal/guru/v2/server/swagger"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	cosmosevmutils "github.com/gurufinglobal/guru/v2/utils"
 	// guru modules
 	"github.com/gurufinglobal/guru/v2/x/bex"
 	bexkeeper "github.com/gurufinglobal/guru/v2/x/bex/keeper"
 	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
-
+	"github.com/gurufinglobal/guru/v2/x/erc20"
+	erc20keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	erc20v2 "github.com/gurufinglobal/guru/v2/x/erc20/v2"
+	"github.com/gurufinglobal/guru/v2/x/feemarket"
+	feemarketkeeper "github.com/gurufinglobal/guru/v2/x/feemarket/keeper"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	feepolicymodule "github.com/gurufinglobal/guru/v2/x/feepolicy"
+	feepolicykeeper "github.com/gurufinglobal/guru/v2/x/feepolicy/keeper"
+	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+	"github.com/gurufinglobal/guru/v2/x/ibc/transfer" // NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
+	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
+	transferv2 "github.com/gurufinglobal/guru/v2/x/ibc/transfer/v2"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap"
 	transwapkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
 	transwaptypes "github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 	transwapv2 "github.com/gurufinglobal/guru/v2/x/ibc/transwap/v2"
+	oraclemodule "github.com/gurufinglobal/guru/v2/x/oracle"
+	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"github.com/gurufinglobal/guru/v2/x/precisebank"
+	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
+	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	"github.com/gurufinglobal/guru/v2/x/vm"
+	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func init() {
@@ -1151,11 +1150,7 @@ func (app *EVMD) RegisterSwaggerAPI(clientCtx client.Context, rtr *mux.Router, s
 	swagger.RegisterCustomSwaggerAPI(rtr, grpcGateway)
 
 	// Use the default static swagger files for other endpoints
-	if err := server.RegisterSwaggerAPI(clientCtx, rtr, swaggerEnabled); err != nil {
-		return err
-	}
-
-	return nil
+	return server.RegisterSwaggerAPI(clientCtx, rtr, swaggerEnabled)
 }
 
 // AutoCliOpts returns the autocli options for the app.

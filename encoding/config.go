@@ -3,10 +3,6 @@ package encoding
 import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	enccodec "github.com/gurufinglobal/guru/v2/encoding/codec"
-	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 	"github.com/cosmos/gogoproto/proto"
 
 	"cosmossdk.io/x/tx/signing"
@@ -18,6 +14,11 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
+
+	enccodec "github.com/gurufinglobal/guru/v2/encoding/codec"
+	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // MakeConfig creates a new EncodingConfig and returns it

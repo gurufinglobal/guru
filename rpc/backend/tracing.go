@@ -11,10 +11,10 @@ import (
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // TraceTransaction returns the structured logs created during the execution of EVM

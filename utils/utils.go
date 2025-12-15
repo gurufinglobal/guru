@@ -10,7 +10,6 @@ import (
 	"github.com/holiman/uint256"
 	"golang.org/x/exp/constraints"
 
-	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -20,6 +19,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 )
 
 // Bech32StringFromHexAddress takes a given Hex string and derives a Cosmos SDK account address

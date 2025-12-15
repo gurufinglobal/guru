@@ -3,10 +3,10 @@ package testutil
 import (
 	"github.com/ethereum/go-ethereum/common"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewStateDB returns a new StateDB for testing purposes.

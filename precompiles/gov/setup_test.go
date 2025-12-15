@@ -6,13 +6,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/gurufinglobal/guru/v2/precompiles/gov"
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
-	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -21,6 +14,13 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+
+	"github.com/gurufinglobal/guru/v2/precompiles/gov"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 )
 
 type PrecompileTestSuite struct {

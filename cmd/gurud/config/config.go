@@ -1,10 +1,10 @@
 package config
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ChainsCoinInfo is a map of the chain id and its corresponding EvmCoinInfo

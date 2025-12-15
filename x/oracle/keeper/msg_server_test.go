@@ -3,9 +3,14 @@ package keeper
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+)
+
+const (
+	// testAuthorityAddr is a test address for oracle authority
+	testAuthorityAddr = "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"
 )
 
 func TestSubmitOracleDataNilDataSet(t *testing.T) {
@@ -13,12 +18,12 @@ func TestSubmitOracleDataNilDataSet(t *testing.T) {
 
 	// Test with nil DataSet - should return error, not panic
 	msg := &types.MsgSubmitOracleData{
-		AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+		AuthorityAddress: testAuthorityAddr,
 		DataSet:          nil, // This should cause validation to fail
 	}
 
 	// This should not panic and should return an error
-	response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
+	response, err := keeper.SubmitOracleData(ctx, msg)
 	require.Error(t, err)
 	require.Nil(t, response)
 	require.Contains(t, err.Error(), "DataSet must be provided")
@@ -60,7 +65,7 @@ func TestSubmitOracleDataNilDataSet(t *testing.T) {
 // 	}
 
 // 	// This should succeed
-// 	response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
+// 	response, err := keeper.SubmitOracleData(ctx, msg)
 // 	require.NoError(t, err)
 // 	require.NotNil(t, response)
 // }
@@ -83,7 +88,7 @@ func TestSubmitOracleDataEdgeCases(t *testing.T) {
 		{
 			name: "nil DataSet",
 			msg: &types.MsgSubmitOracleData{
-				AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				AuthorityAddress: testAuthorityAddr,
 				DataSet:          nil,
 			},
 			expectError: true,
@@ -92,7 +97,7 @@ func TestSubmitOracleDataEdgeCases(t *testing.T) {
 		{
 			name: "valid DataSet structure but invalid content",
 			msg: &types.MsgSubmitOracleData{
-				AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
+				AuthorityAddress: testAuthorityAddr,
 				DataSet: &types.SubmitDataSet{
 					RequestId: 0, // Invalid: zero request ID
 					Nonce:     1,
@@ -113,7 +118,7 @@ func TestSubmitOracleDataEdgeCases(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), tc.msg)
+			response, err := keeper.SubmitOracleData(ctx, tc.msg)
 
 			if tc.expectError {
 				require.Error(t, err)

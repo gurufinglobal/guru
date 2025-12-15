@@ -5,16 +5,16 @@ import (
 
 	"github.com/ethereum/go-ethereum/params"
 
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
+	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // TxFeeChecker check if the provided fee is enough and returns the effective fee, total tip and tx priority,

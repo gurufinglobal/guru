@@ -15,16 +15,6 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/contracts"
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	testfactory "github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
-	testhandler "github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
-	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 
@@ -36,6 +26,16 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
+	"github.com/gurufinglobal/guru/v2/contracts"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	testfactory "github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	testhandler "github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) TestCreateAccount() {

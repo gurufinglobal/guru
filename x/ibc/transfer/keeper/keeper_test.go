@@ -10,14 +10,6 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/gurufinglobal/guru/v2/contracts"
-	cmnfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	evm "github.com/gurufinglobal/guru/v2/x/vm/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -27,6 +19,15 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/contracts"
+	cmnfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	evm "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 type KeeperTestSuite struct {

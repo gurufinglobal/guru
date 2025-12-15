@@ -6,8 +6,9 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // ProcessOracleDataSetAggregation processes oracle data set aggregation for all enabled requests
@@ -44,7 +45,7 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 		}
 
 		// Check if we have enough submissions (quorum)
-		if uint32(len(submitDatas)) < doc.Quorum {
+		if uint32(len(submitDatas)) < doc.Quorum { //nolint:gosec // quorum is always positive
 			k.Logger(ctx).Info(fmt.Sprintf("insufficient submissions for request_id %d, nonce %d: got %d, need %d",
 				doc.RequestId, nextNonce, len(submitDatas), doc.Quorum))
 			continue
@@ -62,8 +63,8 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 		dataSet := types.DataSet{
 			RequestId:   doc.RequestId,
 			Nonce:       nextNonce,
-			BlockHeight: uint64(ctx.BlockHeight()),
-			BlockTime:   uint64(ctx.BlockTime().Unix()),
+			BlockHeight: uint64(ctx.BlockHeight()),      //nolint:gosec // block height is always positive
+			BlockTime:   uint64(ctx.BlockTime().Unix()), //nolint:gosec // block time is always positive
 			RawData:     aggregatedValue,
 		}
 
@@ -84,7 +85,7 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 			sdk.Events{
 				sdk.NewEvent(
 					types.EventTypeCompleteOracleDataSet,
-					sdk.NewAttribute(types.AttributeKeyRequestId, fmt.Sprintf("%d", doc.RequestId)),
+					sdk.NewAttribute(types.AttributeKeyRequestID, fmt.Sprintf("%d", doc.RequestId)),
 					sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprintf("%d", nextNonce)),
 					sdk.NewAttribute(types.AttributeKeyRawData, aggregatedValue),
 					sdk.NewAttribute(types.AttributeKeyBlockHeight, fmt.Sprintf("%d", ctx.BlockHeight())),
@@ -119,17 +120,17 @@ func (k Keeper) calculateMax(submitDatas []*types.SubmitDataSet) (string, error)
 		return "", fmt.Errorf("no data to calculate max")
 	}
 
-	max := new(big.Float)
+	maxVal := new(big.Float)
 	for _, data := range submitDatas {
 		value := new(big.Float)
 		if _, ok := value.SetString(data.RawData); !ok {
 			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
 		}
-		if value.Cmp(max) > 0 {
-			max = value
+		if value.Cmp(maxVal) > 0 {
+			maxVal = value
 		}
 	}
-	return max.Text('f', -1), nil
+	return maxVal.Text('f', -1), nil
 }
 
 func (k Keeper) calculateMin(submitDatas []*types.SubmitDataSet) (string, error) {
@@ -137,17 +138,17 @@ func (k Keeper) calculateMin(submitDatas []*types.SubmitDataSet) (string, error)
 		return "", fmt.Errorf("no data to calculate min")
 	}
 
-	min := new(big.Float).SetFloat64(math.MaxFloat64)
+	minVal := new(big.Float).SetFloat64(math.MaxFloat64)
 	for _, data := range submitDatas {
 		value := new(big.Float)
 		if _, ok := value.SetString(data.RawData); !ok {
 			return "", fmt.Errorf("invalid decimal number in raw data: %q", data.RawData)
 		}
-		if value.Cmp(min) < 0 {
-			min = value
+		if value.Cmp(minVal) < 0 {
+			minVal = value
 		}
 	}
-	return min.Text('f', -1), nil
+	return minVal.Text('f', -1), nil
 }
 
 // calculateAverage calculates the average of all submitted values

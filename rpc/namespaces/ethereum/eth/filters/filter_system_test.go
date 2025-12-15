@@ -13,9 +13,9 @@ import (
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 
-	"github.com/gurufinglobal/guru/v2/rpc/ethereum/pubsub"
-
 	"cosmossdk.io/log"
+
+	"github.com/gurufinglobal/guru/v2/rpc/ethereum/pubsub"
 )
 
 func makeSubscription(id, event string) *Subscription {

@@ -1,10 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 )
 
 // MintToAccount mints coins to an account with the x/precisebank methods. This
