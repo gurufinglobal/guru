@@ -10,7 +10,9 @@ package types
 import (
 	"errors"
 	"fmt"
+	"os"
 
+	"cosmossdk.io/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -51,27 +53,32 @@ func setEVMCoinExtendedDenom(extendedDenom string) error {
 // coin.
 func GetEVMCoinDecimals() Decimals {
 	if testingEvmCoinInfo == nil {
-		panic("EVM coin info not initialized: chain-id must be set in client.toml or via --chain-id flag. Please configure the chain-id before running this command")
+		// Use SDK logger with safe writer
+		logger := log.NewLogger(os.Stdout)
+		logger.Error("EVM coin info not initialized: chain-id must be set in client.toml or via --chain-id flag. Please configure the chain-id before running this command")
+		// Return 18 decimals as safe default for Ethereum compatibility
+		return EighteenDecimals
 	}
-
 	return testingEvmCoinInfo.Decimals
 }
 
 // GetEVMCoinDenom returns the denom used for the EVM coin.
 func GetEVMCoinDenom() string {
 	if testingEvmCoinInfo == nil {
-		panic("EVM coin info not initialized: chain-id must be set in client.toml or via --chain-id flag. Please configure the chain-id before running this command")
+		logger := log.NewLogger(os.Stdout)
+		logger.Error("EVM coin info not initialized: chain-id must be set in client.toml or via --chain-id flag. Please configure the chain-id before running this command")
+		return "agxn" // Default denom
 	}
-
 	return testingEvmCoinInfo.Denom
 }
 
 // GetEVMCoinExtendedDenom returns the extended denom used for the EVM coin.
 func GetEVMCoinExtendedDenom() string {
 	if testingEvmCoinInfo == nil {
-		panic("EVM coin info not initialized: chain-id must be set in client.toml or via --chain-id flag. Please configure the chain-id before running this command")
+		logger := log.NewLogger(os.Stdout)
+		logger.Error("EVM coin info not initialized: chain-id must be set in client.toml or via --chain-id flag. Please configure the chain-id before running this command")
+		return "agxn" // Default extended denom
 	}
-
 	return testingEvmCoinInfo.ExtendedDenom
 }
 
