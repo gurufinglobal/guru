@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	ErrInvalidRequestId = errorsmod.Register(ModuleName, codeInvalidRequestID, "invalid request id")
+	ErrInvalidRequestID = errorsmod.Register(ModuleName, codeInvalidRequestID, "invalid request id")
 	ErrInvalidNonce     = errorsmod.Register(ModuleName, codeInvalidNonce, "invalid nonce")
 	ErrInvalidProvider  = errorsmod.Register(ModuleName, codeInvalidProvider, "invalid provider")
 	ErrInvalidRawData   = errorsmod.Register(ModuleName, codeInvalidRawData, "invalid raw data")

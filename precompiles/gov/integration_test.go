@@ -14,15 +14,6 @@ import (
 	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	"github.com/gurufinglobal/guru/v2/precompiles/gov"
-	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
-	"github.com/gurufinglobal/guru/v2/precompiles/testutil/contracts"
-	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
-	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/crypto/types"
@@ -32,6 +23,15 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	"github.com/gurufinglobal/guru/v2/precompiles/gov"
+	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
+	"github.com/gurufinglobal/guru/v2/precompiles/testutil/contracts"
+	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // General variables used for integration tests

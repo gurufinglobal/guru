@@ -23,6 +23,8 @@ stopwords = [
     '''0x8FA78CEB7F04118Ec6d06AaC37Ca854691d8e963''',
     '''0x205CF44075E77A3543abC690437F3b2819bc450a''',
     '''cosmos10d07y265gmmuvt4z0w9aw880jnsr700jcrztvm''',
+    '''guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft''',
+    '''guru172m263wcg98cph8e32tv0xky94eq4r4wzhwgaz''',
 ]
 
 [[rules]]

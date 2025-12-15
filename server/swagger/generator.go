@@ -7,6 +7,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/docs"
 )
 
+// server/swagger/generator.go에 상수 추가
+const (
+	ServiceType = "Service"
+	QueryType   = "Query"
+	HTTPPost    = "POST"
+	MsgType     = "Msg"
+)
+
 // GetStaticSwaggerContent retrieves the embedded static swagger content
 func GetStaticSwaggerContent() (string, error) {
 	swaggerBytes, err := docs.SwaggerUI.ReadFile("swagger-ui/swagger.yaml")
@@ -98,11 +106,12 @@ func GenerateSwaggerPath(method RPCMethod) string {
 
 	// Determine the appropriate tag
 	var tag string
-	if method.ServiceType == "Service" {
+	switch method.ServiceType {
+	case ServiceType:
 		tag = "Service"
-	} else if method.ServiceType == "Query" {
+	case QueryType:
 		tag = "Query"
-	} else {
+	default:
 		tag = "Guru Module" // fallback
 	}
 

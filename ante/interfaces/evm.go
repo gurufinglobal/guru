@@ -9,14 +9,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
+
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // EVMKeeper exposes the required EVM keeper interface required for ante handlers

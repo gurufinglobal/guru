@@ -3,11 +3,23 @@ package daemon
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/rs/zerolog"
+
+	comethttp "github.com/cometbft/cometbft/rpc/client/http"
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+
 	"cosmossdk.io/log"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	guruconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/encoding"
 	"github.com/gurufinglobal/guru/v2/oralce/config"
@@ -16,13 +28,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/oralce/types"
 	"github.com/gurufinglobal/guru/v2/oralce/worker"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	comethttp "github.com/cometbft/cometbft/rpc/client/http"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/rs/zerolog"
 )
 
 // Daemon is the main Oracle service that coordinates all Oracle operations
@@ -33,7 +38,7 @@ type Daemon struct {
 	clientCtx client.Context
 
 	subscriber *subscriber.Subscriber
-	worker     *worker.WorkerPool
+	worker     *worker.Pool
 	submitter  *submiter.Submitter
 }
 
@@ -89,7 +94,10 @@ func New(ctx context.Context) *Daemon {
 	go func() {
 		<-ctx.Done()
 		if cometClient.IsRunning() {
-			cometClient.Stop()
+			err := cometClient.Stop()
+			if err != nil {
+				d.logger.Error("stop comet client", "error", err)
+			}
 		}
 	}()
 
@@ -140,7 +148,7 @@ func (d *Daemon) runEventLoop(ctx context.Context, queryClient oracletypes.Query
 
 					timestamp = res.DataSet.BlockTime
 				}
-				d.worker.ProcessRequestDoc(ctx, event, timestamp)
+				d.worker.ProcessRequestDoc(ctx, event, int64(timestamp)) //nolint:gosec // timestamp is always positive
 
 			case coretypes.ResultEvent:
 				for i, reqID := range event.Events[types.CompleteID] {
@@ -156,7 +164,13 @@ func (d *Daemon) runEventLoop(ctx context.Context, queryClient oracletypes.Query
 						continue
 					}
 
-					d.worker.ProcessComplete(ctx, reqID, nonce, timestamp)
+					// Check for overflow before converting uint64 to int64
+					if timestamp > math.MaxInt64 {
+						d.logger.Error("timestamp overflow", "timestamp", timestamp, "req_id", reqID)
+						continue
+					}
+
+					d.worker.ProcessComplete(ctx, reqID, nonce, int64(timestamp))
 				}
 			}
 		}

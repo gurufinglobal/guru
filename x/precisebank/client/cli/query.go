@@ -3,10 +3,10 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+
+	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
 )
 
 // GetQueryCmd returns the parent command for all x/precisebank CLI query commands.

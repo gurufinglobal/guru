@@ -62,7 +62,7 @@ func (doc OracleRequestDoc) ValidateWithParams(params Params) error {
 		return fmt.Errorf("quorum cannot be 0")
 	}
 	// Check if quorum is greater than the length of the account list
-	if doc.Quorum > uint32(len(doc.AccountList)) {
+	if doc.Quorum > uint32(len(doc.AccountList)) { //nolint:gosec // quorum is always positive
 		return fmt.Errorf("quorum cannot be greater than account list length")
 	}
 
@@ -105,7 +105,7 @@ func (sds SubmitDataSet) Bytes() ([]byte, error) {
 	buf = append(buf, u64[:]...)
 
 	var l4 [4]byte
-	binary.BigEndian.PutUint32(l4[:], uint32(len(sds.RawData)))
+	binary.BigEndian.PutUint32(l4[:], uint32(len(sds.RawData))) //nolint:gosec // len(sds.RawData) is always positive
 	buf = append(buf, l4[:]...)
 	buf = append(buf, []byte(sds.RawData)...)
 

@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/cmd"
 	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	examplechain "github.com/gurufinglobal/guru/v2/gurud"
-
-	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func main() {

@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
-
 	sdkmath "cosmossdk.io/math"
+
+	ethutils "github.com/gurufinglobal/guru/v2/utils/eth"
 )
 
 func TestTxData_chainID(t *testing.T) {

@@ -3,9 +3,10 @@ package keeper
 import (
 	"context"
 
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
 // QueryServer implementation

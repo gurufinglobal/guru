@@ -14,9 +14,9 @@ import (
 	"github.com/spf13/cast"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/gurufinglobal/guru/v2/types"
-
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
+
+	"github.com/gurufinglobal/guru/v2/types"
 )
 
 // BlockNumber represents decoding hex string to block values
