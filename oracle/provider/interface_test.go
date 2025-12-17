@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"cosmossdk.io/log"
@@ -15,6 +16,9 @@ type mockProvider struct {
 
 func (m mockProvider) ID() string          { return m.id }
 func (m mockProvider) Categories() []int32 { return m.categories }
+func (m mockProvider) SetHTTPClient(client *http.Client) {
+	// no-op
+}
 func (m mockProvider) Fetch(ctx context.Context, symbol string) (string, error) {
 	return "1", nil
 }

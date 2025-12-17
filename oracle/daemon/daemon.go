@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"cosmossdk.io/log"
@@ -33,9 +36,19 @@ import (
 )
 
 type Daemon struct {
+	cfg     *config.Config
+	homeDir string
+
 	logger      log.Logger
 	clientCtx   client.Context
 	cometClient *comethttp.HTTP
+
+	providerHTTPClient *http.Client
+	providers          []provider.Provider
+	pvRegistry         *provider.Registry
+	baseFactory        tx.Factory
+	gasPrice           string
+	gasPriceMu         sync.RWMutex
 
 	reqIDCh  chan uint64
 	taskCh   chan types.OracleTask
@@ -48,11 +61,22 @@ type Daemon struct {
 	oracleQueryClient    oracletypes.QueryClient
 	feemarketQueryClient feemarkettypes.QueryClient
 	denom                string
+
+	runMu     sync.Mutex
+	runCancel context.CancelFunc
+	runDone   chan struct{}
+
+	healthMu sync.Mutex
 }
 
 const (
-	channelBuffer      = 16
-	defaultHTTPTimeout = 30 * time.Second
+	channelBuffer       = 16
+	defaultHTTPTimeout  = 30 * time.Second
+	healthCheckInterval = 30 * time.Second
+	healthCheckTimeout  = 5 * time.Second
+	shutdownTimeout     = 10 * time.Second
+	restartBackoffBase  = 1 * time.Second
+	restartBackoffMax   = 32 * time.Second
 )
 
 func New(cfg *config.Config, homeDir string) (*Daemon, error) {
@@ -123,8 +147,9 @@ func New(cfg *config.Config, homeDir string) (*Daemon, error) {
 	}
 
 	httpClient := &http.Client{Timeout: defaultHTTPTimeout}
+	coinbase := provider.NewCoinbaseProvider(httpClient)
 	registry, err := provider.New(logger, categories.Categories,
-		provider.NewCoinbaseProvider(httpClient),
+		coinbase,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("init provider registry: %w", err)
@@ -151,12 +176,21 @@ func New(cfg *config.Config, homeDir string) (*Daemon, error) {
 		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 
 	return &Daemon{
-		logger:      logger,
-		clientCtx:   clientCtx,
-		cometClient: cometClient,
-		reqIDCh:     make(chan uint64, channelBuffer),
-		taskCh:      make(chan types.OracleTask, channelBuffer),
-		resultCh:    make(chan oracletypes.OracleReport, channelBuffer),
+		cfg:     cfg,
+		homeDir: homeDir,
+
+		logger:             logger,
+		clientCtx:          clientCtx,
+		cometClient:        cometClient,
+		providerHTTPClient: httpClient,
+		providers:          []provider.Provider{coinbase},
+		pvRegistry:         registry,
+		baseFactory:        baseFactory,
+		gasPrice:           gasPrice,
+
+		reqIDCh:  make(chan uint64, channelBuffer),
+		taskCh:   make(chan types.OracleTask, channelBuffer),
+		resultCh: make(chan oracletypes.OracleReport, channelBuffer),
 		listener: listener.NewSubscriptionManager(logger,
 			types.OracleTaskIDQuery,
 		),
@@ -169,24 +203,103 @@ func New(cfg *config.Config, homeDir string) (*Daemon, error) {
 }
 
 func (d *Daemon) Start(ctx context.Context) error {
-	go d.submitter.Start(ctx, d.resultCh)
-	go d.aggregator.Start(ctx, d.taskCh, d.resultCh)
+	d.startRun(ctx)
+	go d.healthLoop(ctx)
 
-	d.listener.Start(ctx, d.clientCtx.Client.(*comethttp.HTTP), d.reqIDCh)
-
-	go d.mainLoop(ctx)
-
+	go func() {
+		<-ctx.Done()
+		// Ensure we don't race with an in-flight restart.
+		d.healthMu.Lock()
+		defer d.healthMu.Unlock()
+		d.stopRun()
+		d.stopComet()
+	}()
 	return nil
 }
 
-func (d *Daemon) mainLoop(ctx context.Context) {
+func (d *Daemon) startRun(parent context.Context) {
+	runCtx, cancel := context.WithCancel(parent)
+	done := make(chan struct{})
+
+	// Fresh channels per run to avoid cross-run mixing.
+	reqIDCh := make(chan uint64, channelBuffer)
+	taskCh := make(chan types.OracleTask, channelBuffer)
+	resultCh := make(chan oracletypes.OracleReport, channelBuffer)
+
+	// Rebuild components that depend on clientCtx/comet.
+	accountInfo := submitter.NewAccountInfo(authtypes.NewQueryClient(d.clientCtx), d.clientCtx.GetFromAddress())
+	baseFactory := d.baseFactory.WithGasPrices(d.currentGasPrice())
+
+	d.runMu.Lock()
+	d.runCancel = cancel
+	d.runDone = done
+	d.reqIDCh = reqIDCh
+	d.taskCh = taskCh
+	d.resultCh = resultCh
+	d.listener = listener.NewSubscriptionManager(d.logger, types.OracleTaskIDQuery)
+	d.aggregator = aggregator.NewAggregator(d.logger, d.pvRegistry)
+	d.submitter = submitter.New(d.logger, d.cfg.Keyring.Name, d.clientCtx.TxConfig, accountInfo, baseFactory, d.clientCtx)
+	d.runMu.Unlock()
+
+	sub := d.submitter
+	agg := d.aggregator
+	lst := d.listener
+	oqc := d.oracleQueryClient
+	fqc := d.feemarketQueryClient
+	denom := d.denom
+	mainDone := make(chan struct{})
+	sub.Start(runCtx, resultCh)
+	agg.Start(runCtx, taskCh, resultCh)
+	go func() {
+		defer close(mainDone)
+		d.mainLoop(runCtx, reqIDCh, taskCh, oqc, fqc, denom, sub)
+	}()
+
+	// Listener manages its own goroutines; cancellation is sufficient.
+	lst.Start(runCtx, d.cometClient, reqIDCh)
+
+	go func() {
+		<-sub.Done()
+		<-agg.Done()
+		<-lst.Done()
+		<-mainDone
+		close(done)
+	}()
+}
+
+func (d *Daemon) stopRun() {
+	d.runMu.Lock()
+	cancel := d.runCancel
+	done := d.runDone
+	d.runMu.Unlock()
+
+	if cancel != nil {
+		cancel()
+	}
+	if done != nil {
+		select {
+		case <-done:
+		case <-time.After(shutdownTimeout):
+			d.logger.Error("run shutdown timed out")
+		}
+	}
+}
+
+func (d *Daemon) mainLoop(
+	ctx context.Context,
+	reqIDCh <-chan uint64,
+	taskCh chan<- types.OracleTask,
+	oracleQueryClient oracletypes.QueryClient,
+	feemarketQueryClient feemarkettypes.QueryClient,
+	denom string,
+	sub *submitter.Submitter,
+) {
 	for {
 		select {
 		case <-ctx.Done():
-			d.stop()
 			return
-		case reqID := <-d.reqIDCh:
-			res, err := d.oracleQueryClient.OracleRequest(ctx, &oracletypes.QueryOracleRequestRequest{RequestId: reqID})
+		case reqID := <-reqIDCh:
+			res, err := oracleQueryClient.OracleRequest(ctx, &oracletypes.QueryOracleRequestRequest{RequestId: reqID})
 			if err != nil {
 				d.logger.Error("get oracle request", "error", err, "request_id", reqID)
 				continue
@@ -194,17 +307,19 @@ func (d *Daemon) mainLoop(ctx context.Context) {
 
 			if res.Request.Category == oracletypes.Category_CATEGORY_OPERATION {
 				go func() {
-					feemarketRes, err := d.feemarketQueryClient.Params(ctx, &feemarkettypes.QueryParamsRequest{})
+					feemarketRes, err := feemarketQueryClient.Params(ctx, &feemarkettypes.QueryParamsRequest{})
 					if err != nil {
 						d.logger.Error("get feemarket params", "error", err)
 						return
 					}
 
-					d.submitter.UpdateGasPrice(feemarketRes.Params.MinGasPrice.Ceil().String() + d.denom)
+					gasPrice := feemarketRes.Params.MinGasPrice.Ceil().String() + denom
+					d.setGasPrice(gasPrice)
+					sub.UpdateGasPrice(gasPrice)
 				}()
 			}
 
-			d.taskCh <- types.OracleTask{
+			taskCh <- types.OracleTask{
 				Id:       res.Request.Id,
 				Category: int32(res.Request.Category),
 				Symbol:   res.Request.Symbol,
@@ -214,7 +329,7 @@ func (d *Daemon) mainLoop(ctx context.Context) {
 	}
 }
 
-func (d *Daemon) stop() {
+func (d *Daemon) stopComet() {
 	if d.cometClient == nil || !d.cometClient.IsRunning() {
 		return
 	}
@@ -222,4 +337,137 @@ func (d *Daemon) stop() {
 	if err := d.cometClient.Stop(); err != nil {
 		d.logger.Error("stop comet client", "error", err)
 	}
+}
+
+func (d *Daemon) healthLoop(ctx context.Context) {
+	// When healthy: check every healthCheckInterval.
+	// When unhealthy: restart with exponential backoff (1,2,4,... up to 32s) and re-check between restarts.
+	nextWait := healthCheckInterval
+	backoff := restartBackoffBase
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(nextWait):
+		}
+
+		comet, httpc, endpoint := d.healthTargets()
+		if d.isHealthy(ctx, comet, httpc, endpoint) {
+			// reset backoff on recovery
+			backoff = restartBackoffBase
+			nextWait = healthCheckInterval
+			continue
+		}
+
+		// Unhealthy: restart attempts indefinitely with exponential backoff.
+		d.logger.Error("health check failed; restarting daemon components", "cooldown", backoff)
+		d.restart(ctx)
+		nextWait = backoff
+		if backoff < restartBackoffMax {
+			backoff *= 2
+			if backoff > restartBackoffMax {
+				backoff = restartBackoffMax
+			}
+		}
+	}
+}
+
+func (d *Daemon) healthTargets() (*comethttp.HTTP, *http.Client, string) {
+	d.healthMu.Lock()
+	defer d.healthMu.Unlock()
+	return d.cometClient, d.providerHTTPClient, d.cfg.Chain.Endpoint
+}
+
+func (d *Daemon) isHealthy(ctx context.Context, comet *comethttp.HTTP, httpc *http.Client, endpoint string) bool {
+	return d.isCometHealthy(ctx, comet) && d.isHTTPHealthy(ctx, httpc, endpoint)
+}
+
+func (d *Daemon) isCometHealthy(ctx context.Context, comet *comethttp.HTTP) bool {
+	if comet == nil || !comet.IsRunning() {
+		return false
+	}
+	hctx, cancel := context.WithTimeout(ctx, healthCheckTimeout)
+	defer cancel()
+	_, err := comet.Status(hctx)
+	return err == nil
+}
+
+func (d *Daemon) isHTTPHealthy(ctx context.Context, httpc *http.Client, endpoint string) bool {
+	if httpc == nil {
+		return false
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return false
+	}
+	p := path.Join(u.Path, "health")
+	if !strings.HasPrefix(p, "/") {
+		p = "/" + p
+	}
+	u.Path = p
+
+	hctx, cancel := context.WithTimeout(ctx, healthCheckTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(hctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return false
+	}
+	resp, err := httpc.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode == http.StatusOK
+}
+
+func (d *Daemon) restart(ctx context.Context) {
+	d.healthMu.Lock()
+	defer d.healthMu.Unlock()
+
+	// Stop current run (components) first.
+	d.stopRun()
+
+	// Restart clients.
+	d.stopComet()
+
+	cometClient, err := comethttp.New(d.cfg.Chain.Endpoint, "/websocket")
+	if err != nil {
+		d.logger.Error("create comet client failed", "error", err)
+		return
+	}
+	if err := cometClient.Start(); err != nil {
+		d.logger.Error("start comet client failed", "error", err)
+		return
+	}
+	d.cometClient = cometClient
+
+	// Update client context and query clients.
+	d.clientCtx = d.clientCtx.WithClient(cometClient)
+	d.oracleQueryClient = oracletypes.NewQueryClient(d.clientCtx)
+	d.feemarketQueryClient = feemarkettypes.NewQueryClient(d.clientCtx)
+
+	// Restart provider HTTP client (best-effort).
+	d.providerHTTPClient = &http.Client{Timeout: defaultHTTPTimeout}
+	for _, pv := range d.providers {
+		pv.SetHTTPClient(d.providerHTTPClient)
+	}
+
+	// Start a new run with fresh component instances.
+	if ctx.Err() != nil {
+		return
+	}
+	d.startRun(ctx)
+}
+
+func (d *Daemon) currentGasPrice() string {
+	d.gasPriceMu.RLock()
+	defer d.gasPriceMu.RUnlock()
+	return d.gasPrice
+}
+
+func (d *Daemon) setGasPrice(v string) {
+	d.gasPriceMu.Lock()
+	d.gasPrice = v
+	d.gasPriceMu.Unlock()
 }

@@ -252,5 +252,27 @@ func TestSubscriptionManager_StateCheck_RestartsInactive(t *testing.T) {
 	}
 }
 
+func TestSubscriptionManager_Done_ClosesAfterCancel(t *testing.T) {
+	t.Parallel()
+
+	logger := log.NewNopLogger()
+	client := &mockSubscriptionClient{running: true}
+	manager := NewSubscriptionManager(logger, "query1", "query2")
+	reqIDCh := make(chan uint64, 1)
+	defer close(reqIDCh)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	manager.Start(ctx, client, reqIDCh)
+
+	cancel()
+
+	select {
+	case <-manager.Done():
+		// ok
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for manager.Done() to close")
+	}
+}
+
 // ensure we reference constants used by listener package to avoid accidental drift.
 var _ = types.SubscriberName

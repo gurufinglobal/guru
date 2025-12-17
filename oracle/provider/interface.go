@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"cosmossdk.io/log"
 	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
@@ -11,6 +12,8 @@ import (
 type Provider interface {
 	ID() string
 	Categories() []int32
+	// SetHTTPClient replaces the underlying HTTP client. Providers that do not use HTTP may no-op.
+	SetHTTPClient(client *http.Client)
 	// Fetch returns a decimal string that must be parseable by big.Float.SetString (chain validation).
 	Fetch(ctx context.Context, symbol string) (raw string, err error)
 }

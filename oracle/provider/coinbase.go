@@ -21,6 +21,14 @@ func NewCoinbaseProvider(client *http.Client) *CoinbaseProvider {
 	return &CoinbaseProvider{client: client, baseURL: "https://api.coinbase.com/v2/prices/", apiKey: ""}
 }
 
+// SetHTTPClient replaces the underlying HTTP client. Intended for daemon restarts.
+func (p *CoinbaseProvider) SetHTTPClient(client *http.Client) {
+	if client == nil {
+		return
+	}
+	p.client = client
+}
+
 func (p *CoinbaseProvider) ID() string {
 	return "coinbase"
 }

@@ -2,6 +2,7 @@ package submitter
 
 import (
 	"context"
+	"sync"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -21,6 +22,8 @@ type Submitter struct {
 	accountInfo  *AccountInfo
 	baseFactory  tx.Factory
 	submitClient SubmitClient
+	done         chan struct{}
+	startOnce    sync.Once
 }
 
 func New(logger log.Logger, keyname string, txConfig client.TxConfig, accountInfo *AccountInfo, baseFactory tx.Factory, submitClient SubmitClient) *Submitter {
@@ -31,27 +34,36 @@ func New(logger log.Logger, keyname string, txConfig client.TxConfig, accountInf
 		accountInfo:  accountInfo,
 		baseFactory:  baseFactory,
 		submitClient: submitClient,
+		done:         make(chan struct{}),
 	}
 }
 
 func (s *Submitter) Start(ctx context.Context, resultCh <-chan oracletypes.OracleReport) {
-	if err := s.accountInfo.ResetAccountInfo(ctx); err != nil {
-		s.logger.Error("failed to reset account info", "error", err)
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case result, ok := <-resultCh:
-			if !ok {
-				s.logger.Info("result channel closed, stopping submitter")
-				return
+	s.startOnce.Do(func() {
+		go func() {
+			defer close(s.done)
+			if err := s.accountInfo.ResetAccountInfo(ctx); err != nil {
+				s.logger.Error("failed to reset account info", "error", err)
 			}
-			s.submit(ctx, result)
-		}
-	}
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case result, ok := <-resultCh:
+					if !ok {
+						s.logger.Info("result channel closed, stopping submitter")
+						return
+					}
+					s.submit(ctx, result)
+				}
+			}
+		}()
+	})
 }
+
+// Done is closed when the submitter loop exits.
+func (s *Submitter) Done() <-chan struct{} { return s.done }
 
 func (s *Submitter) UpdateGasPrice(gasPrice string) {
 	s.baseFactory = s.baseFactory.WithGasPrices(gasPrice)

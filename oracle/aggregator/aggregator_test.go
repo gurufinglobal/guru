@@ -3,6 +3,7 @@ package aggregator
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
@@ -20,6 +21,9 @@ type mockProvider struct {
 
 func (m mockProvider) ID() string          { return m.id }
 func (m mockProvider) Categories() []int32 { return m.categories }
+func (m mockProvider) SetHTTPClient(client *http.Client) {
+	// no-op
+}
 func (m mockProvider) Fetch(ctx context.Context, symbol string) (string, error) {
 	return m.fetchFn(ctx, symbol)
 }
@@ -225,11 +229,7 @@ func TestAggregatorStart_WaitsForActiveTasksOnContextCancel(t *testing.T) {
 	resultCh := make(chan oracletypes.OracleReport, 1)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		a.Start(ctx, taskCh, resultCh)
-	}()
+	a.Start(ctx, taskCh, resultCh)
 
 	taskCh <- types.OracleTask{Id: 1, Category: category, Symbol: "BTC/USD", Nonce: 1}
 
@@ -244,8 +244,8 @@ func TestAggregatorStart_WaitsForActiveTasksOnContextCancel(t *testing.T) {
 	cancel()
 
 	select {
-	case <-done:
-		t.Fatalf("expected Start to block on Wait until active tasks complete")
+	case <-a.Done():
+		t.Fatalf("expected aggregator to wait on active tasks before exiting")
 	case <-time.After(200 * time.Millisecond):
 		// ok
 	}
@@ -253,9 +253,9 @@ func TestAggregatorStart_WaitsForActiveTasksOnContextCancel(t *testing.T) {
 	close(blockCh)
 
 	select {
-	case <-done:
+	case <-a.Done():
 		// ok
 	case <-time.After(2 * time.Second):
-		t.Fatalf("timed out waiting for Start to return after unblocking provider")
+		t.Fatalf("timed out waiting for aggregator to exit after unblocking provider")
 	}
 }

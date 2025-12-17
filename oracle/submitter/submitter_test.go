@@ -220,7 +220,7 @@ func TestSubmitter_Start_ResetsAccountInfoOnce(t *testing.T) {
 	defer cancel()
 
 	resultCh := make(chan oracletypes.OracleReport)
-	go s.Start(ctx, resultCh)
+	s.Start(ctx, resultCh)
 
 	// close channel to terminate Start loop quickly
 	close(resultCh)

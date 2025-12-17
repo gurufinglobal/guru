@@ -27,6 +27,8 @@ type Aggregator struct {
 	pvRegistry  *provider.Registry
 	workerGroup *taskgroup.Group
 	workerFunc  taskgroup.StartFunc
+	done        chan struct{}
+	startOnce   sync.Once
 }
 
 func NewAggregator(logger log.Logger, pvRegistry *provider.Registry) *Aggregator {
@@ -36,39 +38,48 @@ func NewAggregator(logger log.Logger, pvRegistry *provider.Registry) *Aggregator
 		pvRegistry:  pvRegistry,
 		workerGroup: workerGroup,
 		workerFunc:  workerFunc,
+		done:        make(chan struct{}),
 	}
 }
 
 func (a *Aggregator) Start(ctx context.Context, taskChan <-chan types.OracleTask, resultCh chan<- oracletypes.OracleReport) {
-	for {
-		select {
-		case <-ctx.Done():
-			a.logger.Info("aggregator shutting down, waiting for active tasks to complete")
-			if err := a.workerGroup.Wait(); err != nil {
-				a.logger.Error("error during aggregator shutdown", "error", err)
-			} else {
-				a.logger.Info("aggregator shutdown completed successfully")
-			}
-			return
-		case task, ok := <-taskChan:
-			if !ok {
-				a.logger.Info("task channel closed, waiting for active tasks to complete")
-				if err := a.workerGroup.Wait(); err != nil {
-					a.logger.Error("error during aggregator shutdown", "error", err)
-				} else {
-					a.logger.Info("aggregator shutdown completed successfully")
-				}
-				return
-			}
+	a.startOnce.Do(func() {
+		go func() {
+			defer close(a.done)
+			for {
+				select {
+				case <-ctx.Done():
+					a.logger.Info("aggregator shutting down, waiting for active tasks to complete")
+					if err := a.workerGroup.Wait(); err != nil {
+						a.logger.Error("error during aggregator shutdown", "error", err)
+					} else {
+						a.logger.Info("aggregator shutdown completed successfully")
+					}
+					return
+				case task, ok := <-taskChan:
+					if !ok {
+						a.logger.Info("task channel closed, waiting for active tasks to complete")
+						if err := a.workerGroup.Wait(); err != nil {
+							a.logger.Error("error during aggregator shutdown", "error", err)
+						} else {
+							a.logger.Info("aggregator shutdown completed successfully")
+						}
+						return
+					}
 
-			t := task
-			a.workerFunc(func() error {
-				a.processTask(ctx, t, resultCh)
-				return nil
-			})
-		}
-	}
+					t := task
+					a.workerFunc(func() error {
+						a.processTask(ctx, t, resultCh)
+						return nil
+					})
+				}
+			}
+		}()
+	})
 }
+
+// Done is closed when the aggregator main loop exits.
+func (a *Aggregator) Done() <-chan struct{} { return a.done }
 
 // processTask fetches data from providers for a single task and emits result.
 func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, resultCh chan<- oracletypes.OracleReport) {
