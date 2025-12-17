@@ -22,10 +22,11 @@ const (
 const unsubscribeTimeout = 5 * time.Second
 
 type subscriptionState struct {
-	query  string
-	status subscriptionStatus
-	cancel context.CancelFunc
-	mux    sync.Mutex
+	query      string
+	status     subscriptionStatus
+	subscribed bool
+	cancel     context.CancelFunc
+	mux        sync.Mutex
 }
 
 func newSubscriptionState(query string) *subscriptionState {
@@ -59,6 +60,7 @@ func (s *subscriptionState) start(ctx context.Context, client SubscriptionClient
 		cancel()
 		s.mux.Lock()
 		s.status = subscriptionInactive
+		s.subscribed = false
 		s.cancel = nil
 		s.mux.Unlock()
 		return fmt.Errorf("failed to subscribe: %w", err)
@@ -66,6 +68,7 @@ func (s *subscriptionState) start(ctx context.Context, client SubscriptionClient
 
 	s.mux.Lock()
 	s.status = subscriptionActive
+	s.subscribed = true
 	s.mux.Unlock()
 
 	go s.eventLoop(subCtx, ch, reqIDCh)
@@ -75,13 +78,16 @@ func (s *subscriptionState) start(ctx context.Context, client SubscriptionClient
 
 func (s *subscriptionState) stop(client SubscriptionClient) error {
 	s.mux.Lock()
-	if s.status == subscriptionInactive {
+	if s.status == subscriptionInactive && !s.subscribed {
 		s.mux.Unlock()
 		return nil
 	}
 
 	cancel := s.cancel
 	s.status = subscriptionInactive
+	doUnsub := s.subscribed
+	// Mark unsubscribed before making the external call to prevent double unsubscribe.
+	s.subscribed = false
 	s.cancel = nil
 	s.mux.Unlock()
 
@@ -89,7 +95,7 @@ func (s *subscriptionState) stop(client SubscriptionClient) error {
 		cancel()
 	}
 
-	if client != nil && client.IsRunning() {
+	if doUnsub && client != nil && client.IsRunning() {
 		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), unsubscribeTimeout)
 		defer cleanupCancel()
 		if err := client.Unsubscribe(cleanupCtx, types.SubscriberName, s.query); err != nil {

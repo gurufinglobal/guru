@@ -16,8 +16,9 @@ type SubscriptionClient interface {
 }
 
 type SubscriptionManager struct {
-	logger log.Logger
-	states map[string]*subscriptionState // query -> state
+	logger              log.Logger
+	states              map[string]*subscriptionState // query -> state
+	healthCheckInterval time.Duration
 }
 
 func NewSubscriptionManager(logger log.Logger, queries ...string) *SubscriptionManager {
@@ -27,9 +28,19 @@ func NewSubscriptionManager(logger log.Logger, queries ...string) *SubscriptionM
 	}
 
 	return &SubscriptionManager{
-		logger: logger,
-		states: states,
+		logger:              logger,
+		states:              states,
+		healthCheckInterval: types.HealthCheckInterval,
 	}
+}
+
+// SetHealthCheckInterval is intended for tests and advanced tuning.
+// If d <= 0, the interval remains unchanged.
+func (m *SubscriptionManager) SetHealthCheckInterval(d time.Duration) {
+	if d <= 0 {
+		return
+	}
+	m.healthCheckInterval = d
 }
 
 func (m *SubscriptionManager) Start(ctx context.Context, client SubscriptionClient, reqIDCh chan<- uint64) {
@@ -52,7 +63,7 @@ func (m *SubscriptionManager) Start(ctx context.Context, client SubscriptionClie
 }
 
 func (m *SubscriptionManager) stateCheck(ctx context.Context, client SubscriptionClient, reqIDCh chan<- uint64) {
-	ticker := time.NewTicker(types.HealthCheckInterval)
+	ticker := time.NewTicker(m.healthCheckInterval)
 	defer ticker.Stop()
 
 	for {
