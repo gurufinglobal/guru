@@ -10,32 +10,32 @@ import (
 )
 
 type Config struct {
-	Chain   ChainConfig
-	Keyring KeyringConfig
-	Gas     GasConfig
+	Chain   ChainConfig   `mapstructure:"chain"`
+	Keyring KeyringConfig `mapstructure:"keyring"`
+	Gas     GasConfig     `mapstructure:"gas"`
 }
 
 type ChainConfig struct {
-	ChainID  string `toml:"chain_id"`
-	Endpoint string `toml:"endpoint"`
+	ChainID  string `mapstructure:"chain_id"`
+	Endpoint string `mapstructure:"endpoint"`
 }
 
 type KeyringConfig struct {
-	Backend    string `toml:"backend"`
-	Name       string `toml:"name"`
-	Passphrase string `toml:"passphrase"`
+	Backend    string `mapstructure:"backend"`
+	Name       string `mapstructure:"name"`
+	Passphrase string `mapstructure:"passphrase"`
 }
 
 type GasConfig struct {
-	Limit      uint64  `toml:"limit"`
-	Adjustment float64 `toml:"adjustment"`
-	Denom      string  `toml:"denom"`
+	Limit      uint64  `mapstructure:"limit"`
+	Adjustment float64 `mapstructure:"adjustment"`
+	Denom      string  `mapstructure:"denom"`
 }
 
 func LoadFile(path string) (*Config, error) {
 	if st, err := os.Stat(path); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("config file not found: %s", path)
+			return nil, fmt.Errorf("%w: %s", os.ErrNotExist, path)
 		}
 		return nil, fmt.Errorf("stat config file: %w", err)
 	} else if st.IsDir() {

@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/rs/zerolog"
@@ -31,7 +33,23 @@ var startCmd = &cobra.Command{
 		cfgPath := configFilePath()
 		cfg, err := config.LoadFile(cfgPath)
 		if err != nil {
-			return fmt.Errorf("failed to load config from %s (run `oracled init` first): %w", cfgPath, err)
+			if errors.Is(err, os.ErrNotExist) {
+				return fmt.Errorf("config not found at %s (run `oracled init` first)", cfgPath)
+			}
+			return fmt.Errorf("failed to load config from %s: %w", cfgPath, err)
+		}
+
+		// If keyring backend uses a filesystem directory, ensure it exists before starting.
+		// Example: backend "test" => "<home>/.oracled/keyring-test".
+		if cfg.Keyring.Backend == "test" || cfg.Keyring.Backend == "file" {
+			krDir := filepath.Join(homeDir(), "keyring-"+cfg.Keyring.Backend)
+			if st, err := os.Stat(krDir); err != nil || !st.IsDir() {
+				log.Error().
+					Str("keyring_dir", krDir).
+					Str("backend", cfg.Keyring.Backend).
+					Msg("keyring directory not found; add key first, then run `oracled start` again")
+				return nil
+			}
 		}
 
 		log.Info().Str("home", homeDir()).Msg("starting oracled")

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -16,6 +17,9 @@ var (
 		Use:   "oracled",
 		Short: "Oracle Daemon for Guru Blockchain",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// CLI logs should be human-friendly text (not JSON).
+			log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
 			// Prevent "oracled init --home \"\"" from falling back to a relative ".oracled" directory.
 			if strings.TrimSpace(homeBase) == "" {
 				return fmt.Errorf("--home must not be empty")
