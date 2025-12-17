@@ -3,8 +3,6 @@ package ibc
 import (
 	"strings"
 
-	"github.com/gurufinglobal/guru/v2/utils"
-	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
@@ -13,6 +11,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/gurufinglobal/guru/v2/utils"
+	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 )
 
 // GetTransferSenderRecipient returns the sender and recipient sdk.AccAddresses

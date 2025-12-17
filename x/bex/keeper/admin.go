@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"cosmossdk.io/store/prefix"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
 	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 

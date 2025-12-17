@@ -1,16 +1,19 @@
 package cli
 
 import (
-	"io/ioutil"
+	"os"
+
+	"github.com/spf13/cobra"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cobra"
+
+	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
 // NewChangeModeratorTxCmd returns the cli command for changing the moderator address.
@@ -20,7 +23,6 @@ func NewChangeModeratorTxCmd() *cobra.Command {
 		Short: "Change the moderator address for the cex module",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -48,7 +50,6 @@ func NewRegisterDiscountsTxCmd() *cobra.Command {
 		Short: "Register discounts from json file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -61,13 +62,13 @@ func NewRegisterDiscountsTxCmd() *cobra.Command {
 			// read the json file
 			if err := cdc.UnmarshalJSON([]byte(args[0]), &discounts); err != nil {
 				// If that fails, treat it as a filepath
-				contents, err := ioutil.ReadFile(args[0])
+				contents, err := os.ReadFile(args[0])
 				if err != nil {
-					return errorsmod.Wrapf(types.ErrInvalidJsonFile, "%s", err)
+					return errorsmod.Wrapf(types.ErrInvalidJSONFile, "%s", err)
 				}
 
 				if err := cdc.UnmarshalJSON(contents, &discounts); err != nil {
-					return errorsmod.Wrapf(types.ErrInvalidJsonFile, "%s", err)
+					return errorsmod.Wrapf(types.ErrInvalidJSONFile, "%s", err)
 				}
 
 			}
@@ -89,7 +90,6 @@ func NewRemoveDiscountsTxCmd() *cobra.Command {
 		Short: "Remove discounts for the given address and module",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err

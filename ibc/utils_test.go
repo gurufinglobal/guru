@@ -5,9 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	cosmosevmibc "github.com/gurufinglobal/guru/v2/ibc"
-	precompilestestutil "github.com/gurufinglobal/guru/v2/precompiles/testutil"
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
@@ -15,6 +12,10 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	cosmosevmibc "github.com/gurufinglobal/guru/v2/ibc"
+	precompilestestutil "github.com/gurufinglobal/guru/v2/precompiles/testutil"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
 func init() {

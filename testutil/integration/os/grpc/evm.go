@@ -7,9 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
+
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // GetEvmAccount returns the EVM account for the given address.

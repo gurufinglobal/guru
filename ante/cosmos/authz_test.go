@@ -11,13 +11,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
-	"github.com/gurufinglobal/guru/v2/testutil"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,6 +19,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
+	"github.com/gurufinglobal/guru/v2/testutil"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 func TestAuthzLimiterDecorator(t *testing.T) {

@@ -7,9 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // Account is the Ethereum consensus representation of accounts.

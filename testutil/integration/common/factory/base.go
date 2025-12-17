@@ -5,9 +5,6 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -15,6 +12,9 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	testutiltypes "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 )
 
 // BaseTxFactory is the interface that wraps the common methods to build and broadcast transactions

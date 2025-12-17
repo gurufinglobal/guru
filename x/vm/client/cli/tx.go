@@ -10,9 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/gurufinglobal/guru/v2/utils"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	"cosmossdk.io/core/address"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -21,6 +18,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/gurufinglobal/guru/v2/utils"
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // NewTxCmd returns a root CLI command handler for evm module transaction commands

@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
 	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
@@ -16,9 +18,9 @@ var _ types.QueryServer = Keeper{}
 // ModeratorAddress returns the moderator address.
 func (k Keeper) ModeratorAddress(c context.Context, _ *types.QueryModeratorAddressRequest) (*types.QueryModeratorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	moderator_address := k.GetModeratorAddress(ctx)
+	moderatorAddr := k.GetModeratorAddress(ctx)
 
-	return &types.QueryModeratorAddressResponse{ModeratorAddress: moderator_address}, nil
+	return &types.QueryModeratorAddressResponse{ModeratorAddress: moderatorAddr}, nil
 }
 
 // Exchanges returns the list of all exchanges.
@@ -41,9 +43,9 @@ func (k Keeper) IsAdmin(c context.Context, req *types.QueryIsAdminRequest) (*typ
 }
 
 // NextExchangeId returns the next exchange id (RegisterExchange msg should match this id).
-func (k Keeper) NextExchangeId(c context.Context, _ *types.QueryNextExchangeIdRequest) (*types.QueryNextExchangeIdResponse, error) {
+func (k Keeper) NextExchangeId(c context.Context, _ *types.QueryNextExchangeIdRequest) (*types.QueryNextExchangeIdResponse, error) { //nolint:revive // function name is correct
 	ctx := sdk.UnwrapSDKContext(c)
-	id, err := k.GetNextExchangeId(ctx)
+	id, err := k.GetNextExchangeID(ctx)
 	if err != nil {
 		return nil, err
 	}

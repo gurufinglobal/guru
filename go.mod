@@ -17,7 +17,7 @@ require (
 	cosmossdk.io/x/upgrade v0.2.0
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
-	github.com/cometbft/cometbft v0.38.17
+	github.com/cometbft/cometbft v0.38.19
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.53.4
@@ -235,7 +235,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
-	github.com/ulikunitz/xz v0.5.11 // indirect
+	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
 	github.com/zondax/ledger-go v0.14.3 // indirect
 	go.etcd.io/bbolt v1.4.0-alpha.1 // indirect
@@ -275,11 +275,10 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// Pin this pebble version to avoid breaking compilation of geth
 	github.com/cockroachdb/pebble => github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593
-
-	// Security fixes for govulncheck vulnerabilities
-	// GO-2025-4025: CometBFT's invalid BitArray handling can lead to network halt
+	// Fix GO-2025-4025: CometBFT's invalid BitArray handling can lead to network halt
+	// Note: GO-2025-3442 requires v1.0.1 (major upgrade), consider upgrading separately
 	github.com/cometbft/cometbft => github.com/cometbft/cometbft v0.38.19
-	// GO-2025-4087: Unchecked memory allocation during vector deserialization
+	// Fix GO-2025-4087: Unchecked memory allocation during vector deserialization
 	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.18.1
 	// use guru fork of cosmos-sdk
 	github.com/cosmos/cosmos-sdk => github.com/gurufinglobal/cosmos-sdk v0.53.4-guru.6
@@ -289,6 +288,8 @@ replace (
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.1
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
-	// GO-2025-3922: Memory leaks when decoding corrupted LZMA archives
+	// Fix GO-2025-3922: Memory leaks when decoding corrupted multiple LZMA archives
 	github.com/ulikunitz/xz => github.com/ulikunitz/xz v0.5.15
+	// Fix GO-2025-4135/4134/4116: Multiple vulnerabilities in golang.org/x/crypto
+	golang.org/x/crypto => golang.org/x/crypto v0.45.0
 )

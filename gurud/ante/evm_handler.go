@@ -1,9 +1,9 @@
 package ante
 
 import (
-	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 )
 
 // newMonoEVMAnteHandler creates the sdk.AnteHandler implementation for the EVM transactions.

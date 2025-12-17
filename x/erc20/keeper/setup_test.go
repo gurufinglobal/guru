@@ -6,17 +6,17 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
+	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
+	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
 type KeeperTestSuite struct {

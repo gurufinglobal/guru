@@ -6,10 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
-	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
@@ -17,6 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
+	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 )
 
 var expValAmount int64 = 1

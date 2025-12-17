@@ -1,21 +1,23 @@
 package cli
 
 import (
-	"io/ioutil"
+	"os"
 	"strconv"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/gurufinglobal/guru/v2/x/bex/types"
+	"github.com/spf13/cobra"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/spf13/cobra"
+
+	"github.com/gurufinglobal/guru/v2/x/bex/types"
 )
 
 func NewRegisterAdminTxCmd() *cobra.Command {
@@ -24,7 +26,6 @@ func NewRegisterAdminTxCmd() *cobra.Command {
 		Short: "Register a new admin or reset admin for exchange with given id",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -35,16 +36,16 @@ func NewRegisterAdminTxCmd() *cobra.Command {
 				return err
 			}
 
-			exchangeId := math.NewInt(0)
-			ok := true
+			exchangeID := math.NewInt(0)
 			if len(args) > 1 {
-				exchangeId, ok = math.NewIntFromString(args[1])
+				var ok bool
+				exchangeID, ok = math.NewIntFromString(args[1])
 				if !ok {
 					return errorsmod.Wrapf(types.ErrInvalidExchange, " invalid id")
 				}
 			}
 
-			msg := types.NewMsgRegisterAdmin(clientCtx.GetFromAddress(), newAdminAddr, exchangeId)
+			msg := types.NewMsgRegisterAdmin(clientCtx.GetFromAddress(), newAdminAddr, exchangeID)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -60,7 +61,6 @@ func NewRemoveAdminTxCmd() *cobra.Command {
 		Short: "remove the admin_address from admin list",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -87,7 +87,6 @@ func NewRegisterExchangeTxCmd() *cobra.Command {
 		Short: "Register a new exchange from json file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -99,13 +98,13 @@ func NewRegisterExchangeTxCmd() *cobra.Command {
 
 			if err := cdc.UnmarshalJSON([]byte(args[0]), &exchange); err != nil {
 				// If that fails, treat it as a filepath
-				contents, err := ioutil.ReadFile(args[0])
+				contents, err := os.ReadFile(args[0])
 				if err != nil {
-					return errorsmod.Wrapf(types.ErrInvalidJsonFile, "%s", err)
+					return errorsmod.Wrapf(types.ErrInvalidJSONFile, "%s", err)
 				}
 
 				if err := cdc.UnmarshalJSON(contents, &exchange); err != nil {
-					return errorsmod.Wrapf(types.ErrInvalidJsonFile, "%s", err)
+					return errorsmod.Wrapf(types.ErrInvalidJSONFile, "%s", err)
 				}
 				exchange.AdminAddress = clientCtx.GetFromAddress().String()
 			}
@@ -126,7 +125,6 @@ func NewUpdateExchangeTxCmd() *cobra.Command {
 		Short: "Update the exchange attribute by given id",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -189,7 +187,7 @@ func NewWithdrawFeesTxCmd() *cobra.Command {
 				return err
 			}
 
-			exchangeId, ok := math.NewIntFromString(args[0])
+			exchangeID, ok := math.NewIntFromString(args[0])
 			if !ok {
 				return errorsmod.Wrapf(types.ErrInvalidExchange, " invalid id")
 			}
@@ -199,7 +197,7 @@ func NewWithdrawFeesTxCmd() *cobra.Command {
 				return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " %s", err)
 			}
 
-			msg := types.NewMsgWithdrawFees(clientCtx.GetFromAddress(), exchangeId, withdrawAddress)
+			msg := types.NewMsgWithdrawFees(clientCtx.GetFromAddress(), exchangeID, withdrawAddress)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -215,7 +213,6 @@ func NewChangeModeratorTxCmd() *cobra.Command {
 		Short: "Change the moderator address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err

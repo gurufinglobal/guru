@@ -10,14 +10,15 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/gurufinglobal/guru/v2/gurud"
-	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/gurud"
+	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
 )
 
 type TransferTestSuite struct {

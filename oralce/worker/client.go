@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"cosmossdk.io/log"
+
 	"github.com/gurufinglobal/guru/v2/oralce/config"
 )
 

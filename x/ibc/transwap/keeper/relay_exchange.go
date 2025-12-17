@@ -4,13 +4,15 @@ import (
 	"strings"
 	"time"
 
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
+
 	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/events"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/internal/telemetry"
@@ -120,17 +122,17 @@ func (k Keeper) OnRecvExchangePacket(
 	}
 
 	// check the exchange and it supports the given denom
-	exchangeId, ok := sdkmath.NewIntFromString(data.ExchangeId)
+	exchangeID, ok := sdkmath.NewIntFromString(data.ExchangeID)
 	if !ok {
-		return errorsmod.Wrapf(types.ErrInvalidAmount, "unable to parse exchange id: %s", data.ExchangeId)
+		return errorsmod.Wrapf(types.ErrInvalidAmount, "unable to parse exchange id: %s", data.ExchangeID)
 	}
 
-	exchange, err := k.BexKeeper.GetExchange(ctx, exchangeId)
+	exchange, err := k.BexKeeper.GetExchange(ctx, exchangeID)
 	if err != nil {
-		return errorsmod.Wrapf(err, "failed to get exchange: %s", data.ExchangeId)
+		return errorsmod.Wrapf(err, "failed to get exchange: %s", data.ExchangeID)
 	}
 	if exchange == nil {
-		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "exchange not found: %s", exchangeId.String())
+		return errorsmod.Wrapf(sdkerrors.ErrNotFound, "exchange not found: %s", exchangeID.String())
 	}
 
 	sourceDenom := data.Token.Denom.Path()
@@ -156,9 +158,10 @@ func (k Keeper) OnRecvExchangePacket(
 		return errorsmod.Wrapf(err, "failed to get oracle data: %d", exchange.OracleRequestId)
 	}
 
-	rate, err := sdkmath.LegacyNewDecFromStr(oracleData.DataSet.RawData)
+	rawData := truncatePrecision(oracleData.DataSet.RawData, 18)
+	rate, err := sdkmath.LegacyNewDecFromStr(rawData)
 	if err != nil {
-		return errorsmod.Wrapf(err, "failed to parse rate: %s", oracleData.DataSet.RawData)
+		return errorsmod.Wrapf(err, "failed to parse rate: %s", rawData)
 	}
 
 	swapChannel, swapPort, swapDenom, rate, err := exchange.GetSwapDataWithRate(sourceDenom, rate)
@@ -206,7 +209,7 @@ func (k Keeper) OnRecvExchangePacket(
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send fees to module address: %s", coin.Denom)
 	}
-	err = k.BexKeeper.AddExchangeFees(ctx, exchangeId.String(), sdk.NewCoins(feeCoin))
+	err = k.BexKeeper.AddExchangeFees(ctx, exchangeID.String(), sdk.NewCoins(feeCoin))
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to add fees to collected fees: %s", feeCoin.Denom)
 	}
@@ -220,13 +223,13 @@ func (k Keeper) OnRecvExchangePacket(
 
 	if isIBCV1 {
 		// if a V1 channel exists for the source channel, then use IBC V1 protocol
-		_, err = k.transferV1Packet(ctx, swapChannel, token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
+		_, err = k.transferV1Packet(ctx, swapChannel, token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
 		// telemetry for transfer occurs here, in IBC V2 this is done in the onSendPacket callback
 		telemetry.ReportTransfer(swapPort, swapChannel, channel.Counterparty.PortId, channel.Counterparty.ChannelId, token)
 	} else {
 		// otherwise try to send an IBC V2 packet, if the sourceChannel is not a IBC V2 client
 		// then core IBC will return a CounterpartyNotFound error
-		_, err = k.transferV2Packet(ctx, "", swapChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
+		_, err = k.transferV2Packet(ctx, "", swapChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
 	}
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send swap tokens: %s", coin.Denom)
@@ -255,12 +258,15 @@ func (k Keeper) OnRecvExchangePacket(
 		exchange.ReserveAddress,
 		data.Sender,
 		"refund coins through Guru station due to failure on the target chain",
-		uint64(time.Now().Add(20*time.Minute).UnixNano()),
+		uint64(time.Now().Add(20*time.Minute).UnixNano()), //nolint:gosec // timestamp is always positive
 		feeCoin,
-		exchangeId.String(),
+		exchangeID.String(),
 	)
 
-	k.SetRefundPacketData(ctx, destReceiver, &refundMsg)
+	err = k.SetRefundPacketData(ctx, destReceiver, &refundMsg)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to set refund packet data: %s", destReceiver)
+	}
 
 	// The ibc_module.go module will return the proper ack.
 	return nil
@@ -304,7 +310,6 @@ func (k Keeper) OnTimeoutExchangePacket(
 }
 
 func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransferRepresentation) error {
-
 	// refund to original source chain
 	refundPacket, err := k.GetRefundPacketData(ctx, data.Receiver)
 	if err != nil {
@@ -334,11 +339,11 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransf
 
 	if isIBCV1 {
 		// if a V1 channel exists for the source channel, then use IBC V1 protocol
-		_, err = k.transferV1Packet(ctx, refundPacket.SourceChannel, refundPacket.Token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
+		_, err = k.transferV1Packet(ctx, refundPacket.SourceChannel, refundPacket.Token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
 	} else {
 		// otherwise try to send an IBC V2 packet, if the sourceChannel is not a IBC V2 client
 		// then core IBC will return a CounterpartyNotFound error
-		_, err = k.transferV2Packet(ctx, "", refundPacket.SourceChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
+		_, err = k.transferV2Packet(ctx, "", refundPacket.SourceChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
 	}
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send refund tokens: %s", refundPacket.Token.Denom.Path())
@@ -348,4 +353,13 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransf
 	k.DeleteRefundPacketData(ctx, data.Receiver)
 
 	return nil
+}
+
+// truncatePrecision truncates the decimal precision to maxPrecision digits
+func truncatePrecision(value string, maxPrecision int) string {
+	parts := strings.Split(value, ".")
+	if len(parts) == 2 && len(parts[1]) > maxPrecision {
+		return parts[0] + "." + parts[1][:maxPrecision]
+	}
+	return value
 }
