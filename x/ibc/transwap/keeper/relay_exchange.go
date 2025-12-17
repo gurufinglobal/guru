@@ -158,9 +158,10 @@ func (k Keeper) OnRecvExchangePacket(
 		return errorsmod.Wrapf(err, "failed to get oracle data: %d", exchange.OracleRequestId)
 	}
 
-	rate, err := sdkmath.LegacyNewDecFromStr(oracleData.DataSet.RawData)
+	rawData := truncatePrecision(oracleData.DataSet.RawData, 18)
+	rate, err := sdkmath.LegacyNewDecFromStr(rawData)
 	if err != nil {
-		return errorsmod.Wrapf(err, "failed to parse rate: %s", oracleData.DataSet.RawData)
+		return errorsmod.Wrapf(err, "failed to parse rate: %s", rawData)
 	}
 
 	swapChannel, swapPort, swapDenom, rate, err := exchange.GetSwapDataWithRate(sourceDenom, rate)
@@ -352,4 +353,13 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransf
 	k.DeleteRefundPacketData(ctx, data.Receiver)
 
 	return nil
+}
+
+// truncatePrecision truncates the decimal precision to maxPrecision digits
+func truncatePrecision(value string, maxPrecision int) string {
+	parts := strings.Split(value, ".")
+	if len(parts) == 2 && len(parts[1]) > maxPrecision {
+		return parts[0] + "." + parts[1][:maxPrecision]
+	}
+	return value
 }
