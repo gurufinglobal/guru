@@ -112,6 +112,16 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
+			homeDir := initClientCtx.HomeDir
+			if homeDir == "" {
+				homeDir = gurud.DefaultNodeHome
+			}
+			if cmd.Name() != "init" {
+				if err := gurudconfig.LoadChainIDsFromConfig(homeDir); err != nil {
+					return fmt.Errorf("failed to load chain IDs: %w", err)
+				}
+			}
+
 			// This needs to go after ReadFromClientConfig, as that function
 			// sets the RPC client needed for SIGN_MODE_TEXTUAL. This sign mode
 			// is only available if the client is online.
@@ -251,6 +261,16 @@ func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 				clientTomlPath := filepath.Join(homeDir, "config", "client.toml")
 				if err := updateClientTomlChainID(clientTomlPath, chainID); err != nil {
 					return fmt.Errorf("failed to update chain-id in client.toml: %w", err)
+				}
+
+				_, evmChainID, exists := gurudconfig.GetChainIDs(chainID)
+				if !exists {
+					return nil
+				}
+
+				appTomlPath := filepath.Join(homeDir, "config", "app.toml")
+				if err := updateAppTomlEVMChainID(appTomlPath, evmChainID); err != nil {
+					return fmt.Errorf("failed to update evm-chain-id in app.toml: %w", err)
 				}
 
 				return nil
@@ -502,7 +522,7 @@ func updateClientTomlChainID(clientTomlPath, chainID string) error {
 			if len(parts) == 2 {
 				// Keep the format (spaces, quotes, etc.) but update the value
 				prefix := parts[0] // "chain-id"
-				newLines = append(newLines, fmt.Sprintf("%s= %q", strings.TrimSpace(prefix), chainID))
+				newLines = append(newLines, fmt.Sprintf("%s = %q", strings.TrimSpace(prefix), chainID))
 			} else {
 				// Fallback: simple replacement
 				newLines = append(newLines, fmt.Sprintf("chain-id = %q", chainID))
@@ -523,4 +543,38 @@ func updateClientTomlChainID(clientTomlPath, chainID string) error {
 	// Write back to file
 	newContent := strings.Join(newLines, "\n")
 	return os.WriteFile(clientTomlPath, []byte(newContent), 0o600)
+}
+
+func updateAppTomlEVMChainID(appTomlPath string, evmChainID uint64) error {
+	data, err := os.ReadFile(appTomlPath)
+	if err != nil {
+		return fmt.Errorf("failed to read app.toml: %w", err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	inEVMSection := false
+	updated := false
+
+	for i, line := range lines {
+		if strings.TrimSpace(line) == "[evm]" {
+			inEVMSection = true
+			continue
+		}
+		if inEVMSection && strings.HasPrefix(strings.TrimSpace(line), "[") {
+			inEVMSection = false
+		}
+		if inEVMSection && strings.Contains(line, "evm-chain-id") {
+			lines[i] = fmt.Sprintf("evm-chain-id = \"%d\"", evmChainID)
+			updated = true
+			break
+		}
+	}
+
+	if !updated {
+		return fmt.Errorf("evm-chain-id not found in app.toml")
+	}
+
+	updatedData := strings.Join(lines, "\n")
+	// gosec(G306): config files may contain sensitive info; use 0600.
+	return os.WriteFile(appTomlPath, []byte(updatedData), 0o600)
 }
