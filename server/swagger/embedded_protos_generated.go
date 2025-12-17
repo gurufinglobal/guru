@@ -2,92 +2,6 @@
 
 package swagger
 
-// feepolicyTxProto contains the content of ../../proto/guru/feepolicy/v1/tx.proto
-const feepolicyTxProto = `syntax = "proto3";
-
-package guru.feepolicy.v1;
-
-option go_package = "github.com/gurufinglobal/guru/v2/x/feepolicy/types";
-
-import "guru/feepolicy/v1/feepolicy.proto";
-import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
-import "cosmos/base/v1beta1/coin.proto";
-import "cosmos/msg/v1/msg.proto";
-import "cosmos_proto/cosmos.proto";
-
-// Msg defines the feepolicy Msg service.
-service Msg {
-  option (cosmos.msg.v1.service) = true;
-  rpc RegisterDiscounts(MsgRegisterDiscounts) returns (MsgRegisterDiscountsResponse) {
-    option (google.api.http) = {
-      post: "/guru/feepolicy/v1/register_discounts"
-      body: "*"
-    };
-  }
-  rpc RemoveDiscounts(MsgRemoveDiscounts) returns (MsgRemoveDiscountsResponse) {
-    option (google.api.http) = {
-      post: "/guru/feepolicy/v1/remove_discounts"
-      body: "*"
-    };
-  }
-  rpc ChangeModerator(MsgChangeModerator) returns (MsgChangeModeratorResponse) {
-    option (google.api.http) = {
-      post: "/guru/feepolicy/v1/change_moderator"
-      body: "*"
-    };
-  }
-}
-
-message MsgRegisterDiscounts {
-  option (cosmos.msg.v1.signer) = "moderator_address";
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string   moderator_address                 = 1 
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  repeated AccountDiscount discounts = 2 [
-    (gogoproto.nullable) = false
-  ];
-}
-
-message MsgRegisterDiscountsResponse{
-}
-
-message MsgRemoveDiscounts {
-  option (cosmos.msg.v1.signer) = "moderator_address";
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string   moderator_address                 = 1 
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  
-  string address = 2;
-  string module = 3;
-  string msg_type = 4;
-}
-
-message MsgRemoveDiscountsResponse{
-}
-
-
-// msg declaration for changing the moderator.
-message MsgChangeModerator {
-  option (cosmos.msg.v1.signer) = "moderator_address";
-
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string   moderator_address                 = 1 
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string   new_moderator_address     = 2 
-      [(cosmos_proto.scalar) = "cosmos.AddressString"];
-}
-
-// Response type for the Msg/ChangeModerator.
-message MsgChangeModeratorResponse {
-}`
-
 // oracleQueryProto contains the content of ../../proto/guru/oracle/v1/query.proto
 const oracleQueryProto = `syntax = "proto3";
 package guru.oracle.v1;
@@ -416,4 +330,90 @@ message QueryDiscountResponse {
   AccountDiscount discount = 1 [(gogoproto.nullable) = false];
 }
 `
+
+// feepolicyTxProto contains the content of ../../proto/guru/feepolicy/v1/tx.proto
+const feepolicyTxProto = `syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/feepolicy/types";
+
+import "guru/feepolicy/v1/feepolicy.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+
+// Msg defines the feepolicy Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  rpc RegisterDiscounts(MsgRegisterDiscounts) returns (MsgRegisterDiscountsResponse) {
+    option (google.api.http) = {
+      post: "/guru/feepolicy/v1/register_discounts"
+      body: "*"
+    };
+  }
+  rpc RemoveDiscounts(MsgRemoveDiscounts) returns (MsgRemoveDiscountsResponse) {
+    option (google.api.http) = {
+      post: "/guru/feepolicy/v1/remove_discounts"
+      body: "*"
+    };
+  }
+  rpc ChangeModerator(MsgChangeModerator) returns (MsgChangeModeratorResponse) {
+    option (google.api.http) = {
+      post: "/guru/feepolicy/v1/change_moderator"
+      body: "*"
+    };
+  }
+}
+
+message MsgRegisterDiscounts {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  repeated AccountDiscount discounts = 2 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgRegisterDiscountsResponse{
+}
+
+message MsgRemoveDiscounts {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  string address = 2;
+  string module = 3;
+  string msg_type = 4;
+}
+
+message MsgRemoveDiscountsResponse{
+}
+
+
+// msg declaration for changing the moderator.
+message MsgChangeModerator {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string   new_moderator_address     = 2 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// Response type for the Msg/ChangeModerator.
+message MsgChangeModeratorResponse {
+}`
 
