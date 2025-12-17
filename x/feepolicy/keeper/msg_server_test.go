@@ -163,3 +163,163 @@ func TestRegisterDiscounts(t *testing.T) {
 		})
 	}
 }
+
+func TestRemoveDiscounts(t *testing.T) {
+	var (
+		nw  *network.UnitTestNetwork
+		ctx sdk.Context
+	)
+
+	const (
+		addr1 = "guru1gzsvk8rruqn2sx64acfsskrwy8hvrmaf6dvhj3"
+		addr2 = "guru1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqg3d5d2"
+	)
+
+	validModerator := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+
+	baseDiscount := func() types.AccountDiscount {
+		return types.AccountDiscount{
+			Address: addr1,
+			Modules: []types.ModuleDiscount{
+				{
+					Module: "bank",
+					Discounts: []types.Discount{
+						{
+							DiscountType: "percent",
+							MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+							Amount:       math.LegacyNewDec(100),
+						},
+						{
+							DiscountType: "fixed",
+							MsgType:      "/cosmos.bank.v1beta1.MsgMultiSend",
+							Amount:       math.LegacyNewDec(1),
+						},
+					},
+				},
+				{
+					Module: "staking",
+					Discounts: []types.Discount{
+						{
+							DiscountType: "percent",
+							MsgType:      "/cosmos.staking.v1beta1.MsgDelegate",
+							Amount:       math.LegacyNewDec(5),
+						},
+					},
+				},
+			},
+		}
+	}
+
+	testCases := []struct {
+		name      string
+		setup     func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork)
+		request   *types.MsgRemoveDiscounts
+		assert    func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork)
+		expectErr bool
+	}{
+		{
+			name: "fail - wrong moderator",
+			setup: func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork) {
+				t.Helper()
+				nw.App.FeePolicyKeeper.SetAccountDiscounts(ctx, baseDiscount())
+			},
+			request: &types.MsgRemoveDiscounts{
+				ModeratorAddress: addr2,
+				Address:          addr1,
+				Module:           "",
+				MsgType:          "",
+			},
+			assert: func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork) {
+				t.Helper()
+				_, ok := nw.App.FeePolicyKeeper.GetAccountDiscounts(ctx, addr1)
+				require.True(t, ok)
+			},
+			expectErr: true,
+		},
+		{
+			name: "pass - remove all discounts for account",
+			setup: func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork) {
+				t.Helper()
+				nw.App.FeePolicyKeeper.SetAccountDiscounts(ctx, baseDiscount())
+			},
+			request: &types.MsgRemoveDiscounts{
+				ModeratorAddress: validModerator,
+				Address:          addr1,
+				Module:           "",
+				MsgType:          "",
+			},
+			assert: func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork) {
+				t.Helper()
+				_, ok := nw.App.FeePolicyKeeper.GetAccountDiscounts(ctx, addr1)
+				require.False(t, ok)
+			},
+			expectErr: false,
+		},
+		{
+			name: "pass - remove all discounts for module",
+			setup: func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork) {
+				t.Helper()
+				nw.App.FeePolicyKeeper.SetAccountDiscounts(ctx, baseDiscount())
+			},
+			request: &types.MsgRemoveDiscounts{
+				ModeratorAddress: validModerator,
+				Address:          addr1,
+				Module:           "bank",
+				MsgType:          "",
+			},
+			assert: func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork) {
+				t.Helper()
+				_, ok := nw.App.FeePolicyKeeper.GetModuleDiscounts(ctx, addr1, "bank")
+				require.False(t, ok)
+
+				_, ok = nw.App.FeePolicyKeeper.GetModuleDiscounts(ctx, addr1, "staking")
+				require.True(t, ok)
+			},
+			expectErr: false,
+		},
+		{
+			name: "pass - remove specific msg type discount",
+			setup: func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork) {
+				t.Helper()
+				nw.App.FeePolicyKeeper.SetAccountDiscounts(ctx, baseDiscount())
+			},
+			request: &types.MsgRemoveDiscounts{
+				ModeratorAddress: validModerator,
+				Address:          addr1,
+				Module:           "bank",
+				MsgType:          "/cosmos.bank.v1beta1.MsgSend",
+			},
+			assert: func(t *testing.T, ctx sdk.Context, nw *network.UnitTestNetwork) {
+				t.Helper()
+				discounts, ok := nw.App.FeePolicyKeeper.GetModuleDiscounts(ctx, addr1, "bank")
+				require.True(t, ok)
+				require.Len(t, discounts, 1)
+				require.NotEqual(t, "/cosmos.bank.v1beta1.MsgSend", discounts[0].MsgType)
+			},
+			expectErr: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// reset network and context
+			nw = network.NewUnitTestNetwork()
+			ctx = nw.GetContext()
+
+			if tc.setup != nil {
+				tc.setup(t, ctx, nw)
+			}
+
+			_, err := nw.App.FeePolicyKeeper.RemoveDiscounts(ctx, tc.request)
+			if tc.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			if tc.assert != nil {
+				tc.assert(t, ctx, nw)
+			}
+		})
+	}
+}
