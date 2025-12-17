@@ -19,10 +19,12 @@ enum Status {
 enum Category {
   // CATEGORY_UNSPECIFIED defines an invalid category.
   CATEGORY_UNSPECIFIED = 0;
+  // CATEGORY_OPERATIONAL defines the operational category.
+  CATEGORY_OPERATION = 1;
   // CATEGORY_CRYPTO defines the crypto category.
-  CATEGORY_CRYPTO = 1;
+  CATEGORY_CRYPTO = 2;
   // CATEGORY_CURRENCY defines the currency category.
-  CATEGORY_CURRENCY = 2;
+  CATEGORY_CURRENCY = 3;
 }
 
 // OracleRequest defines a request for oracle data.

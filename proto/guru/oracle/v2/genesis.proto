@@ -15,7 +15,7 @@ message GenesisState {
 
   // report_retention_blocks defines the number of blocks after which
   // old reports are automatically deleted.
-  uint64 report_retention_blocks = 2;
+  string moderator_address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // requests is a list of oracle requests to support migrations.
   repeated OracleRequest requests = 3 [ (gogoproto.nullable) = false ];

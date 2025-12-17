@@ -31,9 +31,13 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MsgClient interface {
+	// UpdateModeratorAddress defines a method to update the moderator address.
 	UpdateModeratorAddress(ctx context.Context, in *MsgUpdateModeratorAddress, opts ...grpc.CallOption) (*MsgUpdateModeratorAddressResponse, error)
+	// RegisterOracleRequest defines a method to register a new oracle request.
 	RegisterOracleRequest(ctx context.Context, in *MsgRegisterOracleRequest, opts ...grpc.CallOption) (*MsgRegisterOracleRequestResponse, error)
+	// UpdateOracleRequest defines a method to update an existing oracle request.
 	UpdateOracleRequest(ctx context.Context, in *MsgUpdateOracleRequest, opts ...grpc.CallOption) (*MsgUpdateOracleRequestResponse, error)
+	// SubmitOracleReport defines a method to submit a report for an oracle request.
 	SubmitOracleReport(ctx context.Context, in *MsgSubmitOracleReport, opts ...grpc.CallOption) (*MsgSubmitOracleReportResponse, error)
 	// Add an address to the oracle whitelist (moderator only).
 	AddToWhitelist(ctx context.Context, in *MsgAddToWhitelist, opts ...grpc.CallOption) (*MsgAddToWhitelistResponse, error)
@@ -107,9 +111,13 @@ func (c *msgClient) RemoveFromWhitelist(ctx context.Context, in *MsgRemoveFromWh
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
 type MsgServer interface {
+	// UpdateModeratorAddress defines a method to update the moderator address.
 	UpdateModeratorAddress(context.Context, *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error)
+	// RegisterOracleRequest defines a method to register a new oracle request.
 	RegisterOracleRequest(context.Context, *MsgRegisterOracleRequest) (*MsgRegisterOracleRequestResponse, error)
+	// UpdateOracleRequest defines a method to update an existing oracle request.
 	UpdateOracleRequest(context.Context, *MsgUpdateOracleRequest) (*MsgUpdateOracleRequestResponse, error)
+	// SubmitOracleReport defines a method to submit a report for an oracle request.
 	SubmitOracleReport(context.Context, *MsgSubmitOracleReport) (*MsgSubmitOracleReportResponse, error)
 	// Add an address to the oracle whitelist (moderator only).
 	AddToWhitelist(context.Context, *MsgAddToWhitelist) (*MsgAddToWhitelistResponse, error)

@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"net/http"
 	"strings"
+	"unicode/utf8"
 )
 
 type CoinbaseProvider struct {
@@ -25,36 +26,37 @@ func (p *CoinbaseProvider) ID() string {
 }
 
 func (p *CoinbaseProvider) Categories() []int32 {
-	// 2: currency
+	// 3: currency
 	return []int32{2}
 }
 
-func (p *CoinbaseProvider) Fetch(ctx context.Context, symbol string) (*big.Float, error) {
+func (p *CoinbaseProvider) Fetch(ctx context.Context, symbol string) (string, error) {
+	if symbol == "" {
+		return "", fmt.Errorf("symbol is empty")
+	}
+
 	pair := strings.ReplaceAll(symbol, "/", "-")
 	url := fmt.Sprintf("%s%s/spot", p.baseURL, pair)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if p.apiKey != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", p.apiKey))
 	}
+	req.Header.Set("Accept", "application/json")
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+		snippet, _ := readBodySnippet(resp.Body, 2048)
+		return "", fmt.Errorf("coinbase unexpected status: %d, pair=%s, body=%q", resp.StatusCode, pair, snippet)
 	}
 
 	var payload struct {
@@ -62,18 +64,44 @@ func (p *CoinbaseProvider) Fetch(ctx context.Context, symbol string) (*big.Float
 			Amount string `json:"amount"`
 		} `json:"data"`
 	}
-	if err = json.Unmarshal(body, &payload); err != nil {
-		return nil, err
+	dec := json.NewDecoder(resp.Body)
+	if err = dec.Decode(&payload); err != nil {
+		return "", err
 	}
 
 	if payload.Data.Amount == "" {
-		return nil, fmt.Errorf("amount not found")
+		return "", fmt.Errorf("amount not found")
 	}
 
-	val, ok := new(big.Float).SetString(payload.Data.Amount)
-	if !ok {
-		return nil, fmt.Errorf("invalid amount: %s", payload.Data.Amount)
+	// Must be parseable by big.Float.SetString (matches chain validation).
+	if !isChainDecimal(payload.Data.Amount) {
+		return "", fmt.Errorf("invalid amount: %s", payload.Data.Amount)
 	}
 
-	return val, nil
+	return payload.Data.Amount, nil
+}
+
+func isChainDecimal(s string) bool {
+	// Chain uses big.Float.SetString for validation; accept the same format.
+	if _, ok := new(big.Float).SetString(s); !ok {
+		return false
+	}
+	// Additionally ensure it's a decimal representation (big.Rat also accepts fractions like "1/3").
+	if strings.Contains(s, "/") {
+		return false
+	}
+	_, ok := new(big.Rat).SetString(s)
+	return ok
+}
+
+func readBodySnippet(r io.Reader, limit int64) (string, error) {
+	b, err := io.ReadAll(io.LimitReader(r, limit))
+	if err != nil {
+		return "", err
+	}
+	// ensure printable-ish output; avoid broken utf-8 logs
+	if !utf8.Valid(b) {
+		return string([]rune(string(b))), nil
+	}
+	return string(b), nil
 }

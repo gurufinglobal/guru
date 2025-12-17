@@ -22,14 +22,16 @@ var startCmd = &cobra.Command{
 		// human-friendly console logging
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
+		// Require init first: do not create homeDir implicitly on start.
+		if st, err := os.Stat(homeDir()); err != nil || !st.IsDir() {
+			log.Error().Str("home", homeDir()).Msg("home directory not initialized; run `oracled init` first")
+			return nil
+		}
+
 		cfgPath := configFilePath()
 		cfg, err := config.LoadFile(cfgPath)
 		if err != nil {
-			return fmt.Errorf("failed to load config from %s: %w", cfgPath, err)
-		}
-
-		if err := os.MkdirAll(homeDir(), 0o755); err != nil {
-			return fmt.Errorf("failed to create home directory: %w", err)
+			return fmt.Errorf("failed to load config from %s (run `oracled init` first): %w", cfgPath, err)
 		}
 
 		log.Info().Str("home", homeDir()).Msg("starting oracled")
@@ -37,7 +39,7 @@ var startCmd = &cobra.Command{
 		ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 		defer stop()
 
-		dmn, err := daemon.New(cfg)
+		dmn, err := daemon.New(cfg, homeDir())
 		if err != nil {
 			return fmt.Errorf("failed to create daemon: %w", err)
 		}

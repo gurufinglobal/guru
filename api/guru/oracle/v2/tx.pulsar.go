@@ -5551,12 +5551,15 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// MsgUpdateModeratorAddress defines the Msg/UpdateModeratorAddress request type.
 type MsgUpdateModeratorAddress struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ModeratorAddress    string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	// moderator_address is the current moderator address.
+	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	// new_moderator_address is the new moderator address to set.
 	NewModeratorAddress string `protobuf:"bytes,2,opt,name=new_moderator_address,json=newModeratorAddress,proto3" json:"new_moderator_address,omitempty"`
 }
 
@@ -5620,16 +5623,22 @@ func (*MsgUpdateModeratorAddressResponse) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v2_tx_proto_rawDescGZIP(), []int{1}
 }
 
+// MsgRegisterOracleRequest defines the Msg/RegisterOracleRequest request type.
 type MsgRegisterOracleRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ModeratorAddress string   `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	Category         Category `protobuf:"varint,2,opt,name=category,proto3,enum=guru.oracle.v2.Category" json:"category,omitempty"`
-	Symbol           string   `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Count            uint64   `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
-	Period           uint64   `protobuf:"varint,5,opt,name=period,proto3" json:"period,omitempty"`
+	// moderator_address is the address of the moderator.
+	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	// category is the category of the request.
+	Category Category `protobuf:"varint,2,opt,name=category,proto3,enum=guru.oracle.v2.Category" json:"category,omitempty"`
+	// symbol is the symbol of the request.
+	Symbol string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	// count is the number of validators required for the request.
+	Count uint64 `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
+	// period is the execution period (in blocks).
+	Period uint64 `protobuf:"varint,5,opt,name=period,proto3" json:"period,omitempty"`
 }
 
 func (x *MsgRegisterOracleRequest) Reset() {
@@ -5687,11 +5696,13 @@ func (x *MsgRegisterOracleRequest) GetPeriod() uint64 {
 	return 0
 }
 
+// MsgRegisterOracleRequestResponse defines the response type for Msg/RegisterOracleRequest.
 type MsgRegisterOracleRequestResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// request_id is the unique identifier of the registered request.
 	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 }
 
@@ -5722,16 +5733,22 @@ func (x *MsgRegisterOracleRequestResponse) GetRequestId() uint64 {
 	return 0
 }
 
+// MsgUpdateOracleRequest defines the Msg/UpdateOracleRequest request type.
 type MsgUpdateOracleRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// moderator_address is the address of the moderator.
 	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	RequestId        uint64 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	Count            uint64 `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
-	Period           uint64 `protobuf:"varint,4,opt,name=period,proto3" json:"period,omitempty"`
-	Status           Status `protobuf:"varint,5,opt,name=status,proto3,enum=guru.oracle.v2.Status" json:"status,omitempty"`
+	// request_id is the unique identifier of the request to update.
+	RequestId uint64 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	// count is the new number of validators required (optional, 0 to skip).
+	Count uint64 `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
+	// period is the new execution period (optional, 0 to skip).
+	Period uint64 `protobuf:"varint,4,opt,name=period,proto3" json:"period,omitempty"`
+	// status is the new status (optional, STATUS_UNSPECIFIED to skip).
+	Status Status `protobuf:"varint,5,opt,name=status,proto3,enum=guru.oracle.v2.Status" json:"status,omitempty"`
 }
 
 func (x *MsgUpdateOracleRequest) Reset() {
@@ -5815,16 +5832,22 @@ func (*MsgUpdateOracleRequestResponse) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v2_tx_proto_rawDescGZIP(), []int{5}
 }
 
+// MsgSubmitOracleReport defines the Msg/SubmitOracleReport request type.
 type MsgSubmitOracleReport struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// provider_address is the address of the validator submitting the report.
 	ProviderAddress string `protobuf:"bytes,1,opt,name=provider_address,json=providerAddress,proto3" json:"provider_address,omitempty"`
-	RequestId       uint64 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	RawData         string `protobuf:"bytes,3,opt,name=raw_data,json=rawData,proto3" json:"raw_data,omitempty"`
-	Nonce           uint64 `protobuf:"varint,4,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Signature       []byte `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+	// request_id is the unique identifier of the request.
+	RequestId uint64 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	// raw_data is the raw confirmed data.
+	RawData string `protobuf:"bytes,3,opt,name=raw_data,json=rawData,proto3" json:"raw_data,omitempty"`
+	// nonce is the nonce of the request.
+	Nonce uint64 `protobuf:"varint,4,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	// signature is the signature of the provider.
+	Signature []byte `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
 }
 
 func (x *MsgSubmitOracleReport) Reset() {

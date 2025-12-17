@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -13,6 +15,13 @@ var (
 	rootCmd  = &cobra.Command{
 		Use:   "oracled",
 		Short: "Oracle Daemon for Guru Blockchain",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// Prevent "oracled init --home \"\"" from falling back to a relative ".oracled" directory.
+			if strings.TrimSpace(homeBase) == "" {
+				return fmt.Errorf("--home must not be empty")
+			}
+			return nil
+		},
 	}
 )
 

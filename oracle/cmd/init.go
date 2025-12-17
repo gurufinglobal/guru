@@ -20,7 +20,8 @@ var initCmd = &cobra.Command{
 
 		cfgPath := configFilePath()
 		if _, err := os.Stat(cfgPath); err == nil {
-			return fmt.Errorf("config already exists at %s", cfgPath)
+			log.Info().Str("path", cfgPath).Msg("config already exists (skipping)")
+			return nil
 		}
 
 		if err := config.WriteDefaultFile(cfgPath); err != nil {

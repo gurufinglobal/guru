@@ -374,7 +374,7 @@ func (m *QueryOracleRequestsResponse) GetRequests() []OracleRequest {
 	return nil
 }
 
-// [유지] OracleReports 관련 메시지 (RPC와 연결됨)
+// OracleReportsRequest is the request type for the OracleReports RPC.
 type QueryOracleReportsRequest struct {
 	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	Nonce     uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
@@ -479,7 +479,7 @@ func (m *QueryOracleReportsResponse) GetReports() []OracleReport {
 	return nil
 }
 
-// [유지] Single Result 조회
+// OracleResultRequest is the request type for the OracleResult RPC.
 type QueryOracleResultRequest struct {
 	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	Nonce     uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
@@ -576,7 +576,7 @@ func (m *QueryOracleResultResponse) GetResult() OracleResult {
 	return OracleResult{}
 }
 
-// [추가] 누락되었던 OracleResults (History) 관련 메시지 추가
+// OracleResultsRequest is the request type for the OracleResults RPC (History).
 type QueryOracleResultsRequest struct {
 	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 }
@@ -937,15 +937,13 @@ type QueryClient interface {
 	OracleRequest(ctx context.Context, in *QueryOracleRequestRequest, opts ...grpc.CallOption) (*QueryOracleRequestResponse, error)
 	// OracleRequests returns oracle requests with optional filters.
 	OracleRequests(ctx context.Context, in *QueryOracleRequestsRequest, opts ...grpc.CallOption) (*QueryOracleRequestsResponse, error)
-	// [수정] OracleReports RPC 추가 (메시지는 있었으나 RPC가 없었음)
-	// 특정 Request에 대해 제출된 개별 Report들을 조회
+	// OracleReports queries individual reports submitted for a specific request.
 	OracleReports(ctx context.Context, in *QueryOracleReportsRequest, opts ...grpc.CallOption) (*QueryOracleReportsResponse, error)
 	// OracleResult returns a specific aggregated result (single lookup).
-	// 보통 최신 결과 혹은 특정 nonce의 결과를 조회할 때 사용
+	// It is used to query the latest result or a result at a specific nonce.
 	OracleResult(ctx context.Context, in *QueryOracleResultRequest, opts ...grpc.CallOption) (*QueryOracleResultResponse, error)
-	// [수정] OracleResults는 보통 특정 Request의 "과거 이력(History)"을 조회하는
-	// 용도입니다. 따라서 path를 results/{request_id} 형식이 아닌
-	// requests/{request_id}/results 로 잡는 게 자연스럽습니다.
+	// OracleResults queries the history of results for a specific request.
+	// The path is defined as requests/{request_id}/results to reflect the history nature.
 	OracleResults(ctx context.Context, in *QueryOracleResultsRequest, opts ...grpc.CallOption) (*QueryOracleResultsResponse, error)
 	// Categories returns enabled categories.
 	Categories(ctx context.Context, in *QueryCategoriesRequest, opts ...grpc.CallOption) (*QueryCategoriesResponse, error)
@@ -1052,15 +1050,13 @@ type QueryServer interface {
 	OracleRequest(context.Context, *QueryOracleRequestRequest) (*QueryOracleRequestResponse, error)
 	// OracleRequests returns oracle requests with optional filters.
 	OracleRequests(context.Context, *QueryOracleRequestsRequest) (*QueryOracleRequestsResponse, error)
-	// [수정] OracleReports RPC 추가 (메시지는 있었으나 RPC가 없었음)
-	// 특정 Request에 대해 제출된 개별 Report들을 조회
+	// OracleReports queries individual reports submitted for a specific request.
 	OracleReports(context.Context, *QueryOracleReportsRequest) (*QueryOracleReportsResponse, error)
 	// OracleResult returns a specific aggregated result (single lookup).
-	// 보통 최신 결과 혹은 특정 nonce의 결과를 조회할 때 사용
+	// It is used to query the latest result or a result at a specific nonce.
 	OracleResult(context.Context, *QueryOracleResultRequest) (*QueryOracleResultResponse, error)
-	// [수정] OracleResults는 보통 특정 Request의 "과거 이력(History)"을 조회하는
-	// 용도입니다. 따라서 path를 results/{request_id} 형식이 아닌
-	// requests/{request_id}/results 로 잡는 게 자연스럽습니다.
+	// OracleResults queries the history of results for a specific request.
+	// The path is defined as requests/{request_id}/results to reflect the history nature.
 	OracleResults(context.Context, *QueryOracleResultsRequest) (*QueryOracleResultsResponse, error)
 	// Categories returns enabled categories.
 	Categories(context.Context, *QueryCategoriesRequest) (*QueryCategoriesResponse, error)

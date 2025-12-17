@@ -17,18 +17,16 @@ type SubmitClient interface {
 type Submitter struct {
 	logger       log.Logger
 	keyname      string
-	address      string
 	txConfig     client.TxConfig
 	accountInfo  *AccountInfo
 	baseFactory  tx.Factory
 	submitClient SubmitClient
 }
 
-func New(logger log.Logger, keyname string, address string, txConfig client.TxConfig, accountInfo *AccountInfo, baseFactory tx.Factory, submitClient SubmitClient) *Submitter {
+func New(logger log.Logger, keyname string, txConfig client.TxConfig, accountInfo *AccountInfo, baseFactory tx.Factory, submitClient SubmitClient) *Submitter {
 	return &Submitter{
 		logger:       logger,
 		keyname:      keyname,
-		address:      address,
 		txConfig:     txConfig,
 		accountInfo:  accountInfo,
 		baseFactory:  baseFactory,
@@ -37,6 +35,10 @@ func New(logger log.Logger, keyname string, address string, txConfig client.TxCo
 }
 
 func (s *Submitter) Start(ctx context.Context, resultCh <-chan oracletypes.OracleReport) {
+	if err := s.accountInfo.ResetAccountInfo(ctx); err != nil {
+		s.logger.Error("failed to reset account info", "error", err)
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -51,8 +53,12 @@ func (s *Submitter) Start(ctx context.Context, resultCh <-chan oracletypes.Oracl
 	}
 }
 
+func (s *Submitter) UpdateGasPrice(gasPrice string) {
+	s.baseFactory = s.baseFactory.WithGasPrices(gasPrice)
+}
+
 func (s *Submitter) submit(ctx context.Context, result oracletypes.OracleReport) {
-	result.Provider = s.address
+	result.Provider = s.accountInfo.address.String()
 
 	kr := s.baseFactory.Keybase()
 	resultBytes, err := result.Bytes()
@@ -60,14 +66,21 @@ func (s *Submitter) submit(ctx context.Context, result oracletypes.OracleReport)
 		s.logger.Error("failed to get result bytes", "error", err)
 		return
 	}
+
 	signature, _, err := kr.Sign(s.keyname, resultBytes, s.baseFactory.SignMode())
 	if err != nil {
 		s.logger.Error("failed to sign result", "error", err)
 		return
 	}
+
 	result.Signature = signature
+	if err := result.ValidateBasic(); err != nil {
+		s.logger.Error("invalid oracle report", "error", err)
+		return
+	}
 
 	finalFactory := s.baseFactory.
+		WithAccountNumber(s.accountInfo.AccountNumber()).
 		WithSequence(s.accountInfo.CurrentSequenceNumber())
 
 	txBuilder, err := finalFactory.BuildUnsignedTx(&result)
@@ -95,15 +108,32 @@ func (s *Submitter) submit(ctx context.Context, result oracletypes.OracleReport)
 
 	switch res.Code {
 	case 0:
-		s.logger.Info("tx broadcasted successfully", "tx_hash", res.TxHash)
+		s.logger.Info("tx broadcasted successfully",
+			"tx_hash", res.TxHash,
+			"request_id", result.RequestId,
+			"nonce", result.Nonce,
+			"sequence", s.accountInfo.CurrentSequenceNumber(),
+		)
 		s.accountInfo.IncrementSequenceNumber()
 	case 18:
-		s.logger.Info("tx already certified", "tx_hash", res.TxHash)
+		s.logger.Info("tx already certified", "tx_hash", res.TxHash, "request_id", result.RequestId, "nonce", result.Nonce)
 	case 32:
-		s.logger.Info("tx sequence number rolled back", "tx_hash", res.TxHash)
+		if err := s.accountInfo.ResetAccountInfo(ctx); err != nil {
+			s.logger.Error("failed to reset account info", "error", err)
+		}
+		s.logger.Info("tx sequence number rolled back", "tx_hash", res.TxHash, "request_id", result.RequestId, "nonce", result.Nonce)
 	case 33:
-		s.logger.Info("tx sequence number already used", "tx_hash", res.TxHash)
+		if err := s.accountInfo.ResetAccountInfo(ctx); err != nil {
+			s.logger.Error("failed to reset account info", "error", err)
+		}
+		s.logger.Info("tx sequence number already used", "tx_hash", res.TxHash, "request_id", result.RequestId, "nonce", result.Nonce)
 	default:
-		s.logger.Error("unexpected error code", "error", res.RawLog)
+		s.logger.Error("unexpected error code",
+			"code", res.Code,
+			"raw_log", res.RawLog,
+			"tx_hash", res.TxHash,
+			"request_id", result.RequestId,
+			"nonce", result.Nonce,
+		)
 	}
 }

@@ -8215,13 +8215,13 @@ func (x *QueryOracleRequestsResponse) GetRequests() []*OracleRequest {
 	return nil
 }
 
-// [유지] OracleReports 관련 메시지 (RPC와 연결됨)
+// OracleReportsRequest is the request type for the OracleReports RPC.
 type QueryOracleReportsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // 필수값으로 보는 게 좋음 (REST Path와 일치)
+	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // required
 	Nonce     uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	Provider  string `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
 }
@@ -8302,14 +8302,14 @@ func (x *QueryOracleReportsResponse) GetReports() []*OracleReport {
 	return nil
 }
 
-// [유지] Single Result 조회
+// OracleResultRequest is the request type for the OracleResult RPC.
 type QueryOracleResultRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	Nonce     uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"` // 0이면 최신값
+	Nonce     uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"` // 0 for latest
 }
 
 func (x *QueryOracleResultRequest) Reset() {
@@ -8381,13 +8381,13 @@ func (x *QueryOracleResultResponse) GetResult() *OracleResult {
 	return nil
 }
 
-// [추가] 누락되었던 OracleResults (History) 관련 메시지 추가
+// OracleResultsRequest is the request type for the OracleResults RPC (History).
 type QueryOracleResultsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // 특정 요청의 이력을 봐야하므로 필수
+	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // required to query history
 }
 
 func (x *QueryOracleResultsRequest) Reset() {

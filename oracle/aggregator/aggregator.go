@@ -2,25 +2,40 @@ package aggregator
 
 import (
 	"context"
+	"fmt"
 	"math/big"
-	"sort"
+	"runtime"
+	"slices"
+	"strings"
 	"sync"
 
 	"cosmossdk.io/log"
+	"github.com/creachadair/taskgroup"
 	"github.com/gurufinglobal/guru/v2/oracle/provider"
 	"github.com/gurufinglobal/guru/v2/oracle/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
 )
 
+type providerSample struct {
+	provider string
+	raw      string
+	val      *big.Rat
+}
+
 type Aggregator struct {
-	logger     log.Logger
-	pvRegistry *provider.Registry
+	logger      log.Logger
+	pvRegistry  *provider.Registry
+	workerGroup *taskgroup.Group
+	workerFunc  taskgroup.StartFunc
 }
 
 func NewAggregator(logger log.Logger, pvRegistry *provider.Registry) *Aggregator {
+	workerGroup, workerFunc := taskgroup.New(nil).Limit(2 * runtime.NumCPU())
 	return &Aggregator{
-		logger:     logger,
-		pvRegistry: pvRegistry,
+		logger:      logger,
+		pvRegistry:  pvRegistry,
+		workerGroup: workerGroup,
+		workerFunc:  workerFunc,
 	}
 }
 
@@ -28,14 +43,29 @@ func (a *Aggregator) Start(ctx context.Context, taskChan <-chan types.OracleTask
 	for {
 		select {
 		case <-ctx.Done():
+			a.logger.Info("aggregator shutting down, waiting for active tasks to complete")
+			if err := a.workerGroup.Wait(); err != nil {
+				a.logger.Error("error during aggregator shutdown", "error", err)
+			} else {
+				a.logger.Info("aggregator shutdown completed successfully")
+			}
 			return
 		case task, ok := <-taskChan:
 			if !ok {
+				a.logger.Info("task channel closed, waiting for active tasks to complete")
+				if err := a.workerGroup.Wait(); err != nil {
+					a.logger.Error("error during aggregator shutdown", "error", err)
+				} else {
+					a.logger.Info("aggregator shutdown completed successfully")
+				}
 				return
 			}
 
-			// 각 Task 처리를 별도 goroutine으로 실행해 병렬 처리 가능하게 함.
-			go a.processTask(ctx, task, resultCh)
+			t := task
+			a.workerFunc(func() error {
+				a.processTask(ctx, t, resultCh)
+				return nil
+			})
 		}
 	}
 }
@@ -44,26 +74,50 @@ func (a *Aggregator) Start(ctx context.Context, taskChan <-chan types.OracleTask
 func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, resultCh chan<- oracletypes.OracleReport) {
 	providers := a.pvRegistry.GetProviders(int32(task.Category))
 	if len(providers) == 0 {
-		a.logger.Warn("no providers for category", "category", task.Category)
+		// This should not happen if registry validates category >= 1 provider.
+		a.logger.Error("no providers for category", "request_id", task.Id, "category", task.Category, "symbol", task.Symbol)
 		return
 	}
 
 	var (
 		wg      sync.WaitGroup
-		results = make([]*big.Float, len(providers))
+		results = make([]*providerSample, len(providers))
 	)
 
 	for i, pv := range providers {
 		wg.Add(1)
 		go func(idx int, pv provider.Provider) {
 			defer wg.Done()
-			val, err := pv.Fetch(ctx, task.Symbol)
+			raw, err := pv.Fetch(ctx, task.Symbol)
 			if err != nil {
-				a.logger.Error("failed to fetch price", "error", err, "provider", pv.ID(), "symbol", task.Symbol)
+				a.logger.Debug("provider fetch failed",
+					"error", err,
+					"provider", pv.ID(),
+					"request_id", task.Id,
+					"category", task.Category,
+					"symbol", task.Symbol,
+				)
 				return
 			}
 
-			results[idx] = val
+			rat, err := parseChainDecimalToRat(raw)
+			if err != nil {
+				a.logger.Debug("provider returned invalid decimal",
+					"error", err,
+					"provider", pv.ID(),
+					"request_id", task.Id,
+					"category", task.Category,
+					"symbol", task.Symbol,
+					"raw_data", raw,
+				)
+				return
+			}
+
+			results[idx] = &providerSample{
+				provider: pv.ID(),
+				raw:      raw,
+				val:      rat,
+			}
 		}(i, pv)
 	}
 
@@ -71,17 +125,25 @@ func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, res
 
 	successCount := countNonNil(results)
 	if successCount == 0 {
-		a.logger.Error("all provider requests failed", "symbol", task.Symbol, "category", task.Category)
+		a.logger.Error("all provider fetches failed", "request_id", task.Id, "category", task.Category, "symbol", task.Symbol)
 		return
 	}
 
 	median := selectMiddleValue(results)
 	if median == nil {
-		a.logger.Error("failed to select middle value", "symbol", task.Symbol, "category", task.Category)
+		a.logger.Error("median selection failed", "request_id", task.Id, "category", task.Category, "symbol", task.Symbol)
 		return
 	}
 
-	a.logger.Info("selected middle value", "symbol", task.Symbol, "category", task.Category, "value", median.Text('f', -1), "success_count", successCount, "total_providers", len(providers))
+	a.logger.Info("median selected",
+		"request_id", task.Id,
+		"category", task.Category,
+		"symbol", task.Symbol,
+		"raw_data", median.raw,
+		"source_provider", median.provider,
+		"success_count", successCount,
+		"total_providers", len(providers),
+	)
 
 	if resultCh == nil {
 		return
@@ -89,10 +151,10 @@ func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, res
 
 	select {
 	case <-ctx.Done():
-		a.logger.Debug("context canceled before emitting result", "symbol", task.Symbol, "category", task.Category)
+		a.logger.Debug("context canceled before emitting result", "request_id", task.Id, "category", task.Category, "symbol", task.Symbol)
 	case resultCh <- oracletypes.OracleReport{
 		RequestId: task.Id,
-		RawData:   median.Text('f', -1),
+		RawData:   median.raw,
 		Provider:  "",
 		Nonce:     task.Nonce,
 		Signature: nil,
@@ -101,12 +163,12 @@ func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, res
 }
 
 // selectMiddleValue returns the middle element (lower median for even length) without averaging.
-func selectMiddleValue(values []*big.Float) *big.Float {
+func selectMiddleValue(values []*providerSample) *providerSample {
 	if len(values) == 0 {
 		return nil
 	}
 
-	valid := make([]*big.Float, 0, len(values))
+	valid := make([]*providerSample, 0, len(values))
 	for _, v := range values {
 		if v != nil {
 			valid = append(valid, v)
@@ -116,11 +178,11 @@ func selectMiddleValue(values []*big.Float) *big.Float {
 		return nil
 	}
 
-	sorted := make([]*big.Float, len(valid))
+	sorted := make([]*providerSample, len(valid))
 	copy(sorted, valid)
 
-	sort.Slice(sorted, func(i, j int) bool {
-		return sorted[i].Cmp(sorted[j]) < 0
+	slices.SortFunc(sorted, func(a, b *providerSample) int {
+		return a.val.Cmp(b.val)
 	})
 
 	mid := len(sorted) / 2
@@ -130,7 +192,7 @@ func selectMiddleValue(values []*big.Float) *big.Float {
 	return sorted[mid]
 }
 
-func countNonNil(values []*big.Float) int {
+func countNonNil(values []*providerSample) int {
 	count := 0
 	for _, v := range values {
 		if v != nil {
@@ -138,4 +200,23 @@ func countNonNil(values []*big.Float) int {
 		}
 	}
 	return count
+}
+
+func parseChainDecimalToRat(raw string) (*big.Rat, error) {
+	if raw == "" {
+		return nil, fmt.Errorf("raw_data is empty")
+	}
+	// Chain validation is big.Float.SetString (decimal only).
+	if _, ok := new(big.Float).SetString(raw); !ok {
+		return nil, fmt.Errorf("raw_data is not a valid decimal")
+	}
+	// big.Rat also accepts fractions like "1/3" which chain does not; reject explicitly.
+	if strings.Contains(raw, "/") {
+		return nil, fmt.Errorf("raw_data must be a decimal, not a fraction")
+	}
+	r, ok := new(big.Rat).SetString(raw)
+	if !ok {
+		return nil, fmt.Errorf("failed to parse raw_data as rational")
+	}
+	return r, nil
 }

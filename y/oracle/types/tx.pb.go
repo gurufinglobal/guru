@@ -31,8 +31,11 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgUpdateModeratorAddress defines the Msg/UpdateModeratorAddress request type.
 type MsgUpdateModeratorAddress struct {
-	ModeratorAddress    string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	// moderator_address is the current moderator address.
+	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	// new_moderator_address is the new moderator address to set.
 	NewModeratorAddress string `protobuf:"bytes,2,opt,name=new_moderator_address,json=newModeratorAddress,proto3" json:"new_moderator_address,omitempty"`
 }
 
@@ -105,12 +108,18 @@ func (m *MsgUpdateModeratorAddressResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateModeratorAddressResponse proto.InternalMessageInfo
 
+// MsgRegisterOracleRequest defines the Msg/RegisterOracleRequest request type.
 type MsgRegisterOracleRequest struct {
-	ModeratorAddress string   `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	Category         Category `protobuf:"varint,2,opt,name=category,proto3,enum=guru.oracle.v2.Category" json:"category,omitempty"`
-	Symbol           string   `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Count            uint64   `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
-	Period           uint64   `protobuf:"varint,5,opt,name=period,proto3" json:"period,omitempty"`
+	// moderator_address is the address of the moderator.
+	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	// category is the category of the request.
+	Category Category `protobuf:"varint,2,opt,name=category,proto3,enum=guru.oracle.v2.Category" json:"category,omitempty"`
+	// symbol is the symbol of the request.
+	Symbol string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	// count is the number of validators required for the request.
+	Count uint64 `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
+	// period is the execution period (in blocks).
+	Period uint64 `protobuf:"varint,5,opt,name=period,proto3" json:"period,omitempty"`
 }
 
 func (m *MsgRegisterOracleRequest) Reset()         { *m = MsgRegisterOracleRequest{} }
@@ -146,7 +155,9 @@ func (m *MsgRegisterOracleRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgRegisterOracleRequest proto.InternalMessageInfo
 
+// MsgRegisterOracleRequestResponse defines the response type for Msg/RegisterOracleRequest.
 type MsgRegisterOracleRequestResponse struct {
+	// request_id is the unique identifier of the registered request.
 	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 }
 
@@ -190,12 +201,18 @@ func (m *MsgRegisterOracleRequestResponse) GetRequestId() uint64 {
 	return 0
 }
 
+// MsgUpdateOracleRequest defines the Msg/UpdateOracleRequest request type.
 type MsgUpdateOracleRequest struct {
+	// moderator_address is the address of the moderator.
 	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	RequestId        uint64 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	Count            uint64 `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
-	Period           uint64 `protobuf:"varint,4,opt,name=period,proto3" json:"period,omitempty"`
-	Status           Status `protobuf:"varint,5,opt,name=status,proto3,enum=guru.oracle.v2.Status" json:"status,omitempty"`
+	// request_id is the unique identifier of the request to update.
+	RequestId uint64 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	// count is the new number of validators required (optional, 0 to skip).
+	Count uint64 `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
+	// period is the new execution period (optional, 0 to skip).
+	Period uint64 `protobuf:"varint,4,opt,name=period,proto3" json:"period,omitempty"`
+	// status is the new status (optional, STATUS_UNSPECIFIED to skip).
+	Status Status `protobuf:"varint,5,opt,name=status,proto3,enum=guru.oracle.v2.Status" json:"status,omitempty"`
 }
 
 func (m *MsgUpdateOracleRequest) Reset()         { *m = MsgUpdateOracleRequest{} }
@@ -267,12 +284,18 @@ func (m *MsgUpdateOracleRequestResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateOracleRequestResponse proto.InternalMessageInfo
 
+// MsgSubmitOracleReport defines the Msg/SubmitOracleReport request type.
 type MsgSubmitOracleReport struct {
+	// provider_address is the address of the validator submitting the report.
 	ProviderAddress string `protobuf:"bytes,1,opt,name=provider_address,json=providerAddress,proto3" json:"provider_address,omitempty"`
-	RequestId       uint64 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	RawData         string `protobuf:"bytes,3,opt,name=raw_data,json=rawData,proto3" json:"raw_data,omitempty"`
-	Nonce           uint64 `protobuf:"varint,4,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	Signature       []byte `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+	// request_id is the unique identifier of the request.
+	RequestId uint64 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	// raw_data is the raw confirmed data.
+	RawData string `protobuf:"bytes,3,opt,name=raw_data,json=rawData,proto3" json:"raw_data,omitempty"`
+	// nonce is the nonce of the request.
+	Nonce uint64 `protobuf:"varint,4,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	// signature is the signature of the provider.
+	Signature []byte `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
 }
 
 func (m *MsgSubmitOracleReport) Reset()         { *m = MsgSubmitOracleReport{} }
@@ -645,9 +668,13 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
+	// UpdateModeratorAddress defines a method to update the moderator address.
 	UpdateModeratorAddress(ctx context.Context, in *MsgUpdateModeratorAddress, opts ...grpc.CallOption) (*MsgUpdateModeratorAddressResponse, error)
+	// RegisterOracleRequest defines a method to register a new oracle request.
 	RegisterOracleRequest(ctx context.Context, in *MsgRegisterOracleRequest, opts ...grpc.CallOption) (*MsgRegisterOracleRequestResponse, error)
+	// UpdateOracleRequest defines a method to update an existing oracle request.
 	UpdateOracleRequest(ctx context.Context, in *MsgUpdateOracleRequest, opts ...grpc.CallOption) (*MsgUpdateOracleRequestResponse, error)
+	// SubmitOracleReport defines a method to submit a report for an oracle request.
 	SubmitOracleReport(ctx context.Context, in *MsgSubmitOracleReport, opts ...grpc.CallOption) (*MsgSubmitOracleReportResponse, error)
 	// Add an address to the oracle whitelist (moderator only).
 	AddToWhitelist(ctx context.Context, in *MsgAddToWhitelist, opts ...grpc.CallOption) (*MsgAddToWhitelistResponse, error)
@@ -719,9 +746,13 @@ func (c *msgClient) RemoveFromWhitelist(ctx context.Context, in *MsgRemoveFromWh
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	// UpdateModeratorAddress defines a method to update the moderator address.
 	UpdateModeratorAddress(context.Context, *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error)
+	// RegisterOracleRequest defines a method to register a new oracle request.
 	RegisterOracleRequest(context.Context, *MsgRegisterOracleRequest) (*MsgRegisterOracleRequestResponse, error)
+	// UpdateOracleRequest defines a method to update an existing oracle request.
 	UpdateOracleRequest(context.Context, *MsgUpdateOracleRequest) (*MsgUpdateOracleRequestResponse, error)
+	// SubmitOracleReport defines a method to submit a report for an oracle request.
 	SubmitOracleReport(context.Context, *MsgSubmitOracleReport) (*MsgSubmitOracleReportResponse, error)
 	// Add an address to the oracle whitelist (moderator only).
 	AddToWhitelist(context.Context, *MsgAddToWhitelist) (*MsgAddToWhitelistResponse, error)
