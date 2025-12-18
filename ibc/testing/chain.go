@@ -368,7 +368,7 @@ func (chain *TestChain) SendEvmTx(
 	amount *big.Int,
 	data []byte,
 ) (*abci.ExecTxResult, error) {
-	app, ok := chain.App.(*gurud.EVMD)
+	app, ok := chain.App.(*gurud.GURUD)
 	require.True(chain.TB, ok)
 	ctx := chain.GetContext()
 

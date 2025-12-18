@@ -45,7 +45,7 @@ type signatureV2Args struct {
 // It returns the signed transaction and an error
 func CreateEIP712CosmosTx(
 	ctx sdk.Context,
-	exampleApp *exampleapp.EVMD,
+	exampleApp *exampleapp.GURUD,
 	args EIP712TxArgs,
 ) (sdk.Tx, error) {
 	builder, err := PrepareEIP712CosmosTx(
@@ -61,7 +61,7 @@ func CreateEIP712CosmosTx(
 // It returns the tx builder with the signed transaction and an error
 func PrepareEIP712CosmosTx(
 	ctx sdk.Context,
-	exampleApp *exampleapp.EVMD,
+	exampleApp *exampleapp.GURUD,
 	args EIP712TxArgs,
 ) (client.TxBuilder, error) {
 	txArgs := args.CosmosTxArgs
@@ -118,7 +118,7 @@ func PrepareEIP712CosmosTx(
 // the provided private key and the typed data
 func signCosmosEIP712Tx(
 	ctx sdk.Context,
-	exampleApp *exampleapp.EVMD,
+	exampleApp *exampleapp.GURUD,
 	args EIP712TxArgs,
 	builder authtx.ExtensionOptionsTxBuilder,
 	data apitypes.TypedData,

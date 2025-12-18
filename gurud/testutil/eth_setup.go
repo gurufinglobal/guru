@@ -69,13 +69,13 @@ var EthDefaultConsensusParams = &cmtypes.ConsensusParams{
 	},
 }
 
-// EthSetup initializes a new Cosmos EVM application. A Nop logger is set in EVMD.
-func EthSetup(isCheckTx bool, chainID string, evmChainID uint64, patchGenesis func(*exampleapp.EVMD, cosmosevmtypes.GenesisState) cosmosevmtypes.GenesisState) *exampleapp.EVMD {
+// EthSetup initializes a new Cosmos EVM application. A Nop logger is set in GURUD.
+func EthSetup(isCheckTx bool, chainID string, evmChainID uint64, patchGenesis func(*exampleapp.GURUD, cosmosevmtypes.GenesisState) cosmosevmtypes.GenesisState) *exampleapp.GURUD {
 	return EthSetupWithDB(isCheckTx, chainID, evmChainID, patchGenesis, dbm.NewMemDB())
 }
 
-// EthSetupWithDB initializes a new EVMD. A Nop logger is set in EVMD.
-func EthSetupWithDB(isCheckTx bool, chainID string, evmChainID uint64, patchGenesis func(*exampleapp.EVMD, cosmosevmtypes.GenesisState) cosmosevmtypes.GenesisState, db dbm.DB) *exampleapp.EVMD {
+// EthSetupWithDB initializes a new GURUD. A Nop logger is set in GURUD.
+func EthSetupWithDB(isCheckTx bool, chainID string, evmChainID uint64, patchGenesis func(*exampleapp.GURUD, cosmosevmtypes.GenesisState) cosmosevmtypes.GenesisState, db dbm.DB) *exampleapp.GURUD {
 	app := exampleapp.NewExampleApp(log.NewNopLogger(),
 		db,
 		nil,
@@ -120,7 +120,7 @@ func EthSetupWithDB(isCheckTx bool, chainID string, evmChainID uint64, patchGene
 //
 // TODO: are these different genesis functions necessary or can they all be refactored into one?
 // there's also other genesis state functions; some like app.DefaultGenesis() or others in test helpers only.
-func NewTestGenesisState(app *exampleapp.EVMD) cosmosevmtypes.GenesisState {
+func NewTestGenesisState(app *exampleapp.GURUD) cosmosevmtypes.GenesisState {
 	privVal := mock.NewPV()
 	pubKey, err := privVal.GetPubKey()
 	if err != nil {

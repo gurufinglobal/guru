@@ -59,7 +59,7 @@ type IntegrationNetwork struct {
 	cfg        Config
 	ctx        sdktypes.Context
 	validators []stakingtypes.Validator
-	app        *app.EVMD
+	app        *app.GURUD
 
 	// This is only needed for IBC chain testing setup
 	valSet     *cmttypes.ValidatorSet

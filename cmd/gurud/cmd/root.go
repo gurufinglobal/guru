@@ -214,7 +214,7 @@ func InitAppConfig(denom string, evmChainID uint64) (string, interface{}) {
 	return customAppTemplate, customAppConfig
 }
 
-func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
+func initRootCmd(rootCmd *cobra.Command, osApp *gurud.GURUD) {
 	cfg := sdk.GetConfig()
 	cfg.Seal()
 
@@ -390,7 +390,7 @@ func appExport(
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
-	var exampleApp *gurud.EVMD
+	var exampleApp *gurud.GURUD
 
 	// this check is necessary as we use the flag in x/upgrade.
 	// we can exit more gracefully by checking the flag here.

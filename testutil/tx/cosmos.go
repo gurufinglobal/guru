@@ -42,7 +42,7 @@ type CosmosTxArgs struct {
 // It returns the signed transaction and an error
 func PrepareCosmosTx(
 	ctx sdk.Context,
-	exampleApp *exampleapp.EVMD,
+	exampleApp *exampleapp.GURUD,
 	args CosmosTxArgs,
 ) (authsigning.Tx, error) {
 	txBuilder := args.TxCfg.NewTxBuilder()
@@ -75,7 +75,7 @@ func PrepareCosmosTx(
 // the provided private key
 func signCosmosTx(
 	ctx sdk.Context,
-	exampleApp *exampleapp.EVMD,
+	exampleApp *exampleapp.GURUD,
 	args CosmosTxArgs,
 	txBuilder client.TxBuilder,
 ) (authsigning.Tx, error) {

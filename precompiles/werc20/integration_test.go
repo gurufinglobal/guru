@@ -112,7 +112,7 @@ var _ = DescribeTableSubtree("a user interact with the WEVMOS precompiled contra
 		is.keyring = keyring
 
 		is.wrappedCoinDenom = evmtypes.GetEVMCoinDenom()
-		is.precompileAddrHex = network.GetWEVMOSContractHex(testconstants.ChainID{
+		is.precompileAddrHex = network.GetWGURUContractHex(testconstants.ChainID{
 			ChainID:    is.network.GetChainID(),
 			EVMChainID: is.network.GetEIP155ChainID().Uint64(),
 		})
@@ -153,7 +153,7 @@ var _ = DescribeTableSubtree("a user interact with the WEVMOS precompiled contra
 
 		// Setup of the contract calling into the precompile to tests revert
 		// edge cases and proper handling of snapshots.
-		revertCallerContract, err := testdata.LoadWEVMOS9TestCaller()
+		revertCallerContract, err := testdata.LoadWGURU9TestCaller()
 		Expect(err).ToNot(HaveOccurred(), "failed to load werc20 reverter caller contract")
 
 		txArgs := evmtypes.EvmTxArgs{}

@@ -92,7 +92,7 @@ func PrepareEthTx(
 // Should this not be the case, just pass in zero.
 func CreateEthTx(
 	ctx sdk.Context,
-	exampleApp *exampleapp.EVMD,
+	exampleApp *exampleapp.GURUD,
 	privKey cryptotypes.PrivKey,
 	dest []byte,
 	amount *big.Int,

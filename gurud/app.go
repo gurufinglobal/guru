@@ -112,12 +112,13 @@ import (
 
 	evmante "github.com/gurufinglobal/guru/v2/ante"
 	cosmosevmante "github.com/gurufinglobal/guru/v2/ante/evm"
-	evmosencoding "github.com/gurufinglobal/guru/v2/encoding"
+	guruencoding "github.com/gurufinglobal/guru/v2/encoding"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
 	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
 	"github.com/gurufinglobal/guru/v2/server/swagger"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	cosmosevmutils "github.com/gurufinglobal/guru/v2/utils"
+
 	// guru modules
 	"github.com/gurufinglobal/guru/v2/x/bex"
 	bexkeeper "github.com/gurufinglobal/guru/v2/x/bex/keeper"
@@ -193,13 +194,13 @@ var (
 )
 
 var (
-	_ runtime.AppI            = (*EVMD)(nil)
-	_ servertypes.Application = (*EVMD)(nil)
-	_ ibctesting.TestingApp   = (*EVMD)(nil)
+	_ runtime.AppI            = (*GURUD)(nil)
+	_ servertypes.Application = (*GURUD)(nil)
+	_ ibctesting.TestingApp   = (*GURUD)(nil)
 )
 
-// EVMD extends an ABCI application, but with most of its parameters exported.
-type EVMD struct {
+// GURUD extends an ABCI application, but with most of its parameters exported.
+type GURUD struct {
 	*baseapp.BaseApp
 
 	legacyAmino       *codec.LegacyAmino
@@ -254,7 +255,7 @@ type EVMD struct {
 	configurator module.Configurator
 }
 
-// NewExampleApp returns a reference to an initialized EVMD.
+// NewExampleApp returns a reference to an initialized GURUD.
 func NewExampleApp(
 	logger log.Logger,
 	db dbm.DB,
@@ -264,9 +265,9 @@ func NewExampleApp(
 	evmChainID uint64,
 	evmAppOptions EVMOptionsFn,
 	baseAppOptions ...func(*baseapp.BaseApp),
-) *EVMD {
-	encodingConfig := evmosencoding.MakeConfig(evmChainID)
-	// encodingConfig := evmosencoding.MakeConfigWithBech32Prefix(evmChainID, "cosmos")
+) *GURUD {
+	encodingConfig := guruencoding.MakeConfig(evmChainID)
+	// encodingConfig := guruencoding.MakeConfigWithBech32Prefix(evmChainID, "cosmos")
 
 	appCodec := encodingConfig.Codec
 	legacyAmino := encodingConfig.Amino
@@ -346,7 +347,7 @@ func NewExampleApp(
 		panic("version db not supported in this example chain")
 	}
 
-	app := &EVMD{
+	app := &GURUD{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
@@ -915,7 +916,7 @@ func NewExampleApp(
 	return app
 }
 
-func (app *EVMD) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) {
+func (app *GURUD) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) {
 	options := chainante.HandlerOptions{
 		Cdc:                    app.appCodec,
 		AccountKeeper:          app.AccountKeeper,
@@ -938,7 +939,7 @@ func (app *EVMD) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) {
 	app.SetAnteHandler(chainante.NewAnteHandler(options))
 }
 
-func (app *EVMD) setPostHandler() {
+func (app *GURUD) setPostHandler() {
 	postHandler, err := posthandler.NewPostHandler(
 		posthandler.HandlerOptions{},
 	)
@@ -950,28 +951,28 @@ func (app *EVMD) setPostHandler() {
 }
 
 // Name returns the name of the App
-func (app *EVMD) Name() string { return app.BaseApp.Name() }
+func (app *GURUD) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
-func (app *EVMD) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
+func (app *GURUD) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	return app.ModuleManager.BeginBlock(ctx)
 }
 
 // EndBlocker application updates every end block
-func (app *EVMD) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
+func (app *GURUD) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
 	return app.ModuleManager.EndBlock(ctx)
 }
 
-func (app *EVMD) FinalizeBlock(req *abci.RequestFinalizeBlock) (res *abci.ResponseFinalizeBlock, err error) {
+func (app *GURUD) FinalizeBlock(req *abci.RequestFinalizeBlock) (res *abci.ResponseFinalizeBlock, err error) {
 	return app.BaseApp.FinalizeBlock(req)
 }
 
-func (app *EVMD) Configurator() module.Configurator {
+func (app *GURUD) Configurator() module.Configurator {
 	return app.configurator
 }
 
 // InitChainer application update at chain initialization
-func (app *EVMD) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
+func (app *GURUD) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
 	var genesisState cosmosevmtypes.GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
@@ -984,43 +985,43 @@ func (app *EVMD) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci
 	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
-func (app *EVMD) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+func (app *GURUD) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
 	return app.ModuleManager.PreBlock(ctx)
 }
 
 // LoadHeight loads a particular height
-func (app *EVMD) LoadHeight(height int64) error {
+func (app *GURUD) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
-// LegacyAmino returns EVMD's amino codec.
+// LegacyAmino returns GURUD's amino codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *EVMD) LegacyAmino() *codec.LegacyAmino {
+func (app *GURUD) LegacyAmino() *codec.LegacyAmino {
 	return app.legacyAmino
 }
 
-// AppCodec returns EVMD's app codec.
+// AppCodec returns GURUD's app codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *EVMD) AppCodec() codec.Codec {
+func (app *GURUD) AppCodec() codec.Codec {
 	return app.appCodec
 }
 
-// InterfaceRegistry returns EVMD's InterfaceRegistry
-func (app *EVMD) InterfaceRegistry() types.InterfaceRegistry {
+// InterfaceRegistry returns GURUD's InterfaceRegistry
+func (app *GURUD) InterfaceRegistry() types.InterfaceRegistry {
 	return app.interfaceRegistry
 }
 
-// TxConfig returns EVMD's TxConfig
-func (app *EVMD) TxConfig() client.TxConfig {
+// TxConfig returns GURUD's TxConfig
+func (app *GURUD) TxConfig() client.TxConfig {
 	return app.txConfig
 }
 
 // DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
-func (app *EVMD) DefaultGenesis() map[string]json.RawMessage {
+func (app *GURUD) DefaultGenesis() map[string]json.RawMessage {
 	genesis := app.BasicModuleManager.DefaultGenesis(app.appCodec)
 
 	mintGenState := NewMintGenesisState()
@@ -1030,7 +1031,7 @@ func (app *EVMD) DefaultGenesis() map[string]json.RawMessage {
 	genesis[evmtypes.ModuleName] = app.appCodec.MustMarshalJSON(evmGenState)
 
 	// NOTE: for the example chain implementation we are also adding a default token pair,
-	// which is the base denomination of the chain (i.e. the WEVMOS contract)
+	// which is the base denomination of the chain (i.e. the WGURU contract)
 	erc20GenState := NewErc20GenesisState()
 	genesis[erc20types.ModuleName] = app.appCodec.MustMarshalJSON(erc20GenState)
 
@@ -1040,40 +1041,40 @@ func (app *EVMD) DefaultGenesis() map[string]json.RawMessage {
 // GetKey returns the KVStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *EVMD) GetKey(storeKey string) *storetypes.KVStoreKey {
+func (app *GURUD) GetKey(storeKey string) *storetypes.KVStoreKey {
 	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *EVMD) GetTKey(storeKey string) *storetypes.TransientStoreKey {
+func (app *GURUD) GetTKey(storeKey string) *storetypes.TransientStoreKey {
 	return app.tkeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
 //
 // NOTE: This is solely used for testing purposes.
-func (app *EVMD) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
+func (app *GURUD) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *EVMD) GetSubspace(moduleName string) paramstypes.Subspace {
+func (app *GURUD) GetSubspace(moduleName string) paramstypes.Subspace {
 	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
 	return subspace
 }
 
 // SimulationManager implements the SimulationApp interface
-func (app *EVMD) SimulationManager() *module.SimulationManager {
+func (app *GURUD) SimulationManager() *module.SimulationManager {
 	return app.sm
 }
 
 // RegisterAPIRoutes registers all application module routes with the provided
 // API server.
-func (app *EVMD) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
+func (app *GURUD) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
@@ -1098,12 +1099,12 @@ func (app *EVMD) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfi
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
-func (app *EVMD) RegisterTxService(clientCtx client.Context) {
+func (app *GURUD) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.GRPCQueryRouter(), clientCtx, app.Simulate, app.interfaceRegistry)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
-func (app *EVMD) RegisterTendermintService(clientCtx client.Context) {
+func (app *GURUD) RegisterTendermintService(clientCtx client.Context) {
 	cmtservice.RegisterTendermintService(
 		clientCtx,
 		app.GRPCQueryRouter(),
@@ -1112,7 +1113,7 @@ func (app *EVMD) RegisterTendermintService(clientCtx client.Context) {
 	)
 }
 
-func (app *EVMD) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
+func (app *GURUD) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
 	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg)
 }
 
@@ -1121,27 +1122,27 @@ func (app *EVMD) RegisterNodeService(clientCtx client.Context, cfg config.Config
 //
 
 // GetBaseApp implements the TestingApp interface.
-func (app *EVMD) GetBaseApp() *baseapp.BaseApp {
+func (app *GURUD) GetBaseApp() *baseapp.BaseApp {
 	return app.BaseApp
 }
 
 // GetStakingKeeperSDK implements the TestingApp interface.
-func (app *EVMD) GetStakingKeeperSDK() stakingkeeper.Keeper {
+func (app *GURUD) GetStakingKeeperSDK() stakingkeeper.Keeper {
 	return *app.StakingKeeper
 }
 
 // GetIBCKeeper implements the TestingApp interface.
-func (app *EVMD) GetIBCKeeper() *ibckeeper.Keeper {
+func (app *GURUD) GetIBCKeeper() *ibckeeper.Keeper {
 	return app.IBCKeeper
 }
 
 // GetTxConfig implements the TestingApp interface.
-func (app *EVMD) GetTxConfig() client.TxConfig {
+func (app *GURUD) GetTxConfig() client.TxConfig {
 	return app.txConfig
 }
 
 // RegisterSwaggerAPI provides a custom function which generates swagger route dynamically
-func (app *EVMD) RegisterSwaggerAPI(clientCtx client.Context, rtr *mux.Router, swaggerEnabled bool, grpcGateway *gwruntime.ServeMux) error {
+func (app *GURUD) RegisterSwaggerAPI(clientCtx client.Context, rtr *mux.Router, swaggerEnabled bool, grpcGateway *gwruntime.ServeMux) error {
 	if !swaggerEnabled {
 		return nil
 	}
@@ -1154,7 +1155,7 @@ func (app *EVMD) RegisterSwaggerAPI(clientCtx client.Context, rtr *mux.Router, s
 }
 
 // AutoCliOpts returns the autocli options for the app.
-func (app *EVMD) AutoCliOpts() autocli.AppOptions {
+func (app *GURUD) AutoCliOpts() autocli.AppOptions {
 	modules := make(map[string]appmodule.AppModule, 0)
 	for _, m := range app.ModuleManager.Modules {
 		if moduleWithName, ok := m.(module.HasName); ok {

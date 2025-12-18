@@ -96,7 +96,7 @@ func (suite *KeeperTestSuite) TestGetERC20PrecompileInstance() {
 func (suite *KeeperTestSuite) TestGetNativePrecompiles() {
 	var ctx sdk.Context
 	testAddr := utiltx.GenerateAddress()
-	defaultWEVMOSAddr := common.HexToAddress(testconstants.WEVMOSContractMainnet)
+	defaultWEVMOSAddr := common.HexToAddress(testconstants.WGURUContractMainnet)
 
 	testCases := []struct {
 		name     string
@@ -139,7 +139,7 @@ func (suite *KeeperTestSuite) TestGetNativePrecompiles() {
 func (suite *KeeperTestSuite) TestSetNativePrecompile() {
 	var ctx sdk.Context
 	testAddr := utiltx.GenerateAddress()
-	defaultWEVMOSAddr := common.HexToAddress(testconstants.WEVMOSContractMainnet)
+	defaultWEVMOSAddr := common.HexToAddress(testconstants.WGURUContractMainnet)
 
 	testCases := []struct {
 		name     string
@@ -192,7 +192,7 @@ func (suite *KeeperTestSuite) TestSetNativePrecompile() {
 func (suite *KeeperTestSuite) TestDeleteNativePrecompile() {
 	var ctx sdk.Context
 	testAddr := utiltx.GenerateAddress()
-	defaultWEVMOSAddr := common.HexToAddress(testconstants.WEVMOSContractMainnet)
+	defaultWEVMOSAddr := common.HexToAddress(testconstants.WGURUContractMainnet)
 	unavailableAddr := common.HexToAddress("unavailable")
 
 	testCases := []struct {
@@ -285,7 +285,7 @@ func (suite *KeeperTestSuite) TestDeleteNativePrecompile() {
 func (suite *KeeperTestSuite) TestIsNativePrecompileAvailable() {
 	var ctx sdk.Context
 	testAddr := utiltx.GenerateAddress()
-	defaultWEVMOSAddr := common.HexToAddress(testconstants.WEVMOSContractMainnet)
+	defaultWEVMOSAddr := common.HexToAddress(testconstants.WGURUContractMainnet)
 	unavailableAddr := common.HexToAddress("unavailable")
 
 	testCases := []struct {

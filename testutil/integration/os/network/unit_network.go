@@ -15,7 +15,7 @@ import (
 // makes the App public for easier testing.
 type UnitTestNetwork struct {
 	IntegrationNetwork
-	App *exampleapp.EVMD
+	App *exampleapp.GURUD
 }
 
 var _ Network = (*UnitTestNetwork)(nil)

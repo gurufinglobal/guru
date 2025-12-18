@@ -48,7 +48,7 @@ func init() {
 	config.SetBip44CoinType(cfg)
 }
 
-func setup(withGenesis bool, invCheckPeriod uint, chainID string, evmChainID uint64) (*EVMD, GenesisState) {
+func setup(withGenesis bool, invCheckPeriod uint, chainID string, evmChainID uint64) (*GURUD, GenesisState) {
 	db := dbm.NewMemDB()
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
@@ -63,8 +63,8 @@ func setup(withGenesis bool, invCheckPeriod uint, chainID string, evmChainID uin
 	return app, GenesisState{}
 }
 
-// Setup initializes a new EVMD. A Nop logger is set in EVMD.
-func Setup(t *testing.T, chainID string, evmChainID uint64) *EVMD {
+// Setup initializes a new GURUD. A Nop logger is set in GURUD.
+func Setup(t *testing.T, chainID string, evmChainID uint64) *GURUD {
 	t.Helper()
 
 	privVal := mock.NewPV()
@@ -88,11 +88,11 @@ func Setup(t *testing.T, chainID string, evmChainID uint64) *EVMD {
 	return app
 }
 
-// SetupWithGenesisValSet initializes a new EVMD with a validator set and genesis accounts
+// SetupWithGenesisValSet initializes a new GURUD with a validator set and genesis accounts
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit in the default token of the simapp from first genesis
-// account. A Nop logger is set in EVMD.
-func SetupWithGenesisValSet(t *testing.T, chainID string, evmChainID uint64, valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *EVMD {
+// account. A Nop logger is set in GURUD.
+func SetupWithGenesisValSet(t *testing.T, chainID string, evmChainID uint64, valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *GURUD {
 	t.Helper()
 
 	app, genesisState := setup(true, 5, chainID, evmChainID)
