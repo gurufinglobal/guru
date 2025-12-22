@@ -181,14 +181,14 @@ lint-python:
 	flake8
 
 lint-contracts:
-	solhint contracts/**/*.sol
+	solhint --config .solhint.json 'contracts/**/*.sol' 'precompiles/**/*.sol'
 
 lint-fix:
 	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(golangci_version)
 	@$(golangci_lint_cmd) run --timeout=15m --fix
 
 lint-fix-contracts:
-	solhint --fix contracts/**/*.sol
+	solhint --fix --config .solhint.json 'contracts/**/*.sol' 'precompiles/**/*.sol'
 
 .PHONY: lint lint-fix lint-contracts lint-go lint-python
 
