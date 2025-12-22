@@ -17,6 +17,7 @@ type Keeper struct {
 	storeKey      storetypes.StoreKey
 	authority     string
 	accountKeeper types.AccountKeeper
+	hooks         types.OracleHooks
 }
 
 // NewKeeper creates a new oracle keeper.
@@ -418,4 +419,13 @@ func (k Keeper) deleteReports(ctx sdk.Context, requestID, nonce uint64) {
 	for _, key := range keys {
 		store.Delete(key)
 	}
+}
+
+func (k *Keeper) SetHooks(hooks types.OracleHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set oracle hooks twice")
+	}
+	k.hooks = hooks
+
+	return k
 }

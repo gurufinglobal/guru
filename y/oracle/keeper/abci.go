@@ -26,7 +26,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	currentHeight := uint64(ctx.BlockHeight())
 
 	// 1. Process aggregations
-	k.ProcessOracleDataSetAggregation(ctx)
+	k.ProcessOracleReportAggregation(ctx)
 
 	// 2. Emit scheduled oracle task events
 	k.processScheduledTasks(ctx, currentHeight)

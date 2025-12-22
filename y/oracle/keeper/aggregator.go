@@ -137,9 +137,9 @@ func (k Keeper) tryAggregate(ctx sdk.Context, req types.OracleRequest, nonce, to
 	return &result, true, nil
 }
 
-// ProcessOracleDataSetAggregation scans active requests and aggregates when quorum is met.
+// ProcessOracleReportAggregation scans active requests and aggregates when quorum is met.
 // It is called from EndBlocker to batch emit events.
-func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
+func (k Keeper) ProcessOracleReportAggregation(ctx sdk.Context) {
 	params := k.GetParams(ctx)
 	if !params.Enable {
 		return
@@ -159,8 +159,14 @@ func (k Keeper) ProcessOracleDataSetAggregation(ctx sdk.Context) {
 		}
 
 		nextNonce := req.Nonce + 1
-		_, _, err := k.tryAggregate(ctx, req, nextNonce, totalProviders, params)
-		if err != nil {
+		result, _, err := k.tryAggregate(ctx, req, nextNonce, totalProviders, params)
+		if err == nil {
+			if k.hooks == nil {
+				return false
+			}
+
+			k.hooks.AfterOracleAggregation(ctx, req, *result)
+		} else {
 			k.Logger(ctx).Error("aggregation error", "request_id", req.Id, "error", err)
 		}
 
