@@ -160,9 +160,9 @@ func createBalances(
 	return fundedAccountBalances
 }
 
-// createTestingApp creates an evmos app
+// createTestingApp creates a guru app
 func createTestingApp(chainID string, evmChainID uint64, customBaseAppOptions ...func(*baseapp.BaseApp)) *exampleapp.GURUD {
-	// Create evmos app
+	// Create guru app
 	db := dbm.NewMemDB()
 	logger := log.NewNopLogger()
 	loadLatest := true

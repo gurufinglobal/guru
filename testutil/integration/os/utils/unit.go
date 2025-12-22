@@ -23,11 +23,11 @@ const (
 	TokenToMint = 1e18
 )
 
-// RegisterEvmosERC20Coins uses the UnitNetwork to register the evmos token as an
+// RegisterGuruERC20Coins uses the UnitNetwork to register the guru token as an
 // ERC20 token. The function performs all the required steps for the registration
 // like registering the denom in the transfer keeper and minting the token
 // with the bank. Returns the TokenPair or an error.
-func RegisterEvmosERC20Coins(
+func RegisterGuruERC20Coins(
 	network network.UnitTestNetwork,
 	tokenReceiver sdk.AccAddress,
 ) (erc20types.TokenPair, error) {
@@ -57,7 +57,7 @@ func RegisterEvmosERC20Coins(
 
 	cosmosEVMMetadata, found := network.App.BankKeeper.GetDenomMetaData(network.GetContext(), bondDenom)
 	if !found {
-		return erc20types.TokenPair{}, fmt.Errorf("expected evmos denom metadata")
+		return erc20types.TokenPair{}, fmt.Errorf("expected guru denom metadata")
 	}
 
 	_, err = network.App.Erc20Keeper.RegisterERC20Extension(network.GetContext(), cosmosEVMMetadata.Base)
@@ -68,7 +68,7 @@ func RegisterEvmosERC20Coins(
 	cosmosEVMDenomID := network.App.Erc20Keeper.GetDenomMap(network.GetContext(), bondDenom)
 	tokenPair, ok := network.App.Erc20Keeper.GetTokenPair(network.GetContext(), cosmosEVMDenomID)
 	if !ok {
-		return erc20types.TokenPair{}, fmt.Errorf("expected evmos erc20 token pair")
+		return erc20types.TokenPair{}, fmt.Errorf("expected guru erc20 token pair")
 	}
 
 	return tokenPair, nil

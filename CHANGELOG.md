@@ -112,3 +112,6 @@ This is guru's basic version.
 
 ## Evmos's changelog
 The changelog for evmos can be found [here](https://github.com/evmos/evmos/blob/main/CHANGELOG.md).
+
+## Guru's changelog
+This is the Guru blockchain changelog.

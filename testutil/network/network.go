@@ -103,7 +103,7 @@ type Config struct {
 // DefaultConfig returns a sane default configuration suitable for nearly all
 // testing requirements.
 func DefaultConfig() Config {
-	chainID := "evmos-1"
+	chainID := "guru_631-1"
 	evmChainID := uint64(cmtrand.Int63n(9999999999999) + 1) //nolint:gosec // G115 // won't exceed uint64
 	dir, err := os.MkdirTemp("", "simapp")
 	if err != nil {
@@ -341,7 +341,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 
 		nodeDirName := fmt.Sprintf("node%d", i)
 		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "gurud")
-		clientDir := filepath.Join(network.BaseDir, nodeDirName, "evmoscli")
+		clientDir := filepath.Join(network.BaseDir, nodeDirName, "gurud")
 		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
 
 		err := os.MkdirAll(filepath.Join(nodeDir, "config"), 0o750)

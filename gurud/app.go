@@ -13,8 +13,7 @@ import (
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
 
-	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
-	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
+	_ "github.com/ethereum/go-ethereum/eth/tracers/js" // Force-load tracer engines (Go-Ethereum v1.10.15+ registration).
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -118,8 +117,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/server/swagger"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	cosmosevmutils "github.com/gurufinglobal/guru/v2/utils"
-
-	// guru modules
 	"github.com/gurufinglobal/guru/v2/x/bex"
 	bexkeeper "github.com/gurufinglobal/guru/v2/x/bex/keeper"
 	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
@@ -152,7 +149,7 @@ import (
 )
 
 func init() {
-	// manually update the power reduction by replacing micro (u) -> atto (a) evmos
+	// manually update the power reduction by replacing micro (u) -> atto (a) guru
 	sdk.DefaultPowerReduction = cosmosevmtypes.AttoPowerReduction
 
 	// get the user's home directory

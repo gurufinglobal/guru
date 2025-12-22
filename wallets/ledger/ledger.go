@@ -67,7 +67,7 @@ func (e CosmosEVMSECP256K1) GetPublicKeySECP256K1(hdPath []uint32) ([]byte, erro
 	return pubkeyBz, nil
 }
 
-// GetAddressPubKeySECP256K1 takes in the HD path as well as a "Human Readable Prefix" (HRP, e.g. "evmos")
+// GetAddressPubKeySECP256K1 takes in the HD path as well as a "Human Readable Prefix" (HRP, e.g. "guru")
 // to return the public key bytes in secp256k1 format as well as the account address.
 func (e CosmosEVMSECP256K1) GetAddressPubKeySECP256K1(hdPath []uint32, hrp string) ([]byte, string, error) {
 	if e.PrimaryWallet == nil {
