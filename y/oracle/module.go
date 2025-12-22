@@ -17,6 +17,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/spf13/cobra"
 
+	"github.com/gurufinglobal/guru/v2/y/oracle/client/cli"
 	"github.com/gurufinglobal/guru/v2/y/oracle/keeper"
 	"github.com/gurufinglobal/guru/v2/y/oracle/types"
 )
@@ -73,8 +74,8 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 	}
 }
 
-func (AppModuleBasic) GetTxCmd() *cobra.Command    { return nil }
-func (AppModuleBasic) GetQueryCmd() *cobra.Command { return nil }
+func (AppModuleBasic) GetTxCmd() *cobra.Command    { return cli.GetTxCmd() }
+func (AppModuleBasic) GetQueryCmd() *cobra.Command { return cli.GetQueryCmd() }
 
 // AppModule implements an application module for the oracle module.
 type AppModule struct {

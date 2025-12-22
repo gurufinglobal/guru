@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
-	"path"
 	"strings"
 	"sync"
 	"time"
@@ -30,6 +28,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/oracle/provider"
 	"github.com/gurufinglobal/guru/v2/oracle/submitter"
 	"github.com/gurufinglobal/guru/v2/oracle/types"
+	"github.com/gurufinglobal/guru/v2/oracle/utils"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
 	"github.com/rs/zerolog"
@@ -75,8 +74,6 @@ const (
 	healthCheckInterval = 30 * time.Second
 	healthCheckTimeout  = 5 * time.Second
 	shutdownTimeout     = 10 * time.Second
-	restartBackoffBase  = 1 * time.Second
-	restartBackoffMax   = 32 * time.Second
 )
 
 func New(cfg *config.Config, homeDir string) (*Daemon, error) {
@@ -305,19 +302,19 @@ func (d *Daemon) mainLoop(
 				continue
 			}
 
-			if res.Request.Category == oracletypes.Category_CATEGORY_OPERATION {
-				go func() {
-					feemarketRes, err := feemarketQueryClient.Params(ctx, &feemarkettypes.QueryParamsRequest{})
-					if err != nil {
-						d.logger.Error("get feemarket params", "error", err)
-						return
-					}
+			// if res.Request.Category == oracletypes.Category_CATEGORY_OPERATION {
+			// 	go func() {
+			// 		feemarketRes, err := feemarketQueryClient.Params(ctx, &feemarkettypes.QueryParamsRequest{})
+			// 		if err != nil {
+			// 			d.logger.Error("get feemarket params", "error", err)
+			// 			return
+			// 		}
 
-					gasPrice := feemarketRes.Params.MinGasPrice.Ceil().String() + denom
-					d.setGasPrice(gasPrice)
-					sub.UpdateGasPrice(gasPrice)
-				}()
-			}
+			// 		gasPrice := feemarketRes.Params.MinGasPrice.Ceil().String() + denom
+			// 		d.setGasPrice(gasPrice)
+			// 		sub.UpdateGasPrice(gasPrice)
+			// 	}()
+			// }
 
 			taskCh <- types.OracleTask{
 				Id:       res.Request.Id,
@@ -340,10 +337,8 @@ func (d *Daemon) stopComet() {
 }
 
 func (d *Daemon) healthLoop(ctx context.Context) {
-	// When healthy: check every healthCheckInterval.
-	// When unhealthy: restart with exponential backoff (1,2,4,... up to 32s) and re-check between restarts.
 	nextWait := healthCheckInterval
-	backoff := restartBackoffBase
+	count, reset, inc := utils.TrackFailStreak()
 
 	for {
 		select {
@@ -352,35 +347,32 @@ func (d *Daemon) healthLoop(ctx context.Context) {
 		case <-time.After(nextWait):
 		}
 
-		comet, httpc, endpoint := d.healthTargets()
-		if d.isHealthy(ctx, comet, httpc, endpoint) {
-			// reset backoff on recovery
-			backoff = restartBackoffBase
+		comet := d.healthCometTarget()
+		if d.isCometHealthy(ctx, comet) {
+			reset() // reset fail streak on recovery
 			nextWait = healthCheckInterval
 			continue
 		}
 
-		// Unhealthy: restart attempts indefinitely with exponential backoff.
-		d.logger.Error("health check failed; restarting daemon components", "cooldown", backoff)
-		d.restart(ctx)
-		nextWait = backoff
-		if backoff < restartBackoffMax {
-			backoff *= 2
-			if backoff > restartBackoffMax {
-				backoff = restartBackoffMax
-			}
+		inc() // increment fail streak
+		if count() < 3 {
+			nextWait = 1 << count() * time.Second
+			continue
 		}
+
+		d.logger.Error("comet health check failed repeatedly; restarting daemon components",
+			"failures", count(),
+		)
+		d.restart(ctx)
+		reset()
+		nextWait = healthCheckInterval
 	}
 }
 
-func (d *Daemon) healthTargets() (*comethttp.HTTP, *http.Client, string) {
+func (d *Daemon) healthCometTarget() *comethttp.HTTP {
 	d.healthMu.Lock()
 	defer d.healthMu.Unlock()
-	return d.cometClient, d.providerHTTPClient, d.cfg.Chain.Endpoint
-}
-
-func (d *Daemon) isHealthy(ctx context.Context, comet *comethttp.HTTP, httpc *http.Client, endpoint string) bool {
-	return d.isCometHealthy(ctx, comet) && d.isHTTPHealthy(ctx, httpc, endpoint)
+	return d.cometClient
 }
 
 func (d *Daemon) isCometHealthy(ctx context.Context, comet *comethttp.HTTP) bool {
@@ -391,34 +383,6 @@ func (d *Daemon) isCometHealthy(ctx context.Context, comet *comethttp.HTTP) bool
 	defer cancel()
 	_, err := comet.Status(hctx)
 	return err == nil
-}
-
-func (d *Daemon) isHTTPHealthy(ctx context.Context, httpc *http.Client, endpoint string) bool {
-	if httpc == nil {
-		return false
-	}
-	u, err := url.Parse(endpoint)
-	if err != nil {
-		return false
-	}
-	p := path.Join(u.Path, "health")
-	if !strings.HasPrefix(p, "/") {
-		p = "/" + p
-	}
-	u.Path = p
-
-	hctx, cancel := context.WithTimeout(ctx, healthCheckTimeout)
-	defer cancel()
-	req, err := http.NewRequestWithContext(hctx, http.MethodGet, u.String(), nil)
-	if err != nil {
-		return false
-	}
-	resp, err := httpc.Do(req)
-	if err != nil {
-		return false
-	}
-	defer resp.Body.Close()
-	return resp.StatusCode == http.StatusOK
 }
 
 func (d *Daemon) restart(ctx context.Context) {
