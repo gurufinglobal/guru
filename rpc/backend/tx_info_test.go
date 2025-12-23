@@ -22,7 +22,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/indexer"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
@@ -473,7 +473,7 @@ func (suite *BackendTestSuite) TestGetTransactionByTxIndex() {
 		registerMock func()
 		height       int64
 		index        uint
-		expTxResult  *cosmosevmtypes.TxResult
+		expTxResult  *gurutypes.TxResult
 		expPass      bool
 	}{
 		{
@@ -485,7 +485,7 @@ func (suite *BackendTestSuite) TestGetTransactionByTxIndex() {
 			},
 			0,
 			0,
-			&cosmosevmtypes.TxResult{},
+			&gurutypes.TxResult{},
 			false,
 		},
 	}
@@ -513,7 +513,7 @@ func (suite *BackendTestSuite) TestQueryTendermintTxIndexer() {
 		registerMock func()
 		txGetter     func(*rpctypes.ParsedTxs) *rpctypes.ParsedTx
 		query        string
-		expTxResult  *cosmosevmtypes.TxResult
+		expTxResult  *gurutypes.TxResult
 		expPass      bool
 	}{
 		{
@@ -526,7 +526,7 @@ func (suite *BackendTestSuite) TestQueryTendermintTxIndexer() {
 				return &rpctypes.ParsedTx{}
 			},
 			"",
-			&cosmosevmtypes.TxResult{},
+			&gurutypes.TxResult{},
 			false,
 		},
 	}
@@ -714,7 +714,7 @@ func (suite *BackendTestSuite) TestGetGasUsed() {
 	testCases := []struct {
 		name                     string
 		fixRevertGasRefundHeight int64
-		txResult                 *cosmosevmtypes.TxResult
+		txResult                 *gurutypes.TxResult
 		price                    *big.Int
 		gas                      uint64
 		exp                      uint64
@@ -722,7 +722,7 @@ func (suite *BackendTestSuite) TestGetGasUsed() {
 		{
 			"success txResult",
 			1,
-			&cosmosevmtypes.TxResult{
+			&gurutypes.TxResult{
 				Height:  1,
 				Failed:  false,
 				GasUsed: 53026,
@@ -734,7 +734,7 @@ func (suite *BackendTestSuite) TestGetGasUsed() {
 		{
 			"fail txResult before cap",
 			2,
-			&cosmosevmtypes.TxResult{
+			&gurutypes.TxResult{
 				Height:  1,
 				Failed:  true,
 				GasUsed: 53026,
@@ -746,7 +746,7 @@ func (suite *BackendTestSuite) TestGetGasUsed() {
 		{
 			"fail txResult after cap",
 			2,
-			&cosmosevmtypes.TxResult{
+			&gurutypes.TxResult{
 				Height:  3,
 				Failed:  true,
 				GasUsed: 53026,

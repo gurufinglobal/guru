@@ -27,7 +27,7 @@ func updateBankGenesisStateForChainID(bankGenesisState banktypes.GenesisState) b
 // for the Evm coin depending on the chainID.
 func generateBankGenesisMetadata() banktypes.Metadata {
 	return banktypes.Metadata{
-		Description: "The native EVM, governance and staking token of the Cosmos EVM example chain",
+		Description: "The native EVM, governance and staking token of the Guru example chain",
 		Base:        evmtypes.GetEVMCoinDenom(),
 		DenomUnits: []*banktypes.DenomUnit{
 			{
@@ -43,8 +43,8 @@ func generateBankGenesisMetadata() banktypes.Metadata {
 				Exponent: uint32(evmtypes.GetEVMCoinDecimals()),
 			},
 		},
-		Name:    "Cosmos EVM",
-		Symbol:  "ATOM",
+		Name:    "Guru",
+		Symbol:  "GXN",
 		Display: config.DisplayDenom,
 	}
 }

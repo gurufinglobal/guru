@@ -28,9 +28,9 @@ import (
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
-// QueryClient defines a mocked object that implements the Cosmos EVM GRPC
+// QueryClient defines a mocked object that implements the Guru GRPC
 // QueryClient interface. It allows for performing QueryClient queries without having
-// to run a Cosmos EVM GRPC server.
+// to run a Guru GRPC server.
 //
 // To use a mock method it has to be registered in a given test.
 var _ evmtypes.QueryClient = &mocks.EVMQueryClient{}

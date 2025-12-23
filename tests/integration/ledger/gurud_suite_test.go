@@ -35,7 +35,7 @@ import (
 
 	clientkeys "github.com/gurufinglobal/guru/v2/client/keys"
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
-	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
+	gurukeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/tests/integration/ledger/mocks"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
@@ -64,7 +64,7 @@ func TestLedger(t *testing.T) {
 	suite.Run(t, s)
 
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Evmosd Suite")
+	RunSpecs(t, "Gurud Suite")
 }
 
 func (suite *LedgerTestSuite) SetupTest() {
@@ -83,7 +83,7 @@ func (suite *LedgerTestSuite) SetupTest() {
 	suite.accAddr = sdk.AccAddress(ethAddr.Bytes())
 }
 
-func (suite *LedgerTestSuite) SetupEvmosApp() {
+func (suite *LedgerTestSuite) SetupGuruApp() {
 	consAddress := sdk.ConsAddress(utiltx.GenerateAddress().Bytes())
 
 	// init app
@@ -147,7 +147,7 @@ func (suite *LedgerTestSuite) NewKeyringAndCtxs(krHome string, input io.Reader, 
 	return kr, initClientCtx, ctx
 }
 
-func (suite *LedgerTestSuite) cosmosEVMAddKeyCmd() *cobra.Command {
+func (suite *LedgerTestSuite) guruAddKeyCmd() *cobra.Command {
 	cmd := keys.AddKeyCommand()
 
 	algoFlag := cmd.Flag(flags.FlagKeyType)
@@ -172,12 +172,12 @@ func (suite *LedgerTestSuite) cosmosEVMAddKeyCmd() *cobra.Command {
 
 func (suite *LedgerTestSuite) MockKeyringOption() keyring.Option {
 	return func(options *keyring.Options) {
-		options.SupportedAlgos = cosmosevmkeyring.SupportedAlgorithms
-		options.SupportedAlgosLedger = cosmosevmkeyring.SupportedAlgorithmsLedger
+		options.SupportedAlgos = gurukeyring.SupportedAlgorithms
+		options.SupportedAlgosLedger = gurukeyring.SupportedAlgorithmsLedger
 		options.LedgerDerivation = func() (cosmosledger.SECP256K1, error) { return suite.ledger, nil }
-		options.LedgerCreateKey = cosmosevmkeyring.CreatePubkey
-		options.LedgerAppName = cosmosevmkeyring.AppName
-		options.LedgerSigSkipDERConv = cosmosevmkeyring.SkipDERConversion
+		options.LedgerCreateKey = gurukeyring.CreatePubkey
+		options.LedgerAppName = gurukeyring.AppName
+		options.LedgerSigSkipDERConv = gurukeyring.SkipDERConversion
 	}
 }
 

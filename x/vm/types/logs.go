@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 )
 
 // NewTransactionLogs creates a new NewTransactionLogs instance.
@@ -28,7 +28,7 @@ func NewTransactionLogsFromEth(hash common.Hash, ethlogs []*ethtypes.Log) Transa
 
 // Validate performs a basic validation of a GenesisAccount fields.
 func (tx TransactionLogs) Validate() error {
-	if cosmosevmtypes.IsEmptyHash(tx.Hash) {
+	if gurutypes.IsEmptyHash(tx.Hash) {
 		return fmt.Errorf("hash cannot be the empty %s", tx.Hash)
 	}
 
@@ -53,22 +53,22 @@ func (tx TransactionLogs) EthLogs() []*ethtypes.Log {
 
 // Validate performs a basic validation of an ethereum Log fields.
 func (log *Log) Validate() error {
-	if err := cosmosevmtypes.ValidateAddress(log.Address); err != nil {
+	if err := gurutypes.ValidateAddress(log.Address); err != nil {
 		return fmt.Errorf("invalid log address %w", err)
 	}
-	if cosmosevmtypes.IsEmptyHash(log.BlockHash) {
+	if gurutypes.IsEmptyHash(log.BlockHash) {
 		return fmt.Errorf("block hash cannot be the empty %s", log.BlockHash)
 	}
 	if log.BlockNumber == 0 {
 		return errors.New("block number cannot be zero")
 	}
-	if cosmosevmtypes.IsEmptyHash(log.TxHash) {
+	if gurutypes.IsEmptyHash(log.TxHash) {
 		return fmt.Errorf("tx hash cannot be the empty %s", log.TxHash)
 	}
 	return nil
 }
 
-// ToEthereum returns the Ethereum type Log from a Cosmos EVM proto compatible Log.
+// ToEthereum returns the Ethereum type Log from a Guru proto compatible Log.
 func (log *Log) ToEthereum() *ethtypes.Log {
 	topics := make([]common.Hash, len(log.Topics))
 	for i, topic := range log.Topics {
@@ -97,7 +97,7 @@ func NewLogsFromEth(ethlogs []*ethtypes.Log) []*Log {
 	return logs
 }
 
-// LogsToEthereum casts the Cosmos EVM logs to a slice of Ethereum Logs.
+// LogsToEthereum casts the Guru logs to a slice of Ethereum Logs.
 func LogsToEthereum(logs []*Log) []*ethtypes.Log {
 	var ethLogs []*ethtypes.Log //nolint: prealloc
 	for i := range logs {

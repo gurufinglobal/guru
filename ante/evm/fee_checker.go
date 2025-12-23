@@ -13,7 +13,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
@@ -76,7 +76,7 @@ func FeeChecker(
 	// get the priority tip cap from the extension option.
 	if hasExtOptsTx, ok := feeTx.(authante.HasExtensionOptionsTx); ok {
 		for _, opt := range hasExtOptsTx.GetExtensionOptions() {
-			if extOpt, ok := opt.GetCachedValue().(*cosmosevmtypes.ExtensionOptionDynamicFeeTx); ok {
+			if extOpt, ok := opt.GetCachedValue().(*gurutypes.ExtensionOptionDynamicFeeTx); ok {
 				maxPriorityPrice = extOpt.MaxPriorityPrice
 				if maxPriorityPrice.IsNil() {
 					maxPriorityPrice = sdkmath.LegacyZeroDec()

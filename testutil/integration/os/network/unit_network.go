@@ -20,7 +20,7 @@ type UnitTestNetwork struct {
 
 var _ Network = (*UnitTestNetwork)(nil)
 
-// NewUnitTestNetwork configures and initializes a new Cosmos EVM Network instance with
+// NewUnitTestNetwork configures and initializes a new Guru Network instance with
 // the given configuration options. If no configuration options are provided
 // it uses the default configuration.
 //

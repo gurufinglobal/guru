@@ -247,7 +247,7 @@ func (suite *KeeperIntegrationTestSuite) TestSendEvmTx_RandomValueMultiDecimals(
 	}
 }
 
-func (suite *KeeperIntegrationTestSuite) TestWATOMWrapUnwrap_MultiDecimal() {
+func (suite *KeeperIntegrationTestSuite) TestWGXNWrapUnwrap_MultiDecimal() {
 	tests := []struct {
 		name    string
 		chainID testconstants.ChainID
@@ -273,12 +273,12 @@ func (suite *KeeperIntegrationTestSuite) TestWATOMWrapUnwrap_MultiDecimal() {
 			sender := suite.keyring.GetKey(0)
 			amount := big.NewInt(1)
 
-			// Deploy WATOM contract
-			watomAddr, err := suite.factory.DeployContract(
+			// Deploy WGXN contract
+			wgxnAddr, err := suite.factory.DeployContract(
 				sender.Priv,
 				evmtypes.EvmTxArgs{},
 				factory.ContractDeploymentData{
-					Contract: contracts.WATOMContract,
+					Contract: contracts.WGXNContract,
 				},
 			)
 			suite.Require().NoError(err)
@@ -293,14 +293,14 @@ func (suite *KeeperIntegrationTestSuite) TestWATOMWrapUnwrap_MultiDecimal() {
 			_, err = suite.factory.ExecuteContractCall(
 				sender.Priv,
 				evmtypes.EvmTxArgs{
-					To:        &watomAddr,
+					To:        &wgxnAddr,
 					Amount:    amount,
 					GasLimit:  100_000,
 					GasFeeCap: baseFeeRes.BaseFee.BigInt(),
 					GasTipCap: big.NewInt(1),
 				},
 				factory.CallArgs{
-					ContractABI: contracts.WATOMContract.ABI,
+					ContractABI: contracts.WGXNContract.ABI,
 					MethodName:  "deposit",
 				},
 			)
@@ -308,10 +308,10 @@ func (suite *KeeperIntegrationTestSuite) TestWATOMWrapUnwrap_MultiDecimal() {
 			err = suite.network.NextBlock()
 			suite.Require().NoError(err)
 
-			// Check WATOM balance == wrapAmount
-			bal, err := utils.GetERC20Balance(suite.network, watomAddr, sender.Addr)
+			// Check WGXN balance == wrapAmount
+			bal, err := utils.GetERC20Balance(suite.network, wgxnAddr, sender.Addr)
 			suite.Require().NoError(err)
-			suite.Require().Equal(amount.Cmp(bal), 0, "WATOM balance should match deposited amount (expected: %s, actual: %s)", amount, bal)
+			suite.Require().Equal(amount.Cmp(bal), 0, "WGXN balance should match deposited amount (expected: %s, actual: %s)", amount, bal)
 
 			baseFeeRes, err = suite.network.GetEvmClient().BaseFee(suite.network.GetContext(), &evmtypes.QueryBaseFeeRequest{})
 			suite.Require().NoError(err)
@@ -320,13 +320,13 @@ func (suite *KeeperIntegrationTestSuite) TestWATOMWrapUnwrap_MultiDecimal() {
 			_, err = suite.factory.ExecuteContractCall(
 				sender.Priv,
 				evmtypes.EvmTxArgs{
-					To:        &watomAddr,
+					To:        &wgxnAddr,
 					GasLimit:  100_000,
 					GasFeeCap: baseFeeRes.BaseFee.BigInt(),
 					GasTipCap: big.NewInt(1),
 				},
 				factory.CallArgs{
-					ContractABI: contracts.WATOMContract.ABI,
+					ContractABI: contracts.WGXNContract.ABI,
 					MethodName:  "withdraw",
 					Args:        []interface{}{amount},
 				},
@@ -334,10 +334,10 @@ func (suite *KeeperIntegrationTestSuite) TestWATOMWrapUnwrap_MultiDecimal() {
 			suite.Require().NoError(err)
 			suite.Require().NoError(suite.network.NextBlock())
 
-			// Final WATOM balance should be 0
-			bal, err = utils.GetERC20Balance(suite.network, watomAddr, sender.Addr)
+			// Final WGXN balance should be 0
+			bal, err = utils.GetERC20Balance(suite.network, wgxnAddr, sender.Addr)
 			suite.Require().NoError(err)
-			suite.Require().Equal("0", bal.String(), "WATOM balance should be zero after withdraw")
+			suite.Require().Equal("0", bal.String(), "WGXN balance should be zero after withdraw")
 		})
 	}
 }

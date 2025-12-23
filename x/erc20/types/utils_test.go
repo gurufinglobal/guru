@@ -68,9 +68,9 @@ func TestEqualMetadata(t *testing.T) {
 			banktypes.Metadata{
 				Base:        "agxn",
 				Display:     "atom",
-				Name:        "Cosmos EVM",
-				Symbol:      "ATOM",
-				Description: "EVM, staking and governance denom of Cosmos EVM",
+				Name:        "Guru",
+				Symbol:      "GXN",
+				Description: "EVM, staking and governance denom of Guru",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
 						Denom:    "agxn",
@@ -86,9 +86,9 @@ func TestEqualMetadata(t *testing.T) {
 			banktypes.Metadata{
 				Base:        "agxn",
 				Display:     "atom",
-				Name:        "Cosmos EVM",
-				Symbol:      "ATOM",
-				Description: "EVM, staking and governance denom of Cosmos EVM",
+				Name:        "Guru",
+				Symbol:      "GXN",
+				Description: "EVM, staking and governance denom of Guru",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
 						Denom:    "agxn",
@@ -118,9 +118,9 @@ func TestEqualMetadata(t *testing.T) {
 			banktypes.Metadata{
 				Base:        "agxn",
 				Display:     "atom",
-				Name:        "Cosmos EVM",
-				Symbol:      "ATOM",
-				Description: "EVM, staking and governance denom of Cosmos EVM",
+				Name:        "Guru",
+				Symbol:      "GXN",
+				Description: "EVM, staking and governance denom of Guru",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
 						Denom:    "agxn",
@@ -136,9 +136,9 @@ func TestEqualMetadata(t *testing.T) {
 			banktypes.Metadata{
 				Base:        "agxn",
 				Display:     "atom",
-				Name:        "Cosmos EVM",
-				Symbol:      "ATOM",
-				Description: "EVM, staking and governance denom of Cosmos EVM",
+				Name:        "Guru",
+				Symbol:      "GXN",
+				Description: "EVM, staking and governance denom of Guru",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
 						Denom:    "agxn",
@@ -154,9 +154,9 @@ func TestEqualMetadata(t *testing.T) {
 			banktypes.Metadata{
 				Base:        "agxn",
 				Display:     "atom",
-				Name:        "Cosmos EVM",
-				Symbol:      "ATOM",
-				Description: "EVM, staking and governance denom of Cosmos EVM",
+				Name:        "Guru",
+				Symbol:      "GXN",
+				Description: "EVM, staking and governance denom of Guru",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
 						Denom:    "agxn",
@@ -177,9 +177,9 @@ func TestEqualMetadata(t *testing.T) {
 			banktypes.Metadata{
 				Base:        "agxn",
 				Display:     "atom",
-				Name:        "Cosmos EVM",
-				Symbol:      "ATOM",
-				Description: "EVM, staking and governance denom of Cosmos EVM",
+				Name:        "Guru",
+				Symbol:      "GXN",
+				Description: "EVM, staking and governance denom of Guru",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
 						Denom:    "agxn",

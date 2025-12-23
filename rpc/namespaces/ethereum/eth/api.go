@@ -18,7 +18,7 @@ import (
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
-// The Ethereum API allows applications to connect to an node of any Cosmos EVM based blockchain.
+// The Ethereum API allows applications to connect to an node of any Guru based blockchain.
 // Developers can interact with on-chain EVM data
 // and send different types of transactions to the network by utilizing the
 // endpoints provided by the API. The API follows a JSON-RPC standard. If not
@@ -305,7 +305,7 @@ func (e *PublicAPI) ProtocolVersion() hexutil.Uint {
 	return hexutil.Uint(types.ProtocolVersion)
 }
 
-// GasPrice returns the current gas price based on Cosmos EVM's gas price oracle.
+// GasPrice returns the current gas price based on Guru's gas price oracle.
 func (e *PublicAPI) GasPrice() (*hexutil.Big, error) {
 	e.logger.Debug("eth_gasPrice")
 	return e.backend.GasPrice()

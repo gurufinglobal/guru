@@ -160,9 +160,9 @@ gurud genesis gentx "$VAL_KEY" 1000000000000000000000agxn --gas-prices ${BASEFEE
 ## In case you want to create multiple validators at genesis
 ## 1. Back to `gurud keys add` step, init more keys
 ## 2. Back to `gurud add-genesis-account` step, add balance for those
-## 3. Clone this ~/.gurud home directory into some others, let's say `~/.clonedOsd`
+## 3. Clone this ~/.gurud home directory into some others, let's say `~/.clonedosd`
 ## 4. Run `gentx` in each of those folders
-## 5. Copy the `gentx-*` folders under `~/.clonedOsd/config/gentx/` folders into the original `~/.gurud/config/gentx`
+## 5. Copy the `gentx-*` folders under `~/.clonedosd/config/gentx/` folders into the original `~/.gurud/config/gentx`
 # Collect genesis tx
 gurud genesis collect-gentxs --home "$HOMEDIR"
 # Run this to ensure everything worked and that the genesis file is setup correctly

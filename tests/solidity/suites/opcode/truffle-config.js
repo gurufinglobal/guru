@@ -1,13 +1,11 @@
 module.exports = {
   networks: {
-    // Development network is just left as truffle's default settings
-    cosmos: {
-      host: '127.0.0.1', // Localhost (default: none)
-      port: 8545, // Standard Ethereum port (default: none)
-      network_id: '*', // Any network (default: none)
-      gas: 5000000, // Gas sent with each transaction
-      // Must be >= chain's min_gas_price.
-      gasPrice: 630000000000
+    cosmos: { // Truffle 'development' network uses defaults.
+      host: '127.0.0.1', // JSON-RPC host.
+      port: 8545, // JSON-RPC port.
+      network_id: '*', // Any network id.
+      gas: 5000000, // Gas limit per tx.
+      gasPrice: 630000000000 // Gas price (wei). Must be >= chain min_gas_price.
     }
   },
   compilers: {
