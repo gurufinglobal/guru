@@ -38,6 +38,15 @@ func (g GenesisState) Validate() error {
 		}
 	}
 
+	for _, cat := range g.Categories {
+		if cat == Category_CATEGORY_UNSPECIFIED {
+			return fmt.Errorf("category cannot be unspecified")
+		}
+		if !IsKnownCategory(cat) {
+			return fmt.Errorf("unknown category enum value: %d", int32(cat))
+		}
+	}
+
 	seenIDs := make(map[uint64]struct{})
 	for _, req := range g.Requests {
 		if err := req.ValidateBasic(); err != nil {
@@ -46,13 +55,10 @@ func (g GenesisState) Validate() error {
 		if _, ok := seenIDs[req.Id]; ok {
 			return fmt.Errorf("duplicate request id %d", req.Id)
 		}
-		seenIDs[req.Id] = struct{}{}
-	}
-
-	for _, cat := range g.Categories {
-		if cat == Category_CATEGORY_UNSPECIFIED {
-			return fmt.Errorf("category cannot be unspecified")
+		if !IsKnownCategory(req.Category) {
+			return fmt.Errorf("request %d uses unknown category enum value: %d", req.Id, int32(req.Category))
 		}
+		seenIDs[req.Id] = struct{}{}
 	}
 
 	return nil

@@ -60,6 +60,11 @@ func (k Keeper) RegisterOracleRequest(goCtx context.Context, msg *types.MsgRegis
 		return nil, errorsmod.Wrap(errortypes.ErrUnauthorized, "unauthorized moderator")
 	}
 
+	// Category must be pre-defined/enabled (e.g. from genesis). Do not auto-add categories on request creation.
+	if !k.IsCategoryEnabled(ctx, msg.Category) {
+		return nil, errorsmod.Wrapf(types.ErrInvalidRequest, "category not enabled: %s", msg.Category.String())
+	}
+
 	requestID := k.NextRequestID(ctx)
 	req := types.OracleRequest{
 		Id:       requestID,
@@ -76,7 +81,6 @@ func (k Keeper) RegisterOracleRequest(goCtx context.Context, msg *types.MsgRegis
 
 	k.SetRequest(ctx, req)
 	k.IncrementRequestCount(ctx)
-	k.SetCategory(ctx, msg.Category)
 
 	// 주기 기반 fail-fast: 집계 성공 여부와 관계없이 다음 기간 이벤트를 예약
 	if req.Period > 0 {

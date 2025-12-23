@@ -62,6 +62,24 @@ func TestRegisterOracleRequest_UnauthorizedModerator(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestRegisterOracleRequest_UnknownCategoryRejected(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	moderator := newAddr()
+	k.SetModeratorAddress(ctx, moderator)
+
+	// Use an enum number not defined in proto.
+	msg := &types.MsgRegisterOracleRequest{
+		ModeratorAddress: moderator,
+		Category:         types.Category(99),
+		Symbol:           "BTC",
+		Count:            1,
+		Period:           5,
+	}
+
+	_, err := k.RegisterOracleRequest(sdk.WrapSDKContext(ctx), msg)
+	require.Error(t, err)
+}
+
 func TestUpdateOracleRequest(t *testing.T) {
 	k, ctx := setupKeeper(t)
 	moderator := newAddr()

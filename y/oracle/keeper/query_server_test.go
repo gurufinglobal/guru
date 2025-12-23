@@ -104,6 +104,7 @@ func TestQueryResultsAndWhitelist(t *testing.T) {
 
 	cats, err := k.Categories(sdk.WrapSDKContext(ctx), &types.QueryCategoriesRequest{})
 	require.NoError(t, err)
-	require.Len(t, cats.Categories, 1)
-	require.Equal(t, types.Category_CATEGORY_CRYPTO, cats.Categories[0])
+	// Policy: proto-defined categories are present by default; genesis may add more.
+	// At minimum, CRYPTO must be present.
+	require.Contains(t, cats.Categories, types.Category_CATEGORY_CRYPTO)
 }

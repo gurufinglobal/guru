@@ -27,6 +27,18 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, gs types.GenesisState) {
 	}
 	k.SetModeratorAddress(ctx, moderator)
 
+	// 1) Store proto-defined categories first (baseline, deterministic).
+	for _, cat := range types.ProtoDefinedCategories() {
+		k.SetCategory(ctx, cat)
+	}
+	// 2) Then store genesis categories; ignore duplicates (i.e. do nothing if already present).
+	for _, cat := range gs.Categories {
+		if k.IsCategoryEnabled(ctx, cat) {
+			continue
+		}
+		k.SetCategory(ctx, cat)
+	}
+
 	var maxID uint64
 	for _, req := range gs.Requests {
 		k.SetRequest(ctx, req)
@@ -38,10 +50,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, gs types.GenesisState) {
 
 	for _, addr := range gs.WhitelistAddresses {
 		k.AddWhitelistAddress(ctx, addr)
-	}
-
-	for _, cat := range gs.Categories {
-		k.SetCategory(ctx, cat)
 	}
 }
 

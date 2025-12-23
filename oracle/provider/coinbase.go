@@ -34,8 +34,9 @@ func (p *CoinbaseProvider) ID() string {
 }
 
 func (p *CoinbaseProvider) Categories() []int32 {
-	// 3: currency
-	return []int32{2}
+	// c := oracletypes.Category_value[oracletypes.Category_CATEGORY_OPERATION.String()]
+
+	return []int32{1, 2, 3}
 }
 
 func (p *CoinbaseProvider) Fetch(ctx context.Context, symbol string) (string, error) {

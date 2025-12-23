@@ -4,9 +4,36 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// ProtoDefinedCategories returns all categories defined in the proto enum (excluding UNSPECIFIED),
+// in deterministic order.
+func ProtoDefinedCategories() []Category {
+	keys := make([]int, 0, len(Category_name))
+	for k := range Category_name {
+		keys = append(keys, int(k))
+	}
+	sort.Ints(keys)
+
+	out := make([]Category, 0, len(keys))
+	for _, k := range keys {
+		if k == int(Category_CATEGORY_UNSPECIFIED) {
+			continue
+		}
+		out = append(out, Category(k))
+	}
+	return out
+}
+
+// IsKnownCategory reports whether the provided enum value is defined in the proto enum.
+// NOTE: proto3 technically allows unknown enum numbers on the wire, so we enforce known-ness explicitly.
+func IsKnownCategory(cat Category) bool {
+	_, ok := Category_name[int32(cat)]
+	return ok
+}
 
 // ValidateBasic performs basic validation of the oracle request.
 func (r OracleRequest) ValidateBasic() error {

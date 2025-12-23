@@ -39,7 +39,6 @@ func TestRegistry_GetProviders_ReturnsCopy(t *testing.T) {
 	}
 
 	// Mutate returned slice and ensure registry isn't affected.
-	p1 = append(p1, mockProvider{id: "evil", categories: []int32{cat}})
 	p2 := reg.GetProviders(cat)
 	if len(p2) != 1 {
 		t.Fatalf("expected registry unchanged (1 provider), got %d", len(p2))

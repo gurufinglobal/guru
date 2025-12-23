@@ -320,6 +320,14 @@ func (k Keeper) SetCategory(ctx sdk.Context, cat types.Category) {
 	ctx.KVStore(k.storeKey).Set(types.CategoryKey(cat), []byte{1})
 }
 
+// IsCategoryEnabled returns true if the category was predefined/enabled (typically via genesis).
+func (k Keeper) IsCategoryEnabled(ctx sdk.Context, cat types.Category) bool {
+	if cat == types.Category_CATEGORY_UNSPECIFIED {
+		return false
+	}
+	return ctx.KVStore(k.storeKey).Has(types.CategoryKey(cat))
+}
+
 // GetCategories returns all enabled categories.
 func (k Keeper) GetCategories(ctx sdk.Context) []types.Category {
 	store := ctx.KVStore(k.storeKey)

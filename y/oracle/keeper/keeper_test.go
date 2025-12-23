@@ -47,6 +47,11 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	// preset params to avoid nil defaults
 	require.NoError(t, k.SetParams(ctx, oracletypes.DefaultParams()))
 
+	// Chain behavior: proto-defined categories are always present at init.
+	for _, cat := range oracletypes.ProtoDefinedCategories() {
+		k.SetCategory(ctx, cat)
+	}
+
 	return k, ctx
 }
 

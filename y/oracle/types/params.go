@@ -9,8 +9,8 @@ import (
 var (
 	// DefaultQuorumRatio is the default quorum ratio (2/3).
 	DefaultQuorumRatio = math.LegacyNewDecWithPrec(666666666666666667, 18)
-	// DefaultReportRetentionBlocks is the default number of blocks to retain reports (1000).
-	DefaultReportRetentionBlocks uint64 = 1000
+	// DefaultReportRetentionBlocks is the default number of blocks to retain reports (10).
+	DefaultReportRetentionBlocks uint64 = 10
 )
 
 // DefaultParams returns default oracle parameters.
