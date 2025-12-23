@@ -26,10 +26,10 @@ const (
 	// ExampleEIP155ChainID provides an example EIP-155 chain ID for use in tests
 	ExampleEIP155ChainID = 9001
 
-	// WEVMOSContractMainnet is the WEVMOS contract address for mainnet
-	WEVMOSContractMainnet = "0xD4949664cD82660AaE99bEdc034a0deA8A0bd517"
-	// WEVMOSContractTestnet is the WEVMOS contract address for testnet
-	WEVMOSContractTestnet = "0xcc491f589b45d4a3c679016195b3fb87d7848210"
+	// WGURUContractMainnet is the WGURU contract address for mainnet
+	WGURUContractMainnet = "0xD4949664cD82660AaE99bEdc034a0deA8A0bd517"
+	// WGURUContractTestnet is the WGURU contract address for testnet
+	WGURUContractTestnet = "0xcc491f589b45d4a3c679016195b3fb87d7848210"
 	// ExampleEvmAddress1 is the example EVM address
 	ExampleEvmAddressAlice = "0x1e0DE5DB1a39F99cBc67B00fA3415181b3509e42"
 	// ExampleEvmAddress2 is the example EVM address
@@ -111,7 +111,7 @@ var (
 	// implementation.
 	ExampleTokenPairs = []erc20types.TokenPair{
 		{
-			Erc20Address:  WEVMOSContractMainnet,
+			Erc20Address:  WGURUContractMainnet,
 			Denom:         ExampleAttoDenom,
 			Enabled:       true,
 			ContractOwner: erc20types.OWNER_MODULE,
@@ -122,7 +122,7 @@ var (
 	// implementation.
 	ExampleAllowances = []erc20types.Allowance{
 		{
-			Erc20Address: WEVMOSContractMainnet,
+			Erc20Address: WGURUContractMainnet,
 			Owner:        ExampleEvmAddressAlice,
 			Spender:      ExampleEvmAddressBob,
 			Value:        math.NewInt(100),

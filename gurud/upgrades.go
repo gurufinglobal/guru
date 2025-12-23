@@ -1,5 +1,5 @@
 package gurud
 
-func (app EVMD) RegisterUpgradeHandlers() {
+func (app GURUD) RegisterUpgradeHandlers() {
 	// No upgrades registered yet
 }

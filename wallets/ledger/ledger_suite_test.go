@@ -31,7 +31,7 @@ type LedgerTestSuite struct {
 	suite.Suite
 	txAmino    []byte
 	txProtobuf []byte
-	ledger     ledger.CosmosEVMSECP256K1
+	ledger     ledger.GuruSECP256K1
 	mockWallet *mocks.Wallet
 	hrp        string
 }
@@ -58,7 +58,7 @@ func (suite *LedgerTestSuite) SetupTest() {
 
 	mockWallet := new(mocks.Wallet)
 	suite.mockWallet = mockWallet
-	suite.ledger = ledger.CosmosEVMSECP256K1{Hub: hub, PrimaryWallet: mockWallet}
+	suite.ledger = ledger.GuruSECP256K1{Hub: hub, PrimaryWallet: mockWallet}
 }
 
 func (suite *LedgerTestSuite) newPubKey(pk string) (res cryptoTypes.PubKey) {

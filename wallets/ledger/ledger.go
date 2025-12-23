@@ -21,25 +21,25 @@ import (
 type Secp256k1DerivationFn func() (sdkledger.SECP256K1, error)
 
 func EvmLedgerDerivation() Secp256k1DerivationFn {
-	cosmosEVMSECP256K1 := new(CosmosEVMSECP256K1)
+	guruSECP256K1 := new(GuruSECP256K1)
 
 	return func() (sdkledger.SECP256K1, error) {
-		return cosmosEVMSECP256K1.connectToLedgerApp()
+		return guruSECP256K1.connectToLedgerApp()
 	}
 }
 
-var _ sdkledger.SECP256K1 = &CosmosEVMSECP256K1{}
+var _ sdkledger.SECP256K1 = &GuruSECP256K1{}
 
-// CosmosEVMSECP256K1 defines a wrapper of the Ethereum App to
+// GuruSECP256K1 defines a wrapper of the Ethereum App to
 // for compatibility with Cosmos SDK chains.
-type CosmosEVMSECP256K1 struct {
+type GuruSECP256K1 struct {
 	*usbwallet.Hub
 	PrimaryWallet accounts.Wallet
 }
 
 // Close closes the associated primary wallet. Any requests on
 // the object after a successful Close() should not work
-func (e CosmosEVMSECP256K1) Close() error {
+func (e GuruSECP256K1) Close() error {
 	if e.PrimaryWallet == nil {
 		return errors.New("could not close Ledger: no wallet found")
 	}
@@ -49,7 +49,7 @@ func (e CosmosEVMSECP256K1) Close() error {
 
 // GetPublicKeySECP256K1 returns the public key associated with the address derived from
 // the provided hdPath using the primary wallet
-func (e CosmosEVMSECP256K1) GetPublicKeySECP256K1(hdPath []uint32) ([]byte, error) {
+func (e GuruSECP256K1) GetPublicKeySECP256K1(hdPath []uint32) ([]byte, error) {
 	if e.PrimaryWallet == nil {
 		return nil, errors.New("could not get Ledger public key: no wallet found")
 	}
@@ -67,9 +67,9 @@ func (e CosmosEVMSECP256K1) GetPublicKeySECP256K1(hdPath []uint32) ([]byte, erro
 	return pubkeyBz, nil
 }
 
-// GetAddressPubKeySECP256K1 takes in the HD path as well as a "Human Readable Prefix" (HRP, e.g. "evmos")
+// GetAddressPubKeySECP256K1 takes in the HD path as well as a "Human Readable Prefix" (HRP, e.g. "guru")
 // to return the public key bytes in secp256k1 format as well as the account address.
-func (e CosmosEVMSECP256K1) GetAddressPubKeySECP256K1(hdPath []uint32, hrp string) ([]byte, string, error) {
+func (e GuruSECP256K1) GetAddressPubKeySECP256K1(hdPath []uint32, hrp string) ([]byte, string, error) {
 	if e.PrimaryWallet == nil {
 		return nil, "", errors.New("could not get Ledger address: no wallet found")
 	}
@@ -94,7 +94,7 @@ func (e CosmosEVMSECP256K1) GetAddressPubKeySECP256K1(hdPath []uint32, hrp strin
 
 // SignSECP256K1 returns the signature bytes generated from signing a transaction
 // using the EIP712 signature.
-func (e CosmosEVMSECP256K1) SignSECP256K1(hdPath []uint32, signDocBytes []byte, _ byte) ([]byte, error) {
+func (e GuruSECP256K1) SignSECP256K1(hdPath []uint32, signDocBytes []byte, _ byte) ([]byte, error) {
 	fmt.Printf("Generating payload, please check your Ledger...\n")
 
 	if e.PrimaryWallet == nil {
@@ -132,7 +132,7 @@ func (e CosmosEVMSECP256K1) SignSECP256K1(hdPath []uint32, signDocBytes []byte, 
 
 // displayEIP712Hash is a helper function to display the EIP-712 hashes.
 // This allows users to verify the hashed message they are signing via Ledger.
-func (e CosmosEVMSECP256K1) displayEIP712Hash(typedData apitypes.TypedData) error {
+func (e GuruSECP256K1) displayEIP712Hash(typedData apitypes.TypedData) error {
 	domainSeparator, err := typedData.HashStruct("EIP712Domain", typedData.Domain.Map())
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (e CosmosEVMSECP256K1) displayEIP712Hash(typedData apitypes.TypedData) erro
 }
 
 // connectToLedgerApp connects to the Ledger hardware wallet and initializes the wallet instance.
-func (e *CosmosEVMSECP256K1) connectToLedgerApp() (sdkledger.SECP256K1, error) {
+func (e *GuruSECP256K1) connectToLedgerApp() (sdkledger.SECP256K1, error) {
 	// Instantiate new Ledger object
 	ledger, err := usbwallet.NewLedgerHub()
 	if err != nil {

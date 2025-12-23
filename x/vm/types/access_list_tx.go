@@ -141,7 +141,7 @@ func (tx *AccessListTx) GetTo() *common.Address {
 }
 
 // AsEthereumData returns an AccessListTx transaction tx from the proto-formatted
-// TxData defined on the Cosmos EVM.
+// TxData defined on the Guru.
 func (tx *AccessListTx) AsEthereumData() ethtypes.TxData {
 	v, r, s := tx.GetRawSignatureValues()
 	return &ethtypes.AccessListTx{

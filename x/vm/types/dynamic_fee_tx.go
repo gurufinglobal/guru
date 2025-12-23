@@ -153,7 +153,7 @@ func (tx *DynamicFeeTx) GetTo() *common.Address {
 }
 
 // AsEthereumData returns an DynamicFeeTx transaction tx from the proto-formatted
-// TxData defined on the Cosmos EVM.
+// TxData defined on the Guru.
 func (tx *DynamicFeeTx) AsEthereumData() ethtypes.TxData {
 	v, r, s := tx.GetRawSignatureValues()
 	return &ethtypes.DynamicFeeTx{

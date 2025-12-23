@@ -45,13 +45,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
-	cosmosevmcmd "github.com/gurufinglobal/guru/v2/client"
+	gurucmd "github.com/gurufinglobal/guru/v2/client"
 	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
+	gurukeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
 	"github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/gurud/testutil"
-	cosmosevmserver "github.com/gurufinglobal/guru/v2/server"
-	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
+	guruserver "github.com/gurufinglobal/guru/v2/server"
+	guruserverconfig "github.com/gurufinglobal/guru/v2/server/config"
 	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
 )
 
@@ -67,7 +67,7 @@ func NewRootCmd() *cobra.Command {
 		nil,
 		true,
 		simtestutil.EmptyAppOptions{},
-		cosmosevmserverconfig.DefaultEVMChainID,
+		guruserverconfig.DefaultEVMChainID,
 		testutil.NoOpEvmAppOptions,
 	)
 
@@ -89,7 +89,7 @@ func NewRootCmd() *cobra.Command {
 		WithHomeDir(gurud.DefaultNodeHome).
 		WithViper(""). // In simapp, we don't use any prefix for env variables.
 		// Cosmos EVM specific setup
-		WithKeyringOptions(cosmosevmkeyring.Option()).
+		WithKeyringOptions(gurukeyring.Option()).
 		WithLedgerHasProtobuf(true)
 
 	rootCmd := &cobra.Command{
@@ -154,7 +154,7 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	if initClientCtx.ChainID != "" {
-		if err := gurud.EvmAppOptions(cosmosevmserverconfig.DefaultEVMChainID); err != nil {
+		if err := gurud.EvmAppOptions(guruserverconfig.DefaultEVMChainID); err != nil {
 			panic(err)
 		}
 	}
@@ -180,9 +180,9 @@ func InitAppConfig(denom string, evmChainID uint64) (string, interface{}) {
 	type CustomAppConfig struct {
 		serverconfig.Config
 
-		EVM     cosmosevmserverconfig.EVMConfig
-		JSONRPC cosmosevmserverconfig.JSONRPCConfig
-		TLS     cosmosevmserverconfig.TLSConfig
+		EVM     guruserverconfig.EVMConfig
+		JSONRPC guruserverconfig.JSONRPCConfig
+		TLS     guruserverconfig.TLSConfig
 	}
 
 	// Optionally allow the chain developer to overwrite the SDK's default
@@ -202,23 +202,23 @@ func InitAppConfig(denom string, evmChainID uint64) (string, interface{}) {
 	// In this example application, we set the min gas prices to 0.
 	srvCfg.MinGasPrices = "0" + denom
 
-	evmCfg := cosmosevmserverconfig.DefaultEVMConfig()
+	evmCfg := guruserverconfig.DefaultEVMConfig()
 	evmCfg.EVMChainID = evmChainID
 
 	customAppConfig := CustomAppConfig{
 		Config:  *srvCfg,
 		EVM:     *evmCfg,
-		JSONRPC: *cosmosevmserverconfig.DefaultJSONRPCConfig(),
-		TLS:     *cosmosevmserverconfig.DefaultTLSConfig(),
+		JSONRPC: *guruserverconfig.DefaultJSONRPCConfig(),
+		TLS:     *guruserverconfig.DefaultTLSConfig(),
 	}
 
 	customAppTemplate := serverconfig.DefaultConfigTemplate +
-		cosmosevmserverconfig.DefaultEVMConfigTemplate
+		guruserverconfig.DefaultEVMConfigTemplate
 
 	return customAppTemplate, customAppConfig
 }
 
-func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
+func initRootCmd(rootCmd *cobra.Command, osApp *gurud.GURUD) {
 	cfg := sdk.GetConfig()
 	cfg.Seal()
 
@@ -266,17 +266,17 @@ func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 		snapshot.Cmd(newApp),
 	)
 
-	// add Cosmos EVM' flavored TM commands to start server, etc.
-	cosmosevmserver.AddCommands(
+	// add Guru flavored TM commands to start server, etc.
+	guruserver.AddCommands(
 		rootCmd,
-		cosmosevmserver.NewDefaultStartOptions(newApp, gurud.DefaultNodeHome),
+		guruserver.NewDefaultStartOptions(newApp, gurud.DefaultNodeHome),
 		appExport,
 		addModuleInitFlags,
 	)
 
 	// add Cosmos EVM key commands
 	rootCmd.AddCommand(
-		cosmosevmcmd.KeyCommands(gurud.DefaultNodeHome, true),
+		gurucmd.KeyCommands(gurud.DefaultNodeHome, true),
 	)
 
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
@@ -425,7 +425,7 @@ func appExport(
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
-	var exampleApp *gurud.EVMD
+	var exampleApp *gurud.GURUD
 
 	// this check is necessary as we use the flag in x/upgrade.
 	// we can exit more gracefully by checking the flag here.

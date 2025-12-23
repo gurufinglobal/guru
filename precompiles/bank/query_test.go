@@ -11,12 +11,12 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/precompiles/bank"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	cosmosevmutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	guruutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 )
 
 func (s *PrecompileTestSuite) TestBalances() {
 	var ctx sdk.Context
-	// setup test in order to have s.precompile, s.cosmosEVMAddr and s.xmplAddr defined
+	// setup test in order to have s.precompile, s.guruAddr and s.xmplAddr defined
 	s.SetupTest()
 	method := s.precompile.Methods[bank.BalancesMethod]
 
@@ -25,7 +25,7 @@ func (s *PrecompileTestSuite) TestBalances() {
 		malleate    func() []interface{}
 		expPass     bool
 		errContains string
-		expBalances func(cosmosEVMAddr, xmplAddr common.Address) []bank.Balance
+		expBalances func(guruAddr, xmplAddr common.Address) []bank.Balance
 	}{
 		{
 			"fail - invalid number of arguments",
@@ -53,7 +53,7 @@ func (s *PrecompileTestSuite) TestBalances() {
 			"pass - empty balances for new account",
 			func() []interface{} {
 				return []interface{}{
-					cosmosevmutiltx.GenerateAddress(),
+					guruutiltx.GenerateAddress(),
 				}
 			},
 			true,
@@ -69,10 +69,10 @@ func (s *PrecompileTestSuite) TestBalances() {
 			},
 			true,
 			"",
-			func(cosmosEVMAddr, xmplAddr common.Address) []bank.Balance {
+			func(guruAddr, xmplAddr common.Address) []bank.Balance {
 				return []bank.Balance{
 					{
-						ContractAddress: cosmosEVMAddr,
+						ContractAddress: guruAddr,
 						Amount:          network.PrefundedAccountInitialBalance.BigInt(),
 					},
 					{
@@ -92,9 +92,9 @@ func (s *PrecompileTestSuite) TestBalances() {
 			},
 			true,
 			"",
-			func(cosmosEVMAddr, xmplAddr common.Address) []bank.Balance {
+			func(guruAddr, xmplAddr common.Address) []bank.Balance {
 				return []bank.Balance{{
-					ContractAddress: cosmosEVMAddr,
+					ContractAddress: guruAddr,
 					Amount:          network.PrefundedAccountInitialBalance.BigInt(),
 				}, {
 					ContractAddress: xmplAddr,
@@ -120,7 +120,7 @@ func (s *PrecompileTestSuite) TestBalances() {
 				var balances []bank.Balance
 				err = s.precompile.UnpackIntoInterface(&balances, method.Name, bz)
 				s.Require().NoError(err)
-				s.Require().Equal(tc.expBalances(s.cosmosEVMAddr, s.xmplAddr), balances)
+				s.Require().Equal(tc.expBalances(s.guruAddr, s.xmplAddr), balances)
 			} else {
 				s.Require().Contains(err.Error(), tc.errContains)
 			}
@@ -130,29 +130,29 @@ func (s *PrecompileTestSuite) TestBalances() {
 
 func (s *PrecompileTestSuite) TestTotalSupply() {
 	var ctx sdk.Context
-	// setup test in order to have s.precompile, s.cosmosEVMAddr and s.xmplAddr defined
+	// setup test in order to have s.precompile, s.guruAddr and s.xmplAddr defined
 	s.SetupTest()
 	method := s.precompile.Methods[bank.TotalSupplyMethod]
 
 	totSupplRes, err := s.grpcHandler.GetTotalSupply()
 	s.Require().NoError(err)
-	cosmosEVMTotalSupply := totSupplRes.Supply.AmountOf(s.bondDenom)
+	guruTotalSupply := totSupplRes.Supply.AmountOf(s.bondDenom)
 	xmplTotalSupply := totSupplRes.Supply.AmountOf(s.tokenDenom)
 
 	testcases := []struct {
 		name      string
 		malleate  func()
-		expSupply func(cosmosEVMAddr, xmplAddr common.Address) []bank.Balance
+		expSupply func(guruAddr, xmplAddr common.Address) []bank.Balance
 	}{
 		{
 			"pass - ATOM and XMPL total supply",
 			func() {
 				ctx = s.mintAndSendXMPLCoin(ctx, s.keyring.GetAccAddr(0), math.NewInt(1e18))
 			},
-			func(cosmosEVMAddr, xmplAddr common.Address) []bank.Balance {
+			func(guruAddr, xmplAddr common.Address) []bank.Balance {
 				return []bank.Balance{{
-					ContractAddress: cosmosEVMAddr,
-					Amount:          cosmosEVMTotalSupply.BigInt(),
+					ContractAddress: guruAddr,
+					Amount:          guruTotalSupply.BigInt(),
 				}, {
 					ContractAddress: xmplAddr,
 					Amount:          xmplTotalSupply.Add(math.NewInt(1e18)).BigInt(),
@@ -176,19 +176,19 @@ func (s *PrecompileTestSuite) TestTotalSupply() {
 			var balances []bank.Balance
 			err = s.precompile.UnpackIntoInterface(&balances, method.Name, bz)
 			s.Require().NoError(err)
-			s.Require().Equal(tc.expSupply(s.cosmosEVMAddr, s.xmplAddr), balances)
+			s.Require().Equal(tc.expSupply(s.guruAddr, s.xmplAddr), balances)
 		})
 	}
 }
 
 func (s *PrecompileTestSuite) TestSupplyOf() {
-	// setup test in order to have s.precompile, s.cosmosEVMAddr and s.xmplAddr defined
+	// setup test in order to have s.precompile, s.guruAddr and s.xmplAddr defined
 	s.SetupTest()
 	method := s.precompile.Methods[bank.SupplyOfMethod]
 
 	totSupplRes, err := s.grpcHandler.GetTotalSupply()
 	s.Require().NoError(err)
-	cosmosEVMTotalSupply := totSupplRes.Supply.AmountOf(s.bondDenom)
+	guruTotalSupply := totSupplRes.Supply.AmountOf(s.bondDenom)
 	xmplTotalSupply := totSupplRes.Supply.AmountOf(s.tokenDenom)
 
 	testcases := []struct {
@@ -224,7 +224,7 @@ func (s *PrecompileTestSuite) TestSupplyOf() {
 			"pass - erc20 not registered return 0 supply",
 			func() []interface{} {
 				return []interface{}{
-					cosmosevmutiltx.GenerateAddress(),
+					guruutiltx.GenerateAddress(),
 				}
 			},
 			false,
@@ -247,12 +247,12 @@ func (s *PrecompileTestSuite) TestSupplyOf() {
 			"pass - ATOM total supply",
 			func() []interface{} {
 				return []interface{}{
-					s.cosmosEVMAddr,
+					s.guruAddr,
 				}
 			},
 			false,
 			"",
-			cosmosEVMTotalSupply.BigInt(),
+			guruTotalSupply.BigInt(),
 		},
 	}
 

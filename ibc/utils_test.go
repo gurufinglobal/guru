@@ -13,7 +13,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cosmosevmibc "github.com/gurufinglobal/guru/v2/ibc"
+	guruibc "github.com/gurufinglobal/guru/v2/ibc"
 	precompilestestutil "github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 )
@@ -61,10 +61,10 @@ func TestGetTransferSenderRecipient(t *testing.T) {
 			expError:     true,
 		},
 		{
-			name: "valid - cosmos sender, evmos recipient",
+			name: "valid - cosmos sender, guru recipient",
 			data: transfertypes.FungibleTokenPacketData{
 				Sender:   "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
-				Receiver: "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
+				Receiver: "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
 				Amount:   "123456",
 			},
 			expSender:    "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
@@ -72,9 +72,9 @@ func TestGetTransferSenderRecipient(t *testing.T) {
 			expError:     false,
 		},
 		{
-			name: "valid - evmos sender, cosmos recipient",
+			name: "valid - guru sender, cosmos recipient",
 			data: transfertypes.FungibleTokenPacketData{
-				Sender:   "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
+				Sender:   "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
 				Receiver: "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
 				Amount:   "123456",
 			},
@@ -83,10 +83,10 @@ func TestGetTransferSenderRecipient(t *testing.T) {
 			expError:     false,
 		},
 		{
-			name: "valid - osmosis sender, evmos recipient",
+			name: "valid - osmosis sender, guru recipient",
 			data: transfertypes.FungibleTokenPacketData{
 				Sender:   "osmo1qql8ag4cluz6r4dz28p3w00dnc9w8ueuhnecd2",
-				Receiver: "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
+				Receiver: "guru1x2w87cvt5mqjncav4lxy8yfreynn273xf0qyl6",
 				Amount:   "123456",
 			},
 			expSender:    "guru1qql8ag4cluz6r4dz28p3w00dnc9w8ueu8j2n2x",
@@ -96,7 +96,7 @@ func TestGetTransferSenderRecipient(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		sender, recipient, _, _, err := cosmosevmibc.GetTransferSenderRecipient(tc.data)
+		sender, recipient, _, _, err := guruibc.GetTransferSenderRecipient(tc.data)
 		if tc.expError {
 			require.Error(t, err, tc.name)
 		} else {
@@ -171,7 +171,7 @@ func TestGetTransferAmount(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		amt, err := cosmosevmibc.GetTransferAmount(tc.packet)
+		amt, err := guruibc.GetTransferAmount(tc.packet)
 		if tc.expError {
 			require.Error(t, err, tc.name)
 		} else {
@@ -291,7 +291,7 @@ func TestGetReceivedCoin(t *testing.T) {
 				Denom:  transfertypes.ExtractDenomFromPath(tc.rawDenom()),
 				Amount: tc.rawAmount,
 			}
-			coin := cosmosevmibc.GetReceivedCoin(packet, token)
+			coin := guruibc.GetReceivedCoin(packet, token)
 			require.Equal(t, tc.expCoin(), coin)
 		})
 	}
@@ -339,7 +339,7 @@ func TestGetSentCoin(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		coin := cosmosevmibc.GetSentCoin(tc.rawDenom, tc.rawAmount)
+		coin := guruibc.GetSentCoin(tc.rawDenom, tc.rawAmount)
 		require.Equal(t, tc.expCoin, coin)
 	}
 }
@@ -361,10 +361,10 @@ func TestDeriveDecimalsFromDenom(t *testing.T) {
 		},
 		{
 			name:      "fail: invalid prefix",
-			baseDenom: "nevmos",
+			baseDenom: "nguru",
 			expDec:    0,
 			expFail:   true,
-			expErrMsg: "Should be either micro ('u[...]') or atto ('a[...]'); got: \"nevmos\"",
+			expErrMsg: "Should be either micro ('u[...]') or atto ('a[...]'); got: \"nguru\"",
 		},
 		{
 			name:      "success: micro 'u' prefix",
@@ -383,7 +383,7 @@ func TestDeriveDecimalsFromDenom(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		dec, err := cosmosevmibc.DeriveDecimalsFromDenom(tc.baseDenom)
+		dec, err := guruibc.DeriveDecimalsFromDenom(tc.baseDenom)
 		if tc.expFail {
 			require.Error(t, err, tc.expErrMsg)
 			require.Contains(t, err.Error(), tc.expErrMsg)

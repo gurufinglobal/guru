@@ -28,6 +28,6 @@ const (
 	// TestChainID2 is test chain IDs for IBC E2E test
 	TestChainID2 = 9006
 
-	// WEVMOSContractMainnet is the WEVMOS contract address for mainnet
-	WEVMOSContractMainnet = "0xD4949664cD82660AaE99bEdc034a0deA8A0bd517"
+	// WGURUContractMainnet is the WGURU contract address for mainnet
+	WGURUContractMainnet = "0xD4949664cD82660AaE99bEdc034a0deA8A0bd517"
 )

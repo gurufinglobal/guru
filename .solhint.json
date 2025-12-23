@@ -1,3 +1,17 @@
 {
-  "extends": "solhint:default"
+  "extends": "solhint:recommended",
+  "excludedFiles": [
+    "**/node_modules/**",
+    "**/testdata/**",
+    "tests/solidity/**",
+    "precompiles/testutil/**",
+    "contracts/solidity/precompiles/testutil/**",
+    "gurud/eips/testdata/**",
+    "contracts/solidity/evmd/eips/testdata/**"
+  ],
+  "rules": {
+    "compiler-version": ["error", ">=0.8.0"],
+    "func-visibility": ["warn", { "ignoreConstructors": true }],
+    "import-path-check": "off"
+  }
 }

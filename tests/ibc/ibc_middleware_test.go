@@ -194,7 +194,7 @@ func (suite *MiddlewareTestSuite) TestOnRecvPacket() {
 
 				voucherDenom := testutil.GetVoucherDenomFromPacketData(data, packet.GetDestPort(), packet.GetDestChannel())
 
-				evmApp := suite.evmChainA.App.(*gurud.EVMD)
+				evmApp := suite.evmChainA.App.(*gurud.GURUD)
 				voucherCoin := evmApp.BankKeeper.GetBalance(ctxA, receiver, voucherDenom)
 				suite.Require().Equal(sendAmt.String(), voucherCoin.Amount.String())
 
@@ -226,7 +226,7 @@ func (suite *MiddlewareTestSuite) TestOnRecvPacketNativeErc20() {
 	nativeErc20 := SetupNativeErc20(suite.T(), suite.evmChainA)
 
 	evmCtx := suite.evmChainA.GetContext()
-	evmApp := suite.evmChainA.App.(*gurud.EVMD)
+	evmApp := suite.evmChainA.App.(*gurud.GURUD)
 
 	// Scenario: Native ERC20 token transfer from evmChainA to chainB
 	timeoutHeight := clienttypes.NewHeight(1, 110)
@@ -403,7 +403,7 @@ func (suite *MiddlewareTestSuite) TestOnAcknowledgementPacket() {
 			suite.SetupTest()
 
 			ctxA := suite.evmChainA.GetContext()
-			evmApp := suite.evmChainA.App.(*gurud.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.GURUD)
 
 			bondDenom, err := evmApp.StakingKeeper.BondDenom(ctxA)
 			suite.Require().NoError(err)
@@ -545,7 +545,7 @@ func (suite *MiddlewareTestSuite) TestOnAcknowledgementPacketNativeErc20() {
 			nativeErc20 := SetupNativeErc20(suite.T(), suite.evmChainA)
 
 			evmCtx := suite.evmChainA.GetContext()
-			evmApp := suite.evmChainA.App.(*gurud.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.GURUD)
 
 			timeoutHeight := clienttypes.NewHeight(1, 110)
 			path := suite.pathAToB
@@ -674,7 +674,7 @@ func (suite *MiddlewareTestSuite) TestOnTimeoutPacket() {
 			suite.SetupTest()
 
 			ctxA := suite.evmChainA.GetContext()
-			evmApp := suite.evmChainA.App.(*gurud.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.GURUD)
 			bondDenom, err := evmApp.StakingKeeper.BondDenom(ctxA)
 			suite.Require().NoError(err)
 
@@ -794,7 +794,7 @@ func (suite *MiddlewareTestSuite) TestOnTimeoutPacketNativeErc20() {
 			nativeErc20 := SetupNativeErc20(suite.T(), suite.evmChainA)
 
 			evmCtx := suite.evmChainA.GetContext()
-			evmApp := suite.evmChainA.App.(*gurud.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.GURUD)
 
 			timeoutHeight := clienttypes.NewHeight(1, 110)
 			path := suite.pathAToB

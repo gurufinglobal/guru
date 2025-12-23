@@ -58,7 +58,7 @@ func TestPrecompileIntegrationTestSuite(t *testing.T) {
 // Integration tests
 // -------------------------------------------------------------------------------------------------
 
-var _ = DescribeTableSubtree("a user interact with the WEVMOS precompiled contract", func(chainId testconstants.ChainID) {
+var _ = DescribeTableSubtree("a user interact with the WGURU precompiled contract", func(chainId testconstants.ChainID) {
 	var (
 		is                                         *PrecompileIntegrationTestSuite
 		passCheck, failCheck                       testutil.LogCheckArgs
@@ -112,7 +112,7 @@ var _ = DescribeTableSubtree("a user interact with the WEVMOS precompiled contra
 		is.keyring = keyring
 
 		is.wrappedCoinDenom = evmtypes.GetEVMCoinDenom()
-		is.precompileAddrHex = network.GetWEVMOSContractHex(testconstants.ChainID{
+		is.precompileAddrHex = network.GetWGURUContractHex(testconstants.ChainID{
 			ChainID:    is.network.GetChainID(),
 			EVMChainID: is.network.GetEIP155ChainID().Uint64(),
 		})
@@ -125,7 +125,7 @@ var _ = DescribeTableSubtree("a user interact with the WEVMOS precompiled contra
 		available := is.network.App.Erc20Keeper.IsNativePrecompileAvailable(is.network.GetContext(), common.HexToAddress(is.precompileAddrHex))
 		Expect(available).To(
 			BeTrue(),
-			"expected wevmos to be in the native precompiles",
+			"expected wguru to be in the native precompiles",
 		)
 		_, found := is.network.App.BankKeeper.GetDenomMetaData(ctx, evmtypes.GetEVMCoinDenom())
 		Expect(found).To(BeTrue(), "expected native token metadata to be registered")
@@ -133,7 +133,7 @@ var _ = DescribeTableSubtree("a user interact with the WEVMOS precompiled contra
 		// Check that WEVMOS is registered in the token pairs map.
 		tokenPairID := is.network.App.Erc20Keeper.GetTokenPairID(ctx, is.wrappedCoinDenom)
 		tokenPair, found := is.network.App.Erc20Keeper.GetTokenPair(ctx, tokenPairID)
-		Expect(found).To(BeTrue(), "expected wevmos precompile to be registered in the tokens map")
+		Expect(found).To(BeTrue(), "expected wguru precompile to be registered in the tokens map")
 		Expect(tokenPair.Erc20Address).To(Equal(is.precompileAddrHex))
 
 		precompileAddr := common.HexToAddress(is.precompileAddrHex)
@@ -153,7 +153,7 @@ var _ = DescribeTableSubtree("a user interact with the WEVMOS precompiled contra
 
 		// Setup of the contract calling into the precompile to tests revert
 		// edge cases and proper handling of snapshots.
-		revertCallerContract, err := testdata.LoadWEVMOS9TestCaller()
+		revertCallerContract, err := testdata.LoadWGURU9TestCaller()
 		Expect(err).ToNot(HaveOccurred(), "failed to load werc20 reverter caller contract")
 
 		txArgs := evmtypes.EvmTxArgs{}
@@ -584,7 +584,7 @@ var _ = DescribeTableSubtree("a user interact with the WEVMOS precompiled contra
 				var name string
 				err = is.precompile.UnpackIntoInterface(&name, erc20.NameMethod, ethRes.Ret)
 				Expect(err).ToNot(HaveOccurred(), "failed to unpack result")
-				Expect(name).To(ContainSubstring("Cosmos EVM"), "expected different name")
+				Expect(name).To(ContainSubstring("Guru"), "expected different name")
 			})
 
 			It("should return the correct symbol", func() {
@@ -596,7 +596,7 @@ var _ = DescribeTableSubtree("a user interact with the WEVMOS precompiled contra
 				var symbol string
 				err = is.precompile.UnpackIntoInterface(&symbol, erc20.SymbolMethod, ethRes.Ret)
 				Expect(err).ToNot(HaveOccurred(), "failed to unpack result")
-				Expect(symbol).To(ContainSubstring("ATOM"), "expected different symbol")
+				Expect(symbol).To(ContainSubstring("GXN"), "expected different symbol")
 			})
 
 			It("should return the decimals", func() {

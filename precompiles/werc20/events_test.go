@@ -52,7 +52,7 @@ func (s *PrecompileUnitTestSuite) SetupTest(chainID testconstants.ChainID) {
 	s.grpcHandler = grpcHandler
 	s.keyring = keyring
 
-	s.precompileAddrHex = network.GetWEVMOSContractHex(chainID)
+	s.precompileAddrHex = network.GetWGURUContractHex(chainID)
 
 	ctx := integrationNetwork.GetContext()
 

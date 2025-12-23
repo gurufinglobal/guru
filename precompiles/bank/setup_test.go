@@ -26,8 +26,8 @@ var s *PrecompileTestSuite
 type PrecompileTestSuite struct {
 	suite.Suite
 
-	bondDenom, tokenDenom   string
-	cosmosEVMAddr, xmplAddr common.Address
+	bondDenom, tokenDenom string
+	guruAddr, xmplAddr    common.Address
 
 	// tokenDenom is the specific token denomination used in testing the ERC20 precompile.
 	// This denomination is used to instantiate the precompile.
@@ -72,9 +72,9 @@ func (s *PrecompileTestSuite) SetupTest() sdk.Context {
 	tokenPairID := s.network.App.Erc20Keeper.GetTokenPairID(s.network.GetContext(), s.bondDenom)
 	tokenPair, found := s.network.App.Erc20Keeper.GetTokenPair(s.network.GetContext(), tokenPairID)
 	s.Require().True(found)
-	s.cosmosEVMAddr = common.HexToAddress(tokenPair.Erc20Address)
+	s.guruAddr = common.HexToAddress(tokenPair.Erc20Address)
 
-	s.cosmosEVMAddr = tokenPair.GetERC20Contract()
+	s.guruAddr = tokenPair.GetERC20Contract()
 
 	// Mint and register a second coin for testing purposes
 	err = s.network.App.BankKeeper.MintCoins(s.network.GetContext(), minttypes.ModuleName, sdk.Coins{{Denom: "xmpl", Amount: math.NewInt(1e18)}})

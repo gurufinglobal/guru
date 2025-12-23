@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 )
 
@@ -48,7 +48,7 @@ func NewConvertERC20Cmd() *cobra.Command {
 			}
 
 			contract := args[0]
-			if err := cosmosevmtypes.ValidateAddress(contract); err != nil {
+			if err := gurutypes.ValidateAddress(contract); err != nil {
 				return fmt.Errorf("invalid ERC20 contract address %w", err)
 			}
 
@@ -104,7 +104,7 @@ func NewConvertCoinCmd() *cobra.Command {
 
 			if len(args) == 2 {
 				receiver = args[1]
-				if err := cosmosevmtypes.ValidateAddress(receiver); err != nil {
+				if err := gurutypes.ValidateAddress(receiver); err != nil {
 					return fmt.Errorf("invalid receiver hex address %w", err)
 				}
 			} else {
@@ -141,7 +141,7 @@ func NewMsgRegisterERC20Cmd() *cobra.Command {
 			}
 
 			for _, contract := range args {
-				if err := cosmosevmtypes.ValidateAddress(contract); err != nil {
+				if err := gurutypes.ValidateAddress(contract); err != nil {
 					return fmt.Errorf("invalid ERC20 contract address %w", err)
 				}
 			}

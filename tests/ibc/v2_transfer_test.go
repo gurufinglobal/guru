@@ -150,7 +150,7 @@ func (suite *TransferTestSuiteV2) TestOnSendPacket() {
 		suite.Run(tc.name, func() {
 			suite.SetupTest() // reset
 
-			evmApp := suite.evmChainA.App.(*gurud.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.GURUD)
 			originalBalance := evmApp.BankKeeper.GetBalance(
 				suite.evmChainA.GetContext(),
 				suite.evmChainA.SenderAccount.GetAddress(),
@@ -312,7 +312,7 @@ func (suite *TransferTestSuiteV2) TestOnRecvPacket() {
 			)
 
 			ctx := suite.evmChainA.GetContext()
-			evmApp := suite.evmChainA.App.(*gurud.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.GURUD)
 			cbs := evmApp.GetIBCKeeper().ChannelKeeperV2.Router.Route(evmibctesting.TransferPort)
 
 			// malleate payload after it has been sent but before OnRecvPacket callback is called
@@ -379,7 +379,7 @@ func (suite *TransferTestSuiteV2) TestOnAckPacket() {
 		suite.Run(tc.name, func() {
 			suite.SetupTest() // reset
 
-			evmApp := suite.evmChainA.App.(*gurud.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.GURUD)
 			originalBalance := evmApp.BankKeeper.GetBalance(suite.evmChainA.GetContext(), suite.evmChainA.SenderAccount.GetAddress(), tc.sourceDenomToTransfer)
 
 			timeoutTimestamp := uint64(suite.chainB.GetContext().BlockTime().Add(time.Hour).Unix()) //nolint:gosec // G115
@@ -486,7 +486,7 @@ func (suite *TransferTestSuiteV2) TestOnTimeoutPacket() {
 		suite.Run(tc.name, func() {
 			suite.SetupTest() // reset
 
-			evmApp := suite.evmChainA.App.(*gurud.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.GURUD)
 			originalBalance := evmApp.BankKeeper.GetBalance(suite.evmChainA.GetContext(), suite.evmChainA.SenderAccount.GetAddress(), tc.sourceDenomToTransfer)
 
 			timeoutTimestamp := uint64(suite.chainB.GetContext().BlockTime().Add(time.Hour).Unix()) //nolint:gosec // G115

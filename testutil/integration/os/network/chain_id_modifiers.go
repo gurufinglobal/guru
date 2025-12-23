@@ -27,7 +27,7 @@ func updateBankGenesisStateForChainID(bankGenesisState banktypes.GenesisState) b
 // for the Evm coin depending on the chainID.
 func generateBankGenesisMetadata() banktypes.Metadata {
 	return banktypes.Metadata{
-		Description: "The native EVM, governance and staking token of the Cosmos EVM example chain",
+		Description: "The native EVM, governance and staking token of the Guru example chain",
 		Base:        evmtypes.GetEVMCoinDenom(),
 		DenomUnits: []*banktypes.DenomUnit{
 			{
@@ -43,8 +43,8 @@ func generateBankGenesisMetadata() banktypes.Metadata {
 				Exponent: uint32(evmtypes.GetEVMCoinDecimals()),
 			},
 		},
-		Name:    "Cosmos EVM",
-		Symbol:  "ATOM",
+		Name:    "Guru",
+		Symbol:  "GXN",
 		Display: config.DisplayDenom,
 	}
 }
@@ -58,12 +58,12 @@ func updateErc20GenesisStateForChainID(chainID testconstants.ChainID, erc20Genes
 }
 
 // updateErc20TokenPairs modifies the erc20 token pairs to use the correct
-// WEVMOS depending on ChainID
+// WGURU depending on ChainID
 func updateErc20TokenPairs(chainID testconstants.ChainID, tokenPairs []erc20types.TokenPair) []erc20types.TokenPair {
-	testnetAddress := GetWEVMOSContractHex(chainID)
+	testnetAddress := GetWGURUContractHex(chainID)
 	coinInfo := testconstants.ExampleChainCoinInfo[chainID]
 
-	mainnetAddress := GetWEVMOSContractHex(testconstants.ExampleChainID)
+	mainnetAddress := GetWGURUContractHex(testconstants.ExampleChainID)
 
 	updatedTokenPairs := make([]erc20types.TokenPair, len(tokenPairs))
 	for i, tokenPair := range tokenPairs {

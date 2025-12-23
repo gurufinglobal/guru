@@ -17,7 +17,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-	cosmosevmutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
+	guruutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
 )
 
@@ -41,7 +41,7 @@ func (s *PrecompileTestSuite) TestCreateValidator() {
 		pubkey            = "nfJ0axJC9dhta1MAE1EBFaVdxxkYzxYrBaHuJVjG//M="
 		validatorAddress  common.Address
 		value             = big.NewInt(1205000000000000000)
-		diffAddr, _       = cosmosevmutiltx.NewAddrKey()
+		diffAddr, _       = guruutiltx.NewAddrKey()
 	)
 
 	testCases := []struct {
@@ -67,7 +67,7 @@ func (s *PrecompileTestSuite) TestCreateValidator() {
 		{
 			"fail - different origin than delegator",
 			func() []interface{} {
-				differentAddr := cosmosevmutiltx.GenerateAddress()
+				differentAddr := guruutiltx.GenerateAddress()
 				return []interface{}{
 					description,
 					commission,
@@ -395,7 +395,7 @@ func (s *PrecompileTestSuite) TestEditValidator() {
 		{
 			"fail - different origin than delegator",
 			func() []interface{} {
-				differentAddr := cosmosevmutiltx.GenerateAddress()
+				differentAddr := guruutiltx.GenerateAddress()
 				return []interface{}{
 					description,
 					differentAddr,
@@ -739,7 +739,7 @@ func (s *PrecompileTestSuite) TestDelegate() {
 		{
 			name: "fail - different origin than delegator",
 			malleate: func(_ testkeyring.Key, operatorAddress string) []interface{} {
-				differentAddr := cosmosevmutiltx.GenerateAddress()
+				differentAddr := guruutiltx.GenerateAddress()
 				return []interface{}{
 					differentAddr,
 					operatorAddress,
@@ -894,7 +894,7 @@ func (s *PrecompileTestSuite) TestUndelegate() {
 		{
 			name: "fail - different origin than delegator",
 			malleate: func(_ testkeyring.Key, operatorAddress string) []interface{} {
-				differentAddr := cosmosevmutiltx.GenerateAddress()
+				differentAddr := guruutiltx.GenerateAddress()
 				return []interface{}{
 					differentAddr,
 					operatorAddress,
@@ -1025,7 +1025,7 @@ func (s *PrecompileTestSuite) TestRedelegate() {
 		{
 			name: "fail - different origin than delegator",
 			malleate: func(_ testkeyring.Key, srcOperatorAddr, dstOperatorAddr string) []interface{} {
-				differentAddr := cosmosevmutiltx.GenerateAddress()
+				differentAddr := guruutiltx.GenerateAddress()
 				return []interface{}{
 					differentAddr,
 					srcOperatorAddr,
