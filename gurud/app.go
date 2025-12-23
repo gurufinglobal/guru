@@ -17,6 +17,19 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/gogoproto/proto"
+	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v10/modules/core"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	evmante "github.com/gurufinglobal/guru/v2/ante"
 	cosmosevmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	evmosencoding "github.com/gurufinglobal/guru/v2/encoding"
@@ -37,28 +50,15 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/ibc/transfer" // NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 	transferv2 "github.com/gurufinglobal/guru/v2/x/ibc/transfer/v2"
-	oraclemodule "github.com/gurufinglobal/guru/v2/x/oracle"
-	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
-	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/gurufinglobal/guru/v2/x/precisebank"
 	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
 	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
 	"github.com/gurufinglobal/guru/v2/x/vm"
 	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/gogoproto/proto"
-	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v10/modules/core"
-	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	oraclemodule "github.com/gurufinglobal/guru/v2/y/oracle"
+	oraclekeeper "github.com/gurufinglobal/guru/v2/y/oracle/keeper"
+	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -76,9 +76,9 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/gurufinglobal/guru/v2/server/swagger"
 	"github.com/gorilla/mux"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/gurufinglobal/guru/v2/server/swagger"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -544,9 +544,9 @@ func NewExampleApp(
 	oracleKeeper := oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], authAddr, app.AccountKeeper)
 	app.OracleKeeper = *oracleKeeper
 	app.OracleKeeper = *oracleKeeper.SetHooks(
-		oraclekeeper.NewMultiOracleHooks(
+		oracletypes.NewMultiOracleHooks(
 			// insert oracle hooks receivers here
-			app.FeeMarketKeeper.Hooks(),
+			app.FeeMarketKeeper.OracleHooks(),
 		),
 	)
 

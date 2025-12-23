@@ -26,8 +26,7 @@ var startCmd = &cobra.Command{
 
 		// Require init first: do not create homeDir implicitly on start.
 		if st, err := os.Stat(homeDir()); err != nil || !st.IsDir() {
-			log.Error().Str("home", homeDir()).Msg("home directory not initialized; run `oracled init` first")
-			return nil
+			return fmt.Errorf("home directory not initialized at %s (run `oracled init` first)", homeDir())
 		}
 
 		cfgPath := configFilePath()
@@ -44,11 +43,7 @@ var startCmd = &cobra.Command{
 		if cfg.Keyring.Backend == "test" || cfg.Keyring.Backend == "file" {
 			krDir := filepath.Join(homeDir(), "keyring-"+cfg.Keyring.Backend)
 			if st, err := os.Stat(krDir); err != nil || !st.IsDir() {
-				log.Error().
-					Str("keyring_dir", krDir).
-					Str("backend", cfg.Keyring.Backend).
-					Msg("keyring directory not found; add key first, then run `oracled start` again")
-				return nil
+				return fmt.Errorf("keyring directory not found at %s (backend=%s); add key first, then run `oracled start` again", krDir, cfg.Keyring.Backend)
 			}
 		}
 

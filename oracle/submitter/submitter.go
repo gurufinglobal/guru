@@ -91,11 +91,23 @@ func (s *Submitter) submit(ctx context.Context, result oracletypes.OracleReport)
 		return
 	}
 
+	msg := &oracletypes.MsgSubmitOracleReport{
+		ProviderAddress: result.Provider,
+		RequestId:       result.RequestId,
+		RawData:         result.RawData,
+		Nonce:           result.Nonce,
+		Signature:       result.Signature,
+	}
+	if err := msg.ValidateBasic(); err != nil {
+		s.logger.Error("invalid oracle msg", "error", err)
+		return
+	}
+
 	finalFactory := s.baseFactory.
 		WithAccountNumber(s.accountInfo.AccountNumber()).
 		WithSequence(s.accountInfo.CurrentSequenceNumber())
 
-	txBuilder, err := finalFactory.BuildUnsignedTx(&result)
+	txBuilder, err := finalFactory.BuildUnsignedTx(msg)
 	if err != nil {
 		s.logger.Error("failed to build unsigned tx", "error", err)
 		return

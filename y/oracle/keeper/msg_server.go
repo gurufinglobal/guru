@@ -68,7 +68,7 @@ func (k Keeper) RegisterOracleRequest(goCtx context.Context, msg *types.MsgRegis
 		Count:    int64(msg.Count),
 		Period:   msg.Period,
 		Status:   types.Status_STATUS_ACTIVE,
-		Nonce:    0,
+		Nonce:    1, // 첫 기간은 1부터 시작
 	}
 	if err := req.ValidateBasic(); err != nil {
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
@@ -77,6 +77,12 @@ func (k Keeper) RegisterOracleRequest(goCtx context.Context, msg *types.MsgRegis
 	k.SetRequest(ctx, req)
 	k.IncrementRequestCount(ctx)
 	k.SetCategory(ctx, msg.Category)
+
+	// 주기 기반 fail-fast: 집계 성공 여부와 관계없이 다음 기간 이벤트를 예약
+	if req.Period > 0 {
+		nextHeight := uint64(ctx.BlockHeight()) + req.Period
+		k.ScheduleOracleTask(ctx, nextHeight, req.Id)
+	}
 
 	k.Logger(ctx).Info("oracle request registered",
 		"request_id", requestID,
@@ -91,6 +97,7 @@ func (k Keeper) RegisterOracleRequest(goCtx context.Context, msg *types.MsgRegis
 		sdk.NewEvent(
 			types.EventTypeOracleTask,
 			sdk.NewAttribute(types.AttributeKeyRequestID, strconv.FormatUint(requestID, 10)),
+			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(req.Nonce, 10)),
 		),
 	)
 
@@ -165,13 +172,13 @@ func (k Keeper) SubmitOracleReport(goCtx context.Context, msg *types.MsgSubmitOr
 		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request is not active")
 	}
 
-	if msg.Nonce != req.Nonce+1 {
+	if msg.Nonce != req.Nonce {
 		k.Logger(ctx).Warn("report rejected: invalid nonce",
 			"request_id", msg.RequestId,
-			"expected_nonce", req.Nonce+1,
+			"expected_nonce", req.Nonce,
 			"received_nonce", msg.Nonce,
 		)
-		return nil, errorsmod.Wrapf(types.ErrInvalidNonce, "expected nonce %d", req.Nonce+1)
+		return nil, errorsmod.Wrapf(types.ErrInvalidNonce, "expected nonce %d", req.Nonce)
 	}
 
 	if _, exists := k.GetReport(ctx, msg.RequestId, msg.Nonce, msg.ProviderAddress); exists {
@@ -247,15 +254,21 @@ func (k Keeper) verifyReportSignature(ctx sdk.Context, report types.OracleReport
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
 	}
 
-	sig := report.Signature
-	if len(sig) != crypto.SignatureLength {
+	// Copy signature to avoid mutating the message bytes (and thereby persisted report bytes).
+	sig := append([]byte(nil), report.Signature...)
+	switch len(sig) {
+	case crypto.SignatureLength:
+		// Normalize Ethereum-style recovery ID if provided (27/28 -> 0/1).
+		if sig[64] >= 27 {
+			sig[64] -= 27
+		}
+		if sig[64] != 0 && sig[64] != 1 {
+			return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid recovery id")
+		}
+	case crypto.SignatureLength - 1:
+		// Accept 64-byte signatures too ([R||S] without recovery ID).
+	default:
 		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid signature length")
-	}
-	if sig[64] >= 27 {
-		sig[64] -= 27
-	}
-	if sig[64] != 0 && sig[64] != 1 {
-		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid recovery id")
 	}
 
 	providerAcc, err := sdk.AccAddressFromBech32(report.Provider)

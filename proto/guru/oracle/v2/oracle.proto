@@ -35,7 +35,8 @@ message OracleRequest {
   Category category = 2;
   // symbol is the symbol of the request (e.g. "BTC/USD").
   string symbol = 3;
-  // count is the number of validators required to submit a report.
+  // count is the remaining number of executions (period transitions) for this request.
+  // It is decremented each period; when it reaches 0, the request becomes inactive.
   int64 count = 4;
   // period is the number of blocks between each report execution.
   uint64 period = 5;

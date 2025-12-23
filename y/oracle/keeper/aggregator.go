@@ -45,7 +45,6 @@ func (k Keeper) calculateQuorumThreshold(total uint64, ratio math.LegacyDec) uin
 		return 0
 	}
 
-	// threshold = ceil(total * quorum_ratio)
 	totalDec := math.LegacyNewDec(int64(total))
 	thresholdDec := totalDec.Mul(ratio)
 
@@ -60,6 +59,11 @@ func (k Keeper) calculateQuorumThreshold(total uint64, ratio math.LegacyDec) uin
 
 // tryAggregate attempts to aggregate reports for a specific request and nonce.
 func (k Keeper) tryAggregate(ctx sdk.Context, req types.OracleRequest, nonce, totalProviders uint64, params types.Params) (*types.OracleResult, bool, error) {
+	if nonce == 0 {
+		// 보호: 유효한 기간이 설정되지 않은 경우 건너뛴다.
+		return nil, false, nil
+	}
+
 	if _, exists := k.GetResult(ctx, req.Id, nonce); exists {
 		k.Logger(ctx).Debug("result already exists", "request_id", req.Id, "nonce", nonce)
 		return nil, false, nil
@@ -117,23 +121,6 @@ func (k Keeper) tryAggregate(ctx sdk.Context, req types.OracleRequest, nonce, to
 		"reports_count", reportCount,
 	)
 
-	req.Nonce = nonce
-	// decrement count if finite; count == -1 means infinite
-	if req.Count > 0 {
-		req.Count--
-		if req.Count == 0 {
-			req.Status = types.Status_STATUS_INACTIVE
-			k.Logger(ctx).Info("request deactivated (count reached zero)", "request_id", req.Id)
-		}
-	}
-	k.SetRequest(ctx, req)
-
-	// Schedule next oracle task event at (current_height + period)
-	if req.Status == types.Status_STATUS_ACTIVE && req.Period > 0 {
-		nextEventHeight := uint64(ctx.BlockHeight()) + req.Period
-		k.ScheduleOracleTask(ctx, nextEventHeight, req.Id)
-	}
-
 	return &result, true, nil
 }
 
@@ -151,23 +138,18 @@ func (k Keeper) ProcessOracleReportAggregation(ctx sdk.Context) {
 		if req.Status != types.Status_STATUS_ACTIVE {
 			return false
 		}
-		if req.Count == 0 {
-			req.Status = types.Status_STATUS_INACTIVE
-			k.SetRequest(ctx, req)
-			k.Logger(ctx).Info("request deactivated (count is zero)", "request_id", req.Id)
+
+		result, aggregated, err := k.tryAggregate(ctx, req, req.Nonce, totalProviders, params)
+		if err != nil {
+			k.Logger(ctx).Error("aggregation error", "request_id", req.Id, "error", err)
 			return false
 		}
-
-		nextNonce := req.Nonce + 1
-		result, _, err := k.tryAggregate(ctx, req, nextNonce, totalProviders, params)
-		if err == nil {
-			if k.hooks == nil {
-				return false
-			}
-
+		if !aggregated {
+			// quorum not met (normal case) or aggregation skipped (e.g. no providers / result already exists)
+			return false
+		}
+		if k.hooks != nil && result != nil {
 			k.hooks.AfterOracleAggregation(ctx, req, *result)
-		} else {
-			k.Logger(ctx).Error("aggregation error", "request_id", req.Id, "error", err)
 		}
 
 		return false

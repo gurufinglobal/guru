@@ -374,14 +374,19 @@ func (k Keeper) DeleteScheduledTask(ctx sdk.Context, blockHeight, requestID uint
 
 // DeleteOldReports deletes reports older than retention blocks using index.
 func (k Keeper) DeleteOldReports(ctx sdk.Context, currentHeight uint64) {
-	// 1. Iterate over the expiry index for the current height (or up to current height if needed,
-	//    but exact match is efficient if we run every block).
-	//    Ideally, we should iterate from 0 to currentHeight if we missed blocks,
-	//    but for simplicity and performance assumptions, we check matches at currentHeight.
-	//    Use strict prefix iteration for currentHeight.
+	// Iterate over the expiry index in-order and delete all entries with expireHeight <= currentHeight.
+	// This naturally "catches up" if cleanup was skipped for some heights (e.g. module disabled and later enabled).
 	store := ctx.KVStore(k.storeKey)
-	iter := storetypes.KVStorePrefixIterator(store, types.ResultExpiryPrefix(currentHeight))
+	iter := storetypes.KVStorePrefixIterator(store, []byte{types.ResultExpiryPrefix(0)[0]})
 	defer iter.Close()
+
+	type toDelete struct {
+		expiryKey    []byte
+		requestID    uint64
+		nonce        uint64
+		expireHeight uint64
+	}
+	var dels []toDelete
 
 	for ; iter.Valid(); iter.Next() {
 		// Key structure: prefix (1) + expireHeight (8) + requestID (8) + nonce (8)
@@ -389,19 +394,33 @@ func (k Keeper) DeleteOldReports(ctx sdk.Context, currentHeight uint64) {
 		if len(key) < 25 {
 			continue
 		}
+
+		expireHeight := types.BytesToID(key[1:9])
+		if expireHeight > currentHeight {
+			// Since keys are ordered by expireHeight, we can stop early.
+			break
+		}
+
 		requestID := types.BytesToID(key[9:17])
 		nonce := types.BytesToID(key[17:25])
 
+		dels = append(dels, toDelete{
+			expiryKey:    append([]byte(nil), key...),
+			requestID:    requestID,
+			nonce:        nonce,
+			expireHeight: expireHeight,
+		})
+	}
+
+	for _, d := range dels {
 		// Delete associated reports
-		k.deleteReports(ctx, requestID, nonce)
-
+		k.deleteReports(ctx, d.requestID, d.nonce)
 		// Delete count key
-		store.Delete(types.ReportCountKey(requestID, nonce))
-
+		store.Delete(types.ReportCountKey(d.requestID, d.nonce))
 		// Delete the expiry index itself
-		store.Delete(key)
+		store.Delete(d.expiryKey)
 
-		k.Logger(ctx).Debug("deleted old reports", "request_id", requestID, "nonce", nonce, "height", currentHeight)
+		k.Logger(ctx).Debug("deleted old reports", "request_id", d.requestID, "nonce", d.nonce, "expire_height", d.expireHeight, "height", currentHeight)
 	}
 }
 
@@ -411,9 +430,15 @@ func (k Keeper) deleteReports(ctx sdk.Context, requestID, nonce uint64) {
 	iter := storetypes.KVStorePrefixIterator(store, types.ReportPrefix(requestID, nonce))
 	defer iter.Close()
 
-	var keys [][]byte
+	// Pre-allocate based on the tracked report count (best-effort; 0 is fine).
+	capHint := int(k.GetReportCount(ctx, requestID, nonce))
+	if capHint < 0 {
+		capHint = 0
+	}
+	keys := make([][]byte, 0, capHint)
 	for ; iter.Valid(); iter.Next() {
-		keys = append(keys, iter.Key())
+		// Copy the key: iterator implementations may reuse the underlying slice buffer.
+		keys = append(keys, append([]byte(nil), iter.Key()...))
 	}
 
 	for _, key := range keys {

@@ -99,7 +99,8 @@ type OracleRequest struct {
 	Category Category `protobuf:"varint,2,opt,name=category,proto3,enum=guru.oracle.v2.Category" json:"category,omitempty"`
 	// symbol is the symbol of the request (e.g. "BTC/USD").
 	Symbol string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	// count is the number of validators required to submit a report.
+	// count is the remaining number of executions (period transitions) for this request.
+	// It is decremented each period; when it reaches 0, the request becomes inactive.
 	Count int64 `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
 	// period is the number of blocks between each report execution.
 	Period uint64 `protobuf:"varint,5,opt,name=period,proto3" json:"period,omitempty"`

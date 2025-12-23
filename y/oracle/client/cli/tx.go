@@ -43,7 +43,9 @@ func NewRegisterRequestCmd() *cobra.Command {
 		Short: "Register a new oracle request (moderator only)",
 		Long: strings.TrimSpace(`Register a new oracle request.
 
-category can be an enum name (e.g. CATEGORY_CRYPTO) or numeric value (e.g. 2).`),
+category can be an enum name (e.g. CATEGORY_CRYPTO) or numeric value (e.g. 2).
+
+count is the remaining number of executions (period transitions). It is decremented each period; when it reaches 0, the request becomes inactive.`),
 		Args: cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -92,7 +94,7 @@ func NewUpdateRequestCmd() *cobra.Command {
 		Long: strings.TrimSpace(`Update an existing oracle request.
 
 Notes:
-- count:  0 to skip updating count
+- count:  0 to skip updating count (remaining executions)
 - period: 0 to skip updating period
 - status: STATUS_UNSPECIFIED (or 0) to skip updating status
 

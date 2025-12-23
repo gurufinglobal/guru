@@ -116,7 +116,8 @@ type MsgRegisterOracleRequest struct {
 	Category Category `protobuf:"varint,2,opt,name=category,proto3,enum=guru.oracle.v2.Category" json:"category,omitempty"`
 	// symbol is the symbol of the request.
 	Symbol string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	// count is the number of validators required for the request.
+	// count is the remaining number of executions (period transitions) for the request.
+	// It is decremented each period; when it reaches 0, the request becomes inactive.
 	Count uint64 `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
 	// period is the execution period (in blocks).
 	Period uint64 `protobuf:"varint,5,opt,name=period,proto3" json:"period,omitempty"`
@@ -207,7 +208,7 @@ type MsgUpdateOracleRequest struct {
 	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
 	// request_id is the unique identifier of the request to update.
 	RequestId uint64 `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	// count is the new number of validators required (optional, 0 to skip).
+	// count is the new remaining number of executions (optional, 0 to skip updating).
 	Count uint64 `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
 	// period is the new execution period (optional, 0 to skip).
 	Period uint64 `protobuf:"varint,4,opt,name=period,proto3" json:"period,omitempty"`
