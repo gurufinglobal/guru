@@ -13,7 +13,6 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/gurufinglobal/guru/v2/testutil/network"
-	cosmosevmnetwork "github.com/gurufinglobal/guru/v2/testutil/network"
 )
 
 type IntegrationTestSuite struct {
@@ -26,7 +25,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	var err error
-	cfg := cosmosevmnetwork.DefaultConfig()
+	cfg := gurunetwork.DefaultConfig()
 	cfg.JSONRPCAddress = config.DefaultJSONRPCAddress
 	cfg.NumValidators = 1
 

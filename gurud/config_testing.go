@@ -86,7 +86,7 @@ func EvmAppOptions(chainID uint64) error {
 	// reset configuration to set the new one
 	configurator.ResetTestConfig()
 	err := configurator.
-		WithExtendedEips(cosmosEVMActivators).
+		WithExtendedEips(guruActivators).
 		WithChainConfig(ethCfg).
 		WithEVMCoinInfo(coinInfo).
 		Configure()

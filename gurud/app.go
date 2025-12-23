@@ -110,13 +110,13 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	evmante "github.com/gurufinglobal/guru/v2/ante"
-	cosmosevmante "github.com/gurufinglobal/guru/v2/ante/evm"
+	guruante "github.com/gurufinglobal/guru/v2/ante/evm"
 	guruencoding "github.com/gurufinglobal/guru/v2/encoding"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
 	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
 	"github.com/gurufinglobal/guru/v2/server/swagger"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	cosmosevmutils "github.com/gurufinglobal/guru/v2/utils"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
+	guruutils "github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/bex"
 	bexkeeper "github.com/gurufinglobal/guru/v2/x/bex/keeper"
 	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
@@ -150,7 +150,7 @@ import (
 
 func init() {
 	// manually update the power reduction by replacing micro (u) -> atto (a) guru
-	sdk.DefaultPowerReduction = cosmosevmtypes.AttoPowerReduction
+	sdk.DefaultPowerReduction = gurutypes.AttoPowerReduction
 
 	// get the user's home directory
 	var err error
@@ -918,7 +918,7 @@ func (app *GURUD) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) 
 		Cdc:                    app.appCodec,
 		AccountKeeper:          app.AccountKeeper,
 		BankKeeper:             app.BankKeeper,
-		ExtensionOptionChecker: cosmosevmtypes.HasDynamicFeeExtensionOption,
+		ExtensionOptionChecker: gurutypes.HasDynamicFeeExtensionOption,
 		EvmKeeper:              app.EVMKeeper,
 		FeegrantKeeper:         app.FeeGrantKeeper,
 		FeePolicyKeeper:        app.FeePolicyKeeper,
@@ -927,7 +927,7 @@ func (app *GURUD) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) 
 		SignModeHandler:        txConfig.SignModeHandler(),
 		SigGasConsumer:         evmante.SigVerificationGasConsumer,
 		MaxTxGasWanted:         maxGasWanted,
-		TxFeeChecker:           cosmosevmante.NewDynamicFeeChecker(app.FeeMarketKeeper),
+		TxFeeChecker:           guruante.NewDynamicFeeChecker(app.FeeMarketKeeper),
 	}
 	if err := options.Validate(); err != nil {
 		panic(err)
@@ -970,7 +970,7 @@ func (app *GURUD) Configurator() module.Configurator {
 
 // InitChainer application update at chain initialization
 func (app *GURUD) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
-	var genesisState cosmosevmtypes.GenesisState
+	var genesisState gurutypes.GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
@@ -1203,7 +1203,7 @@ func BlockedAddresses() map[string]bool {
 	}
 
 	for _, precompile := range blockedPrecompilesHex {
-		blockedAddrs[cosmosevmutils.Bech32StringFromHexAddress(precompile)] = true
+		blockedAddrs[guruutils.Bech32StringFromHexAddress(precompile)] = true
 	}
 
 	return blockedAddrs

@@ -49,9 +49,9 @@ import (
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/indexer"
 	ethdebug "github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/debug"
-	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
+	guruserverconfig "github.com/gurufinglobal/guru/v2/server/config"
 	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 )
 
 // DBOpener is a function to open `application.db`, potentially with customized options.
@@ -175,39 +175,39 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().String(srvflags.AppDBBackend, "", "The type of database for application and snapshots databases")
 
 	cmd.Flags().Bool(srvflags.GRPCOnly, false, "Start the node in gRPC query only mode without CometBFT process")
-	cmd.Flags().Bool(srvflags.GRPCEnable, cosmosevmserverconfig.DefaultGRPCEnable, "Define if the gRPC server should be enabled")
+	cmd.Flags().Bool(srvflags.GRPCEnable, guruserverconfig.DefaultGRPCEnable, "Define if the gRPC server should be enabled")
 	cmd.Flags().String(srvflags.GRPCAddress, serverconfig.DefaultGRPCAddress, "the gRPC server address to listen on")
-	cmd.Flags().Bool(srvflags.GRPCWebEnable, cosmosevmserverconfig.DefaultGRPCWebEnable, "Define if the gRPC-Web server should be enabled. (Note: gRPC must also be enabled.)")
-	cmd.Flags().String(srvflags.GRPCWebAddress, cosmosevmserverconfig.DefaultGRPCAddress, "The gRPC-Web server address to listen on")
+	cmd.Flags().Bool(srvflags.GRPCWebEnable, guruserverconfig.DefaultGRPCWebEnable, "Define if the gRPC-Web server should be enabled. (Note: gRPC must also be enabled.)")
+	cmd.Flags().String(srvflags.GRPCWebAddress, guruserverconfig.DefaultGRPCAddress, "The gRPC-Web server address to listen on")
 
-	cmd.Flags().Bool(srvflags.RPCEnable, cosmosevmserverconfig.DefaultAPIEnable, "Defines if Cosmos-sdk REST server should be enabled")
+	cmd.Flags().Bool(srvflags.RPCEnable, guruserverconfig.DefaultAPIEnable, "Defines if Cosmos-sdk REST server should be enabled")
 	cmd.Flags().Bool(srvflags.EnabledUnsafeCors, false, "Defines if CORS should be enabled (unsafe - use it at your own risk)")
 
-	cmd.Flags().Bool(srvflags.JSONRPCEnable, cosmosevmserverconfig.DefaultJSONRPCEnable, "Define if the JSON-RPC server should be enabled")
-	cmd.Flags().StringSlice(srvflags.JSONRPCAPI, cosmosevmserverconfig.GetDefaultAPINamespaces(), "Defines a list of JSON-RPC namespaces that should be enabled")
-	cmd.Flags().String(srvflags.JSONRPCAddress, cosmosevmserverconfig.DefaultJSONRPCAddress, "the JSON-RPC server address to listen on")
-	cmd.Flags().String(srvflags.JSONWsAddress, cosmosevmserverconfig.DefaultJSONRPCWsAddress, "the JSON-RPC WS server address to listen on")
-	cmd.Flags().StringSlice(srvflags.JSONRPCWSOrigins, cosmosevmserverconfig.GetDefaultWSOrigins(), "Defines a list of WebSocket origins that should be allowed to connect")
-	cmd.Flags().Uint64(srvflags.JSONRPCGasCap, cosmosevmserverconfig.DefaultGasCap, "Sets a cap on gas that can be used in eth_call/estimateGas unit is agxn (0=infinite)")                          //nolint:lll
-	cmd.Flags().Bool(srvflags.JSONRPCAllowInsecureUnlock, cosmosevmserverconfig.DefaultJSONRPCAllowInsecureUnlock, "Allow insecure account unlocking when account-related RPCs are exposed by http") //nolint:lll
-	cmd.Flags().Float64(srvflags.JSONRPCTxFeeCap, cosmosevmserverconfig.DefaultTxFeeCap, "Sets a cap on transaction fee that can be sent via the RPC APIs (1 = default 1 guru)")                     //nolint:lll
-	cmd.Flags().Int32(srvflags.JSONRPCFilterCap, cosmosevmserverconfig.DefaultFilterCap, "Sets the global cap for total number of filters that can be created")
-	cmd.Flags().Duration(srvflags.JSONRPCEVMTimeout, cosmosevmserverconfig.DefaultEVMTimeout, "Sets a timeout used for eth_call (0=infinite)")
-	cmd.Flags().Duration(srvflags.JSONRPCHTTPTimeout, cosmosevmserverconfig.DefaultHTTPTimeout, "Sets a read/write timeout for json-rpc http server (0=infinite)")
-	cmd.Flags().Duration(srvflags.JSONRPCHTTPIdleTimeout, cosmosevmserverconfig.DefaultHTTPIdleTimeout, "Sets a idle timeout for json-rpc http server (0=infinite)")
-	cmd.Flags().Bool(srvflags.JSONRPCAllowUnprotectedTxs, cosmosevmserverconfig.DefaultAllowUnprotectedTxs, "Allow for unprotected (non EIP155 signed) transactions to be submitted via the node's RPC when the global parameter is disabled") //nolint:lll
-	cmd.Flags().Int(srvflags.JSONRPCBatchRequestLimit, cosmosevmserverconfig.DefaultBatchRequestLimit, "Maximum number of requests in a batch")
-	cmd.Flags().Int(srvflags.JSONRPCBatchResponseMaxSize, cosmosevmserverconfig.DefaultBatchResponseMaxSize, "Maximum size of server response")
-	cmd.Flags().Int32(srvflags.JSONRPCLogsCap, cosmosevmserverconfig.DefaultLogsCap, "Sets the max number of results can be returned from single `eth_getLogs` query")
-	cmd.Flags().Int32(srvflags.JSONRPCBlockRangeCap, cosmosevmserverconfig.DefaultBlockRangeCap, "Sets the max block range allowed for `eth_getLogs` query")
-	cmd.Flags().Int(srvflags.JSONRPCMaxOpenConnections, cosmosevmserverconfig.DefaultMaxOpenConnections, "Sets the maximum number of simultaneous connections for the server listener") //nolint:lll
+	cmd.Flags().Bool(srvflags.JSONRPCEnable, guruserverconfig.DefaultJSONRPCEnable, "Define if the JSON-RPC server should be enabled")
+	cmd.Flags().StringSlice(srvflags.JSONRPCAPI, guruserverconfig.GetDefaultAPINamespaces(), "Defines a list of JSON-RPC namespaces that should be enabled")
+	cmd.Flags().String(srvflags.JSONRPCAddress, guruserverconfig.DefaultJSONRPCAddress, "the JSON-RPC server address to listen on")
+	cmd.Flags().String(srvflags.JSONWsAddress, guruserverconfig.DefaultJSONRPCWsAddress, "the JSON-RPC WS server address to listen on")
+	cmd.Flags().StringSlice(srvflags.JSONRPCWSOrigins, guruserverconfig.GetDefaultWSOrigins(), "Defines a list of WebSocket origins that should be allowed to connect")
+	cmd.Flags().Uint64(srvflags.JSONRPCGasCap, guruserverconfig.DefaultGasCap, "Sets a cap on gas that can be used in eth_call/estimateGas unit is agxn (0=infinite)")                          //nolint:lll
+	cmd.Flags().Bool(srvflags.JSONRPCAllowInsecureUnlock, guruserverconfig.DefaultJSONRPCAllowInsecureUnlock, "Allow insecure account unlocking when account-related RPCs are exposed by http") //nolint:lll
+	cmd.Flags().Float64(srvflags.JSONRPCTxFeeCap, guruserverconfig.DefaultTxFeeCap, "Sets a cap on transaction fee that can be sent via the RPC APIs (1 = default 1 guru)")                     //nolint:lll
+	cmd.Flags().Int32(srvflags.JSONRPCFilterCap, guruserverconfig.DefaultFilterCap, "Sets the global cap for total number of filters that can be created")
+	cmd.Flags().Duration(srvflags.JSONRPCEVMTimeout, guruserverconfig.DefaultEVMTimeout, "Sets a timeout used for eth_call (0=infinite)")
+	cmd.Flags().Duration(srvflags.JSONRPCHTTPTimeout, guruserverconfig.DefaultHTTPTimeout, "Sets a read/write timeout for json-rpc http server (0=infinite)")
+	cmd.Flags().Duration(srvflags.JSONRPCHTTPIdleTimeout, guruserverconfig.DefaultHTTPIdleTimeout, "Sets a idle timeout for json-rpc http server (0=infinite)")
+	cmd.Flags().Bool(srvflags.JSONRPCAllowUnprotectedTxs, guruserverconfig.DefaultAllowUnprotectedTxs, "Allow for unprotected (non EIP155 signed) transactions to be submitted via the node's RPC when the global parameter is disabled") //nolint:lll
+	cmd.Flags().Int(srvflags.JSONRPCBatchRequestLimit, guruserverconfig.DefaultBatchRequestLimit, "Maximum number of requests in a batch")
+	cmd.Flags().Int(srvflags.JSONRPCBatchResponseMaxSize, guruserverconfig.DefaultBatchResponseMaxSize, "Maximum size of server response")
+	cmd.Flags().Int32(srvflags.JSONRPCLogsCap, guruserverconfig.DefaultLogsCap, "Sets the max number of results can be returned from single `eth_getLogs` query")
+	cmd.Flags().Int32(srvflags.JSONRPCBlockRangeCap, guruserverconfig.DefaultBlockRangeCap, "Sets the max block range allowed for `eth_getLogs` query")
+	cmd.Flags().Int(srvflags.JSONRPCMaxOpenConnections, guruserverconfig.DefaultMaxOpenConnections, "Sets the maximum number of simultaneous connections for the server listener") //nolint:lll
 	cmd.Flags().Bool(srvflags.JSONRPCEnableIndexer, false, "Enable the custom tx indexer for json-rpc")
 	cmd.Flags().Bool(srvflags.JSONRPCEnableMetrics, false, "Define if EVM rpc metrics server should be enabled")
 	cmd.Flags().Bool(srvflags.JSONRPCEnableProfiling, false, "Enables the profiling in the debug namespace")
 
-	cmd.Flags().String(srvflags.EVMTracer, cosmosevmserverconfig.DefaultEVMTracer, "the EVM tracer type to collect execution traces from the EVM transaction execution (json|struct|access_list|markdown)") //nolint:lll
-	cmd.Flags().Uint64(srvflags.EVMMaxTxGasWanted, cosmosevmserverconfig.DefaultMaxTxGasWanted, "the gas wanted for each eth tx returned in ante handler in check tx mode")                                 //nolint:lll
-	cmd.Flags().Bool(srvflags.EVMEnablePreimageRecording, cosmosevmserverconfig.DefaultEnablePreimageRecording, "Enables tracking of SHA3 preimages in the EVM (not implemented yet)")                      //nolint:lll
+	cmd.Flags().String(srvflags.EVMTracer, guruserverconfig.DefaultEVMTracer, "the EVM tracer type to collect execution traces from the EVM transaction execution (json|struct|access_list|markdown)") //nolint:lll
+	cmd.Flags().Uint64(srvflags.EVMMaxTxGasWanted, guruserverconfig.DefaultMaxTxGasWanted, "the gas wanted for each eth tx returned in ante handler in check tx mode")                                 //nolint:lll
+	cmd.Flags().Bool(srvflags.EVMEnablePreimageRecording, guruserverconfig.DefaultEnablePreimageRecording, "Enables tracking of SHA3 preimages in the EVM (not implemented yet)")                      //nolint:lll
 
 	cmd.Flags().String(srvflags.TLSCertPath, "", "the cert.pem file path for the server TLS configuration")
 	cmd.Flags().String(srvflags.TLSKeyPath, "", "the key.pem file path for the server TLS configuration")
@@ -248,7 +248,7 @@ func startStandAlone(svrCtx *server.Context, opts StartOptions) error {
 
 	app := opts.AppCreator(svrCtx.Logger, db, traceWriter, svrCtx.Viper)
 
-	config, err := cosmosevmserverconfig.GetConfig(svrCtx.Viper)
+	config, err := guruserverconfig.GetConfig(svrCtx.Viper)
 	if err != nil {
 		svrCtx.Logger.Error("failed to get server config", "error", err.Error())
 		return err
@@ -341,7 +341,7 @@ func startInProcess(svrCtx *server.Context, clientCtx client.Context, opts Start
 		return err
 	}
 
-	config, err := cosmosevmserverconfig.GetConfig(svrCtx.Viper)
+	config, err := guruserverconfig.GetConfig(svrCtx.Viper)
 	if err != nil {
 		logger.Error("failed to get server config", "error", err.Error())
 		return err
@@ -424,7 +424,7 @@ func startInProcess(svrCtx *server.Context, clientCtx client.Context, opts Start
 		ethmetricsexp.Setup(config.JSONRPC.MetricsAddress)
 	}
 
-	var idxer cosmosevmtypes.EVMTxIndexer
+	var idxer gurutypes.EVMTxIndexer
 	if config.JSONRPC.EnableIndexer {
 		idxDB, err := OpenIndexerDB(home, server.GetAppDBBackend(svrCtx.Viper))
 		if err != nil {
@@ -519,7 +519,7 @@ func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {
 	)
 }
 
-func startTelemetry(cfg cosmosevmserverconfig.Config) (*telemetry.Metrics, error) {
+func startTelemetry(cfg guruserverconfig.Config) (*telemetry.Metrics, error) {
 	if !cfg.Telemetry.Enabled {
 		return nil, nil
 	}
@@ -643,10 +643,10 @@ func startJSONRPCServer(
 	svrCtx *server.Context,
 	clientCtx client.Context,
 	g *errgroup.Group,
-	config cosmosevmserverconfig.Config,
+	config guruserverconfig.Config,
 	genDocProvider node.GenesisDocProvider,
 	cmtRPCAddr string,
-	idxer cosmosevmtypes.EVMTxIndexer,
+	idxer gurutypes.EVMTxIndexer,
 ) (ctx client.Context, httpSrv *http.Server, httpSrvDone chan struct{}, err error) {
 	ctx = clientCtx
 	if !config.JSONRPC.Enable {

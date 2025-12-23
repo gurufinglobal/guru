@@ -55,18 +55,18 @@ func RegisterGuruERC20Coins(
 		return erc20types.TokenPair{}, err
 	}
 
-	cosmosEVMMetadata, found := network.App.BankKeeper.GetDenomMetaData(network.GetContext(), bondDenom)
+	guruMetadata, found := network.App.BankKeeper.GetDenomMetaData(network.GetContext(), bondDenom)
 	if !found {
 		return erc20types.TokenPair{}, fmt.Errorf("expected guru denom metadata")
 	}
 
-	_, err = network.App.Erc20Keeper.RegisterERC20Extension(network.GetContext(), cosmosEVMMetadata.Base)
+	_, err = network.App.Erc20Keeper.RegisterERC20Extension(network.GetContext(), guruMetadata.Base)
 	if err != nil {
 		return erc20types.TokenPair{}, err
 	}
 
-	cosmosEVMDenomID := network.App.Erc20Keeper.GetDenomMap(network.GetContext(), bondDenom)
-	tokenPair, ok := network.App.Erc20Keeper.GetTokenPair(network.GetContext(), cosmosEVMDenomID)
+	guruDenomID := network.App.Erc20Keeper.GetDenomMap(network.GetContext(), bondDenom)
+	tokenPair, ok := network.App.Erc20Keeper.GetTokenPair(network.GetContext(), guruDenomID)
 	if !ok {
 		return erc20types.TokenPair{}, fmt.Errorf("expected guru erc20 token pair")
 	}

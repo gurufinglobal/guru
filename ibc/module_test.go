@@ -13,7 +13,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cosmosevmibc "github.com/gurufinglobal/guru/v2/ibc"
+	guruibc "github.com/gurufinglobal/guru/v2/ibc"
 )
 
 var _ porttypes.IBCModule = &MockIBCModule{}
@@ -185,7 +185,7 @@ func TestModule(t *testing.T) {
 	mockModule.On("OnAcknowledgementPacket").Return(nil)
 	mockModule.On("OnTimeoutPacket").Return(nil)
 
-	module := cosmosevmibc.NewModule(mockModule)
+	module := guruibc.NewModule(mockModule)
 
 	// mock calls for abstraction
 	_, err := module.OnChanOpenInit(sdk.Context{}, channeltypes.ORDERED, nil, transfertypes.PortID, "channel-0", channeltypes.Counterparty{}, "")
