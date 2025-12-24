@@ -13,9 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/encoding"
-	guruconfig "github.com/gurufinglobal/guru/v2/server/config"
 )
 
 var home = flag.String("home", homeDir(), "oracle daemon home directory")
@@ -182,7 +182,7 @@ func validateConfig() error {
 // Keyring creates and returns a keyring instance based on the configuration
 // Supports test, file, and OS keyring backends with EthSecp256k1 option
 func Keyring() keyring.Keyring {
-	encCfg := encoding.MakeConfig(guruconfig.DefaultEVMChainID)
+	encCfg := encoding.MakeConfig(config.GetChainID())
 
 	var backend string
 	switch KeyringBackend() {

@@ -185,7 +185,7 @@ func LegacyEIP712Cmd() *cobra.Command {
 				return errors.Wrap(err, "encode tx")
 			}
 
-			td, err := eip712.LegacyWrapTxToTypedData(clientCtx.Codec, gurudconfig.EVMChainID, stdTx.GetMsgs()[0], txBytes, nil)
+			td, err := eip712.LegacyWrapTxToTypedData(clientCtx.Codec, gurudconfig.GetChainID(), stdTx.GetMsgs()[0], txBytes, nil)
 			if err != nil {
 				return errors.Wrap(err, "wrap tx to typed data")
 			}
