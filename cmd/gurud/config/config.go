@@ -67,14 +67,6 @@ const (
 	BaseDenomUnit = 18
 )
 
-// EVMChainID defines the EIP-155 replay-protection chain id for the current ethereum chain config.
-// It is updated at runtime during startup to keep all components consistent.
-var EVMChainID = uint64(631)
-
-// GuruChainID is used for chain-specific encoding/configuration (e.g. oracle daemon).
-// It is updated at runtime during startup to keep all components consistent.
-var GuruChainID = uint64(631)
-
 // SetBech32Prefixes sets the global prefixes to be used when serializing addresses and public keys to Bech32 strings.
 func SetBech32Prefixes(config *sdk.Config) {
 	config.SetBech32PrefixForAccount(Bech32PrefixAccAddr, Bech32PrefixAccPub)

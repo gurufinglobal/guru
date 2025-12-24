@@ -146,7 +146,7 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
-			customAppTemplate, customAppConfig := InitAppConfig(gurudconfig.BaseDenom, gurudconfig.EVMChainID)
+			customAppTemplate, customAppConfig := InitAppConfig(gurudconfig.BaseDenom, gurudconfig.GetChainID())
 			customTMConfig := initTendermintConfig()
 
 			return sdkserver.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)
@@ -263,8 +263,8 @@ func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 					return fmt.Errorf("failed to update chain-id in client.toml: %w", err)
 				}
 
-				_, evmChainID, exists := gurudconfig.GetChainIDs(chainID)
-				if !exists {
+				evmChainID, ok := gurudconfig.GetChainIDFromString(chainID)
+				if !ok {
 					return nil
 				}
 
@@ -428,7 +428,7 @@ func newApp(
 	return gurud.NewExampleApp(
 		logger, db, traceStore, true,
 		appOpts,
-		gurudconfig.EVMChainID,
+		gurudconfig.GetChainID(),
 		gurud.EvmAppOptions,
 		baseappOptions...,
 	)
@@ -470,13 +470,13 @@ func appExport(
 	}
 
 	if height != -1 {
-		exampleApp = gurud.NewExampleApp(logger, db, traceStore, false, appOpts, gurudconfig.EVMChainID, gurud.EvmAppOptions, baseapp.SetChainID(chainID))
+		exampleApp = gurud.NewExampleApp(logger, db, traceStore, false, appOpts, gurudconfig.GetChainID(), gurud.EvmAppOptions, baseapp.SetChainID(chainID))
 
 		if err := exampleApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		exampleApp = gurud.NewExampleApp(logger, db, traceStore, true, appOpts, gurudconfig.EVMChainID, gurud.EvmAppOptions, baseapp.SetChainID(chainID))
+		exampleApp = gurud.NewExampleApp(logger, db, traceStore, true, appOpts, gurudconfig.GetChainID(), gurud.EvmAppOptions, baseapp.SetChainID(chainID))
 	}
 
 	return exampleApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)

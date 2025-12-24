@@ -8,24 +8,24 @@ import (
 )
 
 type ChainIDConfig struct {
-	CosmosChainID uint64
-	EVMChainID    uint64
+	// ChainID is the single numeric chain ID (used for both EVM and Cosmos contexts).
+	ChainID uint64
 }
 
 var ChainIDMapping = map[string]ChainIDConfig{
-	"guru_630-1": {CosmosChainID: 630, EVMChainID: 630},
-	"guru_631-1": {CosmosChainID: 631, EVMChainID: 631},
+	"guru_630-1": {ChainID: 630},
+	"guru_631-1": {ChainID: 631},
 }
 
-func GetChainIDs(chainID string) (cosmosChainID uint64, evmChainID uint64, exists bool) {
+func GetChainIDFromString(chainID string) (id uint64, exists bool) {
 	if chainID == "" {
-		return 0, 0, false
+		return 0, false
 	}
 	cfg, ok := ChainIDMapping[chainID]
 	if !ok {
-		return 0, 0, false
+		return 0, false
 	}
-	return cfg.CosmosChainID, cfg.EVMChainID, true
+	return cfg.ChainID, true
 }
 
 func LoadChainIDsFromConfig(homeDir string) error {
@@ -45,9 +45,10 @@ func LoadChainIDsFromConfig(homeDir string) error {
 		return nil
 	}
 
-	if cosmosID, evmID, ok := GetChainIDs(chainID); ok {
-		EVMChainID = evmID
-		GuruChainID = cosmosID
+	if id, ok := GetChainIDFromString(chainID); ok {
+		// Use the same chain ID for both EVM and Cosmos contexts
+		// In current setup, they are the same value
+		SetChainID(id)
 		return nil
 	}
 
@@ -68,7 +69,6 @@ func LoadChainIDsFromConfig(homeDir string) error {
 		return nil
 	}
 
-	EVMChainID = evmID
-	GuruChainID = evmID
+	SetChainID(evmID)
 	return nil
 }

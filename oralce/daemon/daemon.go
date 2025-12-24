@@ -49,7 +49,7 @@ func New(ctx context.Context) *Daemon {
 	d.logger = log.NewLogger(os.Stdout, log.LevelOption(zerolog.DebugLevel), log.TimeFormatOption(time.RFC3339), log.OutputJSONOption())
 	d.fatalCh = make(chan error, 1)
 
-	encCfg := encoding.MakeConfig(guruconfig.GuruChainID)
+	encCfg := encoding.MakeConfig(guruconfig.GetChainID())
 	authtypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 	banktypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 	oracletypes.RegisterInterfaces(encCfg.InterfaceRegistry)
