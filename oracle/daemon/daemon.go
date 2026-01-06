@@ -190,6 +190,7 @@ func New(cfg *config.Config, homeDir string) (*Daemon, error) {
 		resultCh: make(chan oracletypes.OracleReport, channelBuffer),
 		listener: listener.NewSubscriptionManager(logger,
 			types.OracleTaskIDQuery,
+			types.MinGasPriceQuery,
 		),
 		aggregator:           aggregator.NewAggregator(logger, registry),
 		submitter:            submitter.New(logger, cfg.Keyring.Name, clientCtx.TxConfig, accountInfo, baseFactory, clientCtx),
@@ -233,7 +234,7 @@ func (d *Daemon) startRun(parent context.Context) {
 	d.reqIDCh = reqIDCh
 	d.taskCh = taskCh
 	d.resultCh = resultCh
-	d.listener = listener.NewSubscriptionManager(d.logger, types.OracleTaskIDQuery)
+	d.listener = listener.NewSubscriptionManager(d.logger, types.OracleTaskIDQuery, types.MinGasPriceQuery)
 	d.aggregator = aggregator.NewAggregator(d.logger, d.pvRegistry)
 	d.submitter = submitter.New(d.logger, d.cfg.Keyring.Name, d.clientCtx.TxConfig, accountInfo, baseFactory, d.clientCtx)
 	d.runMu.Unlock()
@@ -296,25 +297,24 @@ func (d *Daemon) mainLoop(
 		case <-ctx.Done():
 			return
 		case reqID := <-reqIDCh:
+			if reqID == 0 {
+				feemarketRes, err := feemarketQueryClient.Params(ctx, &feemarkettypes.QueryParamsRequest{})
+				if err != nil {
+					d.logger.Error("get feemarket params", "error", err)
+					continue
+				}
+
+				gasPrice := feemarketRes.Params.MinGasPrice.Ceil().String() + denom
+				d.setGasPrice(gasPrice)
+				sub.UpdateGasPrice(gasPrice)
+				continue
+			}
+
 			res, err := oracleQueryClient.OracleRequest(ctx, &oracletypes.QueryOracleRequestRequest{RequestId: reqID})
 			if err != nil {
 				d.logger.Error("get oracle request", "error", err, "request_id", reqID)
 				continue
 			}
-
-			// if res.Request.Category == oracletypes.Category_CATEGORY_OPERATION {
-			// 	go func() {
-			// 		feemarketRes, err := feemarketQueryClient.Params(ctx, &feemarkettypes.QueryParamsRequest{})
-			// 		if err != nil {
-			// 			d.logger.Error("get feemarket params", "error", err)
-			// 			return
-			// 		}
-
-			// 		gasPrice := feemarketRes.Params.MinGasPrice.Ceil().String() + denom
-			// 		d.setGasPrice(gasPrice)
-			// 		sub.UpdateGasPrice(gasPrice)
-			// 	}()
-			// }
 
 			taskCh <- types.OracleTask{
 				Id:       res.Request.Id,

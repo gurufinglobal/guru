@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
@@ -14,6 +15,9 @@ func EventToRequestID(event coretypes.ResultEvent) (uint64, error) {
 
 	ids, ok := event.Events[eventKey]
 	if !ok {
+		if _, ok := event.Events[oracletypes.EventTypeUpdateMinGasPrice+"."+feemarkettypes.AttributeKeyMinGasPrice]; ok {
+			return 0, nil
+		}
 		return 0, fmt.Errorf("event '%s' missing request id", eventKey)
 	}
 	if len(ids) == 0 {
