@@ -6,7 +6,7 @@ import "cosmos_proto/cosmos.proto";
 import "guru/oracle/v2/oracle.proto";
 import "guru/oracle/v2/params.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v2/y/oracle/types";
+option go_package = "github.com/gurufinglobal/guru/v2/x/oracle/types";
 
 // GenesisState defines the oracle module's genesis state.
 message GenesisState {

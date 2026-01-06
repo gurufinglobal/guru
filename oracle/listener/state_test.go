@@ -10,7 +10,7 @@ import (
 	"cosmossdk.io/log"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/gurufinglobal/guru/v2/oracle/types"
-	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 type mockSubscriptionClient struct {

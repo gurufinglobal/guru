@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gurufinglobal/guru/v2/y/oracle/types"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // ParseCategory parses a Category from either enum name (e.g. CATEGORY_CRYPTO)

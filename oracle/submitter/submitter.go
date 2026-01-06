@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 type SubmitClient interface {

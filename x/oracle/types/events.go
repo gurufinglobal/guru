@@ -1,45 +1,44 @@
 package types
 
-// Oracle module event type constants
 const (
-	// EventTypeRegisterOracleRequestDoc defines the event type for registering oracle request document
-	EventTypeRegisterOracleRequestDoc = "register_oracle_request_doc"
+	// EventTypeOracleTask is the single event type for oracle daemon to listen.
+	// Emitted when: 1) new request registered, 2) aggregation completed + period blocks.
+	EventTypeOracleTask = "oracle_task"
+	EventTypeUpdateMinGasPrice = "update_min_gas_price"
 
-	// EventTypeUpdateOracleRequestDoc defines the event type for updating oracle request document
-	EventTypeUpdateOracleRequestDoc = "update_oracle_request_doc"
-
-	// EventTypeCompleteOracleDataSet defines the event type for complete oracle data set
-	EventTypeCompleteOracleDataSet = "complete_oracle_data_set"
-
-	// EventTypeUpdateModeratorAddress defines the event type for updating moderator address
-	EventTypeUpdateModeratorAddress = "update_moderator_address"
-
-	// EventTypeSubmitOracleData defines the event type for submitting oracle data
-	EventTypeSubmitOracleData = "submit_oracle_data"
-)
-
-// Event attribute keys
-const (
-	AttributeKeyRequestId        = "request_id"
-	AttributeKeyOracleType       = "oracle_type"
-	AttributeKeyName             = "name"
-	AttributeKeyDescription      = "description"
-	AttributeKeyPeriod           = "period"
-	AttributeKeyAccountList      = "account_list"
-	AttributeKeyEndpoints        = "endpoints"
-	AttributeKeyAggregateRule    = "aggregate_rule"
-	AttributeKeyStatus           = "status"
-	AttributeKeyCreator          = "creator"
-	AttributeKeyModeratorAddress = "moderator_address"
-	AttributeKeyNonce            = "nonce"
-	AttributeKeyFromAddress      = "from_address"
-	AttributeKeyRawData          = "raw_data"
-	AttributeKeyAggregationRule  = "aggregation_rule"
-	AttributeKeyQuorum           = "quorum"
-	AttributeKeyBlockHeight      = "block_height"
-	AttributeKeyBlockTime        = "block_time"
+	// Legacy event types for internal logging (not for daemon)
+	EventTypeRegisterRequest = "register_oracle_request"
+	EventTypeUpdateRequest   = "update_oracle_request"
+	EventTypeSubmitReport    = "submit_oracle_report"
+	EventTypeAggregateResult = "aggregate_oracle_result"
+	EventTypeUpdateModerator = "update_moderator_address"
 )
 
 const (
-	AttributeKeyOracleDataNone = "oracle_data_nonce"
+	// AttributeKeyRequestID is the attribute key for the request ID.
+	AttributeKeyRequestID = "request_id"
+	// AttributeKeyCategory is the attribute key for the category.
+	AttributeKeyCategory = "category"
+	// AttributeKeySymbol is the attribute key for the symbol.
+	AttributeKeySymbol = "symbol"
+	// AttributeKeyCount is the attribute key for the count.
+	AttributeKeyCount = "count"
+	// AttributeKeyPeriod is the attribute key for the period.
+	AttributeKeyPeriod = "period"
+	// AttributeKeyStatus is the attribute key for the status.
+	AttributeKeyStatus = "status"
+	// AttributeKeyNonce is the attribute key for the nonce.
+	AttributeKeyNonce = "nonce"
+	// AttributeKeyProvider is the attribute key for the provider.
+	AttributeKeyProvider = "provider"
+	// AttributeKeyRawData is the attribute key for the raw data.
+	AttributeKeyRawData = "raw_data"
+	// AttributeKeyAggregatedData is the attribute key for the aggregated data.
+	AttributeKeyAggregatedData = "aggregated_data"
+	// AttributeKeyBlockHeight is the attribute key for the block height.
+	AttributeKeyBlockHeight = "block_height"
+	// AttributeKeyBlockTime is the attribute key for the block time.
+	AttributeKeyBlockTime = "block_time"
+	// AttributeKeyModerator is the attribute key for the moderator address.
+	AttributeKeyModerator = "moderator_address"
 )

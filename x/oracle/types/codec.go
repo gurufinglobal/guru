@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	amino     = codec.NewLegacyAmino()
+	amino = codec.NewLegacyAmino()
+	// ModuleCdc is the codec for the oracle module.
 	ModuleCdc = codec.NewAminoCodec(amino)
 )
 
@@ -19,24 +20,26 @@ func init() {
 	amino.Seal()
 }
 
-// RegisterLegacyAminoCodec registers the necessary x/oracle interfaces and concrete types
+// RegisterLegacyAminoCodec registers the necessary interfaces and concrete types
 // on the provided LegacyAmino codec. These types are used for Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgRegisterOracleRequestDoc{}, "oracle/RegisterOracleRequestDoc", nil)
-	cdc.RegisterConcrete(&MsgUpdateOracleRequestDoc{}, "oracle/UpdateOracleRequestDoc", nil)
-	cdc.RegisterConcrete(&MsgSubmitOracleData{}, "oracle/SubmitOracleData", nil)
 	cdc.RegisterConcrete(&MsgUpdateModeratorAddress{}, "oracle/UpdateModeratorAddress", nil)
-	cdc.RegisterConcrete(&MsgUpdateParams{}, "oracle/UpdateParams", nil)
+	cdc.RegisterConcrete(&MsgRegisterOracleRequest{}, "oracle/RegisterOracleRequest", nil)
+	cdc.RegisterConcrete(&MsgUpdateOracleRequest{}, "oracle/UpdateOracleRequest", nil)
+	cdc.RegisterConcrete(&MsgSubmitOracleReport{}, "oracle/SubmitOracleReport", nil)
+	cdc.RegisterConcrete(&MsgAddToWhitelist{}, "oracle/AddToWhitelist", nil)
+	cdc.RegisterConcrete(&MsgRemoveFromWhitelist{}, "oracle/RemoveFromWhitelist", nil)
 }
 
-// RegisterInterfaces registers the x/oracle interfaces types with the interface registry
+// RegisterInterfaces registers the module's interface types.
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgRegisterOracleRequestDoc{},
-		&MsgUpdateOracleRequestDoc{},
-		&MsgSubmitOracleData{},
 		&MsgUpdateModeratorAddress{},
-		&MsgUpdateParams{},
+		&MsgRegisterOracleRequest{},
+		&MsgUpdateOracleRequest{},
+		&MsgSubmitOracleReport{},
+		&MsgAddToWhitelist{},
+		&MsgRemoveFromWhitelist{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

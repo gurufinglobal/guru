@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 func EventToRequestID(event coretypes.ResultEvent) (uint64, error) {

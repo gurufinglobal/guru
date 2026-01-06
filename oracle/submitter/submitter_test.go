@@ -20,7 +20,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	guruencoding "github.com/gurufinglobal/guru/v2/encoding"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
-	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"google.golang.org/grpc"
 )
 

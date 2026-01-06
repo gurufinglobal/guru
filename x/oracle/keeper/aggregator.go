@@ -7,7 +7,7 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gurufinglobal/guru/v2/y/oracle/types"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // aggregateReports aggregates raw data values using median for robustness.

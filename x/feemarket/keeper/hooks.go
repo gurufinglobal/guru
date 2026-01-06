@@ -3,7 +3,8 @@ package keeper
 import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
+	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 var _ oracletypes.OracleHooks = OracleHooks{}
@@ -81,8 +82,10 @@ func (h OracleHooks) AfterOracleAggregation(ctx sdk.Context, request oracletypes
 	params.MinGasPrice = finalNewPriceDec
 	h.k.SetParams(ctx, params)
 
-	// ctx.EventManager().EmitEvent(
-	//     sdk.NewEvent(
-	//     ),
-	// )
+	ctx.EventManager().EmitEvent(
+	    sdk.NewEvent(
+			oracletypes.EventTypeUpdateMinGasPrice,
+			sdk.NewAttribute(types.AttributeKeyMinGasPrice, finalNewPriceDec.String()),
+	    ),
+	)
 }

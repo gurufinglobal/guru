@@ -3,116 +3,103 @@ package types
 import (
 	"encoding/binary"
 	"fmt"
+	"math/big"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// ValidateWithParams performs validation on OracleRequestDoc with parameter-based limits
-func (doc OracleRequestDoc) ValidateWithParams(params Params) error {
-	// Check if oracle type is unspecified
-	if doc.OracleType == OracleType_ORACLE_TYPE_UNSPECIFIED {
-		return fmt.Errorf("oracle type cannot be unspecified")
+// ProtoDefinedCategories returns all categories defined in the proto enum (excluding UNSPECIFIED),
+// in deterministic order.
+func ProtoDefinedCategories() []Category {
+	keys := make([]int, 0, len(Category_name))
+	for k := range Category_name {
+		keys = append(keys, int(k))
 	}
-	// Check if oracle type is zero (empty)
-	if doc.OracleType == 0 {
-		return fmt.Errorf("oracle type cannot be empty")
-	}
-	// Check if name is empty
-	if doc.Name == "" {
-		return fmt.Errorf("name cannot be empty")
-	}
-	// Check if endpoints is empty
-	if doc.Endpoints == nil {
-		return fmt.Errorf("endpoints cannot be empty")
-	}
-	// Check if endpoints is empty
-	if len(doc.Endpoints) == 0 {
-		return fmt.Errorf("endpoints cannot be empty")
-	}
-	// Check if aggregation rule is unspecified
-	if doc.AggregationRule == AggregationRule_AGGREGATION_RULE_UNSPECIFIED {
-		return fmt.Errorf("aggregation rule cannot be unspecified")
-	}
-	// Check if aggregation rule is empty
-	if doc.AggregationRule == 0 {
-		return fmt.Errorf("aggregation rule cannot be empty")
-	}
-	// Check if account list is nil
-	if doc.AccountList == nil {
-		return fmt.Errorf("account list cannot be empty")
-	}
-	// Check if account list is empty
-	if len(doc.AccountList) == 0 {
-		return fmt.Errorf("account list cannot be empty")
-	}
+	sort.Ints(keys)
 
-	// Safety check: prevent DoS attacks with too many accounts (parameter-based)
-	if uint64(len(doc.AccountList)) > params.MaxAccountListSize {
-		return fmt.Errorf("account list size exceeds maximum allowed: %d, maximum: %d", len(doc.AccountList), params.MaxAccountListSize)
-	}
-
-	// Validate each account in the account list
-	for _, account := range doc.AccountList {
-		if _, err := sdk.AccAddressFromBech32(account); err != nil {
-			return fmt.Errorf("account address is not valid bech32: %v", err)
+	out := make([]Category, 0, len(keys))
+	for _, k := range keys {
+		if k == int(Category_CATEGORY_UNSPECIFIED) {
+			continue
 		}
+		out = append(out, Category(k))
 	}
-	// Check if quorum is zero
-	if doc.Quorum == 0 {
-		return fmt.Errorf("quorum cannot be 0")
-	}
-	// Check if quorum is greater than the length of the account list
-	if doc.Quorum > uint32(len(doc.AccountList)) {
-		return fmt.Errorf("quorum cannot be greater than account list length")
-	}
+	return out
+}
 
-	// Safety check: prevent excessive quorum that could lead to performance issues (parameter-based)
-	if uint64(doc.Quorum) > params.MaxAccountListSize {
-		return fmt.Errorf("quorum exceeds maximum allowed: %d, maximum: %d", doc.Quorum, params.MaxAccountListSize)
-	}
+// IsKnownCategory reports whether the provided enum value is defined in the proto enum.
+// NOTE: proto3 technically allows unknown enum numbers on the wire, so we enforce known-ness explicitly.
+func IsKnownCategory(cat Category) bool {
+	_, ok := Category_name[int32(cat)]
+	return ok
+}
 
-	// Check if status is unspecified
-	if doc.Status == RequestStatus_REQUEST_STATUS_UNSPECIFIED {
+// ValidateBasic performs basic validation of the oracle request.
+func (r OracleRequest) ValidateBasic() error {
+	if r.Category == Category_CATEGORY_UNSPECIFIED {
+		return fmt.Errorf("category cannot be unspecified")
+	}
+	if r.Symbol == "" {
+		return fmt.Errorf("symbol cannot be empty")
+	}
+	if r.Period == 0 {
+		return fmt.Errorf("period must be greater than zero")
+	}
+	if r.Status == Status_STATUS_UNSPECIFIED {
 		return fmt.Errorf("status cannot be unspecified")
 	}
-	// Check if status is empty
-	if doc.Status == 0 {
-		return fmt.Errorf("status cannot be empty")
-	}
-
 	return nil
 }
 
-// Validate performs basic validation on OracleRequestDoc with default limits
-func (doc OracleRequestDoc) Validate() error {
-	// Use default parameters for validation
-	defaultParams := DefaultParams()
-	return doc.ValidateWithParams(defaultParams)
+// ValidateBasic performs basic validation of the oracle report.
+func (r OracleReport) ValidateBasic() error {
+	if r.RequestId == 0 {
+		return fmt.Errorf("request id cannot be zero")
+	}
+	if r.Nonce == 0 {
+		return fmt.Errorf("nonce must be greater than zero")
+	}
+	if r.Provider == "" {
+		return fmt.Errorf("provider cannot be empty")
+	}
+	if _, err := sdk.AccAddressFromBech32(r.Provider); err != nil {
+		return fmt.Errorf("invalid provider address: %w", err)
+	}
+	if r.RawData == "" {
+		return fmt.Errorf("raw data cannot be empty")
+	}
+	if _, ok := new(big.Float).SetString(r.RawData); !ok {
+		return fmt.Errorf("raw data must be a valid decimal")
+	}
+	if len(r.Signature) == 0 {
+		return fmt.Errorf("signature cannot be empty")
+	}
+	return nil
 }
 
-// SignBytes returns the canonical, unhashed bytes to be signed for SubmitDataSet.
-// This encoding matches the Hash() preimage exactly, but without hashing.
-func (sds SubmitDataSet) Bytes() ([]byte, error) {
-	domain := []byte("guru.oracle.SubmitDataSet")
+// Bytes returns canonical sign bytes for oracle report verification.
+func (r OracleReport) Bytes() ([]byte, error) {
+	domain := []byte("guru.oracle.v2.OracleReport")
 
-	buf := make([]byte, 0, len(domain)+8+8+4+len(sds.RawData)+20)
-	buf = append(buf, domain...)
-
-	var u64 [8]byte
-	binary.BigEndian.PutUint64(u64[:], sds.RequestId)
-	buf = append(buf, u64[:]...)
-	binary.BigEndian.PutUint64(u64[:], sds.Nonce)
-	buf = append(buf, u64[:]...)
-
-	var l4 [4]byte
-	binary.BigEndian.PutUint32(l4[:], uint32(len(sds.RawData)))
-	buf = append(buf, l4[:]...)
-	buf = append(buf, []byte(sds.RawData)...)
-
-	acc, err := sdk.AccAddressFromBech32(sds.Provider)
+	addr, err := sdk.AccAddressFromBech32(r.Provider)
 	if err != nil {
 		return nil, fmt.Errorf("invalid provider bech32: %w", err)
 	}
 
-	return append(buf, acc.Bytes()...), nil
+	buf := make([]byte, 0, len(domain)+8+8+4+len(r.RawData)+len(addr))
+	buf = append(buf, domain...)
+
+	var u64 [8]byte
+	binary.BigEndian.PutUint64(u64[:], r.RequestId)
+	buf = append(buf, u64[:]...)
+	binary.BigEndian.PutUint64(u64[:], r.Nonce)
+	buf = append(buf, u64[:]...)
+
+	var l4 [4]byte
+	binary.BigEndian.PutUint32(l4[:], uint32(len(r.RawData)))
+	buf = append(buf, l4[:]...)
+	buf = append(buf, []byte(r.RawData)...)
+
+	return append(buf, addr.Bytes()...), nil
 }

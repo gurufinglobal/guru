@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/y/oracle/types"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 func TestProcessScheduledTasks_RollOverAndReschedule(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/y/oracle/types"
+	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 func TestQueryParamsAndModerator(t *testing.T) {

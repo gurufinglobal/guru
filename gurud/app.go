@@ -50,15 +50,15 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/ibc/transfer" // NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 	transferv2 "github.com/gurufinglobal/guru/v2/x/ibc/transfer/v2"
+	oraclemodule "github.com/gurufinglobal/guru/v2/x/oracle"
+	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/gurufinglobal/guru/v2/x/precisebank"
 	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
 	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
 	"github.com/gurufinglobal/guru/v2/x/vm"
 	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	oraclemodule "github.com/gurufinglobal/guru/v2/y/oracle"
-	oraclekeeper "github.com/gurufinglobal/guru/v2/y/oracle/keeper"
-	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"

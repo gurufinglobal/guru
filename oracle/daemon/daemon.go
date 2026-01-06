@@ -30,7 +30,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/oracle/types"
 	"github.com/gurufinglobal/guru/v2/oracle/utils"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	oracletypes "github.com/gurufinglobal/guru/v2/y/oracle/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/rs/zerolog"
 )
 
