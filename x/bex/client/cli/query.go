@@ -174,3 +174,54 @@ func GetCmdQueryCollectedFees() *cobra.Command {
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
+
+func GetCmdQueryLockedFees() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "locked-fees [exchange-id]",
+		Short: "Query the locked (reserved) fees for the given exchange id",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			exchangeID := args[0]
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.LockedFees(cmd.Context(), &types.QueryLockedFeesRequest{ExchangeId: exchangeID})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetCmdQueryAvailableFees() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "available-fees [exchange-id]",
+		Short: "Query the available fees for the given exchange id (collected - locked)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			exchangeID := args[0]
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.AvailableFees(cmd.Context(), &types.QueryAvailableFeesRequest{ExchangeId: exchangeID})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}

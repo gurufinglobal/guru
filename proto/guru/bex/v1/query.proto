@@ -44,6 +44,16 @@ service Query {
     option (google.api.http).get = "/guru/bex/v1/collected_fees"; // optional parameter: exchangeId
   }
 
+  // LockedFees returns the locked (reserved) fees for given exchange.
+  rpc LockedFees(QueryLockedFeesRequest) returns (QueryLockedFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/locked_fees"; // required parameter: exchangeId
+  }
+
+  // AvailableFees returns the available fees for given exchange (collected - locked).
+  rpc AvailableFees(QueryAvailableFeesRequest) returns (QueryAvailableFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/available_fees"; // required parameter: exchangeId
+  }
+
 }
 
 // Request type for the Query/ModeratorAddress RPC method.
@@ -110,5 +120,29 @@ message QueryCollectedFeesRequest {
 message QueryCollectedFeesResponse {
   repeated cosmos.base.v1beta1.Coin coins = 1 [
     (gogoproto.nullable)   = false
+  ];
+}
+
+// Request type for the Query/LockedFees RPC method.
+message QueryLockedFeesRequest {
+  string exchangeId = 1;
+}
+
+// Response type for the Query/LockedFees RPC method.
+message QueryLockedFeesResponse {
+  repeated cosmos.base.v1beta1.Coin coins = 1 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Request type for the Query/AvailableFees RPC method.
+message QueryAvailableFeesRequest {
+  string exchangeId = 1;
+}
+
+// Response type for the Query/AvailableFees RPC method.
+message QueryAvailableFeesResponse {
+  repeated cosmos.base.v1beta1.Coin coins = 1 [
+    (gogoproto.nullable) = false
   ];
 }

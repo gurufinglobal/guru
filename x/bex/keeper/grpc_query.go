@@ -68,7 +68,7 @@ func (k Keeper) CollectedFees(c context.Context, req *types.QueryCollectedFeesRe
 	ctx := sdk.UnwrapSDKContext(c)
 
 	if req.ExchangeId == "" || req.ExchangeId == "0" {
-		coins := k.GetTotalCollectedFees(ctx)
+		coins := k.GetAllCollectedFees(ctx)
 		return &types.QueryCollectedFeesResponse{Coins: coins}, nil
 	}
 
@@ -77,9 +77,47 @@ func (k Keeper) CollectedFees(c context.Context, req *types.QueryCollectedFeesRe
 		return nil, fmt.Errorf("invalid exchange id: %s", req.ExchangeId)
 	}
 
-	fees, err := k.GetExchangeFees(ctx, req.ExchangeId)
+	// IMPORTANT: "CollectedFees" query should return collected fees (ledger) for the exchange.
+	fees, err := k.GetCollectedFees(ctx, req.ExchangeId)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryCollectedFeesResponse{Coins: fees}, nil
 }
+
+// LockedFees returns the locked (reserved) fees for the given exchange id.
+func (k Keeper) LockedFees(c context.Context, req *types.QueryLockedFeesRequest) (*types.QueryLockedFeesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if req.ExchangeId == "" || req.ExchangeId == "0" {
+		return nil, fmt.Errorf("exchange id is required")
+	}
+	if _, ok := math.NewIntFromString(req.ExchangeId); !ok {
+		return nil, fmt.Errorf("invalid exchange id: %s", req.ExchangeId)
+	}
+
+	fees, err := k.getLockedFees(ctx, req.ExchangeId)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryLockedFeesResponse{Coins: fees}, nil
+}
+
+// AvailableFees returns the available fees for the given exchange id (collected - locked).
+func (k Keeper) AvailableFees(c context.Context, req *types.QueryAvailableFeesRequest) (*types.QueryAvailableFeesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if req.ExchangeId == "" || req.ExchangeId == "0" {
+		return nil, fmt.Errorf("exchange id is required")
+	}
+	if _, ok := math.NewIntFromString(req.ExchangeId); !ok {
+		return nil, fmt.Errorf("invalid exchange id: %s", req.ExchangeId)
+	}
+
+	fees, err := k.GetAvailableFees(ctx, req.ExchangeId)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryAvailableFeesResponse{Coins: fees}, nil
+}
+

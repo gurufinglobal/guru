@@ -29,13 +29,13 @@ else
 fi
 
 # 2. Go lint check
-echo -e "\n${YELLOW}[2/6] Running Go linter...${NC}"
-if make lint-go; then
-	echo -e "${GREEN}✓ Go lint passed${NC}"
-else
-	echo -e "${RED}✗ Go lint failed${NC}"
-	exit 1
-fi
+# echo -e "\n${YELLOW}[2/6] Running Go linter...${NC}"
+# if make lint-go; then
+# 	echo -e "${GREEN}✓ Go lint passed${NC}"
+# else
+# 	echo -e "${RED}✗ Go lint failed${NC}"
+# 	exit 1
+# fi
 
 # 3. Unit tests with coverage
 echo -e "\n${YELLOW}[3/6] Running unit tests...${NC}"

@@ -5,8 +5,12 @@ package types
 
 import (
 	context "context"
-	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
+	cosmossdk_io_math "cosmossdk.io/math"
 	_ "github.com/cosmos/cosmos-proto"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -16,9 +20,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -541,6 +542,186 @@ func (m *QueryCollectedFeesResponse) GetCoins() []types.Coin {
 	return nil
 }
 
+// Request type for the Query/LockedFees RPC method.
+type QueryLockedFeesRequest struct {
+	ExchangeId string `protobuf:"bytes,1,opt,name=exchangeId,proto3" json:"exchangeId,omitempty"`
+}
+
+func (m *QueryLockedFeesRequest) Reset()         { *m = QueryLockedFeesRequest{} }
+func (m *QueryLockedFeesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryLockedFeesRequest) ProtoMessage()    {}
+func (*QueryLockedFeesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1c9cb0b2816bd3b9, []int{12}
+}
+func (m *QueryLockedFeesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryLockedFeesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryLockedFeesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryLockedFeesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryLockedFeesRequest.Merge(m, src)
+}
+func (m *QueryLockedFeesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryLockedFeesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryLockedFeesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryLockedFeesRequest proto.InternalMessageInfo
+
+func (m *QueryLockedFeesRequest) GetExchangeId() string {
+	if m != nil {
+		return m.ExchangeId
+	}
+	return ""
+}
+
+// Response type for the Query/LockedFees RPC method.
+type QueryLockedFeesResponse struct {
+	Coins []types.Coin `protobuf:"bytes,1,rep,name=coins,proto3" json:"coins"`
+}
+
+func (m *QueryLockedFeesResponse) Reset()         { *m = QueryLockedFeesResponse{} }
+func (m *QueryLockedFeesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryLockedFeesResponse) ProtoMessage()    {}
+func (*QueryLockedFeesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1c9cb0b2816bd3b9, []int{13}
+}
+func (m *QueryLockedFeesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryLockedFeesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryLockedFeesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryLockedFeesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryLockedFeesResponse.Merge(m, src)
+}
+func (m *QueryLockedFeesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryLockedFeesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryLockedFeesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryLockedFeesResponse proto.InternalMessageInfo
+
+func (m *QueryLockedFeesResponse) GetCoins() []types.Coin {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
+
+// Request type for the Query/AvailableFees RPC method.
+type QueryAvailableFeesRequest struct {
+	ExchangeId string `protobuf:"bytes,1,opt,name=exchangeId,proto3" json:"exchangeId,omitempty"`
+}
+
+func (m *QueryAvailableFeesRequest) Reset()         { *m = QueryAvailableFeesRequest{} }
+func (m *QueryAvailableFeesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAvailableFeesRequest) ProtoMessage()    {}
+func (*QueryAvailableFeesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1c9cb0b2816bd3b9, []int{14}
+}
+func (m *QueryAvailableFeesRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAvailableFeesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAvailableFeesRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAvailableFeesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAvailableFeesRequest.Merge(m, src)
+}
+func (m *QueryAvailableFeesRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAvailableFeesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAvailableFeesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAvailableFeesRequest proto.InternalMessageInfo
+
+func (m *QueryAvailableFeesRequest) GetExchangeId() string {
+	if m != nil {
+		return m.ExchangeId
+	}
+	return ""
+}
+
+// Response type for the Query/AvailableFees RPC method.
+type QueryAvailableFeesResponse struct {
+	Coins []types.Coin `protobuf:"bytes,1,rep,name=coins,proto3" json:"coins"`
+}
+
+func (m *QueryAvailableFeesResponse) Reset()         { *m = QueryAvailableFeesResponse{} }
+func (m *QueryAvailableFeesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAvailableFeesResponse) ProtoMessage()    {}
+func (*QueryAvailableFeesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1c9cb0b2816bd3b9, []int{15}
+}
+func (m *QueryAvailableFeesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAvailableFeesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAvailableFeesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAvailableFeesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAvailableFeesResponse.Merge(m, src)
+}
+func (m *QueryAvailableFeesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAvailableFeesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAvailableFeesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAvailableFeesResponse proto.InternalMessageInfo
+
+func (m *QueryAvailableFeesResponse) GetCoins() []types.Coin {
+	if m != nil {
+		return m.Coins
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*QueryModeratorAddressRequest)(nil), "guru.bex.v1.QueryModeratorAddressRequest")
 	proto.RegisterType((*QueryModeratorAddressResponse)(nil), "guru.bex.v1.QueryModeratorAddressResponse")
@@ -554,57 +735,67 @@ func init() {
 	proto.RegisterType((*QueryRatemeterResponse)(nil), "guru.bex.v1.QueryRatemeterResponse")
 	proto.RegisterType((*QueryCollectedFeesRequest)(nil), "guru.bex.v1.QueryCollectedFeesRequest")
 	proto.RegisterType((*QueryCollectedFeesResponse)(nil), "guru.bex.v1.QueryCollectedFeesResponse")
+	proto.RegisterType((*QueryLockedFeesRequest)(nil), "guru.bex.v1.QueryLockedFeesRequest")
+	proto.RegisterType((*QueryLockedFeesResponse)(nil), "guru.bex.v1.QueryLockedFeesResponse")
+	proto.RegisterType((*QueryAvailableFeesRequest)(nil), "guru.bex.v1.QueryAvailableFeesRequest")
+	proto.RegisterType((*QueryAvailableFeesResponse)(nil), "guru.bex.v1.QueryAvailableFeesResponse")
 }
 
 func init() { proto.RegisterFile("guru/bex/v1/query.proto", fileDescriptor_1c9cb0b2816bd3b9) }
 
 var fileDescriptor_1c9cb0b2816bd3b9 = []byte{
-	// 719 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x55, 0xcf, 0x4f, 0x13, 0x41,
-	0x18, 0xed, 0xa2, 0xfc, 0xe8, 0x10, 0x09, 0x8e, 0x14, 0xda, 0x05, 0x96, 0xba, 0x44, 0x40, 0xd1,
-	0x9d, 0xb4, 0xc6, 0x83, 0x72, 0x02, 0x22, 0x49, 0x13, 0x35, 0xb1, 0x78, 0xe2, 0xd2, 0xec, 0x76,
-	0x87, 0x65, 0x62, 0x77, 0xa7, 0xec, 0x4c, 0x9b, 0x12, 0xe3, 0xc5, 0xc4, 0x8b, 0x27, 0x8d, 0xfe,
-	0x29, 0xfe, 0x11, 0x1c, 0x89, 0x5e, 0x8c, 0x07, 0x62, 0xc0, 0x3f, 0xc4, 0xec, 0xec, 0xcc, 0xb6,
-	0xdb, 0x96, 0xe2, 0xad, 0x33, 0xdf, 0xfb, 0xde, 0xf7, 0xe6, 0xed, 0xfb, 0x52, 0xb0, 0xe0, 0xb5,
-	0xc2, 0x16, 0x72, 0x70, 0x07, 0xb5, 0x4b, 0xe8, 0xb8, 0x85, 0xc3, 0x13, 0xab, 0x19, 0x52, 0x4e,
-	0xe1, 0x74, 0x54, 0xb0, 0x1c, 0xdc, 0xb1, 0xda, 0x25, 0x3d, 0xd7, 0x8b, 0x8a, 0xee, 0x04, 0x46,
-	0x2f, 0xd4, 0x29, 0xf3, 0x29, 0xab, 0x89, 0x13, 0x8a, 0x0f, 0xb2, 0x64, 0xc4, 0x27, 0xe4, 0xd8,
-	0x0c, 0xa3, 0x76, 0xc9, 0xc1, 0xdc, 0x2e, 0xa1, 0x3a, 0x25, 0x81, 0xac, 0xcf, 0x79, 0xd4, 0xa3,
-	0x71, 0x5f, 0xf4, 0x4b, 0xde, 0x2e, 0x79, 0x94, 0x7a, 0x0d, 0x8c, 0xec, 0x26, 0x41, 0x76, 0x10,
-	0x50, 0x6e, 0x73, 0x42, 0x03, 0xc9, 0x69, 0x1a, 0x60, 0xe9, 0x75, 0xa4, 0xf0, 0x25, 0x75, 0x71,
-	0x68, 0x73, 0x1a, 0x6e, 0xbb, 0x6e, 0x88, 0x19, 0xab, 0xe2, 0xe3, 0x16, 0x66, 0xdc, 0x7c, 0x01,
-	0x96, 0xaf, 0xa8, 0xb3, 0x26, 0x0d, 0x18, 0x86, 0x9b, 0xe0, 0xb6, 0xaf, 0x6a, 0x35, 0x3b, 0x2e,
-	0xe6, 0xb5, 0xa2, 0xb6, 0x91, 0xad, 0xce, 0xfa, 0x7d, 0x4d, 0xe6, 0x3a, 0xc8, 0x09, 0xb6, 0xe7,
-	0x9d, 0xfa, 0x91, 0x1d, 0x78, 0x58, 0x8d, 0x81, 0x33, 0x60, 0x8c, 0xb8, 0xb2, 0x6d, 0x8c, 0xb8,
-	0xe6, 0x3e, 0x98, 0xef, 0x07, 0xca, 0x79, 0x4f, 0x41, 0x16, 0xab, 0xcb, 0xbc, 0x56, 0xbc, 0xb1,
-	0x31, 0x5d, 0xce, 0x59, 0x3d, 0xbe, 0x5a, 0xaa, 0x65, 0xe7, 0xe6, 0xe9, 0xf9, 0x4a, 0xa6, 0xda,
-	0x45, 0x9b, 0x08, 0xdc, 0x11, 0xa4, 0x15, 0xb6, 0xed, 0xfa, 0x24, 0x50, 0xb3, 0xf3, 0x60, 0x32,
-	0xad, 0x5b, 0x1d, 0xcd, 0x12, 0x98, 0x4b, 0x37, 0x48, 0x0d, 0x05, 0x30, 0x45, 0x58, 0xcd, 0x8e,
-	0xee, 0x44, 0xcb, 0x54, 0x75, 0x92, 0xc4, 0x10, 0x73, 0x09, 0xe8, 0xa2, 0xe5, 0x15, 0xee, 0x70,
-	0xa5, 0xa4, 0xe2, 0x2a, 0x37, 0x0f, 0xc0, 0xe2, 0xd0, 0xaa, 0xe4, 0xdd, 0xea, 0xba, 0xb0, 0xb3,
-	0x19, 0xa9, 0xff, 0x7d, 0xbe, 0x92, 0x8b, 0x3f, 0x3a, 0x73, 0xdf, 0x5a, 0x84, 0x22, 0xdf, 0xe6,
-	0x47, 0x56, 0x25, 0xe0, 0x3f, 0xbe, 0x3f, 0x02, 0x32, 0x1b, 0x95, 0x80, 0x0b, 0xcb, 0x16, 0xa4,
-	0xb7, 0x55, 0x9b, 0x63, 0x1f, 0x73, 0x1c, 0xaa, 0xa1, 0x6f, 0xa4, 0x97, 0x3d, 0x05, 0x39, 0xef,
-	0x19, 0xc8, 0x86, 0xea, 0x52, 0x8c, 0x9d, 0x2e, 0xcf, 0xa7, 0xbc, 0x4c, 0x5a, 0x94, 0x99, 0x09,
-	0xdc, 0xdc, 0x02, 0x05, 0xc1, 0xba, 0x4b, 0x1b, 0x0d, 0x5c, 0xe7, 0xd8, 0xdd, 0xc3, 0xdd, 0xcf,
-	0x69, 0x00, 0x80, 0x93, 0xe7, 0x49, 0x57, 0x7b, 0x6e, 0xcc, 0x7d, 0xe9, 0x52, 0x5f, 0xb3, 0x94,
-	0xf5, 0x04, 0x8c, 0x47, 0xa9, 0x56, 0x9f, 0xb7, 0x60, 0xc9, 0x97, 0x46, 0xb9, 0xb7, 0x64, 0xee,
-	0xad, 0x5d, 0x4a, 0x02, 0xa9, 0x2a, 0x46, 0x97, 0xbf, 0x4d, 0x80, 0x71, 0xc1, 0x0a, 0xbf, 0x68,
-	0x60, 0xb6, 0x3f, 0xb0, 0xf0, 0x7e, 0xea, 0x65, 0xa3, 0x42, 0xaf, 0x3f, 0xf8, 0x1f, 0x68, 0x2c,
-	0xd6, 0x5c, 0xfb, 0xf0, 0xf3, 0xef, 0xd7, 0xb1, 0x22, 0x34, 0x50, 0xef, 0x3e, 0x0f, 0xac, 0x04,
-	0xe4, 0x20, 0x9b, 0x84, 0x19, 0x9a, 0x83, 0x03, 0xfa, 0x57, 0x42, 0x5f, 0x1d, 0x89, 0x91, 0xd3,
-	0x0d, 0x31, 0x3d, 0x0f, 0xe7, 0x53, 0xd3, 0x93, 0xc8, 0xc3, 0x36, 0x98, 0x94, 0xe1, 0x85, 0xc5,
-	0x41, 0xbe, 0xf4, 0x22, 0xe8, 0x77, 0x47, 0x20, 0x46, 0xbe, 0x96, 0x30, 0xb1, 0x0b, 0xe8, 0x9d,
-	0x7c, 0xec, 0x7b, 0xf8, 0x49, 0x03, 0x33, 0xe9, 0x90, 0xc3, 0xf5, 0x41, 0xf6, 0xa1, 0x4b, 0xa2,
-	0x6f, 0x5c, 0x0f, 0x94, 0x6a, 0xee, 0x09, 0x35, 0x2b, 0x70, 0x39, 0xa5, 0x26, 0xc0, 0x1d, 0x5e,
-	0x53, 0x16, 0xd4, 0x88, 0x1b, 0x59, 0x9f, 0x04, 0x79, 0x98, 0xf5, 0xfd, 0x1b, 0x33, 0xcc, 0xfa,
-	0x81, 0xe5, 0xb9, 0xc2, 0xfa, 0x64, 0x41, 0xe0, 0x47, 0x0d, 0xdc, 0x4a, 0xe5, 0x1b, 0xae, 0x0d,
-	0xd2, 0x0e, 0xdb, 0x1e, 0x7d, 0xfd, 0x5a, 0x9c, 0x94, 0xb0, 0x2a, 0x24, 0x2c, 0xc3, 0xc5, 0x94,
-	0x84, 0xba, 0xc2, 0xd6, 0x0e, 0x31, 0x66, 0x3b, 0x7b, 0xa7, 0x17, 0x86, 0x76, 0x76, 0x61, 0x68,
-	0x7f, 0x2e, 0x0c, 0xed, 0xf3, 0xa5, 0x91, 0x39, 0xbb, 0x34, 0x32, 0xbf, 0x2e, 0x8d, 0xcc, 0xc1,
-	0x43, 0x8f, 0xf0, 0xa3, 0x96, 0x63, 0xd5, 0xa9, 0x2f, 0x08, 0x0e, 0x49, 0xe0, 0x35, 0xa8, 0x63,
-	0x37, 0x62, 0xba, 0x76, 0x19, 0x75, 0x04, 0x27, 0x3f, 0x69, 0x62, 0xe6, 0x4c, 0x88, 0x3f, 0x8c,
-	0xc7, 0xff, 0x02, 0x00, 0x00, 0xff, 0xff, 0x46, 0x29, 0x43, 0x6b, 0xde, 0x06, 0x00, 0x00,
+	// 809 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x56, 0x41, 0x4f, 0xdb, 0x48,
+	0x18, 0x8d, 0xd9, 0x65, 0x21, 0x83, 0x16, 0xb1, 0xb3, 0x04, 0x12, 0x03, 0x26, 0x6b, 0xb6, 0x40,
+	0x4b, 0x6b, 0x2b, 0xa9, 0x2a, 0xb5, 0xe5, 0x04, 0xa8, 0x48, 0x91, 0x68, 0xd5, 0x86, 0x9e, 0xb8,
+	0x44, 0xe3, 0x78, 0x30, 0x23, 0x1c, 0x4f, 0xb0, 0x27, 0x51, 0x50, 0xd5, 0x4b, 0xa5, 0x5e, 0x7a,
+	0x6a, 0xd5, 0x43, 0xff, 0x48, 0x7f, 0x04, 0x47, 0xd4, 0x5e, 0xaa, 0x1e, 0x50, 0x05, 0xfd, 0x21,
+	0x95, 0xc7, 0x33, 0x49, 0x1c, 0x9b, 0xd0, 0x96, 0x5b, 0x3c, 0xdf, 0xfb, 0xbe, 0xf7, 0xe6, 0xcd,
+	0xcc, 0x53, 0xc0, 0xac, 0xd3, 0xf2, 0x5b, 0xa6, 0x85, 0x3b, 0x66, 0xbb, 0x64, 0x1e, 0xb5, 0xb0,
+	0x7f, 0x6c, 0x34, 0x7d, 0xca, 0x28, 0x9c, 0x08, 0x0b, 0x86, 0x85, 0x3b, 0x46, 0xbb, 0xa4, 0xe6,
+	0xfa, 0x51, 0xe1, 0x1a, 0xc7, 0xa8, 0x85, 0x3a, 0x0d, 0x1a, 0x34, 0xa8, 0xf1, 0x2f, 0x33, 0xfa,
+	0x10, 0x25, 0x2d, 0xfa, 0x32, 0x2d, 0x14, 0x60, 0xb3, 0x5d, 0xb2, 0x30, 0x43, 0x25, 0xb3, 0x4e,
+	0x89, 0x27, 0xea, 0xd3, 0x0e, 0x75, 0x68, 0xd4, 0x17, 0xfe, 0x12, 0xab, 0xf3, 0x0e, 0xa5, 0x8e,
+	0x8b, 0x4d, 0xd4, 0x24, 0x26, 0xf2, 0x3c, 0xca, 0x10, 0x23, 0xd4, 0x13, 0x33, 0x75, 0x0d, 0xcc,
+	0x3f, 0x0b, 0x15, 0x3e, 0xa6, 0x36, 0xf6, 0x11, 0xa3, 0xfe, 0x86, 0x6d, 0xfb, 0x38, 0x08, 0xaa,
+	0xf8, 0xa8, 0x85, 0x03, 0xa6, 0xef, 0x80, 0x85, 0x4b, 0xea, 0x41, 0x93, 0x7a, 0x01, 0x86, 0x6b,
+	0xe0, 0x9f, 0x86, 0xac, 0xd5, 0x50, 0x54, 0xcc, 0x2b, 0x45, 0x65, 0x35, 0x5b, 0x9d, 0x6a, 0x0c,
+	0x34, 0xe9, 0x2b, 0x20, 0xc7, 0xa7, 0x3d, 0xea, 0xd4, 0x0f, 0x90, 0xe7, 0x60, 0x49, 0x03, 0x27,
+	0xc1, 0x08, 0xb1, 0x45, 0xdb, 0x08, 0xb1, 0xf5, 0x5d, 0x30, 0x33, 0x08, 0x14, 0x7c, 0x0f, 0x40,
+	0x16, 0xcb, 0xc5, 0xbc, 0x52, 0xfc, 0x63, 0x75, 0xa2, 0x9c, 0x33, 0xfa, 0x7c, 0x35, 0x64, 0xcb,
+	0xe6, 0x9f, 0x27, 0x67, 0x8b, 0x99, 0x6a, 0x0f, 0xad, 0x9b, 0xe0, 0x5f, 0x3e, 0xb4, 0x12, 0x6c,
+	0xd8, 0x0d, 0xe2, 0x49, 0xee, 0x3c, 0x18, 0x8b, 0xeb, 0x96, 0x9f, 0x7a, 0x09, 0x4c, 0xc7, 0x1b,
+	0x84, 0x86, 0x02, 0x18, 0x27, 0x41, 0x0d, 0x85, 0x6b, 0xbc, 0x65, 0xbc, 0x3a, 0x46, 0x22, 0x88,
+	0x3e, 0x0f, 0x54, 0xde, 0xf2, 0x04, 0x77, 0x98, 0x54, 0x52, 0xb1, 0xa5, 0x9b, 0x7b, 0x60, 0x2e,
+	0xb5, 0x2a, 0xe6, 0xae, 0xf7, 0x5c, 0xd8, 0x5c, 0x0b, 0xd5, 0x7f, 0x3d, 0x5b, 0xcc, 0x45, 0x87,
+	0x1e, 0xd8, 0x87, 0x06, 0xa1, 0x66, 0x03, 0xb1, 0x03, 0xa3, 0xe2, 0xb1, 0x4f, 0x1f, 0xef, 0x00,
+	0x71, 0x37, 0x2a, 0x1e, 0xe3, 0x96, 0xcd, 0x0a, 0x6f, 0xab, 0x88, 0xe1, 0x06, 0x66, 0xd8, 0x97,
+	0xa4, 0xcf, 0x85, 0x97, 0x7d, 0x05, 0xc1, 0xf7, 0x10, 0x64, 0x7d, 0xb9, 0xc8, 0x69, 0x27, 0xca,
+	0x33, 0x31, 0x2f, 0xbb, 0x2d, 0xd2, 0xcc, 0x2e, 0x5c, 0x5f, 0x07, 0x05, 0x3e, 0x75, 0x8b, 0xba,
+	0x2e, 0xae, 0x33, 0x6c, 0x6f, 0xe3, 0xde, 0x71, 0x6a, 0x00, 0xe0, 0xee, 0xf6, 0x84, 0xab, 0x7d,
+	0x2b, 0xfa, 0xae, 0x70, 0x69, 0xa0, 0x59, 0xc8, 0xba, 0x07, 0x46, 0xc3, 0x5b, 0x2d, 0x8f, 0xb7,
+	0x60, 0x88, 0x9d, 0x86, 0xf7, 0xde, 0x10, 0xf7, 0xde, 0xd8, 0xa2, 0xc4, 0x13, 0xaa, 0x22, 0xb4,
+	0x7e, 0x5f, 0xec, 0x73, 0x87, 0xd6, 0x0f, 0x7f, 0x4d, 0xce, 0x53, 0x30, 0x9b, 0xe8, 0xbc, 0x9e,
+	0x16, 0xe9, 0xce, 0x46, 0x1b, 0x11, 0x17, 0x59, 0x2e, 0xfe, 0x1d, 0x77, 0x06, 0x9a, 0xaf, 0xa5,
+	0xa8, 0xfc, 0x61, 0x1c, 0x8c, 0xf2, 0xa9, 0xf0, 0x9d, 0x02, 0xa6, 0x06, 0x9f, 0x33, 0xbc, 0x19,
+	0x3b, 0xf7, 0x61, 0x91, 0xa0, 0xde, 0xfa, 0x19, 0x68, 0x24, 0x56, 0x5f, 0x7e, 0xf5, 0xf9, 0xfb,
+	0xfb, 0x91, 0x22, 0xd4, 0xcc, 0xfe, 0xb4, 0x4b, 0x04, 0x06, 0x64, 0x20, 0xdb, 0x7d, 0xea, 0x50,
+	0x4f, 0x12, 0x0c, 0x06, 0x86, 0xba, 0x34, 0x14, 0x23, 0xd8, 0x35, 0xce, 0x9e, 0x87, 0x33, 0x31,
+	0xf6, 0x6e, 0x20, 0xc0, 0x36, 0x18, 0x13, 0x4f, 0x1b, 0x16, 0x93, 0xf3, 0xe2, 0x31, 0xa1, 0xfe,
+	0x37, 0x04, 0x31, 0x74, 0xb7, 0x24, 0xe0, 0x49, 0x61, 0xbe, 0x10, 0x9b, 0x7d, 0x09, 0xdf, 0x28,
+	0x60, 0x32, 0x1e, 0x01, 0x70, 0x25, 0x39, 0x3d, 0x35, 0x42, 0xd4, 0xd5, 0xab, 0x81, 0x42, 0xcd,
+	0x0d, 0xae, 0x66, 0x11, 0x2e, 0xc4, 0xd4, 0x78, 0xb8, 0xc3, 0x6a, 0xd2, 0x82, 0x1a, 0xb1, 0x43,
+	0xeb, 0xbb, 0xcf, 0x3c, 0xcd, 0xfa, 0xc1, 0x3c, 0x49, 0xb3, 0x3e, 0x11, 0x2d, 0x97, 0x58, 0xdf,
+	0x8d, 0x0f, 0xf8, 0x5a, 0x01, 0x7f, 0xc7, 0x5e, 0x3f, 0x5c, 0x4e, 0x8e, 0x4d, 0xcb, 0x16, 0x75,
+	0xe5, 0x4a, 0x9c, 0x90, 0xb0, 0xc4, 0x25, 0x2c, 0xc0, 0xb9, 0x98, 0x84, 0xba, 0xc4, 0xd6, 0xf6,
+	0x43, 0xd6, 0x63, 0x00, 0x7a, 0xaf, 0x1e, 0xa6, 0x6c, 0x2d, 0x91, 0x26, 0xea, 0xff, 0xc3, 0x41,
+	0x82, 0xbd, 0xc8, 0xd9, 0x55, 0x98, 0x8f, 0xb1, 0xbb, 0x1c, 0x18, 0x51, 0x87, 0x16, 0xc4, 0x9e,
+	0x78, 0x9a, 0x05, 0x69, 0x01, 0x92, 0x66, 0x41, 0x6a, 0x56, 0x5c, 0x62, 0x01, 0x92, 0x58, 0xae,
+	0x63, 0x73, 0xfb, 0xe4, 0x5c, 0x53, 0x4e, 0xcf, 0x35, 0xe5, 0xdb, 0xb9, 0xa6, 0xbc, 0xbd, 0xd0,
+	0x32, 0xa7, 0x17, 0x5a, 0xe6, 0xcb, 0x85, 0x96, 0xd9, 0xbb, 0xed, 0x10, 0x76, 0xd0, 0xb2, 0x8c,
+	0x3a, 0x6d, 0xf0, 0x01, 0xfb, 0xc4, 0x73, 0x5c, 0x6a, 0x21, 0x37, 0x1a, 0xd7, 0x2e, 0x9b, 0x1d,
+	0x3e, 0x93, 0x1d, 0x37, 0x71, 0x60, 0xfd, 0xc5, 0xff, 0x51, 0xdc, 0xfd, 0x11, 0x00, 0x00, 0xff,
+	0xff, 0x0a, 0xbc, 0x90, 0x61, 0xff, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -632,6 +823,10 @@ type QueryClient interface {
 	Ratemeter(ctx context.Context, in *QueryRatemeterRequest, opts ...grpc.CallOption) (*QueryRatemeterResponse, error)
 	// CollectedFees returns the colelcted fees for given exchange
 	CollectedFees(ctx context.Context, in *QueryCollectedFeesRequest, opts ...grpc.CallOption) (*QueryCollectedFeesResponse, error)
+	// LockedFees returns the locked (reserved) fees for given exchange.
+	LockedFees(ctx context.Context, in *QueryLockedFeesRequest, opts ...grpc.CallOption) (*QueryLockedFeesResponse, error)
+	// AvailableFees returns the available fees for given exchange (collected - locked).
+	AvailableFees(ctx context.Context, in *QueryAvailableFeesRequest, opts ...grpc.CallOption) (*QueryAvailableFeesResponse, error)
 }
 
 type queryClient struct {
@@ -696,6 +891,24 @@ func (c *queryClient) CollectedFees(ctx context.Context, in *QueryCollectedFeesR
 	return out, nil
 }
 
+func (c *queryClient) LockedFees(ctx context.Context, in *QueryLockedFeesRequest, opts ...grpc.CallOption) (*QueryLockedFeesResponse, error) {
+	out := new(QueryLockedFeesResponse)
+	err := c.cc.Invoke(ctx, "/guru.bex.v1.Query/LockedFees", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) AvailableFees(ctx context.Context, in *QueryAvailableFeesRequest, opts ...grpc.CallOption) (*QueryAvailableFeesResponse, error) {
+	out := new(QueryAvailableFeesResponse)
+	err := c.cc.Invoke(ctx, "/guru.bex.v1.Query/AvailableFees", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// ModeratorAddress returns the current moderator address
@@ -711,6 +924,10 @@ type QueryServer interface {
 	Ratemeter(context.Context, *QueryRatemeterRequest) (*QueryRatemeterResponse, error)
 	// CollectedFees returns the colelcted fees for given exchange
 	CollectedFees(context.Context, *QueryCollectedFeesRequest) (*QueryCollectedFeesResponse, error)
+	// LockedFees returns the locked (reserved) fees for given exchange.
+	LockedFees(context.Context, *QueryLockedFeesRequest) (*QueryLockedFeesResponse, error)
+	// AvailableFees returns the available fees for given exchange (collected - locked).
+	AvailableFees(context.Context, *QueryAvailableFeesRequest) (*QueryAvailableFeesResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -734,6 +951,12 @@ func (*UnimplementedQueryServer) Ratemeter(ctx context.Context, req *QueryRateme
 }
 func (*UnimplementedQueryServer) CollectedFees(ctx context.Context, req *QueryCollectedFeesRequest) (*QueryCollectedFeesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CollectedFees not implemented")
+}
+func (*UnimplementedQueryServer) LockedFees(ctx context.Context, req *QueryLockedFeesRequest) (*QueryLockedFeesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LockedFees not implemented")
+}
+func (*UnimplementedQueryServer) AvailableFees(ctx context.Context, req *QueryAvailableFeesRequest) (*QueryAvailableFeesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AvailableFees not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -848,6 +1071,42 @@ func _Query_CollectedFees_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_LockedFees_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryLockedFeesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).LockedFees(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/guru.bex.v1.Query/LockedFees",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).LockedFees(ctx, req.(*QueryLockedFeesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_AvailableFees_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAvailableFeesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).AvailableFees(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/guru.bex.v1.Query/AvailableFees",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).AvailableFees(ctx, req.(*QueryAvailableFeesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "guru.bex.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -875,6 +1134,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CollectedFees",
 			Handler:    _Query_CollectedFees_Handler,
+		},
+		{
+			MethodName: "LockedFees",
+			Handler:    _Query_LockedFees_Handler,
+		},
+		{
+			MethodName: "AvailableFees",
+			Handler:    _Query_AvailableFees_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1243,6 +1510,140 @@ func (m *QueryCollectedFeesResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryLockedFeesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryLockedFeesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryLockedFeesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ExchangeId) > 0 {
+		i -= len(m.ExchangeId)
+		copy(dAtA[i:], m.ExchangeId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ExchangeId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryLockedFeesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryLockedFeesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryLockedFeesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for iNdEx := len(m.Coins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Coins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAvailableFeesRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAvailableFeesRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAvailableFeesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ExchangeId) > 0 {
+		i -= len(m.ExchangeId)
+		copy(dAtA[i:], m.ExchangeId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ExchangeId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAvailableFeesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAvailableFeesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAvailableFeesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for iNdEx := len(m.Coins) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Coins[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -1383,6 +1784,62 @@ func (m *QueryCollectedFeesRequest) Size() (n int) {
 }
 
 func (m *QueryCollectedFeesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for _, e := range m.Coins {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryLockedFeesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ExchangeId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryLockedFeesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Coins) > 0 {
+		for _, e := range m.Coins {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryAvailableFeesRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ExchangeId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryAvailableFeesResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2229,6 +2686,338 @@ func (m *QueryCollectedFeesResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: QueryCollectedFeesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Coins = append(m.Coins, types.Coin{})
+			if err := m.Coins[len(m.Coins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryLockedFeesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryLockedFeesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryLockedFeesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExchangeId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ExchangeId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryLockedFeesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryLockedFeesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryLockedFeesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Coins", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Coins = append(m.Coins, types.Coin{})
+			if err := m.Coins[len(m.Coins)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAvailableFeesRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAvailableFeesRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAvailableFeesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExchangeId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ExchangeId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAvailableFeesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAvailableFeesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAvailableFeesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

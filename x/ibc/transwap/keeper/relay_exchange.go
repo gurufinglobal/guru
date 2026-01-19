@@ -209,7 +209,7 @@ func (k Keeper) OnRecvExchangePacket(
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send fees to module address: %s", coin.Denom)
 	}
-	err = k.BexKeeper.AddExchangeFees(ctx, exchangeID.String(), sdk.NewCoins(feeCoin))
+	err = k.BexKeeper.AddCollectedFees(ctx, exchangeID.String(), sdk.NewCoins(feeCoin))
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to add fees to collected fees: %s", feeCoin.Denom)
 	}
@@ -328,7 +328,7 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransf
 	}
 
 	// update the kv store
-	err = k.BexKeeper.DeductExchangeFees(ctx, refundPacket.ExchangeId, sdk.NewCoins(refundPacket.Fee))
+	err = k.BexKeeper.DeductCollectedFees(ctx, refundPacket.ExchangeId, sdk.NewCoins(refundPacket.Fee))
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to deduct fees from collected fees: %s", refundPacket.Fee.Denom)
 	}
