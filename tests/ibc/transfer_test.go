@@ -92,7 +92,7 @@ func (suite *TransferTestSuite) TestHandleMsgTransfer() {
 
 			tc.malleate()
 
-			evmApp := suite.evmChainA.App.(*gurud.EVMD)
+			evmApp := suite.evmChainA.App.(*gurud.GURUD)
 			sourceDenomToTransfer, err = evmApp.StakingKeeper.BondDenom(suite.evmChainA.GetContext())
 			suite.Require().NoError(err)
 			originalBalance := evmApp.BankKeeper.GetBalance(

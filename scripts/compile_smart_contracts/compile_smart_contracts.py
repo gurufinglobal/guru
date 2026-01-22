@@ -301,7 +301,7 @@ if __name__ == "__main__":
     if not is_os_repo(REPO_PATH):
         raise ValueError(
             "This script should only be executed "
-            + "in the evmos repository."
+            + "in the guru repository."
             + f"Current path: {REPO_PATH}"
         )
 

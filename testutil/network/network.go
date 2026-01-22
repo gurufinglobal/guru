@@ -56,7 +56,7 @@ import (
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -78,14 +78,14 @@ type Config struct {
 	InterfaceRegistry codectypes.InterfaceRegistry
 	TxConfig          client.TxConfig
 	AccountRetriever  client.AccountRetriever
-	AppConstructor    AppConstructor              // the ABCI application constructor
-	GenesisState      cosmosevmtypes.GenesisState // custom gensis state to provide
-	TimeoutCommit     time.Duration               // the consensus commitment timeout
-	AccountTokens     math.Int                    // the amount of unique validator tokens (e.g. 1000node0)
-	StakingTokens     math.Int                    // the amount of tokens each validator has available to stake
-	BondedTokens      math.Int                    // the amount of tokens each validator stakes
-	NumValidators     int                         // the total number of validators to create and bond
-	ChainID           string                      // the network chain-id
+	AppConstructor    AppConstructor         // the ABCI application constructor
+	GenesisState      gurutypes.GenesisState // custom gensis state to provide
+	TimeoutCommit     time.Duration          // the consensus commitment timeout
+	AccountTokens     math.Int               // the amount of unique validator tokens (e.g. 1000node0)
+	StakingTokens     math.Int               // the amount of tokens each validator has available to stake
+	BondedTokens      math.Int               // the amount of tokens each validator stakes
+	NumValidators     int                    // the total number of validators to create and bond
+	ChainID           string                 // the network chain-id
 	EVMChainID        uint64
 	BondDenom         string // the staking bond denomination
 	MinGasPrices      string // the minimum gas prices each validator will accept
@@ -103,7 +103,7 @@ type Config struct {
 // DefaultConfig returns a sane default configuration suitable for nearly all
 // testing requirements.
 func DefaultConfig() Config {
-	chainID := "evmos-1"
+	chainID := "guru_631-1"
 	evmChainID := uint64(cmtrand.Int63n(9999999999999) + 1) //nolint:gosec // G115 // won't exceed uint64
 	dir, err := os.MkdirTemp("", "simapp")
 	if err != nil {
@@ -125,9 +125,9 @@ func DefaultConfig() Config {
 		NumValidators:     4,
 		BondDenom:         testconstants.ExampleAttoDenom,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", testconstants.ExampleAttoDenom),
-		AccountTokens:     sdk.TokensFromConsensusPower(1000000000000000000, cosmosevmtypes.AttoPowerReduction),
-		StakingTokens:     sdk.TokensFromConsensusPower(500000000000000000, cosmosevmtypes.AttoPowerReduction),
-		BondedTokens:      sdk.TokensFromConsensusPower(100000000000000000, cosmosevmtypes.AttoPowerReduction),
+		AccountTokens:     sdk.TokensFromConsensusPower(1000000000000000000, gurutypes.AttoPowerReduction),
+		StakingTokens:     sdk.TokensFromConsensusPower(500000000000000000, gurutypes.AttoPowerReduction),
+		BondedTokens:      sdk.TokensFromConsensusPower(100000000000000000, gurutypes.AttoPowerReduction),
 		PruningStrategy:   pruningtypes.PruningOptionNothing,
 		CleanupDir:        true,
 		SigningAlgo:       string(hd.EthSecp256k1Type),
@@ -341,7 +341,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 
 		nodeDirName := fmt.Sprintf("node%d", i)
 		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "gurud")
-		clientDir := filepath.Join(network.BaseDir, nodeDirName, "evmoscli")
+		clientDir := filepath.Join(network.BaseDir, nodeDirName, "gurud")
 		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
 
 		err := os.MkdirAll(filepath.Join(nodeDir, "config"), 0o750)

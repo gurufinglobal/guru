@@ -21,7 +21,7 @@ import (
 // event.
 func SubmitProposal(
 	ctx sdk.Context,
-	appEvmos *exampleapp.EVMD,
+	appEvmos *exampleapp.GURUD,
 	pk *ethsecp256k1.PrivKey,
 	content govv1beta1.Content,
 	eventNum int,
@@ -50,7 +50,7 @@ func SubmitProposal(
 // Delegate delivers a delegate tx
 func Delegate(
 	ctx sdk.Context,
-	appEvmos *exampleapp.EVMD,
+	appEvmos *exampleapp.GURUD,
 	priv *ethsecp256k1.PrivKey,
 	delegateAmount sdk.Coin,
 	validator stakingtypes.Validator,
@@ -69,7 +69,7 @@ func Delegate(
 // Vote delivers a vote tx with the VoteOption "yes"
 func Vote(
 	ctx sdk.Context,
-	appEvmos *exampleapp.EVMD,
+	appEvmos *exampleapp.GURUD,
 	priv *ethsecp256k1.PrivKey,
 	proposalID uint64,
 	voteOption govv1beta1.VoteOption,

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract WATOM {
-    string public name = "Wrapped Atom";
-    string public symbol = "WATOM";
+contract WGXN {
+    string public name = "Wrapped GXN";
+    string public symbol = "WGXN";
     uint8 public decimals = 18;
 
     mapping(address => uint256) public balanceOf;

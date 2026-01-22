@@ -38,7 +38,7 @@ func Cmd() *cobra.Command {
 		cosmosclientdebug.PrefixesCmd(),
 		cosmosclientdebug.PubkeyRawCmd(), // TODO: support eth_secp256k1 pubkeys for this one too?
 
-		// Cosmos EVM adjusted debug commands
+		// Guru adjusted debug commands
 		PubkeyCmd(),
 		AddrCmd(),
 		RawBytesCmd(),
@@ -88,7 +88,7 @@ func AddrCmd() *cobra.Command {
 		Long:  "Convert an address between hex encoding and bech32.",
 		Example: fmt.Sprintf(
 			`$ %s debug addr cosmos1qqqqhe5pnaq5qq39wqkn957aydnrm45sdn8583
-$ %s debug addr 0x00000Be6819f41400225702D32d3dd23663Dd690 --prefix cosmosevmtypes`, version.AppName, version.AppName),
+$ %s debug addr 0x00000Be6819f41400225702D32d3dd23663Dd690 --prefix gurutypes`, version.AppName, version.AppName),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			addrString := args[0]

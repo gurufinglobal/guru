@@ -242,7 +242,7 @@ var _ = Describe("ERC20 Extension -", func() {
 		passCheck = failCheck.WithExpPass(true)
 
 		erc20Keeper := is.network.App.Erc20Keeper
-		available := erc20Keeper.IsNativePrecompileAvailable(is.network.GetContext(), common.HexToAddress(testconstants.WEVMOSContractMainnet))
+		available := erc20Keeper.IsNativePrecompileAvailable(is.network.GetContext(), common.HexToAddress(testconstants.WGURUContractMainnet))
 		Expect(available, true)
 
 		revertContractAddr, err = is.factory.DeployContract(
@@ -252,7 +252,7 @@ var _ = Describe("ERC20 Extension -", func() {
 				Contract: revertCallerContract,
 				// NOTE: we're passing the precompile address to the constructor because that initiates the contract
 				// to make calls to the correct ERC20 precompile.
-				ConstructorArgs: []interface{}{common.HexToAddress(testconstants.WEVMOSContractMainnet)},
+				ConstructorArgs: []interface{}{common.HexToAddress(testconstants.WGURUContractMainnet)},
 			},
 		)
 		Expect(err).ToNot(HaveOccurred(), "failed to deploy reverter contract")

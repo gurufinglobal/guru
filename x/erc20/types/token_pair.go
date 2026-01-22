@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 	"github.com/gurufinglobal/guru/v2/utils"
 )
 
@@ -56,7 +56,7 @@ func (tp TokenPair) Validate() error {
 		return err
 	}
 
-	return cosmosevmtypes.ValidateAddress(tp.Erc20Address)
+	return gurutypes.ValidateAddress(tp.Erc20Address)
 }
 
 // IsNativeCoin returns true if the owner of the ERC20 contract is the

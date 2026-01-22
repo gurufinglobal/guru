@@ -19,7 +19,7 @@ import (
 )
 
 // Call is a helper function to call any arbitrary smart contract.
-func Call(ctx sdk.Context, app *exampleapp.EVMD, args CallArgs) (res abci.ExecTxResult, ethRes *evmtypes.MsgEthereumTxResponse, err error) {
+func Call(ctx sdk.Context, app *exampleapp.GURUD, args CallArgs) (res abci.ExecTxResult, ethRes *evmtypes.MsgEthereumTxResponse, err error) {
 	var (
 		nonce    uint64
 		gasLimit = args.GasLimit
@@ -103,7 +103,7 @@ func Call(ctx sdk.Context, app *exampleapp.EVMD, args CallArgs) (res abci.ExecTx
 
 // CallContractAndCheckLogs is a helper function to call any arbitrary smart contract and check that the logs
 // contain the expected events.
-func CallContractAndCheckLogs(ctx sdk.Context, app *exampleapp.EVMD, cArgs CallArgs, logCheckArgs precompiletestutil.LogCheckArgs) (abci.ExecTxResult, *evmtypes.MsgEthereumTxResponse, error) {
+func CallContractAndCheckLogs(ctx sdk.Context, app *exampleapp.GURUD, cArgs CallArgs, logCheckArgs precompiletestutil.LogCheckArgs) (abci.ExecTxResult, *evmtypes.MsgEthereumTxResponse, error) {
 	res, ethRes, err := Call(ctx, app, cArgs)
 	if err != nil {
 		return res, nil, err

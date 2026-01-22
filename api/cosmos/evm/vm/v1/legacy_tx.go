@@ -15,7 +15,7 @@ func (tx *LegacyTx) GetChainID() *big.Int {
 }
 
 // AsEthereumData returns an LegacyTx transaction tx from the proto-formatted
-// TxData defined on the Cosmos EVM.
+// TxData defined on the Guru.
 func (tx *LegacyTx) AsEthereumData() ethtypes.TxData {
 	v, r, s := tx.GetRawSignatureValues()
 	return &ethtypes.LegacyTx{

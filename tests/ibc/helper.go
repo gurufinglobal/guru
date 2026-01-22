@@ -33,7 +33,7 @@ func SetupNativeErc20(t *testing.T, chain *evmibctesting.TestChain) *NativeErc20
 	t.Helper()
 
 	evmCtx := chain.GetContext()
-	evmApp := chain.App.(*gurud.EVMD)
+	evmApp := chain.App.(*gurud.GURUD)
 
 	// Deploy new ERC20 contract with default metadata
 	contractAddr, err := evmApp.Erc20Keeper.DeployERC20Contract(evmCtx, banktypes.Metadata{
