@@ -72,7 +72,10 @@ func NoOpEVMOptions(_ uint64) error {
 func EvmAppOptions(chainID uint64) error {
 	coinInfo, found := ChainsCoinInfo[chainID]
 	if !found {
+		coinInfo, found = ChainsCoinInfo[config.CosmosChainID]
+		if !found {
 		return fmt.Errorf("unknown chain id: %d", chainID)
+		}
 	}
 
 	// set the base denom considering if its mainnet or testnet

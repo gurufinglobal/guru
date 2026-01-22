@@ -21,7 +21,10 @@ const (
 
 	CosmosChainID = 262144
 
-	GuruChainID = 631
+	// MainnetChainID is the EVM chain ID for mainnet
+	MainnetChainID = 630
+	// TestnetChainID is the EVM chain ID for testnet
+	TestnetChainID = 631
 
 	// TestChainID1 is test chain IDs for IBC E2E test
 	TestChainID1 = 9005
