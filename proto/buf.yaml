@@ -24,3 +24,12 @@ lint:
 breaking:
   use:
     - FILE
+  # Temporary bypass for this refactoring PR:
+  # - FIELD_SAME_NAME: allow field renames (e.g. exchangeId -> exchange_id)
+  # - FILE_SAME_GO_PACKAGE: allow go_package path changes
+  #
+  # NOTE: "FILE_SAME_PARAMETER" is not a valid buf breaking rule ID (buf v1.63.0),
+  # so it cannot be configured here.
+  except:
+    - FIELD_SAME_NAME
+    - FILE_SAME_GO_PACKAGE
