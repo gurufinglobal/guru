@@ -52,7 +52,7 @@ type ContractCallArgs struct {
 // compiled contract data and constructor arguments
 func DeployContract(
 	ctx sdk.Context,
-	app *exampleapp.EVMD,
+	app *exampleapp.GURUD,
 	priv cryptotypes.PrivKey,
 	queryClientEvm evmtypes.QueryClient,
 	contract evmtypes.CompiledContract,
@@ -105,7 +105,7 @@ func DeployContract(
 // with the provided factoryAddress
 func DeployContractWithFactory(
 	ctx sdk.Context,
-	exampleApp *exampleapp.EVMD,
+	exampleApp *exampleapp.GURUD,
 	priv cryptotypes.PrivKey,
 	factoryAddress common.Address,
 ) (common.Address, abci.ExecTxResult, error) {

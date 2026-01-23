@@ -25,7 +25,7 @@ import (
 
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/server/config"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
@@ -98,8 +98,8 @@ type EVMBackend interface {
 
 	// Tx Info
 	GetTransactionByHash(txHash common.Hash) (*rpctypes.RPCTransaction, error)
-	GetTxByEthHash(txHash common.Hash) (*cosmosevmtypes.TxResult, error)
-	GetTxByTxIndex(height int64, txIndex uint) (*cosmosevmtypes.TxResult, error)
+	GetTxByEthHash(txHash common.Hash) (*gurutypes.TxResult, error)
+	GetTxByTxIndex(height int64, txIndex uint) (*gurutypes.TxResult, error)
 	GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, idx hexutil.Uint) (*rpctypes.RPCTransaction, error)
 	GetTransactionReceipt(hash common.Hash) (map[string]interface{}, error)
 	GetTransactionLogs(hash common.Hash) ([]*ethtypes.Log, error)
@@ -136,7 +136,7 @@ type Backend struct {
 	chainID             *big.Int
 	cfg                 config.Config
 	allowUnprotectedTxs bool
-	indexer             cosmosevmtypes.EVMTxIndexer
+	indexer             gurutypes.EVMTxIndexer
 }
 
 func (b *Backend) GetConfig() config.Config {
@@ -149,7 +149,7 @@ func NewBackend(
 	logger log.Logger,
 	clientCtx client.Context,
 	allowUnprotectedTxs bool,
-	indexer cosmosevmtypes.EVMTxIndexer,
+	indexer gurutypes.EVMTxIndexer,
 ) *Backend {
 	appConf, err := config.GetConfig(ctx.Viper)
 	if err != nil {

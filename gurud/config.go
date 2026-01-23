@@ -30,7 +30,10 @@ func EvmAppOptions(chainID uint64) error {
 
 	coinInfo, found := config.ChainsCoinInfo[chainID]
 	if !found {
-		return fmt.Errorf("unknown chain id: %d", chainID)
+		coinInfo, found = config.ChainsCoinInfo[config.CosmosChainID]
+		if !found {
+			return fmt.Errorf("unknown chain id: %d", chainID)
+		}
 	}
 
 	// set the denom info for the chain
@@ -41,7 +44,7 @@ func EvmAppOptions(chainID uint64) error {
 	ethCfg := evmtypes.DefaultChainConfig(chainID)
 
 	err := evmtypes.NewEVMConfigurator().
-		WithExtendedEips(cosmosEVMActivators).
+		WithExtendedEips(guruActivators).
 		WithChainConfig(ethCfg).
 		// NOTE: we're using the 18 decimals default for the example chain
 		WithEVMCoinInfo(coinInfo).

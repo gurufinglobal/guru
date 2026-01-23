@@ -14,7 +14,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/rpc"
 	serverconfig "github.com/gurufinglobal/guru/v2/server/config"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 )
 
 // StartJSONRPC starts the JSON-RPC server
@@ -23,7 +23,7 @@ func StartJSONRPC(ctx *server.Context,
 	tmRPCAddr,
 	tmEndpoint string,
 	config *serverconfig.Config,
-	indexer cosmosevmtypes.EVMTxIndexer,
+	indexer gurutypes.EVMTxIndexer,
 ) (*http.Server, chan struct{}, error) {
 	tmWsClient := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
 

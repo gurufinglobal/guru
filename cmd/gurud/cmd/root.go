@@ -45,13 +45,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
-	cosmosevmcmd "github.com/gurufinglobal/guru/v2/client"
+	gurucmd "github.com/gurufinglobal/guru/v2/client"
 	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
+	gurukeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
 	"github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/gurud/testutil"
-	cosmosevmserver "github.com/gurufinglobal/guru/v2/server"
-	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
+	guruserver "github.com/gurufinglobal/guru/v2/server"
+	guruserverconfig "github.com/gurufinglobal/guru/v2/server/config"
 	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
 )
 
@@ -67,7 +67,7 @@ func NewRootCmd() *cobra.Command {
 		nil,
 		true,
 		simtestutil.EmptyAppOptions{},
-		cosmosevmserverconfig.DefaultEVMChainID,
+		guruserverconfig.DefaultEVMChainID,
 		testutil.NoOpEvmAppOptions,
 	)
 
@@ -89,7 +89,7 @@ func NewRootCmd() *cobra.Command {
 		WithHomeDir(gurud.DefaultNodeHome).
 		WithViper(""). // In simapp, we don't use any prefix for env variables.
 		// Cosmos EVM specific setup
-		WithKeyringOptions(cosmosevmkeyring.Option()).
+		WithKeyringOptions(gurukeyring.Option()).
 		WithLedgerHasProtobuf(true)
 
 	rootCmd := &cobra.Command{
@@ -110,6 +110,16 @@ func NewRootCmd() *cobra.Command {
 			initClientCtx, err = clientcfg.ReadFromClientConfig(initClientCtx)
 			if err != nil {
 				return err
+			}
+
+			homeDir := initClientCtx.HomeDir
+			if homeDir == "" {
+				homeDir = gurud.DefaultNodeHome
+			}
+			if cmd.Name() != "init" {
+				if err := gurudconfig.LoadChainIDsFromConfig(homeDir); err != nil {
+					return fmt.Errorf("failed to load chain IDs: %w", err)
+				}
 			}
 
 			// This needs to go after ReadFromClientConfig, as that function
@@ -136,7 +146,7 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
-			customAppTemplate, customAppConfig := InitAppConfig(gurudconfig.BaseDenom, gurudconfig.EVMChainID)
+			customAppTemplate, customAppConfig := InitAppConfig(gurudconfig.BaseDenom, gurudconfig.GetChainID())
 			customTMConfig := initTendermintConfig()
 
 			return sdkserver.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)
@@ -154,7 +164,7 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	if initClientCtx.ChainID != "" {
-		if err := gurud.EvmAppOptions(cosmosevmserverconfig.DefaultEVMChainID); err != nil {
+		if err := gurud.EvmAppOptions(guruserverconfig.DefaultEVMChainID); err != nil {
 			panic(err)
 		}
 	}
@@ -180,9 +190,9 @@ func InitAppConfig(denom string, evmChainID uint64) (string, interface{}) {
 	type CustomAppConfig struct {
 		serverconfig.Config
 
-		EVM     cosmosevmserverconfig.EVMConfig
-		JSONRPC cosmosevmserverconfig.JSONRPCConfig
-		TLS     cosmosevmserverconfig.TLSConfig
+		EVM     guruserverconfig.EVMConfig
+		JSONRPC guruserverconfig.JSONRPCConfig
+		TLS     guruserverconfig.TLSConfig
 	}
 
 	// Optionally allow the chain developer to overwrite the SDK's default
@@ -202,23 +212,23 @@ func InitAppConfig(denom string, evmChainID uint64) (string, interface{}) {
 	// In this example application, we set the min gas prices to 0.
 	srvCfg.MinGasPrices = "0" + denom
 
-	evmCfg := cosmosevmserverconfig.DefaultEVMConfig()
+	evmCfg := guruserverconfig.DefaultEVMConfig()
 	evmCfg.EVMChainID = evmChainID
 
 	customAppConfig := CustomAppConfig{
 		Config:  *srvCfg,
 		EVM:     *evmCfg,
-		JSONRPC: *cosmosevmserverconfig.DefaultJSONRPCConfig(),
-		TLS:     *cosmosevmserverconfig.DefaultTLSConfig(),
+		JSONRPC: *guruserverconfig.DefaultJSONRPCConfig(),
+		TLS:     *guruserverconfig.DefaultTLSConfig(),
 	}
 
 	customAppTemplate := serverconfig.DefaultConfigTemplate +
-		cosmosevmserverconfig.DefaultEVMConfigTemplate
+		guruserverconfig.DefaultEVMConfigTemplate
 
 	return customAppTemplate, customAppConfig
 }
 
-func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
+func initRootCmd(rootCmd *cobra.Command, osApp *gurud.GURUD) {
 	cfg := sdk.GetConfig()
 	cfg.Seal()
 
@@ -253,6 +263,16 @@ func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 					return fmt.Errorf("failed to update chain-id in client.toml: %w", err)
 				}
 
+				evmChainID, ok := gurudconfig.GetChainIDFromString(chainID)
+				if !ok {
+					return nil
+				}
+
+				appTomlPath := filepath.Join(homeDir, "config", "app.toml")
+				if err := updateAppTomlEVMChainID(appTomlPath, evmChainID); err != nil {
+					return fmt.Errorf("failed to update evm-chain-id in app.toml: %w", err)
+				}
+
 				return nil
 			}
 
@@ -266,17 +286,17 @@ func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
 		snapshot.Cmd(newApp),
 	)
 
-	// add Cosmos EVM' flavored TM commands to start server, etc.
-	cosmosevmserver.AddCommands(
+	// add Guru flavored TM commands to start server, etc.
+	guruserver.AddCommands(
 		rootCmd,
-		cosmosevmserver.NewDefaultStartOptions(newApp, gurud.DefaultNodeHome),
+		guruserver.NewDefaultStartOptions(newApp, gurud.DefaultNodeHome),
 		appExport,
 		addModuleInitFlags,
 	)
 
 	// add Cosmos EVM key commands
 	rootCmd.AddCommand(
-		cosmosevmcmd.KeyCommands(gurud.DefaultNodeHome, true),
+		gurucmd.KeyCommands(gurud.DefaultNodeHome, true),
 	)
 
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
@@ -408,7 +428,7 @@ func newApp(
 	return gurud.NewExampleApp(
 		logger, db, traceStore, true,
 		appOpts,
-		gurudconfig.EVMChainID,
+		gurudconfig.GetChainID(),
 		gurud.EvmAppOptions,
 		baseappOptions...,
 	)
@@ -425,7 +445,7 @@ func appExport(
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
-	var exampleApp *gurud.EVMD
+	var exampleApp *gurud.GURUD
 
 	// this check is necessary as we use the flag in x/upgrade.
 	// we can exit more gracefully by checking the flag here.
@@ -450,13 +470,13 @@ func appExport(
 	}
 
 	if height != -1 {
-		exampleApp = gurud.NewExampleApp(logger, db, traceStore, false, appOpts, gurudconfig.EVMChainID, gurud.EvmAppOptions, baseapp.SetChainID(chainID))
+		exampleApp = gurud.NewExampleApp(logger, db, traceStore, false, appOpts, gurudconfig.GetChainID(), gurud.EvmAppOptions, baseapp.SetChainID(chainID))
 
 		if err := exampleApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		exampleApp = gurud.NewExampleApp(logger, db, traceStore, true, appOpts, gurudconfig.EVMChainID, gurud.EvmAppOptions, baseapp.SetChainID(chainID))
+		exampleApp = gurud.NewExampleApp(logger, db, traceStore, true, appOpts, gurudconfig.GetChainID(), gurud.EvmAppOptions, baseapp.SetChainID(chainID))
 	}
 
 	return exampleApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
@@ -502,7 +522,7 @@ func updateClientTomlChainID(clientTomlPath, chainID string) error {
 			if len(parts) == 2 {
 				// Keep the format (spaces, quotes, etc.) but update the value
 				prefix := parts[0] // "chain-id"
-				newLines = append(newLines, fmt.Sprintf("%s= %q", strings.TrimSpace(prefix), chainID))
+				newLines = append(newLines, fmt.Sprintf("%s = %q", strings.TrimSpace(prefix), chainID))
 			} else {
 				// Fallback: simple replacement
 				newLines = append(newLines, fmt.Sprintf("chain-id = %q", chainID))
@@ -523,4 +543,38 @@ func updateClientTomlChainID(clientTomlPath, chainID string) error {
 	// Write back to file
 	newContent := strings.Join(newLines, "\n")
 	return os.WriteFile(clientTomlPath, []byte(newContent), 0o600)
+}
+
+func updateAppTomlEVMChainID(appTomlPath string, evmChainID uint64) error {
+	data, err := os.ReadFile(appTomlPath)
+	if err != nil {
+		return fmt.Errorf("failed to read app.toml: %w", err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	inEVMSection := false
+	updated := false
+
+	for i, line := range lines {
+		if strings.TrimSpace(line) == "[evm]" {
+			inEVMSection = true
+			continue
+		}
+		if inEVMSection && strings.HasPrefix(strings.TrimSpace(line), "[") {
+			inEVMSection = false
+		}
+		if inEVMSection && strings.Contains(line, "evm-chain-id") {
+			lines[i] = fmt.Sprintf("evm-chain-id = \"%d\"", evmChainID)
+			updated = true
+			break
+		}
+	}
+
+	if !updated {
+		return fmt.Errorf("evm-chain-id not found in app.toml")
+	}
+
+	updatedData := strings.Join(lines, "\n")
+	// gosec(G306): config files may contain sensitive info; use 0600.
+	return os.WriteFile(appTomlPath, []byte(updatedData), 0o600)
 }

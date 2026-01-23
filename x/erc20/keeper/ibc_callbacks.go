@@ -223,7 +223,7 @@ func (k Keeper) ConvertCoinToERC20FromPacket(ctx sdk.Context, data transfertypes
 			return nil
 		}
 
-		// assume that all module accounts on Cosmos EVM need to have their tokens in the
+		// assume that all module accounts on Guru need to have their tokens in the
 		// IBC representation as opposed to ERC20
 		senderAcc := k.accountKeeper.GetAccount(ctx, sender)
 		if types.IsModuleAccount(senderAcc) {

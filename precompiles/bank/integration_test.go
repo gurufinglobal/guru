@@ -33,8 +33,8 @@ var is *IntegrationTestSuite
 // IntegrationTestSuite is the implementation of the TestSuite interface for Bank precompile
 // unit testis.
 type IntegrationTestSuite struct {
-	bondDenom, tokenDenom   string
-	cosmosEVMAddr, xmplAddr common.Address
+	bondDenom, tokenDenom string
+	guruAddr, xmplAddr    common.Address
 
 	network     *network.UnitTestNetwork
 	factory     factory.TxFactory
@@ -76,7 +76,7 @@ func (is *IntegrationTestSuite) SetupTest() {
 	tokenPairID := is.network.App.Erc20Keeper.GetTokenPairID(is.network.GetContext(), is.bondDenom)
 	tokenPair, found := is.network.App.Erc20Keeper.GetTokenPair(is.network.GetContext(), tokenPairID)
 	Expect(found).To(BeTrue(), "failed to register token erc20 extension")
-	is.cosmosEVMAddr = common.HexToAddress(tokenPair.Erc20Address)
+	is.guruAddr = common.HexToAddress(tokenPair.Erc20Address)
 
 	// Mint and register a second coin for testing purposes
 	err = is.network.App.BankKeeper.MintCoins(is.network.GetContext(), minttypes.ModuleName, sdk.Coins{{Denom: is.tokenDenom, Amount: math.NewInt(1e18)}})
@@ -111,8 +111,8 @@ var _ = Describe("Bank Extension -", func() {
 		contractData ContractData
 		passCheck    testutil.LogCheckArgs
 
-		cosmosEVMTotalSupply, _ = new(big.Int).SetString("200002999873922632500001", 10)
-		xmplTotalSupply, _      = new(big.Int).SetString("200000000000000000000000", 10)
+		guruTotalSupply, _ = new(big.Int).SetString("200002999873922632500001", 10)
+		xmplTotalSupply, _ = new(big.Int).SetString("200000000000000000000000", 10)
 	)
 
 	BeforeEach(func() {
@@ -236,21 +236,21 @@ var _ = Describe("Bank Extension -", func() {
 				err = is.precompile.UnpackIntoInterface(&balances, bank.TotalSupplyMethod, ethRes.Ret)
 				Expect(err).ToNot(HaveOccurred(), "failed to unpack balances")
 
-				Expect(balances[0].Amount.String()).To(Equal(cosmosEVMTotalSupply.String()))
+				Expect(balances[0].Amount.String()).To(Equal(guruTotalSupply.String()))
 				Expect(balances[1].Amount.String()).To(Equal(xmplTotalSupply.String()))
 			})
 		})
 
 		Context("supplyOf query", func() {
-			It("should return the supply of Cosmos EVM", func() {
-				queryArgs, supplyArgs := getTxAndCallArgs(directCall, contractData, bank.SupplyOfMethod, is.cosmosEVMAddr)
+			It("should return the supply of Guru", func() {
+				queryArgs, supplyArgs := getTxAndCallArgs(directCall, contractData, bank.SupplyOfMethod, is.guruAddr)
 				_, ethRes, err := is.factory.CallContractAndCheckLogs(sender.Priv, queryArgs, supplyArgs, passCheck)
 				Expect(err).ToNot(HaveOccurred(), "unexpected result calling contract")
 
 				out, err := is.precompile.Unpack(bank.SupplyOfMethod, ethRes.Ret)
 				Expect(err).ToNot(HaveOccurred(), "failed to unpack balances")
 
-				Expect(out[0].(*big.Int).String()).To(Equal(cosmosEVMTotalSupply.String()))
+				Expect(out[0].(*big.Int).String()).To(Equal(guruTotalSupply.String()))
 			})
 
 			It("should return the supply of XMPL", func() {
@@ -379,21 +379,21 @@ var _ = Describe("Bank Extension -", func() {
 				err = is.precompile.UnpackIntoInterface(&balances, bank.TotalSupplyMethod, ethRes.Ret)
 				Expect(err).ToNot(HaveOccurred(), "failed to unpack balances")
 
-				Expect(balances[0].Amount.String()).To(Equal(cosmosEVMTotalSupply.String()))
+				Expect(balances[0].Amount.String()).To(Equal(guruTotalSupply.String()))
 				Expect(balances[1].Amount.String()).To(Equal(xmplTotalSupply.String()))
 			})
 		})
 
 		Context("supplyOf query", func() {
-			It("should return the supply of Cosmos EVM", func() {
-				queryArgs, supplyArgs := getTxAndCallArgs(contractCall, contractData, SupplyOfFunction, is.cosmosEVMAddr)
+			It("should return the supply of Guru", func() {
+				queryArgs, supplyArgs := getTxAndCallArgs(contractCall, contractData, SupplyOfFunction, is.guruAddr)
 				_, ethRes, err := is.factory.CallContractAndCheckLogs(sender.Priv, queryArgs, supplyArgs, passCheck)
 				Expect(err).ToNot(HaveOccurred(), "unexpected result calling contract")
 
 				out, err := is.precompile.Unpack(bank.SupplyOfMethod, ethRes.Ret)
 				Expect(err).ToNot(HaveOccurred(), "failed to unpack balances")
 
-				Expect(out[0].(*big.Int).String()).To(Equal(cosmosEVMTotalSupply.String()))
+				Expect(out[0].(*big.Int).String()).To(Equal(guruTotalSupply.String()))
 			})
 
 			It("should return the supply of XMPL", func() {

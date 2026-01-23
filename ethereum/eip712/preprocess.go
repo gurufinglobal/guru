@@ -14,7 +14,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/types"
 )
 
-// PreprocessLedgerTx reformats Ledger-signed Cosmos transactions to match the fork expected by Cosmos EVM
+// PreprocessLedgerTx reformats Ledger-signed Cosmos transactions to match the fork expected by Guru
 // by including the signature in a Web3Tx extension and sending a blank signature in the body.
 func PreprocessLedgerTx(evmChainID uint64, keyType cosmoskr.KeyType, txBuilder client.TxBuilder) error {
 	// Only process Ledger transactions
@@ -67,7 +67,7 @@ func PreprocessLedgerTx(evmChainID uint64, keyType cosmoskr.KeyType, txBuilder c
 	extensionBuilder.SetExtensionOptions(option)
 
 	// Set blank signature with Amino Sign Type
-	// (Regardless of input signMode, Cosmos EVM requires Amino signature type for Ledger)
+	// (Regardless of input signMode, Guru requires Amino signature type for Ledger)
 	blankSig := signing.SingleSignatureData{
 		SignMode:  signing.SignMode_SIGN_MODE_LEGACY_AMINO_JSON,
 		Signature: nil,

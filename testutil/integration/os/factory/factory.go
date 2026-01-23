@@ -27,7 +27,7 @@ import (
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
-// TxFactory defines a struct that can build and broadcast transactions for the Cosmos EVM
+// TxFactory defines a struct that can build and broadcast transactions for the Guru
 // network.
 // Methods are organized by build sign and broadcast type methods.
 type TxFactory interface {
