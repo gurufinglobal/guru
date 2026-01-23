@@ -113,7 +113,7 @@ message QueryRatemeterResponse {
 
 // Request type for the Query/CollectedFees RPC method.
 message QueryCollectedFeesRequest {
-  string exchange_id = 1;
+  string exchangeId = 1;
 }
 
 // Response type for the Query/CollectedFees RPC method.
@@ -125,7 +125,7 @@ message QueryCollectedFeesResponse {
 
 // Request type for the Query/LockedFees RPC method.
 message QueryLockedFeesRequest {
-  string exchange_id = 1;
+  string exchangeId = 1;
 }
 
 // Response type for the Query/LockedFees RPC method.
@@ -137,7 +137,7 @@ message QueryLockedFeesResponse {
 
 // Request type for the Query/AvailableFees RPC method.
 message QueryAvailableFeesRequest {
-  string exchange_id = 1;
+  string exchangeId = 1;
 }
 
 // Response type for the Query/AvailableFees RPC method.

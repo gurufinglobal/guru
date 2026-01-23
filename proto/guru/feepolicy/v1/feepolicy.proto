@@ -9,8 +9,8 @@ import "cosmos_proto/cosmos.proto";
 import "amino/amino.proto";
 
 message Discount {
-  string discount_type = 1;
-  string msg_type = 2;
+  string discountType = 1;
+  string msgType = 2;
   string amount = 3 [
     (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
