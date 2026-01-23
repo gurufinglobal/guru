@@ -28,8 +28,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MsgClient interface {
+	// RegisterDiscounts registers or updates discounts for one or more accounts.
 	RegisterDiscounts(ctx context.Context, in *MsgRegisterDiscounts, opts ...grpc.CallOption) (*MsgRegisterDiscountsResponse, error)
+	// RemoveDiscounts removes a specific discount configuration for an account/module/message type.
 	RemoveDiscounts(ctx context.Context, in *MsgRemoveDiscounts, opts ...grpc.CallOption) (*MsgRemoveDiscountsResponse, error)
+	// ChangeModerator updates the module moderator address.
 	ChangeModerator(ctx context.Context, in *MsgChangeModerator, opts ...grpc.CallOption) (*MsgChangeModeratorResponse, error)
 }
 
@@ -72,8 +75,11 @@ func (c *msgClient) ChangeModerator(ctx context.Context, in *MsgChangeModerator,
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
 type MsgServer interface {
+	// RegisterDiscounts registers or updates discounts for one or more accounts.
 	RegisterDiscounts(context.Context, *MsgRegisterDiscounts) (*MsgRegisterDiscountsResponse, error)
+	// RemoveDiscounts removes a specific discount configuration for an account/module/message type.
 	RemoveDiscounts(context.Context, *MsgRemoveDiscounts) (*MsgRemoveDiscountsResponse, error)
+	// ChangeModerator updates the module moderator address.
 	ChangeModerator(context.Context, *MsgChangeModerator) (*MsgChangeModeratorResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }

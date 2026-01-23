@@ -41,17 +41,17 @@ service Query {
 
   // CollectedFees returns the colelcted fees for given exchange
   rpc CollectedFees(QueryCollectedFeesRequest) returns (QueryCollectedFeesResponse) {
-    option (google.api.http).get = "/guru/bex/v1/collected_fees"; // optional parameter: exchangeId
+    option (google.api.http).get = "/guru/bex/v1/collected_fees"; // optional parameter: exchange_id
   }
 
   // LockedFees returns the locked (reserved) fees for given exchange.
   rpc LockedFees(QueryLockedFeesRequest) returns (QueryLockedFeesResponse) {
-    option (google.api.http).get = "/guru/bex/v1/locked_fees"; // required parameter: exchangeId
+    option (google.api.http).get = "/guru/bex/v1/locked_fees"; // required parameter: exchange_id
   }
 
   // AvailableFees returns the available fees for given exchange (collected - locked).
   rpc AvailableFees(QueryAvailableFeesRequest) returns (QueryAvailableFeesResponse) {
-    option (google.api.http).get = "/guru/bex/v1/available_fees"; // required parameter: exchangeId
+    option (google.api.http).get = "/guru/bex/v1/available_fees"; // required parameter: exchange_id
   }
 
 }
@@ -113,7 +113,7 @@ message QueryRatemeterResponse {
 
 // Request type for the Query/CollectedFees RPC method.
 message QueryCollectedFeesRequest {
-  string exchangeId = 1;
+  string exchange_id = 1;
 }
 
 // Response type for the Query/CollectedFees RPC method.
@@ -125,7 +125,7 @@ message QueryCollectedFeesResponse {
 
 // Request type for the Query/LockedFees RPC method.
 message QueryLockedFeesRequest {
-  string exchangeId = 1;
+  string exchange_id = 1;
 }
 
 // Response type for the Query/LockedFees RPC method.
@@ -137,7 +137,7 @@ message QueryLockedFeesResponse {
 
 // Request type for the Query/AvailableFees RPC method.
 message QueryAvailableFeesRequest {
-  string exchangeId = 1;
+  string exchange_id = 1;
 }
 
 // Response type for the Query/AvailableFees RPC method.
