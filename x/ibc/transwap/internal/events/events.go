@@ -2,7 +2,6 @@ package events
 
 import (
 	"encoding/json"
-	"reflect"
 	"strconv"
 
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -12,20 +11,6 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
-
-func isNilAcknowledgement(ack ibcexported.Acknowledgement) bool {
-	if ack == nil {
-		return true
-	}
-	// Handle typed-nil values stored inside an interface.
-	v := reflect.ValueOf(ack)
-	switch v.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
-		return v.IsNil()
-	default:
-		return false
-	}
-}
 
 // EmitTransferEvent emits a ibc transfer event on successful transfers.
 func EmitTransferEvent(ctx sdk.Context, sender, receiver string, token types.Token, memo string) {
@@ -48,7 +33,7 @@ func EmitTransferEvent(ctx sdk.Context, sender, receiver string, token types.Tok
 // EmitOnRecvPacketEvent emits a fungible token packet event in the OnRecvPacket callback
 func EmitOnRecvPacketEvent(ctx sdk.Context, packetData types.InternalTransferRepresentation, ack ibcexported.Acknowledgement, ackErr error) {
 	ackSuccess := "false"
-	if !isNilAcknowledgement(ack) {
+	if ack != nil {
 		ackSuccess = strconv.FormatBool(ack.Success())
 	}
 	eventAttributes := []sdk.Attribute{
