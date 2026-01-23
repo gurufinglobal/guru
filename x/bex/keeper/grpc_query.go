@@ -120,4 +120,3 @@ func (k Keeper) AvailableFees(c context.Context, req *types.QueryAvailableFeesRe
 	}
 	return &types.QueryAvailableFeesResponse{Coins: fees}, nil
 }
-
