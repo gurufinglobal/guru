@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 )
 
 // RegisterLegacyAminoCodec registers the necessary x/ibc transfer interfaces and concrete types
@@ -14,7 +15,13 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 // RegisterInterfaces register the ibc transfer module interfaces to protobuf
 // Any.
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
-	// do nothing
+	// Register custom authz.Authorization implementations defined by this module.
+	//
+	// This is required so that authz.MsgGrant/Grant can unpack the embedded Any
+	// into authz.Authorization during tx decoding and basic validation.
+	registry.RegisterImplementations((*authz.Authorization)(nil),
+		&RecoverClientAuthorization{},
+	)
 }
 
 // ModuleCdc references the global x/ibc-transfer module codec. Note, the codec

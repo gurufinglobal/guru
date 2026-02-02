@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package guru.transwap.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/ibc/transwap/types";
+
+import "gogoproto/gogo.proto";
+
+// AllowedPath is a (port_id, channel_id) pair used to scope a recovery authorization.
+message AllowedPath {
+  option (gogoproto.goproto_stringer) = false;
+
+  string port_id    = 1;
+  string channel_id = 2;
+}
+
+// RecoverClientAuthorization is a custom authz.Authorization payload.
+//
+// Phase 1 scope:
+// - This type exists so governance can grant it via authz.MsgGrant and the chain can
+//   decode/store/query it correctly (Any pack/unpack).
+// - Enforcement of allowed_paths at MsgExec time is intentionally deferred to later phases.
+message RecoverClientAuthorization {
+  option (gogoproto.goproto_stringer) = false;
+
+  // msg_type_url is a fixed identifier for human-readability in queries/JSON.
+  // It MUST be "/ibc.core.client.v1.MsgRecoverClient".
+  string msg_type_url = 2;
+
+  repeated AllowedPath allowed_paths = 1 [(gogoproto.nullable) = false];
+}
+
+
