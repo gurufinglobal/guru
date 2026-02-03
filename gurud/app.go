@@ -923,6 +923,7 @@ func (app *GURUD) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) 
 		FeegrantKeeper:         app.FeeGrantKeeper,
 		FeePolicyKeeper:        app.FeePolicyKeeper,
 		IBCKeeper:              app.IBCKeeper,
+		AuthzKeeper:            &app.AuthzKeeper,
 		FeeMarketKeeper:        app.FeeMarketKeeper,
 		SignModeHandler:        txConfig.SignModeHandler(),
 		SigGasConsumer:         evmante.SigVerificationGasConsumer,

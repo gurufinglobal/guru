@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
@@ -24,6 +25,7 @@ type HandlerOptions struct {
 	AccountKeeper          anteinterfaces.AccountKeeper
 	BankKeeper             anteinterfaces.BankKeeper
 	IBCKeeper              *ibckeeper.Keeper
+	AuthzKeeper            *authzkeeper.Keeper
 	FeeMarketKeeper        anteinterfaces.FeeMarketKeeper
 	EvmKeeper              anteinterfaces.EVMKeeper
 	FeegrantKeeper         ante.FeegrantKeeper
@@ -48,6 +50,9 @@ func (options HandlerOptions) Validate() error {
 	}
 	if options.IBCKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "ibc keeper is required for AnteHandler")
+	}
+	if options.AuthzKeeper == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "authz keeper is required for AnteHandler")
 	}
 	if options.FeeMarketKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "fee market keeper is required for AnteHandler")
