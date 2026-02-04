@@ -73,3 +73,31 @@ func TestRecoverClientGrantDecorator_AllowsGovGranterWithResolvablePaths(t *test
 	_, err := decorator.AnteHandle(ctx, testTx{msgs: []sdk.Msg{msgGrant}}, false, nextNoop)
 	require.NoError(t, err)
 }
+
+func TestRecoverClientGrantDecorator_AllowsTransferPortIfResolvable(t *testing.T) {
+	nw := network.NewUnitTestNetwork()
+	ctx := nw.GetContext()
+
+	// If policy is "resolvable channel/connection only", port_id is not restricted.
+	portID := "transfer"
+	channelID := testChannelID
+	connID := testConnID
+	nw.App.IBCKeeper.ChannelKeeper.SetChannel(ctx, portID, channelID, channeltypes.Channel{ConnectionHops: []string{connID}})
+	nw.App.IBCKeeper.ConnectionKeeper.SetConnection(ctx, connID, connectiontypes.ConnectionEnd{ClientId: testClientID})
+
+	decorator := cosmosante.NewRecoverClientGrantDecorator(nw.App.IBCKeeper)
+
+	govAddr := authtypes.NewModuleAddress(govtypes.ModuleName)
+	grantee := sdk.AccAddress([]byte("grantee_addr________"))[:20]
+	exp := ctx.BlockTime().Add(24 * time.Hour)
+	auth := &transwaptypes.RecoverClientAuthorization{
+		MsgTypeUrl: transwaptypes.MsgTypeURLRecoverClient,
+		AllowedPaths: []transwaptypes.AllowedPath{
+			{PortId: portID, ChannelId: channelID},
+		},
+	}
+	msgGrant := newMsgGrant(govAddr, grantee, auth, &exp)
+
+	_, err := decorator.AnteHandle(ctx, testTx{msgs: []sdk.Msg{msgGrant}}, false, nextNoop)
+	require.NoError(t, err)
+}

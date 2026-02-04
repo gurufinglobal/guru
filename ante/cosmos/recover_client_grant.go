@@ -88,10 +88,6 @@ func (d RecoverClientGrantDecorator) checkGrant(ctx sdk.Context, grant *authztyp
 	}
 
 	for _, p := range rcAuth.AllowedPaths {
-		if p.PortId != transwaptypes.ModuleName {
-			return fmt.Errorf("recover-client-grant: allowed_paths port_id must be %s (got %s)", transwaptypes.ModuleName, p.PortId)
-		}
-
 		ch, found := d.ibcKeeper.ChannelKeeper.GetChannel(ctx, p.PortId, p.ChannelId)
 		if !found {
 			return fmt.Errorf("recover-client-grant: allowed_path channel not found (path=%s/%s)", p.PortId, p.ChannelId)
