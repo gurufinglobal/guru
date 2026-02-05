@@ -20,6 +20,12 @@ jobs:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
 
+      - name: Check GoReleaser config
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: check --config .goreleaser.yml
+
       - name: Lint Code Base
         uses: github/super-linter@v6
         env:
@@ -34,6 +40,7 @@ jobs:
           VALIDATE_JSCPD: false
           VALIDATE_GO: false
           VALIDATE_GO_MODULES: false
+          VALIDATE_GO_RELEASER: false
           VALIDATE_PROTOBUF: false
           PYTHON_PYLINT_CONFIG_FILE: .pylintrc
           DEFAULT_BRANCH: "main"
