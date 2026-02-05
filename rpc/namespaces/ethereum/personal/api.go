@@ -161,7 +161,7 @@ func (api *PrivateAccountAPI) EcRecover(_ context.Context, data, sig hexutil.Byt
 	return crypto.PubkeyToAddress(*pubkey), nil
 }
 
-// Unpair deletes a pairing between wallet and Cosmos EVM.
+// Unpair deletes a pairing between wallet and Guru.
 func (api *PrivateAccountAPI) Unpair(_ context.Context, url, pin string) error {
 	api.logger.Debug("personal_unpair", "url", url, "pin", pin)
 	api.logger.Info("personal_unpair for smartcard wallet not supported")

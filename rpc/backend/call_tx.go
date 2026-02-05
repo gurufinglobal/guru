@@ -377,7 +377,7 @@ func (b *Backend) DoCall(
 	return res, nil
 }
 
-// GasPrice returns the current gas price based on Cosmos EVM' gas price oracle.
+// GasPrice returns the current gas price based on Guru' gas price oracle.
 func (b *Backend) GasPrice() (*hexutil.Big, error) {
 	var (
 		result *big.Int

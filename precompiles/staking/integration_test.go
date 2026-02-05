@@ -28,7 +28,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/precompiles/staking/testdata"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil/contracts"
-	cosmosevmutil "github.com/gurufinglobal/guru/v2/testutil/constants"
+	guruutil "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
@@ -2614,7 +2614,7 @@ var _ = Describe("Calling staking precompile via Solidity", Ordered, func() {
 			err = s.precompile.UnpackIntoInterface(&delOut, staking.DelegationMethod, ethRes.Ret)
 			Expect(err).To(BeNil(), "error while unpacking the delegation output: %v", err)
 			Expect(delOut.Balance.Amount.Int64()).To(Equal(int64(0)), "expected a different delegation balance")
-			Expect(delOut.Balance.Denom).To(Equal(cosmosevmutil.ExampleAttoDenom), "expected a different delegation balance")
+			Expect(delOut.Balance.Denom).To(Equal(guruutil.ExampleAttoDenom), "expected a different delegation balance")
 		})
 
 		It("which exists should return the delegation", func() {
@@ -2635,7 +2635,7 @@ var _ = Describe("Calling staking precompile via Solidity", Ordered, func() {
 			err = s.precompile.UnpackIntoInterface(&delOut, staking.DelegationMethod, ethRes.Ret)
 			Expect(err).To(BeNil(), "error while unpacking the delegation output: %v", err)
 			Expect(delOut.Balance).To(Equal(
-				cmn.Coin{Denom: cosmosevmutil.ExampleAttoDenom, Amount: big.NewInt(1e18)}),
+				cmn.Coin{Denom: guruutil.ExampleAttoDenom, Amount: big.NewInt(1e18)}),
 				"expected a different delegation balance",
 			)
 		})

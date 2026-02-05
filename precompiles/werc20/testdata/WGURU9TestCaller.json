@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "WEVMOS9TestCaller",
-  "sourceName": "solidity/precompiles/werc20/testdata/WEVMOS9TestCaller.sol",
+  "contractName": "WGURU9TestCaller",
+  "sourceName": "solidity/precompiles/werc20/testdata/WGURU9TestCaller.sol",
   "abi": [
     {
       "inputs": [

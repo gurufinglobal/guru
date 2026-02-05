@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	// DefaultBaseFee for the Cosmos EVM chain
+	// DefaultBaseFee for the Guru chain
 	DefaultBaseFee = math.LegacyNewDec(1_000_000_000)
 	// DefaultMinGasMultiplier is 0.5 or 50%
 	DefaultMinGasMultiplier = math.LegacyNewDecWithPrec(50, 2)

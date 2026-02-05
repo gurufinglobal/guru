@@ -19,7 +19,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
@@ -144,7 +144,7 @@ func (s *benchmarkSuite) generateHandlerOptions() chainante.HandlerOptions {
 		Cdc:                    s.network.App.AppCodec(),
 		AccountKeeper:          s.network.App.AccountKeeper,
 		BankKeeper:             s.network.App.BankKeeper,
-		ExtensionOptionChecker: cosmosevmtypes.HasDynamicFeeExtensionOption,
+		ExtensionOptionChecker: gurutypes.HasDynamicFeeExtensionOption,
 		EvmKeeper:              s.network.App.EVMKeeper,
 		FeegrantKeeper:         s.network.App.FeeGrantKeeper,
 		IBCKeeper:              s.network.App.IBCKeeper,
