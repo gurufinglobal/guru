@@ -130,6 +130,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 
 	# Change parameter token denominations to desired value
 	jq '.app_state["staking"]["params"]["bond_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["staking"]["params"]["min_validator_bond_amount"]="3000000000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["gov"]["params"]["expedited_min_deposit"][0]["denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -242,7 +243,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	gurud genesis add-genesis-account "$MODERATOR_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
 
 	# Sign genesis transaction
-	gurud genesis gentx "$VAL_KEY" 1000000000000000000000agxn --gas-prices ${BASEFEE}agxn --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"
+	gurud genesis gentx "$VAL_KEY" 3000000000000000000000000agxn --min-self-delegation="3000000000000000000000000" --gas-prices ${BASEFEE}agxn --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"
 	## In case you want to create multiple validators at genesis
 	## 1. Back to `gurud keys add` step, init more keys
 	## 2. Back to `gurud add-genesis-account` step, add balance for those

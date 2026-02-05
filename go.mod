@@ -270,6 +270,7 @@ require (
 )
 
 replace (
+	cosmossdk.io/api => github.com/gurufinglobal/cosmos-sdk/api v0.9.2-guru.1
 	cosmossdk.io/store v1.1.2 => github.com/gurufinglobal/cosmos-sdk/store v1.1.2-guru.2
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
@@ -281,7 +282,7 @@ replace (
 	// Fix GO-2025-4087: Unchecked memory allocation during vector deserialization
 	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.18.1
 	// use guru fork of cosmos-sdk
-	github.com/cosmos/cosmos-sdk => github.com/gurufinglobal/cosmos-sdk v0.53.4-guru.6
+	github.com/cosmos/cosmos-sdk => github.com/gurufinglobal/cosmos-sdk v0.53.4-guru.7
 	// use Cosmos geth fork
 	github.com/ethereum/go-ethereum => github.com/cosmos/go-ethereum v1.15.11-cosmos-0
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
