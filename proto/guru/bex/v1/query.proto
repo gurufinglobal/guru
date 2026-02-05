@@ -103,7 +103,7 @@ message QueryRatemeterResponse {
 
 // Request type for the Query/CollectedFees RPC method.
 message QueryCollectedFeesRequest {
-  string exchangeId = 1;
+  string exchange_id = 1;
 }
 
 // Response type for the Query/CollectedFees RPC method.
