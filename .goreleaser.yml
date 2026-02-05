@@ -1,3 +1,5 @@
+version: 2
+
 before:
   hooks:
     - go mod download
@@ -84,14 +86,15 @@ archives:
   - name_template: '{{ .ProjectName }}_{{ .Version }}_{{- title .Os }}_{{ .Arch }}'
     format_overrides:
       - goos: windows
-        format: zip
-    builds:
+        formats:
+          - zip
+    ids:
       - gurud-darwin
       - gurud-darwin-arm64
       - gurud-windows
       - gurud-linux
       - gurud-linux-arm64
-  
+
 checksum:
   name_template: 'checksums.txt'
 changelog:
@@ -101,4 +104,4 @@ changelog:
       - '^docs:'
       - '^test:'
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Version }}-next"
