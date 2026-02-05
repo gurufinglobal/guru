@@ -170,7 +170,8 @@ func (k Keeper) IncrementAddressRequestCount(ctx sdk.Context, address string) er
 
 // WithdrawExchangeFees withdraws the accumulated fees from the reserve address to the given address
 func (k Keeper) WithdrawExchangeFees(ctx sdk.Context, exchangeID string, withdrawAddress string) error {
-	fees, err := k.GetExchangeFees(ctx, exchangeID)
+	// Withdraw is based on available fees (total_collected - locked).
+	fees, err := k.GetAvailableFees(ctx, exchangeID)
 	if err != nil {
 		return err
 	}
@@ -188,11 +189,13 @@ func (k Keeper) WithdrawExchangeFees(ctx sdk.Context, exchangeID string, withdra
 		return err
 	}
 
-	return nil
+	// Keep the exchange ledger in sync with the actual module balance change.
+	// Since we withdrew available fees, deduct the same amount from collected fees.
+	return k.DeductCollectedFees(ctx, exchangeID, fees)
 }
 
-// GetTotalCollectedFees returns the total collected fees for the module
-func (k Keeper) GetTotalCollectedFees(ctx sdk.Context) sdk.Coins {
+// GetAllCollectedFees returns the module account balance for the bex module account.
+func (k Keeper) GetAllCollectedFees(ctx sdk.Context) sdk.Coins {
 	return k.bankKeeper.GetAllBalances(ctx, k.GetModuleAddress())
 }
 
@@ -200,6 +203,7 @@ func (k Keeper) GetTotalCollectedFees(ctx sdk.Context) sdk.Coins {
 func (k Keeper) setCollectedFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error {
 	store := ctx.KVStore(k.storeKey)
 	exchangeIDStore := prefix.NewStore(store, types.KeyCollectedFees)
+	fees = fees.Sort()
 	bz, err := json.Marshal(fees)
 	if err != nil {
 		return err
@@ -208,18 +212,33 @@ func (k Keeper) setCollectedFees(ctx sdk.Context, exchangeID string, fees sdk.Co
 	return nil
 }
 
-// GetExchangeFees returns the collected fees for the given exchange id
-func (k Keeper) GetExchangeFees(ctx sdk.Context, exchangeID string) (sdk.Coins, error) {
+// GetCollectedFees returns the collected fees for the given exchange id.
+func (k Keeper) GetCollectedFees(ctx sdk.Context, exchangeID string) (sdk.Coins, error) {
 	store := ctx.KVStore(k.storeKey)
 	exchangeIDStore := prefix.NewStore(store, types.KeyCollectedFees)
 	bz := exchangeIDStore.Get([]byte(exchangeID))
 	if bz == nil {
-		return nil, nil
+		return sdk.Coins{}, nil
 	}
+
 	fees := sdk.Coins{}
-	err := json.Unmarshal(bz, &fees)
-	if err != nil {
+	if err := json.Unmarshal(bz, &fees); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal collected fees for exchange: %s", exchangeID)
+	}
+
+	return fees.Sort(), nil
+}
+
+// GetAvailableFees returns the available fees for the given exchange id (total_collected - locked).
+func (k Keeper) GetAvailableFees(ctx sdk.Context, exchangeID string) (sdk.Coins, error) {
+	totalCollectedFees, err := k.GetCollectedFees(ctx, exchangeID)
+	if err != nil {
+		return nil, err
+	}
+
+	if totalCollectedFees.IsZero() {
+		// Nothing collected for this exchange; keep legacy behavior for callers.
+		return nil, nil
 	}
 
 	// subtract the locked fees from the collected fees to get the available fees
@@ -227,30 +246,64 @@ func (k Keeper) GetExchangeFees(ctx sdk.Context, exchangeID string) (sdk.Coins, 
 	if err != nil {
 		return nil, err
 	}
-	fees = fees.Sub(lockedFees...)
 
-	return fees, nil
+	totalCollectedFees = totalCollectedFees.Sort()
+	lockedFees = lockedFees.Sort()
+
+	// Avoid Cosmos SDK panic on negative coin amounts.
+	if !totalCollectedFees.IsAllGTE(lockedFees) {
+		k.Logger(ctx).Error(
+			"invariant violation: locked fees exceed collected fees",
+			"exchangeID", exchangeID,
+			"collected", totalCollectedFees.String(),
+			"locked", lockedFees.String(),
+		)
+		return nil, fmt.Errorf(
+			"invariant violation: locked fees exceed collected fees (exchange=%s collected=%s locked=%s)",
+			exchangeID, totalCollectedFees.String(), lockedFees.String(),
+		)
+	}
+
+	available := totalCollectedFees.Sub(lockedFees...)
+	return available.Sort(), nil
 }
 
-// AddExchangeFees adds the given fees to the collected fees for the given exchange id
-func (k Keeper) AddExchangeFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error {
-	collectedFees, err := k.GetExchangeFees(ctx, exchangeID)
+// AddCollectedFees adds the given fees to the collected fees for the given exchange id.
+func (k Keeper) AddCollectedFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error {
+	// IMPORTANT: Add must operate on collected fees, not available fees.
+	collectedFees, err := k.GetCollectedFees(ctx, exchangeID)
 	if err != nil {
 		return err
 	}
-	if collectedFees == nil {
-		collectedFees = sdk.Coins{}
-	}
+	fees = fees.Sort()
 	collectedFees = collectedFees.Add(fees...)
 	return k.setCollectedFees(ctx, exchangeID, collectedFees)
 }
 
-// DeductExchangeFees deducts the given fees from the collected fees for the given exchange id
-func (k Keeper) DeductExchangeFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error {
-	collectedFees, err := k.GetExchangeFees(ctx, exchangeID)
+// DeductCollectedFees deducts the given fees from the collected fees for the given exchange id.
+func (k Keeper) DeductCollectedFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error {
+	// IMPORTANT: Deduct must operate on collected fees, not available fees.
+	collectedFees, err := k.GetCollectedFees(ctx, exchangeID)
 	if err != nil {
 		return err
 	}
+	collectedFees = collectedFees.Sort()
+	fees = fees.Sort()
+
+	// Avoid Cosmos SDK panic on negative coin amounts.
+	if !collectedFees.IsAllGTE(fees) {
+		k.Logger(ctx).Error(
+			"invariant violation: cannot deduct more than collected",
+			"exchangeID", exchangeID,
+			"collected", collectedFees.String(),
+			"deduct", fees.String(),
+		)
+		return fmt.Errorf(
+			"invariant violation: cannot deduct more than collected (exchange=%s collected=%s deduct=%s)",
+			exchangeID, collectedFees.String(), fees.String(),
+		)
+	}
+
 	collectedFees = collectedFees.Sub(fees...)
 	return k.setCollectedFees(ctx, exchangeID, collectedFees)
 }
@@ -275,7 +328,7 @@ func (k Keeper) getLockedFees(ctx sdk.Context, exchangeID string) (sdk.Coins, er
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal locked fees for exchange: %s", exchangeID)
 	}
-	return lockedFees, nil
+	return lockedFees.Sort(), nil
 }
 
 // LockExchangeFees locks the given fees for the given exchange id
@@ -286,7 +339,32 @@ func (k Keeper) LockExchangeFees(ctx sdk.Context, exchangeID string, fees sdk.Co
 	if err != nil {
 		return err
 	}
-	lockedFees = lockedFees.Add(fees...)
+
+	fees = fees.Sort()
+	lockedFees = lockedFees.Sort()
+	newLocked := lockedFees.Add(fees...).Sort()
+
+	// Ensure denom-wise: total_collected >= locked after applying this lock.
+	totalCollected, err := k.GetCollectedFees(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	totalCollected = totalCollected.Sort()
+
+	if !totalCollected.IsAllGTE(newLocked) {
+		k.Logger(ctx).Error(
+			"invariant violation: cannot lock more than collected",
+			"exchangeID", exchangeID,
+			"collected", totalCollected.String(),
+			"newLocked", newLocked.String(),
+		)
+		return fmt.Errorf(
+			"invariant violation: cannot lock more than collected (exchange=%s collected=%s new_locked=%s)",
+			exchangeID, totalCollected.String(), newLocked.String(),
+		)
+	}
+
+	lockedFees = newLocked
 	bz, err := json.Marshal(lockedFees)
 	if err != nil {
 		return err
@@ -303,6 +381,8 @@ func (k Keeper) ReleaseExchangeFees(ctx sdk.Context, exchangeID string, fees sdk
 	if err != nil {
 		return err
 	}
+	fees = fees.Sort()
+	lockedFees = lockedFees.Sort()
 	if !lockedFees.IsAllGTE(fees) {
 		return fmt.Errorf("fees to release are less than the locked fees for exchange: %s", exchangeID)
 	}

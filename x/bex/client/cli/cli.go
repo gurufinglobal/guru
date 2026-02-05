@@ -27,6 +27,8 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdQueryNextExchangeID(),
 		GetCmdQueryRatemeter(),
 		GetCmdQueryCollectedFees(),
+		GetCmdQueryLockedFees(),
+		GetCmdQueryAvailableFees(),
 	)
 
 	return bexQueryCmd

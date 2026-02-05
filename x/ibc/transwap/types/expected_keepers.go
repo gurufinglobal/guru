@@ -50,8 +50,8 @@ type ChannelKeeper interface {
 
 type BexKeeper interface {
 	GetExchange(ctx sdk.Context, exchangeID math.Int) (*bextypes.Exchange, error)
-	AddExchangeFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error
-	DeductExchangeFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error
+	AddCollectedFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error
+	DeductCollectedFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error
 	LockExchangeFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error
 	ReleaseExchangeFees(ctx sdk.Context, exchangeID string, fees sdk.Coins) error
 }

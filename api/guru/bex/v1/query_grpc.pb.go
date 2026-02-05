@@ -8,7 +8,6 @@ package bexv1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -26,6 +25,8 @@ const (
 	Query_NextExchangeId_FullMethodName   = "/guru.bex.v1.Query/NextExchangeId"
 	Query_Ratemeter_FullMethodName        = "/guru.bex.v1.Query/Ratemeter"
 	Query_CollectedFees_FullMethodName    = "/guru.bex.v1.Query/CollectedFees"
+	Query_LockedFees_FullMethodName       = "/guru.bex.v1.Query/LockedFees"
+	Query_AvailableFees_FullMethodName    = "/guru.bex.v1.Query/AvailableFees"
 )
 
 // QueryClient is the client API for Query service.
@@ -45,6 +46,10 @@ type QueryClient interface {
 	Ratemeter(ctx context.Context, in *QueryRatemeterRequest, opts ...grpc.CallOption) (*QueryRatemeterResponse, error)
 	// CollectedFees returns the colelcted fees for given exchange
 	CollectedFees(ctx context.Context, in *QueryCollectedFeesRequest, opts ...grpc.CallOption) (*QueryCollectedFeesResponse, error)
+	// LockedFees returns the locked (reserved) fees for given exchange.
+	LockedFees(ctx context.Context, in *QueryLockedFeesRequest, opts ...grpc.CallOption) (*QueryLockedFeesResponse, error)
+	// AvailableFees returns the available fees for given exchange (collected - locked).
+	AvailableFees(ctx context.Context, in *QueryAvailableFeesRequest, opts ...grpc.CallOption) (*QueryAvailableFeesResponse, error)
 }
 
 type queryClient struct {
@@ -109,6 +114,24 @@ func (c *queryClient) CollectedFees(ctx context.Context, in *QueryCollectedFeesR
 	return out, nil
 }
 
+func (c *queryClient) LockedFees(ctx context.Context, in *QueryLockedFeesRequest, opts ...grpc.CallOption) (*QueryLockedFeesResponse, error) {
+	out := new(QueryLockedFeesResponse)
+	err := c.cc.Invoke(ctx, Query_LockedFees_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) AvailableFees(ctx context.Context, in *QueryAvailableFeesRequest, opts ...grpc.CallOption) (*QueryAvailableFeesResponse, error) {
+	out := new(QueryAvailableFeesResponse)
+	err := c.cc.Invoke(ctx, Query_AvailableFees_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
@@ -126,6 +149,10 @@ type QueryServer interface {
 	Ratemeter(context.Context, *QueryRatemeterRequest) (*QueryRatemeterResponse, error)
 	// CollectedFees returns the colelcted fees for given exchange
 	CollectedFees(context.Context, *QueryCollectedFeesRequest) (*QueryCollectedFeesResponse, error)
+	// LockedFees returns the locked (reserved) fees for given exchange.
+	LockedFees(context.Context, *QueryLockedFeesRequest) (*QueryLockedFeesResponse, error)
+	// AvailableFees returns the available fees for given exchange (collected - locked).
+	AvailableFees(context.Context, *QueryAvailableFeesRequest) (*QueryAvailableFeesResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -150,6 +177,12 @@ func (UnimplementedQueryServer) Ratemeter(context.Context, *QueryRatemeterReques
 }
 func (UnimplementedQueryServer) CollectedFees(context.Context, *QueryCollectedFeesRequest) (*QueryCollectedFeesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CollectedFees not implemented")
+}
+func (UnimplementedQueryServer) LockedFees(context.Context, *QueryLockedFeesRequest) (*QueryLockedFeesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LockedFees not implemented")
+}
+func (UnimplementedQueryServer) AvailableFees(context.Context, *QueryAvailableFeesRequest) (*QueryAvailableFeesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AvailableFees not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -272,6 +305,42 @@ func _Query_CollectedFees_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_LockedFees_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryLockedFeesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).LockedFees(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_LockedFees_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).LockedFees(ctx, req.(*QueryLockedFeesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_AvailableFees_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAvailableFeesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).AvailableFees(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_AvailableFees_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).AvailableFees(ctx, req.(*QueryAvailableFeesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -302,6 +371,14 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CollectedFees",
 			Handler:    _Query_CollectedFees_Handler,
+		},
+		{
+			MethodName: "LockedFees",
+			Handler:    _Query_LockedFees_Handler,
+		},
+		{
+			MethodName: "AvailableFees",
+			Handler:    _Query_AvailableFees_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

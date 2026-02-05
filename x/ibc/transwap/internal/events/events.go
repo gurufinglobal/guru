@@ -32,13 +32,17 @@ func EmitTransferEvent(ctx sdk.Context, sender, receiver string, token types.Tok
 
 // EmitOnRecvPacketEvent emits a fungible token packet event in the OnRecvPacket callback
 func EmitOnRecvPacketEvent(ctx sdk.Context, packetData types.InternalTransferRepresentation, ack ibcexported.Acknowledgement, ackErr error) {
+	ackSuccess := "false"
+	if ack != nil {
+		ackSuccess = strconv.FormatBool(ack.Success())
+	}
 	eventAttributes := []sdk.Attribute{
 		sdk.NewAttribute(types.AttributeKeySender, packetData.Sender),
 		sdk.NewAttribute(types.AttributeKeyReceiver, packetData.Receiver),
 		sdk.NewAttribute(types.AttributeKeyDenom, packetData.Token.Denom.Path()),
 		sdk.NewAttribute(types.AttributeKeyAmount, packetData.Token.Amount),
 		sdk.NewAttribute(types.AttributeKeyMemo, packetData.Memo),
-		sdk.NewAttribute(types.AttributeKeyAckSuccess, strconv.FormatBool(ack.Success())),
+		sdk.NewAttribute(types.AttributeKeyAckSuccess, ackSuccess),
 	}
 
 	if ackErr != nil {

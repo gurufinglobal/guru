@@ -261,7 +261,8 @@ func (k Keeper) WithdrawFees(goCtx context.Context, msg *types.MsgWithdrawFees) 
 		return nil, errorsmod.Wrapf(types.ErrWrongAdmin, " expected: %s, got: %s", exchange.AdminAddress, msg.AdminAddress)
 	}
 
-	fees, err := k.GetExchangeFees(ctx, msg.ExchangeId.String())
+	// Emit withdrawn amount based on available fees.
+	fees, err := k.GetAvailableFees(ctx, msg.ExchangeId.String())
 	if err != nil {
 		return nil, err
 	}

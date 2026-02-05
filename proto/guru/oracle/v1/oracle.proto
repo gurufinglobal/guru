@@ -1,10 +1,6 @@
 syntax = "proto3";
 package guru.oracle.v1;
 
-import "gogoproto/gogo.proto";
-import "google/protobuf/timestamp.proto";
-import "cosmos/base/v1beta1/coin.proto";
-
 option go_package = "github.com/gurufinglobal/guru/v2/x/oracle/types";
 
 // OracleType defines the type of oracle data that can be requested and provided
