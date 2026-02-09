@@ -2,7 +2,10 @@
 
 package swagger
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 // bexQueryProto contains the content of proto/guru/bex/v1/query.proto
 const bexQueryProto = `syntax = "proto3";
@@ -905,11 +908,12 @@ func CheckEmbeddedProtoFileExists(protoPath string) bool {
 	return ok
 }
 
-// ListEmbeddedProtoFiles returns all proto file paths in the embedded registry.
+// ListEmbeddedProtoFiles returns all proto file paths in the embedded registry (sorted for determinism).
 func ListEmbeddedProtoFiles() ([]string, error) {
 	files := make([]string, 0, len(embeddedProtoRegistry))
 	for path := range embeddedProtoRegistry {
 		files = append(files, path)
 	}
+	sort.Strings(files)
 	return files, nil
 }
