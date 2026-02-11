@@ -2,7 +2,345 @@
 
 package swagger
 
-// feepolicyQueryProto contains the content of ../../proto/guru/feepolicy/v1/query.proto
+import (
+	"fmt"
+	"sort"
+)
+
+// bexQueryProto contains the content of proto/guru/bex/v1/query.proto
+const bexQueryProto = `syntax = "proto3";
+package guru.bex.v1;
+
+import "guru/bex/v1/bex.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/bex/types";
+
+// Query provides defines the gRPC querier service.
+service Query {
+ 
+  // ModeratorAddress returns the current moderator address
+  rpc ModeratorAddress(QueryModeratorAddressRequest) 
+        returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/bex/v1/moderator_address";
+  }
+
+  // Exchanges returns the list of available exchanges
+  // Or one exchange by given id
+  rpc Exchanges(QueryExchangesRequest) returns (QueryExchangesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges"; // optional parameter: id
+  }
+
+  // IsAdmin checks if the given address is admin 
+  rpc IsAdmin(QueryIsAdminRequest) returns (QueryIsAdminResponse) {
+    option (google.api.http).get = "/guru/bex/v1/isadmin/{address}";
+  }
+
+  // NextExchangeId returns the id for the new exchange to be created next
+  rpc NextExchangeId(QueryNextExchangeIdRequest) returns (QueryNextExchangeIdResponse) {
+    option (google.api.http).get = "/guru/bex/v1/next_exchange_id";
+  }
+
+  // Ratemeter returns the current ratemeter state
+  rpc Ratemeter(QueryRatemeterRequest) returns (QueryRatemeterResponse) {
+    option (google.api.http).get = "/guru/bex/v1/ratemeter";
+  }
+
+  // CollectedFees returns the colelcted fees for given exchange
+  rpc CollectedFees(QueryCollectedFeesRequest) returns (QueryCollectedFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/collected_fees"; // optional parameter: exchange_id
+  }
+
+  // LockedFees returns the locked (reserved) fees for given exchange.
+  rpc LockedFees(QueryLockedFeesRequest) returns (QueryLockedFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/locked_fees"; // required parameter: exchange_id
+  }
+
+  // AvailableFees returns the available fees for given exchange (collected - locked).
+  rpc AvailableFees(QueryAvailableFeesRequest) returns (QueryAvailableFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/available_fees"; // required parameter: exchange_id
+  }
+
+}
+
+// Request type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressRequest {
+}
+
+// Response type for the Query/ModeratorAddress RPC method.
+message QueryModeratorAddressResponse {
+  string moderator_address = 1;
+}
+
+// Request type for the Query/Exchanges RPC method.
+message QueryExchangesRequest {
+  string id = 1;
+}
+
+// Response type for the Query/Exchanges RPC method.
+message QueryExchangesResponse {
+  repeated Exchange exchanges = 1 [
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// Request type for the Query/IsAdmin RPC method.
+message QueryIsAdminRequest {
+  string address  = 1;
+}
+
+// Response type for the Query/IsAdmin RPC method.
+message QueryIsAdminResponse {
+  bool is_admin = 1;
+}
+
+// Request type for the Query/NextExchangeId RPC method.
+message QueryNextExchangeIdRequest {
+}
+
+// Response type for the Query/NextExchangeId RPC method.
+message QueryNextExchangeIdResponse {
+  string id = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Request type for the Query/Ratemeter RPC method.
+message QueryRatemeterRequest {
+}
+
+// Response type for the Query/Ratemeter RPC method.
+message QueryRatemeterResponse {
+  Ratemeter ratemeter = 1 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Request type for the Query/CollectedFees RPC method.
+message QueryCollectedFeesRequest {
+  string exchange_id = 1;
+}
+
+// Response type for the Query/CollectedFees RPC method.
+message QueryCollectedFeesResponse {
+  repeated cosmos.base.v1beta1.Coin coins = 1 [
+    (gogoproto.nullable)   = false
+  ];
+}
+
+// Request type for the Query/LockedFees RPC method.
+message QueryLockedFeesRequest {
+  string exchange_id = 1;
+}
+
+// Response type for the Query/LockedFees RPC method.
+message QueryLockedFeesResponse {
+  repeated cosmos.base.v1beta1.Coin coins = 1 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Request type for the Query/AvailableFees RPC method.
+message QueryAvailableFeesRequest {
+  string exchange_id = 1;
+}
+
+// Response type for the Query/AvailableFees RPC method.
+message QueryAvailableFeesResponse {
+  repeated cosmos.base.v1beta1.Coin coins = 1 [
+    (gogoproto.nullable) = false
+  ];
+}`
+
+// bexTxProto contains the content of proto/guru/bex/v1/tx.proto
+const bexTxProto = `syntax = "proto3";
+package guru.bex.v1;
+
+import "guru/bex/v1/bex.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/bex/types";
+
+// Msg defines the bex module Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  
+  // RegisterAdmin registers new admin for the module 
+  rpc RegisterAdmin(MsgRegisterAdmin) returns (MsgRegisterAdminResponse);
+
+  // RemoveAdmin revekoes the admin privileges 
+  rpc RemoveAdmin(MsgRemoveAdmin) returns (MsgRemoveAdminResponse);
+
+  // RegisterExchange registers new exchange from json file
+  rpc RegisterExchange(MsgRegisterExchange) returns (MsgRegisterExchangeResponse);
+
+  // UpdateExchange updates the existinge xchnage from json file 
+  rpc UpdateExchange(MsgUpdateExchange) returns (MsgUpdateExchangeResponse);
+
+  // UpdateRatemeter changes the state of current ratemeter
+  rpc UpdateRatemeter(MsgUpdateRatemeter) returns (MsgUpdateRatemeterResponse);
+
+  // WithdrawFees allows the admin to withdraw collected fees from exchange
+  rpc WithdrawFees(MsgWithdrawFees) returns (MsgWithdrawFeesResponse);
+
+  // ChangeModerator changes the state of current moderator 
+  rpc ChangeModerator(MsgChangeBexModerator) returns (MsgChangeBexModeratorResponse);
+}
+
+// msg declaration for registering admin.
+message MsgRegisterAdmin {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // new admin address
+  string admin_address = 2;
+  string exchange_id = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Response type for the Msg/RegisterAdmin.
+message MsgRegisterAdminResponse {
+}
+
+// msg declaration for registering admin.
+message MsgRemoveAdmin {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // admin address to remove
+  string admin_address = 2;
+}
+
+// Response type for the Msg/RegisterAdmin.
+message MsgRemoveAdminResponse {
+}
+
+// msg declaration for registering admin.
+message MsgRegisterExchange {
+  option (cosmos.msg.v1.signer) = "admin_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   admin_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // exchange
+  Exchange exchange = 3;
+}
+
+// Response type for the Msg/RegisterAdmin.
+message MsgRegisterExchangeResponse {
+}
+
+// msg declaration for updating the rate.
+message MsgUpdateExchange {
+  option (cosmos.msg.v1.signer) = "admin_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   admin_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // exchnage id 
+  string exchange_id = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // key to udpate
+  string key = 3;
+
+  // new value
+  string value = 4;
+}
+
+// Response type for the Msg/UpdateRate.
+message MsgUpdateExchangeResponse {
+}
+
+// msg declaration for updating the rate.
+message MsgUpdateRatemeter {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // ratemeter
+  Ratemeter ratemeter = 2;
+}
+
+// Response type for the Msg/UpdateRate.
+message MsgUpdateRatemeterResponse {
+}
+
+// msg declaration for withdrawing the collected fees.
+message MsgWithdrawFees {
+  option (cosmos.msg.v1.signer) = "admin_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string admin_address = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // ID for the existing coin pair
+  string exchange_id = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string withdraw_address = 3
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// Response type for the Msg/WithdrawFees.
+message MsgWithdrawFeesResponse {
+}
+
+// msg declaration for changing the moderator.
+message MsgChangeBexModerator {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string   moderator_address                 = 1 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string   new_moderator_address     = 2 
+      [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// Response type for the Msg/ChangeModerator.
+message MsgChangeBexModeratorResponse {
+}`
+
+// feepolicyQueryProto contains the content of proto/guru/feepolicy/v1/query.proto
 const feepolicyQueryProto = `syntax = "proto3";
 
 package guru.feepolicy.v1;
@@ -70,7 +408,7 @@ message QueryDiscountResponse {
 }
 `
 
-// feepolicyTxProto contains the content of ../../proto/guru/feepolicy/v1/tx.proto
+// feepolicyTxProto contains the content of proto/guru/feepolicy/v1/tx.proto
 const feepolicyTxProto = `syntax = "proto3";
 
 package guru.feepolicy.v1;
@@ -80,25 +418,27 @@ option go_package = "github.com/gurufinglobal/guru/v2/x/feepolicy/types";
 import "guru/feepolicy/v1/feepolicy.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 
 // Msg defines the feepolicy Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
+  // RegisterDiscounts registers or updates discounts for one or more accounts.
   rpc RegisterDiscounts(MsgRegisterDiscounts) returns (MsgRegisterDiscountsResponse) {
     option (google.api.http) = {
       post: "/guru/feepolicy/v1/register_discounts"
       body: "*"
     };
   }
+  // RemoveDiscounts removes a specific discount configuration for an account/module/message type.
   rpc RemoveDiscounts(MsgRemoveDiscounts) returns (MsgRemoveDiscountsResponse) {
     option (google.api.http) = {
       post: "/guru/feepolicy/v1/remove_discounts"
       body: "*"
     };
   }
+  // ChangeModerator updates the module moderator address.
   rpc ChangeModerator(MsgChangeModerator) returns (MsgChangeModeratorResponse) {
     option (google.api.http) = {
       post: "/guru/feepolicy/v1/change_moderator"
@@ -156,7 +496,7 @@ message MsgChangeModerator {
 message MsgChangeModeratorResponse {
 }`
 
-// oracleQueryProto contains the content of ../../proto/guru/oracle/v1/query.proto
+// oracleQueryProto contains the content of proto/guru/oracle/v1/query.proto
 const oracleQueryProto = `syntax = "proto3";
 package guru.oracle.v1;
 
@@ -267,7 +607,7 @@ message QueryModeratorAddressResponse {
 }
 `
 
-// oracleTxProto contains the content of ../../proto/guru/oracle/v1/tx.proto
+// oracleTxProto contains the content of proto/guru/oracle/v1/tx.proto
 const oracleTxProto = `syntax = "proto3";
 package guru.oracle.v1;
 
@@ -277,7 +617,6 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "guru/oracle/v1/oracle.proto";
 import "guru/oracle/v1/genesis.proto";
-import "cosmos/base/v1beta1/coin.proto";
 
 
 option go_package = "github.com/gurufinglobal/guru/v2/x/oracle/types";
@@ -417,3 +756,164 @@ message MsgUpdateParams {
 message MsgUpdateParamsResponse {} 
 `
 
+// transwapQueryProto contains the content of proto/guru/transwap/v1/query.proto
+const transwapQueryProto = `syntax = "proto3";
+
+package guru.transwap.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "guru/transwap/v1/token.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/ibc/transwap/types";
+
+// Query provides defines the gRPC querier service.
+service Query {
+
+  // Denoms queries all denominations
+  rpc Denoms(QueryDenomsRequest) returns (QueryDenomsResponse) {
+    option (google.api.http).get = "/ibc/apps/transfer/v1/denoms";
+  }
+
+  // Denom queries a denomination
+  rpc Denom(QueryDenomRequest) returns (QueryDenomResponse) {
+    option (google.api.http).get = "/ibc/apps/transfer/v1/denoms/{hash=**}";
+  }
+
+  // DenomHash queries a denomination hash information.
+  rpc DenomHash(QueryDenomHashRequest) returns (QueryDenomHashResponse) {
+    option (google.api.http).get = "/ibc/apps/transfer/v1/denom_hashes/{trace=**}";
+  }
+
+  // EscrowAddress returns the escrow address for a particular port and channel id.
+  rpc EscrowAddress(QueryEscrowAddressRequest) returns (QueryEscrowAddressResponse) {
+    option (google.api.http).get = "/ibc/apps/transfer/v1/channels/{channel_id}/ports/{port_id}/escrow_address";
+  }
+
+  // TotalEscrowForDenom returns the total amount of tokens in escrow based on the denom.
+  rpc TotalEscrowForDenom(QueryTotalEscrowForDenomRequest) returns (QueryTotalEscrowForDenomResponse) {
+    option (google.api.http).get = "/ibc/apps/transfer/v1/total_escrow/{denom=**}";
+  }
+}
+
+// QueryDenomRequest is the request type for the Query/Denom RPC
+// method
+message QueryDenomRequest {
+  // hash (in hex format) or denom (full denom with ibc prefix) of the on chain denomination.
+  string hash = 1;
+}
+
+// QueryDenomResponse is the response type for the Query/Denom RPC
+// method.
+message QueryDenomResponse {
+  // denom returns the requested denomination.
+  Denom denom = 1;
+}
+
+// QueryDenomsRequest is the request type for the Query/Denoms RPC
+// method
+message QueryDenomsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryDenomsResponse is the response type for the Query/Denoms RPC
+// method.
+message QueryDenomsResponse {
+  // denoms returns all denominations.
+  repeated Denom denoms = 1 [(gogoproto.castrepeated) = "Denoms", (gogoproto.nullable) = false];
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryDenomHashRequest is the request type for the Query/DenomHash RPC
+// method
+message QueryDenomHashRequest {
+  // The denomination trace ([port_id]/[channel_id])+/[denom]
+  string trace = 1;
+}
+
+// QueryDenomHashResponse is the response type for the Query/DenomHash RPC
+// method.
+message QueryDenomHashResponse {
+  // hash (in hex format) of the denomination trace information.
+  string hash = 1;
+}
+
+// QueryEscrowAddressRequest is the request type for the EscrowAddress RPC method.
+message QueryEscrowAddressRequest {
+  // unique port identifier
+  string port_id = 1;
+  // unique channel identifier
+  string channel_id = 2;
+}
+
+// QueryEscrowAddressResponse is the response type of the EscrowAddress RPC method.
+message QueryEscrowAddressResponse {
+  // the escrow account address
+  string escrow_address = 1;
+}
+
+// QueryTotalEscrowForDenomRequest is the request type for TotalEscrowForDenom RPC method.
+message QueryTotalEscrowForDenomRequest {
+  string denom = 1;
+}
+
+// QueryTotalEscrowForDenomResponse is the response type for TotalEscrowForDenom RPC method.
+message QueryTotalEscrowForDenomResponse {
+  cosmos.base.v1beta1.Coin amount = 1 [(gogoproto.nullable) = false];
+}
+`
+
+// embeddedProtoRegistry maps canonical proto paths to their content.
+var embeddedProtoRegistry = map[string]string{
+	"proto/guru/bex/v1/query.proto": bexQueryProto,
+	"proto/guru/bex/v1/tx.proto": bexTxProto,
+	"proto/guru/feepolicy/v1/query.proto": feepolicyQueryProto,
+	"proto/guru/feepolicy/v1/tx.proto": feepolicyTxProto,
+	"proto/guru/oracle/v1/query.proto": oracleQueryProto,
+	"proto/guru/oracle/v1/tx.proto": oracleTxProto,
+	"proto/guru/transwap/v1/query.proto": transwapQueryProto,
+}
+
+// embeddedModules lists all discovered module names (sorted).
+var embeddedModules = []string{
+	"bex",
+	"feepolicy",
+	"oracle",
+	"transwap",
+}
+
+// ScanModulesInEmbeddedProtoDir returns all module names found in the embedded proto directory.
+func ScanModulesInEmbeddedProtoDir(_ string) ([]string, error) {
+	result := make([]string, len(embeddedModules))
+	copy(result, embeddedModules)
+	return result, nil
+}
+
+// ReadEmbeddedProtoFile reads a proto file content from the embedded registry.
+func ReadEmbeddedProtoFile(protoPath string) (string, error) {
+	content, ok := embeddedProtoRegistry[protoPath]
+	if !ok {
+		return "", fmt.Errorf("embedded proto file %s not found", protoPath)
+	}
+	return content, nil
+}
+
+// CheckEmbeddedProtoFileExists checks if a proto file exists in the embedded registry.
+func CheckEmbeddedProtoFileExists(protoPath string) bool {
+	_, ok := embeddedProtoRegistry[protoPath]
+	return ok
+}
+
+// ListEmbeddedProtoFiles returns all proto file paths in the embedded registry (sorted for determinism).
+func ListEmbeddedProtoFiles() ([]string, error) {
+	files := make([]string, 0, len(embeddedProtoRegistry))
+	for path := range embeddedProtoRegistry {
+		files = append(files, path)
+	}
+	sort.Strings(files)
+	return files, nil
+}
