@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -26,14 +27,14 @@ type GovParamsResponse struct {
 
 type GovProposalResponse struct {
 	Proposal struct {
-		Id           string `json:"id"`
+		ID           string `json:"id"`
 		Status       string `json:"status"`
 		FailedReason string `json:"failed_reason"`
 	} `json:"proposal"`
 }
 
 type TxResponse struct {
-	Code   int `json:"code"`
+	Code   int    `json:"code"`
 	TxHash string `json:"txhash"`
 	Logs   []struct {
 		Events []struct {
@@ -201,8 +202,14 @@ func findEventAttribute(v any, eventType, key string) string {
 				}
 			}
 		}
-		for _, val := range vv {
-			if found := findEventAttribute(val, eventType, key); found != "" {
+		// Iterate over map keys in a stable order to avoid non-determinism.
+		keys := make([]string, 0, len(vv))
+		for k := range vv {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			if found := findEventAttribute(vv[k], eventType, key); found != "" {
 				return found
 			}
 		}

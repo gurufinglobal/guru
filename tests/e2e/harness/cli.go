@@ -11,8 +11,8 @@ import (
 )
 
 type CLI struct {
-	Home   string
-	Node   string
+	Home    string
+	Node    string
 	ChainID string
 }
 
