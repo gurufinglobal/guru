@@ -60,6 +60,14 @@ func InitGenesis(
 		}
 	}
 
+	// Deploy preinstall contracts
+	for i := range data.Preinstalls {
+		preinstall := &data.Preinstalls[i]
+		if err := k.ApplyPreinstall(ctx, preinstall); err != nil {
+			panic(fmt.Errorf("failed to apply preinstall %s: %s", preinstall.Name, err))
+		}
+	}
+
 	if err := k.InitEvmCoinInfo(ctx); err != nil {
 		panic(fmt.Errorf("error initializing evm coin info: %s", err))
 	}

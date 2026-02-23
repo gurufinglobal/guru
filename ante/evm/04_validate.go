@@ -4,6 +4,8 @@ import (
 	"errors"
 	"math/big"
 
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -21,7 +23,7 @@ import (
 // - If the transaction is a contract creation or call, the corresponding operation must be enabled in the EVM parameters
 func ValidateMsg(
 	evmParams evmtypes.Params,
-	txData evmtypes.TxData,
+	tx *ethtypes.Transaction,
 	from sdktypes.AccAddress,
 ) error {
 	if from != nil {
@@ -29,7 +31,7 @@ func ValidateMsg(
 	}
 
 	return checkDisabledCreateCall(
-		txData,
+		tx,
 		&evmParams.AccessControl,
 	)
 }
@@ -37,10 +39,10 @@ func ValidateMsg(
 // checkDisabledCreateCall checks if the transaction is a contract creation or call,
 // and if those actions are disabled through governance.
 func checkDisabledCreateCall(
-	txData evmtypes.TxData,
+	tx *ethtypes.Transaction,
 	permissions *evmtypes.AccessControl,
 ) error {
-	to := txData.GetTo()
+	to := tx.To()
 	blockCreate := permissions.Create.AccessType == evmtypes.AccessTypeRestricted
 	blockCall := permissions.Call.AccessType == evmtypes.AccessTypeRestricted
 

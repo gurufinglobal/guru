@@ -93,6 +93,6 @@ func SignatureVerification(
 	}
 
 	// set up the sender to the transaction field if not already
-	msg.From = sender.Hex()
+	msg.From = sender.Bytes()
 	return nil
 }

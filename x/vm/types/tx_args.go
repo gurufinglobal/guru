@@ -11,8 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
-
-	sdkmath "cosmossdk.io/math"
 )
 
 // TransactionArgs represents the arguments to construct a new transaction
@@ -67,18 +65,16 @@ func (args *TransactionArgs) String() string {
 }
 
 // ToTransaction converts the arguments to an ethereum transaction.
-// This assumes that setTxDefaults has been called.
-func (args *TransactionArgs) ToTransaction() *MsgEthereumTx {
+// txType is used as default when no type-specific fields are present (e.g. ethtypes.LegacyTxType).
+func (args *TransactionArgs) ToTransaction(txType byte) *ethtypes.Transaction {
 	var (
-		chainID, value, gasPrice, maxFeePerGas, maxPriorityFeePerGas sdkmath.Int
-		gas, nonce                                                   uint64
-		from, to                                                     string
+		nonce    uint64
+		gas      uint64
+		chainID  *big.Int
+		value    = new(big.Int)
+		gasPrice = new(big.Int)
+		data     = args.GetData()
 	)
-
-	// Set sender address or use zero address if none specified.
-	if args.ChainID != nil {
-		chainID = sdkmath.NewIntFromBigInt(args.ChainID.ToInt())
-	}
 
 	if args.Nonce != nil {
 		nonce = uint64(*args.Nonce)
@@ -88,82 +84,61 @@ func (args *TransactionArgs) ToTransaction() *MsgEthereumTx {
 		gas = uint64(*args.Gas)
 	}
 
-	if args.GasPrice != nil {
-		gasPrice = sdkmath.NewIntFromBigInt(args.GasPrice.ToInt())
-	}
-
-	if args.MaxFeePerGas != nil {
-		maxFeePerGas = sdkmath.NewIntFromBigInt(args.MaxFeePerGas.ToInt())
-	}
-
-	if args.MaxPriorityFeePerGas != nil {
-		maxPriorityFeePerGas = sdkmath.NewIntFromBigInt(args.MaxPriorityFeePerGas.ToInt())
-	}
-
 	if args.Value != nil {
-		value = sdkmath.NewIntFromBigInt(args.Value.ToInt())
+		value = args.Value.ToInt()
 	}
 
-	if args.To != nil {
-		to = args.To.Hex()
+	if args.ChainID != nil {
+		chainID = args.ChainID.ToInt()
 	}
 
-	var data TxData
+	if args.GasPrice != nil {
+		gasPrice = args.GasPrice.ToInt()
+	}
+
+	var al ethtypes.AccessList
+	if args.AccessList != nil {
+		al = *args.AccessList
+	}
+
 	switch {
 	case args.MaxFeePerGas != nil:
-		al := AccessList{}
-		if args.AccessList != nil {
-			al = NewAccessList(args.AccessList)
+		gasTipCap := new(big.Int)
+		if args.MaxPriorityFeePerGas != nil {
+			gasTipCap = args.MaxPriorityFeePerGas.ToInt()
 		}
-
-		data = &DynamicFeeTx{
-			To:        to,
-			ChainID:   &chainID,
-			Nonce:     nonce,
-			GasLimit:  gas,
-			GasFeeCap: &maxFeePerGas,
-			GasTipCap: &maxPriorityFeePerGas,
-			Amount:    &value,
-			Data:      args.GetData(),
-			Accesses:  al,
-		}
+		return ethtypes.NewTx(&ethtypes.DynamicFeeTx{
+			ChainID:    chainID,
+			Nonce:      nonce,
+			GasTipCap:  gasTipCap,
+			GasFeeCap:  args.MaxFeePerGas.ToInt(),
+			Gas:        gas,
+			To:         args.To,
+			Value:      value,
+			Data:       data,
+			AccessList: al,
+		})
 	case args.AccessList != nil:
-		data = &AccessListTx{
-			To:       to,
-			ChainID:  &chainID,
-			Nonce:    nonce,
-			GasLimit: gas,
-			GasPrice: &gasPrice,
-			Amount:   &value,
-			Data:     args.GetData(),
-			Accesses: NewAccessList(args.AccessList),
-		}
+		return ethtypes.NewTx(&ethtypes.AccessListTx{
+			ChainID:    chainID,
+			Nonce:      nonce,
+			GasPrice:   gasPrice,
+			Gas:        gas,
+			To:         args.To,
+			Value:      value,
+			Data:       data,
+			AccessList: al,
+		})
 	default:
-		data = &LegacyTx{
-			To:       to,
+		return ethtypes.NewTx(&ethtypes.LegacyTx{
 			Nonce:    nonce,
-			GasLimit: gas,
-			GasPrice: &gasPrice,
-			Amount:   &value,
-			Data:     args.GetData(),
-		}
+			GasPrice: gasPrice,
+			Gas:      gas,
+			To:       args.To,
+			Value:    value,
+			Data:     data,
+		})
 	}
-
-	anyData, err := PackTxData(data)
-	if err != nil {
-		return nil
-	}
-
-	if args.From != nil {
-		from = args.From.Hex()
-	}
-
-	msg := MsgEthereumTx{
-		Data: anyData,
-		From: from,
-	}
-	msg.Hash = msg.AsTransaction().Hash().Hex()
-	return &msg
 }
 
 // ToMessage converts the arguments to the Message type used by the core evm.
@@ -191,48 +166,48 @@ func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int, sk
 		gas = globalGasCap
 	}
 	var (
-		gasPrice  *big.Int
-		gasFeeCap *big.Int
-		gasTipCap *big.Int
+		gp  *big.Int
+		gfc *big.Int
+		gtc *big.Int
 	)
 	if baseFee == nil {
 		// If there's no basefee, then it must be a non-1559 execution
-		gasPrice = new(big.Int)
+		gp = new(big.Int)
 		if args.GasPrice != nil {
-			gasPrice = args.GasPrice.ToInt()
+			gp = args.GasPrice.ToInt()
 		}
-		gasFeeCap, gasTipCap = gasPrice, gasPrice
+		gfc, gtc = gp, gp
 	} else {
 		// A basefee is provided, necessitating 1559-type execution
 		if args.GasPrice != nil {
 			// User specified the legacy gas field, convert to 1559 gas typing
-			gasPrice = args.GasPrice.ToInt()
-			gasFeeCap, gasTipCap = gasPrice, gasPrice
+			gp = args.GasPrice.ToInt()
+			gfc, gtc = gp, gp
 		} else {
-			// User specified 1559 gas feilds (or none), use those
-			gasFeeCap = new(big.Int)
+			// User specified 1559 gas fields (or none), use those
+			gfc = new(big.Int)
 			if args.MaxFeePerGas != nil {
-				gasFeeCap = args.MaxFeePerGas.ToInt()
+				gfc = args.MaxFeePerGas.ToInt()
 			}
-			gasTipCap = new(big.Int)
+			gtc = new(big.Int)
 			if args.MaxPriorityFeePerGas != nil {
-				gasTipCap = args.MaxPriorityFeePerGas.ToInt()
+				gtc = args.MaxPriorityFeePerGas.ToInt()
 			}
 			// Backfill the legacy gasPrice for EVM execution, unless we're all zeroes
-			gasPrice = new(big.Int)
-			if gasFeeCap.BitLen() > 0 || gasTipCap.BitLen() > 0 {
-				gasPrice = new(big.Int).Add(gasTipCap, baseFee)
-				if gasPrice.Cmp(gasFeeCap) > 0 {
-					gasPrice = gasFeeCap
+			gp = new(big.Int)
+			if gfc.BitLen() > 0 || gtc.BitLen() > 0 {
+				gp = new(big.Int).Add(gtc, baseFee)
+				if gp.Cmp(gfc) > 0 {
+					gp = gfc
 				}
 			}
 		}
 	}
-	value := new(big.Int)
+	val := new(big.Int)
 	if args.Value != nil {
-		value = args.Value.ToInt()
+		val = args.Value.ToInt()
 	}
-	data := args.GetData()
+	callData := args.GetData()
 	var accessList ethtypes.AccessList
 	if args.AccessList != nil {
 		accessList = *args.AccessList
@@ -247,12 +222,12 @@ func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int, sk
 		From:                  addr,
 		To:                    args.To,
 		Nonce:                 nonce,
-		Value:                 value,
+		Value:                 val,
 		GasLimit:              gas,
-		GasPrice:              gasPrice,
-		GasFeeCap:             gasFeeCap,
-		GasTipCap:             gasTipCap,
-		Data:                  data,
+		GasPrice:              gp,
+		GasFeeCap:             gfc,
+		GasTipCap:             gtc,
+		Data:                  callData,
 		AccessList:            accessList,
 		BlobGasFeeCap:         (*big.Int)(args.BlobFeeCap),
 		BlobHashes:            args.BlobHashes,

@@ -21,9 +21,9 @@ import (
 // sender has enough funds to pay for the fees and value of the transaction.
 func CheckSenderBalance(
 	balance sdkmath.Int,
-	txData types.TxData,
+	tx *ethtypes.Transaction,
 ) error {
-	cost := txData.Cost()
+	cost := tx.Cost()
 
 	if cost.Sign() < 0 {
 		return errorsmod.Wrapf(
@@ -63,31 +63,20 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 	return nil
 }
 
-// VerifyFee is used to return the fee for the given transaction data in sdk.Coins. It checks that the
+// VerifyFee is used to return the fee for the given transaction in sdk.Coins. It checks that the
 // gas limit is not reached, the gas limit is higher than the intrinsic gas and that the
 // base fee is higher than the gas fee cap.
 func VerifyFee(
-	txData types.TxData,
+	tx *ethtypes.Transaction,
 	denom string,
 	baseFee *big.Int,
 	homestead, istanbul, shanghai, isCheckTx bool,
 ) (sdk.Coins, error) {
-	isContractCreation := txData.GetTo() == nil
+	isContractCreation := tx.To() == nil
 
-	gasLimit := txData.GetGas()
+	gasLimit := tx.Gas()
 
-	var accessList ethtypes.AccessList
-	if txData.GetAccessList() != nil {
-		accessList = txData.GetAccessList()
-	}
-
-	var authList []ethtypes.SetCodeAuthorization
-	ethTx := ethtypes.NewTx(txData.AsEthereumData())
-	if ethTx != nil {
-		authList = ethTx.SetCodeAuthorizations()
-	}
-
-	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, authList, isContractCreation, homestead,
+	intrinsicGas, err := core.IntrinsicGas(tx.Data(), tx.AccessList(), tx.SetCodeAuthorizations(), isContractCreation, homestead,
 		istanbul, shanghai)
 	if err != nil {
 		return nil, errorsmod.Wrapf(
@@ -105,14 +94,14 @@ func VerifyFee(
 		)
 	}
 
-	if baseFee != nil && txData.GetGasFeeCap().Cmp(baseFee) < 0 {
+	if baseFee != nil && tx.GasFeeCap().Cmp(baseFee) < 0 {
 		return nil, errorsmod.Wrapf(errortypes.ErrInsufficientFee,
 			"the tx gasfeecap is lower than the tx baseFee: %s (gasfeecap), %s (basefee) ",
-			txData.GetGasFeeCap(),
+			tx.GasFeeCap(),
 			baseFee)
 	}
 
-	feeAmt := txData.EffectiveFee(baseFee)
+	feeAmt := types.EffectiveFee(tx, baseFee)
 	if feeAmt.Sign() == 0 {
 		// zero fee, no need to deduct
 		return sdk.Coins{}, nil
@@ -120,3 +109,5 @@ func VerifyFee(
 
 	return sdk.Coins{{Denom: denom, Amount: sdkmath.NewIntFromBigInt(feeAmt)}}, nil
 }
+
+var _ = (*types.Params)(nil) // ensure types import is used

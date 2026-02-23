@@ -75,6 +75,11 @@ service Query {
     option (google.api.http).get = "/cosmos/evm/vm/v1/trace_block";
   }
 
+  // TraceCall implements the `debug_traceCall` rpc api
+  rpc TraceCall(QueryTraceCallRequest) returns (QueryTraceCallResponse) {
+    option (google.api.http).get = "/cosmos/evm/vm/v1/trace_call";
+  }
+
   // BaseFee queries the base fee of the parent block of the current block,
   // it's similar to feemarket module's method, but also checks london hardfork
   // status.
@@ -362,4 +367,38 @@ message QueryGlobalMinGasPriceResponse {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+}
+
+// QueryTraceCallRequest defines TraceCall request
+message QueryTraceCallRequest {
+  // args uses the same json format as the json rpc api.
+  bytes args = 1;
+  // gas_cap defines the default gas cap to be used
+  uint64 gas_cap = 2;
+  // proposer_address of the requested block in hex format
+  bytes proposer_address = 3
+      [ (gogoproto.casttype) =
+            "github.com/cosmos/cosmos-sdk/types.ConsAddress" ];
+  // chain_id is the eip155 chain id parsed from the requested block header
+  int64 chain_id = 4;
+  // trace_config holds extra parameters to trace functions.
+  TraceConfig trace_config = 5;
+  // block_number of requested transaction
+  int64 block_number = 6;
+  // block_hash of requested transaction
+  string block_hash = 7;
+  // block_time of requested transaction
+  google.protobuf.Timestamp block_time = 8 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.stdtime) = true
+  ];
+  // block_max_gas of the block of the requested transaction
+  int64 block_max_gas = 9;
+}
+
+// QueryTraceCallResponse defines TraceCall response
+message QueryTraceCallResponse {
+  // data is the response serialized in bytes
+  bytes data = 1;
 }

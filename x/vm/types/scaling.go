@@ -66,3 +66,21 @@ func ConvertCoinsDenomToExtendedDenom(coins sdk.Coins) sdk.Coins {
 	}
 	return convertedCoins.Sort()
 }
+
+// ConvertCoinsDenomToExtendedDenomWithEvmParams returns the given coins with the Denom of the evm
+// coin converted to the extended denom, using explicit Params to get the extended denom.
+func ConvertCoinsDenomToExtendedDenomWithEvmParams(coins sdk.Coins, params Params) sdk.Coins {
+	if params.ExtendedDenomOptions == nil || params.ExtendedDenomOptions.ExtendedDenom == "" {
+		return ConvertCoinsDenomToExtendedDenom(coins)
+	}
+	evmDenom := params.EvmDenom
+	extendedDenom := params.ExtendedDenomOptions.ExtendedDenom
+	convertedCoins := make(sdk.Coins, len(coins))
+	for i, coin := range coins {
+		if coin.Denom == evmDenom {
+			coin = sdk.Coin{Denom: extendedDenom, Amount: coin.Amount}
+		}
+		convertedCoins[i] = coin
+	}
+	return convertedCoins.Sort()
+}

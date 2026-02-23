@@ -443,7 +443,7 @@ func (e *PublicAPI) FillTransaction(args evmtypes.TransactionArgs) (*rpctypes.Si
 	}
 
 	// Assemble the transaction and obtain rlp
-	tx := args.ToTransaction().AsTransaction()
+	tx := args.ToTransaction(ethtypes.LegacyTxType)
 
 	data, err := tx.MarshalBinary()
 	if err != nil {

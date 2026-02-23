@@ -35,6 +35,15 @@ message Params {
   // active_static_precompiles defines the slice of hex addresses of the
   // precompiled contracts that are active
   repeated string active_static_precompiles = 9;
+  // history_serve_window defines the number of historical blocks to serve
+  uint64 history_serve_window = 10;
+  // extended_denom_options defines the extended denomination options
+  ExtendedDenomOptions extended_denom_options = 11;
+}
+
+// ExtendedDenomOptions defines the extended denomination options
+message ExtendedDenomOptions {
+  string extended_denom = 1;
 }
 
 // AccessControl defines the permission policy of the EVM
@@ -264,6 +273,8 @@ message Log {
   // reorganisation. You must pay attention to this field if you receive logs
   // through a filter query.
   bool removed = 9;
+  // block_timestamp of the block in which the transaction was included
+  uint64 block_timestamp = 10 [ (gogoproto.jsontag) = "blockTimestamp" ];
 }
 
 // TxResult stores results of Tx execution.
@@ -332,4 +343,24 @@ message TraceConfig {
   bool enable_return_data = 12 [ (gogoproto.jsontag) = "enableReturnData" ];
   // tracer_json_config configures the tracer using a JSON string
   string tracer_json_config = 13 [ (gogoproto.jsontag) = "tracerConfig" ];
+}
+
+// Preinstall defines a contract that is preinstalled on-chain with a specific
+// contract address and bytecode
+message Preinstall {
+  // name of the preinstall contract
+  string name = 1;
+  // address in hex format of the preinstall contract
+  string address = 2;
+  // code in hex format for the preinstall contract
+  string code = 3;
+}
+
+// EvmCoinInfo contains denomination information including display name and
+// decimal precision.
+message EvmCoinInfo {
+  string denom = 1;
+  string extended_denom = 2;
+  string display_denom = 3;
+  uint32 decimals = 4;
 }

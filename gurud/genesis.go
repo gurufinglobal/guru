@@ -28,6 +28,7 @@ type GenesisState map[string]json.RawMessage
 func NewEVMGenesisState() *evmtypes.GenesisState {
 	evmGenState := evmtypes.DefaultGenesisState()
 	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	evmGenState.Preinstalls = evmtypes.DefaultPreinstalls()
 
 	return evmGenState
 }

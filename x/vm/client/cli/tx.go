@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -53,7 +54,8 @@ func NewRawTxCmd() *cobra.Command {
 			}
 
 			msg := &types.MsgEthereumTx{}
-			if err := msg.UnmarshalBinary(data); err != nil {
+			signer := ethtypes.LatestSignerForChainID(types.GetEthChainConfig().ChainID)
+			if err := msg.UnmarshalBinary(data, signer); err != nil {
 				return err
 			}
 

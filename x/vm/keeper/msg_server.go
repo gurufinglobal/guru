@@ -30,7 +30,7 @@ var _ types.MsgServer = &Keeper{}
 func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*types.MsgEthereumTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	sender := msg.From
+	sender := msg.GetSender().Hex()
 	tx := msg.AsTransaction()
 	txIndex := k.GetTxIndexTransient(ctx)
 
@@ -145,4 +145,23 @@ func (k *Keeper) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams)
 	}
 
 	return &types.MsgUpdateParamsResponse{}, nil
+}
+
+// RegisterPreinstalls implements the gRPC MsgServer interface. When a RegisterPreinstalls
+// proposal passes, it creates preinstalled contracts in the EVM state.
+func (k *Keeper) RegisterPreinstalls(goCtx context.Context, req *types.MsgRegisterPreinstalls) (*types.MsgRegisterPreinstallsResponse, error) {
+	if k.authority.String() != req.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority, expected %s, got %s", k.authority.String(), req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	for i := range req.Preinstalls {
+		preinstall := &req.Preinstalls[i]
+		if err := k.ApplyPreinstall(ctx, preinstall); err != nil {
+			return nil, errorsmod.Wrapf(err, "failed to apply preinstall %s", preinstall.Name)
+		}
+	}
+
+	return &types.MsgRegisterPreinstallsResponse{}, nil
 }

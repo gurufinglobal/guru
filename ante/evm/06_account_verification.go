@@ -2,6 +2,7 @@ package evm
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -12,7 +13,6 @@ import (
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
 	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // VerifyAccountBalance checks that the account balance is greater than the total transaction cost.
@@ -25,7 +25,7 @@ func VerifyAccountBalance(
 	accountKeeper anteinterfaces.AccountKeeper,
 	account *statedb.Account,
 	from common.Address,
-	txData evmtypes.TxData,
+	tx *ethtypes.Transaction,
 ) error {
 	// Only EOA are allowed to send transactions.
 	if account != nil && account.IsContract() {
@@ -41,7 +41,7 @@ func VerifyAccountBalance(
 		account = statedb.NewEmptyAccount()
 	}
 
-	if err := keeper.CheckSenderBalance(sdkmath.NewIntFromBigInt(account.Balance.ToBig()), txData); err != nil {
+	if err := keeper.CheckSenderBalance(sdkmath.NewIntFromBigInt(account.Balance.ToBig()), tx); err != nil {
 		return errorsmod.Wrap(err, "failed to check sender balance")
 	}
 

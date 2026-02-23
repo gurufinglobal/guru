@@ -83,7 +83,7 @@ func Call(ctx sdk.Context, app *exampleapp.GURUD, args CallArgs) (res abci.ExecT
 		Input:     input,
 		Accesses:  args.AccessList,
 	})
-	msg.From = addr.Hex()
+	msg.From = addr.Bytes()
 
 	res, err = chainutil.DeliverEthTx(app, args.PrivKey, msg)
 	if err != nil {

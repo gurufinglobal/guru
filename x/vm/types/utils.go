@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/cosmos/gogoproto/proto"
@@ -79,7 +80,6 @@ func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) 
 			return nil, fmt.Errorf("invalid tx type: %T", tx)
 		}
 		txHash := ethMsg.AsTransaction().Hash()
-		ethMsg.Hash = txHash.Hex()
 		if txHash == ethHash {
 			return ethMsg, nil
 		}
@@ -89,23 +89,13 @@ func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) 
 }
 
 // UnpackEthMsg unpacks an Ethereum message from a Cosmos SDK message
-func UnpackEthMsg(msg sdk.Msg) (
-	ethMsg *MsgEthereumTx,
-	txData TxData,
-	err error,
-) {
+func UnpackEthMsg(msg sdk.Msg) (*MsgEthereumTx, error) {
 	msgEthTx, ok := msg.(*MsgEthereumTx)
 	if !ok {
-		return nil, nil, errorsmod.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*MsgEthereumTx)(nil))
+		return nil, errorsmod.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*MsgEthereumTx)(nil))
 	}
 
-	txData, err = UnpackTxData(msgEthTx.Data)
-	if err != nil {
-		return nil, nil, errorsmod.Wrap(err, "failed to unpack tx data any for tx")
-	}
-
-	// sender address should be in the tx cache from the previous AnteHandle call
-	return msgEthTx, txData, nil
+	return msgEthTx, nil
 }
 
 // BinSearch executes the binary search and hone in on an executable gas limit
@@ -136,6 +126,17 @@ func EffectiveGasPrice(baseFee, feeCap, tipCap *big.Int) *big.Int {
 		return calcVal
 	}
 	return feeCap
+}
+
+// EffectiveFee returns the effective fee for a transaction given baseFee
+func EffectiveFee(tx *ethtypes.Transaction, baseFee *big.Int) *big.Int {
+	gasLimit := new(big.Int).SetUint64(tx.Gas())
+	if baseFee != nil {
+		gasTip, _ := tx.EffectiveGasTip(baseFee)
+		effectiveGasPrice := new(big.Int).Add(gasTip, baseFee)
+		return gasLimit.Mul(gasLimit, effectiveGasPrice)
+	}
+	return gasLimit.Mul(gasLimit, tx.GasPrice())
 }
 
 // SortedKVStoreKeys returns a slice of *KVStoreKey sorted by their map key.

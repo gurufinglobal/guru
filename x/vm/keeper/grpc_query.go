@@ -740,3 +740,55 @@ func buildTraceCtx(ctx sdk.Context, gasLimit uint64) sdk.Context {
 	return evmante.BuildEvmExecutionCtx(ctx).
 		WithGasMeter(gurutypes.NewInfiniteGasMeterWithLimit(gasLimit))
 }
+
+// TraceCall implements the `debug_traceCall` rpc api
+func (k Keeper) TraceCall(c context.Context, req *types.QueryTraceCallRequest) (*types.QueryTraceCallResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	var args types.TransactionArgs
+	err := json.Unmarshal(req.Args, &args)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	cfg, err := k.EVMConfig(ctx, GetProposerAddress(ctx, nil))
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to load evm config")
+	}
+
+	// set defaults
+	if args.Gas == nil {
+		gas := hexutil.Uint64(req.GasCap)
+		args.Gas = &gas
+	}
+
+	msg, err := args.ToMessage(req.GasCap, cfg.BaseFee, true, true)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	traceCtx := buildTraceCtx(ctx, msg.GasLimit)
+
+	// Build a synthetic transaction for tracing
+	ethTx := args.ToTransaction(ethtypes.LegacyTxType)
+	signer := ethtypes.MakeSigner(types.GetEthChainConfig(), big.NewInt(ctx.BlockHeight()), uint64(ctx.BlockTime().Unix())) //#nosec G115 -- int overflow is not a concern here
+
+	txConfig := statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash()))
+
+	result, _, err := k.traceTx(traceCtx, cfg, txConfig, signer, ethTx, req.TraceConfig, false)
+	if err != nil {
+		return nil, err
+	}
+
+	resultData, err := json.Marshal(result)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &types.QueryTraceCallResponse{Data: resultData}, nil
+}
+
