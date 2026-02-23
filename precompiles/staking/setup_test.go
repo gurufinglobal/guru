@@ -75,9 +75,8 @@ func (s *PrecompileTestSuite) SetupTest() {
 	s.keyring = keyring
 	s.network = nw
 
-	if s.precompile, err = staking.NewPrecompile(
+	s.precompile = staking.NewPrecompile(
 		*s.network.App.StakingKeeper,
-	); err != nil {
-		panic(err)
-	}
+		s.network.App.BankKeeper,
+	)
 }

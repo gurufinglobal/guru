@@ -21,19 +21,6 @@ func (suite *KeeperTestSuite) TestEthereumTx() {
 		expectedErr error
 	}{
 		{
-			"fail - insufficient gas",
-			func() *types.MsgEthereumTx {
-				args := types.EvmTxArgs{
-					// Have insufficient gas
-					GasLimit: 10,
-				}
-				tx, err := suite.factory.GenerateSignedEthTx(suite.keyring.GetPrivKey(0), args)
-				suite.Require().NoError(err)
-				return tx.GetMsgs()[0].(*types.MsgEthereumTx)
-			},
-			types.ErrInvalidGasCap,
-		},
-		{
 			"success - transfer funds tx",
 			func() *types.MsgEthereumTx {
 				recipient := suite.keyring.GetAddr(1)

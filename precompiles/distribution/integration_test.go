@@ -1354,8 +1354,7 @@ var _ = Describe("Calling distribution precompile from contract", Ordered, func(
 		Expect(cAcc.IsContract()).To(BeTrue(), "account should be a contract")
 
 		// Contract delegate
-		stkPrecompile, err := s.getStakingPrecompile()
-		Expect(err).To(BeNil(), "error while getting staking precompile: %v", err)
+		stkPrecompile := s.getStakingPrecompile()
 		// make a delegation with contract as delegator
 		logCheck := testutil.LogCheckArgs{
 			ExpPass:   true,
@@ -1878,8 +1877,7 @@ var _ = Describe("Calling distribution precompile from contract", Ordered, func(
 			Expect(err).To(BeNil())
 			Expect(s.network.NextBlock()).To(BeNil())
 
-			stkPrecompile, err := s.getStakingPrecompile()
-			Expect(err).To(BeNil())
+			stkPrecompile := s.getStakingPrecompile()
 			// make a delegation with contract as delegator
 			logCheck := testutil.LogCheckArgs{
 				ExpPass:   true,
@@ -2065,8 +2063,7 @@ var _ = Describe("Calling distribution precompile from contract", Ordered, func(
 			Expect(err).To(BeNil())
 			Expect(s.network.NextBlock()).To(BeNil())
 
-			stkPrecompile, err := s.getStakingPrecompile()
-			Expect(err).To(BeNil())
+			stkPrecompile := s.getStakingPrecompile()
 			// make a delegation with contract as delegator
 			logCheck := testutil.LogCheckArgs{
 				ExpPass:   true,
@@ -2326,8 +2323,7 @@ var _ = Describe("Calling distribution precompile from contract", Ordered, func(
 			Expect(err).To(BeNil())
 			Expect(s.network.NextBlock()).To(BeNil())
 
-			stkPrecompile, err := s.getStakingPrecompile()
-			Expect(err).To(BeNil())
+			stkPrecompile := s.getStakingPrecompile()
 			// make a delegation with contract as delegator
 			logCheck := testutil.LogCheckArgs{
 				ExpPass:   true,

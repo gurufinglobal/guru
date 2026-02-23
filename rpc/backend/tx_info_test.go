@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/mock"
-	"google.golang.org/grpc/metadata"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -49,6 +48,10 @@ func (suite *BackendTestSuite) TestGetTransactionByHash() {
 	}
 
 	rpcTransaction, _ := rpctypes.NewRPCTransaction(msgEthereumTx.AsTransaction(), common.Hash{}, 0, 0, big.NewInt(1), suite.backend.chainID)
+	// After RLP roundtrip, tx.Data() returns []byte{} instead of nil.
+	if rpcTransaction.Input == nil {
+		rpcTransaction.Input = hexutil.Bytes{}
+	}
 
 	testCases := []struct {
 		name         string
@@ -121,7 +124,7 @@ func (suite *BackendTestSuite) TestGetTransactionByHash() {
 			err := suite.backend.indexer.IndexBlock(block, responseDeliver)
 			suite.Require().NoError(err)
 
-			rpcTx, err := suite.backend.GetTransactionByHash(common.HexToHash(tc.tx.Hash))
+			rpcTx, err := suite.backend.GetTransactionByHash(tc.tx.Hash())
 
 			if tc.expPass {
 				suite.Require().NoError(err)
@@ -136,6 +139,12 @@ func (suite *BackendTestSuite) TestGetTransactionByHash() {
 func (suite *BackendTestSuite) TestGetTransactionsByHashPending() {
 	msgEthereumTx, bz := suite.buildEthereumTx()
 	rpcTransaction, _ := rpctypes.NewRPCTransaction(msgEthereumTx.AsTransaction(), common.Hash{}, 0, 0, big.NewInt(1), suite.backend.chainID)
+	// After RLP roundtrip, tx.Data() returns []byte{} instead of nil,
+	// so the pending tx will have Input: hexutil.Bytes{} (non-nil empty).
+	// Normalize expected to match.
+	if rpcTransaction.Input == nil {
+		rpcTransaction.Input = hexutil.Bytes{}
+	}
 
 	testCases := []struct {
 		name         string
@@ -181,7 +190,7 @@ func (suite *BackendTestSuite) TestGetTransactionsByHashPending() {
 			suite.SetupTest() // reset
 			tc.registerMock()
 
-			rpcTx, err := suite.backend.getTransactionByHashPending(common.HexToHash(tc.tx.Hash))
+			rpcTx, err := suite.backend.getTransactionByHashPending(tc.tx.Hash())
 
 			if tc.expPass {
 				suite.Require().NoError(err)
@@ -196,6 +205,10 @@ func (suite *BackendTestSuite) TestGetTransactionsByHashPending() {
 func (suite *BackendTestSuite) TestGetTxByEthHash() {
 	msgEthereumTx, bz := suite.buildEthereumTx()
 	rpcTransaction, _ := rpctypes.NewRPCTransaction(msgEthereumTx.AsTransaction(), common.Hash{}, 0, 0, big.NewInt(1), suite.backend.chainID)
+	// After RLP roundtrip, tx.Data() returns []byte{} instead of nil.
+	if rpcTransaction.Input == nil {
+		rpcTransaction.Input = hexutil.Bytes{}
+	}
 
 	testCases := []struct {
 		name         string
@@ -209,7 +222,7 @@ func (suite *BackendTestSuite) TestGetTxByEthHash() {
 			func() {
 				suite.backend.indexer = nil
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
-				query := fmt.Sprintf("%s.%s='%s'", evmtypes.TypeMsgEthereumTx, evmtypes.AttributeKeyEthereumTxHash, common.HexToHash(msgEthereumTx.Hash).Hex())
+				query := fmt.Sprintf("%s.%s='%s'", evmtypes.TypeMsgEthereumTx, evmtypes.AttributeKeyEthereumTxHash, msgEthereumTx.Hash().Hex())
 				RegisterTxSearch(client, query, bz)
 			},
 			msgEthereumTx,
@@ -223,7 +236,7 @@ func (suite *BackendTestSuite) TestGetTxByEthHash() {
 			suite.SetupTest() // reset
 			tc.registerMock()
 
-			rpcTx, err := suite.backend.GetTxByEthHash(common.HexToHash(tc.tx.Hash))
+			rpcTx, err := suite.backend.GetTxByEthHash(tc.tx.Hash())
 
 			if tc.expPass {
 				suite.Require().NoError(err)
@@ -295,7 +308,7 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockAndIndex() {
 			Code: 0,
 			Events: []abci.Event{
 				{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-					{Key: "ethereumTxHash", Value: common.HexToHash(msgEthTx.Hash).Hex()},
+					{Key: "ethereumTxHash", Value: msgEthTx.Hash().Hex()},
 					{Key: "txIndex", Value: "0"},
 					{Key: "amount", Value: "1000"},
 					{Key: "txGasUsed", Value: "21000"},
@@ -314,6 +327,10 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockAndIndex() {
 		big.NewInt(1),
 		suite.backend.chainID,
 	)
+	// After RLP roundtrip, tx.Data() returns []byte{} instead of nil.
+	if txFromMsg.Input == nil {
+		txFromMsg.Input = hexutil.Bytes{}
+	}
 	testCases := []struct {
 		name         string
 		registerMock func()
@@ -412,6 +429,10 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockNumberAndIndex() {
 		big.NewInt(1),
 		suite.backend.chainID,
 	)
+	// After RLP roundtrip, tx.Data() returns []byte{} instead of nil.
+	if txFromMsg.Input == nil {
+		txFromMsg.Input = hexutil.Bytes{}
+	}
 	testCases := []struct {
 		name         string
 		registerMock func()
@@ -648,10 +669,7 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 		{
 			"happy path",
 			func() {
-				var header metadata.MD
-				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
-				RegisterParams(queryClient, &header, 1)
 				_, err := RegisterBlock(client, 1, txBz)
 				suite.Require().NoError(err)
 				_, err = RegisterBlockResults(client, 1)
@@ -689,7 +707,7 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 			err := suite.backend.indexer.IndexBlock(tc.block, tc.blockResult)
 			suite.Require().NoError(err)
 
-			hash := common.HexToHash(tc.tx.Hash)
+			hash := tc.tx.Hash()
 			res, err := suite.backend.GetTransactionReceipt(hash)
 			if tc.expPass {
 				suite.Require().Equal(res["transactionHash"], hash)

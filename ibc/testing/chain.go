@@ -150,7 +150,7 @@ func NewTestChainWithValSet(tb testing.TB, isEVM bool, coord *Coordinator, chain
 		senderAccs = append(senderAccs, senderAcc)
 	}
 
-	app := ibctesting.SetupWithGenesisValSet(tb, valSet, genAccs, chainID, sdk.DefaultPowerReduction, genBals...)
+	app := SetupWithGenesisValSet(tb, valSet, genAccs, chainID, sdk.DefaultPowerReduction, genBals...)
 	// create current header and call begin block
 	header := cmtproto.Header{
 		ChainID: chainID,

@@ -31,6 +31,12 @@ func (ec *EVMConfigurator) Configure() error {
 		return err
 	}
 
+	if ec.chainConfig != nil {
+		if err := SetChainConfig(ec.chainConfig); err != nil {
+			return err
+		}
+	}
+
 	if err := extendDefaultExtraEIPs(ec.extendedDefaultExtraEIPs); err != nil {
 		return err
 	}

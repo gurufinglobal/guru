@@ -515,7 +515,21 @@ func newDefaultGenesisState(guruApp *exampleapp.GURUD, evmChainID uint64, params
 	genesisState = setDefaultSlashingGenesisState(guruApp, genesisState, params.slashing)
 	genesisState = setDefaultMintGenesisState(guruApp, genesisState, params.mint)
 	genesisState = setDefaultErc20GenesisState(guruApp, evmChainID, genesisState)
+	genesisState = setDefaultEVMGenesisState(guruApp, genesisState)
 
+	return genesisState
+}
+
+// setDefaultEVMGenesisState updates the EVM genesis params to use the
+// configured EVM coin denom (which may differ from the default "agxn" when
+// a custom chain ID is used). This ensures InitEvmCoinInfo can find the
+// matching bank denom metadata during genesis.
+func setDefaultEVMGenesisState(guruApp *exampleapp.GURUD, genesisState gurutypes.GenesisState) gurutypes.GenesisState {
+	evmGenesis := evmtypes.DefaultGenesisState()
+	evmGenesis.Params.EvmDenom = evmtypes.GetEVMCoinDenom()
+	evmGenesis.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	evmGenesis.Preinstalls = evmtypes.DefaultPreinstalls()
+	genesisState[evmtypes.ModuleName] = guruApp.AppCodec().MustMarshalJSON(evmGenesis)
 	return genesisState
 }
 

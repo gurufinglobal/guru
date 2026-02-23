@@ -21,12 +21,12 @@ import (
 // setupBankPrecompile is a helper function to set up an instance of the Bank precompile for
 // a given token denomination.
 func (s *PrecompileTestSuite) setupBankPrecompile() *bank.Precompile {
-	precompile, err := bank.NewPrecompile(
+	precompile := bank.NewPrecompile(
 		s.network.App.BankKeeper,
 		s.network.App.Erc20Keeper,
 	)
 
-	s.Require().NoError(err, "failed to create bank precompile")
+	s.Require().NotNil(precompile, "failed to create bank precompile")
 
 	return precompile
 }
@@ -34,11 +34,11 @@ func (s *PrecompileTestSuite) setupBankPrecompile() *bank.Precompile {
 // setupBankPrecompile is a helper function to set up an instance of the Bank precompile for
 // a given token denomination.
 func (is *IntegrationTestSuite) setupBankPrecompile() *bank.Precompile {
-	precompile, err := bank.NewPrecompile(
+	precompile := bank.NewPrecompile(
 		is.network.App.BankKeeper,
 		is.network.App.Erc20Keeper,
 	)
-	Expect(err).ToNot(HaveOccurred(), "failed to create bank precompile")
+	Expect(precompile).ToNot(BeNil(), "failed to create bank precompile")
 	return precompile
 }
 

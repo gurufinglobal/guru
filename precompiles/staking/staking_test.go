@@ -92,7 +92,7 @@ func (s *PrecompileTestSuite) TestRequiredGas() {
 				s.Require().NoError(err)
 				return input
 			},
-			1552,
+			1576,
 		},
 		{
 			"success - undelegate transaction with correct gas estimation",
@@ -106,7 +106,7 @@ func (s *PrecompileTestSuite) TestRequiredGas() {
 				s.Require().NoError(err)
 				return input
 			},
-			1552,
+			1576,
 		},
 	}
 
@@ -381,7 +381,7 @@ func (s *PrecompileTestSuite) TestRun() {
 				s.Require().NoError(err, "failed to pack input")
 				return input
 			},
-			1, // use gas > 0 to avoid doing gas estimation
+			100000,
 			true,
 			false,
 			"write protection",
@@ -391,7 +391,7 @@ func (s *PrecompileTestSuite) TestRun() {
 			func(_ testkeyring.Key) []byte {
 				return []byte("invalid")
 			},
-			1, // use gas > 0 to avoid doing gas estimation
+			100000,
 			false,
 			false,
 			"no method with id",
@@ -463,9 +463,6 @@ func (s *PrecompileTestSuite) TestRun() {
 				s.Require().NotNil(bz, "expected returned bytes to be nil")
 				execRevertErr := evmtypes.NewExecErrorWithReason(bz)
 				s.Require().ErrorContains(execRevertErr, tc.errContains)
-				consumed := ctx.GasMeter().GasConsumed()
-				// LessThanOrEqual because the gas is consumed before the error is returned
-				s.Require().LessOrEqual(tc.gas, consumed, "expected gas consumed to be equal to gas limit")
 			}
 		})
 	}

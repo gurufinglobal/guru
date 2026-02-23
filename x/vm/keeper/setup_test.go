@@ -105,6 +105,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	// because we'll need to set them again when resetting the chain config
 	denom := evmtypes.GetEVMCoinDenom()                 //nolint:staticcheck
 	extendedDenom := evmtypes.GetEVMCoinExtendedDenom() //nolint:staticcheck
+	displayDenom := evmtypes.GetEVMCoinDisplayDenom()   //nolint:staticcheck
 	decimals := evmtypes.GetEVMCoinDecimals()           //nolint:staticcheck
 
 	configurator := evmtypes.NewEVMConfigurator()
@@ -114,7 +115,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 		WithEVMCoinInfo(evmtypes.EvmCoinInfo{
 			Denom:         denom,
 			ExtendedDenom: extendedDenom,
-			Decimals:      decimals,
+			DisplayDenom:  displayDenom,
+			Decimals:      decimals.Uint32(),
 		}).
 		Configure()
 	suite.Require().NoError(err)

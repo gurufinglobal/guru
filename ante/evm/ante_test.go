@@ -614,14 +614,14 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			}, false, false, false,
 		},
 		{
-			"fails - invalid from",
+			"passes - from set to signer address",
 			func() sdk.Tx {
 				tx, err := suite.GetTxFactory().GenerateSignedEthTx(privKey, ethContractCreationTxParams)
 				suite.Require().NoError(err)
 				msg := tx.GetMsgs()[0].(*evmtypes.MsgEthereumTx)
-				msg.From = addr.Hex()
+				msg.From = addr.Bytes()
 				return tx
-			}, true, false, false,
+			}, true, false, true,
 		},
 		{
 			"passes - Single-signer EIP-712",

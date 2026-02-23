@@ -31,7 +31,6 @@ func TestPrecompileTestSuite(t *testing.T) {
 
 func (s *PrecompileTestSuite) SetupTest() {
 	keyring := testkeyring.New(3)
-	var err error
 	nw := network.NewUnitTestNetwork(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
 		network.WithValidatorOperators([]sdk.AccAddress{
@@ -49,9 +48,8 @@ func (s *PrecompileTestSuite) SetupTest() {
 	s.grpcHandler = grpcHandler
 	s.keyring = keyring
 
-	if s.precompile, err = slashing.NewPrecompile(
+	s.precompile = slashing.NewPrecompile(
 		s.network.App.SlashingKeeper,
-	); err != nil {
-		panic(err)
-	}
+		s.network.App.BankKeeper,
+	)
 }

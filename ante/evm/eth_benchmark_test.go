@@ -61,7 +61,7 @@ func BenchmarkEthGasConsumeDecorator(b *testing.B) {
 				addr := testutiltx.GenerateAddress()
 				args.Accesses = &ethtypes.AccessList{{Address: addr, StorageKeys: nil}}
 				tx := evmtypes.NewTx(args)
-				tx.From = addr.Hex()
+				tx.From = addr.Bytes()
 
 				cacheCtx, _ := ctx.CacheContext()
 				// Create new stateDB for each test case from the cached context

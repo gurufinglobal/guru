@@ -29,6 +29,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.
@@ -98,6 +99,47 @@ func SetupWithGenesisValSet(t *testing.T, chainID string, evmChainID uint64, val
 	app, genesisState := setup(true, 5, chainID, evmChainID)
 	genesisState, err := simtestutil.GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, genAccs, balances...)
 	require.NoError(t, err)
+
+	// Ensure the bank genesis has denom metadata for the EVM denom,
+	// which is required by vm.InitGenesis → InitEvmCoinInfo.
+	var bankGenesis banktypes.GenesisState
+	require.NoError(t, app.AppCodec().UnmarshalJSON(genesisState[banktypes.ModuleName], &bankGenesis))
+	coinInfo, found := config.ChainsCoinInfo[evmChainID]
+	if !found {
+		coinInfo = config.ChainsCoinInfo[config.CosmosChainID]
+	}
+	hasMeta := false
+	for _, m := range bankGenesis.DenomMetadata {
+		if m.Base == coinInfo.Denom {
+			hasMeta = true
+			break
+		}
+	}
+	if !hasMeta {
+		bankGenesis.DenomMetadata = append(bankGenesis.DenomMetadata, banktypes.Metadata{
+			Description: "The native EVM token of the chain",
+			DenomUnits: []*banktypes.DenomUnit{
+				{Denom: coinInfo.Denom, Exponent: 0},
+				{Denom: coinInfo.DisplayDenom, Exponent: coinInfo.Decimals},
+			},
+			Base:    coinInfo.Denom,
+			Display: coinInfo.DisplayDenom,
+			Name:    coinInfo.DisplayDenom,
+			Symbol:  coinInfo.DisplayDenom,
+		})
+		genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(&bankGenesis)
+	}
+
+	// Ensure the EVM genesis has ActiveStaticPrecompiles and Preinstalls
+	var evmGenesis evmtypes.GenesisState
+	require.NoError(t, app.AppCodec().UnmarshalJSON(genesisState[evmtypes.ModuleName], &evmGenesis))
+	if len(evmGenesis.Params.ActiveStaticPrecompiles) == 0 {
+		evmGenesis.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	}
+	if len(evmGenesis.Preinstalls) == 0 {
+		evmGenesis.Preinstalls = evmtypes.DefaultPreinstalls()
+	}
+	genesisState[evmtypes.ModuleName] = app.AppCodec().MustMarshalJSON(&evmGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	require.NoError(t, err)

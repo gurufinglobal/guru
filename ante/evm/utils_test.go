@@ -68,10 +68,7 @@ func (suite *AnteTestSuite) CreateTxBuilder(privKey cryptotypes.PrivKey, txArgs 
 	err = builder.SetMsgs(&signedMsg)
 	suite.Require().NoError(err)
 
-	txData, err := evmtypes.UnpackTxData(signedMsg.Data)
-	suite.Require().NoError(err)
-
-	fees := sdk.NewCoins(sdk.NewCoin(suite.GetNetwork().GetBaseDenom(), sdkmath.NewIntFromBigInt(txData.Fee())))
+	fees := sdk.NewCoins(sdk.NewCoin(suite.GetNetwork().GetBaseDenom(), sdkmath.NewIntFromBigInt(signedMsg.GetFee())))
 	builder.SetFeeAmount(fees)
 	builder.SetGasLimit(signedMsg.GetGas())
 	return builder

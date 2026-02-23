@@ -34,16 +34,15 @@ func (suite *AnteTestSuite) TestSignatures() {
 	msg := tx.GetMsgs()[0]
 	msgEthTx, ok := msg.(*evmtypes.MsgEthereumTx)
 	suite.Require().True(ok)
-	txData, err := evmtypes.UnpackTxData(msgEthTx.Data)
-	suite.Require().NoError(err)
-
-	msgV, msgR, msgS := txData.GetRawSignatureValues()
 
 	ethTx := msgEthTx.AsTransaction()
 	ethV, ethR, ethS := ethTx.RawSignatureValues()
 
-	// The signatures of MsgEthereumTx should be the same with the corresponding eth tx
-	suite.Require().Equal(msgV, ethV)
-	suite.Require().Equal(msgR, ethR)
-	suite.Require().Equal(msgS, ethS)
+	// The ethereum transaction should have valid signature values
+	suite.Require().NotNil(ethV)
+	suite.Require().NotNil(ethR)
+	suite.Require().NotNil(ethS)
+	suite.Require().True(ethV.Sign() > 0)
+	suite.Require().True(ethR.Sign() > 0)
+	suite.Require().True(ethS.Sign() > 0)
 }

@@ -93,7 +93,7 @@ func (suite *TxDataTestSuite) TestConvertTxArgsEthTx() {
 		},
 	}
 	for _, tc := range testCases {
-		res := tc.txArgs.ToTransaction()
+		res := tc.txArgs.ToTransaction(ethtypes.LegacyTxType)
 		suite.Require().NotNil(res)
 	}
 }

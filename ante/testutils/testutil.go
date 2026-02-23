@@ -59,6 +59,8 @@ func (suite *AnteTestSuite) SetupTest() {
 	customGenesis[feemarkettypes.ModuleName] = feemarketGenesis
 
 	evmGenesis := evmtypes.DefaultGenesisState()
+	evmGenesis.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	evmGenesis.Preinstalls = evmtypes.DefaultPreinstalls()
 
 	if suite.evmParamsOption != nil {
 		suite.evmParamsOption(&evmGenesis.Params)
@@ -106,6 +108,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	// when resetting the chain config
 	denom := evmtypes.GetEVMCoinDenom()                 //nolint:staticcheck
 	extendedDenom := evmtypes.GetEVMCoinExtendedDenom() //nolint:staticcheck
+	displayDenom := evmtypes.GetEVMCoinDisplayDenom()   //nolint:staticcheck
 	decimals := evmtypes.GetEVMCoinDecimals()           //nolint:staticcheck
 
 	configurator := evmtypes.NewEVMConfigurator()
@@ -115,6 +118,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		WithEVMCoinInfo(evmtypes.EvmCoinInfo{
 			Denom:         denom,
 			ExtendedDenom: extendedDenom,
+			DisplayDenom:  displayDenom,
 			Decimals:      decimals.Uint32(),
 		}).
 		Configure()

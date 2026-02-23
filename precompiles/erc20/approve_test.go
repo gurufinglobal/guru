@@ -13,7 +13,7 @@ import (
 
 //nolint:dupl // tests are not duplicate between the functions
 func (s *PrecompileTestSuite) TestApprove() {
-	method := s.precompile.Methods[erc20.ApproveMethod]
+	method := s.precompile.ABI.Methods[erc20.ApproveMethod]
 	amount := int64(100)
 
 	testcases := []struct {

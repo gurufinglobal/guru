@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"cosmossdk.io/math"
 
@@ -20,8 +21,7 @@ import (
 
 type validateMsgParams struct {
 	evmParams evmtypes.Params
-	from      sdktypes.AccAddress
-	txData    evmtypes.TxData
+	ethTx     *ethtypes.Transaction
 }
 
 func (suite *EvmAnteTestSuite) TestValidateMsg() {
@@ -33,13 +33,12 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 		getFunctionParams func() validateMsgParams
 	}{
 		{
-			name:          "fail: invalid from address, should be nil",
+			name:          "fail: nil transaction",
 			expectedError: errortypes.ErrInvalidRequest,
 			getFunctionParams: func() validateMsgParams {
 				return validateMsgParams{
 					evmParams: evmtypes.DefaultParams(),
-					txData:    nil,
-					from:      keyring.GetAccAddr(0),
+					ethTx:     nil,
 				}
 			},
 		},
@@ -48,12 +47,10 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 			expectedError: nil,
 			getFunctionParams: func() validateMsgParams {
 				txArgs := getTxByType("transfer", keyring.GetAddr(1))
-				txData, err := txArgs.ToTxData()
-				suite.Require().NoError(err)
+				ethTx := txArgs.ToTxData().ToTransaction(ethtypes.LegacyTxType)
 				return validateMsgParams{
 					evmParams: evmtypes.DefaultParams(),
-					txData:    txData,
-					from:      nil,
+					ethTx:     ethTx,
 				}
 			},
 		},
@@ -62,8 +59,7 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 			expectedError: evmtypes.ErrCallDisabled,
 			getFunctionParams: func() validateMsgParams {
 				txArgs := getTxByType("transfer", keyring.GetAddr(1))
-				txData, err := txArgs.ToTxData()
-				suite.Require().NoError(err)
+				ethTx := txArgs.ToTxData().ToTransaction(ethtypes.LegacyTxType)
 
 				params := evmtypes.DefaultParams()
 				params.AccessControl.Call.AccessType = evmtypes.AccessTypeRestricted
@@ -71,8 +67,7 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 
 				return validateMsgParams{
 					evmParams: params,
-					txData:    txData,
-					from:      nil,
+					ethTx:     ethTx,
 				}
 			},
 		},
@@ -81,12 +76,10 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 			expectedError: nil,
 			getFunctionParams: func() validateMsgParams {
 				txArgs := getTxByType("call", keyring.GetAddr(1))
-				txData, err := txArgs.ToTxData()
-				suite.Require().NoError(err)
+				ethTx := txArgs.ToTxData().ToTransaction(ethtypes.LegacyTxType)
 				return validateMsgParams{
 					evmParams: evmtypes.DefaultParams(),
-					txData:    txData,
-					from:      nil,
+					ethTx:     ethTx,
 				}
 			},
 		},
@@ -95,16 +88,14 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 			expectedError: nil,
 			getFunctionParams: func() validateMsgParams {
 				txArgs := getTxByType("call", keyring.GetAddr(1))
-				txData, err := txArgs.ToTxData()
-				suite.Require().NoError(err)
+				ethTx := txArgs.ToTxData().ToTransaction(ethtypes.LegacyTxType)
 
 				params := evmtypes.DefaultParams()
 				params.AccessControl.Create.AccessType = evmtypes.AccessTypeRestricted
 
 				return validateMsgParams{
 					evmParams: params,
-					txData:    txData,
-					from:      nil,
+					ethTx:     ethTx,
 				}
 			},
 		},
@@ -113,16 +104,14 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 			expectedError: evmtypes.ErrCallDisabled,
 			getFunctionParams: func() validateMsgParams {
 				txArgs := getTxByType("call", keyring.GetAddr(1))
-				txData, err := txArgs.ToTxData()
-				suite.Require().NoError(err)
+				ethTx := txArgs.ToTxData().ToTransaction(ethtypes.LegacyTxType)
 
 				params := evmtypes.DefaultParams()
 				params.AccessControl.Call.AccessType = evmtypes.AccessTypeRestricted
 
 				return validateMsgParams{
 					evmParams: params,
-					txData:    txData,
-					from:      nil,
+					ethTx:     ethTx,
 				}
 			},
 		},
@@ -131,12 +120,10 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 			expectedError: nil,
 			getFunctionParams: func() validateMsgParams {
 				txArgs := getTxByType("create", keyring.GetAddr(1))
-				txData, err := txArgs.ToTxData()
-				suite.Require().NoError(err)
+				ethTx := txArgs.ToTxData().ToTransaction(ethtypes.LegacyTxType)
 				return validateMsgParams{
 					evmParams: evmtypes.DefaultParams(),
-					txData:    txData,
-					from:      nil,
+					ethTx:     ethTx,
 				}
 			},
 		},
@@ -145,16 +132,14 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 			expectedError: nil,
 			getFunctionParams: func() validateMsgParams {
 				txArgs := getTxByType("create", keyring.GetAddr(1))
-				txData, err := txArgs.ToTxData()
-				suite.Require().NoError(err)
+				ethTx := txArgs.ToTxData().ToTransaction(ethtypes.LegacyTxType)
 
 				params := evmtypes.DefaultParams()
 				params.AccessControl.Call.AccessType = evmtypes.AccessTypeRestricted
 
 				return validateMsgParams{
 					evmParams: params,
-					txData:    txData,
-					from:      nil,
+					ethTx:     ethTx,
 				}
 			},
 		},
@@ -163,16 +148,14 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 			expectedError: evmtypes.ErrCreateDisabled,
 			getFunctionParams: func() validateMsgParams {
 				txArgs := getTxByType("create", keyring.GetAddr(1))
-				txData, err := txArgs.ToTxData()
-				suite.Require().NoError(err)
+				ethTx := txArgs.ToTxData().ToTransaction(ethtypes.LegacyTxType)
 
 				params := evmtypes.DefaultParams()
 				params.AccessControl.Create.AccessType = evmtypes.AccessTypeRestricted
 
 				return validateMsgParams{
 					evmParams: params,
-					txData:    txData,
-					from:      nil,
+					ethTx:     ethTx,
 				}
 			},
 		},
@@ -185,8 +168,7 @@ func (suite *EvmAnteTestSuite) TestValidateMsg() {
 			// Function under test
 			err := evm.ValidateMsg(
 				params.evmParams,
-				params.txData,
-				params.from,
+				params.ethTx,
 			)
 
 			if tc.expectedError != nil {

@@ -1563,7 +1563,8 @@ func (suite *KeeperTestSuite) TestQueryBaseFee() {
 	coinInfo := types.EvmCoinInfo{
 		Denom:         types.GetEVMCoinDenom(),
 		ExtendedDenom: types.GetEVMCoinExtendedDenom(),
-		Decimals:      types.GetEVMCoinDecimals(),
+		DisplayDenom:  types.GetEVMCoinDisplayDenom(),
+		Decimals:      types.GetEVMCoinDecimals().Uint32(),
 	}
 	chainConfig := types.DefaultChainConfig(suite.network.GetEIP155ChainID().Uint64())
 

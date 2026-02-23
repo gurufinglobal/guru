@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
@@ -113,7 +114,7 @@ func (suite *BackendTestSuite) buildEthereumTx() (*evmtypes.MsgEthereumTx, []byt
 	msgEthereumTx := evmtypes.NewTx(&ethTxParams)
 
 	// A valid msg should have empty `From`
-	msgEthereumTx.From = suite.from.Hex()
+	msgEthereumTx.From = suite.from.Bytes()
 
 	txBuilder := suite.backend.clientCtx.TxConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msgEthereumTx)
@@ -137,7 +138,7 @@ func (suite *BackendTestSuite) buildEthereumTxWithChainID(eip155ChainID *big.Int
 	msgEthereumTx := evmtypes.NewTx(&ethTxParams)
 
 	// A valid msg should have empty `From`
-	msgEthereumTx.From = suite.from.Hex()
+	msgEthereumTx.From = suite.from.Bytes()
 
 	txBuilder := suite.backend.clientCtx.TxConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msgEthereumTx)
@@ -175,9 +176,13 @@ func (suite *BackendTestSuite) buildFormattedBlock(
 				suite.backend.chainID,
 			)
 			suite.Require().NoError(err)
+			// After RLP roundtrip, tx.Data() returns []byte{} instead of nil.
+			if rpcTx.Input == nil {
+				rpcTx.Input = hexutil.Bytes{}
+			}
 			ethRPCTxs = []interface{}{rpcTx}
 		} else {
-			ethRPCTxs = []interface{}{common.HexToHash(tx.Hash)}
+			ethRPCTxs = []interface{}{tx.Hash()}
 		}
 	}
 
@@ -204,7 +209,7 @@ func (suite *BackendTestSuite) signAndEncodeEthTx(msgEthereumTx *evmtypes.MsgEth
 	signer := utiltx.NewSigner(priv)
 
 	ethSigner := ethtypes.LatestSigner(suite.backend.ChainConfig())
-	msgEthereumTx.From = from.String()
+	msgEthereumTx.From = from.Bytes()
 	err := msgEthereumTx.Sign(ethSigner, signer)
 	suite.Require().NoError(err)
 

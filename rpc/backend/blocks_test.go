@@ -1107,9 +1107,13 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 						suite.backend.chainID,
 					)
 					suite.Require().NoError(err)
+					// After RLP roundtrip, tx.Data() returns []byte{} instead of nil.
+					if rpcTx.Input == nil {
+						rpcTx.Input = hexutil.Bytes{}
+					}
 					ethRPCTxs = []interface{}{rpcTx}
 				} else {
-					ethRPCTxs = []interface{}{common.HexToHash(msgEthereumTx.Hash)}
+					ethRPCTxs = []interface{}{msgEthereumTx.Hash()}
 				}
 			}
 
@@ -1193,7 +1197,10 @@ func (suite *BackendTestSuite) TestEthMsgsFromTendermintBlock() {
 			suite.SetupTest() // reset test and queries
 
 			msgs := suite.backend.EthMsgsFromTendermintBlock(tc.resBlock, tc.blockRes)
-			suite.Require().Equal(tc.expMsgs, msgs)
+			suite.Require().Equal(len(tc.expMsgs), len(msgs))
+			for i := range tc.expMsgs {
+				suite.Require().Equal(tc.expMsgs[i].AsTransaction().Hash(), msgs[i].AsTransaction().Hash())
+			}
 		})
 	}
 }
@@ -1524,7 +1531,7 @@ func (suite *BackendTestSuite) TestEthBlockByNumber() {
 				suite.Require().Equal(tc.expEthBlock.Uncles(), ethBlock.Uncles())
 				suite.Require().Equal(tc.expEthBlock.ReceiptHash(), ethBlock.ReceiptHash())
 				for i, tx := range tc.expEthBlock.Transactions() {
-					suite.Require().Equal(tx.Data(), ethBlock.Transactions()[i].Data())
+					suite.Require().Equal(tx.Hash(), ethBlock.Transactions()[i].Hash())
 				}
 
 			} else {
@@ -1621,7 +1628,7 @@ func (suite *BackendTestSuite) TestEthBlockFromTendermintBlock() {
 				suite.Require().Equal(tc.expEthBlock.Uncles(), ethBlock.Uncles())
 				suite.Require().Equal(tc.expEthBlock.ReceiptHash(), ethBlock.ReceiptHash())
 				for i, tx := range tc.expEthBlock.Transactions() {
-					suite.Require().Equal(tx.Data(), ethBlock.Transactions()[i].Data())
+					suite.Require().Equal(tx.Hash(), ethBlock.Transactions()[i].Hash())
 				}
 
 			} else {

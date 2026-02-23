@@ -169,13 +169,13 @@ func (is *IntegrationTestSuite) setupERC20Precompile(denom string, tokenPairs []
 		tokenPair = tp
 	}
 
-	precompile, err := erc20.NewPrecompile(
+	precompile := erc20.NewPrecompile(
 		tokenPair,
 		is.network.App.BankKeeper,
 		is.network.App.Erc20Keeper,
 		is.network.App.TransferKeeper,
 	)
-	Expect(err).ToNot(HaveOccurred(), "failed to set up %q erc20 precompile", tokenPair.Denom)
+	Expect(precompile).ToNot(BeNil(), "failed to set up %q erc20 precompile", tokenPair.Denom)
 
 	return precompile
 }
@@ -186,17 +186,14 @@ func (is *IntegrationTestSuite) setupERC20Precompile(denom string, tokenPairs []
 func setupERC20PrecompileForTokenPair(
 	unitNetwork network.UnitTestNetwork, tokenPair erc20types.TokenPair,
 ) (*erc20.Precompile, error) {
-	precompile, err := erc20.NewPrecompile(
+	precompile := erc20.NewPrecompile(
 		tokenPair,
 		unitNetwork.App.BankKeeper,
 		unitNetwork.App.Erc20Keeper,
 		unitNetwork.App.TransferKeeper,
 	)
-	if err != nil {
-		return nil, errorsmod.Wrapf(err, "failed to create %q erc20 precompile", tokenPair.Denom)
-	}
 
-	err = unitNetwork.App.Erc20Keeper.EnableDynamicPrecompile(
+	err := unitNetwork.App.Erc20Keeper.EnableDynamicPrecompile(
 		unitNetwork.GetContext(),
 		precompile.Address(),
 	)
@@ -213,15 +210,12 @@ func setupERC20PrecompileForTokenPair(
 func (is *IntegrationTestSuite) setupNewERC20PrecompileForTokenPair(
 	tokenPair erc20types.TokenPair,
 ) (*erc20.Precompile, error) {
-	precompile, err := erc20.NewPrecompile(
+	precompile := erc20.NewPrecompile(
 		tokenPair,
 		is.network.App.BankKeeper,
 		is.network.App.Erc20Keeper,
 		is.network.App.TransferKeeper,
 	)
-	if err != nil {
-		return nil, errorsmod.Wrapf(err, "failed to create %q erc20 precompile", tokenPair.Denom)
-	}
 
 	// Update the params via gov proposal
 	if err := is.network.App.Erc20Keeper.EnableDynamicPrecompile(is.network.GetContext(), precompile.Address()); err != nil {
@@ -346,7 +340,7 @@ func (is *IntegrationTestSuite) ExpectAllowanceForContract(
 // in the ethereum transaction response.
 func (is *IntegrationTestSuite) ExpectTrueToBeReturned(res *evmtypes.MsgEthereumTxResponse, methodName string) {
 	var ret bool
-	err := is.precompile.UnpackIntoInterface(&ret, methodName, res.Ret)
+	err := is.precompile.ABI.UnpackIntoInterface(&ret, methodName, res.Ret)
 	Expect(err).ToNot(HaveOccurred(), "expected no error unpacking")
 	Expect(ret).To(BeTrue(), "expected true to be returned")
 }

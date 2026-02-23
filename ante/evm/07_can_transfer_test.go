@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	gethtypes "github.com/ethereum/go-ethereum/core/types"
-
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -170,11 +168,8 @@ func (suite *EvmAnteTestSuite) TestCanTransfer() {
 
 			baseFeeResp, err := grpcHandler.GetEvmBaseFee()
 			suite.Require().NoError(err)
-			ethCfg := unitNetwork.GetEVMChainConfig()
 			evmParams, err := grpcHandler.GetEvmParams()
 			suite.Require().NoError(err)
-			ctx := unitNetwork.GetContext()
-			signer := gethtypes.MakeSigner(ethCfg, big.NewInt(ctx.BlockHeight()), uint64(ctx.BlockTime().Unix())) //#nosec G115 -- int overflow is not a concern here
 			txArgs, err := txFactory.GenerateDefaultTxTypeArgs(senderKey.Addr, suite.ethTxType)
 			suite.Require().NoError(err)
 			txArgs.Amount = big.NewInt(100)
@@ -182,11 +177,10 @@ func (suite *EvmAnteTestSuite) TestCanTransfer() {
 			tc.malleate(&txArgs)
 
 			msg := evmtypes.NewTx(&txArgs)
-			msg.From = senderKey.Addr.String()
+			msg.From = senderKey.Addr.Bytes()
 			signMsg, err := txFactory.SignMsgEthereumTx(senderKey.Priv, *msg)
 			suite.Require().NoError(err)
-			coreMsg, err := signMsg.AsMessage(signer, baseFeeResp.BaseFee.BigInt())
-			suite.Require().NoError(err)
+			coreMsg := signMsg.AsMessage(baseFeeResp.BaseFee.BigInt())
 
 			// Function under test
 			err = evm.CanTransfer(

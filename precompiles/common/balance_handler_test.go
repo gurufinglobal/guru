@@ -1,6 +1,7 @@
 package common_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -34,19 +35,21 @@ func setupBalanceHandlerTest(t *testing.T) {
 // mockBankKeeper implements cmn.BankKeeper for testing purposes.
 type mockBankKeeper struct{}
 
-func (m mockBankKeeper) IterateAccountBalances(_ sdk.Context, _ sdk.AccAddress, _ func(coin sdk.Coin) bool) {
+func (m mockBankKeeper) IterateAccountBalances(_ context.Context, _ sdk.AccAddress, _ func(coin sdk.Coin) bool) {
 }
-func (m mockBankKeeper) IterateTotalSupply(_ sdk.Context, _ func(coin sdk.Coin) bool) {}
-func (m mockBankKeeper) GetSupply(_ sdk.Context, _ string) sdk.Coin                    { return sdk.Coin{} }
-func (m mockBankKeeper) GetDenomMetaData(_ sdk.Context, _ string) (banktypes.Metadata, bool) {
+func (m mockBankKeeper) IterateTotalSupply(_ context.Context, _ func(coin sdk.Coin) bool) {}
+func (m mockBankKeeper) GetSupply(_ context.Context, _ string) sdk.Coin { return sdk.Coin{} }
+func (m mockBankKeeper) GetDenomMetaData(_ context.Context, _ string) (banktypes.Metadata, bool) {
 	return banktypes.Metadata{}, false
 }
-func (m mockBankKeeper) SetDenomMetaData(_ sdk.Context, _ banktypes.Metadata) {}
-func (m mockBankKeeper) GetBalance(_ sdk.Context, _ sdk.AccAddress, _ string) sdk.Coin {
+func (m mockBankKeeper) SetDenomMetaData(_ context.Context, _ banktypes.Metadata) {}
+func (m mockBankKeeper) GetBalance(_ context.Context, _ sdk.AccAddress, _ string) sdk.Coin {
 	return sdk.Coin{}
 }
-func (m mockBankKeeper) SendCoins(_ sdk.Context, _, _ sdk.AccAddress, _ sdk.Coins) error { return nil }
-func (m mockBankKeeper) SpendableCoin(_ sdk.Context, _ sdk.AccAddress, _ string) sdk.Coin {
+func (m mockBankKeeper) SendCoins(_ context.Context, _, _ sdk.AccAddress, _ sdk.Coins) error {
+	return nil
+}
+func (m mockBankKeeper) SpendableCoin(_ context.Context, _ sdk.AccAddress, _ string) sdk.Coin {
 	return sdk.Coin{}
 }
 func (m mockBankKeeper) BlockedAddr(_ sdk.AccAddress) bool { return false }

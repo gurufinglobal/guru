@@ -249,14 +249,14 @@ func (suite *KeeperTestSuite) TestCheckSenderBalance() {
 				Accesses:  tc.accessList,
 			}
 			tx := evmtypes.NewTx(ethTxParams)
-			tx.From = tc.from
+			tx.From = common.HexToAddress(tc.from).Bytes()
 
-			txData, _ := evmtypes.UnpackTxData(tx.Data)
+			ethTx := tx.AsTransaction()
 
 			acct := suite.network.App.EVMKeeper.GetAccountOrEmpty(suite.network.GetContext(), addr)
 			err := keeper.CheckSenderBalance(
 				sdkmath.NewIntFromBigInt(acct.Balance.ToBig()),
-				txData,
+				ethTx,
 			)
 
 			if tc.expectPass {
@@ -500,16 +500,16 @@ func (suite *KeeperTestSuite) TestVerifyFeeAndDeductTxCostsFromUserBalance() {
 				Accesses:  tc.accessList,
 			}
 			tx := evmtypes.NewTx(ethTxParams)
-			tx.From = tc.from
+			tx.From = common.HexToAddress(tc.from).Bytes()
 
-			txData, _ := evmtypes.UnpackTxData(tx.Data)
+			ethTx := tx.AsTransaction()
 
 			baseFee := suite.network.App.EVMKeeper.GetBaseFee(suite.network.GetContext())
-			priority := evmtypes.GetTxPriority(txData, baseFee)
+			priority := evmtypes.GetTxPriority(ethTx, baseFee)
 
 			baseDenom := evmtypes.GetEVMCoinDenom()
 
-			fees, err := keeper.VerifyFee(txData, baseDenom, baseFee, false, false, false, suite.network.GetContext().IsCheckTx())
+			fees, err := keeper.VerifyFee(ethTx, baseDenom, baseFee, false, false, false, suite.network.GetContext().IsCheckTx())
 			if tc.expectPassVerify {
 				suite.Require().NoError(err, "valid test %d failed - '%s'", i, tc.name)
 				if tc.enableFeemarket {
@@ -517,7 +517,7 @@ func (suite *KeeperTestSuite) TestVerifyFeeAndDeductTxCostsFromUserBalance() {
 					suite.Require().Equal(
 						fees,
 						sdk.NewCoins(
-							sdk.NewCoin(baseDenom, sdkmath.NewIntFromBigInt(txData.EffectiveFee(baseFee.TruncateInt().BigInt()))),
+							sdk.NewCoin(baseDenom, sdkmath.NewIntFromBigInt(evmtypes.EffectiveFee(ethTx, baseFee.TruncateInt().BigInt()))),
 						),
 						"valid test %d failed, fee value is wrong  - '%s'", i, tc.name,
 					)
@@ -536,7 +536,7 @@ func (suite *KeeperTestSuite) TestVerifyFeeAndDeductTxCostsFromUserBalance() {
 				suite.Require().Nil(fees, "invalid test %d passed. fees value must be nil - '%s'", i, tc.name)
 			}
 
-			err = suite.network.App.EVMKeeper.DeductTxCostsFromUserBalance(suite.network.GetContext(), fees, common.HexToAddress(tx.From))
+			err = suite.network.App.EVMKeeper.DeductTxCostsFromUserBalance(suite.network.GetContext(), fees, common.BytesToAddress(tx.From))
 			if tc.expectPassDeduct {
 				suite.Require().NoError(err, "valid test %d failed - '%s'", i, tc.name)
 			} else {

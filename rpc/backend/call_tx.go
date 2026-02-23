@@ -120,6 +120,13 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	ethereumTx := &evmtypes.MsgEthereumTx{}
 	ethereumTx.FromEthereumTx(tx)
 
+	// Recover the sender address from the signature
+	signer := ethtypes.LatestSignerForChainID(tx.ChainId())
+	if _, err := ethereumTx.GetSenderLegacy(signer); err != nil {
+		b.logger.Error("failed to recover sender", "error", err.Error())
+		return common.Hash{}, err
+	}
+
 	if err := ethereumTx.ValidateBasic(); err != nil {
 		b.logger.Debug("tx failed basic validation", "error", err.Error())
 		return common.Hash{}, err

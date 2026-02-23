@@ -1,15 +1,18 @@
 package backend
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 
+	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
+	mock "github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/metadata"
 
 	"cosmossdk.io/math"
@@ -300,7 +303,6 @@ func (suite *BackendTestSuite) TestSendRawTransaction() {
 	suite.Require().NoError(err)
 
 	rlpEncodedBz, _ := rlp.EncodeToBytes(ethTx.AsTransaction())
-	evmDenom := evmtypes.GetEVMCoinDenom()
 
 	testCases := []struct {
 		name         string
@@ -334,7 +336,7 @@ func (suite *BackendTestSuite) TestSendRawTransaction() {
 			func() []byte {
 				from, priv := utiltx.NewAddrKey()
 				signer := utiltx.NewSigner(priv)
-				invalidChainIDTx.From = from.String()
+				invalidChainIDTx.From = from.Bytes()
 				err := invalidChainIDTx.Sign(ethSigner, signer)
 				suite.Require().NoError(err)
 				bytes, _ := rlp.EncodeToBytes(invalidChainIDTx.AsTransaction())
@@ -360,33 +362,29 @@ func (suite *BackendTestSuite) TestSendRawTransaction() {
 		{
 			"fail - failed to broadcast transaction",
 			func() {
-				cosmosTx, _ := ethTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), evmDenom)
-				txBytes, _ := suite.backend.clientCtx.TxConfig.TxEncoder()(cosmosTx)
-
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				suite.backend.allowUnprotectedTxs = true
-				RegisterBroadcastTxError(client, txBytes)
+				client.On("BroadcastTxSync", context.Background(), mock.Anything).
+					Return(nil, errortypes.ErrInvalidRequest)
 			},
 			func() []byte {
 				bytes, _ := rlp.EncodeToBytes(ethTx.AsTransaction())
 				return bytes
 			},
-			common.HexToHash(ethTx.Hash),
+			ethTx.Hash(),
 			errortypes.ErrInvalidRequest.Error(),
 			false,
 		},
 		{
 			"pass - Gets the correct transaction hash of the eth transaction",
 			func() {
-				cosmosTx, _ := ethTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), evmDenom)
-				txBytes, _ := suite.backend.clientCtx.TxConfig.TxEncoder()(cosmosTx)
-
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				suite.backend.allowUnprotectedTxs = true
-				RegisterBroadcastTx(client, txBytes)
+				client.On("BroadcastTxSync", context.Background(), mock.Anything).
+					Return(&cmtrpctypes.ResultBroadcastTx{}, nil)
 			},
 			func() []byte { return rlpEncodedBz },
-			common.HexToHash(ethTx.Hash),
+			ethTx.Hash(),
 			"",
 			true,
 		},

@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"cosmossdk.io/math"
 
@@ -213,16 +214,15 @@ func (suite *EvmAnteTestSuite) TestVerifyAccountBalance() {
 		suite.Run(fmt.Sprintf("%v_%v_%v", evmtypes.GetTxTypeName(suite.ethTxType), suite.chainID, tc.name), func() {
 			// Perform test logic
 			statedbAccount, txArgs := tc.generateAccountAndArgs()
-			txData, err := txArgs.ToTxData()
-			suite.Require().NoError(err)
+			ethTx := txArgs.ToTxData().ToTransaction(ethtypes.LegacyTxType)
 
 			//  Function to be tested
-			err = evm.VerifyAccountBalance(
+			err := evm.VerifyAccountBalance(
 				unitNetwork.GetContext(),
 				unitNetwork.App.AccountKeeper,
 				statedbAccount,
 				senderKey.Addr,
-				txData,
+				ethTx,
 			)
 
 			if tc.expectedError != nil {

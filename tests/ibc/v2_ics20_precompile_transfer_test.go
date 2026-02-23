@@ -47,18 +47,20 @@ func (suite *ICS20TransferV2TestSuite) SetupTest() {
 	suite.chainB = suite.coordinator.GetChain(evmibctesting.GetEvmChainID(2))
 
 	evmAppA := suite.chainA.App.(*gurud.GURUD)
-	suite.chainAPrecompile, _ = ics20.NewPrecompile(
+	suite.chainAPrecompile = ics20.NewPrecompile(
 		*evmAppA.StakingKeeper,
 		evmAppA.TransferKeeper,
 		evmAppA.IBCKeeper.ChannelKeeper,
 		evmAppA.EVMKeeper,
+		evmAppA.BankKeeper,
 	)
 	evmAppB := suite.chainB.App.(*gurud.GURUD)
-	suite.chainBPrecompile, _ = ics20.NewPrecompile(
+	suite.chainBPrecompile = ics20.NewPrecompile(
 		*evmAppB.StakingKeeper,
 		evmAppB.TransferKeeper,
 		evmAppB.IBCKeeper.ChannelKeeper,
 		evmAppB.EVMKeeper,
+		evmAppB.BankKeeper,
 	)
 }
 

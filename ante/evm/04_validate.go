@@ -19,17 +19,14 @@ import (
 
 // ValidateMsg validates an Ethereum specific message type and returns an error
 // if invalid. It checks the following requirements:
-// - nil MUST be passed as the from address
 // - If the transaction is a contract creation or call, the corresponding operation must be enabled in the EVM parameters
 func ValidateMsg(
 	evmParams evmtypes.Params,
 	tx *ethtypes.Transaction,
-	from sdktypes.AccAddress,
 ) error {
-	if from != nil {
-		return errorsmod.Wrapf(errortypes.ErrInvalidRequest, "invalid from address; expected nil; got: %q", from.String())
+	if tx == nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "transaction is nil")
 	}
-
 	return checkDisabledCreateCall(
 		tx,
 		&evmParams.AccessControl,

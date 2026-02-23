@@ -399,9 +399,18 @@ func TestIterateContracts(t *testing.T) {
 		foundHashes []common.Hash
 	)
 
+	// Preinstalled contract addresses to filter out
+	preinstallAddrs := map[common.Address]bool{
+		common.HexToAddress(types.Multicall3Address):       true,
+		common.HexToAddress(types.Create2DeployerAddress):  true,
+	}
+
 	network.App.EVMKeeper.IterateContracts(network.GetContext(), func(addr common.Address, codeHash common.Hash) bool {
-		// NOTE: we only care about the 2 contracts deployed above, not the ERC20 native precompile for the aatom denomination
+		// NOTE: we only care about the 2 contracts deployed above, not the ERC20 native precompile or preinstalls
 		if bytes.Equal(addr.Bytes(), common.HexToAddress(testconstants.WGURUContractMainnet).Bytes()) {
+			return false
+		}
+		if preinstallAddrs[addr] {
 			return false
 		}
 
@@ -724,7 +733,7 @@ func (suite *KeeperTestSuite) TestAddLog() {
 		Input:    []byte("test"),
 	}
 	msg := types.NewTx(ethTxParams)
-	msg.From = addr.Hex()
+	msg.From = addr.Bytes()
 
 	tx := suite.CreateTestTx(msg, privKey)
 	msg, _ = tx.GetMsgs()[0].(*types.MsgEthereumTx)
@@ -740,7 +749,7 @@ func (suite *KeeperTestSuite) TestAddLog() {
 		Input:    []byte("test"),
 	}
 	msg2 := types.NewTx(ethTx2Params)
-	msg2.From = addr.Hex()
+	msg2.From = addr.Bytes()
 
 	ethTx3Params := &types.EvmTxArgs{
 		ChainID:   big.NewInt(testconstants.ExampleEIP155ChainID),
@@ -753,7 +762,7 @@ func (suite *KeeperTestSuite) TestAddLog() {
 		Input:     []byte("test"),
 	}
 	msg3 := types.NewTx(ethTx3Params)
-	msg3.From = addr.Hex()
+	msg3.From = addr.Bytes()
 
 	tx3 := suite.CreateTestTx(msg3, privKey)
 	msg3, _ = tx3.GetMsgs()[0].(*types.MsgEthereumTx)
@@ -770,7 +779,7 @@ func (suite *KeeperTestSuite) TestAddLog() {
 		Input:     []byte("test"),
 	}
 	msg4 := types.NewTx(ethTx4Params)
-	msg4.From = addr.Hex()
+	msg4.From = addr.Bytes()
 
 	testCases := []struct {
 		name        string

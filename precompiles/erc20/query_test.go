@@ -106,8 +106,8 @@ var (
 // NOTE: we test both methods in the same test because they need the same testcases and
 // the same setup.
 func (s *PrecompileTestSuite) TestNameSymbol() {
-	nameMethod := s.precompile.Methods[erc20.NameMethod]
-	symbolMethod := s.precompile.Methods[erc20.SymbolMethod]
+	nameMethod := s.precompile.ABI.Methods[erc20.NameMethod]
+	symbolMethod := s.precompile.ABI.Methods[erc20.SymbolMethod]
 
 	testcases := []struct {
 		name        string
@@ -219,7 +219,7 @@ func (s *PrecompileTestSuite) TestNameSymbol() {
 }
 
 func (s *PrecompileTestSuite) TestDecimals() {
-	DecimalsMethod := s.precompile.Methods[erc20.DecimalsMethod]
+	DecimalsMethod := s.precompile.ABI.Methods[erc20.DecimalsMethod]
 
 	testcases := []struct {
 		name        string
@@ -347,7 +347,7 @@ func (s *PrecompileTestSuite) TestDecimals() {
 }
 
 func (s *PrecompileTestSuite) TestTotalSupply() {
-	method := s.precompile.Methods[erc20.TotalSupplyMethod]
+	method := s.precompile.ABI.Methods[erc20.TotalSupplyMethod]
 
 	testcases := []struct {
 		name        string
@@ -399,7 +399,7 @@ func (s *PrecompileTestSuite) TestTotalSupply() {
 }
 
 func (s *PrecompileTestSuite) TestBalanceOf() {
-	method := s.precompile.Methods[erc20.BalanceOfMethod]
+	method := s.precompile.ABI.Methods[erc20.BalanceOfMethod]
 
 	testcases := []struct {
 		name        string
@@ -476,7 +476,7 @@ func (s *PrecompileTestSuite) TestBalanceOf() {
 }
 
 func (s *PrecompileTestSuite) TestAllowance() {
-	method := s.precompile.Methods[erc20.AllowanceMethod]
+	method := s.precompile.ABI.Methods[erc20.AllowanceMethod]
 
 	testcases := []struct {
 		name        string

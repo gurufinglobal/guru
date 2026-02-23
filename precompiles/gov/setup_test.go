@@ -129,10 +129,9 @@ func (s *PrecompileTestSuite) SetupTest() {
 	s.keyring = keyring
 	s.network = nw
 
-	if s.precompile, err = gov.NewPrecompile(
+	s.precompile = gov.NewPrecompile(
 		s.network.App.GovKeeper,
 		s.network.App.AppCodec(),
-	); err != nil {
-		panic(err)
-	}
+		s.network.App.BankKeeper,
+	)
 }

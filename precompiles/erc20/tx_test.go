@@ -28,7 +28,7 @@ var (
 )
 
 func (s *PrecompileTestSuite) TestTransfer() {
-	method := s.precompile.Methods[erc20.TransferMethod]
+	method := s.precompile.ABI.Methods[erc20.TransferMethod]
 	// fromAddr is the address of the keyring account used for testing.
 	fromAddr := s.keyring.GetKey(0).Addr
 	testcases := []struct {
@@ -160,7 +160,7 @@ func (s *PrecompileTestSuite) TestTransferFrom() {
 		ctx  sdk.Context
 		stDB *statedb.StateDB
 	)
-	method := s.precompile.Methods[erc20.TransferFromMethod]
+	method := s.precompile.ABI.Methods[erc20.TransferFromMethod]
 	// owner of the tokens
 	owner := s.keyring.GetKey(0)
 	// spender of the tokens

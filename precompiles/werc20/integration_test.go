@@ -142,13 +142,13 @@ var _ = DescribeTableSubtree("a user interact with the WGURU precompiled contrac
 			evmtypes.GetEVMCoinDenom(),
 			erc20types.OWNER_MODULE,
 		)
-		precompile, err := werc20.NewPrecompile(
+		precompile := werc20.NewPrecompile(
 			tokenPair,
 			is.network.App.BankKeeper,
 			is.network.App.Erc20Keeper,
 			is.network.App.TransferKeeper,
 		)
-		Expect(err).ToNot(HaveOccurred(), "failed to instantiate the werc20 precompile")
+		Expect(precompile).ToNot(BeNil(), "failed to instantiate the werc20 precompile")
 		is.precompile = precompile
 
 		// Setup of the contract calling into the precompile to tests revert
@@ -184,7 +184,7 @@ var _ = DescribeTableSubtree("a user interact with the WGURU precompiled contrac
 		}
 
 		// Utility types used to check the different events emitted.
-		failCheck = testutil.LogCheckArgs{ABIEvents: is.precompile.Events}
+		failCheck = testutil.LogCheckArgs{ABIEvents: is.precompile.ABI.Events}
 		passCheck = failCheck.WithExpPass(true)
 		withdrawCheck = passCheck.WithExpEvents(werc20.EventTypeWithdrawal)
 		depositCheck = passCheck.WithExpEvents(werc20.EventTypeDeposit)
@@ -558,7 +558,7 @@ var _ = DescribeTableSubtree("a user interact with the WGURU precompiled contrac
 					expBalance := is.network.App.BankKeeper.GetBalance(is.network.GetContext(), txSender.AccAddr, is.wrappedCoinDenom)
 
 					var balance *big.Int
-					err = is.precompile.UnpackIntoInterface(&balance, erc20.BalanceOfMethod, ethRes.Ret)
+					err = is.precompile.ABI.UnpackIntoInterface(&balance, erc20.BalanceOfMethod, ethRes.Ret)
 					Expect(err).ToNot(HaveOccurred(), "failed to unpack result")
 					Expect(balance).To(Equal(expBalance.Amount.BigInt()), "expected different balance")
 				})
@@ -570,7 +570,7 @@ var _ = DescribeTableSubtree("a user interact with the WGURU precompiled contrac
 					Expect(err).ToNot(HaveOccurred(), "unexpected result calling contract")
 
 					var balance *big.Int
-					err = is.precompile.UnpackIntoInterface(&balance, erc20.BalanceOfMethod, ethRes.Ret)
+					err = is.precompile.ABI.UnpackIntoInterface(&balance, erc20.BalanceOfMethod, ethRes.Ret)
 					Expect(err).ToNot(HaveOccurred(), "failed to unpack result")
 					Expect(balance.Int64()).To(Equal(int64(0)), "expected different balance")
 				})
@@ -582,7 +582,7 @@ var _ = DescribeTableSubtree("a user interact with the WGURU precompiled contrac
 				Expect(err).ToNot(HaveOccurred(), "unexpected result calling contract")
 
 				var name string
-				err = is.precompile.UnpackIntoInterface(&name, erc20.NameMethod, ethRes.Ret)
+				err = is.precompile.ABI.UnpackIntoInterface(&name, erc20.NameMethod, ethRes.Ret)
 				Expect(err).ToNot(HaveOccurred(), "failed to unpack result")
 				Expect(name).To(ContainSubstring("Guru"), "expected different name")
 			})
@@ -594,7 +594,7 @@ var _ = DescribeTableSubtree("a user interact with the WGURU precompiled contrac
 				Expect(err).ToNot(HaveOccurred(), "unexpected result calling contract")
 
 				var symbol string
-				err = is.precompile.UnpackIntoInterface(&symbol, erc20.SymbolMethod, ethRes.Ret)
+				err = is.precompile.ABI.UnpackIntoInterface(&symbol, erc20.SymbolMethod, ethRes.Ret)
 				Expect(err).ToNot(HaveOccurred(), "failed to unpack result")
 				Expect(symbol).To(ContainSubstring("GXN"), "expected different symbol")
 			})
@@ -606,7 +606,7 @@ var _ = DescribeTableSubtree("a user interact with the WGURU precompiled contrac
 				Expect(err).ToNot(HaveOccurred(), "unexpected result calling contract")
 
 				var decimals uint8
-				err = is.precompile.UnpackIntoInterface(&decimals, erc20.DecimalsMethod, ethRes.Ret)
+				err = is.precompile.ABI.UnpackIntoInterface(&decimals, erc20.DecimalsMethod, ethRes.Ret)
 				Expect(err).ToNot(HaveOccurred(), "failed to unpack result")
 
 				coinInfo := testconstants.ExampleChainCoinInfo[testconstants.ChainID{
