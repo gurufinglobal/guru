@@ -31,7 +31,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // Unit tests for single-signer EIP-712 signature verification. Multi-signature key verification tests are out-of-scope

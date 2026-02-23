@@ -5,7 +5,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 )
 
 var _ feemarkettypes.QueryClient = &mocks.FeeMarketQueryClient{}

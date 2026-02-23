@@ -11,8 +11,8 @@ import (
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/gurufinglobal/guru/v2/ante"
-	ethante "github.com/gurufinglobal/guru/v2/ante/evm"
+	"github.com/cosmos/evm/ante"
+	ethante "github.com/cosmos/evm/ante/evm"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
 	cmmnfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -20,7 +20,7 @@ import (
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	gurutypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type benchmarkSuite struct {

@@ -9,7 +9,7 @@ import (
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 )
 
 // CreateGenesisWithTokenPairs creates a genesis that includes

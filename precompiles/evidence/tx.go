@@ -10,7 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	cmn "github.com/cosmos/evm/precompiles/common"
 )
 
 // SubmitEvidence implements the evidence submission logic for the evidence precompile.

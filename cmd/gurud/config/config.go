@@ -3,8 +3,8 @@ package config
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	gurutypes "github.com/gurufinglobal/guru/v2/types"
 )
 
 // ChainsCoinInfo is a map of the chain id and its corresponding EvmCoinInfo
@@ -15,32 +15,32 @@ var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 		Denom:         ExampleChainDenom,
 		ExtendedDenom: ExampleChainDenom,
 		DisplayDenom:  ExampleDisplayDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 	CosmosChainID: {
 		Denom:         "agxn",
 		ExtendedDenom: "agxn",
 		DisplayDenom:  "gxn",
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 	MainnetChainID: {
 		Denom:         "agxn",
 		ExtendedDenom: "agxn",
 		DisplayDenom:  "gxn",
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 	TestnetChainID: {
 		Denom:         "agxn",
 		ExtendedDenom: "agxn",
 		DisplayDenom:  "gxn",
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 	// SixDecimalsChainID provides a chain ID which is being set up with 6 decimals
 	SixDecimalsChainID: {
 		Denom:         "utest",
 		ExtendedDenom: "atest",
 		DisplayDenom:  "test",
-		Decimals:      evmtypes.SixDecimals,
+		Decimals:      evmtypes.SixDecimals.Uint32(),
 	},
 }
 
@@ -76,7 +76,7 @@ func SetBech32Prefixes(config *sdk.Config) {
 
 // SetBip44CoinType sets the global coin type to be used in hierarchical deterministic wallets.
 func SetBip44CoinType(config *sdk.Config) {
-	config.SetCoinType(types.Bip44CoinType)
-	config.SetPurpose(sdk.Purpose)                  // Shared
-	config.SetFullFundraiserPath(types.BIP44HDPath) //nolint: staticcheck
+	config.SetCoinType(gurutypes.Bip44CoinType)
+	config.SetPurpose(sdk.Purpose)                      // Shared
+	config.SetFullFundraiserPath(gurutypes.BIP44HDPath) //nolint: staticcheck
 }

@@ -35,7 +35,7 @@ import (
 	rpcfilters "github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/eth/filters"
 	"github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/server/config"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 const (

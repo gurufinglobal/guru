@@ -6,7 +6,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"cosmossdk.io/log"
@@ -15,8 +14,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	cmn "github.com/cosmos/evm/precompiles/common"
+)
+
+const (
+	// EvidencePrecompileAddress is the address of the evidence precompile contract.
+	EvidencePrecompileAddress = "0x0000000000000000000000000000000000000807"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -26,41 +29,40 @@ var _ vm.PrecompiledContract = &Precompile{}
 //go:embed abi.json
 var f embed.FS
 
+var (
+	// ABI is the ABI of the evidence precompile, loaded at init time.
+	ABI abi.ABI
+)
+
+func init() {
+	var err error
+	ABI, err = cmn.LoadABI(f, "abi.json")
+	if err != nil {
+		panic(err)
+	}
+}
+
 // Precompile defines the precompiled contract for evidence.
 type Precompile struct {
 	cmn.Precompile
+	abi.ABI
 	evidenceKeeper evidencekeeper.Keeper
-}
-
-// LoadABI loads the evidence ABI from the embedded abi.json file
-// for the evidence precompile.
-func LoadABI() (abi.ABI, error) {
-	return cmn.LoadABI(f, "abi.json")
 }
 
 // NewPrecompile creates a new evidence Precompile instance as a
 // PrecompiledContract interface.
 func NewPrecompile(
 	evidenceKeeper evidencekeeper.Keeper,
-) (*Precompile, error) {
-	abi, err := LoadABI()
-	if err != nil {
-		return nil, err
-	}
-
-	p := &Precompile{
+) *Precompile {
+	return &Precompile{
 		Precompile: cmn.Precompile{
-			ABI:                  abi,
 			KvGasConfig:          storetypes.KVGasConfig(),
 			TransientKVGasConfig: storetypes.TransientGasConfig(),
+			ContractAddress:      common.HexToAddress(EvidencePrecompileAddress),
 		},
+		ABI:            ABI,
 		evidenceKeeper: evidenceKeeper,
 	}
-
-	// SetAddress defines the address of the evidence precompiled contract.
-	p.SetAddress(common.HexToAddress(evmtypes.EvidencePrecompileAddress))
-
-	return p, nil
 }
 
 // RequiredGas calculates the precompiled contract's base gas rate.
@@ -81,27 +83,18 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 }
 
 // Run executes the precompiled contract evidence methods defined in the ABI.
-func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
-	bz, err = p.run(evm, contract, readOnly)
-	if err != nil {
-		return cmn.ReturnRevertError(evm, err)
-	}
-
-	return bz, nil
+func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) ([]byte, error) {
+	return p.RunNativeAction(evm, contract, func(ctx sdk.Context) ([]byte, error) {
+		return p.Execute(ctx, evm.StateDB, contract, readOnly)
+	})
 }
 
-func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
-	ctx, stateDB, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
+// Execute runs the evidence precompile logic.
+func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
+	method, args, err := cmn.SetupABI(p.ABI, contract, readOnly, p.IsTransaction)
 	if err != nil {
 		return nil, err
 	}
-
-	// Start the balance change handler before executing the precompile.
-	p.GetBalanceHandler().BeforeBalanceChange(ctx)
-
-	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
-	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
-	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
 	switch method.Name {
 	// evidence transactions
@@ -117,17 +110,6 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	}
 
 	if err != nil {
-		return nil, err
-	}
-
-	cost := ctx.GasMeter().GasConsumed() - initialGas
-
-	if !contract.UseGas(cost, nil, tracing.GasChangeCallPrecompiledContract) {
-		return nil, vm.ErrOutOfGas
-	}
-
-	// Process the native balance changes after the method execution.
-	if err = p.GetBalanceHandler().AfterBalanceChange(ctx, stateDB); err != nil {
 		return nil, err
 	}
 

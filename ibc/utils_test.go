@@ -14,7 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	guruibc "github.com/gurufinglobal/guru/v2/ibc"
-	precompilestestutil "github.com/gurufinglobal/guru/v2/precompiles/testutil"
+	precompilestestutil "github.com/cosmos/evm/precompiles/testutil"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 

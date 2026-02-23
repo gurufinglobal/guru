@@ -7,14 +7,14 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/precompiles/testutil"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // buildMsgEthereumTx builds an Ethereum transaction from the given arguments and populates the From field.
 func buildMsgEthereumTx(txArgs evmtypes.EvmTxArgs, fromAddr common.Address) evmtypes.MsgEthereumTx {
 	msgEthereumTx := evmtypes.NewTx(&txArgs)
-	msgEthereumTx.From = fromAddr.String()
+	msgEthereumTx.From = fromAddr.Bytes()
 	return *msgEthereumTx
 }
 

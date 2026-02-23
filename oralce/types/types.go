@@ -3,8 +3,13 @@ package types
 import (
 	"time"
 
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
+)
+
+// Feemarket event constants (previously from x/feemarket/types/events.go)
+const (
+	EventTypeChangeMinGasPrice = "change_min_gas_price"
+	AttributeKeyMinGasPrice    = "min_gas_price"
 )
 
 var (
@@ -17,7 +22,7 @@ var (
 	CompleteNonce = oracletypes.EventTypeCompleteOracleDataSet + "." + oracletypes.AttributeKeyNonce
 	CompleteTime  = oracletypes.EventTypeCompleteOracleDataSet + "." + oracletypes.AttributeKeyBlockTime
 
-	MinGasPrice = feemarkettypes.EventTypeChangeMinGasPrice + "." + feemarkettypes.AttributeKeyMinGasPrice
+	MinGasPrice = EventTypeChangeMinGasPrice + "." + AttributeKeyMinGasPrice
 )
 
 type OracleJob struct {

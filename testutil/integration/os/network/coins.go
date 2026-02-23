@@ -2,7 +2,7 @@ package network
 
 import (
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type CoinInfo struct {
@@ -40,7 +40,7 @@ func DefaultChainCoins() ChainCoins {
 func getCoinInfo(coinInfo evmtypes.EvmCoinInfo) CoinInfo {
 	return CoinInfo{
 		Denom:    coinInfo.Denom,
-		Decimals: coinInfo.Decimals,
+		Decimals: evmtypes.Decimals(coinInfo.Decimals),
 	}
 }
 

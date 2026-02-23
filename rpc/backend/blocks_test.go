@@ -21,7 +21,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	ethrpc "github.com/gurufinglobal/guru/v2/rpc/types"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *BackendTestSuite) TestBlockNumber() {

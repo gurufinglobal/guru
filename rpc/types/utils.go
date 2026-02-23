@@ -21,7 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // ExceedBlockGasLimitError defines the error message when tx execution exceeds the block gas limit.
@@ -46,7 +46,6 @@ func RawTxToEthTx(clientCtx client.Context, txBz cmttypes.Tx) ([]*evmtypes.MsgEt
 		if !ok {
 			return nil, fmt.Errorf("invalid message type %T, expected %T", msg, &evmtypes.MsgEthereumTx{})
 		}
-		ethTx.Hash = ethTx.AsTransaction().Hash().Hex()
 		ethTxs[i] = ethTx
 	}
 	return ethTxs, nil

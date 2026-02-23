@@ -20,7 +20,7 @@ import (
 
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // GetTransactionByHash returns the Ethereum format transaction identified by Ethereum transaction hash
@@ -58,7 +58,7 @@ func (b *Backend) GetTransactionByHash(txHash common.Hash) (*rpctypes.RPCTransac
 		// Fallback to find tx index by iterating all valid eth transactions
 		msgs := b.EthMsgsFromTendermintBlock(block, blockRes)
 		for i := range msgs {
-			if msgs[i].Hash == hexTx {
+			if msgs[i].Hash().Hex() == hexTx {
 				if i > math.MaxInt32 {
 					return nil, errors.New("tx index overflow")
 				}
@@ -107,7 +107,7 @@ func (b *Backend) getTransactionByHashPending(txHash common.Hash) (*rpctypes.RPC
 			continue
 		}
 
-		if msg.Hash == hexTx {
+		if msg.Hash().Hex() == hexTx {
 			// use zero block values since it's not included in a block yet
 			rpctx, err := rpctypes.NewTransactionFromMsg(
 				msg,
@@ -163,12 +163,7 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 	}
 
 	ethMsg := tx.GetMsgs()[res.MsgIndex].(*evmtypes.MsgEthereumTx)
-
-	txData, err := evmtypes.UnpackTxData(ethMsg.Data)
-	if err != nil {
-		b.logger.Error("failed to unpack tx data", "error", err.Error())
-		return nil, err
-	}
+	ethTx := ethMsg.AsTransaction()
 
 	cumulativeGasUsed := uint64(0)
 	blockRes, err := b.rpcClient.BlockResults(b.ctx, &res.Height)
@@ -195,7 +190,8 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 		return nil, err
 	}
 
-	from, err := ethMsg.GetSender(chainID.ToInt())
+	signer := ethtypes.LatestSignerForChainID(chainID.ToInt())
+	from, err := ethMsg.GetSenderLegacy(signer)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +207,7 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 		// Fallback to find tx index by iterating all valid eth transactions
 		msgs := b.EthMsgsFromTendermintBlock(resBlock, blockRes)
 		for i := range msgs {
-			if msgs[i].Hash == hexTx {
+			if msgs[i].Hash().Hex() == hexTx {
 				res.EthTxIndex = int32(i) // #nosec G115
 				break
 			}
@@ -242,7 +238,7 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 		// They are stored in the chain database.
 		"transactionHash": hash,
 		"contractAddress": nil,
-		"gasUsed":         hexutil.Uint64(b.GetGasUsed(res, txData.GetGasPrice(), txData.GetGas())),
+		"gasUsed":         hexutil.Uint64(b.GetGasUsed(res, ethTx.GasPrice(), ethTx.Gas())),
 
 		// Inclusion information: These fields provide information about the inclusion of the
 		// transaction corresponding to this receipt.
@@ -251,11 +247,11 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 		"transactionIndex": hexutil.Uint64(res.EthTxIndex), //nolint:gosec // G115 // no int overflow expected here
 
 		// https://github.com/foundry-rs/foundry/issues/7640
-		"effectiveGasPrice": (*hexutil.Big)(txData.GetGasPrice()),
+		"effectiveGasPrice": (*hexutil.Big)(ethTx.GasPrice()),
 
 		// sender and receiver (contract or EOA) addreses
 		"from": from,
-		"to":   txData.GetTo(),
+		"to":   ethTx.To(),
 		"type": hexutil.Uint(ethMsg.AsTransaction().Type()),
 	}
 
@@ -264,17 +260,19 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 	}
 
 	// If the ContractAddress is 20 0x0 bytes, assume it is not a contract creation
-	if txData.GetTo() == nil {
-		receipt["contractAddress"] = crypto.CreateAddress(from, txData.GetNonce())
+	if ethTx.To() == nil {
+		receipt["contractAddress"] = crypto.CreateAddress(from, ethTx.Nonce())
 	}
 
-	if dynamicTx, ok := txData.(*evmtypes.DynamicFeeTx); ok {
+	if ethTx.Type() == ethtypes.DynamicFeeTxType {
 		baseFee, err := b.BaseFee(blockRes)
 		if err != nil {
 			// tolerate the error for pruned node.
 			b.logger.Error("fetch basefee failed, node is pruned?", "height", res.Height, "error", err)
 		} else {
-			receipt["effectiveGasPrice"] = hexutil.Big(*dynamicTx.EffectiveGasPrice(baseFee))
+			tip, _ := ethTx.EffectiveGasTip(baseFee)
+			effectivePrice := new(big.Int).Add(tip, baseFee)
+			receipt["effectiveGasPrice"] = hexutil.Big(*effectivePrice)
 		}
 	}
 

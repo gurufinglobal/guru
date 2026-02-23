@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	cmn "github.com/cosmos/evm/precompiles/common"
 )
 
 const (

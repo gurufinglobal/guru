@@ -12,7 +12,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/ibc/simapp"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 )
 
 func SetupExampleApp() (ibctesting.TestingApp, map[string]json.RawMessage) {

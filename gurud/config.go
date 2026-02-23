@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // EVMOptionsFn defines a function type for setting app options specifically for
@@ -21,8 +21,10 @@ type EVMOptionsFn func(uint64) error
 
 var sealed = false
 
-// EvmAppOptions allows to setup the global configuration
-// for the Cosmos EVM chain.
+// EvmAppOptions sets up the base denomination for the chain.
+// In cosmos/evm v0.5.1, the EVM coin info and EIP activators are initialized
+// during InitGenesis via SetGlobalConfigVariables, so we do NOT call
+// Configure() here to avoid "EVM coin info already set" errors.
 func EvmAppOptions(chainID uint64) error {
 	if sealed {
 		return nil
@@ -38,18 +40,6 @@ func EvmAppOptions(chainID uint64) error {
 
 	// set the denom info for the chain
 	if err := setBaseDenom(coinInfo); err != nil {
-		return err
-	}
-
-	ethCfg := evmtypes.DefaultChainConfig(chainID)
-
-	err := evmtypes.NewEVMConfigurator().
-		WithExtendedEips(guruActivators).
-		WithChainConfig(ethCfg).
-		// NOTE: we're using the 18 decimals default for the example chain
-		WithEVMCoinInfo(coinInfo).
-		Configure()
-	if err != nil {
 		return err
 	}
 

@@ -10,8 +10,8 @@ import (
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
-	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/precompiles/testutil"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // ExecuteEthTx executes an Ethereum transaction - contract call with the provided private key and txArgs

@@ -13,7 +13,7 @@ import (
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	testnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func TestGetERC20Balance(t *testing.T) {

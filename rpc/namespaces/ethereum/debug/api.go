@@ -23,7 +23,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // HandlerT keeps track of the cpu profiler and trace execution

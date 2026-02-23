@@ -22,7 +22,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 func TestKVIndexer(t *testing.T) {

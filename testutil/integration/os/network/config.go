@@ -14,7 +14,7 @@ import (
 
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	testtx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // defaultChain represents the default chain ID used in the suite setup.
@@ -126,10 +126,10 @@ func WithChainID(chainID testconstants.ChainID) ConfigOption {
 
 		if cfg.chainCoins.IsBaseEqualToEVM() {
 			cfg.chainCoins.baseCoin.Denom = evmCoinInfo.Denom
-			cfg.chainCoins.baseCoin.Decimals = evmCoinInfo.Decimals
+			cfg.chainCoins.baseCoin.Decimals = evmtypes.Decimals(evmCoinInfo.Decimals)
 		}
 		cfg.chainCoins.evmCoin.Denom = evmCoinInfo.Denom
-		cfg.chainCoins.evmCoin.Decimals = evmCoinInfo.Decimals
+		cfg.chainCoins.evmCoin.Decimals = evmtypes.Decimals(evmCoinInfo.Decimals)
 	}
 }
 

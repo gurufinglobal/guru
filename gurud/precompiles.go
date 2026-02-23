@@ -1,7 +1,6 @@
 package gurud
 
 import (
-	"fmt"
 	"maps"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -12,24 +11,24 @@ import (
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	bankprecompile "github.com/gurufinglobal/guru/v2/precompiles/bank"
-	"github.com/gurufinglobal/guru/v2/precompiles/bech32"
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	distprecompile "github.com/gurufinglobal/guru/v2/precompiles/distribution"
+	bankprecompile "github.com/cosmos/evm/precompiles/bank"
+	"github.com/cosmos/evm/precompiles/bech32"
+	cmn "github.com/cosmos/evm/precompiles/common"
+	distprecompile "github.com/cosmos/evm/precompiles/distribution"
 	evidenceprecompile "github.com/gurufinglobal/guru/v2/precompiles/evidence"
-	govprecompile "github.com/gurufinglobal/guru/v2/precompiles/gov"
-	ics20precompile "github.com/gurufinglobal/guru/v2/precompiles/ics20"
-	"github.com/gurufinglobal/guru/v2/precompiles/p256"
-	slashingprecompile "github.com/gurufinglobal/guru/v2/precompiles/slashing"
-	stakingprecompile "github.com/gurufinglobal/guru/v2/precompiles/staking"
-	erc20Keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
+	govprecompile "github.com/cosmos/evm/precompiles/gov"
+	ics20precompile "github.com/cosmos/evm/precompiles/ics20"
+	"github.com/cosmos/evm/precompiles/p256"
+	slashingprecompile "github.com/cosmos/evm/precompiles/slashing"
+	stakingprecompile "github.com/cosmos/evm/precompiles/staking"
+	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
-	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
 )
 
 const bech32PrecompileBaseGas = 6_000
@@ -44,7 +43,6 @@ func NewAvailableStaticPrecompiles(
 	erc20Keeper erc20Keeper.Keeper,
 	transferKeeper transferkeeper.Keeper,
 	channelKeeper *channelkeeper.Keeper,
-	evmKeeper *evmkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
 	slashingKeeper slashingkeeper.Keeper,
 	evidenceKeeper evidencekeeper.Keeper,
@@ -53,57 +51,59 @@ func NewAvailableStaticPrecompiles(
 	// Clone the mapping from the latest EVM fork.
 	precompiles := maps.Clone(vm.PrecompiledContractsBerlin)
 
+	addrCdc := authcodec.NewBech32Codec("guru")
+
 	// secp256r1 precompile as per EIP-7212
 	p256Precompile := &p256.Precompile{}
 
 	bech32Precompile, err := bech32.NewPrecompile(bech32PrecompileBaseGas)
 	if err != nil {
-		panic(fmt.Errorf("failed to instantiate bech32 precompile: %w", err))
+		panic(err)
 	}
 
-	stakingPrecompile, err := stakingprecompile.NewPrecompile(stakingKeeper)
-	if err != nil {
-		panic(fmt.Errorf("failed to instantiate staking precompile: %w", err))
-	}
-
-	distributionPrecompile, err := distprecompile.NewPrecompile(
-		distributionKeeper,
+	stakingPrecompile := stakingprecompile.NewPrecompile(
 		stakingKeeper,
-		evmKeeper,
+		stakingkeeper.NewMsgServerImpl(&stakingKeeper),
+		stakingkeeper.NewQuerier(&stakingKeeper),
+		bankKeeper,
+		addrCdc,
 	)
-	if err != nil {
-		panic(fmt.Errorf("failed to instantiate distribution precompile: %w", err))
-	}
 
-	ibcTransferPrecompile, err := ics20precompile.NewPrecompile(
+	distributionPrecompile := distprecompile.NewPrecompile(
+		distributionKeeper,
+		distributionkeeper.NewMsgServerImpl(distributionKeeper),
+		distributionkeeper.NewQuerier(distributionKeeper),
+		stakingKeeper,
+		bankKeeper,
+		addrCdc,
+	)
+
+	ibcTransferPrecompile := ics20precompile.NewPrecompile(
+		bankKeeper,
 		stakingKeeper,
 		transferKeeper,
 		channelKeeper,
-		evmKeeper,
 	)
-	if err != nil {
-		panic(fmt.Errorf("failed to instantiate ICS20 precompile: %w", err))
-	}
 
-	bankPrecompile, err := bankprecompile.NewPrecompile(bankKeeper, erc20Keeper)
-	if err != nil {
-		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
-	}
+	bankPrecompile := bankprecompile.NewPrecompile(bankKeeper, erc20Keeper)
 
-	govPrecompile, err := govprecompile.NewPrecompile(govKeeper, codec)
-	if err != nil {
-		panic(fmt.Errorf("failed to instantiate gov precompile: %w", err))
-	}
+	govPrecompile := govprecompile.NewPrecompile(
+		govkeeper.NewMsgServerImpl(&govKeeper),
+		govkeeper.NewQueryServer(&govKeeper),
+		bankKeeper,
+		codec,
+		addrCdc,
+	)
 
-	slashingPrecompile, err := slashingprecompile.NewPrecompile(slashingKeeper)
-	if err != nil {
-		panic(fmt.Errorf("failed to instantiate slashing precompile: %w", err))
-	}
+	slashingPrecompile := slashingprecompile.NewPrecompile(
+		slashingKeeper,
+		slashingkeeper.NewMsgServerImpl(slashingKeeper),
+		bankKeeper,
+		authcodec.NewBech32Codec("guruvaloper"),
+		authcodec.NewBech32Codec("guruvalcons"),
+	)
 
-	evidencePrecompile, err := evidenceprecompile.NewPrecompile(evidenceKeeper)
-	if err != nil {
-		panic(fmt.Errorf("failed to instantiate evidence precompile: %w", err))
-	}
+	evidencePrecompile := evidenceprecompile.NewPrecompile(evidenceKeeper)
 
 	// Stateless precompiles
 	precompiles[bech32Precompile.Address()] = bech32Precompile

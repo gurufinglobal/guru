@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v2/ante"
-	ethante "github.com/gurufinglobal/guru/v2/ante/evm"
+	"github.com/cosmos/evm/ante"
+	ethante "github.com/cosmos/evm/ante/evm"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/types"

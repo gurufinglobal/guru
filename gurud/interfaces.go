@@ -1,8 +1,8 @@
 package gurud
 
 import (
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	cmn "github.com/cosmos/evm/precompiles/common"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type BankKeeper interface {

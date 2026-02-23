@@ -26,7 +26,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	gurutypes "github.com/gurufinglobal/guru/v2/types"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in
@@ -70,12 +69,12 @@ var EthDefaultConsensusParams = &cmtypes.ConsensusParams{
 }
 
 // EthSetup initializes a new Cosmos EVM application. A Nop logger is set in GURUD.
-func EthSetup(isCheckTx bool, chainID string, evmChainID uint64, patchGenesis func(*exampleapp.GURUD, gurutypes.GenesisState) gurutypes.GenesisState) *exampleapp.GURUD {
+func EthSetup(isCheckTx bool, chainID string, evmChainID uint64, patchGenesis func(*exampleapp.GURUD, map[string]json.RawMessage) map[string]json.RawMessage) *exampleapp.GURUD {
 	return EthSetupWithDB(isCheckTx, chainID, evmChainID, patchGenesis, dbm.NewMemDB())
 }
 
 // EthSetupWithDB initializes a new GURUD. A Nop logger is set in GURUD.
-func EthSetupWithDB(isCheckTx bool, chainID string, evmChainID uint64, patchGenesis func(*exampleapp.GURUD, gurutypes.GenesisState) gurutypes.GenesisState, db dbm.DB) *exampleapp.GURUD {
+func EthSetupWithDB(isCheckTx bool, chainID string, evmChainID uint64, patchGenesis func(*exampleapp.GURUD, map[string]json.RawMessage) map[string]json.RawMessage, db dbm.DB) *exampleapp.GURUD {
 	app := exampleapp.NewExampleApp(log.NewNopLogger(),
 		db,
 		nil,
@@ -120,7 +119,7 @@ func EthSetupWithDB(isCheckTx bool, chainID string, evmChainID uint64, patchGene
 //
 // TODO: are these different genesis functions necessary or can they all be refactored into one?
 // there's also other genesis state functions; some like app.DefaultGenesis() or others in test helpers only.
-func NewTestGenesisState(app *exampleapp.GURUD) gurutypes.GenesisState {
+func NewTestGenesisState(app *exampleapp.GURUD) map[string]json.RawMessage {
 	privVal := mock.NewPV()
 	pubKey, err := privVal.GetPubKey()
 	if err != nil {
@@ -142,10 +141,10 @@ func NewTestGenesisState(app *exampleapp.GURUD) gurutypes.GenesisState {
 	return genesisStateWithValSet(app.AppCodec(), genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 }
 
-func genesisStateWithValSet(codec codec.Codec, genesisState gurutypes.GenesisState,
+func genesisStateWithValSet(codec codec.Codec, genesisState map[string]json.RawMessage,
 	valSet *cmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
 	balances ...banktypes.Balance,
-) gurutypes.GenesisState {
+) map[string]json.RawMessage {
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisState[authtypes.ModuleName] = codec.MustMarshalJSON(authGenesis)

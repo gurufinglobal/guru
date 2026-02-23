@@ -7,6 +7,7 @@ import (
 	"maps"
 	"os"
 	"sort"
+	"unsafe"
 
 	corevm "github.com/ethereum/go-ethereum/core/vm"
 	"github.com/gorilla/mux"
@@ -109,24 +110,24 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	evmante "github.com/gurufinglobal/guru/v2/ante"
-	guruante "github.com/gurufinglobal/guru/v2/ante/evm"
+	evmante "github.com/cosmos/evm/ante"
+	antetypes "github.com/cosmos/evm/ante/types"
+	evmutils "github.com/cosmos/evm/utils"
 	guruencoding "github.com/gurufinglobal/guru/v2/encoding"
-	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
 	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
-	"github.com/gurufinglobal/guru/v2/server/swagger"
-	gurutypes "github.com/gurufinglobal/guru/v2/types"
 	guruutils "github.com/gurufinglobal/guru/v2/utils"
+	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
+	"github.com/gurufinglobal/guru/v2/server/swagger"
 	"github.com/gurufinglobal/guru/v2/x/bex"
 	bexkeeper "github.com/gurufinglobal/guru/v2/x/bex/keeper"
 	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
-	"github.com/gurufinglobal/guru/v2/x/erc20"
-	erc20keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	erc20v2 "github.com/gurufinglobal/guru/v2/x/erc20/v2"
-	"github.com/gurufinglobal/guru/v2/x/feemarket"
-	feemarketkeeper "github.com/gurufinglobal/guru/v2/x/feemarket/keeper"
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
+	"github.com/cosmos/evm/x/erc20"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
+	"github.com/cosmos/evm/x/feemarket"
+	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	feepolicymodule "github.com/gurufinglobal/guru/v2/x/feepolicy"
 	feepolicykeeper "github.com/gurufinglobal/guru/v2/x/feepolicy/keeper"
 	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
@@ -140,17 +141,20 @@ import (
 	oraclemodule "github.com/gurufinglobal/guru/v2/x/oracle"
 	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/gurufinglobal/guru/v2/x/precisebank"
-	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
-	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	"github.com/gurufinglobal/guru/v2/x/vm"
-	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/precisebank"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
+	evmtransferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
+	"github.com/cosmos/evm/x/vm"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
+
+type evmTransferKeeper = evmtransferkeeper.Keeper
 
 func init() {
 	// manually update the power reduction by replacing micro (u) -> atto (a) guru
-	sdk.DefaultPowerReduction = gurutypes.AttoPowerReduction
+	sdk.DefaultPowerReduction = evmutils.AttoPowerReduction
 
 	// get the user's home directory
 	var err error
@@ -529,7 +533,6 @@ func NewExampleApp(
 
 	// NOTE: it's required to set up the EVM keeper before the ERC-20 keeper, because it is used in its instantiation.
 	app.EVMKeeper = evmkeeper.NewKeeper(
-		// TODO: check why this is not adjusted to use the runtime module methods like SDK native keepers
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], keys,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper,
@@ -538,6 +541,7 @@ func NewExampleApp(
 		app.FeeMarketKeeper,
 		&app.ConsensusParamsKeeper,
 		&app.Erc20Keeper,
+		evmChainID,
 		tracer,
 	)
 
@@ -549,17 +553,14 @@ func NewExampleApp(
 		app.PreciseBankKeeper,
 		app.EVMKeeper,
 		app.StakingKeeper,
-		&app.TransferKeeper,
+		(*evmTransferKeeper)(unsafe.Pointer(&app.TransferKeeper)),
 	)
 
 	oracleKeeper := oraclekeeper.NewKeeper(appCodec, keys[oracletypes.StoreKey], authAddr, app.AccountKeeper)
 	app.OracleKeeper = *oracleKeeper
-	app.OracleKeeper = *oracleKeeper.SetHooks(
-		oraclekeeper.NewMultiOracleHooks(
-			// insert oracle hooks receivers here
-			app.FeeMarketKeeper.Hooks(),
-		),
-	)
+	// NOTE: FeeMarketKeeper.Hooks() removed in cosmos/evm v0.5.1.
+	// The guru-specific oracle->feemarket gas price adjustment hook
+	// needs to be re-implemented separately if required.
 
 	app.BexKeeper = bexkeeper.NewKeeper(
 		appCodec, keys[bextypes.StoreKey], app.AccountKeeper, app.BankKeeper, authAddr,
@@ -661,7 +662,6 @@ func NewExampleApp(
 			app.Erc20Keeper,
 			app.TransferKeeper,
 			app.IBCKeeper.ChannelKeeper,
-			app.EVMKeeper,
 			app.GovKeeper,
 			app.SlashingKeeper,
 			app.EvidenceKeeper,
@@ -697,7 +697,7 @@ func NewExampleApp(
 		transferModule,
 		transwapModule,
 		// Cosmos EVM modules
-		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
+		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.PreciseBankKeeper, app.AccountKeeper.AddressCodec()),
 		feemarket.NewAppModule(app.FeeMarketKeeper),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
@@ -734,6 +734,7 @@ func NewExampleApp(
 	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
 		authtypes.ModuleName,
+		evmtypes.ModuleName,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -918,7 +919,7 @@ func (app *GURUD) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) 
 		Cdc:                    app.appCodec,
 		AccountKeeper:          app.AccountKeeper,
 		BankKeeper:             app.BankKeeper,
-		ExtensionOptionChecker: gurutypes.HasDynamicFeeExtensionOption,
+		ExtensionOptionChecker: antetypes.HasDynamicFeeExtensionOption,
 		EvmKeeper:              app.EVMKeeper,
 		FeegrantKeeper:         app.FeeGrantKeeper,
 		FeePolicyKeeper:        app.FeePolicyKeeper,
@@ -927,7 +928,7 @@ func (app *GURUD) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) 
 		SignModeHandler:        txConfig.SignModeHandler(),
 		SigGasConsumer:         evmante.SigVerificationGasConsumer,
 		MaxTxGasWanted:         maxGasWanted,
-		TxFeeChecker:           guruante.NewDynamicFeeChecker(app.FeeMarketKeeper),
+		DynamicFeeChecker:      true,
 	}
 	if err := options.Validate(); err != nil {
 		panic(err)
@@ -970,7 +971,7 @@ func (app *GURUD) Configurator() module.Configurator {
 
 // InitChainer application update at chain initialization
 func (app *GURUD) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
-	var genesisState gurutypes.GenesisState
+	var genesisState map[string]json.RawMessage
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}

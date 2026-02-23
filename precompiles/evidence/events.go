@@ -8,7 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	cmn "github.com/cosmos/evm/precompiles/common"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 // EmitSubmitEvidenceEvent creates a new event emitted on a SubmitEvidence transaction.
 func (p Precompile) EmitSubmitEvidenceEvent(ctx sdk.Context, stateDB vm.StateDB, origin common.Address, evidenceHash []byte) error {
 	// Prepare the event topics
-	event := p.Events[EventTypeSubmitEvidence]
+	event := p.ABI.Events[EventTypeSubmitEvidence]
 	topics := make([]common.Hash, 2)
 
 	// The first topic is always the signature of the event.

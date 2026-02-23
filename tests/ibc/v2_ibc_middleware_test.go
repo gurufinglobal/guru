@@ -23,9 +23,9 @@ import (
 	"github.com/gurufinglobal/guru/v2/gurud"
 	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
 	"github.com/gurufinglobal/guru/v2/testutil"
-	erc20Keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
-	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-	v2 "github.com/gurufinglobal/guru/v2/x/erc20/v2"
+	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
+	"github.com/cosmos/evm/x/erc20/types"
+	v2 "github.com/cosmos/evm/x/erc20/v2"
 )
 
 // MiddlewareTestSuite tests the v2 IBC middleware for the ERC20 module.

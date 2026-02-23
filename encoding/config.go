@@ -17,8 +17,8 @@ import (
 
 	enccodec "github.com/gurufinglobal/guru/v2/encoding/codec"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // MakeConfig creates a new EncodingConfig and returns it

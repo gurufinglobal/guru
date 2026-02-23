@@ -9,9 +9,9 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	"github.com/cosmos/evm/x/precisebank/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // updateErc20GenesisStateForChainID modify the default genesis state for the

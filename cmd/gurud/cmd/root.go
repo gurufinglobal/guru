@@ -61,13 +61,16 @@ func NewRootCmd() *cobra.Command {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
 	// and the CLI options for the modules
 	// add keyring to autocli opts
+	// Use evmChainID=0 for the temporary app so that SetChainConfig uses
+	// DefaultEVMChainID. This allows the real app (created later by newApp)
+	// to override it with the actual chain ID.
 	tempApp := gurud.NewExampleApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
 		nil,
 		true,
 		simtestutil.EmptyAppOptions{},
-		guruserverconfig.DefaultEVMChainID,
+		0,
 		testutil.NoOpEvmAppOptions,
 	)
 

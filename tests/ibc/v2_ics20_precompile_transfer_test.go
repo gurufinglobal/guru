@@ -24,9 +24,9 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/gurud"
 	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
-	"github.com/gurufinglobal/guru/v2/precompiles/ics20"
-	evmante "github.com/gurufinglobal/guru/v2/x/vm/ante"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/precompiles/ics20"
+	evmante "github.com/cosmos/evm/x/vm/ante"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type ICS20TransferV2TestSuite struct {
