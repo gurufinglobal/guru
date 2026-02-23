@@ -8,7 +8,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -58,10 +57,11 @@ func GetChainConfig() *ChainConfig {
 
 // SetChainConfig allows to set the `chainConfig` variable modifying the
 // default values. The method is exported because it is called from the keeper
-// constructor.
+// constructor. It is idempotent — if the chain config is already set, it
+// returns nil without error.
 func SetChainConfig(cc *ChainConfig) error {
 	if chainConfig != nil && chainConfig.ChainId != 0 {
-		return errors.New("chainConfig already set. Cannot set again the chainConfig")
+		return nil
 	}
 	config := DefaultChainConfig(0)
 	if cc != nil {

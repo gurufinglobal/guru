@@ -3,7 +3,6 @@ package common
 import (
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,18 +12,19 @@ import (
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
-func ParseHexAddress(event sdk.Event, key string) (common.Address, error) {
+// ParseAddress parses the address from the event attributes
+func ParseAddress(event sdk.Event, key string) (sdk.AccAddress, error) {
 	attr, ok := event.GetAttribute(key)
 	if !ok {
-		return common.Address{}, fmt.Errorf("event %q missing attribute %q", event.Type, key)
+		return sdk.AccAddress{}, fmt.Errorf("event %q missing attribute %q", event.Type, key)
 	}
 
 	accAddr, err := sdk.AccAddressFromBech32(attr.Value)
 	if err != nil {
-		return common.Address{}, fmt.Errorf("invalid address %q: %w", attr.Value, err)
+		return sdk.AccAddress{}, fmt.Errorf("invalid address %q: %w", attr.Value, err)
 	}
 
-	return common.BytesToAddress(accAddr), nil
+	return accAddr, nil
 }
 
 func ParseAmount(event sdk.Event) (*uint256.Int, error) {
