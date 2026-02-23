@@ -83,14 +83,12 @@ func EvmAppOptions(chainID uint64) error {
 		return err
 	}
 
-	ethCfg := evmtypes.DefaultChainConfig(chainID)
-
+	// NOTE: Chain config is now set in the keeper constructor via SetChainConfig
 	configurator := evmtypes.NewEVMConfigurator()
 	// reset configuration to set the new one
 	configurator.ResetTestConfig()
 	err := configurator.
 		WithExtendedEips(guruActivators).
-		WithChainConfig(ethCfg).
 		WithEVMCoinInfo(coinInfo).
 		Configure()
 	if err != nil {
