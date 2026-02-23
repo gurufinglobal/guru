@@ -22,37 +22,37 @@ var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 		Denom:         config.ExampleChainDenom,
 		ExtendedDenom: config.ExampleChainDenom,
 		DisplayDenom:  config.ExampleDisplayDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 	config.SixDecimalsChainID: {
 		Denom:         "utest",
 		ExtendedDenom: "atest",
 		DisplayDenom:  "test",
-		Decimals:      evmtypes.SixDecimals,
+		Decimals:      evmtypes.SixDecimals.Uint32(),
 	},
 	config.TwelveDecimalsChainID: {
 		Denom:         "ptest2",
 		ExtendedDenom: "atest2",
 		DisplayDenom:  "test2",
-		Decimals:      evmtypes.TwelveDecimals,
+		Decimals:      evmtypes.TwelveDecimals.Uint32(),
 	},
 	config.TwoDecimalsChainID: {
 		Denom:         "ctest3",
 		ExtendedDenom: "atest3",
 		DisplayDenom:  "test3",
-		Decimals:      evmtypes.TwoDecimals,
+		Decimals:      evmtypes.TwoDecimals.Uint32(),
 	},
 	config.TestChainID1: {
 		Denom:         config.ExampleChainDenom,
 		ExtendedDenom: config.ExampleChainDenom,
 		DisplayDenom:  config.ExampleChainDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 	config.TestChainID2: {
 		Denom:         config.ExampleChainDenom,
 		ExtendedDenom: config.ExampleChainDenom,
 		DisplayDenom:  config.ExampleChainDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 }
 

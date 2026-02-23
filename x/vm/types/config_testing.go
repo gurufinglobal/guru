@@ -27,10 +27,6 @@ func (ec *EVMConfigurator) Configure() error {
 		return fmt.Errorf("error configuring EVMConfigurator: already sealed and cannot be modified")
 	}
 
-	if err := setTestChainConfig(ec.chainConfig); err != nil {
-		return err
-	}
-
 	if err := setTestingEVMCoinInfo(ec.evmCoinInfo); err != nil {
 		return err
 	}
@@ -56,7 +52,9 @@ func (ec *EVMConfigurator) ResetTestConfig() {
 	testChainConfig = nil
 }
 
-func setTestChainConfig(cc *ChainConfig) error {
+// SetChainConfig allows to set the `chainConfig` variable modifying the
+// default values.
+func SetChainConfig(cc *ChainConfig) error {
 	if testChainConfig != nil {
 		return errors.New("chainConfig already set. Cannot set again the chainConfig. Call the configurators ResetTestConfig method before configuring a new chain.")
 	}

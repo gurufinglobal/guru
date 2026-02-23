@@ -16,9 +16,26 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// defaultEvmCoinInfo provides a default configuration to prevent nil pointer dereferences
+// when RPC requests execute before evmCoinInfo is initialized in PreBlock.
+var defaultEvmCoinInfo *EvmCoinInfo
+
+// SetDefaultEvmCoinInfo sets the default EVM coin info to be used as fallback.
+func SetDefaultEvmCoinInfo(coinInfo EvmCoinInfo) {
+	defaultEvmCoinInfo = &coinInfo
+}
+
 // testingEvmCoinInfo hold the information of the coin used in the EVM as gas token. It
 // can only be set via `EVMConfigurator` before starting the app.
 var testingEvmCoinInfo *EvmCoinInfo
+
+// getEvmCoinInfo returns the evmCoinInfo if set, otherwise returns defaultEvmCoinInfo.
+func getEvmCoinInfo() *EvmCoinInfo {
+	if testingEvmCoinInfo == nil {
+		return defaultEvmCoinInfo
+	}
+	return testingEvmCoinInfo
+}
 
 // setEVMCoinDecimals allows to define the decimals used in the representation
 // of the EVM coin.
@@ -27,7 +44,7 @@ func setEVMCoinDecimals(d Decimals) error {
 		return fmt.Errorf("setting EVM coin decimals: %w", err)
 	}
 
-	testingEvmCoinInfo.Decimals = d
+	testingEvmCoinInfo.Decimals = d.Uint32()
 	return nil
 }
 
@@ -49,37 +66,57 @@ func setEVMCoinExtendedDenom(extendedDenom string) error {
 	return nil
 }
 
+func setDisplayDenom(displayDenom string) error {
+	if err := sdk.ValidateDenom(displayDenom); err != nil {
+		return fmt.Errorf("setting EVM coin display denom: %w", err)
+	}
+	testingEvmCoinInfo.DisplayDenom = displayDenom
+	return nil
+}
+
 // GetEVMCoinDecimals returns the decimals used in the representation of the EVM
 // coin.
 func GetEVMCoinDecimals() Decimals {
-	if testingEvmCoinInfo == nil {
+	ci := getEvmCoinInfo()
+	if ci == nil {
 		// Use SDK logger with safe writer
 		logger := log.NewLogger(os.Stdout)
 		logger.Error("EVM coin info not initialized: chain-id must be set in client.toml or via --chain-id flag. Please configure the chain-id before running this command")
 		// Return 18 decimals as safe default for Ethereum compatibility
 		return EighteenDecimals
 	}
-	return testingEvmCoinInfo.Decimals
+	return Decimals(ci.Decimals)
 }
 
 // GetEVMCoinDenom returns the denom used for the EVM coin.
 func GetEVMCoinDenom() string {
-	if testingEvmCoinInfo == nil {
+	ci := getEvmCoinInfo()
+	if ci == nil {
 		logger := log.NewLogger(os.Stdout)
 		logger.Error("EVM coin info not initialized: chain-id must be set in client.toml or via --chain-id flag. Please configure the chain-id before running this command")
 		return "agxn" // Default denom
 	}
-	return testingEvmCoinInfo.Denom
+	return ci.Denom
 }
 
 // GetEVMCoinExtendedDenom returns the extended denom used for the EVM coin.
 func GetEVMCoinExtendedDenom() string {
-	if testingEvmCoinInfo == nil {
+	ci := getEvmCoinInfo()
+	if ci == nil {
 		logger := log.NewLogger(os.Stdout)
 		logger.Error("EVM coin info not initialized: chain-id must be set in client.toml or via --chain-id flag. Please configure the chain-id before running this command")
 		return "agxn" // Default extended denom
 	}
-	return testingEvmCoinInfo.ExtendedDenom
+	return ci.ExtendedDenom
+}
+
+// GetEVMCoinDisplayDenom returns the display denom used for the EVM coin.
+func GetEVMCoinDisplayDenom() string {
+	ci := getEvmCoinInfo()
+	if ci == nil {
+		return "gxn" // Default display denom
+	}
+	return ci.DisplayDenom
 }
 
 // setTestingEVMCoinInfo allows to define denom and decimals of the coin used in the EVM.
@@ -88,7 +125,7 @@ func setTestingEVMCoinInfo(eci EvmCoinInfo) error {
 		return errors.New("testing EVM coin info already set. Make sure you run the configurator's ResetTestConfig before trying to set a new evm coin info")
 	}
 
-	if eci.Decimals == EighteenDecimals {
+	if Decimals(eci.Decimals) == EighteenDecimals {
 		if eci.Denom != eci.ExtendedDenom {
 			return errors.New("EVM coin denom and extended denom must be the same for 18 decimals")
 		}
@@ -102,7 +139,10 @@ func setTestingEVMCoinInfo(eci EvmCoinInfo) error {
 	if err := setEVMCoinExtendedDenom(eci.ExtendedDenom); err != nil {
 		return err
 	}
-	return setEVMCoinDecimals(eci.Decimals)
+	if err := setDisplayDenom(eci.DisplayDenom); err != nil {
+		return err
+	}
+	return setEVMCoinDecimals(Decimals(eci.Decimals))
 }
 
 // resetEVMCoinInfo resets to nil the testingEVMCoinInfo

@@ -178,7 +178,10 @@ func (b *Backend) processBlock(
 				continue
 			}
 			tx := ethMsg.AsTransaction()
-			reward := tx.EffectiveGasTipValue(blockBaseFee)
+			reward, err := tx.EffectiveGasTip(blockBaseFee)
+			if err != nil {
+				reward = big.NewInt(0)
+			}
 			if reward == nil || reward.Sign() < 0 {
 				b.logger.Debug("negative or nil reward found in transaction", "height", blockHeight, "txHash", tx.Hash().Hex(), "reward", reward)
 				reward = big.NewInt(0)

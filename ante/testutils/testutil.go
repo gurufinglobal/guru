@@ -115,7 +115,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		WithEVMCoinInfo(evmtypes.EvmCoinInfo{
 			Denom:         denom,
 			ExtendedDenom: extendedDenom,
-			Decimals:      decimals,
+			Decimals:      decimals.Uint32(),
 		}).
 		Configure()
 	suite.Require().NoError(err)

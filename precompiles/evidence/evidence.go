@@ -16,7 +16,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -58,7 +57,8 @@ func NewPrecompile(
 	}
 
 	// SetAddress defines the address of the evidence precompiled contract.
-	p.SetAddress(common.HexToAddress(evmtypes.EvidencePrecompileAddress))
+	// NOTE: Evidence precompile is deprecated and will be removed in the v0.5.1 upgrade
+	p.SetAddress(common.HexToAddress("0x0000000000000000000000000000000000000807"))
 
 	return p, nil
 }

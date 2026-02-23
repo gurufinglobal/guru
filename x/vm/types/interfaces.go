@@ -26,6 +26,7 @@ import (
 type AccountKeeper interface {
 	NewAccountWithAddress(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
 	GetModuleAddress(moduleName string) sdk.AccAddress
+	HasAccount(ctx context.Context, addr sdk.AccAddress) bool
 	GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
 	SetAccount(ctx context.Context, account sdk.AccountI)
 	RemoveAccount(ctx context.Context, account sdk.AccountI)
@@ -57,6 +58,7 @@ type StakingKeeper interface {
 	GetHistoricalInfo(ctx context.Context, height int64) (stakingtypes.HistoricalInfo, error)
 	GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error)
 	ValidatorAddressCodec() address.Codec
+	BondDenom(ctx context.Context) (string, error)
 }
 
 // FeeMarketKeeper defines the expected interfaces needed for the feemarket

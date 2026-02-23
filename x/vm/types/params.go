@@ -22,6 +22,8 @@ var (
 	DefaultEVMDenom = "agxn"
 	// DefaultEVMChainID is the default value for the evm chain ID
 	DefaultEVMChainID = "guru_631-1"
+	// DefaultEVMChainIDNum is the numeric part of the default EVM chain ID
+	DefaultEVMChainIDNum uint64 = 631
 	// DefaultEVMDecimals is the default value for the evm denom decimal precision
 	DefaultEVMDecimals uint64 = 18
 	// DefaultAllowUnprotectedTxs rejects all unprotected txs (i.e false)
