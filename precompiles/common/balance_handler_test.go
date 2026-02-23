@@ -31,7 +31,27 @@ func setupBalanceHandlerTest(t *testing.T) {
 	require.NoError(t, configurator.WithEVMCoinInfo(testconstants.ExampleChainCoinInfo[testconstants.ExampleChainID]).Configure())
 }
 
-func TestParseHexAddress(t *testing.T) {
+// mockBankKeeper implements cmn.BankKeeper for testing purposes.
+type mockBankKeeper struct{}
+
+func (m mockBankKeeper) IterateAccountBalances(_ sdk.Context, _ sdk.AccAddress, _ func(coin sdk.Coin) bool) {
+}
+func (m mockBankKeeper) IterateTotalSupply(_ sdk.Context, _ func(coin sdk.Coin) bool) {}
+func (m mockBankKeeper) GetSupply(_ sdk.Context, _ string) sdk.Coin                    { return sdk.Coin{} }
+func (m mockBankKeeper) GetDenomMetaData(_ sdk.Context, _ string) (banktypes.Metadata, bool) {
+	return banktypes.Metadata{}, false
+}
+func (m mockBankKeeper) SetDenomMetaData(_ sdk.Context, _ banktypes.Metadata) {}
+func (m mockBankKeeper) GetBalance(_ sdk.Context, _ sdk.AccAddress, _ string) sdk.Coin {
+	return sdk.Coin{}
+}
+func (m mockBankKeeper) SendCoins(_ sdk.Context, _, _ sdk.AccAddress, _ sdk.Coins) error { return nil }
+func (m mockBankKeeper) SpendableCoin(_ sdk.Context, _ sdk.AccAddress, _ string) sdk.Coin {
+	return sdk.Coin{}
+}
+func (m mockBankKeeper) BlockedAddr(_ sdk.AccAddress) bool { return false }
+
+func TestParseAddress(t *testing.T) {
 	var accAddr sdk.AccAddress
 
 	testCases := []struct {
@@ -77,14 +97,14 @@ func TestParseHexAddress(t *testing.T) {
 
 			event := tc.maleate()
 
-			addr, err := cmn.ParseHexAddress(event, tc.key)
+			addr, err := cmn.ParseAddress(event, tc.key)
 			if tc.expError {
 				require.Error(t, err)
 				return
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, common.BytesToAddress(accAddr), addr)
+			require.Equal(t, sdk.AccAddress(accAddr), addr)
 		})
 	}
 }
@@ -155,7 +175,8 @@ func TestAfterBalanceChange(t *testing.T) {
 	// initial balance for spender
 	stateDB.AddBalance(spender, uint256.NewInt(5), tracing.BalanceChangeUnspecified)
 
-	bh := cmn.NewBalanceHandler()
+	bhf := cmn.NewBalanceHandlerFactory(mockBankKeeper{})
+	bh := bhf.NewBalanceHandler()
 	bh.BeforeBalanceChange(ctx)
 
 	coins := sdk.NewCoins(sdk.NewInt64Coin(evmtypes.GetEVMCoinDenom(), 3))
@@ -183,7 +204,8 @@ func TestAfterBalanceChangeErrors(t *testing.T) {
 	require.NoError(t, err)
 	addr := addrs[0]
 
-	bh := cmn.NewBalanceHandler()
+	bhf := cmn.NewBalanceHandlerFactory(mockBankKeeper{})
+	bh := bhf.NewBalanceHandler()
 	bh.BeforeBalanceChange(ctx)
 
 	// invalid address in event

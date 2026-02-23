@@ -5,10 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
-
-	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -36,11 +33,25 @@ const (
 //go:embed abi.json
 var f embed.FS
 
+var (
+	ERC20ABI abi.ABI
+)
+
+func init() {
+	var err error
+	ERC20ABI, err = cmn.LoadABI(f, abiPath)
+	if err != nil {
+		panic(err)
+	}
+}
+
 var _ vm.PrecompiledContract = &Precompile{}
 
 // Precompile defines the precompiled contract for ERC-20.
 type Precompile struct {
 	cmn.Precompile
+
+	ABI            abi.ABI
 	tokenPair      erc20types.TokenPair
 	transferKeeper transferkeeper.Keeper
 	erc20Keeper    Erc20Keeper
@@ -55,26 +66,17 @@ func NewPrecompile(
 	bankKeeper cmn.BankKeeper,
 	erc20Keeper Erc20Keeper,
 	transferKeeper transferkeeper.Keeper,
-) (*Precompile, error) {
-	newABI, err := cmn.LoadABI(f, abiPath)
-	if err != nil {
-		return nil, err
-	}
-
-	p := &Precompile{
+) *Precompile {
+	return &Precompile{
 		Precompile: cmn.Precompile{
-			ABI:                  newABI,
-			KvGasConfig:          storetypes.GasConfig{},
-			TransientKVGasConfig: storetypes.GasConfig{},
+			ContractAddress: tokenPair.GetERC20Contract(),
 		},
+		ABI:            ERC20ABI,
 		tokenPair:      tokenPair,
 		BankKeeper:     bankKeeper,
 		erc20Keeper:    erc20Keeper,
 		transferKeeper: transferKeeper,
 	}
-	// Address defines the address of the ERC-20 precompile contract.
-	p.SetAddress(p.tokenPair.GetERC20Contract())
-	return p, nil
 }
 
 // RequiredGas calculates the contract gas used for the
@@ -85,7 +87,7 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 	}
 
 	methodID := input[:4]
-	method, err := p.MethodById(methodID)
+	method, err := p.ABI.MethodById(methodID)
 	if err != nil {
 		return 0
 	}
@@ -120,45 +122,27 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 }
 
 // Run executes the precompiled contract ERC-20 methods defined in the ABI.
-func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
-	bz, err = p.run(evm, contract, readOnly)
-	if err != nil {
-		return cmn.ReturnRevertError(evm, err)
-	}
-
-	return bz, nil
+func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) ([]byte, error) {
+	return p.RunNativeAction(evm, contract, func(ctx sdk.Context) ([]byte, error) {
+		return p.Execute(ctx, contract, evm.StateDB, readOnly)
+	})
 }
 
-func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
+func (p Precompile) Execute(ctx sdk.Context, contract *vm.Contract, stateDB vm.StateDB, readOnly bool) ([]byte, error) {
 	// ERC20 precompiles cannot receive funds because they are not managed by an
 	// EOA and will not be possible to recover funds sent to an instance of
-	// them.This check is a safety measure because currently funds cannot be
+	// them. This check is a safety measure because currently funds cannot be
 	// received due to the lack of a fallback handler.
 	if value := contract.Value(); value.Sign() == 1 {
 		return nil, fmt.Errorf(ErrCannotReceiveFunds, contract.Value().String())
 	}
 
-	ctx, stateDB, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
+	method, args, err := cmn.SetupABI(p.ABI, contract, readOnly, p.IsTransaction)
 	if err != nil {
 		return nil, err
 	}
 
-	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
-	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
-	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
-
-	bz, err = p.HandleMethod(ctx, contract, stateDB, method, args)
-	if err != nil {
-		return nil, err
-	}
-
-	cost := ctx.GasMeter().GasConsumed() - initialGas
-
-	if !contract.UseGas(cost, nil, tracing.GasChangeCallPrecompiledContract) {
-		return nil, vm.ErrOutOfGas
-	}
-
-	return bz, nil
+	return p.HandleMethod(ctx, contract, stateDB, method, args)
 }
 
 // IsTransaction checks if the given method name corresponds to a transaction or query.
