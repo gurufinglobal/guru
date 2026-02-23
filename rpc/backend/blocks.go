@@ -181,6 +181,10 @@ func (b *Backend) TendermintBlockByNumber(blockNum rpctypes.BlockNumber) (*tmrpc
 // TendermintBlockResultByNumber returns a Tendermint-formatted block result
 // by block number
 func (b *Backend) TendermintBlockResultByNumber(height *int64) (*tmrpctypes.ResultBlockResults, error) {
+	// convert height 0 to nil, which is treated as latest by CometBFT
+	if height != nil && *height == 0 {
+		height = nil
+	}
 	return b.rpcClient.BlockResults(b.ctx, height)
 }
 
