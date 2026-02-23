@@ -130,8 +130,18 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 
 	delegations := createDelegations(validators, genAccounts[0].GetAddress())
 
-	// Create a new testing app with the following params
+	// Create a new testing app with the following params.
+	// NOTE: createTestingApp → EvmAppOptions → ResetTestConfig(), which clears
+	// testingEvmCoinInfo. We must re-set it afterwards for genesis state helpers
+	// (e.g. GetEVMCoinDenom) to work before InitGenesis runs.
 	exampleApp := createTestingApp(n.cfg.chainID, n.cfg.eip155ChainID.Uint64(), n.cfg.customBaseAppOpts...)
+
+	evmtypes.SetDefaultEvmCoinInfo(evmtypes.EvmCoinInfo{
+		Denom:         n.cfg.chainCoins.evmCoin.Denom,
+		ExtendedDenom: n.cfg.chainCoins.evmCoin.Denom,
+		DisplayDenom:  n.cfg.chainCoins.evmCoin.Denom,
+		Decimals:      n.cfg.chainCoins.evmCoin.Decimals.Uint32(),
+	})
 
 	stakingParams := StakingCustomGenesisState{
 		denom:       n.cfg.chainCoins.BaseDenom(),
@@ -195,6 +205,20 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 
 	consensusParams := chainutil.DefaultConsensusParams
 	now := time.Now()
+
+	// Reset test config before InitChain so that InitGenesis →
+	// SetGlobalConfigVariables → Configure() can set the EVM coin info
+	// and activators fresh (it will panic if testingEvmCoinInfo is already set).
+	resetConfigurator := evmtypes.NewEVMConfigurator()
+	resetConfigurator.ResetTestConfig()
+
+	// ResetTestConfig clears chain config too, so re-set it.
+	// SetChainConfig in test builds can be called repeatedly (it checks
+	// the non-test chainConfig global which is always nil).
+	ethCfg := evmtypes.DefaultChainConfig(n.cfg.eip155ChainID.Uint64())
+	if err := evmtypes.SetChainConfig(ethCfg); err != nil {
+		return err
+	}
 
 	if _, err = exampleApp.InitChain(
 		&abcitypes.RequestInitChain{

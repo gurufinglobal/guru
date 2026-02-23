@@ -515,7 +515,17 @@ func newDefaultGenesisState(guruApp *exampleapp.GURUD, evmChainID uint64, params
 	genesisState = setDefaultSlashingGenesisState(guruApp, genesisState, params.slashing)
 	genesisState = setDefaultMintGenesisState(guruApp, genesisState, params.mint)
 	genesisState = setDefaultErc20GenesisState(guruApp, evmChainID, genesisState)
+	genesisState = setDefaultEVMGenesisState(guruApp, genesisState)
 
+	return genesisState
+}
+
+// setDefaultEVMGenesisState overrides the EVM module genesis params to use the
+// correct EvmDenom for this chain instead of the cosmos/evm default ("aatom").
+func setDefaultEVMGenesisState(guruApp *exampleapp.GURUD, genesisState gurutypes.GenesisState) gurutypes.GenesisState {
+	evmGenesis := evmtypes.DefaultGenesisState()
+	evmGenesis.Params.EvmDenom = evmtypes.GetEVMCoinDenom()
+	genesisState[evmtypes.ModuleName] = guruApp.AppCodec().MustMarshalJSON(evmGenesis)
 	return genesisState
 }
 

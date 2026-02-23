@@ -15,6 +15,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 
+	cosmoseips "github.com/cosmos/evm/eips"
 	"github.com/gurufinglobal/guru/v2/gurud/eips"
 	"github.com/gurufinglobal/guru/v2/gurud/eips/testdata"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -108,6 +109,7 @@ var _ = Describe("EIP-0000 - ", Ordered, func() {
 
 	It("should enable the new EIP", func() {
 		eips.Multiplier = eipMultiplier
+		cosmoseips.Multiplier = eipMultiplier
 		newEIP := 0o000
 
 		qRes, err := gh.GetEvmParams()
@@ -256,6 +258,7 @@ var _ = Describe("EIP0001 - ", Ordered, func() {
 	})
 	It("should enable the new EIP", func() {
 		eips.Multiplier = eipMultiplier
+		cosmoseips.Multiplier = eipMultiplier
 		newEIP := 0o001
 
 		qRes, err := gh.GetEvmParams()
@@ -398,6 +401,7 @@ var _ = Describe("EIP0002 - ", Ordered, func() {
 
 	It("should enable the new EIP", func() {
 		eips.SstoreConstantGas = constantGas
+		cosmoseips.SstoreConstantGas = constantGas
 		newEIP := 0o002
 
 		qRes, err := gh.GetEvmParams()

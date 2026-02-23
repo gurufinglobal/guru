@@ -38,7 +38,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 
 	txEncoder := suite.backend.clientCtx.TxConfig.TxEncoder()
 
-	msgEthereumTx.From = from.String()
+	msgEthereumTx.From = from.Bytes()
 	_ = msgEthereumTx.Sign(ethSigner, suite.signer)
 
 	baseDenom := evmtypes.GetEVMCoinDenom()
@@ -46,7 +46,7 @@ func (suite *BackendTestSuite) TestTraceTransaction() {
 	tx, _ := msgEthereumTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), baseDenom)
 	txBz, _ := txEncoder(tx)
 
-	msgEthereumTx2.From = from.String()
+	msgEthereumTx2.From = from.Bytes()
 	_ = msgEthereumTx2.Sign(ethSigner, suite.signer)
 
 	tx2, _ := msgEthereumTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), baseDenom)

@@ -109,11 +109,11 @@ func (suite *BackendTestSuite) buildEthereumTx() (*evmtypes.MsgEthereumTx, []byt
 		Amount:   big.NewInt(0),
 		GasLimit: 100000,
 		GasPrice: big.NewInt(1),
+		Input:    []byte{},
 	}
 	msgEthereumTx := evmtypes.NewTx(&ethTxParams)
 
-	// A valid msg should have empty `From`
-	msgEthereumTx.From = suite.from.Hex()
+	msgEthereumTx.From = suite.from.Bytes()
 
 	txBuilder := suite.backend.clientCtx.TxConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msgEthereumTx)
@@ -124,7 +124,7 @@ func (suite *BackendTestSuite) buildEthereumTx() (*evmtypes.MsgEthereumTx, []byt
 	return msgEthereumTx, bz
 }
 
-// buildEthereumTx returns an example legacy Ethereum transaction
+// buildEthereumTxWithChainID returns an example legacy Ethereum transaction
 func (suite *BackendTestSuite) buildEthereumTxWithChainID(eip155ChainID *big.Int) *evmtypes.MsgEthereumTx {
 	ethTxParams := evmtypes.EvmTxArgs{
 		ChainID:  eip155ChainID,
@@ -133,11 +133,11 @@ func (suite *BackendTestSuite) buildEthereumTxWithChainID(eip155ChainID *big.Int
 		Amount:   big.NewInt(0),
 		GasLimit: 100000,
 		GasPrice: big.NewInt(1),
+		Input:    []byte{},
 	}
 	msgEthereumTx := evmtypes.NewTx(&ethTxParams)
 
-	// A valid msg should have empty `From`
-	msgEthereumTx.From = suite.from.Hex()
+	msgEthereumTx.From = suite.from.Bytes()
 
 	txBuilder := suite.backend.clientCtx.TxConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msgEthereumTx)
@@ -177,7 +177,7 @@ func (suite *BackendTestSuite) buildFormattedBlock(
 			suite.Require().NoError(err)
 			ethRPCTxs = []interface{}{rpcTx}
 		} else {
-			ethRPCTxs = []interface{}{common.HexToHash(tx.Hash)}
+			ethRPCTxs = []interface{}{tx.Hash()}
 		}
 	}
 
@@ -204,7 +204,7 @@ func (suite *BackendTestSuite) signAndEncodeEthTx(msgEthereumTx *evmtypes.MsgEth
 	signer := utiltx.NewSigner(priv)
 
 	ethSigner := ethtypes.LatestSigner(suite.backend.ChainConfig())
-	msgEthereumTx.From = from.String()
+	msgEthereumTx.From = from.Bytes()
 	err := msgEthereumTx.Sign(ethSigner, signer)
 	suite.Require().NoError(err)
 

@@ -22,37 +22,37 @@ var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 		Denom:         config.ExampleChainDenom,
 		ExtendedDenom: config.ExampleChainDenom,
 		DisplayDenom:  config.ExampleDisplayDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 	config.SixDecimalsChainID: {
 		Denom:         "utest",
 		ExtendedDenom: "atest",
 		DisplayDenom:  "test",
-		Decimals:      evmtypes.SixDecimals,
+		Decimals:      evmtypes.SixDecimals.Uint32(),
 	},
 	config.TwelveDecimalsChainID: {
 		Denom:         "ptest2",
 		ExtendedDenom: "atest2",
 		DisplayDenom:  "test2",
-		Decimals:      evmtypes.TwelveDecimals,
+		Decimals:      evmtypes.TwelveDecimals.Uint32(),
 	},
 	config.TwoDecimalsChainID: {
 		Denom:         "ctest3",
 		ExtendedDenom: "atest3",
 		DisplayDenom:  "test3",
-		Decimals:      evmtypes.TwoDecimals,
+		Decimals:      evmtypes.TwoDecimals.Uint32(),
 	},
 	config.TestChainID1: {
 		Denom:         config.ExampleChainDenom,
 		ExtendedDenom: config.ExampleChainDenom,
 		DisplayDenom:  config.ExampleChainDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 	config.TestChainID2: {
 		Denom:         config.ExampleChainDenom,
 		ExtendedDenom: config.ExampleChainDenom,
 		DisplayDenom:  config.ExampleChainDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      evmtypes.EighteenDecimals.Uint32(),
 	},
 }
 
@@ -68,32 +68,27 @@ func NoOpEVMOptions(_ uint64) error {
 }
 
 // EvmAppOptions allows to setup the global configuration
-// for the Cosmos EVM chain.
+// for the Cosmos EVM chain. In cosmos/evm v0.5.1, the EVM coin info and EIP
+// activators are initialized during InitGenesis via SetGlobalConfigVariables,
+// so we only reset test config and set the base denom here.
 func EvmAppOptions(chainID uint64) error {
 	coinInfo, found := ChainsCoinInfo[chainID]
 	if !found {
 		coinInfo, found = ChainsCoinInfo[config.CosmosChainID]
 		if !found {
-		return fmt.Errorf("unknown chain id: %d", chainID)
+			return fmt.Errorf("unknown chain id: %d", chainID)
 		}
 	}
 
-	// set the base denom considering if its mainnet or testnet
-	if err := setBaseDenom(coinInfo); err != nil {
-		return err
-	}
-
-	ethCfg := evmtypes.DefaultChainConfig(chainID)
-
+	// Reset test configuration to allow re-initialization across tests.
+	// This clears testingEvmCoinInfo, testChainConfig, and activators
+	// so that InitGenesis → SetGlobalConfigVariables → Configure() can
+	// set them fresh without "already set" errors.
 	configurator := evmtypes.NewEVMConfigurator()
-	// reset configuration to set the new one
 	configurator.ResetTestConfig()
-	err := configurator.
-		WithExtendedEips(guruActivators).
-		WithChainConfig(ethCfg).
-		WithEVMCoinInfo(coinInfo).
-		Configure()
-	if err != nil {
+
+	// Set the base denom considering if its mainnet or testnet
+	if err := setBaseDenom(coinInfo); err != nil {
 		return err
 	}
 

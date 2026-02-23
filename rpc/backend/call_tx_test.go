@@ -334,7 +334,7 @@ func (suite *BackendTestSuite) TestSendRawTransaction() {
 			func() []byte {
 				from, priv := utiltx.NewAddrKey()
 				signer := utiltx.NewSigner(priv)
-				invalidChainIDTx.From = from.String()
+				invalidChainIDTx.From = from.Bytes()
 				err := invalidChainIDTx.Sign(ethSigner, signer)
 				suite.Require().NoError(err)
 				bytes, _ := rlp.EncodeToBytes(invalidChainIDTx.AsTransaction())
@@ -371,7 +371,7 @@ func (suite *BackendTestSuite) TestSendRawTransaction() {
 				bytes, _ := rlp.EncodeToBytes(ethTx.AsTransaction())
 				return bytes
 			},
-			common.HexToHash(ethTx.Hash),
+			ethTx.Hash(),
 			errortypes.ErrInvalidRequest.Error(),
 			false,
 		},
@@ -386,7 +386,7 @@ func (suite *BackendTestSuite) TestSendRawTransaction() {
 				RegisterBroadcastTx(client, txBytes)
 			},
 			func() []byte { return rlpEncodedBz },
-			common.HexToHash(ethTx.Hash),
+			ethTx.Hash(),
 			"",
 			true,
 		},

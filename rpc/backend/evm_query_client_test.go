@@ -38,28 +38,30 @@ var _ evmtypes.QueryClient = &mocks.EVMQueryClient{}
 // TraceTransaction
 func RegisterTraceTransactionWithPredecessors(queryClient *mocks.EVMQueryClient, msgEthTx *evmtypes.MsgEthereumTx, predecessors []*evmtypes.MsgEthereumTx) {
 	data := []byte{0x7b, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22, 0x3a, 0x20, 0x22, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x7d}
-	queryClient.On("TraceTx", rpc.ContextWithHeight(1),
-		&evmtypes.QueryTraceTxRequest{Msg: msgEthTx, BlockNumber: 1, Predecessors: predecessors, ChainId: config.DefaultEVMChainID, BlockMaxGas: -1}).
-		Return(&evmtypes.QueryTraceTxResponse{Data: data}, nil)
+	queryClient.On("TraceTx", rpc.ContextWithHeight(1), mock.MatchedBy(func(req *evmtypes.QueryTraceTxRequest) bool {
+		return req.BlockNumber == 1 && req.ChainId == config.DefaultEVMChainID && req.BlockMaxGas == -1 && req.Msg != nil && len(req.Predecessors) == len(predecessors)
+	})).Return(&evmtypes.QueryTraceTxResponse{Data: data}, nil)
 }
 
 func RegisterTraceTransaction(queryClient *mocks.EVMQueryClient, msgEthTx *evmtypes.MsgEthereumTx) {
 	data := []byte{0x7b, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22, 0x3a, 0x20, 0x22, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x7d}
-	queryClient.On("TraceTx", rpc.ContextWithHeight(1), &evmtypes.QueryTraceTxRequest{Msg: msgEthTx, BlockNumber: 1, ChainId: config.DefaultEVMChainID, BlockMaxGas: -1}).
-		Return(&evmtypes.QueryTraceTxResponse{Data: data}, nil)
+	queryClient.On("TraceTx", rpc.ContextWithHeight(1), mock.MatchedBy(func(req *evmtypes.QueryTraceTxRequest) bool {
+		return req.BlockNumber == 1 && req.ChainId == config.DefaultEVMChainID && req.BlockMaxGas == -1 && req.Msg != nil
+	})).Return(&evmtypes.QueryTraceTxResponse{Data: data}, nil)
 }
 
 func RegisterTraceTransactionError(queryClient *mocks.EVMQueryClient, msgEthTx *evmtypes.MsgEthereumTx) {
-	queryClient.On("TraceTx", rpc.ContextWithHeight(1), &evmtypes.QueryTraceTxRequest{Msg: msgEthTx, BlockNumber: 1, ChainId: config.DefaultEVMChainID}).
-		Return(nil, errortypes.ErrInvalidRequest)
+	queryClient.On("TraceTx", rpc.ContextWithHeight(1), mock.MatchedBy(func(req *evmtypes.QueryTraceTxRequest) bool {
+		return req.BlockNumber == 1 && req.ChainId == config.DefaultEVMChainID
+	})).Return(nil, errortypes.ErrInvalidRequest)
 }
 
 // TraceBlock
 func RegisterTraceBlock(queryClient *mocks.EVMQueryClient, txs []*evmtypes.MsgEthereumTx) {
 	data := []byte{0x7b, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22, 0x3a, 0x20, 0x22, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x7d}
-	queryClient.On("TraceBlock", rpc.ContextWithHeight(1),
-		&evmtypes.QueryTraceBlockRequest{Txs: txs, BlockNumber: 1, TraceConfig: &evmtypes.TraceConfig{}, ChainId: config.DefaultEVMChainID, BlockMaxGas: -1}).
-		Return(&evmtypes.QueryTraceBlockResponse{Data: data}, nil)
+	queryClient.On("TraceBlock", rpc.ContextWithHeight(1), mock.MatchedBy(func(req *evmtypes.QueryTraceBlockRequest) bool {
+		return req.BlockNumber == 1 && req.ChainId == config.DefaultEVMChainID && req.BlockMaxGas == -1 && len(req.Txs) == len(txs)
+	})).Return(&evmtypes.QueryTraceBlockResponse{Data: data}, nil)
 }
 
 func RegisterTraceBlockError(queryClient *mocks.EVMQueryClient) {

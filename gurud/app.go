@@ -976,6 +976,13 @@ func (app *GURUD) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abc
 		panic(err)
 	}
 
+	// Ensure bank genesis includes denom metadata for the EVM coin.
+	// This is required because cosmos/evm v0.5.1 InitEvmCoinInfo reads
+	// denom metadata from the bank keeper during EVM InitGenesis.
+	// Some testing frameworks (e.g. ibc-go) overwrite the bank genesis
+	// with empty metadata, which would cause a panic.
+	genesisState = ensureBankDenomMetadata(app, genesisState)
+
 	if err := app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap()); err != nil {
 		panic(err)
 	}
@@ -985,6 +992,67 @@ func (app *GURUD) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abc
 
 func (app *GURUD) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
 	return app.ModuleManager.PreBlock(ctx)
+}
+
+// ensureBankDenomMetadata ensures the bank genesis state includes denom
+// metadata for the EVM coin. This is required because cosmos/evm v0.5.1's
+// InitEvmCoinInfo looks up denom metadata in the bank keeper, and some
+// testing frameworks (e.g. ibc-go) create a bank genesis with empty metadata.
+func ensureBankDenomMetadata(app *GURUD, genesisState map[string]json.RawMessage) map[string]json.RawMessage {
+	// Parse EVM genesis to get the EvmDenom
+	var evmGenesis evmtypes.GenesisState
+	if evmRaw, ok := genesisState[evmtypes.ModuleName]; ok {
+		app.appCodec.MustUnmarshalJSON(evmRaw, &evmGenesis)
+	}
+	evmDenom := evmGenesis.Params.EvmDenom
+	if evmDenom == "" {
+		return genesisState
+	}
+
+	// Parse bank genesis and check if metadata already exists
+	var bankGenesis banktypes.GenesisState
+	if bankRaw, ok := genesisState[banktypes.ModuleName]; ok {
+		app.appCodec.MustUnmarshalJSON(bankRaw, &bankGenesis)
+	}
+
+	for _, meta := range bankGenesis.DenomMetadata {
+		if meta.Base == evmDenom {
+			return genesisState // metadata already present
+		}
+	}
+
+	// Add minimal denom metadata so InitEvmCoinInfo can find it.
+	// Use 18 decimals as default (standard for EVM chains).
+	displayDenom := evmDenom
+	var exponent uint32 = 18
+	if len(evmDenom) > 1 {
+		// Derive display denom by stripping the prefix (a→18, u→6)
+		prefix := evmDenom[0]
+		baseName := evmDenom[1:]
+		switch prefix {
+		case 'a':
+			exponent = 18
+			displayDenom = baseName
+		case 'u':
+			exponent = 6
+			displayDenom = baseName
+		}
+	}
+
+	bankGenesis.DenomMetadata = append(bankGenesis.DenomMetadata, banktypes.Metadata{
+		Description: fmt.Sprintf("The native EVM token (%s)", evmDenom),
+		Base:        evmDenom,
+		DenomUnits: []*banktypes.DenomUnit{
+			{Denom: evmDenom, Exponent: 0},
+			{Denom: displayDenom, Exponent: exponent},
+		},
+		Name:    displayDenom,
+		Symbol:  displayDenom,
+		Display: displayDenom,
+	})
+	genesisState[banktypes.ModuleName] = app.appCodec.MustMarshalJSON(&bankGenesis)
+
+	return genesisState
 }
 
 // LoadHeight loads a particular height

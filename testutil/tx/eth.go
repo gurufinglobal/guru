@@ -53,8 +53,6 @@ func PrepareEthTx(
 			}
 		}
 
-		msg.From = nil
-
 		txGasLimit += msg.GetGas()
 		txFee = txFee.Add(sdk.Coin{Denom: baseDenom, Amount: sdkmath.NewIntFromBigInt(msg.GetFee())})
 	}

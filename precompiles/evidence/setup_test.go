@@ -34,7 +34,6 @@ func TestPrecompileTestSuite(t *testing.T) {
 
 func (s *PrecompileTestSuite) SetupTest() {
 	keyring := testkeyring.New(2)
-	var err error
 	nw := network.NewUnitTestNetwork(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
 	)
@@ -51,11 +50,9 @@ func (s *PrecompileTestSuite) SetupTest() {
 	s.grpcHandler = grpcHandler
 	s.keyring = keyring
 
-	if s.precompile, err = evidence.NewPrecompile(
+	s.precompile = evidence.NewPrecompile(
 		s.network.App.EvidenceKeeper,
-	); err != nil {
-		panic(err)
-	}
+	)
 }
 
 func testEquivocationHandler(_ interface{}) types.Handler {

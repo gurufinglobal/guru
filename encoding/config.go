@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
+	cosmoseip712 "github.com/cosmos/evm/ethereum/eip712"
 	enccodec "github.com/gurufinglobal/guru/v2/encoding/codec"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
@@ -49,6 +50,7 @@ func MakeConfig(evmChainID uint64) sdktestutil.TestEncodingConfig {
 	// the deprecated method legacytx.StdSignBytes
 	legacytx.RegressionTestingAminoCodec = cdc
 	eip712.SetEncodingConfig(cdc, interfaceRegistry, evmChainID)
+	cosmoseip712.SetEncodingConfig(cdc, interfaceRegistry, evmChainID)
 
 	return sdktestutil.TestEncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
@@ -86,6 +88,7 @@ func MakeConfigWithBech32Prefix(evmChainID uint64, bech32Prefix string) sdktestu
 	// the deprecated method legacytx.StdSignBytes
 	legacytx.RegressionTestingAminoCodec = cdc
 	eip712.SetEncodingConfig(cdc, interfaceRegistry, evmChainID)
+	cosmoseip712.SetEncodingConfig(cdc, interfaceRegistry, evmChainID)
 
 	return sdktestutil.TestEncodingConfig{
 		InterfaceRegistry: interfaceRegistry,

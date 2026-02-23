@@ -118,7 +118,11 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	}
 
 	ethereumTx := &evmtypes.MsgEthereumTx{}
-	ethereumTx.FromEthereumTx(tx)
+	signer := ethtypes.LatestSignerForChainID(tx.ChainId())
+	if err := ethereumTx.FromSignedEthereumTx(tx, signer); err != nil {
+		b.logger.Debug("failed to recover sender from signed tx", "error", err.Error())
+		return common.Hash{}, err
+	}
 
 	if err := ethereumTx.ValidateBasic(); err != nil {
 		b.logger.Debug("tx failed basic validation", "error", err.Error())

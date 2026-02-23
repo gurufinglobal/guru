@@ -12,7 +12,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/cosmos/evm/ante"
-	ethante "github.com/cosmos/evm/ante/evm"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
 	cmmnfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -152,6 +151,6 @@ func (s *benchmarkSuite) generateHandlerOptions() chainante.HandlerOptions {
 		SignModeHandler:        encCfg.TxConfig.SignModeHandler(),
 		SigGasConsumer:         ante.SigVerificationGasConsumer,
 		MaxTxGasWanted:         1_000_000_000,
-		TxFeeChecker:           ethante.NewDynamicFeeChecker(s.network.App.FeeMarketKeeper),
+		DynamicFeeChecker:      true,
 	}
 }

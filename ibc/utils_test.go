@@ -14,7 +14,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	guruibc "github.com/gurufinglobal/guru/v2/ibc"
-	precompilestestutil "github.com/cosmos/evm/precompiles/testutil"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
@@ -300,6 +299,15 @@ func TestGetReceivedCoin(t *testing.T) {
 func TestGetSentCoin(t *testing.T) {
 	baseDenom := testconstants.ExampleAttoDenom
 
+	// Compute expected IBC denoms from the raw denom paths
+	agxnIbcDenom := transfertypes.NewDenom("agxn", transfertypes.NewHop(transfertypes.PortID, "channel-0")).IBCDenom()
+	uosmoIbcDenom := transfertypes.NewDenom("uosmo", transfertypes.NewHop(transfertypes.PortID, "channel-0")).IBCDenom()
+	uatomIbcDenom := transfertypes.NewDenom("uatom", transfertypes.NewHop(transfertypes.PortID, "channel-1")).IBCDenom()
+	uatomOsmoIbcDenom := transfertypes.NewDenom("uatom",
+		transfertypes.NewHop(transfertypes.PortID, "channel-0"),
+		transfertypes.NewHop(transfertypes.PortID, "channel-1"),
+	).IBCDenom()
+
 	testCases := []struct {
 		name      string
 		rawDenom  string
@@ -316,25 +324,25 @@ func TestGetSentCoin(t *testing.T) {
 			"get ibc wrapped agxn coin",
 			"transfer/channel-0/agxn",
 			"10",
-			sdk.Coin{Denom: precompilestestutil.AatomIbcDenom, Amount: math.NewInt(10)},
+			sdk.Coin{Denom: agxnIbcDenom, Amount: math.NewInt(10)},
 		},
 		{
 			"get ibc wrapped uosmo coin",
 			"transfer/channel-0/uosmo",
 			"10",
-			sdk.Coin{Denom: precompilestestutil.UosmoIbcDenom, Amount: math.NewInt(10)},
+			sdk.Coin{Denom: uosmoIbcDenom, Amount: math.NewInt(10)},
 		},
 		{
 			"get ibc wrapped uatom coin",
 			"transfer/channel-1/uatom",
 			"10",
-			sdk.Coin{Denom: precompilestestutil.UatomIbcDenom, Amount: math.NewInt(10)},
+			sdk.Coin{Denom: uatomIbcDenom, Amount: math.NewInt(10)},
 		},
 		{
 			"get 2x ibc wrapped uatom coin",
 			"transfer/channel-0/transfer/channel-1/uatom",
 			"10",
-			sdk.Coin{Denom: precompilestestutil.UatomOsmoIbcDenom, Amount: math.NewInt(10)},
+			sdk.Coin{Denom: uatomOsmoIbcDenom, Amount: math.NewInt(10)},
 		},
 	}
 

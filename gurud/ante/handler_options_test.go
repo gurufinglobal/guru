@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/evm/ante"
-	ethante "github.com/cosmos/evm/ante/evm"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/types"
@@ -102,7 +101,7 @@ func TestValidateHandlerOptions(t *testing.T) {
 			false,
 		},
 		{
-			"fail - empty tx fee checker",
+			"fail - empty fee policy keeper",
 			chainante.HandlerOptions{
 				Cdc:             nw.App.AppCodec(),
 				AccountKeeper:   nw.App.AccountKeeper,
@@ -112,7 +111,7 @@ func TestValidateHandlerOptions(t *testing.T) {
 				EvmKeeper:       nw.App.EVMKeeper,
 				SigGasConsumer:  ante.SigVerificationGasConsumer,
 				SignModeHandler: nw.App.GetTxConfig().SignModeHandler(),
-				TxFeeChecker:    nil,
+				FeePolicyKeeper: nil,
 			},
 			false,
 		},
@@ -131,7 +130,7 @@ func TestValidateHandlerOptions(t *testing.T) {
 				SignModeHandler:        nw.GetEncodingConfig().TxConfig.SignModeHandler(),
 				SigGasConsumer:         ante.SigVerificationGasConsumer,
 				MaxTxGasWanted:         40000000,
-				TxFeeChecker:           ethante.NewDynamicFeeChecker(nw.App.FeeMarketKeeper),
+				DynamicFeeChecker:      true,
 			},
 			true,
 		},
