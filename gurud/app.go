@@ -538,6 +538,7 @@ func NewExampleApp(
 		app.FeeMarketKeeper,
 		&app.ConsensusParamsKeeper,
 		&app.Erc20Keeper,
+		evmChainID,
 		tracer,
 	)
 
@@ -697,7 +698,7 @@ func NewExampleApp(
 		transferModule,
 		transwapModule,
 		// Cosmos EVM modules
-		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
+		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.PreciseBankKeeper, app.AccountKeeper.AddressCodec()),
 		feemarket.NewAppModule(app.FeeMarketKeeper),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),

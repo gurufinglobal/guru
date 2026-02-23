@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -35,6 +36,7 @@ var (
 
 	_ appmodule.HasBeginBlocker = AppModule{}
 	_ appmodule.HasEndBlocker   = AppModule{}
+	_ appmodule.HasPreBlocker   = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the evm module.
@@ -104,16 +106,20 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // AppModule implements an application module for the evm module.
 type AppModule struct {
 	AppModuleBasic
-	keeper *keeper.Keeper
-	ak     types.AccountKeeper
+	keeper      *keeper.Keeper
+	ak          types.AccountKeeper
+	bankKeeper  types.BankKeeper
+	initializer *sync.Once
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(k *keeper.Keeper, ak types.AccountKeeper, ac address.Codec) AppModule {
+func NewAppModule(k *keeper.Keeper, ak types.AccountKeeper, bankKeeper types.BankKeeper, ac address.Codec) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{ac: ac},
 		keeper:         k,
 		ak:             ak,
+		bankKeeper:     bankKeeper,
+		initializer:    &sync.Once{},
 	}
 }
 
@@ -127,6 +133,18 @@ func (AppModule) Name() string {
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+}
+
+func (am AppModule) PreBlock(goCtx context.Context) (appmodule.ResponsePreBlock, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	coinInfo := am.keeper.GetEvmCoinInfo(ctx)
+	am.initializer.Do(func() {
+		// Set global config variables from stored EvmCoinInfo.
+		// NOTE: In guru, the EVMConfigurator is already configured via EvmAppOptions.
+		// This only sets the default coin info for historical queries.
+		types.SetDefaultEvmCoinInfo(coinInfo)
+	})
+	return &sdk.ResponsePreBlock{ConsensusParamsChanged: false}, nil
 }
 
 // BeginBlock returns the begin blocker for the evm module.
@@ -147,7 +165,7 @@ func (am AppModule) EndBlock(ctx context.Context) error {
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
 	cdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.keeper, am.ak, genesisState)
+	InitGenesis(ctx, am.keeper, am.ak, am.bankKeeper, genesisState, am.initializer)
 	return []abci.ValidatorUpdate{}
 }
 

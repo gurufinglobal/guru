@@ -1,6 +1,7 @@
 package vm_test
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -158,7 +159,9 @@ func TestInitGenesis(t *testing.T) {
 						ts.network.GetContext(),
 						ts.network.App.EVMKeeper,
 						ts.network.App.AccountKeeper,
+						ts.network.App.PreciseBankKeeper,
 						*tc.genState,
+						&sync.Once{},
 					)
 				})
 			} else {
@@ -167,7 +170,9 @@ func TestInitGenesis(t *testing.T) {
 						ctx,
 						ts.network.App.EVMKeeper,
 						ts.network.App.AccountKeeper,
+						ts.network.App.PreciseBankKeeper,
 						*tc.genState,
+						&sync.Once{},
 					)
 				})
 

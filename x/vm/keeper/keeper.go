@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -9,6 +10,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
+	ethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 
 	errorsmod "cosmossdk.io/errors"
@@ -75,6 +77,10 @@ type Keeper struct {
 	// Some of these precompiled contracts might not be active depending on the EVM
 	// parameters.
 	precompiles map[common.Address]vm.PrecompiledContract
+
+	// defaultEvmCoinInfo is the default EVM coin info used when evmCoinInfo is not initialized in the state,
+	// mainly for historical queries.
+	defaultEvmCoinInfo types.EvmCoinInfo
 }
 
 // NewKeeper generates new evm module keeper
@@ -89,6 +95,7 @@ func NewKeeper(
 	fmk types.FeeMarketKeeper,
 	consensusKeeper types.ConsensusParamsKeeper,
 	erc20Keeper types.Erc20Keeper,
+	evmChainID uint64,
 	tracer string,
 ) *Keeper {
 	// ensure evm module account is set
@@ -103,6 +110,12 @@ func NewKeeper(
 
 	bankWrapper := wrappers.NewBankWrapper(bankKeeper)
 	feeMarketWrapper := wrappers.NewFeeMarketWrapper(fmk)
+
+	// set global chain config
+	ethCfg := types.DefaultChainConfig(evmChainID)
+	if err := types.SetChainConfig(ethCfg); err != nil {
+		panic(err)
+	}
 
 	// NOTE: we pass in the parameter space to the CommitStateDB in order to use custom denominations for the EVM operations
 	return &Keeper{
@@ -124,6 +137,13 @@ func NewKeeper(
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", types.ModuleName)
+}
+
+// WithDefaultEvmCoinInfo set default EvmCoinInfo
+func (k *Keeper) WithDefaultEvmCoinInfo(coinInfo types.EvmCoinInfo) *Keeper {
+	k.defaultEvmCoinInfo = coinInfo
+	types.SetDefaultEvmCoinInfo(coinInfo)
+	return k
 }
 
 // ----------------------------------------------------------------------------
@@ -209,6 +229,11 @@ func (k *Keeper) PostTxProcessing(
 		return nil
 	}
 	return k.hooks.PostTxProcessing(ctx, sender, msg, receipt)
+}
+
+// HasHooks returns true if hooks are set
+func (k *Keeper) HasHooks() bool {
+	return k.hooks != nil
 }
 
 // ----------------------------------------------------------------------------
@@ -385,4 +410,28 @@ func (k Keeper) AddTransientGasUsed(ctx sdk.Context, gasUsed uint64) (uint64, er
 // KVStoreKeys returns KVStore keys injected to keeper
 func (k Keeper) KVStoreKeys() map[string]*storetypes.KVStoreKey {
 	return k.storeKeys
+}
+
+// SetHeaderHash sets current block hash into EIP-2935 compatible storage contract.
+func (k Keeper) SetHeaderHash(ctx sdk.Context) {
+	window := uint64(types.DefaultHistoryServeWindow)
+
+	acct := k.GetAccount(ctx, ethparams.HistoryStorageAddress)
+	if acct != nil && k.IsContract(ctx, ethparams.HistoryStorageAddress) {
+		// set current block hash in the contract storage, compatible with EIP-2935
+		ringIndex := uint64(ctx.BlockHeight()) % window //nolint:gosec // G115 // won't exceed uint64
+		var key common.Hash
+		binary.BigEndian.PutUint64(key[24:], ringIndex)
+		k.SetState(ctx, ethparams.HistoryStorageAddress, key, ctx.HeaderHash())
+	}
+}
+
+// GetHeaderHash gets block hash from EIP-2935 compatible storage contract.
+func (k Keeper) GetHeaderHash(ctx sdk.Context, height uint64) common.Hash {
+	window := uint64(types.DefaultHistoryServeWindow)
+
+	ringIndex := height % window
+	var key common.Hash
+	binary.BigEndian.PutUint64(key[24:], ringIndex)
+	return k.GetState(ctx, ethparams.HistoryStorageAddress, key)
 }
