@@ -165,6 +165,14 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# Set EVM config
 	jq '.app_state["evm"]["params"]["evm_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
+	# Add default preinstalled contracts (Create2, Multicall3, Permit2, Safe singleton factory, EIP-2935)
+	# These are standard EVM utility contracts from cosmos/evm v0.5.1 DefaultPreinstalls
+	PREINSTALLS_JSON=$(go run ./cmd/preinstalls_dump/main.go 2>/dev/null) || {
+		echo "Warning: Could not generate preinstalls JSON, skipping preinstalls"
+		PREINSTALLS_JSON="[]"
+	}
+	jq --argjson preinstalls "$PREINSTALLS_JSON" '.app_state["evm"]["preinstalls"]=$preinstalls' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
 	# Enable native denomination as a token pair for STRv2
 	jq '.app_state.erc20.native_precompiles=["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state.erc20.token_pairs=[{contract_owner:1,erc20_address:"0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",denom:"atest",enabled:true}]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"

@@ -1,3 +1,7 @@
+// Proto file for cosmos/evm vm module genesis state.
+// Updated to match cosmos/evm v0.5.1 structure.
+// NOTE: pb.go files are provided by the cosmos/evm external dependency.
+// This file is kept for documentation and tooling only.
 
 syntax = "proto3";
 package cosmos.evm.vm.v1;
@@ -6,7 +10,7 @@ import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/evm/vm/v1/evm.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v2/x/vm/types";
+option go_package = "github.com/cosmos/evm/x/vm/types";
 
 // GenesisState defines the evm module's genesis state.
 message GenesisState {
@@ -15,6 +19,9 @@ message GenesisState {
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
   // params defines all the parameters of the module.
   Params params = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  // preinstalls defines a set of predefined contracts
+  repeated Preinstall preinstalls = 3
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
@@ -32,4 +39,15 @@ message GenesisAccount {
     (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "Storage"
   ];
+}
+
+// Preinstall defines a contract that is preinstalled on-chain with a specific
+// contract address and bytecode.
+message Preinstall {
+  // name of the preinstall contract
+  string name = 1;
+  // address in hex format of the preinstall contract
+  string address = 2;
+  // code in hex format for the preinstall contract
+  string code = 3;
 }

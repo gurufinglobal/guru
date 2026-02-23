@@ -1,3 +1,7 @@
+// Proto file for cosmos/evm vm module EVM types.
+// Updated to match cosmos/evm v0.5.1 structure.
+// NOTE: pb.go files are provided by the cosmos/evm external dependency.
+// This file is kept for documentation and tooling only.
 
 syntax = "proto3";
 package cosmos.evm.vm.v1;
@@ -5,7 +9,7 @@ package cosmos.evm.vm.v1;
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v2/x/vm/types";
+option go_package = "github.com/cosmos/evm/x/vm/types";
 
 // Params defines the EVM module parameters
 message Params {
