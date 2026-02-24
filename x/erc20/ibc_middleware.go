@@ -55,6 +55,12 @@ func (im IBCMiddleware) OnRecvPacket(
 	relayer sdk.AccAddress,
 ) exported.Acknowledgement {
 	ack := im.Module.OnRecvPacket(ctx, channelVersion, packet, relayer)
+	// NOTE: Some middlewares (e.g. Packet Forward Middleware) intentionally return a nil acknowledgement
+	// to defer WriteAcknowledgement until a subsequent hop's ack/timeout is known.
+	// In that case, we must propagate nil upward and MUST NOT attempt post-processing.
+	if ack == nil {
+		return nil
+	}
 
 	// return if the acknowledgement is an error ACK
 	if !ack.Success() {

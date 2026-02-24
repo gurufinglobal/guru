@@ -9,17 +9,20 @@ import (
 	"sort"
 
 	corevm "github.com/ethereum/go-ethereum/core/vm"
-	"github.com/gorilla/mux"
-	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
 
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js" // Force-load tracer engines (Go-Ethereum v1.10.15+ registration).
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+	"github.com/gorilla/mux"
+	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
+	packetforward "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
 	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v10/modules/core"
@@ -229,6 +232,7 @@ type GURUD struct {
 	IBCKeeper      *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	TransferKeeper transferkeeper.Keeper
 	TranswapKeeper transwapkeeper.Keeper
+	PacketForwardKeeper *packetforwardkeeper.Keeper
 
 	// Cosmos EVM keepers
 	FeeMarketKeeper   feemarketkeeper.Keeper
@@ -321,7 +325,7 @@ func NewExampleApp(
 		govtypes.StoreKey, paramstypes.StoreKey, consensusparamtypes.StoreKey,
 		upgradetypes.StoreKey, feegrant.StoreKey, evidencetypes.StoreKey, authzkeeper.StoreKey,
 		// ibc keys
-		ibcexported.StoreKey, ibctransfertypes.StoreKey, transwaptypes.StoreKey,
+		ibcexported.StoreKey, ibctransfertypes.StoreKey, transwaptypes.StoreKey, packetforwardtypes.StoreKey,
 		// Cosmos EVM store keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey,
 		// Oracle store key
@@ -579,6 +583,20 @@ func NewExampleApp(
 		authAddr,
 	)
 
+	// Packet Forward Middleware (PFM) keeper
+	// NOTE: PFM must be able to send IBC transfer packets (via MsgTransfer) and write acknowledgements.
+	// It stores in-flight forwarded packets in its own KVStore to later proxy ack/timeout results back to the previous hop.
+	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[packetforwardtypes.StoreKey]),
+		app.TransferKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.BankKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		authAddr,
+	)
+
+	// ExchangeForward (transwap replacement) keeper: stores in-flight output packets for refund processing.
 	app.TranswapKeeper = transwapkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[transwaptypes.StoreKey]),
@@ -621,8 +639,22 @@ func NewExampleApp(
 	var transwapStack porttypes.IBCModule
 
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
-	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
 	transwapStack = transwap.NewIBCModule(app.TranswapKeeper)
+	// IMPORTANT: PFM needs to be in the ICS4 (SendPacket) path to track forwarded packets (sequence) and proxy ack/timeout later.
+	// Therefore we set the TransferKeeper's ICS4Wrapper to the PFM middleware instance.
+	pfmStack := packetforward.NewIBCMiddleware(
+		transferStack,
+		app.PacketForwardKeeper,
+		0, // retriesOnTimeout: use memo override when provided; default to 0
+		// forwardTimeout: if memo.timeout is missing or invalid, fall back to a sane default
+		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
+	)
+	app.TransferKeeper.WithICS4Wrapper(pfmStack)
+	// ERC20 middleware sits on top of PFM so that:
+	// - normal (non-forwarded) transfers can still run ERC20 post-processing
+	// - forwarded transfers can safely return nil-ack from PFM without triggering ERC20 post-processing
+	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, pfmStack)
+	
 
 	var transferStackV2 ibcapi.IBCModule
 	var transwapStackV2 ibcapi.IBCModule
@@ -694,6 +726,7 @@ func NewExampleApp(
 		// IBC modules
 		ibc.NewAppModule(app.IBCKeeper),
 		ibctm.NewAppModule(tmLightClientModule),
+		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		transferModule,
 		transwapModule,
 		// Cosmos EVM modules
@@ -746,7 +779,7 @@ func NewExampleApp(
 		minttypes.ModuleName,
 
 		// IBC modules
-		ibcexported.ModuleName, ibctransfertypes.ModuleName, transwaptypes.ModuleName,
+		ibcexported.ModuleName, packetforwardtypes.ModuleName, ibctransfertypes.ModuleName, transwaptypes.ModuleName,
 
 		// Cosmos EVM BeginBlockers
 		erc20types.ModuleName, feemarkettypes.ModuleName,
@@ -781,7 +814,7 @@ func NewExampleApp(
 		bextypes.ModuleName,
 
 		// no-ops
-		ibcexported.ModuleName, ibctransfertypes.ModuleName, transwaptypes.ModuleName,
+		ibcexported.ModuleName, packetforwardtypes.ModuleName, ibctransfertypes.ModuleName, transwaptypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName, minttypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
@@ -799,6 +832,7 @@ func NewExampleApp(
 		distrtypes.ModuleName, stakingtypes.ModuleName, slashingtypes.ModuleName, govtypes.ModuleName,
 		minttypes.ModuleName,
 		ibcexported.ModuleName,
+		packetforwardtypes.ModuleName,
 
 		// Cosmos EVM modules
 		//
@@ -1226,6 +1260,8 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	keyTable.RegisterParamSet(&ibcconnectiontypes.Params{})
 	paramsKeeper.Subspace(ibcexported.ModuleName).WithKeyTable(keyTable)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName).WithKeyTable(ibctransfertypes.ParamKeyTable())
+	// Packet Forward Middleware module subspace (used for migrations / future params expansion)
+	paramsKeeper.Subspace(packetforwardtypes.ModuleName)
 	// TODO: do we need a keytable? copied from Evmos repo
 
 	return paramsKeeper
