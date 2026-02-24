@@ -38,7 +38,7 @@ type mockBankKeeper struct{}
 func (m mockBankKeeper) IterateAccountBalances(_ context.Context, _ sdk.AccAddress, _ func(coin sdk.Coin) bool) {
 }
 func (m mockBankKeeper) IterateTotalSupply(_ context.Context, _ func(coin sdk.Coin) bool) {}
-func (m mockBankKeeper) GetSupply(_ context.Context, _ string) sdk.Coin { return sdk.Coin{} }
+func (m mockBankKeeper) GetSupply(_ context.Context, _ string) sdk.Coin                   { return sdk.Coin{} }
 func (m mockBankKeeper) GetDenomMetaData(_ context.Context, _ string) (banktypes.Metadata, bool) {
 	return banktypes.Metadata{}, false
 }
@@ -46,9 +46,11 @@ func (m mockBankKeeper) SetDenomMetaData(_ context.Context, _ banktypes.Metadata
 func (m mockBankKeeper) GetBalance(_ context.Context, _ sdk.AccAddress, _ string) sdk.Coin {
 	return sdk.Coin{}
 }
+
 func (m mockBankKeeper) SendCoins(_ context.Context, _, _ sdk.AccAddress, _ sdk.Coins) error {
 	return nil
 }
+
 func (m mockBankKeeper) SpendableCoin(_ context.Context, _ sdk.AccAddress, _ string) sdk.Coin {
 	return sdk.Coin{}
 }
@@ -107,7 +109,7 @@ func TestParseAddress(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, sdk.AccAddress(accAddr), addr)
+			require.Equal(t, accAddr, addr)
 		})
 	}
 }

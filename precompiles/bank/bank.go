@@ -40,7 +40,7 @@ var (
 	// Embed abi json file to the executable binary. Needed when importing as dependency.
 	//
 	//go:embed abi.json
-	f      embed.FS
+	f       embed.FS
 	BankABI abi.ABI
 )
 

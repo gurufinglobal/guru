@@ -33,9 +33,7 @@ const (
 //go:embed abi.json
 var f embed.FS
 
-var (
-	ERC20ABI abi.ABI
-)
+var ERC20ABI abi.ABI
 
 func init() {
 	var err error

@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/x/vm/types"
 )
 
 // LoadEvmCoinInfo load EvmCoinInfo from bank denom metadata

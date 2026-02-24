@@ -24,9 +24,7 @@ const abiPath = "abi.json"
 //go:embed abi.json
 var f embed.FS
 
-var (
-	WERC20ABI abi.ABI
-)
+var WERC20ABI abi.ABI
 
 func init() {
 	var err error
@@ -86,7 +84,7 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 	}
 
 	methodID := input[:4]
-	method, err := p.Precompile.ABI.MethodById(methodID)
+	method, err := p.ABI.MethodById(methodID)
 	if err != nil {
 		return 0
 	}
@@ -109,7 +107,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) ([]by
 }
 
 func (p Precompile) Execute(ctx sdk.Context, contract *vm.Contract, stateDB vm.StateDB, readOnly bool) ([]byte, error) {
-	method, args, err := cmn.SetupABI(p.Precompile.ABI, contract, readOnly, p.IsTransaction)
+	method, args, err := cmn.SetupABI(p.ABI, contract, readOnly, p.IsTransaction)
 	if err != nil {
 		return nil, err
 	}

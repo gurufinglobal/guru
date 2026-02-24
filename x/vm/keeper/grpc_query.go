@@ -791,4 +791,3 @@ func (k Keeper) TraceCall(c context.Context, req *types.QueryTraceCallRequest) (
 
 	return &types.QueryTraceCallResponse{Data: resultData}, nil
 }
-

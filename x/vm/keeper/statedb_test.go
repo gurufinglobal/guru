@@ -401,8 +401,8 @@ func TestIterateContracts(t *testing.T) {
 
 	// Preinstalled contract addresses to filter out
 	preinstallAddrs := map[common.Address]bool{
-		common.HexToAddress(types.Multicall3Address):       true,
-		common.HexToAddress(types.Create2DeployerAddress):  true,
+		common.HexToAddress(types.Multicall3Address):      true,
+		common.HexToAddress(types.Create2DeployerAddress): true,
 	}
 
 	network.App.EVMKeeper.IterateContracts(network.GetContext(), func(addr common.Address, codeHash common.Hash) bool {

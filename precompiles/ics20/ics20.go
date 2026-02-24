@@ -12,9 +12,8 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"

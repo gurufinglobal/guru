@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"math/big"
 
-	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	mock "github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/metadata"
+
+	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
 	"cosmossdk.io/math"
 

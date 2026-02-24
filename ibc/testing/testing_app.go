@@ -137,7 +137,7 @@ func SetupWithGenesisValSet(tb testing.TB, valSet *cmttypes.ValidatorSet, genAcc
 	// add bonded amount to bonded pool module account
 	balances = append(balances, banktypes.Balance{
 		Address: authtypes.NewModuleAddress(stakingtypes.BondedPoolName).String(),
-		Coins:   sdk.Coins{sdk.NewCoin(bondDenom, bondAmt.Mul(sdkmath.NewInt(int64(len(valSet.Validators)))))}, //nolint:gosec // G115
+		Coins:   sdk.Coins{sdk.NewCoin(bondDenom, bondAmt.Mul(sdkmath.NewInt(int64(len(valSet.Validators)))))},
 	})
 
 	// set validators and delegations
