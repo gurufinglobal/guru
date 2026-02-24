@@ -11,6 +11,8 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
+	"github.com/cosmos/evm/precompiles/testutil"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
@@ -20,11 +22,9 @@ import (
 	testutiltypes "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 
-	"github.com/cosmos/evm/precompiles/testutil"
 	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // TxFactory defines a struct that can build and broadcast transactions for the Guru

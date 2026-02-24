@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
@@ -19,9 +21,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) TestTransfer() {

@@ -1,10 +1,10 @@
 package testutil
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
 	"github.com/cosmos/evm/x/vm/statedb"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewStateDB returns a new StateDB for testing purposes.

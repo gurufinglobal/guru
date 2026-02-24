@@ -12,6 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"google.golang.org/grpc/metadata"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/math"
 
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -19,7 +21,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *BackendTestSuite) TestResend() {

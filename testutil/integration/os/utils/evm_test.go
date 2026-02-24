@@ -7,13 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"github.com/gurufinglobal/guru/v2/contracts"
 	testfactory "github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	testhandler "github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	testnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func TestGetERC20Balance(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -16,7 +17,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/gurud"
 	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
 )
 
 // NativeErc20Info holds details about a deployed ERC20 token.

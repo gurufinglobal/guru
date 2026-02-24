@@ -6,11 +6,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	cmn "github.com/cosmos/evm/precompiles/common"
+
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	cmn "github.com/cosmos/evm/precompiles/common"
 )
 
 // SubmitEvidence implements the evidence submission logic for the evidence precompile.

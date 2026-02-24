@@ -11,6 +11,8 @@ import (
 	"github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +20,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *BackendTestSuite) TestBaseFee() {

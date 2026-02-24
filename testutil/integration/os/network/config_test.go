@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +16,6 @@ import (
 	grpchandler "github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func TestWithChainID(t *testing.T) {

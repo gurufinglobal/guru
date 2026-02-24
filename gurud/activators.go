@@ -6,9 +6,9 @@ import (
 	"github.com/gurufinglobal/guru/v2/gurud/eips"
 )
 
-// guruActivators defines a map of opcode modifiers associated
+// GuruActivators defines a map of opcode modifiers associated
 // with a key defining the corresponding EIP.
-var guruActivators = map[int]func(*vm.JumpTable){
+var GuruActivators = map[int]func(*vm.JumpTable){
 	0o000: eips.Enable0000,
 	0o001: eips.Enable0001,
 	0o002: eips.Enable0002,

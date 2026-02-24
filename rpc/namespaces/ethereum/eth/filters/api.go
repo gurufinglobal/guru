@@ -15,12 +15,13 @@ import (
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	cmttypes "github.com/cometbft/cometbft/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
 
 	"github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // FilterAPI gathers

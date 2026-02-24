@@ -18,13 +18,14 @@ import (
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
 	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // EventTypeTxLog is the event type for EVM tx logs.

@@ -14,6 +14,7 @@ import (
 	cmtrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
 	dbm "github.com/cosmos/cosmos-db"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -29,7 +30,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	testnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type BackendTestSuite struct {

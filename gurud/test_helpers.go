@@ -11,6 +11,7 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 
 	dbm "github.com/cosmos/cosmos-db"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	"cosmossdk.io/log"
@@ -28,7 +29,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 )
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.

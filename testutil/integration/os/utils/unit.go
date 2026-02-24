@@ -7,6 +7,7 @@ package utils
 import (
 	"fmt"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"cosmossdk.io/math"
@@ -16,7 +17,6 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
 )
 
 const (

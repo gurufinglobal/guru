@@ -27,6 +27,8 @@ import (
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	cmttypes "github.com/cometbft/cometbft/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -35,7 +37,6 @@ import (
 	rpcfilters "github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/eth/filters"
 	"github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/server/config"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 const (

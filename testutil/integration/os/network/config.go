@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -14,7 +16,6 @@ import (
 
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	testtx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // defaultChain represents the default chain ID used in the suite setup.

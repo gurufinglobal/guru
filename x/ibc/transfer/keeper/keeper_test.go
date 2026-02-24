@@ -10,6 +10,8 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	evm "github.com/cosmos/evm/x/vm/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -26,8 +28,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
-	evm "github.com/cosmos/evm/x/vm/types"
 )
 
 type KeeperTestSuite struct {

@@ -9,6 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -21,7 +23,6 @@ import (
 
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/server/config"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // PrepareEthTx creates an ethereum tx and signs it with the provided messages and private key.

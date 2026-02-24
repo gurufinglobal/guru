@@ -6,12 +6,12 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
+	"github.com/cosmos/evm/precompiles/testutil"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	errorsmod "cosmossdk.io/errors"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-
-	"github.com/cosmos/evm/precompiles/testutil"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // ExecuteEthTx executes an Ethereum transaction - contract call with the provided private key and txArgs

@@ -8,13 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	cmn "github.com/cosmos/evm/precompiles/common"
+
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	cmn "github.com/cosmos/evm/precompiles/common"
 )
 
 const (
@@ -29,10 +29,8 @@ var _ vm.PrecompiledContract = &Precompile{}
 //go:embed abi.json
 var f embed.FS
 
-var (
-	// ABI is the ABI of the evidence precompile, loaded at init time.
-	ABI abi.ABI
-)
+// ABI is the ABI of the evidence precompile, loaded at init time.
+var ABI abi.ABI
 
 func init() {
 	var err error

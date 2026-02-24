@@ -9,6 +9,7 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 
 	dbm "github.com/cosmos/cosmos-db"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
@@ -20,7 +21,6 @@ import (
 
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	gurutypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 const (

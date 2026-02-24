@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 
 	dbm "github.com/cosmos/cosmos-db"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	"cosmossdk.io/log"
@@ -14,8 +16,6 @@ import (
 	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/ibc/simapp"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func SetupExampleApp() (ibctesting.TestingApp, map[string]json.RawMessage) {

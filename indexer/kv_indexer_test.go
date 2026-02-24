@@ -12,6 +12,7 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/evm/x/vm/types"
 
 	"cosmossdk.io/log"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/cosmos/evm/x/vm/types"
 )
 
 func TestKVIndexer(t *testing.T) {

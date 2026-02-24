@@ -11,6 +11,7 @@ import (
 	"github.com/cometbft/cometbft/types"
 
 	dbm "github.com/cosmos/cosmos-db"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"cosmossdk.io/log"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/indexer"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *BackendTestSuite) TestTraceTransaction() {

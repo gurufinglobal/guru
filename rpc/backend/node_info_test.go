@@ -11,6 +11,8 @@ import (
 
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +22,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *BackendTestSuite) TestRPCMinGasPrice() {

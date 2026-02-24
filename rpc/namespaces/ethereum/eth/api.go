@@ -10,12 +10,13 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/log"
 
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // The Ethereum API allows applications to connect to an node of any Guru based blockchain.

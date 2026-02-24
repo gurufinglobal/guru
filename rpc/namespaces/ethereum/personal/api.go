@@ -11,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -19,7 +21,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/rpc/backend"
 	"github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // PrivateAccountAPI is the personal_ prefixed set of APIs in the Web3 JSON-RPC spec.

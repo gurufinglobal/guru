@@ -18,12 +18,13 @@ import (
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	cmttypes "github.com/cometbft/cometbft/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/gurufinglobal/guru/v2/rpc/ethereum/pubsub"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 var (

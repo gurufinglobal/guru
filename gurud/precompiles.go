@@ -6,6 +6,16 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	bankprecompile "github.com/cosmos/evm/precompiles/bank"
+	"github.com/cosmos/evm/precompiles/bech32"
+	cmn "github.com/cosmos/evm/precompiles/common"
+	distprecompile "github.com/cosmos/evm/precompiles/distribution"
+	govprecompile "github.com/cosmos/evm/precompiles/gov"
+	ics20precompile "github.com/cosmos/evm/precompiles/ics20"
+	"github.com/cosmos/evm/precompiles/p256"
+	slashingprecompile "github.com/cosmos/evm/precompiles/slashing"
+	stakingprecompile "github.com/cosmos/evm/precompiles/staking"
+	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
@@ -17,17 +27,7 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	bankprecompile "github.com/cosmos/evm/precompiles/bank"
-	"github.com/cosmos/evm/precompiles/bech32"
-	cmn "github.com/cosmos/evm/precompiles/common"
-	distprecompile "github.com/cosmos/evm/precompiles/distribution"
 	evidenceprecompile "github.com/gurufinglobal/guru/v2/precompiles/evidence"
-	govprecompile "github.com/cosmos/evm/precompiles/gov"
-	ics20precompile "github.com/cosmos/evm/precompiles/ics20"
-	"github.com/cosmos/evm/precompiles/p256"
-	slashingprecompile "github.com/cosmos/evm/precompiles/slashing"
-	stakingprecompile "github.com/cosmos/evm/precompiles/staking"
-	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 )
 

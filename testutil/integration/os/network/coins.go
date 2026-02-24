@@ -1,8 +1,9 @@
 package network
 
 import (
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
 type CoinInfo struct {

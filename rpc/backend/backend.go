@@ -16,6 +16,8 @@ import (
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -26,7 +28,6 @@ import (
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	"github.com/gurufinglobal/guru/v2/server/config"
 	gurutypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // BackendI implements the Cosmos and EVM backend.

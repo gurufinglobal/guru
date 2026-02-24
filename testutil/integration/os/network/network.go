@@ -15,6 +15,10 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cometbft/cometbft/version"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
@@ -29,9 +33,6 @@ import (
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	commonnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/common/network"
 	"github.com/gurufinglobal/guru/v2/types"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // Network is the interface that wraps the methods to interact with integration test network.
@@ -111,7 +112,7 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 
 	// Create validator set with the amount of validators specified in the config
 	// with the default power of 1.
-	valSet, valSigners := createValidatorSetAndSigners(n.cfg.amountOfValidators)
+	valSet, valSigners := createValidatorSetAndSigners(n.cfg.amountOfValidators) //nolint:staticcheck // SA4006 false positive: valSigners is used at n.valSigners assignment below
 	totalBonded := bondedAmount.Mul(sdkmath.NewInt(int64(n.cfg.amountOfValidators)))
 
 	// Build staking type validators and delegations
@@ -198,13 +199,13 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 	}
 
 	// Init chain
-	stateBytes, err := cmtjson.MarshalIndent(genesisState, "", " ")
+	stateBytes, err := cmtjson.MarshalIndent(genesisState, "", " ") //nolint:staticcheck // SA4006 false positive: stateBytes used in InitChain call below
 	if err != nil {
 		return err
 	}
 
-	consensusParams := chainutil.DefaultConsensusParams
-	now := time.Now()
+	consensusParams := chainutil.DefaultConsensusParams //nolint:staticcheck // SA4006 false positive: used in InitChain and WithConsensusParams below
+	now := time.Now()                                   //nolint:staticcheck // SA4006 false positive: used in InitChain and Header below
 
 	// Reset test config before InitChain so that InitGenesis →
 	// SetGlobalConfigVariables → Configure() can set the EVM coin info
