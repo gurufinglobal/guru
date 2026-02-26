@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package guru.feeproxy.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/feeproxy/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+import "guru/feeproxy/v1/feeproxy.proto";
+
+// Query provides defines the gRPC querier service.
+service Query {
+  // Params returns the current x/feeproxy module parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/params";
+  }
+
+  // ModeratorAddress returns the current moderator address.
+  rpc ModeratorAddress(QueryModeratorAddressRequest) returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/moderator_address";
+  }
+
+  // AdminAddress returns the current admin address.
+  rpc AdminAddress(QueryAdminAddressRequest) returns (QueryAdminAddressResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/admin_address";
+  }
+
+  // IsAdmin checks if the given address is the admin.
+  rpc IsAdmin(QueryIsAdminRequest) returns (QueryIsAdminResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/isadmin/{address}";
+  }
+
+  // FeePercentage returns the current fee percentage.
+  rpc FeePercentage(QueryFeePercentageRequest) returns (QueryFeePercentageResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/fee_percentage";
+  }
+
+  // ReserveAddress returns the current reserve address.
+  rpc ReserveAddress(QueryReserveAddressRequest) returns (QueryReserveAddressResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/reserve_address";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryModeratorAddressRequest {}
+
+message QueryModeratorAddressResponse {
+  string moderator_address = 1;
+}
+
+message QueryAdminAddressRequest {}
+
+message QueryAdminAddressResponse {
+  string admin_address = 1;
+}
+
+message QueryIsAdminRequest {
+  string address = 1;
+}
+
+message QueryIsAdminResponse {
+  bool is_admin = 1;
+}
+
+message QueryFeePercentageRequest {}
+
+message QueryFeePercentageResponse {
+  string fee_percentage = 1 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+message QueryReserveAddressRequest {}
+
+message QueryReserveAddressResponse {
+  string reserve_address = 1;
+}
+

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package guru.feeproxy.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/feeproxy/types";
+
+import "guru/feeproxy/v1/feeproxy.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+// GenesisState defines the x/feeproxy genesis state.
+message GenesisState {
+  // moderator_address is the account allowed to register the initial admin.
+  // If omitted, the chain will default it to the keeper authority at InitGenesis.
+  string moderator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params is optional; if omitted, InitGenesis will fall back to DefaultParams()
+  // and then fill missing admin/reserve addresses from moderator_address.
+  Params params = 2 [(gogoproto.moretags) = "yaml:\"params\""];
+}
+

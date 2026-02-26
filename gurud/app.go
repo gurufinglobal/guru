@@ -133,6 +133,9 @@ import (
 	feepolicymodule "github.com/gurufinglobal/guru/v2/x/feepolicy"
 	feepolicykeeper "github.com/gurufinglobal/guru/v2/x/feepolicy/keeper"
 	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
+	feeproxy "github.com/gurufinglobal/guru/v2/x/feeproxy"
+	feeproxykeeper "github.com/gurufinglobal/guru/v2/x/feeproxy/keeper"
+	feeproxytypes "github.com/gurufinglobal/guru/v2/x/feeproxy/types"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transfer" // NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 	transferv2 "github.com/gurufinglobal/guru/v2/x/ibc/transfer/v2"
@@ -231,6 +234,7 @@ type GURUD struct {
 	// IBC keepers
 	IBCKeeper      *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	TransferKeeper transferkeeper.Keeper
+	FeeProxyKeeper feeproxykeeper.Keeper
 	TranswapKeeper transwapkeeper.Keeper
 	PacketForwardKeeper *packetforwardkeeper.Keeper
 
@@ -325,7 +329,7 @@ func NewExampleApp(
 		govtypes.StoreKey, paramstypes.StoreKey, consensusparamtypes.StoreKey,
 		upgradetypes.StoreKey, feegrant.StoreKey, evidencetypes.StoreKey, authzkeeper.StoreKey,
 		// ibc keys
-		ibcexported.StoreKey, ibctransfertypes.StoreKey, transwaptypes.StoreKey, packetforwardtypes.StoreKey,
+		ibcexported.StoreKey, ibctransfertypes.StoreKey, transwaptypes.StoreKey, packetforwardtypes.StoreKey, feeproxytypes.StoreKey,
 		// Cosmos EVM store keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey,
 		// Oracle store key
@@ -583,13 +587,22 @@ func NewExampleApp(
 		authAddr,
 	)
 
+	// FeeProxy keeper: wraps TransferKeeper for PFM forwarding fee capture.
+	app.FeeProxyKeeper = feeproxykeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[feeproxytypes.StoreKey]),
+		app.TransferKeeper,
+		app.BankKeeper,
+		authAddr,
+	)
+
 	// Packet Forward Middleware (PFM) keeper
 	// NOTE: PFM must be able to send IBC transfer packets (via MsgTransfer) and write acknowledgements.
 	// It stores in-flight forwarded packets in its own KVStore to later proxy ack/timeout results back to the previous hop.
 	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[packetforwardtypes.StoreKey]),
-		app.TransferKeeper,
+		app.FeeProxyKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
@@ -726,6 +739,7 @@ func NewExampleApp(
 		// IBC modules
 		ibc.NewAppModule(app.IBCKeeper),
 		ibctm.NewAppModule(tmLightClientModule),
+		feeproxy.NewAppModule(app.FeeProxyKeeper),
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		transferModule,
 		transwapModule,
@@ -833,6 +847,7 @@ func NewExampleApp(
 		minttypes.ModuleName,
 		ibcexported.ModuleName,
 		packetforwardtypes.ModuleName,
+		feeproxytypes.ModuleName,
 
 		// Cosmos EVM modules
 		//

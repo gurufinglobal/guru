@@ -1,0 +1,35 @@
+# Protocol Documentation
+#
+# This template is used by protoc-gen-doc (buf "doc" plugin).
+# Keep it simple and stable so proto generation doesn't fail in dev envs.
+
+{{- range .Files }}
+## {{ .Name }}
+
+{{- if .Description }}
+{{ .Description }}
+{{- end }}
+
+{{- if .Services }}
+### Services
+{{- range .Services }}
+- **{{ .Name }}**
+{{- end }}
+{{- end }}
+
+{{- if .Messages }}
+### Messages
+{{- range .Messages }}
+- **{{ .Name }}**
+{{- end }}
+{{- end }}
+
+{{- if .Enums }}
+### Enums
+{{- range .Enums }}
+- **{{ .Name }}**
+{{- end }}
+{{- end }}
+
+{{ end }}
+

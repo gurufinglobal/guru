@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package guru.feeproxy.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/feeproxy/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+
+// Params defines the x/feeproxy module state.
+message Params {
+  // AdminAddress is the account allowed to update feeproxy state (except moderator).
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // ReserveAddress is the account which receives collected forwarding fees.
+  string reserve_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // FeePercentage is a fixed fee rate charged on forwarded transfers.
+  // Example: "0.01" means 1% of the amount will be charged as fee.
+  string fee_percentage = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)   = false
+  ];
+}
+

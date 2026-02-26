@@ -496,6 +496,184 @@ message MsgChangeModerator {
 message MsgChangeModeratorResponse {
 }`
 
+// feeproxyQueryProto contains the content of proto/guru/feeproxy/v1/query.proto
+const feeproxyQueryProto = `syntax = "proto3";
+
+package guru.feeproxy.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/feeproxy/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+import "guru/feeproxy/v1/feeproxy.proto";
+
+// Query provides defines the gRPC querier service.
+service Query {
+  // Params returns the current x/feeproxy module parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/params";
+  }
+
+  // ModeratorAddress returns the current moderator address.
+  rpc ModeratorAddress(QueryModeratorAddressRequest) returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/moderator_address";
+  }
+
+  // AdminAddress returns the current admin address.
+  rpc AdminAddress(QueryAdminAddressRequest) returns (QueryAdminAddressResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/admin_address";
+  }
+
+  // IsAdmin checks if the given address is the admin.
+  rpc IsAdmin(QueryIsAdminRequest) returns (QueryIsAdminResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/isadmin/{address}";
+  }
+
+  // FeePercentage returns the current fee percentage.
+  rpc FeePercentage(QueryFeePercentageRequest) returns (QueryFeePercentageResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/fee_percentage";
+  }
+
+  // ReserveAddress returns the current reserve address.
+  rpc ReserveAddress(QueryReserveAddressRequest) returns (QueryReserveAddressResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/reserve_address";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryModeratorAddressRequest {}
+
+message QueryModeratorAddressResponse {
+  string moderator_address = 1;
+}
+
+message QueryAdminAddressRequest {}
+
+message QueryAdminAddressResponse {
+  string admin_address = 1;
+}
+
+message QueryIsAdminRequest {
+  string address = 1;
+}
+
+message QueryIsAdminResponse {
+  bool is_admin = 1;
+}
+
+message QueryFeePercentageRequest {}
+
+message QueryFeePercentageResponse {
+  string fee_percentage = 1 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+message QueryReserveAddressRequest {}
+
+message QueryReserveAddressResponse {
+  string reserve_address = 1;
+}
+
+`
+
+// feeproxyTxProto contains the content of proto/guru/feeproxy/v1/tx.proto
+const feeproxyTxProto = `syntax = "proto3";
+
+package guru.feeproxy.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/feeproxy/types";
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+
+// Msg defines the feeproxy module Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // RegisterAdmin registers (or replaces) the module admin.
+  // This can only be executed by the module moderator.
+  rpc RegisterAdmin(MsgRegisterAdmin) returns (MsgRegisterAdminResponse) {
+    option (google.api.http) = {
+      post: "/guru/feeproxy/v1/register_admin"
+      body: "*"
+    };
+  }
+
+  // UpdateFeePercentage updates the fee percentage.
+  // This can only be executed by the module admin.
+  rpc UpdateFeePercentage(MsgUpdateFeePercentage) returns (MsgUpdateFeePercentageResponse) {
+    option (google.api.http) = {
+      post: "/guru/feeproxy/v1/update_fee_percentage"
+      body: "*"
+    };
+  }
+
+  // UpdateReserveAddress updates the reserve address that receives fees.
+  // This can only be executed by the module admin.
+  rpc UpdateReserveAddress(MsgUpdateReserveAddress) returns (MsgUpdateReserveAddressResponse) {
+    option (google.api.http) = {
+      post: "/guru/feeproxy/v1/update_reserve_address"
+      body: "*"
+    };
+  }
+}
+
+message MsgRegisterAdmin {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // new admin address
+  string admin_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message MsgRegisterAdminResponse {}
+
+message MsgUpdateFeePercentage {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  string fee_percentage = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+message MsgUpdateFeePercentageResponse {}
+
+message MsgUpdateReserveAddress {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  string reserve_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message MsgUpdateReserveAddressResponse {}
+
+`
+
 // oracleQueryProto contains the content of proto/guru/oracle/v1/query.proto
 const oracleQueryProto = `syntax = "proto3";
 package guru.oracle.v1;
@@ -873,6 +1051,8 @@ var embeddedProtoRegistry = map[string]string{
 	"proto/guru/bex/v1/tx.proto": bexTxProto,
 	"proto/guru/feepolicy/v1/query.proto": feepolicyQueryProto,
 	"proto/guru/feepolicy/v1/tx.proto": feepolicyTxProto,
+	"proto/guru/feeproxy/v1/query.proto": feeproxyQueryProto,
+	"proto/guru/feeproxy/v1/tx.proto": feeproxyTxProto,
 	"proto/guru/oracle/v1/query.proto": oracleQueryProto,
 	"proto/guru/oracle/v1/tx.proto": oracleTxProto,
 	"proto/guru/transwap/v1/query.proto": transwapQueryProto,
@@ -882,6 +1062,7 @@ var embeddedProtoRegistry = map[string]string{
 var embeddedModules = []string{
 	"bex",
 	"feepolicy",
+	"feeproxy",
 	"oracle",
 	"transwap",
 }

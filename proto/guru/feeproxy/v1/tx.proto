@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package guru.feeproxy.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/feeproxy/types";
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+
+// Msg defines the feeproxy module Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // RegisterAdmin registers (or replaces) the module admin.
+  // This can only be executed by the module moderator.
+  rpc RegisterAdmin(MsgRegisterAdmin) returns (MsgRegisterAdminResponse) {
+    option (google.api.http) = {
+      post: "/guru/feeproxy/v1/register_admin"
+      body: "*"
+    };
+  }
+
+  // UpdateFeePercentage updates the fee percentage.
+  // This can only be executed by the module admin.
+  rpc UpdateFeePercentage(MsgUpdateFeePercentage) returns (MsgUpdateFeePercentageResponse) {
+    option (google.api.http) = {
+      post: "/guru/feeproxy/v1/update_fee_percentage"
+      body: "*"
+    };
+  }
+
+  // UpdateReserveAddress updates the reserve address that receives fees.
+  // This can only be executed by the module admin.
+  rpc UpdateReserveAddress(MsgUpdateReserveAddress) returns (MsgUpdateReserveAddressResponse) {
+    option (google.api.http) = {
+      post: "/guru/feeproxy/v1/update_reserve_address"
+      body: "*"
+    };
+  }
+}
+
+message MsgRegisterAdmin {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // new admin address
+  string admin_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message MsgRegisterAdminResponse {}
+
+message MsgUpdateFeePercentage {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  string fee_percentage = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+}
+
+message MsgUpdateFeePercentageResponse {}
+
+message MsgUpdateReserveAddress {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  string reserve_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message MsgUpdateReserveAddressResponse {}
+
