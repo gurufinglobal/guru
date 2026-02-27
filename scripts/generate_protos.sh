@@ -18,5 +18,13 @@ for dir in $proto_dirs; do
 done
 
 # move proto files to the right places
+#
+# NOTE: buf generate output is copied into the repo root. Historically, this step
+# has accidentally overwritten go.mod/go.sum in some environments. Keep a backup
+# and restore them to avoid breaking the module graph.
+cp -f go.mod /tmp/go.mod.bak
+cp -f go.sum /tmp/go.sum.bak
 cp -r github.com/gurufinglobal/guru/v2/* ./
+mv -f /tmp/go.mod.bak go.mod
+mv -f /tmp/go.sum.bak go.sum
 rm -rf github.com

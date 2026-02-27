@@ -28,6 +28,10 @@ type TransferKeeper interface {
 }
 
 type BankKeeper interface {
-	SendCoins(ctx context.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
+	// Lock: move coins into module escrow account.
+	SendCoinsFromAccountToModule(ctx context.Context, fromAddr sdk.AccAddress, toModule string, amt sdk.Coins) error
+
+	// Refund/top-up: move coins from module escrow to a regular account (e.g. transfer escrow address).
+	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }
 

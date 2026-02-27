@@ -193,6 +193,7 @@ var (
 		oracletypes.ModuleName:    nil,
 		feepolicytypes.ModuleName: nil,
 		bextypes.ModuleName:       nil,
+		feeproxytypes.EscrowModuleName: nil,
 	}
 )
 
@@ -667,7 +668,10 @@ func NewExampleApp(
 	// - normal (non-forwarded) transfers can still run ERC20 post-processing
 	// - forwarded transfers can safely return nil-ack from PFM without triggering ERC20 post-processing
 	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, pfmStack)
-	
+	// feeproxy must see Ack/Timeout before PFM so it can:
+	// - settle locked fees on success
+	// - top-up transfer escrow + override packet amount on failure (for correct PFM rollback)
+	transferStack = feeproxy.NewIBCMiddleware(app.FeeProxyKeeper, transferStack)
 
 	var transferStackV2 ibcapi.IBCModule
 	var transwapStackV2 ibcapi.IBCModule

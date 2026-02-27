@@ -66,6 +66,12 @@ func (k Keeper) GetAuthority() string {
 	return k.authority
 }
 
+// BankKeeper exposes the bank keeper dependency for middleware operations
+// (settlement/refund at ack/timeout time).
+func (k Keeper) BankKeeper() types.BankKeeper {
+	return k.bankKeeper
+}
+
 func (k Keeper) GetModeratorAddress(ctx context.Context) (string, error) {
 	addr, err := k.ModeratorAddressItem.Get(ctx)
 	switch {

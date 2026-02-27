@@ -9,6 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+
+	"github.com/gurufinglobal/guru/v2/x/feeproxy/types"
 )
 
 // Transfer intercepts PFM-initiated MsgTransfer forwarding, charges fee from the
@@ -20,6 +22,8 @@ func (k Keeper) Transfer(ctx context.Context, msg *transfertypes.MsgTransfer) (*
 	if msg == nil {
 		return nil, fmt.Errorf("nil MsgTransfer")
 	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
@@ -42,11 +46,6 @@ func (k Keeper) Transfer(ctx context.Context, msg *transfertypes.MsgTransfer) (*
 		return k.originalKeeper.Transfer(ctx, msg)
 	}
 
-	reserveAddr, err := sdk.AccAddressFromBech32(params.ReserveAddress)
-	if err != nil {
-		return nil, fmt.Errorf("invalid reserve_address %q: %w", params.ReserveAddress, err)
-	}
-
 	amount := msg.Token.Amount
 	if amount.IsNil() || !amount.IsPositive() {
 		return nil, fmt.Errorf("invalid amount: %s", amount)
@@ -66,14 +65,24 @@ func (k Keeper) Transfer(ctx context.Context, msg *transfertypes.MsgTransfer) (*
 	}
 
 	feeCoin := sdk.NewCoin(msg.Token.Denom, feeAmt)
-	if err := k.bankKeeper.SendCoins(ctx, sender, reserveAddr, sdk.NewCoins(feeCoin)); err != nil {
-		return nil, fmt.Errorf("failed to send fee to reserve_address %q: %w", params.ReserveAddress, err)
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.EscrowModuleName, sdk.NewCoins(feeCoin)); err != nil {
+		return nil, fmt.Errorf("failed to lock fee into %q module account: %w", types.EscrowModuleName, err)
 	}
 
 	// update MsgTransfer to forward the net amount
 	msg.Token.Amount = netAmt
 
-	return k.originalKeeper.Transfer(ctx, msg)
+	resp, err := k.originalKeeper.Transfer(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Track the locked fee by the outgoing packet key (port/channel/sequence).
+	if err := k.SetLockedFee(sdkCtx, msg.SourcePort, msg.SourceChannel, resp.Sequence, feeCoin); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 // --- delegate methods required by PFM's TransferKeeper interface ---

@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"strconv"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -26,6 +28,8 @@ func GetQueryCmd() *cobra.Command {
 		GetIsAdminCmd(),
 		GetFeePercentageCmd(),
 		GetReserveAddressCmd(),
+		GetLockedFeeCmd(),
+		GetListLockedFeesCmd(),
 	)
 
 	return cmd
@@ -170,6 +174,65 @@ func GetReserveAddressCmd() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.ReserveAddress(cmd.Context(), &types.QueryReserveAddressRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetLockedFeeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "locked-fee [source-port] [source-channel] [sequence]",
+		Short: "Get locked fee by packet key",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			sequence, err := strconv.ParseUint(args[2], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.LockedFee(cmd.Context(), &types.QueryLockedFeeRequest{
+				SourcePort:    args[0],
+				SourceChannel: args[1],
+				Sequence:      sequence,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetListLockedFeesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list-locked-fees",
+		Short: "List all locked fees (iterate locked_fee prefix)",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.LockedFees(cmd.Context(), &types.QueryLockedFeesRequest{})
 			if err != nil {
 				return err
 			}

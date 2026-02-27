@@ -539,6 +539,16 @@ service Query {
   rpc ReserveAddress(QueryReserveAddressRequest) returns (QueryReserveAddressResponse) {
     option (google.api.http).get = "/guru/feeproxy/v1/reserve_address";
   }
+
+  // LockedFee returns the locked fee for a forwarded packet key.
+  rpc LockedFee(QueryLockedFeeRequest) returns (QueryLockedFeeResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/locked_fee/{source_port}/{source_channel}/{sequence}";
+  }
+
+  // LockedFees returns all locked fees stored under the locked_fee prefix.
+  rpc LockedFees(QueryLockedFeesRequest) returns (QueryLockedFeesResponse) {
+    option (google.api.http).get = "/guru/feeproxy/v1/locked_fees";
+  }
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -583,6 +593,31 @@ message QueryReserveAddressRequest {}
 
 message QueryReserveAddressResponse {
   string reserve_address = 1;
+}
+
+message QueryLockedFeeRequest {
+  string source_port = 1;
+  string source_channel = 2;
+  uint64 sequence = 3;
+}
+
+message QueryLockedFeeResponse {
+  string denom = 1;
+  string amount = 2;
+  bool found = 3;
+}
+
+message QueryLockedFeesRequest {}
+
+message QueryLockedFeesResponse {
+  repeated LockedFee locked_fees = 1 [(gogoproto.nullable) = false];
+}
+
+message LockedFee {
+  string port_id = 1;
+  string channel_id = 2;
+  uint64 sequence = 3;
+  string amount = 4;
 }
 
 `

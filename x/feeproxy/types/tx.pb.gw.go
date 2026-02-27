@@ -315,11 +315,11 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 }
 
 var (
-	pattern_Msg_RegisterAdmin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"guru", "feeproxy", "v1", "register_admin"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_RegisterAdmin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"guru", "feeproxy", "v1", "register_admin"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_UpdateFeePercentage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"guru", "feeproxy", "v1", "update_fee_percentage"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_UpdateFeePercentage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"guru", "feeproxy", "v1", "update_fee_percentage"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_UpdateReserveAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"guru", "feeproxy", "v1", "update_reserve_address"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Msg_UpdateReserveAddress_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"guru", "feeproxy", "v1", "update_reserve_address"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
