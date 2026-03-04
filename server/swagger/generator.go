@@ -59,41 +59,38 @@ func GenerateCustomPathsFromProto() (string, error) {
 	var paths strings.Builder
 	paths.WriteString("  # Guru Module endpoints (generated from embedded proto files)\n")
 
-	// Process embedded proto/guru/ directory
-	protoDir := "proto/guru"
-
-	// Scan for modules in embedded proto/guru/ directory
-	modules, err := ScanModulesInEmbeddedProtoDir(protoDir)
+	protoFiles, err := ListEmbeddedProtoFiles()
 	if err != nil {
-		return "", fmt.Errorf("failed to scan modules in embedded %s: %v", protoDir, err)
+		return "", fmt.Errorf("failed to list embedded proto files: %v", err)
 	}
 
-	for _, module := range modules {
-		// Process both query.proto and tx.proto if they exist
-		protoFiles := []string{"query.proto", "tx.proto"}
+	for _, protoPath := range protoFiles {
+		// Expect canonical paths like proto/guru/<module>/<version>/<query|tx>.proto
+		if !strings.HasPrefix(protoPath, "proto/guru/") {
+			continue
+		}
+		if !strings.HasSuffix(protoPath, "/query.proto") && !strings.HasSuffix(protoPath, "/tx.proto") {
+			continue
+		}
 
-		for _, protoFile := range protoFiles {
-			protoPath := fmt.Sprintf("%s/%s/v1/%s", protoDir, module, protoFile)
+		pathParts := strings.Split(protoPath, "/")
+		if len(pathParts) != 5 {
+			continue
+		}
+		module := pathParts[2]
 
-			// Check if the proto file exists in embedded filesystem
-			if !CheckEmbeddedProtoFileExists(protoPath) {
-				continue // Skip if file doesn't exist
-			}
+		content, err := ReadEmbeddedProtoFile(protoPath)
+		if err != nil {
+			fmt.Printf("Warning: Could not read embedded %s: %v\n", protoPath, err)
+			continue
+		}
 
-			// Read the proto file from embedded filesystem
-			content, err := ReadEmbeddedProtoFile(protoPath)
-			if err != nil {
-				fmt.Printf("Warning: Could not read embedded %s: %v\n", protoPath, err)
-				continue
-			}
+		// Parse RPC methods and their HTTP annotations
+		rpcMethods := ParseRPCMethods(content, module)
 
-			// Parse RPC methods and their HTTP annotations
-			rpcMethods := ParseRPCMethods(content, module)
-
-			// Generate Swagger paths for each RPC method
-			for _, rpcMethod := range rpcMethods {
-				paths.WriteString(GenerateSwaggerPath(rpcMethod))
-			}
+		// Generate Swagger paths for each RPC method
+		for _, rpcMethod := range rpcMethods {
+			paths.WriteString(GenerateSwaggerPath(rpcMethod))
 		}
 	}
 
