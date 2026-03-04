@@ -1,28 +1,26 @@
-// x/mymodule/keeper/keeper.go
 package keeper
 
 import (
 	"encoding/binary"
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
+// Keeper defines the oracle module keeper.
 type Keeper struct {
 	cdc           codec.BinaryCodec
 	storeKey      storetypes.StoreKey
-	hooks         types.OracleHooks
 	authority     string
 	accountKeeper types.AccountKeeper
+	hooks         types.OracleHooks
 }
 
+// NewKeeper creates a new oracle keeper.
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
@@ -37,304 +35,430 @@ func NewKeeper(
 	}
 }
 
-// SetHooks set the oracle hooks
-func (k *Keeper) SetHooks(eh types.OracleHooks) *Keeper {
-	if k.hooks != nil {
-		panic("cannot set oracle hooks twice")
-	}
-
-	k.hooks = eh
-
-	return k
+// GetAuthority returns the module authority address.
+func (k Keeper) GetAuthority() string {
+	return k.authority
 }
 
-// SetParams stores the oracle module parameters in the state store
+// SetParams sets the oracle module parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
-	store := ctx.KVStore(k.storeKey)
+	if err := params.Validate(); err != nil {
+		return err
+	}
 	bz, err := k.cdc.Marshal(&params)
 	if err != nil {
 		return err
 	}
-
-	store.Set(types.KeyParams, bz)
-
+	ctx.KVStore(k.storeKey).Set(types.KeyParams, bz)
 	return nil
 }
 
-// GetParams retrieves the oracle module parameters from the state store
-// Returns default parameters if no parameters are found
+// GetParams returns the oracle module parameters.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.KeyParams)
 	if len(bz) == 0 {
 		return types.DefaultParams()
 	}
-
 	var params types.Params
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
 }
 
-func (k Keeper) GetAuthority() string {
-	return k.authority
+// SetModeratorAddress sets the moderator address.
+func (k Keeper) SetModeratorAddress(ctx sdk.Context, addr string) {
+	ctx.KVStore(k.storeKey).Set(types.KeyModeratorAddress, []byte(addr))
 }
 
-// SetModeratorAddress stores the moderator address in the state store
-func (k Keeper) SetModeratorAddress(ctx sdk.Context, address string) error {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.KeyModeratorAddress, []byte(address))
-	return nil
-}
-
-// GetModeratorAddress retrieves the moderator address from the state store
-// Returns empty string if no address is found
+// GetModeratorAddress returns the moderator address.
 func (k Keeper) GetModeratorAddress(ctx sdk.Context) string {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.KeyModeratorAddress)
+	bz := ctx.KVStore(k.storeKey).Get(types.KeyModeratorAddress)
 	if len(bz) == 0 {
 		return ""
 	}
 	return string(bz)
 }
 
-// SetOracleRequestDocCount stores the total count of oracle request documents in the state store
-// count: number of documents to store
-func (k Keeper) SetOracleRequestDocCount(ctx sdk.Context, count uint64) {
+// whitelist helpers
+// GetWhitelistCount returns the total number of whitelisted addresses.
+func (k Keeper) GetWhitelistCount(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.KeyWhitelistCount)
+	if bz == nil {
+		return 0
+	}
+	return sdk.BigEndianToUint64(bz)
+}
+
+func (k Keeper) setWhitelistCount(ctx sdk.Context, count uint64) {
 	store := ctx.KVStore(k.storeKey)
 	bz := make([]byte, 8)
 	binary.BigEndian.PutUint64(bz, count)
-	store.Set(types.KeyOracleRequestDocCount, bz)
+	store.Set(types.KeyWhitelistCount, bz)
 }
 
-// GetOracleRequestDocCount retrieves the total count of oracle request documents from the state store
-// Returns: number of stored documents (0 if none exist)
-func (k Keeper) GetOracleRequestDocCount(ctx sdk.Context) uint64 {
+func (k Keeper) addToWhitelist(ctx sdk.Context, addr string) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.KeyOracleRequestDocCount)
+	key := types.GetWhitelistKey(addr)
+	if store.Has(key) {
+		return
+	}
+	store.Set(key, []byte{1})
+	k.setWhitelistCount(ctx, k.GetWhitelistCount(ctx)+1)
+}
+
+func (k Keeper) removeFromWhitelist(ctx sdk.Context, addr string) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.GetWhitelistKey(addr)
+	if !store.Has(key) {
+		return
+	}
+	store.Delete(key)
+	cnt := k.GetWhitelistCount(ctx)
+	if cnt > 0 {
+		k.setWhitelistCount(ctx, cnt-1)
+	}
+}
+
+// IsWhitelisted checks if an address is in the whitelist.
+func (k Keeper) IsWhitelisted(ctx sdk.Context, addr string) bool {
+	return ctx.KVStore(k.storeKey).Has(types.GetWhitelistKey(addr))
+}
+
+// GetWhitelist returns all whitelisted addresses.
+func (k Keeper) GetWhitelist(ctx sdk.Context) []string {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, []byte(types.WhitelistKeyPrefix))
+	defer iter.Close()
+	var res []string
+	for ; iter.Valid(); iter.Next() {
+		// key suffix is original address bytes
+		key := iter.Key()
+		res = append(res, string(key[len(types.WhitelistKeyPrefix):]))
+	}
+	return res
+}
+
+// AddWhitelistAddress is an exported helper for genesis/msg usage.
+func (k Keeper) AddWhitelistAddress(ctx sdk.Context, addr string) {
+	k.addToWhitelist(ctx, addr)
+}
+
+// RemoveWhitelistAddress is an exported helper.
+func (k Keeper) RemoveWhitelistAddress(ctx sdk.Context, addr string) {
+	k.removeFromWhitelist(ctx, addr)
+}
+
+// setRequestCount sets the total request count.
+func (k Keeper) setRequestCount(ctx sdk.Context, count uint64) {
+	ctx.KVStore(k.storeKey).Set(types.KeyRequestCount, types.IDToBytes(count))
+}
+
+// getRequestCount returns the total request count.
+func (k Keeper) getRequestCount(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.KeyRequestCount)
 	if len(bz) == 0 {
 		return 0
 	}
-	return binary.BigEndian.Uint64(bz)
+	return sdk.BigEndianToUint64(bz)
 }
 
-// SetOracleRequestDoc stores an oracle request document in the state store
-// doc: oracle request document to store
-func (k Keeper) SetOracleRequestDoc(ctx sdk.Context, doc types.OracleRequestDoc) {
-	store := ctx.KVStore(k.storeKey)
-
-	bz := k.cdc.MustMarshal(&doc)
-	store.Set(types.GetOracleRequestDocKey(doc.RequestId), bz)
+// SetRequestCount sets the request count (for genesis).
+func (k Keeper) SetRequestCount(ctx sdk.Context, count uint64) {
+	k.setRequestCount(ctx, count)
 }
 
-func (k Keeper) updateOracleRequestDoc(ctx sdk.Context, doc types.OracleRequestDoc) error {
-	// Retrieve the existing oracle request document
-	existingDoc, err := k.GetOracleRequestDoc(ctx, doc.RequestId)
-	if err != nil {
-		return err
-	}
-
-	// Check if the existing document status is disabled
-	if existingDoc.Status == types.RequestStatus_REQUEST_STATUS_DISABLED &&
-		doc.Status == types.RequestStatus_REQUEST_STATUS_UNSPECIFIED {
-		return fmt.Errorf("cannot modify disabled Request Doc except status")
-	}
-
-	// Update the period if it is not empty
-	if doc.Period != 0 {
-		existingDoc.Period = doc.Period
-	}
-
-	// Update the status if it is not empty
-	if doc.Status != types.RequestStatus_REQUEST_STATUS_UNSPECIFIED {
-		existingDoc.Status = doc.Status
-	}
-
-	// Update the account list if it is not empty
-	if len(doc.AccountList) != 0 {
-		existingDoc.AccountList = doc.AccountList
-	}
-
-	// Update the quorum if it is not empty
-	if doc.Quorum != 0 {
-		existingDoc.Quorum = doc.Quorum
-	}
-
-	// Update the endpoints if they are not empty
-	if len(doc.Endpoints) != 0 {
-		existingDoc.Endpoints = doc.Endpoints
-	}
-
-	// Update the aggregation rule if it is not empty
-	if doc.AggregationRule != types.AggregationRule_AGGREGATION_RULE_UNSPECIFIED {
-		existingDoc.AggregationRule = doc.AggregationRule
-	}
-
-	// Validate the updated oracle request document with current parameters
-	params := k.GetParams(ctx)
-	err = existingDoc.ValidateWithParams(params)
-	if err != nil {
-		return fmt.Errorf("validation failed for updated document: %v", err)
-	}
-
-	// Store the updated oracle request document
-	k.SetOracleRequestDoc(ctx, *existingDoc)
-	return nil
+// NextRequestID returns the next request ID.
+func (k Keeper) NextRequestID(ctx sdk.Context) uint64 {
+	return k.getRequestCount(ctx) + 1
 }
 
-// GetOracleRequestDoc retrieves an oracle request document by ID from the state store
-// id: ID of the document to retrieve
-// Returns: retrieved oracle request document and error (error if document doesn't exist)
-func (k Keeper) GetOracleRequestDoc(ctx sdk.Context, id uint64) (*types.OracleRequestDoc, error) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetOracleRequestDocKey(id))
+// IncrementRequestCount increments the request count.
+func (k Keeper) IncrementRequestCount(ctx sdk.Context) {
+	k.setRequestCount(ctx, k.NextRequestID(ctx))
+}
+
+// SetRequest sets an oracle request.
+func (k Keeper) SetRequest(ctx sdk.Context, req types.OracleRequest) {
+	ctx.KVStore(k.storeKey).Set(types.RequestKey(req.Id), k.cdc.MustMarshal(&req))
+}
+
+// GetRequest returns an oracle request by ID.
+func (k Keeper) GetRequest(ctx sdk.Context, id uint64) (types.OracleRequest, bool) {
+	bz := ctx.KVStore(k.storeKey).Get(types.RequestKey(id))
 	if len(bz) == 0 {
-		return nil, fmt.Errorf("not exist RequestDoc(req_id: %d)", id)
+		return types.OracleRequest{}, false
 	}
-
-	var doc types.OracleRequestDoc
-	k.cdc.MustUnmarshal(bz, &doc)
-	return &doc, nil
+	var req types.OracleRequest
+	k.cdc.MustUnmarshal(bz, &req)
+	return req, true
 }
 
-func (k Keeper) GetOracleRequestDocs(ctx sdk.Context) []*types.OracleRequestDoc {
+// IterateRequests iterates over all oracle requests.
+func (k Keeper) IterateRequests(ctx sdk.Context, fn func(req types.OracleRequest) bool) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := storetypes.KVStorePrefixIterator(store, types.KeyOracleRequestDoc)
-	defer iterator.Close()
+	iter := storetypes.KVStorePrefixIterator(store, []byte{types.RequestKey(0)[0]})
+	defer iter.Close()
 
-	var docs []*types.OracleRequestDoc
-	for ; iterator.Valid(); iterator.Next() {
-		var doc types.OracleRequestDoc
-		k.cdc.MustUnmarshal(iterator.Value(), &doc)
-		docs = append(docs, &doc)
-	}
-	return docs
-}
-
-func (k Keeper) GetOracleRequestDocsByStatus(ctx sdk.Context, status types.RequestStatus) []*types.OracleRequestDoc {
-	store := ctx.KVStore(k.storeKey)
-	iterator := storetypes.KVStorePrefixIterator(store, types.KeyOracleRequestDoc)
-	defer iterator.Close()
-
-	var docs []*types.OracleRequestDoc
-	for ; iterator.Valid(); iterator.Next() {
-		var doc types.OracleRequestDoc
-		k.cdc.MustUnmarshal(iterator.Value(), &doc)
-		if doc.Status == status {
-			docs = append(docs, &doc)
+	for ; iter.Valid(); iter.Next() {
+		var req types.OracleRequest
+		k.cdc.MustUnmarshal(iter.Value(), &req)
+		if stop := fn(req); stop {
+			return
 		}
 	}
-	return docs
 }
 
-func (k Keeper) SetSubmitData(ctx sdk.Context, data types.SubmitDataSet) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&data)
-	key := types.GetSubmitDataKeyByProvider(data.RequestId, data.Nonce, data.Provider)
-	store.Set(key, bz)
+// SetReport sets an oracle report.
+func (k Keeper) SetReport(ctx sdk.Context, report types.OracleReport) {
+	ctx.KVStore(k.storeKey).Set(types.ReportKey(report.RequestId, report.Nonce, report.Provider), k.cdc.MustMarshal(&report))
+	k.incrementReportCount(ctx, report.RequestId, report.Nonce)
 }
 
-func (k Keeper) GetSubmitData(ctx sdk.Context, requestID uint64, nonce uint64, provider string) ([]*types.SubmitDataSet, error) {
+// incrementReportCount increments the report count for a specific request and nonce.
+func (k Keeper) incrementReportCount(ctx sdk.Context, requestID, nonce uint64) {
 	store := ctx.KVStore(k.storeKey)
-	var datas []*types.SubmitDataSet
-	if provider == "" {
-		datas, err := k.GetSubmitDatas(ctx, requestID, nonce)
-		if err != nil {
-			return nil, err
-		}
-		return datas, nil
-	}
-
-	key := types.GetSubmitDataKeyByProvider(requestID, nonce, provider)
+	key := types.ReportCountKey(requestID, nonce)
 	bz := store.Get(key)
-	if len(bz) == 0 {
-		return nil, fmt.Errorf("not exist SubmitData(req_id: %d, nonce: %d, provider: %s)", requestID, nonce, provider)
+	var count uint64
+	if len(bz) > 0 {
+		count = types.BytesToID(bz)
 	}
-
-	var data types.SubmitDataSet
-	k.cdc.MustUnmarshal(bz, &data)
-	datas = append(datas, &data)
-	return datas, nil
+	store.Set(key, types.IDToBytes(count+1))
 }
 
-func (k Keeper) GetSubmitDatas(ctx sdk.Context, requestID uint64, nonce uint64) ([]*types.SubmitDataSet, error) {
+// GetReportCount returns the number of reports for a specific request and nonce.
+func (k Keeper) GetReportCount(ctx sdk.Context, requestID, nonce uint64) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	iterator := storetypes.KVStorePrefixIterator(store, types.GetSubmitDataKey(requestID, nonce))
-	defer iterator.Close()
+	bz := store.Get(types.ReportCountKey(requestID, nonce))
+	if len(bz) == 0 {
+		return 0
+	}
+	return types.BytesToID(bz)
+}
 
-	var datas []*types.SubmitDataSet
-	for ; iterator.Valid(); iterator.Next() {
-		var data types.SubmitDataSet
-		if err := k.cdc.Unmarshal(iterator.Value(), &data); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal submit data: %w", err)
+// GetReport returns an oracle report.
+func (k Keeper) GetReport(ctx sdk.Context, requestID, nonce uint64, provider string) (types.OracleReport, bool) {
+	bz := ctx.KVStore(k.storeKey).Get(types.ReportKey(requestID, nonce, provider))
+	if len(bz) == 0 {
+		return types.OracleReport{}, false
+	}
+	var report types.OracleReport
+	k.cdc.MustUnmarshal(bz, &report)
+	return report, true
+}
+
+// IterateReports iterates over all reports for a specific request and nonce.
+func (k Keeper) IterateReports(ctx sdk.Context, requestID, nonce uint64, fn func(report types.OracleReport) bool) {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, types.ReportPrefix(requestID, nonce))
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var report types.OracleReport
+		k.cdc.MustUnmarshal(iter.Value(), &report)
+		if stop := fn(report); stop {
+			return
 		}
-		datas = append(datas, &data)
 	}
-	return datas, nil
 }
 
-// SetDataSet stores the aggregated oracle data
-func (k Keeper) SetDataSet(ctx sdk.Context, dataSet types.DataSet) {
+// SetResult sets an oracle result.
+func (k Keeper) SetResult(ctx sdk.Context, result types.OracleResult) {
 	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&dataSet)
-	store.Set(types.GetDataSetKey(dataSet.RequestId, dataSet.Nonce), bz)
+	store.Set(types.ResultKey(result.RequestId, result.Nonce), k.cdc.MustMarshal(&result))
+	// Update latest result pointer for O(1) lookup
+	k.setLatestResultNonce(ctx, result.RequestId, result.Nonce)
+
+	// Create expiry index
+	params := k.GetParams(ctx)
+	if params.ReportRetentionBlocks > 0 {
+		expireHeight := result.AggregatedHeight + params.ReportRetentionBlocks
+		store.Set(types.ResultExpiryKey(expireHeight, result.RequestId, result.Nonce), []byte{1})
+	}
 }
 
-func (k Keeper) GetDataSet(ctx sdk.Context, requestID uint64, nonce uint64) (*types.DataSet, error) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetDataSetKey(requestID, nonce))
+// GetResult returns an oracle result.
+func (k Keeper) GetResult(ctx sdk.Context, requestID, nonce uint64) (types.OracleResult, bool) {
+	bz := ctx.KVStore(k.storeKey).Get(types.ResultKey(requestID, nonce))
 	if len(bz) == 0 {
-		return nil, fmt.Errorf("not exist DataSet(req_id: %d, nonce: %d)", requestID, nonce)
+		return types.OracleResult{}, false
 	}
-
-	var dataSet types.DataSet
-	k.cdc.MustUnmarshal(bz, &dataSet)
-	return &dataSet, nil
+	var res types.OracleResult
+	k.cdc.MustUnmarshal(bz, &res)
+	return res, true
 }
 
-// Logger returns a logger instance with the module name prefixed
+// setLatestResultNonce stores the latest nonce for a request (for O(1) lookup).
+func (k Keeper) setLatestResultNonce(ctx sdk.Context, requestID, nonce uint64) {
+	ctx.KVStore(k.storeKey).Set(types.LatestResultKey(requestID), types.IDToBytes(nonce))
+}
+
+// getLatestResultNonce retrieves the latest nonce for a request.
+func (k Keeper) getLatestResultNonce(ctx sdk.Context, requestID uint64) (uint64, bool) {
+	bz := ctx.KVStore(k.storeKey).Get(types.LatestResultKey(requestID))
+	if len(bz) == 0 {
+		return 0, false
+	}
+	return types.BytesToID(bz), true
+}
+
+// GetLatestResult returns the latest result for a request in O(1) time.
+func (k Keeper) GetLatestResult(ctx sdk.Context, requestID uint64) (types.OracleResult, bool) {
+	nonce, found := k.getLatestResultNonce(ctx, requestID)
+	if !found {
+		return types.OracleResult{}, false
+	}
+	return k.GetResult(ctx, requestID, nonce)
+}
+
+// SetCategory sets an enabled category.
+func (k Keeper) SetCategory(ctx sdk.Context, cat types.Category) {
+	if cat == types.Category_CATEGORY_UNSPECIFIED {
+		return
+	}
+	ctx.KVStore(k.storeKey).Set(types.CategoryKey(cat), []byte{1})
+}
+
+// IsCategoryEnabled returns true if the category was predefined/enabled (typically via genesis).
+func (k Keeper) IsCategoryEnabled(ctx sdk.Context, cat types.Category) bool {
+	if cat == types.Category_CATEGORY_UNSPECIFIED {
+		return false
+	}
+	return ctx.KVStore(k.storeKey).Has(types.CategoryKey(cat))
+}
+
+// GetCategories returns all enabled categories.
+func (k Keeper) GetCategories(ctx sdk.Context) []types.Category {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, []byte{types.CategoryKey(types.Category_CATEGORY_UNSPECIFIED)[0]})
+	defer iter.Close()
+
+	cats := []types.Category{}
+	for ; iter.Valid(); iter.Next() {
+		key := iter.Key()
+		if len(key) < 2 {
+			continue
+		}
+		cats = append(cats, types.Category(key[1]))
+	}
+	return cats
+}
+
+// Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+	return ctx.Logger().With("module", fmt.Sprintf("y/%s", types.ModuleName))
 }
 
-func (k Keeper) checkAccountAuthorized(accountList []string, fromAddress string) bool {
-	for _, account := range accountList {
-		if account == fromAddress {
-			return true
+// ScheduleOracleTask schedules an oracle task event at a specific block height.
+func (k Keeper) ScheduleOracleTask(ctx sdk.Context, blockHeight, requestID uint64) {
+	ctx.KVStore(k.storeKey).Set(types.TaskScheduleKey(blockHeight, requestID), []byte{1})
+	k.Logger(ctx).Info("scheduled oracle task", "block_height", blockHeight, "request_id", requestID)
+}
+
+// GetScheduledTasks returns all request IDs scheduled for a specific block height.
+func (k Keeper) GetScheduledTasks(ctx sdk.Context, blockHeight uint64) []uint64 {
+	store := ctx.KVStore(k.storeKey)
+	prefix := types.TaskSchedulePrefix(blockHeight)
+	iter := storetypes.KVStorePrefixIterator(store, prefix)
+	defer iter.Close()
+
+	var requestIDs []uint64
+	for ; iter.Valid(); iter.Next() {
+		key := iter.Key()
+		// key format: prefix (1) + blockHeight (8) + requestID (8)
+		if len(key) >= 17 {
+			requestID := types.BytesToID(key[9:17])
+			requestIDs = append(requestIDs, requestID)
 		}
 	}
-	return false
+	return requestIDs
 }
 
-func (k Keeper) validateSubmitData(data types.SubmitDataSet) error {
-	if data.RequestId == 0 {
-		return errorsmod.Wrapf(types.ErrInvalidRequestID, "request id is 0")
-	}
-	if data.Nonce == 0 {
-		return errorsmod.Wrapf(types.ErrInvalidNonce, "nonce is 0")
-	}
-	if data.Provider == "" {
-		return errorsmod.Wrapf(types.ErrInvalidProvider, "provider is empty")
-	}
-	if data.RawData == "" {
-		return errorsmod.Wrapf(types.ErrInvalidRawData, "raw data is empty")
-	}
-	return nil
+// DeleteScheduledTask removes a scheduled task.
+func (k Keeper) DeleteScheduledTask(ctx sdk.Context, blockHeight, requestID uint64) {
+	ctx.KVStore(k.storeKey).Delete(types.TaskScheduleKey(blockHeight, requestID))
 }
 
-// GetOracleData retrieves the oracle data by request ID
-func (k Keeper) GetOracleData(ctx sdk.Context, requestID uint64) (*types.QueryOracleDataResponse, error) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	doc, err := k.GetOracleRequestDoc(sdkCtx, requestID)
-	if err != nil {
-		return nil, err
+// DeleteOldReports deletes reports older than retention blocks using index.
+func (k Keeper) DeleteOldReports(ctx sdk.Context, currentHeight uint64) {
+	// Iterate over the expiry index in-order and delete all entries with expireHeight <= currentHeight.
+	// This naturally "catches up" if cleanup was skipped for some heights (e.g. module disabled and later enabled).
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, []byte{types.ResultExpiryPrefix(0)[0]})
+	defer iter.Close()
+
+	type toDelete struct {
+		expiryKey    []byte
+		requestID    uint64
+		nonce        uint64
+		expireHeight uint64
+	}
+	var dels []toDelete
+
+	for ; iter.Valid(); iter.Next() {
+		// Key structure: prefix (1) + expireHeight (8) + requestID (8) + nonce (8)
+		key := iter.Key()
+		if len(key) < 25 {
+			continue
+		}
+
+		expireHeight := types.BytesToID(key[1:9])
+		if expireHeight > currentHeight {
+			// Since keys are ordered by expireHeight, we can stop early.
+			break
+		}
+
+		requestID := types.BytesToID(key[9:17])
+		nonce := types.BytesToID(key[17:25])
+
+		dels = append(dels, toDelete{
+			expiryKey:    append([]byte(nil), key...),
+			requestID:    requestID,
+			nonce:        nonce,
+			expireHeight: expireHeight,
+		})
 	}
 
-	dataset, err := k.GetDataSet(sdkCtx, doc.RequestId, doc.Nonce)
-	if err != nil {
-		return nil, err
+	for _, d := range dels {
+		// Delete associated reports
+		k.deleteReports(ctx, d.requestID, d.nonce)
+		// Delete count key
+		store.Delete(types.ReportCountKey(d.requestID, d.nonce))
+		// Delete the expiry index itself
+		store.Delete(d.expiryKey)
+
+		k.Logger(ctx).Debug("deleted old reports", "request_id", d.requestID, "nonce", d.nonce, "expire_height", d.expireHeight, "height", currentHeight)
+	}
+}
+
+// deleteReports deletes all reports for a specific request and nonce.
+func (k Keeper) deleteReports(ctx sdk.Context, requestID, nonce uint64) {
+	store := ctx.KVStore(k.storeKey)
+	iter := storetypes.KVStorePrefixIterator(store, types.ReportPrefix(requestID, nonce))
+	defer iter.Close()
+
+	// Pre-allocate based on the tracked report count (best-effort; 0 is fine).
+	capHint := int(k.GetReportCount(ctx, requestID, nonce))
+	if capHint < 0 {
+		capHint = 0
+	}
+	keys := make([][]byte, 0, capHint)
+	for ; iter.Valid(); iter.Next() {
+		// Copy the key: iterator implementations may reuse the underlying slice buffer.
+		keys = append(keys, append([]byte(nil), iter.Key()...))
 	}
 
-	return &types.QueryOracleDataResponse{
-		DataSet: dataset,
-	}, nil
+	for _, key := range keys {
+		store.Delete(key)
+	}
+}
+
+func (k *Keeper) SetHooks(hooks types.OracleHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set oracle hooks twice")
+	}
+	k.hooks = hooks
+
+	return k
 }

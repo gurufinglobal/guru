@@ -3,133 +3,179 @@ package keeper
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
-const (
-	// testAuthorityAddr is a test address for oracle authority
-	testAuthorityAddr = "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"
-)
+func TestRegisterOracleRequest_SchedulesAndStartsAtNonceOne(t *testing.T) {
+	k, ctx := setupKeeper(t)
 
-func TestSubmitOracleDataNilDataSet(t *testing.T) {
-	keeper, ctx := setupKeeper(t)
+	moderator := newAddr()
+	k.SetModeratorAddress(ctx, moderator)
 
-	// Test with nil DataSet - should return error, not panic
-	msg := &types.MsgSubmitOracleData{
-		AuthorityAddress: testAuthorityAddr,
-		DataSet:          nil, // This should cause validation to fail
+	msg := &types.MsgRegisterOracleRequest{
+		ModeratorAddress: moderator,
+		Category:         types.Category_CATEGORY_CRYPTO,
+		Symbol:           "BTC",
+		Count:            3,
+		Period:           5,
 	}
 
-	// This should not panic and should return an error
-	response, err := keeper.SubmitOracleData(ctx, msg)
+	resp, err := k.RegisterOracleRequest(sdk.WrapSDKContext(ctx), msg)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	req, found := k.GetRequest(ctx, resp.RequestId)
+	require.True(t, found)
+	require.Equal(t, uint64(1), req.Nonce)
+	require.Equal(t, types.Status_STATUS_ACTIVE, req.Status)
+
+	// schedule at period height
+	scheduled := k.GetScheduledTasks(ctx, uint64(ctx.BlockHeight())+req.Period)
+	require.Len(t, scheduled, 1)
+	require.Equal(t, resp.RequestId, scheduled[0])
+
+	// event contains request id and nonce
+	evts := ctx.EventManager().Events()
+	require.Len(t, evts, 1)
+	require.Equal(t, types.EventTypeOracleTask, evts[0].Type)
+	require.Len(t, evts[0].Attributes, 2)
+	require.Equal(t, types.AttributeKeyRequestID, string(evts[0].Attributes[0].Key))
+	require.Equal(t, types.AttributeKeyNonce, string(evts[0].Attributes[1].Key))
+}
+
+func TestRegisterOracleRequest_UnauthorizedModerator(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	k.SetModeratorAddress(ctx, newAddr())
+
+	msg := &types.MsgRegisterOracleRequest{
+		ModeratorAddress: newAddr(), // mismatch
+		Category:         types.Category_CATEGORY_CRYPTO,
+		Symbol:           "BTC",
+		Count:            1,
+		Period:           5,
+	}
+
+	_, err := k.RegisterOracleRequest(sdk.WrapSDKContext(ctx), msg)
 	require.Error(t, err)
-	require.Nil(t, response)
-	require.Contains(t, err.Error(), "DataSet must be provided")
 }
 
-// func TestSubmitOracleDataValidDataSet(t *testing.T) {
-// 	keeper, ctx := setupKeeper(t)
+func TestRegisterOracleRequest_UnknownCategoryRejected(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	moderator := newAddr()
+	k.SetModeratorAddress(ctx, moderator)
 
-// 	// Set up a moderator address first
-// 	moderatorAddr := "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"
-// 	keeper.SetModeratorAddress(ctx, moderatorAddr)
-
-// 	// Create a test oracle request document
-// 	doc := types.OracleRequestDoc{
-// 		RequestId:       1,
-// 		OracleType:      types.OracleType_ORACLE_TYPE_CRYPTO,
-// 		Name:            "Test Oracle",
-// 		Description:     "Test Description",
-// 		Period:          60,
-// 		AccountList:     []string{moderatorAddr},
-// 		Quorum:          1,
-// 		Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
-// 		AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
-// 		Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-// 		Nonce:           0,
-// 	}
-// 	keeper.SetOracleRequestDoc(ctx, doc)
-
-// 	// Test with valid DataSet
-// 	msg := &types.MsgSubmitOracleData{
-// 		AuthorityAddress: moderatorAddr,
-// 		DataSet: &types.SubmitDataSet{
-// 			RequestId: 1,
-// 			Nonce:     1,
-// 			RawData:   "123.456",
-// 			Provider:  moderatorAddr,
-// 			Signature: []byte("test signature"),
-// 		},
-// 	}
-
-// 	// This should succeed
-// 	response, err := keeper.SubmitOracleData(ctx, msg)
-// 	require.NoError(t, err)
-// 	require.NotNil(t, response)
-// }
-
-func TestSubmitOracleDataEdgeCases(t *testing.T) {
-	keeper, ctx := setupKeeper(t)
-
-	testCases := []struct {
-		name        string
-		msg         *types.MsgSubmitOracleData
-		expectError bool
-		errorMsg    string
-	}{
-		{
-			name: "nil message",
-			msg:  nil,
-			// This would panic before reaching our handler, so we skip this test
-			expectError: true,
-		},
-		{
-			name: "nil DataSet",
-			msg: &types.MsgSubmitOracleData{
-				AuthorityAddress: testAuthorityAddr,
-				DataSet:          nil,
-			},
-			expectError: true,
-			errorMsg:    "DataSet must be provided",
-		},
-		{
-			name: "valid DataSet structure but invalid content",
-			msg: &types.MsgSubmitOracleData{
-				AuthorityAddress: testAuthorityAddr,
-				DataSet: &types.SubmitDataSet{
-					RequestId: 0, // Invalid: zero request ID
-					Nonce:     1,
-					RawData:   "",
-					Provider:  "",
-					Signature: nil,
-				},
-			},
-			expectError: true,
-			errorMsg:    "request id is 0",
-		},
+	// Use an enum number not defined in proto.
+	msg := &types.MsgRegisterOracleRequest{
+		ModeratorAddress: moderator,
+		Category:         types.Category(99),
+		Symbol:           "BTC",
+		Count:            1,
+		Period:           5,
 	}
 
-	for _, tc := range testCases {
-		if tc.name == "nil message" {
-			// Skip nil message test as it would panic before reaching our handler
-			continue
-		}
-
-		t.Run(tc.name, func(t *testing.T) {
-			response, err := keeper.SubmitOracleData(ctx, tc.msg)
-
-			if tc.expectError {
-				require.Error(t, err)
-				require.Nil(t, response)
-				if tc.errorMsg != "" {
-					require.Contains(t, err.Error(), tc.errorMsg)
-				}
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, response)
-			}
-		})
-	}
+	_, err := k.RegisterOracleRequest(sdk.WrapSDKContext(ctx), msg)
+	require.Error(t, err)
 }
+
+func TestUpdateOracleRequest(t *testing.T) {
+	k, ctx := setupKeeper(t)
+	moderator := newAddr()
+	k.SetModeratorAddress(ctx, moderator)
+
+	req := types.OracleRequest{
+		Id:       1,
+		Category: types.Category_CATEGORY_CRYPTO,
+		Symbol:   "BTC",
+		Count:    3,
+		Period:   5,
+		Status:   types.Status_STATUS_ACTIVE,
+		Nonce:    1,
+	}
+	k.SetRequest(ctx, req)
+
+	msg := &types.MsgUpdateOracleRequest{
+		ModeratorAddress: moderator,
+		RequestId:        1,
+		Count:            10,
+		Period:           7,
+		Status:           types.Status_STATUS_INACTIVE,
+	}
+
+	_, err := k.UpdateOracleRequest(sdk.WrapSDKContext(ctx), msg)
+	require.NoError(t, err)
+
+	updated, _ := k.GetRequest(ctx, 1)
+	require.Equal(t, int64(10), updated.Count)
+	require.Equal(t, uint64(7), updated.Period)
+	require.Equal(t, types.Status_STATUS_INACTIVE, updated.Status)
+}
+
+func TestSubmitOracleReport_InvalidNonce(t *testing.T) {
+	k, ctx := setupKeeper(t)
+
+	moderator := newAddr()
+	k.SetModeratorAddress(ctx, moderator)
+	provider := newAddr()
+	k.AddWhitelistAddress(ctx, provider)
+
+	req := types.OracleRequest{
+		Id:       1,
+		Category: types.Category_CATEGORY_CRYPTO,
+		Symbol:   "BTC",
+		Count:    3,
+		Period:   5,
+		Status:   types.Status_STATUS_ACTIVE,
+		Nonce:    1,
+	}
+	k.SetRequest(ctx, req)
+
+	msg := &types.MsgSubmitOracleReport{
+		ProviderAddress: provider,
+		RequestId:       1,
+		Nonce:           2, // expect 1
+		RawData:         "1.23",
+		Signature:       []byte{1},
+	}
+
+	_, err := k.SubmitOracleReport(sdk.WrapSDKContext(ctx), msg)
+	require.Error(t, err)
+
+	// nothing stored
+	_, found := k.GetReport(ctx, 1, 2, provider)
+	require.False(t, found)
+}
+
+func TestSubmitOracleReport_NotWhitelisted(t *testing.T) {
+	k, ctx := setupKeeper(t)
+
+	moderator := newAddr()
+	k.SetModeratorAddress(ctx, moderator)
+
+	req := types.OracleRequest{
+		Id:       2,
+		Category: types.Category_CATEGORY_CRYPTO,
+		Symbol:   "ETH",
+		Count:    3,
+		Period:   5,
+		Status:   types.Status_STATUS_ACTIVE,
+		Nonce:    1,
+	}
+	k.SetRequest(ctx, req)
+
+	provider := newAddr() // not added to whitelist
+
+	msg := &types.MsgSubmitOracleReport{
+		ProviderAddress: provider,
+		RequestId:       2,
+		Nonce:           1,
+		RawData:         "2.34",
+		Signature:       []byte{1},
+	}
+
+	_, err := k.SubmitOracleReport(sdk.WrapSDKContext(ctx), msg)
+	require.Error(t, err)
+}
+

@@ -11,6 +11,10 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	"github.com/gurufinglobal/guru/v2/x/feemarket/client/cli"
+	"github.com/gurufinglobal/guru/v2/x/feemarket/keeper"
+	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
+
 	"cosmossdk.io/core/appmodule"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -19,10 +23,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-
-	"github.com/gurufinglobal/guru/v2/x/feemarket/client/cli"
-	"github.com/gurufinglobal/guru/v2/x/feemarket/keeper"
-	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 )
 
 // consensusVersion defines the current x/feemarket module consensus version.

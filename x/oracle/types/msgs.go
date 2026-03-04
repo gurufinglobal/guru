@@ -1,233 +1,254 @@
 package types
 
 import (
-	"math/big"
-
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// NewMsgRegisterOracleRequestDoc creates a new MsgRegisterOracleRequestDoc instance
-func NewMsgRegisterOracleRequestDoc(
-	moderatorAddress string,
-	requestDoc OracleRequestDoc,
-) *MsgRegisterOracleRequestDoc {
-	return &MsgRegisterOracleRequestDoc{
-		ModeratorAddress: moderatorAddress,
-		RequestDoc:       requestDoc,
-	}
-}
+// MsgUpdateModeratorAddress - methods for the message type.
 
-// Route implements the sdk.Msg interface
-func (msg MsgRegisterOracleRequestDoc) Route() string {
-	return RouterKey
-}
+// Route returns the message route.
+func (msg MsgUpdateModeratorAddress) Route() string { return RouterKey }
 
-// Type implements the sdk.Msg interface
-func (msg MsgRegisterOracleRequestDoc) Type() string {
-	return "register_oracle_request_doc"
-}
+// Type returns the message type.
+func (msg MsgUpdateModeratorAddress) Type() string { return "update_moderator_address" }
 
-// GetSigners implements the sdk.Msg interface
-func (msg MsgRegisterOracleRequestDoc) GetSigners() []sdk.AccAddress {
-	moderatorAddress, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{moderatorAddress}
-}
-
-// GetSignBytes implements the sdk.Msg interface
-func (msg MsgRegisterOracleRequestDoc) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(&msg)
-	return sdk.MustSortJSON(bz)
-}
-
-// ValidateBasic implements the sdk.Msg interface
-func (msg MsgRegisterOracleRequestDoc) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid from address(Moderator) (%s)", err)
-	}
-	if err := msg.RequestDoc.ValidateWithParams(DefaultParams()); err != nil {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	}
-	return nil
-}
-
-// NewMsgUpdateOracleRequestDoc creates a new MsgUpdateOracleRequestDoc instance
-func NewMsgUpdateOracleRequestDoc(
-	moderatorAddress string,
-	requestDoc OracleRequestDoc,
-	reason string,
-) *MsgUpdateOracleRequestDoc {
-	return &MsgUpdateOracleRequestDoc{
-		ModeratorAddress: moderatorAddress,
-		RequestDoc:       requestDoc,
-		Reason:           reason,
-	}
-}
-
-// Route implements the sdk.Msg interface
-func (msg MsgUpdateOracleRequestDoc) Route() string {
-	return RouterKey
-}
-
-// Type implements the sdk.Msg interface
-func (msg MsgUpdateOracleRequestDoc) Type() string {
-	return "update_oracle_request_doc"
-}
-
-// GetSigners implements the sdk.Msg interface
-func (msg MsgUpdateOracleRequestDoc) GetSigners() []sdk.AccAddress {
-	moderatorAddress, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{moderatorAddress}
-}
-
-// GetSignBytes implements the sdk.Msg interface
-func (msg MsgUpdateOracleRequestDoc) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(&msg)
-	return sdk.MustSortJSON(bz)
-}
-
-// ValidateBasic implements the sdk.Msg interface
-func (msg MsgUpdateOracleRequestDoc) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid from address(Moderator) (%s)", err)
-	}
-	if err := msg.RequestDoc.ValidateWithParams(DefaultParams()); err != nil {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	}
-	return nil
-}
-
-// NewMsgSubmitOracleData creates a new MsgSubmitOracleData instance
-func NewMsgSubmitOracleData(
-	requestID uint64,
-	nonce uint64,
-	rawData string,
-	provider string,
-	signature []byte,
-	authorityAddress string,
-) *MsgSubmitOracleData {
-	return &MsgSubmitOracleData{
-		AuthorityAddress: authorityAddress,
-		DataSet: &SubmitDataSet{
-			RequestId: requestID,
-			Nonce:     nonce,
-			RawData:   rawData,
-			Provider:  provider,
-			Signature: signature,
-		},
-	}
-}
-
-// Route implements the sdk.Msg interface
-func (msg MsgSubmitOracleData) Route() string {
-	return RouterKey
-}
-
-// Type implements the sdk.Msg interface
-func (msg MsgSubmitOracleData) Type() string {
-	return "submit_oracle_data"
-}
-
-// GetSigners implements the sdk.Msg interface
-func (msg MsgSubmitOracleData) GetSigners() []sdk.AccAddress {
-	authorityAddress, err := sdk.AccAddressFromBech32(msg.AuthorityAddress)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{authorityAddress}
-}
-
-// GetSignBytes implements the sdk.Msg interface
-func (msg MsgSubmitOracleData) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(&msg)
-	return sdk.MustSortJSON(bz)
-}
-
-// ValidateBasic implements the sdk.Msg interface
-func (msg MsgSubmitOracleData) ValidateBasic() error {
-	// Validate that DataSet is provided
-	if msg.DataSet == nil {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "DataSet must be provided")
-	}
-
-	if _, err := sdk.AccAddressFromBech32(msg.DataSet.Provider); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid provider address (%s)", err)
-	}
-	if msg.DataSet.RequestId == 0 {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "request ID cannot be empty")
-	}
-	if msg.DataSet.RawData == "" {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "raw data cannot be empty")
-	}
-	// Validate that RawData is a valid decimal number
-	if _, ok := new(big.Float).SetString(msg.DataSet.RawData); !ok {
-		return errorsmod.Wrapf(errortypes.ErrInvalidRequest,
-			"raw data must be a valid decimal number: %q", msg.DataSet.RawData)
-	}
-
-	if msg.DataSet.Signature == nil {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "signature cannot be empty")
-	}
-	return nil
-}
-
-// NewMsgUpdateModeratorAddress creates a new MsgUpdateModeratorAddress instance
-func NewMsgUpdateModeratorAddress(moderatorAddress string, newModeratorAddress string) *MsgUpdateModeratorAddress {
-	return &MsgUpdateModeratorAddress{
-		ModeratorAddress:    moderatorAddress,
-		NewModeratorAddress: newModeratorAddress,
-	}
-}
-
-// Route implements the sdk.Msg interface
-func (msg MsgUpdateModeratorAddress) Route() string {
-	return RouterKey
-}
-
-// Type implements the sdk.Msg interface
-func (msg MsgUpdateModeratorAddress) Type() string {
-	return "update_moderator_address"
-}
-
-// GetSigners implements the sdk.Msg interface
+// GetSigners returns the signers of the message.
 func (msg MsgUpdateModeratorAddress) GetSigners() []sdk.AccAddress {
-	moderatorAddress, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
+	addr, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{moderatorAddress}
+	return []sdk.AccAddress{addr}
 }
 
-// GetSignBytes implements the sdk.Msg interface
+// GetSignBytes returns the bytes to verify the message signature.
 func (msg MsgUpdateModeratorAddress) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(&msg)
 	return sdk.MustSortJSON(bz)
 }
 
-// ValidateBasic implements the sdk.Msg interface
+// ValidateBasic performs basic validation of the message.
 func (msg MsgUpdateModeratorAddress) ValidateBasic() error {
-	if msg.ModeratorAddress == "" {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "moderator address cannot be empty")
-	}
-	if msg.NewModeratorAddress == "" {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "new moderator address cannot be empty")
+	if msg.ModeratorAddress == "" || msg.NewModeratorAddress == "" {
+		return errorsmod.Wrap(errortypes.ErrInvalidAddress, "addresses must be set")
 	}
 	if msg.ModeratorAddress == msg.NewModeratorAddress {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "moderator address and new moderator address cannot be the same")
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "new moderator must differ")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid moderator address (%s)", err)
+		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid moderator address: %v", err)
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.NewModeratorAddress); err != nil {
-		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid new moderator address (%s)", err)
+		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid new moderator address: %v", err)
+	}
+	return nil
+}
+
+// MsgRegisterOracleRequest - methods for the message type.
+
+// Route returns the message route.
+func (msg MsgRegisterOracleRequest) Route() string { return RouterKey }
+
+// Type returns the message type.
+func (msg MsgRegisterOracleRequest) Type() string { return "register_oracle_request" }
+
+// GetSigners returns the signers of the message.
+func (msg MsgRegisterOracleRequest) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{addr}
+}
+
+// GetSignBytes returns the bytes to verify the message signature.
+func (msg MsgRegisterOracleRequest) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(&msg)
+	return sdk.MustSortJSON(bz)
+}
+
+// ValidateBasic performs basic validation of the message.
+func (msg MsgRegisterOracleRequest) ValidateBasic() error {
+	if msg.ModeratorAddress == "" {
+		return errorsmod.Wrap(errortypes.ErrInvalidAddress, "moderator address required")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
+		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid moderator address: %v", err)
+	}
+	req := OracleRequest{
+		Category: msg.Category,
+		Symbol:   msg.Symbol,
+		Count:    int64(msg.Count),
+		Period:   msg.Period,
+		Status:   Status_STATUS_ACTIVE,
+		Nonce:    0,
+	}
+	if err := req.ValidateBasic(); err != nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+	return nil
+}
+
+// MsgUpdateOracleRequest - methods for the message type.
+
+// Route returns the message route.
+func (msg MsgUpdateOracleRequest) Route() string { return RouterKey }
+
+// Type returns the message type.
+func (msg MsgUpdateOracleRequest) Type() string { return "update_oracle_request" }
+
+// GetSigners returns the signers of the message.
+func (msg MsgUpdateOracleRequest) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{addr}
+}
+
+// GetSignBytes returns the bytes to verify the message signature.
+func (msg MsgUpdateOracleRequest) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(&msg)
+	return sdk.MustSortJSON(bz)
+}
+
+// ValidateBasic performs basic validation of the message.
+func (msg MsgUpdateOracleRequest) ValidateBasic() error {
+	if msg.ModeratorAddress == "" {
+		return errorsmod.Wrap(errortypes.ErrInvalidAddress, "moderator address required")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
+		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid moderator address: %v", err)
+	}
+	if msg.RequestId == 0 {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "request id must be set")
+	}
+	if msg.Count == 0 && msg.Period == 0 && msg.Status == Status_STATUS_UNSPECIFIED {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "no update field provided")
+	}
+	if msg.Status != Status_STATUS_UNSPECIFIED && msg.Status != Status_STATUS_ACTIVE && msg.Status != Status_STATUS_INACTIVE {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "invalid status")
+	}
+	return nil
+}
+
+// MsgSubmitOracleReport - methods for the message type.
+
+// Route returns the message route.
+func (msg MsgSubmitOracleReport) Route() string { return RouterKey }
+
+// Type returns the message type.
+func (msg MsgSubmitOracleReport) Type() string { return "submit_oracle_report" }
+
+// GetSigners returns the signers of the message.
+func (msg MsgSubmitOracleReport) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(msg.ProviderAddress)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{addr}
+}
+
+// GetSignBytes returns the bytes to verify the message signature.
+func (msg MsgSubmitOracleReport) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(&msg)
+	return sdk.MustSortJSON(bz)
+}
+
+// ValidateBasic performs basic validation of the message.
+func (msg MsgSubmitOracleReport) ValidateBasic() error {
+	if msg.ProviderAddress == "" {
+		return errorsmod.Wrap(errortypes.ErrInvalidAddress, "provider address required")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.ProviderAddress); err != nil {
+		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid provider address: %v", err)
+	}
+	report := OracleReport{
+		RequestId: msg.RequestId,
+		Provider:  msg.ProviderAddress,
+		RawData:   msg.RawData,
+		Nonce:     msg.Nonce,
+		Signature: msg.Signature,
+	}
+	if err := report.ValidateBasic(); err != nil {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+	return nil
+}
+
+// MsgAddToWhitelist - methods for the message type.
+
+// Route returns the message route.
+func (msg MsgAddToWhitelist) Route() string { return RouterKey }
+
+// Type returns the message type.
+func (msg MsgAddToWhitelist) Type() string { return "add_to_whitelist" }
+
+// GetSigners returns the signers of the message.
+func (msg MsgAddToWhitelist) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{addr}
+}
+
+// GetSignBytes returns the bytes to verify the message signature.
+func (msg MsgAddToWhitelist) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(&msg)
+	return sdk.MustSortJSON(bz)
+}
+
+// ValidateBasic performs basic validation of the message.
+func (msg MsgAddToWhitelist) ValidateBasic() error {
+	if msg.ModeratorAddress == "" || msg.Address == "" {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "addresses must be set")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
+		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid moderator address: %v", err)
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.Address); err != nil {
+		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid whitelist address: %v", err)
+	}
+	return nil
+}
+
+// MsgRemoveFromWhitelist - methods for the message type.
+
+// Route returns the message route.
+func (msg MsgRemoveFromWhitelist) Route() string { return RouterKey }
+
+// Type returns the message type.
+func (msg MsgRemoveFromWhitelist) Type() string { return "remove_from_whitelist" }
+
+// GetSigners returns the signers of the message.
+func (msg MsgRemoveFromWhitelist) GetSigners() []sdk.AccAddress {
+	addr, err := sdk.AccAddressFromBech32(msg.ModeratorAddress)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{addr}
+}
+
+// GetSignBytes returns the bytes to verify the message signature.
+func (msg MsgRemoveFromWhitelist) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(&msg)
+	return sdk.MustSortJSON(bz)
+}
+
+// ValidateBasic performs basic validation of the message.
+func (msg MsgRemoveFromWhitelist) ValidateBasic() error {
+	if msg.ModeratorAddress == "" || msg.Address == "" {
+		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "addresses must be set")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
+		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid moderator address: %v", err)
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.Address); err != nil {
+		return errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid whitelist address: %v", err)
 	}
 	return nil
 }

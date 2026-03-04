@@ -57,7 +57,7 @@ type BexKeeper interface {
 }
 
 type OracleKeeper interface {
-	GetOracleData(ctx sdk.Context, requestID uint64) (*oracletypes.QueryOracleDataResponse, error)
+	GetLatestResult(ctx sdk.Context, requestID uint64) (oracletypes.OracleResult, bool)
 }
 
 // MessageRouter ADR 031 request type routing

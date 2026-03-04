@@ -5,17 +5,28 @@ import (
 )
 
 const (
-	codeInvalidRequestID = uint32(iota) + 2
+	codeInvalidRequest = uint32(iota) + 2
 	codeInvalidNonce
 	codeInvalidProvider
 	codeInvalidRawData
-	codeQuorumNotMet
+	codeRequestNotFound
+	codeReportExists
+	codeModuleDisabled
 )
 
 var (
-	ErrInvalidRequestID = errorsmod.Register(ModuleName, codeInvalidRequestID, "invalid request id")
-	ErrInvalidNonce     = errorsmod.Register(ModuleName, codeInvalidNonce, "invalid nonce")
-	ErrInvalidProvider  = errorsmod.Register(ModuleName, codeInvalidProvider, "invalid provider")
-	ErrInvalidRawData   = errorsmod.Register(ModuleName, codeInvalidRawData, "invalid raw data")
-	ErrQuorumNotMet     = errorsmod.Register(ModuleName, codeQuorumNotMet, "quorum not met")
+	// ErrInvalidRequest is returned when the request is invalid.
+	ErrInvalidRequest = errorsmod.Register(ModuleName, codeInvalidRequest, "invalid request")
+	// ErrInvalidNonce is returned when the nonce is invalid.
+	ErrInvalidNonce = errorsmod.Register(ModuleName, codeInvalidNonce, "invalid nonce")
+	// ErrInvalidProvider is returned when the provider is invalid.
+	ErrInvalidProvider = errorsmod.Register(ModuleName, codeInvalidProvider, "invalid provider")
+	// ErrInvalidRawData is returned when the raw data is invalid.
+	ErrInvalidRawData = errorsmod.Register(ModuleName, codeInvalidRawData, "invalid raw data")
+	// ErrRequestNotFound is returned when the oracle request is not found.
+	ErrRequestNotFound = errorsmod.Register(ModuleName, codeRequestNotFound, "oracle request not found")
+	// ErrReportExists is returned when the oracle report already exists.
+	ErrReportExists = errorsmod.Register(ModuleName, codeReportExists, "oracle report already exists")
+	// ErrModuleDisabled is returned when the oracle module is disabled.
+	ErrModuleDisabled = errorsmod.Register(ModuleName, codeModuleDisabled, "oracle module is disabled")
 )

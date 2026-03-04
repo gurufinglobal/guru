@@ -153,12 +153,12 @@ func (k Keeper) OnRecvExchangePacket(
 
 	// step 2: prepare the swap data
 
-	oracleData, err := k.OracleKeeper.GetOracleData(ctx, exchange.OracleRequestId)
-	if err != nil {
+	oracleResult, found := k.OracleKeeper.GetLatestResult(ctx, exchange.OracleRequestId)
+	if !found {
 		return errorsmod.Wrapf(err, "failed to get oracle data: %d", exchange.OracleRequestId)
 	}
 
-	rawData := truncatePrecision(oracleData.DataSet.RawData, 18)
+	rawData := truncatePrecision(oracleResult.AggregatedData, 18)
 	rate, err := sdkmath.LegacyNewDecFromStr(rawData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "failed to parse rate: %s", rawData)
