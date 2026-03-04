@@ -84,7 +84,7 @@ func ResultPrefix(requestID uint64) []byte {
 
 // CategoryKey returns the key for a specific category.
 func CategoryKey(cat Category) []byte {
-	return []byte{prefixCategory, byte(cat)}
+	return []byte{prefixCategory, byte(cat)} // #nosec G115 -- category enum values are small and controlled
 }
 
 const (

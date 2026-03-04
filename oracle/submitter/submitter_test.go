@@ -9,19 +9,22 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"cosmossdk.io/log"
+
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	guruconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	guruencoding "github.com/gurufinglobal/guru/v2/encoding"
 	cosmosevmtypes "github.com/gurufinglobal/guru/v2/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"google.golang.org/grpc"
 )
 
 type mockSubmitClient struct {
@@ -226,10 +229,7 @@ func TestSubmitter_Start_ResetsAccountInfoOnce(t *testing.T) {
 	close(resultCh)
 
 	deadline := time.After(2 * time.Second)
-	for {
-		if ai.AccountNumber() == 1 && ai.CurrentSequenceNumber() == 2 {
-			break
-		}
+	for ai.AccountNumber() != 1 || ai.CurrentSequenceNumber() != 2 {
 		select {
 		case <-deadline:
 			t.Fatalf("timed out waiting for initial ResetAccountInfo to take effect")

@@ -9,8 +9,10 @@ import (
 	"strings"
 	"sync"
 
-	"cosmossdk.io/log"
 	"github.com/creachadair/taskgroup"
+
+	"cosmossdk.io/log"
+
 	"github.com/gurufinglobal/guru/v2/oracle/provider"
 	"github.com/gurufinglobal/guru/v2/oracle/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
@@ -83,7 +85,7 @@ func (a *Aggregator) Done() <-chan struct{} { return a.done }
 
 // processTask fetches data from providers for a single task and emits result.
 func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, resultCh chan<- oracletypes.OracleReport) {
-	providers := a.pvRegistry.GetProviders(int32(task.Category))
+	providers := a.pvRegistry.GetProviders(task.Category)
 	if len(providers) == 0 {
 		// This should not happen if registry validates category >= 1 provider.
 		a.logger.Error("no providers for category", "request_id", task.Id, "category", task.Category, "symbol", task.Symbol)

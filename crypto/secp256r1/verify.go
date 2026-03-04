@@ -17,6 +17,7 @@
 package secp256r1
 
 import (
+	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"math/big"
@@ -40,7 +41,20 @@ func Verify(hash []byte, r, s, x, y *big.Int) bool {
 // newECDSAPublicKey creates an ECDSA P256 public key from the given coordinates
 func newECDSAPublicKey(x, y *big.Int) *ecdsa.PublicKey {
 	// Check if the given coordinates are valid and in the reference point (infinity)
-	if x == nil || y == nil || x.Sign() == 0 && y.Sign() == 0 || !elliptic.P256().IsOnCurve(x, y) {
+	if x == nil || y == nil || x.Sign() == 0 && y.Sign() == 0 {
+		return nil
+	}
+
+	// SEC1 uncompressed form: 0x04 || X(32) || Y(32) for P-256.
+	if x.Sign() < 0 || y.Sign() < 0 || x.BitLen() > 256 || y.BitLen() > 256 {
+		return nil
+	}
+	encodedPoint := make([]byte, 65)
+	encodedPoint[0] = 0x04
+	x.FillBytes(encodedPoint[1:33])
+	y.FillBytes(encodedPoint[33:65])
+
+	if _, err := ecdh.P256().NewPublicKey(encodedPoint); err != nil {
 		return nil
 	}
 

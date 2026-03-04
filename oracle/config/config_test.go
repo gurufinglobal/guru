@@ -39,7 +39,7 @@ name = ""
 limit = 0
 adjustment = 1.0
 denom = "agxn"
-`), 0o644); err != nil {
+`), 0o600); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
 	_, err := LoadFile(p)

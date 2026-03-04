@@ -3,7 +3,6 @@ package keeper
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
@@ -23,7 +22,7 @@ func TestRegisterOracleRequest_SchedulesAndStartsAtNonceOne(t *testing.T) {
 		Period:           5,
 	}
 
-	resp, err := k.RegisterOracleRequest(sdk.WrapSDKContext(ctx), msg)
+	resp, err := k.RegisterOracleRequest(ctx, msg)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
@@ -33,7 +32,7 @@ func TestRegisterOracleRequest_SchedulesAndStartsAtNonceOne(t *testing.T) {
 	require.Equal(t, types.Status_STATUS_ACTIVE, req.Status)
 
 	// schedule at period height
-	scheduled := k.GetScheduledTasks(ctx, uint64(ctx.BlockHeight())+req.Period)
+	scheduled := k.GetScheduledTasks(ctx, uint64(ctx.BlockHeight())+req.Period) // #nosec G115 -- block height is non-negative
 	require.Len(t, scheduled, 1)
 	require.Equal(t, resp.RequestId, scheduled[0])
 
@@ -42,8 +41,8 @@ func TestRegisterOracleRequest_SchedulesAndStartsAtNonceOne(t *testing.T) {
 	require.Len(t, evts, 1)
 	require.Equal(t, types.EventTypeOracleTask, evts[0].Type)
 	require.Len(t, evts[0].Attributes, 2)
-	require.Equal(t, types.AttributeKeyRequestID, string(evts[0].Attributes[0].Key))
-	require.Equal(t, types.AttributeKeyNonce, string(evts[0].Attributes[1].Key))
+	require.Equal(t, types.AttributeKeyRequestID, evts[0].Attributes[0].Key)
+	require.Equal(t, types.AttributeKeyNonce, evts[0].Attributes[1].Key)
 }
 
 func TestRegisterOracleRequest_UnauthorizedModerator(t *testing.T) {
@@ -58,7 +57,7 @@ func TestRegisterOracleRequest_UnauthorizedModerator(t *testing.T) {
 		Period:           5,
 	}
 
-	_, err := k.RegisterOracleRequest(sdk.WrapSDKContext(ctx), msg)
+	_, err := k.RegisterOracleRequest(ctx, msg)
 	require.Error(t, err)
 }
 
@@ -76,7 +75,7 @@ func TestRegisterOracleRequest_UnknownCategoryRejected(t *testing.T) {
 		Period:           5,
 	}
 
-	_, err := k.RegisterOracleRequest(sdk.WrapSDKContext(ctx), msg)
+	_, err := k.RegisterOracleRequest(ctx, msg)
 	require.Error(t, err)
 }
 
@@ -104,7 +103,7 @@ func TestUpdateOracleRequest(t *testing.T) {
 		Status:           types.Status_STATUS_INACTIVE,
 	}
 
-	_, err := k.UpdateOracleRequest(sdk.WrapSDKContext(ctx), msg)
+	_, err := k.UpdateOracleRequest(ctx, msg)
 	require.NoError(t, err)
 
 	updated, _ := k.GetRequest(ctx, 1)
@@ -140,7 +139,7 @@ func TestSubmitOracleReport_InvalidNonce(t *testing.T) {
 		Signature:       []byte{1},
 	}
 
-	_, err := k.SubmitOracleReport(sdk.WrapSDKContext(ctx), msg)
+	_, err := k.SubmitOracleReport(ctx, msg)
 	require.Error(t, err)
 
 	// nothing stored
@@ -175,7 +174,6 @@ func TestSubmitOracleReport_NotWhitelisted(t *testing.T) {
 		Signature:       []byte{1},
 	}
 
-	_, err := k.SubmitOracleReport(sdk.WrapSDKContext(ctx), msg)
+	_, err := k.SubmitOracleReport(ctx, msg)
 	require.Error(t, err)
 }
-

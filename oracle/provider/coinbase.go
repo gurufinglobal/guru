@@ -57,7 +57,7 @@ func (p *CoinbaseProvider) Fetch(ctx context.Context, symbol string) (string, er
 	}
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := p.client.Do(req)
+	resp, err := p.client.Do(req) //nolint:gosec // request target is fixed Coinbase API baseURL
 	if err != nil {
 		return "", err
 	}

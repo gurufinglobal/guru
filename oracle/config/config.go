@@ -96,7 +96,7 @@ denom = "agxn"
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
-	if err := os.WriteFile(path, defaultConfig, 0o644); err != nil {
+	if err := os.WriteFile(path, defaultConfig, 0o600); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 

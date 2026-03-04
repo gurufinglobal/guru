@@ -81,7 +81,7 @@ func (msg MsgRegisterOracleRequest) ValidateBasic() error {
 	req := OracleRequest{
 		Category: msg.Category,
 		Symbol:   msg.Symbol,
-		Count:    int64(msg.Count),
+		Count:    int64(msg.Count), // #nosec G115 -- count is validated before use
 		Period:   msg.Period,
 		Status:   Status_STATUS_ACTIVE,
 		Nonce:    0,

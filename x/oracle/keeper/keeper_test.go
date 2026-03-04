@@ -3,17 +3,21 @@ package keeper
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
+	tmdb "github.com/cosmos/cosmos-db"
+
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmdb "github.com/cosmos/cosmos-db"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
@@ -37,7 +41,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 
 	// minimal account keeper stub: we only need GetAccount for signature paths,
 	// but unit tests here avoid signature verification, so pass nil safely.
-	var accountKeeper oracletypes.AccountKeeper = nil
+	var accountKeeper oracletypes.AccountKeeper
 
 	k := NewKeeper(cdc, storeKey, "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft", accountKeeper)
 
@@ -60,4 +64,3 @@ func newAddr() string {
 	priv := secp256k1.GenPrivKey()
 	return sdk.AccAddress(priv.PubKey().Address()).String()
 }
-

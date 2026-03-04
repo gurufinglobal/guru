@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+
+	"cosmossdk.io/log"
+
 	"github.com/gurufinglobal/guru/v2/oracle/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )

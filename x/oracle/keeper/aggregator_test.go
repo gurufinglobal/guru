@@ -3,8 +3,9 @@ package keeper
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
@@ -89,4 +90,3 @@ func TestProcessOracleReportAggregation_BelowThreshold_NoResult(t *testing.T) {
 	_, found := k.GetResult(ctx, 2, 1)
 	require.False(t, found)
 }
-

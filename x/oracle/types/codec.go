@@ -11,7 +11,7 @@ import (
 var (
 	amino = codec.NewLegacyAmino()
 	// ModuleCdc is the codec for the oracle module.
-	ModuleCdc = codec.NewAminoCodec(amino)
+	ModuleCdc = codec.NewAminoCodec(amino) //nolint:staticcheck // kept for legacy Amino JSON signing compatibility
 )
 
 func init() {

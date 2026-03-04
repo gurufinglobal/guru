@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cobra"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"cosmossdk.io/core/appmodule"
 
@@ -15,7 +17,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/spf13/cobra"
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/client/cli"
 	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
@@ -95,7 +96,7 @@ func NewAppModule(k keeper.Keeper) AppModule {
 func (AppModule) Name() string { return types.ModuleName }
 
 // RegisterInvariants registers the oracle module assertions (invariants).
-func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
+func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {} //nolint:staticcheck // required by Cosmos SDK AppModule interface
 
 // RegisterServices registers a gRPC query service to respond to the module-specific gRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {

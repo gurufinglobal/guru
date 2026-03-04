@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"cosmossdk.io/log"
+
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 

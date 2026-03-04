@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cosmossdk.io/log"
+
 	"github.com/gurufinglobal/guru/v2/oracle/provider"
 	"github.com/gurufinglobal/guru/v2/oracle/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
@@ -24,6 +25,7 @@ func (m mockProvider) Categories() []int32 { return m.categories }
 func (m mockProvider) SetHTTPClient(client *http.Client) {
 	// no-op
 }
+
 func (m mockProvider) Fetch(ctx context.Context, symbol string) (string, error) {
 	return m.fetchFn(ctx, symbol)
 }

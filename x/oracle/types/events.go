@@ -3,7 +3,7 @@ package types
 const (
 	// EventTypeOracleTask is the single event type for oracle daemon to listen.
 	// Emitted when: 1) new request registered, 2) aggregation completed + period blocks.
-	EventTypeOracleTask = "oracle_task"
+	EventTypeOracleTask        = "oracle_task"
 	EventTypeUpdateMinGasPrice = "update_min_gas_price"
 
 	// Legacy event types for internal logging (not for daemon)

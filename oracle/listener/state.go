@@ -7,6 +7,7 @@ import (
 	"time"
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+
 	"github.com/gurufinglobal/guru/v2/oracle/types"
 	"github.com/gurufinglobal/guru/v2/oracle/utils"
 )

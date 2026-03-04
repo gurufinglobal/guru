@@ -96,8 +96,12 @@ func (r OracleReport) Bytes() ([]byte, error) {
 	binary.BigEndian.PutUint64(u64[:], r.Nonce)
 	buf = append(buf, u64[:]...)
 
+	rawDataLen := len(r.RawData)
+	if rawDataLen > int(^uint32(0)) {
+		return nil, fmt.Errorf("raw data too large")
+	}
 	var l4 [4]byte
-	binary.BigEndian.PutUint32(l4[:], uint32(len(r.RawData)))
+	binary.BigEndian.PutUint32(l4[:], uint32(rawDataLen))
 	buf = append(buf, l4[:]...)
 	buf = append(buf, []byte(r.RawData)...)
 

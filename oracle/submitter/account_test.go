@@ -5,9 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	"google.golang.org/grpc"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"google.golang.org/grpc"
 )
 
 type mockAuthClient struct {

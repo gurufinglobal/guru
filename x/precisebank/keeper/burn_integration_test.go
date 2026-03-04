@@ -523,10 +523,7 @@ func FuzzBurnCoins(f *testing.F) {
 	f.Add(types.ConversionFactor().MulRaw(2).AddRaw(123948723).Int64())
 
 	f.Fuzz(func(t *testing.T, amount int64) {
-		// No negative amounts
-		if amount < 0 {
-			amount = -amount
-		}
+		absAmount := absInt64(amount) //nolint:staticcheck // false positive in fuzz closure analysis
 
 		// Manually setup test suite since no direct Fuzz support in test suites
 		suite := new(KeeperIntegrationTestSuite)
@@ -544,7 +541,7 @@ func FuzzBurnCoins(f *testing.F) {
 		err := suite.network.App.PreciseBankKeeper.MintCoins(
 			suite.network.GetContext(),
 			moduleName,
-			cs(ci(types.ExtendedCoinDenom(), sdkmath.NewInt(amount).MulRaw(burnCount))),
+			cs(ci(types.ExtendedCoinDenom(), sdkmath.NewInt(absAmount).MulRaw(burnCount))),
 		)
 		suite.Require().NoError(err)
 
@@ -553,7 +550,7 @@ func FuzzBurnCoins(f *testing.F) {
 			err := suite.network.App.PreciseBankKeeper.BurnCoins(
 				suite.network.GetContext(),
 				moduleName,
-				cs(c(types.ExtendedCoinDenom(), amount)),
+				cs(c(types.ExtendedCoinDenom(), absAmount)),
 			)
 			suite.Require().NoError(err)
 		}
@@ -568,4 +565,11 @@ func FuzzBurnCoins(f *testing.F) {
 			balAfter.Amount.Int64(),
 		)
 	})
+}
+
+func absInt64(v int64) int64 {
+	if v < 0 {
+		return -v
+	}
+	return v
 }

@@ -5,12 +5,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/spf13/cobra"
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )

@@ -4,10 +4,13 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
@@ -70,7 +73,7 @@ func (k Keeper) RegisterOracleRequest(goCtx context.Context, msg *types.MsgRegis
 		Id:       requestID,
 		Category: msg.Category,
 		Symbol:   msg.Symbol,
-		Count:    int64(msg.Count),
+		Count:    int64(msg.Count), // #nosec G115 -- count is validated and fits module constraints
 		Period:   msg.Period,
 		Status:   types.Status_STATUS_ACTIVE,
 		Nonce:    1, // 첫 기간은 1부터 시작
@@ -84,7 +87,7 @@ func (k Keeper) RegisterOracleRequest(goCtx context.Context, msg *types.MsgRegis
 
 	// 주기 기반 fail-fast: 집계 성공 여부와 관계없이 다음 기간 이벤트를 예약
 	if req.Period > 0 {
-		nextHeight := uint64(ctx.BlockHeight()) + req.Period
+		nextHeight := uint64(ctx.BlockHeight()) + req.Period // #nosec G115 -- block height is non-negative
 		k.ScheduleOracleTask(ctx, nextHeight, req.Id)
 	}
 
@@ -130,7 +133,7 @@ func (k Keeper) UpdateOracleRequest(goCtx context.Context, msg *types.MsgUpdateO
 	}
 
 	if msg.Count != 0 {
-		req.Count = int64(msg.Count)
+		req.Count = int64(msg.Count) // #nosec G115 -- count is bounded by message validation
 	}
 	if msg.Period != 0 {
 		req.Period = msg.Period

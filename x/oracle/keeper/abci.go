@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
@@ -23,7 +24,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 		return
 	}
 
-	currentHeight := uint64(ctx.BlockHeight())
+	currentHeight := uint64(ctx.BlockHeight()) // #nosec G115 -- block height is non-negative in chain context
 
 	// 1. Process aggregations
 	k.ProcessOracleReportAggregation(ctx)

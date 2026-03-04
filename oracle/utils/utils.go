@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )

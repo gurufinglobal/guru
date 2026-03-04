@@ -260,7 +260,7 @@ func (suite *KeeperTestSuite) TestQueryERC20Bytes32Fallback() {
 		data[31] = 32
 
 		// Length (32 bytes)
-		data[63] = byte(textLen)
+		data[63] = byte(textLen) // #nosec G115 -- helper inputs are short test strings
 
 		// String data (padded to 32-byte boundary)
 		copy(data[64:64+textLen], textBytes)

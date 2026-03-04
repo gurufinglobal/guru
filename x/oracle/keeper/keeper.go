@@ -6,8 +6,10 @@ import (
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
@@ -438,10 +440,14 @@ func (k Keeper) deleteReports(ctx sdk.Context, requestID, nonce uint64) {
 	iter := storetypes.KVStorePrefixIterator(store, types.ReportPrefix(requestID, nonce))
 	defer iter.Close()
 
-	// Pre-allocate based on the tracked report count (best-effort; 0 is fine).
-	capHint := int(k.GetReportCount(ctx, requestID, nonce))
-	if capHint < 0 {
-		capHint = 0
+	// Pre-allocate based on tracked report count with a safe int cap.
+	reportCount := k.GetReportCount(ctx, requestID, nonce)
+	maxInt := uint64(^uint(0) >> 1)
+	capHint := 0
+	if reportCount > maxInt {
+		capHint = int(maxInt)
+	} else {
+		capHint = int(reportCount)
 	}
 	keys := make([][]byte, 0, capHint)
 	for ; iter.Valid(); iter.Next() {

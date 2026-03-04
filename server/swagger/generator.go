@@ -112,12 +112,12 @@ func GenerateSwaggerPath(method RPCMethod) string {
 		tag = "Guru Module" // fallback
 	}
 
-	path.WriteString(fmt.Sprintf("  %s:\n", method.HTTPPath))
-	path.WriteString(fmt.Sprintf("    %s:\n", strings.ToLower(method.HTTPMethod)))
-	path.WriteString(fmt.Sprintf("      summary: %s\n", method.Summary))
-	path.WriteString(fmt.Sprintf("      operationId: %s\n", method.OperationID))
+	fmt.Fprintf(&path, "  %s:\n", method.HTTPPath)
+	fmt.Fprintf(&path, "    %s:\n", strings.ToLower(method.HTTPMethod))
+	fmt.Fprintf(&path, "      summary: %s\n", method.Summary)
+	fmt.Fprintf(&path, "      operationId: %s\n", method.OperationID)
 	path.WriteString("      tags:\n")
-	path.WriteString(fmt.Sprintf("        - \"%s\"\n", tag))
+	fmt.Fprintf(&path, "        - \"%s\"\n", tag)
 
 	// Add parameters
 	if len(method.Parameters) > 0 || method.HTTPMethod == "POST" {
@@ -125,10 +125,10 @@ func GenerateSwaggerPath(method RPCMethod) string {
 
 		// Add path parameters if any
 		for _, param := range method.Parameters {
-			path.WriteString(fmt.Sprintf("        - name: %s\n", param.Name))
+			fmt.Fprintf(&path, "        - name: %s\n", param.Name)
 			path.WriteString("          in: path\n")
-			path.WriteString(fmt.Sprintf("          required: %t\n", param.Required))
-			path.WriteString(fmt.Sprintf("          type: %s\n", param.Type))
+			fmt.Fprintf(&path, "          required: %t\n", param.Required)
+			fmt.Fprintf(&path, "          type: %s\n", param.Type)
 		}
 
 		// Add request body for POST methods

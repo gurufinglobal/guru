@@ -2,7 +2,6 @@ package keys
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 
 	"sigs.k8s.io/yaml"
@@ -37,7 +36,8 @@ func printKeyringRecord(w io.Writer, k *cryptokeyring.Record, bechKeyOut bechKey
 			return err
 		}
 
-		if _, err := fmt.Fprintln(w, string(out)); err != nil {
+		out = append(out, '\n')
+		if _, err := w.Write(out); err != nil {
 			return err
 		}
 	}
@@ -51,7 +51,8 @@ func printTextRecords(w io.Writer, kos []keys.KeyOutput) error {
 		return err
 	}
 
-	if _, err := fmt.Fprintln(w, string(out)); err != nil {
+	out = append(out, '\n')
+	if _, err := w.Write(out); err != nil {
 		return err
 	}
 

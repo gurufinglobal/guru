@@ -32,7 +32,7 @@ func TestInitCmd_WhenConfigExists_Skips(t *testing.T) {
 			t.Fatalf("mkdir: %v", err)
 		}
 		cfgPath := configFilePath()
-		if err := os.WriteFile(cfgPath, []byte("dummy"), 0o644); err != nil {
+		if err := os.WriteFile(cfgPath, []byte("dummy"), 0o600); err != nil {
 			t.Fatalf("write: %v", err)
 		}
 

@@ -6,7 +6,9 @@ import (
 	"sort"
 
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
@@ -45,7 +47,7 @@ func (k Keeper) calculateQuorumThreshold(total uint64, ratio math.LegacyDec) uin
 		return 0
 	}
 
-	totalDec := math.LegacyNewDec(int64(total))
+	totalDec := math.LegacyNewDec(int64(total)) // #nosec G115 -- total comes from whitelist count
 	thresholdDec := totalDec.Mul(ratio)
 
 	// Ceiling: if there's a fractional part, round up
@@ -54,7 +56,7 @@ func (k Keeper) calculateQuorumThreshold(total uint64, ratio math.LegacyDec) uin
 		threshold++
 	}
 
-	return uint64(threshold)
+	return uint64(threshold) // #nosec G115 -- threshold is derived from non-negative decimal math
 }
 
 // tryAggregate attempts to aggregate reports for a specific request and nonce.
@@ -107,8 +109,8 @@ func (k Keeper) tryAggregate(ctx sdk.Context, req types.OracleRequest, nonce, to
 	result := types.OracleResult{
 		RequestId:        req.Id,
 		AggregatedData:   agg,
-		AggregatedHeight: uint64(ctx.BlockHeight()),
-		AggregatedTime:   uint64(ctx.BlockTime().Unix()),
+		AggregatedHeight: uint64(ctx.BlockHeight()),      // #nosec G115 -- block height is non-negative
+		AggregatedTime:   uint64(ctx.BlockTime().Unix()), // #nosec G115 -- block time is expected non-negative
 		Nonce:            nonce,
 	}
 

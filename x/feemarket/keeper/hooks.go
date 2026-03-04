@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
@@ -80,12 +82,15 @@ func (h OracleHooks) AfterOracleAggregation(ctx sdk.Context, request oracletypes
 	}
 
 	params.MinGasPrice = finalNewPriceDec
-	h.k.SetParams(ctx, params)
+	if err := h.k.SetParams(ctx, params); err != nil {
+		h.k.Logger(ctx).Error("failed to set feemarket params from oracle hook", "err", err)
+		return
+	}
 
 	ctx.EventManager().EmitEvent(
-	    sdk.NewEvent(
+		sdk.NewEvent(
 			oracletypes.EventTypeUpdateMinGasPrice,
 			sdk.NewAttribute(types.AttributeKeyMinGasPrice, finalNewPriceDec.String()),
-	    ),
+		),
 	)
 }

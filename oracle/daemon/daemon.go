@@ -10,8 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"cosmossdk.io/log"
+	"github.com/rs/zerolog"
+
 	comethttp "github.com/cometbft/cometbft/rpc/client/http"
+
+	"cosmossdk.io/log"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -19,6 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	guruconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	"github.com/gurufinglobal/guru/v2/crypto/hd"
 	"github.com/gurufinglobal/guru/v2/encoding"
@@ -31,7 +36,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/oracle/utils"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/rs/zerolog"
 )
 
 type Daemon struct {

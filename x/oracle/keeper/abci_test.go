@@ -49,10 +49,10 @@ func TestProcessScheduledTasks_RollOverAndReschedule(t *testing.T) {
 	evts := ctx.EventManager().Events()
 	require.Len(t, evts, 1)
 	attrs := evts[0].Attributes
-	require.Equal(t, types.AttributeKeyRequestID, string(attrs[0].Key))
-	require.Equal(t, "1", string(attrs[0].Value))
-	require.Equal(t, types.AttributeKeyNonce, string(attrs[1].Key))
-	require.Equal(t, "2", string(attrs[1].Value))
+	require.Equal(t, types.AttributeKeyRequestID, attrs[0].Key)
+	require.Equal(t, "1", attrs[0].Value)
+	require.Equal(t, types.AttributeKeyNonce, attrs[1].Key)
+	require.Equal(t, "2", attrs[1].Value)
 }
 
 func TestProcessScheduledTasks_DeactivateWhenCountExhausted(t *testing.T) {
@@ -83,4 +83,3 @@ func TestProcessScheduledTasks_DeactivateWhenCountExhausted(t *testing.T) {
 	next := k.GetScheduledTasks(ctx, 24)
 	require.Len(t, next, 0)
 }
-
