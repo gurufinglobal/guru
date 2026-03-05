@@ -264,7 +264,7 @@ func (k Keeper) OnRecvExchangePacket(
 		exchangeID.String(),
 	)
 
-	refundKey := RefundPacketDataKey(types.PortID, swapChannel, sequence)
+	refundKey := GetRefundPacketDataKey(types.PortID, swapChannel, sequence)
 
 	err = k.SetRefundPacketData(ctx, refundKey, &refundMsg)
 	if err != nil {

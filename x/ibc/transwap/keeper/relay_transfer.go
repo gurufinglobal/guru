@@ -109,7 +109,7 @@ func (k Keeper) OnAcknowledgementTransferPacket(
 	data types.InternalTransferRepresentation,
 	ack channeltypes.Acknowledgement,
 ) error {
-	refundKey := RefundPacketDataKey(sourcePort, sourceChannel, sequence)
+	refundKey := GetRefundPacketDataKey(sourcePort, sourceChannel, sequence)
 
 	switch ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
@@ -152,6 +152,6 @@ func (k Keeper) OnTimeoutTransferPacket(
 	}
 
 	// refund to original source chain
-	refundKey := RefundPacketDataKey(sourcePort, sourceChannel, sequence)
+	refundKey := GetRefundPacketDataKey(sourcePort, sourceChannel, sequence)
 	return k.performExchangeRefund(ctx, refundKey)
 }

@@ -72,7 +72,7 @@ func setupRefundKeeper(t *testing.T) (Keeper, sdk.Context) {
 }
 
 func TestRefundPacketDataKey(t *testing.T) {
-	key := RefundPacketDataKey(transtypes.PortID, "channel-7", 42)
+	key := GetRefundPacketDataKey(transtypes.PortID, "channel-7", 42)
 	require.Equal(t, "refund/transwap/channel-7/42", key)
 }
 
@@ -105,8 +105,8 @@ func TestRefundPacketData_IsolatedBySequenceForSameReceiver(t *testing.T) {
 		"2",
 	)
 
-	key1 := RefundPacketDataKey(transtypes.PortID, "channel-0", 1)
-	key2 := RefundPacketDataKey(transtypes.PortID, "channel-0", 2)
+	key1 := GetRefundPacketDataKey(transtypes.PortID, "channel-0", 1)
+	key2 := GetRefundPacketDataKey(transtypes.PortID, "channel-0", 2)
 
 	require.NoError(t, k.SetRefundPacketData(ctx, key1, &packet1))
 	require.NoError(t, k.SetRefundPacketData(ctx, key2, &packet2))
