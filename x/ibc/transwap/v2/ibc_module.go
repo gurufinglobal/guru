@@ -143,7 +143,7 @@ func (im *IBCModule) OnRecvPacket(ctx sdk.Context, sourceChannel string, destina
 			sourceChannel,
 			payload.DestinationPort,
 			destinationChannel,
-			0, // IBC v2 callback does not expose packet timeout; guard in keeper will reject.
+			v2ExchangeSourceTimeoutTimestamp(ctx),
 		)
 	}
 
@@ -221,4 +221,8 @@ func (im *IBCModule) OnAcknowledgementPacket(ctx sdk.Context, sourceChannel stri
 // it implements the PacketDataUnmarshaler interface
 func (*IBCModule) UnmarshalPacketData(payload channeltypesv2.Payload) (any, error) {
 	return types.UnmarshalPacketData(payload.Value, payload.Version, payload.Encoding)
+}
+
+func v2ExchangeSourceTimeoutTimestamp(ctx sdk.Context) uint64 {
+	return uint64(ctx.BlockTime().Add(types.MinTimeoutWindow).UnixNano())
 }

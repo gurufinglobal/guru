@@ -121,8 +121,8 @@ func (k Keeper) OnRecvExchangePacket(
 	if err := data.ValidateBasic(); err != nil {
 		return errorsmod.Wrapf(err, "error validating ICS-20 transfer packet data")
 	}
-	if err := validateInheritedTimeoutWindow(ctx, sourceTimeoutTimestamp); err != nil {
-		return errorsmod.Wrap(err, "rejecting exchange packet due to insufficient inherited timeout window")
+	if err := validateInheritedTimeout(ctx, sourceTimeoutTimestamp); err != nil {
+		return errorsmod.Wrap(err, "rejecting exchange packet due to insufficient inherited timeout")
 	}
 
 	// check the exchange and it supports the given denom
@@ -226,9 +226,9 @@ func (k Keeper) OnRecvExchangePacket(
 	channel, isIBCV1 := k.channelKeeper.GetChannel(ctx, swapPort, swapChannel)
 	var sequence uint64
 	var outboundTimeoutTimestamp uint64
+	outboundTimeoutTimestamp = sourceTimeoutTimestamp
 
 	if isIBCV1 {
-		outboundTimeoutTimestamp = sourceTimeoutTimestamp
 		// if a V1 channel exists for the source channel, then use IBC V1 protocol
 		sequence, err = k.transferV1Packet(ctx, swapChannel, token, outboundTimeoutTimestamp, packetData)
 		// telemetry for transfer occurs here, in IBC V2 this is done in the onSendPacket callback
@@ -376,8 +376,8 @@ func truncatePrecision(value string, maxPrecision int) string {
 	return value
 }
 
-func validateInheritedTimeoutWindow(ctx sdk.Context, inheritedTimeoutTimestampNano uint64) error {
-	minAcceptable := uint64(ctx.BlockTime().Add(types.MinTimeoutWindow).UnixNano())
+func validateInheritedTimeout(ctx sdk.Context, inheritedTimeoutTimestampNano uint64) error {
+	minAcceptable := uint64(ctx.BlockTime().UnixNano())
 
 	if inheritedTimeoutTimestampNano < minAcceptable {
 		return errorsmod.Wrapf(
@@ -396,9 +396,9 @@ func toV2TimeoutSeconds(timeoutTimestampNano uint64) uint64 {
 		return 0
 	}
 
-	nanoPerSec := uint64(time.Second)
-	seconds := timeoutTimestampNano / nanoPerSec
-	if timeoutTimestampNano%nanoPerSec != 0 {
+	nanoPerSecond := uint64(time.Second)
+	seconds := timeoutTimestampNano / nanoPerSecond
+	if timeoutTimestampNano%nanoPerSecond != 0 {
 		seconds++
 	}
 

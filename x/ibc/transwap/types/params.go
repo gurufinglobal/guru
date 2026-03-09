@@ -3,9 +3,9 @@ package types
 import "time"
 
 const (
-	// DefaultMinTimeoutWindow is the default minimum required remaining timeout window for
-	// inbound exchange packets before Guru forwards funds to the destination chain.
-	DefaultMinTimeoutWindow = time.Minute
+	// DefaultMinTimeoutWindow is the default timeout window used by the
+	// IBC v2 exchange fallback policy.
+	DefaultMinTimeoutWindow = 10 * time.Minute
 )
 
 var (
