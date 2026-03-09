@@ -14,7 +14,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
 )
 
-func (k Keeper) transferV1Packet(ctx sdk.Context, sourceChannel string, token types.Token, timeoutTimestamp uint64, packetData types.FungibleTokenPacketData) (uint64, error) { //nolint:unparam
+func (k Keeper) transferV1Packet(ctx sdk.Context, sourceChannel string, token types.Token, timeoutTimestamp uint64, packetData types.FungibleTokenPacketData) (uint64, error) {
 	if err := k.SendTransfer(ctx, types.PortID, sourceChannel, token, sdk.MustAccAddressFromBech32(packetData.Sender)); err != nil {
 		return 0, err
 	}
@@ -31,7 +31,7 @@ func (k Keeper) transferV1Packet(ctx sdk.Context, sourceChannel string, token ty
 	return sequence, nil
 }
 
-func (k Keeper) transferV2Packet(ctx sdk.Context, encoding, sourceChannel string, timeoutTimestamp uint64, packetData types.FungibleTokenPacketData) (uint64, error) { //nolint:unparam
+func (k Keeper) transferV2Packet(ctx sdk.Context, encoding, sourceChannel string, timeoutTimestamp uint64, packetData types.FungibleTokenPacketData) (uint64, error) {
 	if encoding == "" {
 		encoding = types.EncodingJSON
 	}

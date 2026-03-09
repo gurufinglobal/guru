@@ -105,13 +105,16 @@ func (k Keeper) OnAcknowledgementTransferPacket(
 	ctx sdk.Context,
 	sourcePort string,
 	sourceChannel string,
+	sequence uint64,
 	data types.InternalTransferRepresentation,
 	ack channeltypes.Acknowledgement,
 ) error {
+	refundKey := GetRefundPacketDataKey(sourcePort, sourceChannel, sequence)
+
 	switch ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		// delete refund info from store
-		k.DeleteRefundPacketData(ctx, data.Receiver)
+		k.DeleteRefundPacketData(ctx, refundKey)
 		// the acknowledgement succeeded on the receiving chain so nothing
 		// needs to be executed and no error needs to be returned
 		return nil
@@ -121,14 +124,14 @@ func (k Keeper) OnAcknowledgementTransferPacket(
 		}
 
 		// refund to original source chain
-		if err := k.performExchangeRefund(ctx, data); err != nil {
+		if err := k.performExchangeRefund(ctx, refundKey); err != nil {
 			return err
 		}
 
 		return nil
 	default:
 		// if the acknowledgement is not a success or error, then return an error
-		if err := k.performExchangeRefund(ctx, data); err != nil {
+		if err := k.performExchangeRefund(ctx, refundKey); err != nil {
 			return err
 		}
 		return errorsmod.Wrapf(ibcerrors.ErrInvalidType, "expected one of [%T, %T], got %T", channeltypes.Acknowledgement_Result{}, channeltypes.Acknowledgement_Error{}, ack.Response)
@@ -140,6 +143,7 @@ func (k Keeper) OnTimeoutTransferPacket(
 	ctx sdk.Context,
 	sourcePort string,
 	sourceChannel string,
+	sequence uint64,
 	data types.InternalTransferRepresentation,
 ) error {
 	// refund the tokens to the sender
@@ -148,5 +152,6 @@ func (k Keeper) OnTimeoutTransferPacket(
 	}
 
 	// refund to original source chain
-	return k.performExchangeRefund(ctx, data)
+	refundKey := GetRefundPacketDataKey(sourcePort, sourceChannel, sequence)
+	return k.performExchangeRefund(ctx, refundKey)
 }

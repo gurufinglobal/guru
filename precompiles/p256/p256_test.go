@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -64,8 +65,8 @@ func (s *PrecompileTestSuite) TestRun() {
 
 				input := make([]byte, p256.VerifyInputLength)
 				copy(input[0:32], hash)
-				copy(input[32:64], rBz)
-				copy(input[64:96], sBz)
+				new(big.Int).SetBytes(rBz).FillBytes(input[32:64])
+				new(big.Int).SetBytes(sBz).FillBytes(input[64:96])
 				s.p256Priv.X.FillBytes(input[96:128])
 				s.p256Priv.Y.FillBytes(input[128:160])
 

@@ -169,7 +169,7 @@ func (im *IBCModule) OnTimeoutPacket(ctx sdk.Context, sourceChannel string, dest
 
 	// refund tokens
 	if data.IsTransferPacket() {
-		err = im.keeper.OnTimeoutTransferPacket(ctx, payload.SourcePort, sourceChannel, data)
+		err = im.keeper.OnTimeoutTransferPacket(ctx, payload.SourcePort, sourceChannel, sequence, data)
 	} else {
 		err = im.keeper.OnTimeoutExchangePacket(ctx, payload.SourcePort, sourceChannel, data)
 	}
@@ -203,7 +203,7 @@ func (im *IBCModule) OnAcknowledgementPacket(ctx sdk.Context, sourceChannel stri
 	}
 
 	if data.IsTransferPacket() {
-		err = im.keeper.OnAcknowledgementTransferPacket(ctx, payload.SourcePort, sourceChannel, data, ack)
+		err = im.keeper.OnAcknowledgementTransferPacket(ctx, payload.SourcePort, sourceChannel, sequence, data, ack)
 	} else {
 		err = im.keeper.OnAcknowledgementExchangePacket(ctx, payload.SourcePort, sourceChannel, data, ack)
 	}

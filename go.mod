@@ -17,7 +17,7 @@ require (
 	cosmossdk.io/x/upgrade v0.2.0
 	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcutil v1.1.6
-	github.com/cometbft/cometbft v0.38.19
+	github.com/cometbft/cometbft v0.38.21
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.53.4
@@ -277,7 +277,7 @@ replace (
 	github.com/cockroachdb/pebble => github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593
 	// Fix GO-2025-4025: CometBFT's invalid BitArray handling can lead to network halt
 	// Note: GO-2025-3442 requires v1.0.1 (major upgrade), consider upgrading separately
-	github.com/cometbft/cometbft => github.com/cometbft/cometbft v0.38.19
+	github.com/cometbft/cometbft => github.com/cometbft/cometbft v0.38.21
 	// Fix GO-2025-4087: Unchecked memory allocation during vector deserialization
 	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.18.1
 	// use guru fork of cosmos-sdk

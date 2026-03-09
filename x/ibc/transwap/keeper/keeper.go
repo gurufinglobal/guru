@@ -290,6 +290,11 @@ func (k Keeper) IsBlockedAddr(addr sdk.AccAddress) bool {
 	return k.BankKeeper.BlockedAddr(addr)
 }
 
+// GetRefundPacketDataKey builds a deterministic key for refund packet data.
+func GetRefundPacketDataKey(sourcePort, sourceChannel string, sequence uint64) string {
+	return fmt.Sprintf("refund/%s/%s/%d", sourcePort, sourceChannel, sequence)
+}
+
 func (k Keeper) SetRefundPacketData(ctx sdk.Context, key string, packet *types.TransferPacketData) error {
 	if packet == nil {
 		return fmt.Errorf("packet cannot be nil")

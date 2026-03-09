@@ -220,16 +220,17 @@ func (k Keeper) OnRecvExchangePacket(
 	// if a channel exists with source channel, then use IBC V1 protocol
 	// otherwise use IBC V2 protocol
 	channel, isIBCV1 := k.channelKeeper.GetChannel(ctx, swapPort, swapChannel)
+	var sequence uint64
 
 	if isIBCV1 {
 		// if a V1 channel exists for the source channel, then use IBC V1 protocol
-		_, err = k.transferV1Packet(ctx, swapChannel, token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
+		sequence, err = k.transferV1Packet(ctx, swapChannel, token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
 		// telemetry for transfer occurs here, in IBC V2 this is done in the onSendPacket callback
 		telemetry.ReportTransfer(swapPort, swapChannel, channel.Counterparty.PortId, channel.Counterparty.ChannelId, token)
 	} else {
 		// otherwise try to send an IBC V2 packet, if the sourceChannel is not a IBC V2 client
 		// then core IBC will return a CounterpartyNotFound error
-		_, err = k.transferV2Packet(ctx, "", swapChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
+		sequence, err = k.transferV2Packet(ctx, "", swapChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
 	}
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send swap tokens: %s", coin.Denom)
@@ -263,9 +264,11 @@ func (k Keeper) OnRecvExchangePacket(
 		exchangeID.String(),
 	)
 
-	err = k.SetRefundPacketData(ctx, destReceiver, &refundMsg)
+	refundKey := GetRefundPacketDataKey(types.PortID, swapChannel, sequence)
+
+	err = k.SetRefundPacketData(ctx, refundKey, &refundMsg)
 	if err != nil {
-		return errorsmod.Wrapf(err, "unable to set refund packet data: %s", destReceiver)
+		return errorsmod.Wrapf(err, "unable to set refund packet data: %s", refundKey)
 	}
 
 	// The ibc_module.go module will return the proper ack.
@@ -309,9 +312,9 @@ func (k Keeper) OnTimeoutExchangePacket(
 	return k.refundPacketTokens(ctx, sourcePort, sourceChannel, data)
 }
 
-func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransferRepresentation) error {
+func (k Keeper) performExchangeRefund(ctx sdk.Context, refundKey string) error {
 	// refund to original source chain
-	refundPacket, err := k.GetRefundPacketData(ctx, data.Receiver)
+	refundPacket, err := k.GetRefundPacketData(ctx, refundKey)
 	if err != nil {
 		return err
 	}
@@ -350,7 +353,7 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, data types.InternalTransf
 	}
 
 	// delete refund info from store
-	k.DeleteRefundPacketData(ctx, data.Receiver)
+	k.DeleteRefundPacketData(ctx, refundKey)
 
 	return nil
 }
