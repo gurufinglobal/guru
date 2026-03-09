@@ -224,5 +224,5 @@ func (*IBCModule) UnmarshalPacketData(payload channeltypesv2.Payload) (any, erro
 }
 
 func v2ExchangeSourceTimeoutTimestamp(ctx sdk.Context) uint64 {
-	return uint64(ctx.BlockTime().Add(types.MinTimeoutWindow).UnixNano())
+	return uint64(ctx.BlockTime().Add(types.MinTimeoutWindow).UnixNano()) //nolint:gosec // G115: block time cannot be negative
 }

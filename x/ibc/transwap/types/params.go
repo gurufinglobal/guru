@@ -8,8 +8,6 @@ const (
 	DefaultMinTimeoutWindow = 10 * time.Minute
 )
 
-var (
-	// MinTimeoutWindow is checked against ctx.BlockTime() to keep evaluation deterministic.
-	// It is declared as a variable to allow future module-level parameter wiring.
-	MinTimeoutWindow = DefaultMinTimeoutWindow
-)
+// MinTimeoutWindow is checked against ctx.BlockTime() to keep evaluation deterministic.
+// It is declared as a variable to allow future module-level parameter wiring.
+var MinTimeoutWindow = DefaultMinTimeoutWindow

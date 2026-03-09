@@ -377,7 +377,7 @@ func truncatePrecision(value string, maxPrecision int) string {
 }
 
 func validateInheritedTimeout(ctx sdk.Context, inheritedTimeoutTimestampNano uint64) error {
-	minAcceptable := uint64(ctx.BlockTime().UnixNano())
+	minAcceptable := uint64(ctx.BlockTime().UnixNano()) //nolint:gosec // G115: block time cannot be negative
 
 	if inheritedTimeoutTimestampNano < minAcceptable {
 		return errorsmod.Wrapf(

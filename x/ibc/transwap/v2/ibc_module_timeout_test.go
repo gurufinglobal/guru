@@ -13,6 +13,6 @@ func TestV2ExchangeSourceTimeoutTimestamp(t *testing.T) {
 	blockTime := time.Unix(1_700_000_000, 0)
 	ctx := sdk.Context{}.WithBlockTime(blockTime)
 
-	expected := uint64(blockTime.Add(10 * time.Minute).UnixNano())
+	expected := uint64(blockTime.Add(10 * time.Minute).UnixNano()) //nolint:gosec // G115: block time cannot be negative
 	require.Equal(t, expected, v2ExchangeSourceTimeoutTimestamp(ctx))
 }
