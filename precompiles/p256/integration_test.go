@@ -103,10 +103,10 @@ var _ = Describe("Calling p256 precompile directly", Label("P256 Precompile"), O
 
 					input = make([]byte, p256.VerifyInputLength)
 					copy(input[0:32], hash)
-					copy(input[32:64], rInt.Bytes())
-					copy(input[64:96], sInt.Bytes())
-					copy(input[96:128], privB.X.Bytes())
-					copy(input[128:160], privB.Y.Bytes())
+					rInt.FillBytes(input[32:64])
+					sInt.FillBytes(input[64:96])
+					privB.X.FillBytes(input[96:128])
+					privB.Y.FillBytes(input[128:160])
 					return input, nil, ""
 				},
 			),
@@ -161,10 +161,10 @@ var _ = Describe("Calling p256 precompile directly", Label("P256 Precompile"), O
 
 					input = make([]byte, p256.VerifyInputLength)
 					copy(input[0:32], hash)
-					copy(input[32:64], rInt.Bytes())
-					copy(input[64:96], sInt.Bytes())
-					copy(input[96:128], privB.X.Bytes())
-					copy(input[128:160], privB.Y.Bytes())
+					rInt.FillBytes(input[32:64])
+					sInt.FillBytes(input[64:96])
+					privB.X.FillBytes(input[96:128])
+					privB.Y.FillBytes(input[128:160])
 					return input
 				},
 			),
