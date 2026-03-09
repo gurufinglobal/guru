@@ -115,10 +115,14 @@ func (k Keeper) OnRecvExchangePacket(
 	sourceChannel string,
 	destPort string,
 	destChannel string,
+	sourceTimeoutTimestamp uint64,
 ) error {
 	// validate packet data upon receiving
 	if err := data.ValidateBasic(); err != nil {
 		return errorsmod.Wrapf(err, "error validating ICS-20 transfer packet data")
+	}
+	if err := validateInheritedTimeoutWindow(ctx, sourceTimeoutTimestamp); err != nil {
+		return errorsmod.Wrap(err, "rejecting exchange packet due to insufficient inherited timeout window")
 	}
 
 	// check the exchange and it supports the given denom
@@ -221,16 +225,19 @@ func (k Keeper) OnRecvExchangePacket(
 	// otherwise use IBC V2 protocol
 	channel, isIBCV1 := k.channelKeeper.GetChannel(ctx, swapPort, swapChannel)
 	var sequence uint64
+	var outboundTimeoutTimestamp uint64
 
 	if isIBCV1 {
+		outboundTimeoutTimestamp = sourceTimeoutTimestamp
 		// if a V1 channel exists for the source channel, then use IBC V1 protocol
-		sequence, err = k.transferV1Packet(ctx, swapChannel, token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
+		sequence, err = k.transferV1Packet(ctx, swapChannel, token, outboundTimeoutTimestamp, packetData)
 		// telemetry for transfer occurs here, in IBC V2 this is done in the onSendPacket callback
 		telemetry.ReportTransfer(swapPort, swapChannel, channel.Counterparty.PortId, channel.Counterparty.ChannelId, token)
 	} else {
+		outboundTimeoutTimestamp = toV2TimeoutSeconds(sourceTimeoutTimestamp)
 		// otherwise try to send an IBC V2 packet, if the sourceChannel is not a IBC V2 client
 		// then core IBC will return a CounterpartyNotFound error
-		sequence, err = k.transferV2Packet(ctx, "", swapChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
+		sequence, err = k.transferV2Packet(ctx, "", swapChannel, outboundTimeoutTimestamp, packetData)
 	}
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send swap tokens: %s", coin.Denom)
@@ -259,7 +266,7 @@ func (k Keeper) OnRecvExchangePacket(
 		exchange.ReserveAddress,
 		data.Sender,
 		"refund coins through Guru station due to failure on the target chain",
-		uint64(time.Now().Add(20*time.Minute).UnixNano()), //nolint:gosec // timestamp is always positive
+		sourceTimeoutTimestamp,
 		feeCoin,
 		exchangeID.String(),
 	)
@@ -339,14 +346,16 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, refundKey string) error {
 	// send back to original chain
 	_, isIBCV1 := k.channelKeeper.GetChannel(ctx, refundPacket.SourcePort, refundPacket.SourceChannel)
 	packetData := types.NewFungibleTokenPacketData(refundPacket.Token.Denom.Path(), refundPacket.Token.Amount, refundPacket.Sender, refundPacket.Receiver, refundPacket.Memo)
+	outboundTimeoutTimestamp := refundPacket.TimeoutTimestamp
 
 	if isIBCV1 {
 		// if a V1 channel exists for the source channel, then use IBC V1 protocol
-		_, err = k.transferV1Packet(ctx, refundPacket.SourceChannel, refundPacket.Token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
+		_, err = k.transferV1Packet(ctx, refundPacket.SourceChannel, refundPacket.Token, outboundTimeoutTimestamp, packetData)
 	} else {
+		outboundTimeoutTimestamp = toV2TimeoutSeconds(refundPacket.TimeoutTimestamp)
 		// otherwise try to send an IBC V2 packet, if the sourceChannel is not a IBC V2 client
 		// then core IBC will return a CounterpartyNotFound error
-		_, err = k.transferV2Packet(ctx, "", refundPacket.SourceChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
+		_, err = k.transferV2Packet(ctx, "", refundPacket.SourceChannel, outboundTimeoutTimestamp, packetData)
 	}
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send refund tokens: %s", refundPacket.Token.Denom.Path())
@@ -365,4 +374,33 @@ func truncatePrecision(value string, maxPrecision int) string {
 		return parts[0] + "." + parts[1][:maxPrecision]
 	}
 	return value
+}
+
+func validateInheritedTimeoutWindow(ctx sdk.Context, inheritedTimeoutTimestampNano uint64) error {
+	minAcceptable := uint64(ctx.BlockTime().Add(types.MinTimeoutWindow).UnixNano())
+
+	if inheritedTimeoutTimestampNano < minAcceptable {
+		return errorsmod.Wrapf(
+			ibcerrors.ErrInvalidRequest,
+			"inherited timeout timestamp is too close: got %d, required at least %d",
+			inheritedTimeoutTimestampNano,
+			minAcceptable,
+		)
+	}
+
+	return nil
+}
+
+func toV2TimeoutSeconds(timeoutTimestampNano uint64) uint64 {
+	if timeoutTimestampNano == 0 {
+		return 0
+	}
+
+	nanoPerSec := uint64(time.Second)
+	seconds := timeoutTimestampNano / nanoPerSec
+	if timeoutTimestampNano%nanoPerSec != 0 {
+		seconds++
+	}
+
+	return seconds
 }

@@ -208,6 +208,7 @@ func (im IBCModule) OnRecvPacket(
 			packet.SourceChannel,
 			packet.DestinationPort,
 			packet.DestinationChannel,
+			packet.TimeoutTimestamp,
 		)
 	}
 	if ackErr != nil {

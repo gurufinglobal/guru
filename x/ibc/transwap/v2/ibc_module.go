@@ -143,6 +143,7 @@ func (im *IBCModule) OnRecvPacket(ctx sdk.Context, sourceChannel string, destina
 			sourceChannel,
 			payload.DestinationPort,
 			destinationChannel,
+			0, // IBC v2 callback does not expose packet timeout; guard in keeper will reject.
 		)
 	}
 
