@@ -208,7 +208,7 @@ func (w *ledgerDriver) ledgerVersion() ([3]byte, error) {
 func (w *ledgerDriver) ledgerDerive(derivationPath gethaccounts.DerivationPath) (common.Address, *ecdsa.PublicKey, error) {
 	// Flatten the derivation path into the Ledger request
 	path := make([]byte, 1+4*len(derivationPath))
-	path[0] = byte(len(derivationPath))
+	path[0] = byte(len(derivationPath)) // #nosec G115 -- BIP32 path depth is bounded by protocol
 	for i, component := range derivationPath {
 		binary.BigEndian.PutUint32(path[1+4*i:], component)
 	}
@@ -294,7 +294,7 @@ func (w *ledgerDriver) ledgerDerive(derivationPath gethaccounts.DerivationPath) 
 func (w *ledgerDriver) ledgerSignTypedMessage(derivationPath gethaccounts.DerivationPath, domainHash, messageHash []byte) ([]byte, error) {
 	// Flatten the derivation path into the Ledger request
 	path := make([]byte, 1+4*len(derivationPath))
-	path[0] = byte(len(derivationPath))
+	path[0] = byte(len(derivationPath)) // #nosec G115 -- BIP32 path depth is bounded by protocol
 	for i, component := range derivationPath {
 		binary.BigEndian.PutUint32(path[1+4*i:], component)
 	}
@@ -368,7 +368,7 @@ func (w *ledgerDriver) ledgerExchange(opcode ledgerOpcode, p1 ledgerParam1, p2 l
 
 	//#nosec G115 -- gosec will raise a warning on this integer conversion for potential overflow
 	binary.BigEndian.PutUint16(apdu, uint16(5+len(data)))
-	apdu = append(apdu, []byte{0xe0, byte(opcode), byte(p1), byte(p2), byte(len(data))}...)
+	apdu = append(apdu, []byte{0xe0, byte(opcode), byte(p1), byte(p2), byte(len(data))}...) // #nosec G115 -- APDU payload length is byte-sized by design
 	apdu = append(apdu, data...)
 
 	// Stream all the chunks to the device

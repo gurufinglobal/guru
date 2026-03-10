@@ -59,41 +59,38 @@ func GenerateCustomPathsFromProto() (string, error) {
 	var paths strings.Builder
 	paths.WriteString("  # Guru Module endpoints (generated from embedded proto files)\n")
 
-	// Process embedded proto/guru/ directory
-	protoDir := "proto/guru"
-
-	// Scan for modules in embedded proto/guru/ directory
-	modules, err := ScanModulesInEmbeddedProtoDir(protoDir)
+	protoFiles, err := ListEmbeddedProtoFiles()
 	if err != nil {
-		return "", fmt.Errorf("failed to scan modules in embedded %s: %v", protoDir, err)
+		return "", fmt.Errorf("failed to list embedded proto files: %v", err)
 	}
 
-	for _, module := range modules {
-		// Process both query.proto and tx.proto if they exist
-		protoFiles := []string{"query.proto", "tx.proto"}
+	for _, protoPath := range protoFiles {
+		// Expect canonical paths like proto/guru/<module>/<version>/<query|tx>.proto
+		if !strings.HasPrefix(protoPath, "proto/guru/") {
+			continue
+		}
+		if !strings.HasSuffix(protoPath, "/query.proto") && !strings.HasSuffix(protoPath, "/tx.proto") {
+			continue
+		}
 
-		for _, protoFile := range protoFiles {
-			protoPath := fmt.Sprintf("%s/%s/v1/%s", protoDir, module, protoFile)
+		pathParts := strings.Split(protoPath, "/")
+		if len(pathParts) != 5 {
+			continue
+		}
+		module := pathParts[2]
 
-			// Check if the proto file exists in embedded filesystem
-			if !CheckEmbeddedProtoFileExists(protoPath) {
-				continue // Skip if file doesn't exist
-			}
+		content, err := ReadEmbeddedProtoFile(protoPath)
+		if err != nil {
+			fmt.Printf("Warning: Could not read embedded %s: %v\n", protoPath, err)
+			continue
+		}
 
-			// Read the proto file from embedded filesystem
-			content, err := ReadEmbeddedProtoFile(protoPath)
-			if err != nil {
-				fmt.Printf("Warning: Could not read embedded %s: %v\n", protoPath, err)
-				continue
-			}
+		// Parse RPC methods and their HTTP annotations
+		rpcMethods := ParseRPCMethods(content, module)
 
-			// Parse RPC methods and their HTTP annotations
-			rpcMethods := ParseRPCMethods(content, module)
-
-			// Generate Swagger paths for each RPC method
-			for _, rpcMethod := range rpcMethods {
-				paths.WriteString(GenerateSwaggerPath(rpcMethod))
-			}
+		// Generate Swagger paths for each RPC method
+		for _, rpcMethod := range rpcMethods {
+			paths.WriteString(GenerateSwaggerPath(rpcMethod))
 		}
 	}
 
@@ -115,12 +112,12 @@ func GenerateSwaggerPath(method RPCMethod) string {
 		tag = "Guru Module" // fallback
 	}
 
-	path.WriteString(fmt.Sprintf("  %s:\n", method.HTTPPath))
-	path.WriteString(fmt.Sprintf("    %s:\n", strings.ToLower(method.HTTPMethod)))
-	path.WriteString(fmt.Sprintf("      summary: %s\n", method.Summary))
-	path.WriteString(fmt.Sprintf("      operationId: %s\n", method.OperationID))
+	fmt.Fprintf(&path, "  %s:\n", method.HTTPPath)
+	fmt.Fprintf(&path, "    %s:\n", strings.ToLower(method.HTTPMethod))
+	fmt.Fprintf(&path, "      summary: %s\n", method.Summary)
+	fmt.Fprintf(&path, "      operationId: %s\n", method.OperationID)
 	path.WriteString("      tags:\n")
-	path.WriteString(fmt.Sprintf("        - \"%s\"\n", tag))
+	fmt.Fprintf(&path, "        - \"%s\"\n", tag)
 
 	// Add parameters
 	if len(method.Parameters) > 0 || method.HTTPMethod == "POST" {
@@ -128,10 +125,10 @@ func GenerateSwaggerPath(method RPCMethod) string {
 
 		// Add path parameters if any
 		for _, param := range method.Parameters {
-			path.WriteString(fmt.Sprintf("        - name: %s\n", param.Name))
+			fmt.Fprintf(&path, "        - name: %s\n", param.Name)
 			path.WriteString("          in: path\n")
-			path.WriteString(fmt.Sprintf("          required: %t\n", param.Required))
-			path.WriteString(fmt.Sprintf("          type: %s\n", param.Type))
+			fmt.Fprintf(&path, "          required: %t\n", param.Required)
+			fmt.Fprintf(&path, "          type: %s\n", param.Type)
 		}
 
 		// Add request body for POST methods

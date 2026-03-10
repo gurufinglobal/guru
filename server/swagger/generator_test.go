@@ -128,7 +128,7 @@ func TestGenerateSwaggerPath(t *testing.T) {
 	// Create a test RPC method
 	testMethod := RPCMethod{
 		Name:        "QueryParams",
-		HTTPPath:    "/guru/oracle/v1/params",
+		HTTPPath:    "/guru/oracle/v2/params",
 		HTTPMethod:  "GET",
 		Summary:     "Query Oracle QueryParams",
 		OperationID: "OracleQueryParams",
@@ -142,7 +142,7 @@ func TestGenerateSwaggerPath(t *testing.T) {
 
 	// Verify the generated path contains expected elements
 	expectedElements := []string{
-		"/guru/oracle/v1/params:",
+		"/guru/oracle/v2/params:",
 		"get:",
 		"summary: Query Oracle QueryParams",
 		"operationId: OracleQueryParams",
@@ -167,7 +167,7 @@ func TestGenerateSwaggerPathWithParameters(t *testing.T) {
 	// Create a test RPC method with parameters
 	testMethod := RPCMethod{
 		Name:        "QueryRequest",
-		HTTPPath:    "/guru/oracle/v1/request/{request_id}",
+		HTTPPath:    "/guru/oracle/v2/request/{request_id}",
 		HTTPMethod:  "GET",
 		Summary:     "Query Oracle QueryRequest",
 		OperationID: "OracleQueryRequest",

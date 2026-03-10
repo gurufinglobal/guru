@@ -67,7 +67,7 @@ func (suite *KeeperTestSuite) TestContextSetConsensusParams() {
 
 	// evm should query the max gas from consensus keeper, yielding the number set above.
 	vm := s.network.App.EVMKeeper.NewEVM(queryContext, *msg, cfg, nil, s.network.GetStateDB())
-	//nolint:gosec
+
 	s.Require().Equal(vm.Context.GasLimit, uint64(maxGas))
 
 	// if we explicitly set the consensus params in context, like when Cosmos builds a transaction context,
