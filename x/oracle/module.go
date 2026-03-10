@@ -3,7 +3,6 @@ package oracle
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -24,7 +23,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
-// consensusVersion defines the current x/oracle module consensus version.
 const consensusVersion = 1
 
 var (
@@ -33,46 +31,41 @@ var (
 	_ module.AppModuleSimulation = AppModule{}
 
 	_ appmodule.HasBeginBlocker = AppModule{}
+	_ appmodule.HasEndBlocker   = AppModule{}
 	_ module.HasABCIGenesis     = AppModule{}
 )
 
 // AppModuleBasic defines the basic application module used by the oracle module.
 type AppModuleBasic struct{}
 
-var _ module.AppModuleBasic = AppModuleBasic{}
-
 // Name returns the oracle module's name.
-func (AppModuleBasic) Name() string {
-	return types.ModuleName
-}
+func (AppModuleBasic) Name() string { return types.ModuleName }
 
-// RegisterLegacyAminoCodec registers the oracle module's types on the given LegacyAmino codec.
+// RegisterLegacyAminoCodec registers the oracle module's types for the given codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	types.RegisterLegacyAminoCodec(cdc)
 }
 
-// ConsensusVersion returns the consensus state-breaking version for the module.
+// ConsensusVersion returns the consensus version of the module.
 func (AppModuleBasic) ConsensusVersion() uint64 { return consensusVersion }
 
-// RegisterInterfaces registers the module's interface types
-func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+// RegisterInterfaces registers interfaces and implementations of the oracle module.
+func (AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the oracle
-// module.
+// DefaultGenesis returns default genesis state as raw bytes for the oracle module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
 // ValidateGenesis performs genesis state validation for the oracle module.
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
-	var genesisState types.GenesisState
-	if err := cdc.UnmarshalJSON(bz, &genesisState); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
+	var gs types.GenesisState
+	if err := cdc.UnmarshalJSON(bz, &gs); err != nil {
+		return err
 	}
-
-	return genesisState.Validate()
+	return gs.Validate()
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the oracle module.
@@ -82,24 +75,16 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 	}
 }
 
-// GetTxCmd returns no root tx command for the oracle module.
-func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
-}
-
-// GetQueryCmd returns the root query command for the oracle module.
-func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd()
-}
+func (AppModuleBasic) GetTxCmd() *cobra.Command    { return cli.GetTxCmd() }
+func (AppModuleBasic) GetQueryCmd() *cobra.Command { return cli.GetQueryCmd() }
 
 // AppModule implements an application module for the oracle module.
 type AppModule struct {
 	AppModuleBasic
-
 	keeper keeper.Keeper
 }
 
-// NewAppModule creates a new AppModule object
+// NewAppModule creates a new AppModule object.
 func NewAppModule(k keeper.Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
@@ -108,61 +93,55 @@ func NewAppModule(k keeper.Keeper) AppModule {
 }
 
 // Name returns the oracle module's name.
-func (AppModule) Name() string {
-	return types.ModuleName
-}
+func (AppModule) Name() string { return types.ModuleName }
 
-// RegisterInvariants registers the module invariants. No-op for oracle.
-//
-//nolint:staticcheck // required by SDK interface, will be removed when x/crisis is removed
-func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
+// RegisterInvariants registers the oracle module assertions (invariants).
+func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {} //nolint:staticcheck // required by Cosmos SDK AppModule interface
 
-// RegisterServices registers a gRPC query service to respond to the
-// module-specific gRPC queries.
+// RegisterServices registers a gRPC query service to respond to the module-specific gRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), &am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
-
-	// migration registration will be here in case of verion upgrade
 }
 
 // BeginBlock returns the begin blocker for the oracle module.
 func (am AppModule) BeginBlock(ctx context.Context) error {
-	c := sdk.UnwrapSDKContext(ctx)
-	am.keeper.BeginBlocker(c)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	am.keeper.BeginBlocker(sdkCtx)
 	return nil
 }
 
-// InitGenesis performs genesis initialization for the oracle module. It returns
-// no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState types.GenesisState
-	cdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.keeper, genesisState)
+// EndBlock returns the end blocker for the oracle module.
+func (am AppModule) EndBlock(ctx context.Context) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	am.keeper.EndBlocker(sdkCtx)
+	return nil
+}
 
+// InitGenesis performs genesis initialization for the oracle module.
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+	var gs types.GenesisState
+	cdc.MustUnmarshalJSON(data, &gs)
+	InitGenesis(ctx, am.keeper, gs)
 	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the oracle module.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
-	return cdc.MustMarshalJSON(&gs)
+	return cdc.MustMarshalJSON(gs)
 }
 
 // GenerateGenesisState creates a randomized GenState of the oracle module.
-func (AppModule) GenerateGenesisState(_ *module.SimulationState) {
-}
+func (AppModule) GenerateGenesisState(_ *module.SimulationState) {}
 
 // RegisterStoreDecoder registers a decoder for oracle module's types.
-func (am AppModule) RegisterStoreDecoder(sdr simtypes.StoreDecoderRegistry) {}
+func (AppModule) RegisterStoreDecoder(_ simtypes.StoreDecoderRegistry) {}
 
-// WeightedOperations doesn't return any oracle module operation.
+// WeightedOperations returns the all the oracle module operations with their respective weights.
 func (AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
 	return nil
 }
 
-// IsAppModule implements the appmodule.AppModule interface.
-func (am AppModule) IsAppModule() {}
-
-// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
-func (am AppModule) IsOnePerModuleType() {}
+func (AppModule) IsAppModule()        {}
+func (AppModule) IsOnePerModuleType() {}

@@ -92,7 +92,7 @@ func waitForRPC(ctx context.Context, rpcURL string) error {
 			return fmt.Errorf("rpc not ready: %w", waitCtx.Err())
 		case <-ticker.C:
 			req, _ := http.NewRequestWithContext(waitCtx, http.MethodGet, rpcURL+"/health", nil)
-			resp, err := http.DefaultClient.Do(req)
+			resp, err := http.DefaultClient.Do(req) //nolint:gosec // RPC URL is test harness controlled
 			if err == nil && resp != nil {
 				_ = resp.Body.Close()
 				if resp.StatusCode == http.StatusOK {
@@ -116,7 +116,7 @@ func waitForFirstBlock(ctx context.Context, rpcURL string) error {
 			return fmt.Errorf("first block not produced: %w", waitCtx.Err())
 		case <-ticker.C:
 			req, _ := http.NewRequestWithContext(waitCtx, http.MethodGet, rpcURL+"/status", nil)
-			resp, err := http.DefaultClient.Do(req)
+			resp, err := http.DefaultClient.Do(req) //nolint:gosec // RPC URL is test harness controlled
 			if err != nil || resp == nil {
 				continue
 			}

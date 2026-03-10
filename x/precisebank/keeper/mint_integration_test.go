@@ -446,10 +446,7 @@ func FuzzMintCoins(f *testing.F) {
 	f.Add(types.ConversionFactor().MulRaw(2).AddRaw(123948723).Int64())
 
 	f.Fuzz(func(t *testing.T, amount int64) {
-		// No negative amounts
-		if amount < 0 {
-			amount = -amount
-		}
+		absAmount := absInt64(amount) //nolint:staticcheck // false positive in fuzz closure analysis
 
 		// Manually setup test suite since no direct Fuzz support in test suites
 		suite := new(KeeperIntegrationTestSuite)
@@ -459,14 +456,14 @@ func FuzzMintCoins(f *testing.F) {
 
 		mintCount := int64(10)
 
-		suite.T().Logf("minting %d %d times", amount, mintCount)
+		suite.T().Logf("minting %d %d times", absAmount, mintCount)
 
 		// Mint 10 times to include mints from non-zero balances
 		for i := int64(0); i < mintCount; i++ {
 			err := suite.network.App.PreciseBankKeeper.MintCoins(
 				suite.network.GetContext(),
 				evmtypes.ModuleName,
-				cs(c(types.ExtendedCoinDenom(), amount)),
+				cs(c(types.ExtendedCoinDenom(), absAmount)),
 			)
 			suite.Require().NoError(err)
 		}
@@ -476,10 +473,10 @@ func FuzzMintCoins(f *testing.F) {
 		bal := suite.network.App.PreciseBankKeeper.GetBalance(suite.network.GetContext(), recipientAddr, types.ExtendedCoinDenom())
 
 		suite.Require().Equalf(
-			amount*mintCount,
+			absAmount*mintCount,
 			bal.Amount.Int64(),
 			"unexpected balance after minting %d %d times",
-			amount,
+			absAmount,
 			mintCount,
 		)
 	})

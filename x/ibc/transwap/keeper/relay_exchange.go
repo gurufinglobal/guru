@@ -153,12 +153,12 @@ func (k Keeper) OnRecvExchangePacket(
 
 	// step 2: prepare the swap data
 
-	oracleData, err := k.OracleKeeper.GetOracleData(ctx, exchange.OracleRequestId)
-	if err != nil {
+	oracleResult, found := k.OracleKeeper.GetLatestResult(ctx, exchange.OracleRequestId)
+	if !found {
 		return errorsmod.Wrapf(err, "failed to get oracle data: %d", exchange.OracleRequestId)
 	}
 
-	rawData := truncatePrecision(oracleData.DataSet.RawData, 18)
+	rawData := truncatePrecision(oracleResult.AggregatedData, 18)
 	rate, err := sdkmath.LegacyNewDecFromStr(rawData)
 	if err != nil {
 		return errorsmod.Wrapf(err, "failed to parse rate: %s", rawData)
@@ -259,7 +259,7 @@ func (k Keeper) OnRecvExchangePacket(
 		exchange.ReserveAddress,
 		data.Sender,
 		"refund coins through Guru station due to failure on the target chain",
-		uint64(time.Now().Add(20*time.Minute).UnixNano()), //nolint:gosec // timestamp is always positive
+		uint64(time.Now().Add(20*time.Minute).UnixNano()),
 		feeCoin,
 		exchangeID.String(),
 	)
@@ -342,11 +342,11 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, refundKey string) error {
 
 	if isIBCV1 {
 		// if a V1 channel exists for the source channel, then use IBC V1 protocol
-		_, err = k.transferV1Packet(ctx, refundPacket.SourceChannel, refundPacket.Token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
+		_, err = k.transferV1Packet(ctx, refundPacket.SourceChannel, refundPacket.Token, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
 	} else {
 		// otherwise try to send an IBC V2 packet, if the sourceChannel is not a IBC V2 client
 		// then core IBC will return a CounterpartyNotFound error
-		_, err = k.transferV2Packet(ctx, "", refundPacket.SourceChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData) //nolint:gosec // timestamp is always positive
+		_, err = k.transferV2Packet(ctx, "", refundPacket.SourceChannel, uint64(time.Now().Add(10*time.Minute).UnixNano()), packetData)
 	}
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to send refund tokens: %s", refundPacket.Token.Denom.Path())

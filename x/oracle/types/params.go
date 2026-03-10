@@ -3,41 +3,43 @@ package types
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/math"
 )
 
-// DefaultParams returns default oracle module parameters
+var (
+	// DefaultQuorumRatio is the default quorum ratio (2/3).
+	DefaultQuorumRatio = math.LegacyNewDecWithPrec(666666666666666667, 18)
+	// DefaultReportRetentionBlocks is the default number of blocks to retain reports (10).
+	DefaultReportRetentionBlocks uint64 = 10
+)
+
+// DefaultParams returns default oracle parameters.
 func DefaultParams() Params {
 	return Params{
-		EnableOracle:          true,
-		SubmitWindow:          3600, // 1 hour in seconds
-		MinSubmitPerWindow:    sdkmath.LegacyNewDec(1),
-		SlashFractionDowntime: sdkmath.LegacyNewDecWithPrec(1, 2), // 1%
-		MaxAccountListSize:    1000,                               // Maximum 1000 accounts in account list (also max submissions) - for client validation
+		Enable:                true,
+		QuorumRatio:           DefaultQuorumRatio,
+		ReportRetentionBlocks: DefaultReportRetentionBlocks,
 	}
 }
 
-// Validate performs basic validation on oracle parameters
+// Validate validates the set of params.
 func (p Params) Validate() error {
-	if p.SubmitWindow == 0 {
-		return fmt.Errorf("submit window cannot be zero")
+	if p.QuorumRatio.IsNegative() {
+		return fmt.Errorf("quorum_ratio cannot be negative: %s", p.QuorumRatio)
 	}
-
-	if p.MinSubmitPerWindow.IsNegative() {
-		return fmt.Errorf("min submit per window cannot be negative")
+	if p.QuorumRatio.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("quorum_ratio cannot exceed 1: %s", p.QuorumRatio)
 	}
-
-	if p.SlashFractionDowntime.IsNegative() {
-		return fmt.Errorf("slash fraction downtime cannot be negative")
+	if p.QuorumRatio.IsZero() {
+		return fmt.Errorf("quorum_ratio cannot be zero")
 	}
+	return nil
+}
 
-	if p.MaxAccountListSize == 0 {
-		return fmt.Errorf("max account list size cannot be zero")
+// ValidateBasic performs basic validation on using the struct methods.
+func (p Params) ValidateBasic() error {
+	if err := p.Validate(); err != nil {
+		return fmt.Errorf("invalid params: %w", err)
 	}
-
-	if p.MaxAccountListSize > 1000 {
-		return fmt.Errorf("max account list size cannot exceed 1000")
-	}
-
 	return nil
 }

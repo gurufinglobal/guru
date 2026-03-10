@@ -2,9 +2,7 @@ package keeper
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"strings"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -16,283 +14,282 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
-// MsgServer implementation
-var _ types.MsgServer = &Keeper{}
+var _ types.MsgServer = Keeper{}
 
-// RegisterOracleRequestDoc defines a method for registering a new oracle request document
-func (k Keeper) RegisterOracleRequestDoc(c context.Context, doc *types.MsgRegisterOracleRequestDoc) (*types.MsgRegisterOracleRequestDocResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
+// UpdateModeratorAddress updates the moderator address.
+func (k Keeper) UpdateModeratorAddress(goCtx context.Context, msg *types.MsgUpdateModeratorAddress) (*types.MsgUpdateModeratorAddressResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	moderatorAddress := k.GetModeratorAddress(ctx)
-
-	if moderatorAddress == "" {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "moderator address is not set")
+	current := k.GetModeratorAddress(ctx)
+	if current == "" {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "moderator not set")
 	}
-	if moderatorAddress != doc.ModeratorAddress {
-		return nil, errorsmod.Wrap(errortypes.ErrUnauthorized, "moderator address is not authorized")
+	if current != msg.ModeratorAddress {
+		return nil, errorsmod.Wrap(errortypes.ErrUnauthorized, "unauthorized moderator")
 	}
-
-	// Get the current count of oracle request documents
-	count := k.GetOracleRequestDocCount(ctx)
-
-	// Create a new oracle request document
-	oracleRequestDoc := types.OracleRequestDoc{
-		RequestId:       count + 1,
-		Status:          doc.RequestDoc.Status,
-		OracleType:      doc.RequestDoc.OracleType,
-		Name:            doc.RequestDoc.Name,
-		Description:     doc.RequestDoc.Description,
-		Period:          doc.RequestDoc.Period,
-		AccountList:     doc.RequestDoc.AccountList,
-		Quorum:          doc.RequestDoc.Quorum,
-		Endpoints:       doc.RequestDoc.Endpoints,
-		AggregationRule: doc.RequestDoc.AggregationRule,
+	if msg.ModeratorAddress == msg.NewModeratorAddress {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "new moderator must differ")
 	}
 
-	// Validate the oracle request document with current parameters
-	params := k.GetParams(ctx)
-	err := oracleRequestDoc.ValidateWithParams(params)
-	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	}
+	k.SetModeratorAddress(ctx, msg.NewModeratorAddress)
 
-	// Store the oracle request document
-	k.SetOracleRequestDoc(ctx, oracleRequestDoc)
-
-	// Increment the count
-	k.SetOracleRequestDocCount(ctx, count+1)
-
-	// Marshal the endpoints to a JSON string
-	endpointsJSON, _ := json.Marshal(oracleRequestDoc.Endpoints)
-
-	// Emit event for registering oracle request document
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeRegisterOracleRequestDoc,
-			sdk.NewAttribute(types.AttributeKeyRequestID, fmt.Sprint(oracleRequestDoc.RequestId)),
-			sdk.NewAttribute(types.AttributeKeyOracleType, string(oracleRequestDoc.OracleType)),
-			sdk.NewAttribute(types.AttributeKeyName, oracleRequestDoc.Name),
-			sdk.NewAttribute(types.AttributeKeyDescription, oracleRequestDoc.Description),
-			sdk.NewAttribute(types.AttributeKeyPeriod, fmt.Sprint(oracleRequestDoc.Period)),
-			sdk.NewAttribute(types.AttributeKeyAccountList, strings.Join(oracleRequestDoc.AccountList, ",")),
-			sdk.NewAttribute(types.AttributeKeyEndpoints, string(endpointsJSON)),
-			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(oracleRequestDoc.AggregationRule)),
-			sdk.NewAttribute(types.AttributeKeyStatus, string(oracleRequestDoc.Status)),
-		),
+	k.Logger(ctx).Info("moderator address updated",
+		"old", msg.ModeratorAddress,
+		"new", msg.NewModeratorAddress,
 	)
-
-	return &types.MsgRegisterOracleRequestDocResponse{
-		RequestId: oracleRequestDoc.RequestId,
-	}, nil
-}
-
-// UpdateOracleRequestDoc defines a method for updating an existing oracle request document
-func (k Keeper) UpdateOracleRequestDoc(c context.Context, doc *types.MsgUpdateOracleRequestDoc) (*types.MsgUpdateOracleRequestDocResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	moderatorAddress := k.GetModeratorAddress(ctx)
-
-	if moderatorAddress == "" {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "moderator address is not set")
-	}
-	if moderatorAddress != doc.ModeratorAddress {
-		return nil, errorsmod.Wrap(errortypes.ErrUnauthorized, "moderator address is not authorized")
-	}
-
-	err := k.updateOracleRequestDoc(ctx, doc.RequestDoc)
-	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	}
-
-	// Marshal the endpoints to a JSON string
-	endpointsJSON, _ := json.Marshal(doc.RequestDoc.Endpoints)
-
-	// Emit event for updating oracle request document
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeUpdateOracleRequestDoc,
-			sdk.NewAttribute(types.AttributeKeyRequestID, fmt.Sprint(doc.RequestDoc.RequestId)),
-			sdk.NewAttribute(types.AttributeKeyOracleType, string(doc.RequestDoc.OracleType)),
-			sdk.NewAttribute(types.AttributeKeyName, doc.RequestDoc.Name),
-			sdk.NewAttribute(types.AttributeKeyDescription, doc.RequestDoc.Description),
-			sdk.NewAttribute(types.AttributeKeyPeriod, fmt.Sprint(doc.RequestDoc.Period)),
-			sdk.NewAttribute(types.AttributeKeyAccountList, strings.Join(doc.RequestDoc.AccountList, ",")),
-			sdk.NewAttribute(types.AttributeKeyEndpoints, string(endpointsJSON)),
-			sdk.NewAttribute(types.AttributeKeyAggregationRule, string(doc.RequestDoc.AggregationRule)),
-			sdk.NewAttribute(types.AttributeKeyStatus, string(doc.RequestDoc.Status)),
-			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(doc.RequestDoc.Nonce)),
-		),
-	)
-
-	return &types.MsgUpdateOracleRequestDocResponse{
-		RequestId: doc.RequestDoc.RequestId,
-	}, nil
-}
-
-// SubmitOracleData defines a method for submitting oracle data
-func (k Keeper) SubmitOracleData(c context.Context, msg *types.MsgSubmitOracleData) (*types.MsgSubmitOracleDataResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	// Validate that DataSet is provided
-	if msg.DataSet == nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "DataSet must be provided")
-	}
-
-	err := k.validateSubmitData(*msg.DataSet)
-	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	}
-
-	requestID := msg.DataSet.RequestId
-
-	requestDoc, err := k.GetOracleRequestDoc(ctx, requestID)
-	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document not found")
-	}
-
-	if requestDoc == nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document not found")
-	}
-
-	// Check if RequestDoc status is ENABLED
-	if requestDoc.Status != types.RequestStatus_REQUEST_STATUS_ENABLED {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request document is not enabled")
-	}
-
-	accountList := requestDoc.AccountList
-	fromAddress := msg.AuthorityAddress
-
-	isAuthorized := k.checkAccountAuthorized(accountList, fromAddress)
-	if !isAuthorized {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "account is not authorized")
-	}
-
-	nonce := requestDoc.GetNonce()
-
-	if msg.DataSet.Nonce != nonce+1 {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "nonce is not correct")
-	}
-
-	err = k.verifySubmitData(ctx, msg)
-	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	}
-
-	k.SetSubmitData(ctx, *msg.DataSet)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeSubmitOracleData,
-			sdk.NewAttribute(types.AttributeKeyRequestID, fmt.Sprint(requestID)),
-			sdk.NewAttribute(types.AttributeKeyNonce, fmt.Sprint(msg.DataSet.Nonce)),
-			sdk.NewAttribute(types.AttributeKeyRawData, msg.DataSet.RawData),
-			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAddress),
+			types.EventTypeUpdateModerator,
+			sdk.NewAttribute(types.AttributeKeyModerator, msg.NewModeratorAddress),
 		),
 	)
-
-	return &types.MsgSubmitOracleDataResponse{}, nil
-}
-
-// UpdateParams defines a method for updating oracle module parameters
-func (k Keeper) UpdateParams(c context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	// Validate the authority address
-	if k.authority != msg.Authority {
-		return nil, errorsmod.Wrapf(errortypes.ErrUnauthorized, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
-	}
-
-	// Validate the new parameters
-	if err := msg.Params.Validate(); err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	}
-
-	// Update the parameters
-	if err := k.SetParams(ctx, msg.Params); err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	}
-
-	// Emit event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			"oracle_params_updated",
-			sdk.NewAttribute("authority", msg.Authority),
-			sdk.NewAttribute("submit_window", fmt.Sprintf("%d", msg.Params.SubmitWindow)),
-			sdk.NewAttribute("min_submit_per_window", msg.Params.MinSubmitPerWindow.String()),
-			sdk.NewAttribute("slash_fraction_downtime", msg.Params.SlashFractionDowntime.String()),
-		),
-	)
-
-	return &types.MsgUpdateParamsResponse{}, nil
-}
-
-// UpdateModeratorAddress defines a method for updating the moderator address
-func (k Keeper) UpdateModeratorAddress(c context.Context, msg *types.MsgUpdateModeratorAddress) (*types.MsgUpdateModeratorAddressResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-
-	currentModeratorAddress := k.GetModeratorAddress(ctx)
-
-	if currentModeratorAddress != msg.ModeratorAddress {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "from address is different from current moderator address")
-	}
-	if currentModeratorAddress == "" {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "moderator address is not set")
-	}
-	if currentModeratorAddress == msg.NewModeratorAddress {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "new moderator address is same as current moderator address")
-	}
-
-	err := k.SetModeratorAddress(ctx, msg.NewModeratorAddress)
-	if err != nil {
-		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeUpdateModeratorAddress,
-			sdk.NewAttribute(types.AttributeKeyModeratorAddress, msg.NewModeratorAddress),
-		),
-	)
-
 	return &types.MsgUpdateModeratorAddressResponse{}, nil
 }
 
-func (k Keeper) verifySubmitData(ctx context.Context, msg *types.MsgSubmitOracleData) error {
-	if msg == nil || msg.DataSet == nil {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "missing dataset")
+// RegisterOracleRequest registers a new oracle request.
+func (k Keeper) RegisterOracleRequest(goCtx context.Context, msg *types.MsgRegisterOracleRequest) (*types.MsgRegisterOracleRequestResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := k.GetParams(ctx)
+	if !params.Enable {
+		return nil, errorsmod.Wrap(types.ErrModuleDisabled, "oracle disabled")
 	}
 
-	signBytes, err := msg.DataSet.Bytes()
+	moderator := k.GetModeratorAddress(ctx)
+	if moderator == "" {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "moderator not set")
+	}
+	if moderator != msg.ModeratorAddress {
+		return nil, errorsmod.Wrap(errortypes.ErrUnauthorized, "unauthorized moderator")
+	}
+
+	// Category must be pre-defined/enabled (e.g. from genesis). Do not auto-add categories on request creation.
+	if !k.IsCategoryEnabled(ctx, msg.Category) {
+		return nil, errorsmod.Wrapf(types.ErrInvalidRequest, "category not enabled: %s", msg.Category.String())
+	}
+
+	requestID := k.NextRequestID(ctx)
+	req := types.OracleRequest{
+		Id:       requestID,
+		Category: msg.Category,
+		Symbol:   msg.Symbol,
+		Count:    int64(msg.Count), // #nosec G115 -- count is validated and fits module constraints
+		Period:   msg.Period,
+		Status:   types.Status_STATUS_ACTIVE,
+		Nonce:    1, // 첫 기간은 1부터 시작
+	}
+	if err := req.ValidateBasic(); err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	k.SetRequest(ctx, req)
+	k.IncrementRequestCount(ctx)
+
+	// 주기 기반 fail-fast: 집계 성공 여부와 관계없이 다음 기간 이벤트를 예약
+	if req.Period > 0 {
+		nextHeight := uint64(ctx.BlockHeight()) + req.Period // #nosec G115 -- block height is non-negative
+		k.ScheduleOracleTask(ctx, nextHeight, req.Id)
+	}
+
+	k.Logger(ctx).Info("oracle request registered",
+		"request_id", requestID,
+		"category", req.Category.String(),
+		"symbol", req.Symbol,
+		"count", req.Count,
+		"period", req.Period,
+	)
+
+	// Emit single EventOracleTask for daemon to start working
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOracleTask,
+			sdk.NewAttribute(types.AttributeKeyRequestID, strconv.FormatUint(requestID, 10)),
+			sdk.NewAttribute(types.AttributeKeyNonce, strconv.FormatUint(req.Nonce, 10)),
+		),
+	)
+
+	return &types.MsgRegisterOracleRequestResponse{RequestId: requestID}, nil
+}
+
+// UpdateOracleRequest updates an existing oracle request.
+func (k Keeper) UpdateOracleRequest(goCtx context.Context, msg *types.MsgUpdateOracleRequest) (*types.MsgUpdateOracleRequestResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := k.GetParams(ctx)
+	if !params.Enable {
+		return nil, errorsmod.Wrap(types.ErrModuleDisabled, "oracle disabled")
+	}
+
+	moderator := k.GetModeratorAddress(ctx)
+	if moderator == "" {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "moderator not set")
+	}
+	if moderator != msg.ModeratorAddress {
+		return nil, errorsmod.Wrap(errortypes.ErrUnauthorized, "unauthorized moderator")
+	}
+
+	req, found := k.GetRequest(ctx, msg.RequestId)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrRequestNotFound, "id %d", msg.RequestId)
+	}
+
+	if msg.Count != 0 {
+		req.Count = int64(msg.Count) // #nosec G115 -- count is bounded by message validation
+	}
+	if msg.Period != 0 {
+		req.Period = msg.Period
+	}
+	if msg.Status != types.Status_STATUS_UNSPECIFIED {
+		req.Status = msg.Status
+	}
+
+	if err := req.ValidateBasic(); err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	k.SetRequest(ctx, req)
+
+	k.Logger(ctx).Info("oracle request updated",
+		"request_id", req.Id,
+		"count", req.Count,
+		"period", req.Period,
+		"status", req.Status.String(),
+	)
+
+	return &types.MsgUpdateOracleRequestResponse{}, nil
+}
+
+// SubmitOracleReport submits a new oracle report.
+func (k Keeper) SubmitOracleReport(goCtx context.Context, msg *types.MsgSubmitOracleReport) (*types.MsgSubmitOracleReportResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	params := k.GetParams(ctx)
+	if !params.Enable {
+		return nil, errorsmod.Wrap(types.ErrModuleDisabled, "oracle disabled")
+	}
+
+	if !k.IsWhitelisted(ctx, msg.ProviderAddress) {
+		k.Logger(ctx).Warn("report rejected: provider not whitelisted", "provider", msg.ProviderAddress)
+		return nil, errorsmod.Wrap(errortypes.ErrUnauthorized, "provider not whitelisted")
+	}
+
+	req, found := k.GetRequest(ctx, msg.RequestId)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrRequestNotFound, "id %d", msg.RequestId)
+	}
+	if req.Status != types.Status_STATUS_ACTIVE {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, "request is not active")
+	}
+
+	if msg.Nonce != req.Nonce {
+		k.Logger(ctx).Warn("report rejected: invalid nonce",
+			"request_id", msg.RequestId,
+			"expected_nonce", req.Nonce,
+			"received_nonce", msg.Nonce,
+		)
+		return nil, errorsmod.Wrapf(types.ErrInvalidNonce, "expected nonce %d", req.Nonce)
+	}
+
+	if _, exists := k.GetReport(ctx, msg.RequestId, msg.Nonce, msg.ProviderAddress); exists {
+		return nil, errorsmod.Wrap(types.ErrReportExists, "duplicate report")
+	}
+
+	report := types.OracleReport{
+		RequestId: msg.RequestId,
+		Provider:  msg.ProviderAddress,
+		RawData:   msg.RawData,
+		Nonce:     msg.Nonce,
+		Signature: msg.Signature,
+	}
+	if err := report.ValidateBasic(); err != nil {
+		return nil, errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
+	}
+
+	if err := k.verifyReportSignature(ctx, report); err != nil {
+		k.Logger(ctx).Warn("report rejected: signature verification failed",
+			"request_id", msg.RequestId,
+			"provider", msg.ProviderAddress,
+		)
+		return nil, err
+	}
+
+	k.SetReport(ctx, report)
+
+	k.Logger(ctx).Debug("report submitted",
+		"request_id", report.RequestId,
+		"nonce", report.Nonce,
+		"provider", report.Provider,
+	)
+
+	return &types.MsgSubmitOracleReportResponse{}, nil
+}
+
+// AddToWhitelist adds a new provider to the whitelist.
+func (k Keeper) AddToWhitelist(goCtx context.Context, msg *types.MsgAddToWhitelist) (*types.MsgAddToWhitelistResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if k.GetModeratorAddress(ctx) != msg.ModeratorAddress {
+		return nil, errorsmod.Wrap(errortypes.ErrUnauthorized, "unauthorized moderator")
+	}
+	k.addToWhitelist(ctx, msg.Address)
+
+	k.Logger(ctx).Info("provider added to whitelist",
+		"address", msg.Address,
+		"total_count", k.GetWhitelistCount(ctx),
+	)
+
+	return &types.MsgAddToWhitelistResponse{}, nil
+}
+
+// RemoveFromWhitelist removes a provider from the whitelist.
+func (k Keeper) RemoveFromWhitelist(goCtx context.Context, msg *types.MsgRemoveFromWhitelist) (*types.MsgRemoveFromWhitelistResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if k.GetModeratorAddress(ctx) != msg.ModeratorAddress {
+		return nil, errorsmod.Wrap(errortypes.ErrUnauthorized, "unauthorized moderator")
+	}
+	k.removeFromWhitelist(ctx, msg.Address)
+
+	k.Logger(ctx).Info("provider removed from whitelist",
+		"address", msg.Address,
+		"total_count", k.GetWhitelistCount(ctx),
+	)
+
+	return &types.MsgRemoveFromWhitelistResponse{}, nil
+}
+
+// verifyReportSignature verifies the signature of an oracle report.
+func (k Keeper) verifyReportSignature(ctx sdk.Context, report types.OracleReport) error {
+	signBytes, err := report.Bytes()
 	if err != nil {
 		return errorsmod.Wrap(errortypes.ErrInvalidRequest, err.Error())
 	}
 
-	sig := msg.DataSet.Signature
-	if len(sig) != crypto.SignatureLength {
+	// Copy signature to avoid mutating the message bytes (and thereby persisted report bytes).
+	sig := append([]byte(nil), report.Signature...)
+	switch len(sig) {
+	case crypto.SignatureLength:
+		// Normalize Ethereum-style recovery ID if provided (27/28 -> 0/1).
+		if sig[64] >= 27 {
+			sig[64] -= 27
+		}
+		if sig[64] != 0 && sig[64] != 1 {
+			return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid recovery id")
+		}
+	case crypto.SignatureLength - 1:
+		// Accept 64-byte signatures too ([R||S] without recovery ID).
+	default:
 		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid signature length")
 	}
-	if sig[64] >= 27 {
-		sig[64] -= 27
-	}
-	if sig[64] != 0 && sig[64] != 1 {
-		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid signature recovery id")
-	}
 
-	providerAcc, err := sdk.AccAddressFromBech32(msg.DataSet.Provider)
+	providerAcc, err := sdk.AccAddressFromBech32(report.Provider)
 	if err != nil {
 		return errorsmod.Wrap(errortypes.ErrInvalidAddress, "invalid provider address")
 	}
 
 	acc := k.accountKeeper.GetAccount(ctx, providerAcc)
-	if acc == nil {
-		return errorsmod.Wrap(errortypes.ErrUnauthorized, "account not found")
-	}
-	if acc.GetPubKey() == nil {
-		return errorsmod.Wrap(errortypes.ErrUnauthorized, "public key not found")
+	if acc == nil || acc.GetPubKey() == nil {
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "provider account/pubkey not found")
 	}
 
 	if !acc.GetPubKey().VerifySignature(signBytes, sig) {
-		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid dataset signature")
+		return errorsmod.Wrap(errortypes.ErrUnauthorized, "invalid report signature")
 	}
 
 	return nil

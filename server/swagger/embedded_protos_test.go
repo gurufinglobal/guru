@@ -38,7 +38,7 @@ func TestScanModulesInEmbeddedProtoDir(t *testing.T) {
 // TestReadEmbeddedProtoFile tests reading embedded proto files
 func TestReadEmbeddedProtoFile(t *testing.T) {
 	// Test reading oracle query.proto
-	content, err := ReadEmbeddedProtoFile("proto/guru/oracle/v1/query.proto")
+	content, err := ReadEmbeddedProtoFile("proto/guru/oracle/v2/query.proto")
 	if err != nil {
 		t.Fatalf("Failed to read embedded oracle query.proto: %v", err)
 	}
@@ -71,8 +71,8 @@ func TestReadEmbeddedProtoFile(t *testing.T) {
 func TestCheckEmbeddedProtoFileExists(t *testing.T) {
 	// Test existing files
 	existingFiles := []string{
-		"proto/guru/oracle/v1/query.proto",
-		"proto/guru/oracle/v1/tx.proto",
+		"proto/guru/oracle/v2/query.proto",
+		"proto/guru/oracle/v2/tx.proto",
 		"proto/guru/feepolicy/v1/query.proto",
 		"proto/guru/feepolicy/v1/tx.proto",
 	}
