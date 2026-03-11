@@ -208,6 +208,7 @@ func (im IBCModule) OnRecvPacket(
 			packet.SourceChannel,
 			packet.DestinationPort,
 			packet.DestinationChannel,
+			v1ExchangeSourceTimeoutTimestamp(packet),
 		)
 	}
 	if ackErr != nil {
@@ -302,4 +303,8 @@ func (im IBCModule) UnmarshalPacketData(ctx sdk.Context, portID string, channelI
 
 	ftpd, err := types.UnmarshalPacketData(bz, ics20Version, "")
 	return ftpd, ics20Version, err
+}
+
+func v1ExchangeSourceTimeoutTimestamp(packet channeltypes.Packet) uint64 {
+	return packet.TimeoutTimestamp
 }
