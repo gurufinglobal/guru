@@ -149,8 +149,12 @@ func New(cfg *config.Config, homeDir string) (*Daemon, error) {
 
 	httpClient := &http.Client{Timeout: defaultHTTPTimeout}
 	coinbase := provider.NewCoinbaseProvider(httpClient)
+	frankfurter := provider.NewFrankfurterProvider(httpClient)
+	cmc := provider.NewCMCProvider(httpClient)
 	registry, err := provider.New(logger, categories.Categories,
 		coinbase,
+		frankfurter,
+		cmc,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("init provider registry: %w", err)
@@ -184,11 +188,10 @@ func New(cfg *config.Config, homeDir string) (*Daemon, error) {
 		clientCtx:          clientCtx,
 		cometClient:        cometClient,
 		providerHTTPClient: httpClient,
-		providers:          []provider.Provider{coinbase},
+		providers:          []provider.Provider{coinbase, frankfurter, cmc},
 		pvRegistry:         registry,
 		baseFactory:        baseFactory,
 		gasPrice:           gasPrice,
-
 		reqIDCh:  make(chan uint64, channelBuffer),
 		taskCh:   make(chan types.OracleTask, channelBuffer),
 		resultCh: make(chan oracletypes.OracleReport, channelBuffer),
