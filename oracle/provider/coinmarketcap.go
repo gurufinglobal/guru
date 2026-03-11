@@ -36,7 +36,7 @@ func (p *CMCProvider) ID() string {
 func (p *CMCProvider) Categories() []int32 {
 	// c := oracletypes.Category_value[oracletypes.Category_CATEGORY_OPERATION.String()]
 
-	return []int32{2,3}
+	return []int32{1,2,3}
 }
 
 func (p *CMCProvider) Fetch(ctx context.Context, symbol string) (string, error) {
