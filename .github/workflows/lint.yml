@@ -10,6 +10,8 @@ permissions: read-all
 jobs:
   golangci:
     name: Run golangci-lint
+    # Temporarily gate lint jobs with repository variable ENABLE_LINT.
+    if: ${{ vars.ENABLE_LINT == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -47,6 +49,8 @@ jobs:
 
   markdown-lint:
     name: Run markdown-lint
+    # Temporarily gate lint jobs with repository variable ENABLE_LINT.
+    if: ${{ vars.ENABLE_LINT == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

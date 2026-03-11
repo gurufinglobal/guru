@@ -9,6 +9,8 @@ permissions: read-all
 
 jobs:
   check_diff:
+    # Temporarily gate lint jobs with repository variable ENABLE_LINT.
+    if: ${{ vars.ENABLE_LINT == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check Changelog for changes

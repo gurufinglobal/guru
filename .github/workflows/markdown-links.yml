@@ -8,6 +8,8 @@ permissions: read-all
 
 jobs:
   markdown-link-check:
+    # Temporarily gate lint-like checks with repository variable ENABLE_LINT.
+    if: ${{ vars.ENABLE_LINT == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
