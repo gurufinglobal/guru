@@ -398,6 +398,8 @@ func validateExchangeOutputLimit(limit, rate, swapAmount sdkmath.LegacyDec) erro
 		limit.String(),
 		rate.String(),
 	)
+}
+
 func validateInheritedTimeout(ctx sdk.Context, inheritedTimeoutTimestampNano uint64) error {
 	minAcceptable := uint64(ctx.BlockTime().UnixNano()) //nolint:gosec // G115: block time cannot be negative
 
