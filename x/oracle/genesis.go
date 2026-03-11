@@ -4,75 +4,72 @@ import (
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
-// InitGenesis new oracle genesis
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, data types.GenesisState) {
-	// Set genesis state
-	params := data.Params
-	err := k.SetParams(ctx, params)
-	if err != nil {
-		panic(errorsmod.Wrapf(err, "error setting params"))
+// InitGenesis initializes the oracle module's state from a provided genesis state.
+func InitGenesis(ctx sdk.Context, k keeper.Keeper, gs types.GenesisState) {
+	if err := gs.Validate(); err != nil {
+		panic(errorsmod.Wrap(err, "invalid oracle genesis"))
 	}
 
-	// Set moderator address
-	moderatorAddress := data.ModeratorAddress
-	if moderatorAddress == "" {
-		moderatorAddress = k.GetAuthority()
+	if err := k.SetParams(ctx, gs.Params); err != nil {
+		panic(errorsmod.Wrap(err, "failed to set params"))
 	}
 
-	if _, err := sdk.AccAddressFromBech32(moderatorAddress); err != nil {
-		panic(errorsmod.Wrapf(err, "invalid moderator address"))
+	moderator := gs.ModeratorAddress
+	if moderator == "" {
+		moderator = k.GetAuthority()
 	}
-
-	err = k.SetModeratorAddress(ctx, moderatorAddress)
-	if err != nil {
-		panic(errorsmod.Wrapf(err, "error setting moderator address"))
+	if _, err := sdk.AccAddressFromBech32(moderator); err != nil {
+		panic(errorsmod.Wrap(err, "invalid moderator address"))
 	}
+	k.SetModeratorAddress(ctx, moderator)
 
-	// Set oracle request documents
-	oracleDocs := data.OracleRequestDocs
-	for _, doc := range oracleDocs {
-		err := doc.Validate()
-		if err != nil {
-			panic(errorsmod.Wrapf(err, "error validating oracle request doc"))
+	// 1) Store proto-defined categories first (baseline, deterministic).
+	for _, cat := range types.ProtoDefinedCategories() {
+		k.SetCategory(ctx, cat)
+	}
+	// 2) Then store genesis categories; ignore duplicates (i.e. do nothing if already present).
+	for _, cat := range gs.Categories {
+		if k.IsCategoryEnabled(ctx, cat) {
+			continue
 		}
-		k.SetOracleRequestDoc(ctx, doc)
+		k.SetCategory(ctx, cat)
 	}
 
-	if uint64(len(data.OracleRequestDocs)) != data.OracleRequestDocCount {
-		panic(errorsmod.Wrapf(errortypes.ErrInvalidRequest, "%s: oracle request doc count must match actual documents", types.ModuleName))
+	var maxID uint64
+	for _, req := range gs.Requests {
+		k.SetRequest(ctx, req)
+		if req.Id > maxID {
+			maxID = req.Id
+		}
 	}
+	k.SetRequestCount(ctx, maxID)
 
-	// Set oracle request doc count
-	k.SetOracleRequestDocCount(ctx, data.OracleRequestDocCount)
+	for _, addr := range gs.WhitelistAddresses {
+		k.AddWhitelistAddress(ctx, addr)
+	}
 }
 
-// ExportGenesis returns a GenesisState for a given context and keeper.
-func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) types.GenesisState {
-	// Get the current parameters from the keeper
-	params := keeper.GetParams(ctx)
+// ExportGenesis returns the oracle module's exported genesis.
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+	params := k.GetParams(ctx)
+	moderator := k.GetModeratorAddress(ctx)
 
-	// Get the current moderator address from the keeper
-	moderatorAddress := keeper.GetModeratorAddress(ctx)
+	var requests []types.OracleRequest
+	k.IterateRequests(ctx, func(req types.OracleRequest) bool {
+		requests = append(requests, req)
+		return false
+	})
 
-	// Get the current oracle request doc count from the keeper
-	oracleRequestDocCount := keeper.GetOracleRequestDocCount(ctx)
-
-	// Get the current oracle request documents from the keeper
-	tmpDocs := keeper.GetOracleRequestDocs(ctx)
-
-	// Initialize a new slice to hold the oracle request documents
-	docs := make([]types.OracleRequestDoc, len(tmpDocs))
-
-	// Copy the oracle request documents from the temporary slice to the new slice
-	for i, doc := range tmpDocs {
-		docs[i] = *doc
+	return &types.GenesisState{
+		Params:             params,
+		ModeratorAddress:   moderator,
+		Requests:           requests,
+		Categories:         k.GetCategories(ctx),
+		WhitelistAddresses: k.GetWhitelist(ctx),
 	}
-
-	return types.NewGenesisState(params, docs, moderatorAddress, oracleRequestDocCount)
 }

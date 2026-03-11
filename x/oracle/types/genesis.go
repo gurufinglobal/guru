@@ -3,54 +3,62 @@ package types
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types"
 )
 
-// NewGenesisState creates a new genesis state.
-func NewGenesisState(params Params, docs []OracleRequestDoc, moderatorAddress string, oracleRequestDocCount uint64) GenesisState {
-	return GenesisState{
-		Params:                params,
-		OracleRequestDocCount: oracleRequestDocCount,
-		OracleRequestDocs:     docs,
-		ModeratorAddress:      moderatorAddress,
+// NewGenesisState creates a new GenesisState object.
+func NewGenesisState(params Params, moderator string, requests []OracleRequest, categories []Category) *GenesisState {
+	return &GenesisState{
+		Params:           params,
+		ModeratorAddress: moderator,
+		Requests:         requests,
+		Categories:       categories,
 	}
 }
 
-// DefaultGenesisState returns a default genesis state
+// DefaultGenesisState returns a default GenesisState object.
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		Params:                DefaultParams(),
-		OracleRequestDocCount: 0,
-		OracleRequestDocs:     []OracleRequestDoc{},
-		ModeratorAddress:      "",
+		Params:           DefaultParams(),
+		ModeratorAddress: "",
+		Requests:         []OracleRequest{},
+		Categories:       []Category{},
 	}
 }
 
-// Validate performs basic genesis state validation returning an error upon any
-// failure.
-func (gs GenesisState) Validate() error {
-	// Validate params
-	if err := gs.Params.Validate(); err != nil {
+// Validate performs basic validation of the genesis state.
+func (g GenesisState) Validate() error {
+	if err := g.Params.Validate(); err != nil {
 		return fmt.Errorf("invalid params: %w", err)
 	}
 
-	// Validate moderator address
-	if gs.ModeratorAddress == "" {
-		return fmt.Errorf("moderator address must be set in genesis")
-	}
-
-	// Validate each request oracle doc
-	for _, doc := range gs.OracleRequestDocs {
-		if err := doc.Validate(); err != nil {
-			return fmt.Errorf("invalid request oracle doc: %w", err)
-		}
-	}
-
-	// Validate moderator address if provided
-	if gs.ModeratorAddress != "" {
-		if _, err := sdk.AccAddressFromBech32(gs.ModeratorAddress); err != nil {
+	if g.ModeratorAddress != "" {
+		if _, err := types.AccAddressFromBech32(g.ModeratorAddress); err != nil {
 			return fmt.Errorf("invalid moderator address: %w", err)
 		}
+	}
+
+	for _, cat := range g.Categories {
+		if cat == Category_CATEGORY_UNSPECIFIED {
+			return fmt.Errorf("category cannot be unspecified")
+		}
+		if !IsKnownCategory(cat) {
+			return fmt.Errorf("unknown category enum value: %d", int32(cat))
+		}
+	}
+
+	seenIDs := make(map[uint64]struct{})
+	for _, req := range g.Requests {
+		if err := req.ValidateBasic(); err != nil {
+			return fmt.Errorf("invalid request %d: %w", req.Id, err)
+		}
+		if _, ok := seenIDs[req.Id]; ok {
+			return fmt.Errorf("duplicate request id %d", req.Id)
+		}
+		if !IsKnownCategory(req.Category) {
+			return fmt.Errorf("request %d uses unknown category enum value: %d", req.Id, int32(req.Category))
+		}
+		seenIDs[req.Id] = struct{}{}
 	}
 
 	return nil

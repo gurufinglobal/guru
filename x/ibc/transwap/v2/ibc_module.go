@@ -143,6 +143,7 @@ func (im *IBCModule) OnRecvPacket(ctx sdk.Context, sourceChannel string, destina
 			sourceChannel,
 			payload.DestinationPort,
 			destinationChannel,
+			v2ExchangeSourceTimeoutTimestamp(ctx),
 		)
 	}
 
@@ -169,7 +170,7 @@ func (im *IBCModule) OnTimeoutPacket(ctx sdk.Context, sourceChannel string, dest
 
 	// refund tokens
 	if data.IsTransferPacket() {
-		err = im.keeper.OnTimeoutTransferPacket(ctx, payload.SourcePort, sourceChannel, data)
+		err = im.keeper.OnTimeoutTransferPacket(ctx, payload.SourcePort, sourceChannel, sequence, data)
 	} else {
 		err = im.keeper.OnTimeoutExchangePacket(ctx, payload.SourcePort, sourceChannel, data)
 	}
@@ -203,7 +204,7 @@ func (im *IBCModule) OnAcknowledgementPacket(ctx sdk.Context, sourceChannel stri
 	}
 
 	if data.IsTransferPacket() {
-		err = im.keeper.OnAcknowledgementTransferPacket(ctx, payload.SourcePort, sourceChannel, data, ack)
+		err = im.keeper.OnAcknowledgementTransferPacket(ctx, payload.SourcePort, sourceChannel, sequence, data, ack)
 	} else {
 		err = im.keeper.OnAcknowledgementExchangePacket(ctx, payload.SourcePort, sourceChannel, data, ack)
 	}
@@ -220,4 +221,8 @@ func (im *IBCModule) OnAcknowledgementPacket(ctx sdk.Context, sourceChannel stri
 // it implements the PacketDataUnmarshaler interface
 func (*IBCModule) UnmarshalPacketData(payload channeltypesv2.Payload) (any, error) {
 	return types.UnmarshalPacketData(payload.Value, payload.Version, payload.Encoding)
+}
+
+func v2ExchangeSourceTimeoutTimestamp(ctx sdk.Context) uint64 {
+	return uint64(ctx.BlockTime().Add(types.MinTimeoutWindow).UnixNano()) //nolint:gosec // G115: block time cannot be negative
 }

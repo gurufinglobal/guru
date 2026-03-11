@@ -208,6 +208,7 @@ func (im IBCModule) OnRecvPacket(
 			packet.SourceChannel,
 			packet.DestinationPort,
 			packet.DestinationChannel,
+			v1ExchangeSourceTimeoutTimestamp(packet),
 		)
 	}
 	if ackErr != nil {
@@ -251,7 +252,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 
 	// acknowledgement
 	if data.IsTransferPacket() {
-		err = im.keeper.OnAcknowledgementTransferPacket(ctx, packet.SourcePort, packet.SourceChannel, data, ack)
+		err = im.keeper.OnAcknowledgementTransferPacket(ctx, packet.SourcePort, packet.SourceChannel, packet.Sequence, data, ack)
 	} else {
 		err = im.keeper.OnAcknowledgementExchangePacket(ctx, packet.SourcePort, packet.SourceChannel, data, ack)
 	}
@@ -278,7 +279,7 @@ func (im IBCModule) OnTimeoutPacket(
 
 	// refund tokens
 	if data.IsTransferPacket() {
-		err = im.keeper.OnTimeoutTransferPacket(ctx, packet.SourcePort, packet.SourceChannel, data)
+		err = im.keeper.OnTimeoutTransferPacket(ctx, packet.SourcePort, packet.SourceChannel, packet.Sequence, data)
 	} else {
 		err = im.keeper.OnTimeoutExchangePacket(ctx, packet.SourcePort, packet.SourceChannel, data)
 	}
@@ -302,4 +303,8 @@ func (im IBCModule) UnmarshalPacketData(ctx sdk.Context, portID string, channelI
 
 	ftpd, err := types.UnmarshalPacketData(bz, ics20Version, "")
 	return ftpd, ics20Version, err
+}
+
+func v1ExchangeSourceTimeoutTimestamp(packet channeltypes.Packet) uint64 {
+	return packet.TimeoutTimestamp
 }

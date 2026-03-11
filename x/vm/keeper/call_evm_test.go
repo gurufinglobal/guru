@@ -13,7 +13,6 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestCallEVM() {
-	wguruContract := common.HexToAddress(testconstants.WGURUContractMainnet)
 	testCases := []struct {
 		name    string
 		method  string
@@ -35,7 +34,15 @@ func (suite *KeeperTestSuite) TestCallEVM() {
 
 		erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
 		account := utiltx.GenerateAddress()
-		res, err := suite.network.App.EVMKeeper.CallEVM(suite.network.GetContext(), erc20, types.ModuleAddress, wguruContract, false, tc.method, account)
+		res, err := suite.network.App.EVMKeeper.CallEVM(
+			suite.network.GetContext(),
+			erc20,
+			types.ModuleAddress,
+			common.HexToAddress(testconstants.WGURUContractMainnet),
+			false,
+			tc.method,
+			account,
+		)
 		if tc.expPass {
 			suite.Require().IsTypef(&evmtypes.MsgEthereumTxResponse{}, res, tc.name)
 			suite.Require().NoError(err)
