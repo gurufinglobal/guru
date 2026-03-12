@@ -20,8 +20,8 @@ import (
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/statedb"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (s *PrecompileTestSuite) TestIsTransaction() {

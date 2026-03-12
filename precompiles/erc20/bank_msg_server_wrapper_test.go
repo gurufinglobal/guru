@@ -9,7 +9,7 @@ import (
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/common/mocks"
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
-	vmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	vmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (s *PrecompileTestSuite) TestSend() {

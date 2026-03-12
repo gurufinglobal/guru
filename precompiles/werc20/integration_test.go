@@ -28,7 +28,7 @@ import (
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // -------------------------------------------------------------------------------------------------

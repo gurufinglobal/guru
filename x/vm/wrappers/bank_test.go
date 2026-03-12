@@ -15,9 +15,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/wrappers"
-	"github.com/gurufinglobal/guru/v2/x/vm/wrappers/testutil"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/cosmos/evm/x/vm/wrappers"
+	"github.com/cosmos/evm/x/vm/wrappers/testutil"
 )
 
 // --------------------------------------TRANSACTIONS-----------------------------------------------

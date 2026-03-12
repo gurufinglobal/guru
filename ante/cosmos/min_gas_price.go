@@ -12,7 +12,7 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // MinGasPriceDecorator will check if the transaction's fee is at least as large

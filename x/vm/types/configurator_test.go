@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 func TestEVMConfigurator(t *testing.T) {

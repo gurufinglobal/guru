@@ -32,8 +32,8 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/keeper"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) TestContextSetConsensusParams() {

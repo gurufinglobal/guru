@@ -20,7 +20,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	fmkttypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type txParams struct {

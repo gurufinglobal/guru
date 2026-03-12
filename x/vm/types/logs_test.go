@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 func TestTransactionLogsValidate(t *testing.T) {

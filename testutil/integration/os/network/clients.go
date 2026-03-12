@@ -22,7 +22,7 @@ import (
 	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
 	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func getQueryHelper(ctx sdktypes.Context, encCfg testutil.TestEncodingConfig) *baseapp.QueryServiceTestHelper {

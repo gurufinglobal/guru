@@ -20,7 +20,7 @@ import (
 	types2 "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/gurufinglobal/guru/v2/utils"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 // NewTxCmd returns a root CLI command handler for evm module transaction commands

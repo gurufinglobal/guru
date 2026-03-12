@@ -7,7 +7,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/cosmos/evm/x/vm/statedb"
 )
 
 // UnitTestNetwork is the implementation of the Network interface for unit tests.

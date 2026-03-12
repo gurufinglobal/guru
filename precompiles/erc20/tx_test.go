@@ -16,7 +16,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/cosmos/evm/x/vm/statedb"
 )
 
 var (

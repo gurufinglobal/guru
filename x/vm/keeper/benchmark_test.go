@@ -15,8 +15,8 @@ import (
 
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/vm/keeper/testdata"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/keeper/testdata"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 func SetupContract(b *testing.B) (*KeeperTestSuite, common.Address) {

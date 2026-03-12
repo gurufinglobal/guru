@@ -143,9 +143,9 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/precisebank"
 	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
 	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	"github.com/gurufinglobal/guru/v2/x/vm"
-	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func init() {
@@ -526,6 +526,7 @@ func NewExampleApp(
 
 	// Set up EVM keeper
 	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
+	evmFeeMarketAdapter := feemarketkeeper.NewEVMFeeMarketAdapter(app.FeeMarketKeeper)
 
 	// NOTE: it's required to set up the EVM keeper before the ERC-20 keeper, because it is used in its instantiation.
 	app.EVMKeeper = evmkeeper.NewKeeper(
@@ -535,7 +536,7 @@ func NewExampleApp(
 		app.AccountKeeper,
 		app.PreciseBankKeeper,
 		app.StakingKeeper,
-		app.FeeMarketKeeper,
+		evmFeeMarketAdapter,
 		&app.ConsensusParamsKeeper,
 		&app.Erc20Keeper,
 		tracer,

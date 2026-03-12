@@ -3,10 +3,11 @@ package wrappers
 import (
 	"math/big"
 
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 // FeeMarketWrapper is a wrapper around the feemarket keeper

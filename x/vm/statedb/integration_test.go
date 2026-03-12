@@ -22,7 +22,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	testnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func TestNestedEVMExtensionCall(t *testing.T) {

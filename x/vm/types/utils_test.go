@@ -17,7 +17,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/encoding"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func TestEvmDataEncoding(t *testing.T) {

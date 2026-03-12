@@ -3,7 +3,7 @@ package common
 import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // ReturnRevertError returns a ExecutionReverted error with revert reason

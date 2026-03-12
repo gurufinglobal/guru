@@ -26,9 +26,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	gurutypes "github.com/gurufinglobal/guru/v2/types"
-	evmante "github.com/gurufinglobal/guru/v2/x/vm/ante"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmante "github.com/cosmos/evm/x/vm/ante"
+	"github.com/cosmos/evm/x/vm/statedb"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 var _ types.QueryServer = Keeper{}

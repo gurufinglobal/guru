@@ -14,7 +14,7 @@ import (
 
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	gurutypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // TxFeeChecker check if the provided fee is enough and returns the effective fee, total tip and tx priority,

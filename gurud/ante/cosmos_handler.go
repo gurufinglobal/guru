@@ -9,7 +9,7 @@ import (
 
 	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // newCosmosAnteHandler creates the default ante handler for Cosmos transactions

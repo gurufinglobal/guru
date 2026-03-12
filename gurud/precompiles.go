@@ -29,7 +29,7 @@ import (
 	stakingprecompile "github.com/gurufinglobal/guru/v2/precompiles/staking"
 	erc20Keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
-	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 )
 
 const bech32PrecompileBaseGas = 6_000

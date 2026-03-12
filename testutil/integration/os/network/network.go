@@ -31,7 +31,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/types"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // Network is the interface that wraps the methods to interact with integration test network.

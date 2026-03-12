@@ -18,7 +18,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	guruutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/cosmos/evm/x/vm/statedb"
 )
 
 func (s *PrecompileTestSuite) TestCreateValidator() {

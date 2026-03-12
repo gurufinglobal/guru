@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx"
 
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // ValidateMsg validates an Ethereum specific message type and returns an error

@@ -13,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // DecoratorUtils contain a bunch of relevant variables used for a variety of checks

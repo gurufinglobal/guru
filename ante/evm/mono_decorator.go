@@ -14,8 +14,8 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // MonoDecorator is a single decorator that handles all the prechecks for

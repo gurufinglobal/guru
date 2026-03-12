@@ -20,8 +20,8 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/erc20/keeper"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
 	erc20mocks "github.com/gurufinglobal/guru/v2/x/erc20/types/mocks"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/statedb"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) TestConvertERC20NativeERC20() {

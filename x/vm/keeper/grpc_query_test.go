@@ -28,9 +28,9 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/tx"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	types2 "github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/keeper/testdata"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/keeper/testdata"
+	"github.com/cosmos/evm/x/vm/statedb"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 // Not valid Ethereum address

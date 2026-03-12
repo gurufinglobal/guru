@@ -18,7 +18,7 @@ import (
 
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	erc20keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 const (

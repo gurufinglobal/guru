@@ -9,7 +9,7 @@ import (
 	commongrpc "github.com/gurufinglobal/guru/v2/testutil/integration/common/grpc"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // Handler is an interface that defines the methods that are used to query

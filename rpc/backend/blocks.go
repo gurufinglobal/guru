@@ -20,7 +20,7 @@ import (
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // BlockNumber returns the current block number in abci app state. Because abci

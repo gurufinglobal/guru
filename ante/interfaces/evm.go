@@ -15,8 +15,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx"
 
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/statedb"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // EVMKeeper exposes the required EVM keeper interface required for ante handlers

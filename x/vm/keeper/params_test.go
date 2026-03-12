@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) TestParams() {

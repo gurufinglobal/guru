@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 type UnitTestSuite struct {

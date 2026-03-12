@@ -12,7 +12,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/x/erc20/keeper/testdata"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-	evm "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evm "github.com/cosmos/evm/x/vm/types"
 )
 
 // MintFeeCollector mints some coins to the fee collector address.

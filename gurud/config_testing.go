@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"cosmossdk.io/math"
 

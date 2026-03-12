@@ -17,8 +17,8 @@ import (
 
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
-	evmkeeper "github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // PrecompileAddress of the ICS-20 EVM extension in hex format.

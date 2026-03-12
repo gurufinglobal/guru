@@ -15,7 +15,7 @@ import (
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	precompiletestutil "github.com/gurufinglobal/guru/v2/precompiles/testutil"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // Call is a helper function to call any arbitrary smart contract.

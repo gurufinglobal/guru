@@ -21,7 +21,7 @@ import (
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *KeeperTestSuite) TestTransfer() {

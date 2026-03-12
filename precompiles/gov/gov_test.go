@@ -11,8 +11,8 @@ import (
 
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	"github.com/gurufinglobal/guru/v2/precompiles/gov"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/statedb"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (s *PrecompileTestSuite) TestIsTransaction() {

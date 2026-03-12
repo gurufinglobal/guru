@@ -13,7 +13,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/cosmos/evm/x/vm/statedb"
 )
 
 // Precompile is a common struct for all precompiles that holds the common data each

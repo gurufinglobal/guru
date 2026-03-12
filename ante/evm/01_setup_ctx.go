@@ -9,7 +9,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	evmante "github.com/gurufinglobal/guru/v2/x/vm/ante"
+	evmante "github.com/cosmos/evm/x/vm/ante"
 )
 
 var _ sdktypes.AnteDecorator = &EthSetupContextDecorator{}

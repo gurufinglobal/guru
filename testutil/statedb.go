@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
+	"github.com/cosmos/evm/x/vm/statedb"
 )
 
 // NewStateDB returns a new StateDB for testing purposes.

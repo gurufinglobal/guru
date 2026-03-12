@@ -17,9 +17,9 @@ import (
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	testutil "github.com/gurufinglobal/guru/v2/testutil"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/types/mocks"
+	"github.com/cosmos/evm/x/vm/statedb"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types/mocks"
 )
 
 func setupBalanceHandlerTest(t *testing.T) {

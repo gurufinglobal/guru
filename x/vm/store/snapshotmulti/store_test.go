@@ -12,7 +12,7 @@ import (
 	"cosmossdk.io/store/dbadapter"
 	storetypes "cosmossdk.io/store/types"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotmulti"
+	"github.com/cosmos/evm/x/vm/store/snapshotmulti"
 )
 
 func setupStore() (*snapshotmulti.Store, *storetypes.KVStoreKey) {

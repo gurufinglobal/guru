@@ -7,9 +7,9 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotkv"
-	"github.com/gurufinglobal/guru/v2/x/vm/store/types"
-	vmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/store/snapshotkv"
+	"github.com/cosmos/evm/x/vm/store/types"
+	vmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type Store struct {

@@ -13,9 +13,9 @@ import (
 
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/wrappers"
-	"github.com/gurufinglobal/guru/v2/x/vm/wrappers/testutil"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/cosmos/evm/x/vm/wrappers"
+	"github.com/cosmos/evm/x/vm/wrappers/testutil"
 )
 
 func TestGetBaseFee(t *testing.T) {

@@ -15,7 +15,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type validateMsgParams struct {

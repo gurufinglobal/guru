@@ -11,7 +11,7 @@ import (
 	"cosmossdk.io/store/cachekv"
 	"cosmossdk.io/store/dbadapter"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotkv"
+	"github.com/cosmos/evm/x/vm/store/snapshotkv"
 )
 
 func newSnapshotKV() *snapshotkv.Store {

@@ -12,7 +12,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 type TxDataTestSuite struct {

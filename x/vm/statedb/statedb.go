@@ -23,9 +23,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/store/snapshotmulti"
-	vmstoretypes "github.com/gurufinglobal/guru/v2/x/vm/store/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/store/snapshotmulti"
+	vmstoretypes "github.com/cosmos/evm/x/vm/store/types"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 // revision is the identifier of a version of state.

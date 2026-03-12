@@ -26,8 +26,8 @@ import (
 	"github.com/gurufinglobal/guru/v2/utils"
 	"github.com/gurufinglobal/guru/v2/x/erc20/keeper"
 	"github.com/gurufinglobal/guru/v2/x/erc20/types"
-	"github.com/gurufinglobal/guru/v2/x/vm/statedb"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/statedb"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 var erc20Denom = "erc20:0xdac17f958d2ee523a2206206994597c13d831ec7"

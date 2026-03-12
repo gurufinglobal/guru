@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}

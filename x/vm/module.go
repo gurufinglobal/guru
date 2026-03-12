@@ -21,9 +21,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/gurufinglobal/guru/v2/x/vm/client/cli"
-	"github.com/gurufinglobal/guru/v2/x/vm/keeper"
-	"github.com/gurufinglobal/guru/v2/x/vm/types"
+	"github.com/cosmos/evm/x/vm/client/cli"
+	"github.com/cosmos/evm/x/vm/keeper"
+	"github.com/cosmos/evm/x/vm/types"
 )
 
 // consensusVersion defines the current x/evm module consensus version.
