@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	Chain   ChainConfig   `mapstructure:"chain"`
-	Keyring KeyringConfig `mapstructure:"keyring"`
-	Gas     GasConfig     `mapstructure:"gas"`
+	Chain     ChainConfig   `mapstructure:"chain"`
+	Keyring   KeyringConfig `mapstructure:"keyring"`
+	Gas       GasConfig     `mapstructure:"gas"`
+	CMCAPIKey string        `mapstructure:"cmc_api_key" toml:"cmc_api_key"`
 }
 
 type ChainConfig struct {
@@ -30,6 +32,26 @@ type GasConfig struct {
 	Limit      uint64  `mapstructure:"limit"`
 	Adjustment float64 `mapstructure:"adjustment"`
 	Denom      string  `mapstructure:"denom"`
+}
+
+func DefaultConfig() Config {
+	return Config{
+		Chain: ChainConfig{
+			ChainID:  "guru_631-1",
+			Endpoint: "http://localhost:26657",
+		},
+		Keyring: KeyringConfig{
+			Backend:    "test",
+			Name:       "oracle_feeder",
+			Passphrase: "password",
+		},
+		Gas: GasConfig{
+			Limit:      70000,
+			Adjustment: 1.5,
+			Denom:      "agxn",
+		},
+		CMCAPIKey: "",
+	}
 }
 
 func LoadFile(path string) (*Config, error) {
@@ -53,6 +75,11 @@ func LoadFile(path string) (*Config, error) {
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	// Keep compatibility with the generated config layout where cmc_api_key is written last.
+	if cfg.CMCAPIKey == "" {
+		cfg.CMCAPIKey = strings.TrimSpace(v.GetString("gas.cmc_api_key"))
 	}
 
 	// Basic validation (keep minimal; deeper validation happens in daemon).
@@ -91,6 +118,8 @@ passphrase = "password"
 limit = 70000
 adjustment = 1.5
 denom = "agxn"
+
+cmc_api_key = ""
 `)
 
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
