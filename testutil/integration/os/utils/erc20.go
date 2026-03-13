@@ -12,7 +12,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 )
 
 // ERC20RegistrationData is the necessary data to provide in order to register an ERC20 token.

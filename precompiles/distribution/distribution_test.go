@@ -14,12 +14,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (s *PrecompileTestSuite) TestIsTransaction() {

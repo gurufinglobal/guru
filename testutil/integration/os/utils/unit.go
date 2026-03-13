@@ -16,7 +16,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 )
 
 const (

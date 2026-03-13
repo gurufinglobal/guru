@@ -7,8 +7,8 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
 )
 
 type MsgServer struct {

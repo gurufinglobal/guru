@@ -9,10 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
-	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
-	"github.com/gurufinglobal/guru/v2/precompiles/gov"
 	"github.com/cosmos/evm/x/vm/statedb"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
+	"github.com/gurufinglobal/guru/v2/precompiles/gov"
 )
 
 func (s *PrecompileTestSuite) TestIsTransaction() {

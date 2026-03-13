@@ -1,8 +1,8 @@
 package testdata
 
 import (
-	contractutils "github.com/gurufinglobal/guru/v2/contracts/utils"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	contractutils "github.com/gurufinglobal/guru/v2/contracts/utils"
 )
 
 // LoadWGURU9Contract load the WGURU9 contract from the json representation of

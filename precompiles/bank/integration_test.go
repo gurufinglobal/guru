@@ -16,6 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/precompiles/bank"
 	"github.com/gurufinglobal/guru/v2/precompiles/bank/testdata"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
@@ -25,7 +26,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 var is *IntegrationTestSuite

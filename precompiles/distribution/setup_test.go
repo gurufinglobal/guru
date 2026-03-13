@@ -11,13 +11,13 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type PrecompileTestSuite struct {

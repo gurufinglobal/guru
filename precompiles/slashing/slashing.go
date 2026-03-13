@@ -15,8 +15,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}

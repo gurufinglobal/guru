@@ -16,8 +16,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}

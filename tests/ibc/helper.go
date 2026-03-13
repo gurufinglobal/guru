@@ -16,7 +16,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/gurud"
 	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 )
 
 // NativeErc20Info holds details about a deployed ERC20 token.

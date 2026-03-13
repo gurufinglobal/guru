@@ -19,7 +19,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	"github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	"github.com/cosmos/evm/x/precisebank/types"
 	"github.com/cosmos/evm/x/vm/statedb"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 )

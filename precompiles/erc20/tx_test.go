@@ -12,11 +12,11 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	"github.com/cosmos/evm/x/vm/statedb"
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	"github.com/cosmos/evm/x/vm/statedb"
 )
 
 var (

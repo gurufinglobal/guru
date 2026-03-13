@@ -15,6 +15,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	"github.com/gurufinglobal/guru/v2/precompiles/werc20"
@@ -25,10 +28,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // -------------------------------------------------------------------------------------------------

@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/gurufinglobal/guru/v2/utils"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/utils"
 )
 
 func ParseHexAddress(event sdk.Event, key string) (common.Address, error) {

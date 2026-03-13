@@ -13,9 +13,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/precompiles/bank"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // setupBankPrecompile is a helper function to set up an instance of the Bank precompile for

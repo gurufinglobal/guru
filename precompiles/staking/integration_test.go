@@ -21,6 +21,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	compiledcontracts "github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
@@ -32,7 +33,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func TestPrecompileIntegrationTestSuite(t *testing.T) {

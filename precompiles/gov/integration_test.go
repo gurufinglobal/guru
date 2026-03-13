@@ -24,6 +24,7 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/gov"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
@@ -31,7 +32,6 @@ import (
 	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // General variables used for integration tests

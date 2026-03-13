@@ -14,12 +14,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/slashing/testdata"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func TestPrecompileIntegrationTestSuite(t *testing.T) {

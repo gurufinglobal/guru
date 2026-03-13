@@ -3,7 +3,7 @@ package constants
 import (
 	"cosmossdk.io/math"
 
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 

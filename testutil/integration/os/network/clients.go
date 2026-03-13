@@ -17,11 +17,11 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-	precisebankkeeper "github.com/gurufinglobal/guru/v2/x/precisebank/keeper"
-	precisebanktypes "github.com/gurufinglobal/guru/v2/x/precisebank/types"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 

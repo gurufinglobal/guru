@@ -12,9 +12,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
 )
 
 const (

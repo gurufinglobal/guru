@@ -15,13 +15,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/cosmos/evm/x/vm/statedb"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
-	"github.com/cosmos/evm/x/vm/statedb"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (s *PrecompileTestSuite) TestIsTransaction() {

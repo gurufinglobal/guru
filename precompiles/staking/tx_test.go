@@ -13,12 +13,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/cosmos/evm/x/vm/statedb"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	guruutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/cosmos/evm/x/vm/statedb"
 )
 
 func (s *PrecompileTestSuite) TestCreateValidator() {

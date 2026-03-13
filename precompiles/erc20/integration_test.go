@@ -19,6 +19,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/contracts"
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20"
 	"github.com/gurufinglobal/guru/v2/precompiles/erc20/testdata"
@@ -30,8 +32,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	integrationutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	erc20types "github.com/gurufinglobal/guru/v2/x/erc20/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 var is *IntegrationTestSuite

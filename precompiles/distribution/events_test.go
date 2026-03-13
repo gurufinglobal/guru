@@ -15,12 +15,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/cosmos/evm/x/vm/statedb"
 	chainconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
 	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
-	"github.com/cosmos/evm/x/vm/statedb"
 )
 
 func (s *PrecompileTestSuite) TestSetWithdrawAddressEvent() {

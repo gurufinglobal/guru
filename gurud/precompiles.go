@@ -27,8 +27,8 @@ import (
 	"github.com/gurufinglobal/guru/v2/precompiles/p256"
 	slashingprecompile "github.com/gurufinglobal/guru/v2/precompiles/slashing"
 	stakingprecompile "github.com/gurufinglobal/guru/v2/precompiles/staking"
-	erc20Keeper "github.com/gurufinglobal/guru/v2/x/erc20/keeper"
-	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
+	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
+	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 )
 

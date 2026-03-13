@@ -18,6 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 	"github.com/gurufinglobal/guru/v2/precompiles/distribution"
 	"github.com/gurufinglobal/guru/v2/precompiles/staking"
@@ -27,7 +28,6 @@ import (
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	testutils "github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // General variables used for integration tests

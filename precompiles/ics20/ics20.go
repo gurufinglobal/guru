@@ -15,10 +15,10 @@ import (
 
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
-	transferkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transfer/keeper"
+	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
 )
 
 // PrecompileAddress of the ICS-20 EVM extension in hex format.

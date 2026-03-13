@@ -14,6 +14,7 @@ import (
 
 	"github.com/cometbft/cometbft/crypto"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/precompiles/p256"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -21,7 +22,6 @@ import (
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/utils"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type IntegrationTestSuite struct {

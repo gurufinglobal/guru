@@ -11,8 +11,8 @@ import (
 
 	"github.com/cometbft/cometbft/crypto"
 
-	"github.com/gurufinglobal/guru/v2/precompiles/p256"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/precompiles/p256"
 )
 
 var trueValue = common.LeftPadBytes(common.Big1.Bytes(), 32)
