@@ -88,7 +88,7 @@ What it does:
 
 ## Adding a provider
 
-Providers implement `provider.Provider` and must return values the chain accepts (decimal strings parseable by `big.Float`, no fractions).
+Providers implement `provider.Provider` and must return values the chain accepts (decimal strings accepted by `oracletypes.ParseOracleDecimal`).
 
 1) Create your provider (example skeleton):
 
@@ -101,7 +101,7 @@ func (p *MyProvider) ID() string                     { return "myprovider" }
 func (p *MyProvider) Categories() []int32            { return []int32{1} } // match chain categories
 func (p *MyProvider) SetHTTPClient(c *http.Client)   { if c != nil { p.client = c } }
 func (p *MyProvider) Fetch(ctx context.Context, symbol string) (string, error) {
-    // Return a decimal string (no fractions); honor context for timeouts.
+    // Return a chain-acceptable decimal string; honor context for timeouts.
     return "123.45", nil
 }
 ```
@@ -123,6 +123,6 @@ daemon.providers = []provider.Provider{coinbase, myPv} // keep track for restart
 Notes:
 - Registry will ignore unknown categories and errors if any chain category has zero providers; max 10 providers per category.
 - Implement `SetHTTPClient` so the daemon can swap clients on restart.
-- Ensure `Fetch` honors context and returns chain-parseable decimals; invalid formats are rejected during aggregation.
+- Ensure `Fetch` honors context and returns values accepted by `oracletypes.ParseOracleDecimal`; invalid formats are rejected during aggregation.
 
 

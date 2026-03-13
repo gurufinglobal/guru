@@ -90,3 +90,16 @@ func TestProcessOracleReportAggregation_BelowThreshold_NoResult(t *testing.T) {
 	_, found := k.GetResult(ctx, 2, 1)
 	require.False(t, found)
 }
+
+func TestAggregateReports_EvenCountAverageCanonical(t *testing.T) {
+	reports := []types.OracleReport{
+		{RawData: "1.0"},
+		{RawData: "2.0"},
+		{RawData: "3.0"},
+		{RawData: "4.0"},
+	}
+
+	got, err := aggregateReports(reports)
+	require.NoError(t, err)
+	require.Equal(t, "2.5", got)
+}

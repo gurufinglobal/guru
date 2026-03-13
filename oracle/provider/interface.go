@@ -15,7 +15,7 @@ type Provider interface {
 	Categories() []int32
 	// SetHTTPClient replaces the underlying HTTP client. Providers that do not use HTTP may no-op.
 	SetHTTPClient(client *http.Client)
-	// Fetch returns a decimal string that must be parseable by big.Float.SetString (chain validation).
+	// Fetch returns a decimal string that must be accepted by oracletypes.ParseOracleDecimal (chain validation).
 	Fetch(ctx context.Context, symbol string) (raw string, err error)
 }
 
