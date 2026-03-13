@@ -33,7 +33,7 @@ func (p *CDNProvider) ID() string {
 }
 
 func (p *CDNProvider) Categories() []int32 {
-	return []int32{3}
+	return []int32{1,2,3}
 }
 
 func (p *CDNProvider) Fetch(ctx context.Context, symbol string) (string, error) {

@@ -37,7 +37,7 @@ func (p *CoinMarketCapProvider) ID() string {
 }
 
 func (p *CoinMarketCapProvider) Categories() []int32 {
-	return []int32{1, 2}
+	return []int32{1,2,3}
 }
 
 func (p *CoinMarketCapProvider) Fetch(ctx context.Context, symbol string) (string, error) {
