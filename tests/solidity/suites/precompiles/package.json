@@ -4,7 +4,7 @@
   "author": "Evmos team",
   "license": "GPL-3.0-or-later",
   "scripts": {
-    "get-contracts": "mkdir -p ./contracts/cosmos && rsync -avm --include='*/' --exclude='**/ERC20Minter_OpenZeppelinV5.sol' --exclude='**/WEVMOS.sol' --exclude='**/ERC20NoMetadata.sol' --include='*.sol' --exclude='*' ../../../../precompiles/ ./contracts/cosmos/",
+    "get-contracts": "ROOT=$(go list -f '{{.Dir}}' github.com/cosmos/evm/precompiles/erc20 | sed 's|/erc20$||') && mkdir -p ./contracts/cosmos && rsync -avm --include='*/' --exclude='**/ERC20Minter_OpenZeppelinV5.sol' --exclude='**/WEVMOS.sol' --exclude='**/ERC20NoMetadata.sol' --include='*.sol' --exclude='*' \"$ROOT\"/ ./contracts/cosmos/",
     "clean-contracts": "rm -rf ./contracts/cosmos/*",
     "test-ganache": "yarn hardhat test",
     "test-cosmos": "yarn get-contracts && yarn hardhat test --network cosmos && yarn clean-contracts"

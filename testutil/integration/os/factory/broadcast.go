@@ -10,7 +10,7 @@ import (
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
-	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
+	"github.com/cosmos/evm/precompiles/testutil"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 

@@ -1,7 +1,7 @@
 package gurud
 
 import (
-	cmn "github.com/gurufinglobal/guru/v2/precompiles/common"
+	cmn "github.com/cosmos/evm/precompiles/common"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 

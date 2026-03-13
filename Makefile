@@ -162,15 +162,11 @@ test-solidity:
 	@echo "Beginning solidity tests..."
 	./scripts/run-solidity-tests.sh
 
-test-werc20:
-	@echo "Running werc20 integration tests with test tag..."
-	go test -tags=test ./precompiles/werc20/... -short
-
 test-e2e-smoke:
 	@echo "Running RPC/JSON-RPC/gRPC e2e smoke test..."
 	./scripts/e2e_smoke_rpc.sh
 
-.PHONY: run-tests test test-all $(TEST_TARGETS) check-evm-type-ownership test-e2e-smoke test-werc20
+.PHONY: run-tests test test-all $(TEST_TARGETS) check-evm-type-ownership test-e2e-smoke
 
 benchmark:
 	@go test -tags=test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)
@@ -195,14 +191,14 @@ lint-python:
 	flake8
 
 lint-contracts:
-	solhint --config .solhint.json 'contracts/**/*.sol' 'precompiles/**/*.sol'
+	solhint --config .solhint.json 'contracts/**/*.sol'
 
 lint-fix:
 	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(golangci_version)
 	@$(golangci_lint_cmd) run --timeout=15m --fix
 
 lint-fix-contracts:
-	solhint --fix --config .solhint.json 'contracts/**/*.sol' 'precompiles/**/*.sol'
+	solhint --fix --config .solhint.json 'contracts/**/*.sol'
 
 .PHONY: lint lint-fix lint-contracts lint-go lint-python
 

@@ -20,7 +20,7 @@ import (
 	testutiltypes "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 
-	"github.com/gurufinglobal/guru/v2/precompiles/testutil"
+	"github.com/cosmos/evm/precompiles/testutil"
 	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"

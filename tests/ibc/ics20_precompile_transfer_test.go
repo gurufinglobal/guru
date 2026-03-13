@@ -23,7 +23,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/gurud"
 	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
-	"github.com/gurufinglobal/guru/v2/precompiles/ics20"
+	"github.com/cosmos/evm/precompiles/ics20"
 	evmante "github.com/cosmos/evm/x/vm/ante"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
