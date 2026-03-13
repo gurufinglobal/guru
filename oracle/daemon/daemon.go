@@ -150,13 +150,13 @@ func New(cfg *config.Config, homeDir string) (*Daemon, error) {
 	httpClient := &http.Client{Timeout: defaultHTTPTimeout}
 	coinbase := provider.NewCoinbaseProvider(httpClient)
 	cdn := provider.NewCDNProvider(httpClient)
-	cmc := provider.NewCoinMarketCapProvider(httpClient, cfg.CMCAPIKey)
+	providers := []provider.Provider{coinbase, cdn}
+	if strings.TrimSpace(cfg.Provider.CMCAPIKey) != "" {
+		cmc := provider.NewCoinMarketCapProvider(httpClient, cfg.Provider.CMCAPIKey)
+		providers = append(providers, cmc)
+	}
 
-	registry, err := provider.New(logger, categories.Categories,
-		coinbase,
-		cdn,
-		cmc,
-	)
+	registry, err := provider.New(logger, categories.Categories, providers...)
 	if err != nil {
 		return nil, fmt.Errorf("init provider registry: %w", err)
 	}
@@ -189,7 +189,7 @@ func New(cfg *config.Config, homeDir string) (*Daemon, error) {
 		clientCtx:          clientCtx,
 		cometClient:        cometClient,
 		providerHTTPClient: httpClient,
-		providers:          []provider.Provider{coinbase, cdn, cmc},
+		providers:          providers,
 		pvRegistry:         registry,
 		baseFactory:        baseFactory,
 		gasPrice:           gasPrice,

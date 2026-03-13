@@ -41,7 +41,13 @@ passphrase = "password"
 limit = 70000
 adjustment = 1.5
 denom = "agxn"
+
+[provider]
+cmc_api_key=""
 ```
+
+- `provider.cmc_api_key`: set this to enable the CoinMarketCap provider. If empty, CMC is not registered.
+- API keys are loaded from config only (`config.toml`), not environment variables.
 
 ## Commands
 
@@ -79,7 +85,7 @@ Start the daemon after configuration and keyring setup:
 What it does:
 
 - Loads `<home>/.oracled/config.toml` and verifies the keyring directory exists for file/test backends.
-- Connects to the chain RPC/WebSocket endpoint, queries supported oracle categories, and builds a provider registry (Coinbase by default).
+- Connects to the chain RPC/WebSocket endpoint, queries supported oracle categories, and builds a provider registry (`coinbase` + `cdn` by default, plus `cmc` when `provider.cmc_api_key` is set).
 - Launches the pipeline:
   - Listener subscribes to oracle task IDs and min gas price updates.
   - Aggregator fetches from all providers for the task category and selects the median.

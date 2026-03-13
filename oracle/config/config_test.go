@@ -71,14 +71,15 @@ endpoint = "http://localhost:26657"
 
 [keyring]
 backend = "test"
-name = "oracle_feeder"
-passphrase = "password"
+name = "dev0"
+passphrase = ""
 
 [gas]
 limit = 70000
 adjustment = 1.5
 denom = "agxn"
 
+[provider]
 cmc_api_key = "test-cmc-key"
 `), 0o600); err != nil {
 		t.Fatalf("write config: %v", err)
@@ -88,8 +89,11 @@ cmc_api_key = "test-cmc-key"
 	if err != nil {
 		t.Fatalf("LoadFile error: %v", err)
 	}
-	if cfg.CMCAPIKey != "test-cmc-key" {
-		t.Fatalf("expected CMC API key to be loaded, got %q", cfg.CMCAPIKey)
+	if cfg.Provider.CMCAPIKey != "test-cmc-key" {
+		t.Fatalf("expected CMC API key to be loaded, got %q", cfg.Provider.CMCAPIKey)
+	}
+	if cfg.Keyring.Name != "dev0" {
+		t.Fatalf("expected keyring name dev0, got %q", cfg.Keyring.Name)
 	}
 }
 
@@ -104,10 +108,13 @@ func TestWriteDefaultFile_ContainsCMCAPIKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read config: %v", err)
 	}
-	if !strings.Contains(string(b), `cmc_api_key = ""`) {
+	if !strings.Contains(string(b), `cmc_api_key=""`) {
 		t.Fatalf("expected default config to include cmc_api_key")
 	}
-	if !strings.HasSuffix(strings.TrimSpace(string(b)), `cmc_api_key = ""`) {
+	if !strings.Contains(string(b), `[provider]`) {
+		t.Fatalf("expected default config to include [provider] section")
+	}
+	if !strings.HasSuffix(strings.TrimSpace(string(b)), `cmc_api_key=""`) {
 		t.Fatalf("expected cmc_api_key to be the last config line")
 	}
 }
@@ -116,7 +123,7 @@ func TestDefaultConfig_CMCAPIKeyEmpty(t *testing.T) {
 	t.Parallel()
 
 	cfg := DefaultConfig()
-	if cfg.CMCAPIKey != "" {
-		t.Fatalf("expected empty CMC API key by default, got %q", cfg.CMCAPIKey)
+	if cfg.Provider.CMCAPIKey != "" {
+		t.Fatalf("expected empty CMC API key by default, got %q", cfg.Provider.CMCAPIKey)
 	}
 }
