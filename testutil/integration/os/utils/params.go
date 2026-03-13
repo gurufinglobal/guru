@@ -3,6 +3,8 @@ package utils
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -76,7 +78,12 @@ func createProposalMsg(params interface{}, name string) sdk.Msg {
 	case govtypes.ModuleName:
 		return &govv1types.MsgUpdateParams{Authority: authority, Params: params.(govv1types.Params)}
 	case feemarkettypes.ModuleName:
-		return &feemarkettypes.MsgUpdateParams{Authority: authority, Params: params.(feemarkettypes.Params)}
+		custom := params.(feemarkettypes.Params)
+		// Keep local feemarket MsgUpdateParams for gov routing, but clear
+		// custom-only fields so mixed cosmos/guru decoders remain compatible.
+		custom.GasPriceAdjustmentFactor = sdkmath.LegacyDec{}
+		custom.MaxChangeRate = sdkmath.LegacyDec{}
+		return &feemarkettypes.MsgUpdateParams{Authority: authority, Params: custom}
 	case erc20types.ModuleName:
 		return &erc20types.MsgUpdateParams{Authority: authority, Params: params.(erc20types.Params)}
 	default:

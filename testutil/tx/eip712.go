@@ -14,11 +14,11 @@ import (
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	cosmosevmtypes "github.com/cosmos/evm/types"
 
 	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/types"
 )
 
 type EIP712TxArgs struct {
@@ -164,7 +164,7 @@ func signCosmosEIP712Tx(
 func createTypedData(args typedDataArgs, useLegacy bool) (apitypes.TypedData, error) {
 	if useLegacy {
 		registry := codectypes.NewInterfaceRegistry()
-		types.RegisterInterfaces(registry)
+		cosmosevmtypes.RegisterInterfaces(registry)
 		cryptocodec.RegisterInterfaces(registry)
 		evmCodec := codec.NewProtoCodec(registry)
 

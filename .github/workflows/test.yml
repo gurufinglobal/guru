@@ -33,6 +33,10 @@ jobs:
             go.mod
             go.sum
             *.toml
+      - name: Check EVM type ownership guardrails
+        run: |
+          make check-evm-type-ownership
+        if: env.GIT_DIFF
       - name: Test and Create Coverage Report
         run: |
           make test-unit-cover

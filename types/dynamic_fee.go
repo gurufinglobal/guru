@@ -2,10 +2,11 @@ package types
 
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cosmosevmtypes "github.com/cosmos/evm/types"
 )
 
 // HasDynamicFeeExtensionOption returns true if the tx implements the `ExtensionOptionDynamicFeeTx` extension option.
 func HasDynamicFeeExtensionOption(anyType *codectypes.Any) bool {
-	_, ok := anyType.GetCachedValue().(*ExtensionOptionDynamicFeeTx)
+	_, ok := anyType.GetCachedValue().(*cosmosevmtypes.ExtensionOptionDynamicFeeTx)
 	return ok
 }

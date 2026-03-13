@@ -136,6 +136,12 @@ else
 	go test -tags=test -mod=readonly $(ARGS)  $(EXTRA_ARGS) $(TEST_PACKAGES)
 endif
 
+# Fail fast when local EVM tx extension types are re-introduced.
+check-evm-type-ownership:
+	@echo "Checking EVM type ownership guardrails..."
+	@git grep -n "(*tx.TxExtensionOptionI)(nil)" -- "types/codec.go" && (echo "types/codec.go must not register TxExtensionOptionI locally" && exit 1) || true
+	@git grep -nE "(\*|&)types\.(ExtensionOptionsWeb3Tx|ExtensionOptionDynamicFeeTx)" -- '*.go' ':!types/*.pb.go' ':!api/**/*.pulsar.go' ':!api/**/*.pb.go' && (echo "Use github.com/cosmos/evm/types extension types, not local types.* extension types" && exit 1) || true
+
 # Use the old Apple linker to workaround broken xcode - https://github.com/golang/go/issues/65169
 ifeq ($(OS_FAMILY),Darwin)
   FUZZLDFLAGS := -ldflags=-extldflags=-Wl,-ld_classic
@@ -156,7 +162,11 @@ test-solidity:
 	@echo "Beginning solidity tests..."
 	./scripts/run-solidity-tests.sh
 
-.PHONY: run-tests test test-all $(TEST_TARGETS)
+test-e2e-smoke:
+	@echo "Running RPC/JSON-RPC/gRPC e2e smoke test..."
+	./scripts/e2e_smoke_rpc.sh
+
+.PHONY: run-tests test test-all $(TEST_TARGETS) check-evm-type-ownership test-e2e-smoke
 
 benchmark:
 	@go test -tags=test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)

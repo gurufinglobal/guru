@@ -340,6 +340,108 @@ message MsgChangeBexModerator {
 message MsgChangeBexModeratorResponse {
 }`
 
+// feemarketQueryProto contains the content of proto/guru/feemarket/v1/query.proto
+const feemarketQueryProto = `
+syntax = "proto3";
+package guru.feemarket.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "guru/feemarket/v1/feemarket.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/feemarket/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Params queries the parameters of x/feemarket module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/guru/feemarket/v1/params";
+  }
+
+  // BaseFee queries the base fee of the parent block of the current block.
+  rpc BaseFee(QueryBaseFeeRequest) returns (QueryBaseFeeResponse) {
+    option (google.api.http).get = "/guru/feemarket/v1/base_fee";
+  }
+
+  // BlockGas queries the gas used at a given block height
+  rpc BlockGas(QueryBlockGasRequest) returns (QueryBlockGasResponse) {
+    option (google.api.http).get = "/guru/feemarket/v1/block_gas";
+  }
+}
+
+// QueryParamsRequest defines the request type for querying x/vm parameters.
+message QueryParamsRequest {}
+
+// QueryParamsResponse defines the response type for querying x/vm parameters.
+message QueryParamsResponse {
+  // params define the evm module parameters.
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// QueryBaseFeeRequest defines the request type for querying the EIP1559 base
+// fee.
+message QueryBaseFeeRequest {}
+
+// QueryBaseFeeResponse returns the EIP1559 base fee.
+message QueryBaseFeeResponse {
+  // base_fee is the EIP1559 base fee
+  string base_fee = 1
+      [ (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec" ];
+}
+
+// QueryBlockGasRequest defines the request type for querying the EIP1559 base
+// fee.
+message QueryBlockGasRequest {}
+
+// QueryBlockGasResponse returns block gas used for a given height.
+message QueryBlockGasResponse {
+  // gas is the returned block gas
+  int64 gas = 1;
+}
+`
+
+// feemarketTxProto contains the content of proto/guru/feemarket/v1/tx.proto
+const feemarketTxProto = `
+syntax = "proto3";
+package guru.feemarket.v1;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "guru/feemarket/v1/feemarket.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/feemarket/types";
+
+// Msg defines the feemarket Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  // UpdateParams defined a governance operation for updating the x/feemarket
+  // module parameters. The authority is hard-coded to the Cosmos SDK x/gov
+  // module account
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+// MsgUpdateParams defines a Msg for updating the x/feemarket module parameters.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "guru/feemarket/v1/MsgUpdateParams";
+
+  // authority is the address of the governance account.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // params defines the x/feemarket parameters to update.
+  // NOTE: All parameters must be supplied.
+  Params params = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+`
+
 // feepolicyQueryProto contains the content of proto/guru/feepolicy/v1/query.proto
 const feepolicyQueryProto = `syntax = "proto3";
 
@@ -959,6 +1061,8 @@ message QueryTotalEscrowForDenomResponse {
 var embeddedProtoRegistry = map[string]string{
 	"proto/guru/bex/v1/query.proto": bexQueryProto,
 	"proto/guru/bex/v1/tx.proto": bexTxProto,
+	"proto/guru/feemarket/v1/query.proto": feemarketQueryProto,
+	"proto/guru/feemarket/v1/tx.proto": feemarketTxProto,
 	"proto/guru/feepolicy/v1/query.proto": feepolicyQueryProto,
 	"proto/guru/feepolicy/v1/tx.proto": feepolicyTxProto,
 	"proto/guru/oracle/v2/query.proto": oracleQueryProto,
@@ -969,6 +1073,7 @@ var embeddedProtoRegistry = map[string]string{
 // embeddedModules lists all discovered module names (sorted).
 var embeddedModules = []string{
 	"bex",
+	"feemarket",
 	"feepolicy",
 	"oracle",
 	"transwap",
