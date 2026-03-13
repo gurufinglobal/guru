@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
@@ -37,7 +38,7 @@ func (p *CoinMarketCapProvider) ID() string {
 }
 
 func (p *CoinMarketCapProvider) Categories() []int32 {
-	return []int32{1,2,3}
+	return []int32{1, 2, 3}
 }
 
 func (p *CoinMarketCapProvider) Fetch(ctx context.Context, symbol string) (string, error) {
@@ -76,11 +77,7 @@ func (p *CoinMarketCapProvider) Fetch(ctx context.Context, symbol string) (strin
 			ErrorCode    int    `json:"error_code"`
 			ErrorMessage string `json:"error_message"`
 		} `json:"status"`
-		Data map[string][]struct {
-			Quote map[string]struct {
-				Price json.Number `json:"price"`
-			} `json:"quote"`
-		} `json:"data"`
+		Data json.RawMessage `json:"data"`
 	}
 
 	dec := json.NewDecoder(resp.Body)
@@ -93,27 +90,116 @@ func (p *CoinMarketCapProvider) Fetch(ctx context.Context, symbol string) (strin
 		return "", fmt.Errorf("cmc api error: code=%d message=%q", payload.Status.ErrorCode, payload.Status.ErrorMessage)
 	}
 
-	conversions, ok := payload.Data[baseSymbol]
-	if !ok || len(conversions) == 0 {
-		return "", fmt.Errorf("conversion data not found for symbol %s", baseSymbol)
-	}
-
-	quote, ok := conversions[0].Quote[convertSymbol]
-	if !ok {
-		return "", fmt.Errorf("quote not found for convert symbol %s", convertSymbol)
-	}
-
-	price := quote.Price.String()
-	if price == "" {
-		return "", fmt.Errorf("price not found")
-	}
-
-	normalized, err := normalizeChainDecimal(price)
+	normalized, err := extractCMCPrice(payload.Data, baseSymbol, convertSymbol)
 	if err != nil {
-		return "", fmt.Errorf("invalid price %q: %w", price, err)
+		return "", err
 	}
 
 	return normalized, nil
+}
+
+type cmcConversion struct {
+	Symbol      string              `json:"symbol"`
+	LastUpdated string              `json:"last_updated"`
+	Quote       map[string]cmcQuote `json:"quote"`
+}
+
+type cmcQuote struct {
+	Price       json.RawMessage `json:"price"`
+	LastUpdated string          `json:"last_updated"`
+}
+
+func extractCMCPrice(dataRaw json.RawMessage, baseSymbol, convertSymbol string) (string, error) {
+	conversions, err := parseCMCConversions(dataRaw, baseSymbol)
+	if err != nil {
+		return "", err
+	}
+
+	return pickCMCConversionPrice(conversions, baseSymbol, convertSymbol)
+}
+
+func parseCMCConversions(dataRaw json.RawMessage, baseSymbol string) ([]cmcConversion, error) {
+	// Newer CMC responses encode data as an array.
+	var asArray []cmcConversion
+	if err := json.Unmarshal(dataRaw, &asArray); err == nil {
+		if len(asArray) == 0 {
+			return nil, fmt.Errorf("conversion data not found for symbol %s", baseSymbol)
+		}
+		return asArray, nil
+	}
+
+	// Backward-compatible path for map-based responses in docs/examples.
+	var asMap map[string][]cmcConversion
+	if err := json.Unmarshal(dataRaw, &asMap); err == nil {
+		conversions := asMap[baseSymbol]
+		if len(conversions) == 0 {
+			return nil, fmt.Errorf("conversion data not found for symbol %s", baseSymbol)
+		}
+		return conversions, nil
+	}
+
+	return nil, fmt.Errorf("unsupported cmc data format")
+}
+
+func pickCMCConversionPrice(conversions []cmcConversion, baseSymbol, convertSymbol string) (string, error) {
+	bestPrice := ""
+	var bestUpdatedAt time.Time
+	found := false
+
+	for _, conversion := range conversions {
+		if conversion.Symbol != "" && !strings.EqualFold(conversion.Symbol, baseSymbol) {
+			continue
+		}
+
+		quote, ok := conversion.Quote[convertSymbol]
+		if !ok {
+			continue
+		}
+
+		normalized, err := parseJSONDecimal(quote.Price)
+		if err != nil {
+			continue
+		}
+
+		updatedAt := cmcCandidateUpdatedAt(quote.LastUpdated, conversion.LastUpdated)
+		if !found || updatedAt.After(bestUpdatedAt) {
+			bestPrice = normalized
+			bestUpdatedAt = updatedAt
+			found = true
+		}
+	}
+
+	if found {
+		return bestPrice, nil
+	}
+
+	return "", fmt.Errorf("quote not found for convert symbol %s", convertSymbol)
+}
+
+func cmcCandidateUpdatedAt(quoteUpdatedAtRaw, conversionUpdatedAtRaw string) time.Time {
+	if t, ok := parseCMCTimestamp(quoteUpdatedAtRaw); ok {
+		return t
+	}
+	if t, ok := parseCMCTimestamp(conversionUpdatedAtRaw); ok {
+		return t
+	}
+	return time.Time{}
+}
+
+func parseCMCTimestamp(raw string) (time.Time, bool) {
+	s := strings.TrimSpace(raw)
+	if s == "" {
+		return time.Time{}, false
+	}
+
+	if ts, err := time.Parse(time.RFC3339Nano, s); err == nil {
+		return ts, true
+	}
+	if ts, err := time.Parse(time.RFC3339, s); err == nil {
+		return ts, true
+	}
+
+	return time.Time{}, false
 }
 
 func splitProviderSymbol(symbol string) (string, string, error) {
