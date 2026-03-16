@@ -2,6 +2,7 @@ package evm
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -9,10 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	"github.com/cosmos/evm/x/vm/keeper"
 	"github.com/cosmos/evm/x/vm/statedb"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 )
 
 // VerifyAccountBalance checks that the account balance is greater than the total transaction cost.
@@ -22,17 +22,23 @@ import (
 // - account balance is lower than the transaction cost
 func VerifyAccountBalance(
 	ctx sdk.Context,
+	evmKeeper anteinterfaces.EVMKeeper,
 	accountKeeper anteinterfaces.AccountKeeper,
 	account *statedb.Account,
 	from common.Address,
-	txData evmtypes.TxData,
+	ethTx *ethtypes.Transaction,
 ) error {
 	// Only EOA are allowed to send transactions.
-	if account != nil && account.IsContract() {
-		return errorsmod.Wrapf(
-			errortypes.ErrInvalidType,
-			"the sender is not EOA: address %s", from,
-		)
+	if account != nil && account.HasCodeHash() {
+		// check eip-7702 delegated code accounts
+		code := evmKeeper.GetCode(ctx, common.BytesToHash(account.CodeHash))
+		_, delegated := ethtypes.ParseDelegation(code)
+		if len(code) > 0 && !delegated {
+			return errorsmod.Wrapf(
+				errortypes.ErrInvalidType,
+				"the sender is not EOA: address %s", from,
+			)
+		}
 	}
 
 	if account == nil {
@@ -41,7 +47,7 @@ func VerifyAccountBalance(
 		account = statedb.NewEmptyAccount()
 	}
 
-	if err := keeper.CheckSenderBalance(sdkmath.NewIntFromBigInt(account.Balance.ToBig()), txData); err != nil {
+	if err := keeper.CheckSenderBalance(sdkmath.NewIntFromBigInt(account.Balance.ToBig()), ethTx); err != nil {
 		return errorsmod.Wrap(err, "failed to check sender balance")
 	}
 

@@ -7,9 +7,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type InitialAmounts struct {
@@ -21,15 +21,15 @@ func DefaultInitialAmounts() InitialAmounts {
 	baseCoinInfo := testconstants.ExampleChainCoinInfo[defaultChain]
 
 	return InitialAmounts{
-		Base: GetInitialAmount(baseCoinInfo.Decimals),
-		Evm:  GetInitialAmount(baseCoinInfo.Decimals),
+		Base: GetInitialAmount(evmtypes.Decimals(baseCoinInfo.Decimals)),
+		Evm:  GetInitialAmount(evmtypes.Decimals(baseCoinInfo.Decimals)),
 	}
 }
 
 func DefaultInitialBondedAmount() math.Int {
 	baseCoinInfo := testconstants.ExampleChainCoinInfo[defaultChain]
 
-	return GetInitialBondedAmount(baseCoinInfo.Decimals)
+	return GetInitialBondedAmount(evmtypes.Decimals(baseCoinInfo.Decimals))
 }
 
 func GetInitialAmount(decimals evmtypes.Decimals) math.Int {

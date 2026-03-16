@@ -1,13 +1,11 @@
 package network
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
-	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/cosmos/evm/x/vm/statedb"
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 )
 
 // UnitTestNetwork is the implementation of the Network interface for unit tests.
@@ -36,12 +34,7 @@ func NewUnitTestNetwork(opts ...ConfigOption) *UnitTestNetwork {
 
 // GetStateDB returns the state database for the current block.
 func (n *UnitTestNetwork) GetStateDB() *statedb.StateDB {
-	headerHash := n.GetContext().HeaderHash()
-	return statedb.New(
-		n.GetContext(),
-		n.app.EVMKeeper,
-		statedb.NewEmptyTxConfig(common.BytesToHash(headerHash)),
-	)
+	return statedb.New(n.GetContext(), n.app.EVMKeeper, statedb.NewEmptyTxConfig())
 }
 
 // FundAccount funds the given account with the given amount of coins.

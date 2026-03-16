@@ -91,7 +91,7 @@ func (suite *MsgsTestSuite) TestMsgRegisterDiscount() {
 				ModeratorAddress: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 				Discounts: []AccountDiscount{
 					{
-						Address: "guru1gzsvk8rruqn2sx64acfsskrwy8hvrmaf6dvhj3",
+						Address: authtypes.NewModuleAddress("discount").String(),
 						Modules: []ModuleDiscount{
 							{
 								Module: "bank",
@@ -139,7 +139,7 @@ func (suite *MsgsTestSuite) TestMsgRegisterDiscount() {
 				ModeratorAddress: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 				Discounts: []AccountDiscount{
 					{
-						Address: "guru1gzsvk8rruqn2sx64acfsskrwy8hvrmaf6dvhj3",
+						Address: authtypes.NewModuleAddress("discount").String(),
 						Modules: []ModuleDiscount{
 							{
 								Module: "bank",
@@ -191,7 +191,7 @@ func (suite *MsgsTestSuite) TestMsgRemoveDiscounts() {
 			"pass - valid msg",
 			&MsgRemoveDiscounts{
 				ModeratorAddress: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-				Address:          "guru1gzsvk8rruqn2sx64acfsskrwy8hvrmaf6dvhj3",
+				Address:          authtypes.NewModuleAddress("discount").String(),
 				Module:           "bank",
 				MsgType:          "/cosmos.bank.v1beta1.MsgSend",
 			},

@@ -15,32 +15,32 @@ var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 		Denom:         ExampleChainDenom,
 		ExtendedDenom: ExampleChainDenom,
 		DisplayDenom:  ExampleDisplayDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      uint32(evmtypes.EighteenDecimals),
 	},
 	CosmosChainID: {
 		Denom:         "agxn",
 		ExtendedDenom: "agxn",
 		DisplayDenom:  "gxn",
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      uint32(evmtypes.EighteenDecimals),
 	},
 	MainnetChainID: {
 		Denom:         "agxn",
 		ExtendedDenom: "agxn",
 		DisplayDenom:  "gxn",
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      uint32(evmtypes.EighteenDecimals),
 	},
 	TestnetChainID: {
 		Denom:         "agxn",
 		ExtendedDenom: "agxn",
 		DisplayDenom:  "gxn",
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      uint32(evmtypes.EighteenDecimals),
 	},
 	// SixDecimalsChainID provides a chain ID which is being set up with 6 decimals
 	SixDecimalsChainID: {
 		Denom:         "utest",
 		ExtendedDenom: "atest",
 		DisplayDenom:  "test",
-		Decimals:      evmtypes.SixDecimals,
+		Decimals:      uint32(evmtypes.SixDecimals),
 	},
 }
 

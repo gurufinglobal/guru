@@ -3,7 +3,7 @@ package evm
 import (
 	"math"
 
-	cosmosevmtypes "github.com/cosmos/evm/types"
+	antetypes "github.com/cosmos/evm/ante/types"
 	"github.com/ethereum/go-ethereum/params"
 
 	errorsmod "cosmossdk.io/errors"
@@ -13,8 +13,8 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 )
 
 // TxFeeChecker check if the provided fee is enough and returns the effective fee, total tip and tx priority,
@@ -76,7 +76,7 @@ func FeeChecker(
 	// get the priority tip cap from the extension option.
 	if hasExtOptsTx, ok := feeTx.(authante.HasExtensionOptionsTx); ok {
 		for _, opt := range hasExtOptsTx.GetExtensionOptions() {
-			if extOpt, ok := opt.GetCachedValue().(*cosmosevmtypes.ExtensionOptionDynamicFeeTx); ok {
+			if extOpt, ok := opt.GetCachedValue().(*antetypes.ExtensionOptionDynamicFeeTx); ok {
 				maxPriorityPrice = extOpt.MaxPriorityPrice
 				if maxPriorityPrice.IsNil() {
 					maxPriorityPrice = sdkmath.LegacyZeroDec()

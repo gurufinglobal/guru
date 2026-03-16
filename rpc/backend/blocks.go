@@ -19,8 +19,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 )
 
 // BlockNumber returns the current block number in abci app state. Because abci
@@ -266,7 +266,6 @@ func (b *Backend) EthMsgsFromTendermintBlock(
 				continue
 			}
 
-			ethMsg.Hash = ethMsg.AsTransaction().Hash().Hex()
 			result = append(result, ethMsg)
 		}
 	}
@@ -373,7 +372,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 	msgs := b.EthMsgsFromTendermintBlock(resBlock, blockRes)
 	for txIndex, ethMsg := range msgs {
 		if !fullTx {
-			hash := common.HexToHash(ethMsg.Hash)
+			hash := ethMsg.Hash()
 			ethRPCTxs = append(ethRPCTxs, hash)
 			continue
 		}
@@ -540,7 +539,7 @@ func (b *Backend) GetBlockReceipts(
 			common.BytesToHash(resBlock.Block.Header.Hash()).Hex(),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get transaction receipt for tx %s: %w", msg.Hash, err)
+			return nil, fmt.Errorf("failed to get transaction receipt for tx %s: %w", msg.Hash().Hex(), err)
 		}
 	}
 
@@ -548,15 +547,12 @@ func (b *Backend) GetBlockReceipts(
 }
 
 func (b *Backend) formatTxReceipt(ethMsg *evmtypes.MsgEthereumTx, blockMsgs []*evmtypes.MsgEthereumTx, blockRes *tmrpctypes.ResultBlockResults, blockHeaderHash string) (map[string]interface{}, error) {
-	txResult, err := b.GetTxByEthHash(common.HexToHash(ethMsg.Hash))
+	txResult, err := b.GetTxByEthHash(ethMsg.Hash())
 	if err != nil {
-		return nil, fmt.Errorf("tx not found: hash=%s, error=%s", ethMsg.Hash, err.Error())
+		return nil, fmt.Errorf("tx not found: hash=%s, error=%s", ethMsg.Hash().Hex(), err.Error())
 	}
 
-	txData, err := evmtypes.UnpackTxData(ethMsg.Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unpack tx data: %w", err)
-	}
+	ethTx := ethMsg.AsTransaction()
 
 	cumulativeGasUsed := uint64(0)
 
@@ -573,27 +569,19 @@ func (b *Backend) formatTxReceipt(ethMsg *evmtypes.MsgEthereumTx, blockMsgs []*e
 		status = hexutil.Uint(ethtypes.ReceiptStatusSuccessful)
 	}
 
-	chainID, err := b.ChainID()
-	if err != nil {
-		return nil, err
-	}
-
-	from, err := ethMsg.GetSender(chainID.ToInt())
-	if err != nil {
-		return nil, err
-	}
+	from := ethMsg.GetSender()
 
 	// parse tx logs from events
 	msgIndex := int(txResult.MsgIndex) // #nosec G115 -- checked for int overflow already
 	logs, err := TxLogsFromEvents(blockRes.TxsResults[txResult.TxIndex].Events, msgIndex)
 	if err != nil {
-		b.logger.Debug("failed to parse logs", "hash", ethMsg.Hash, "error", err.Error())
+		b.logger.Debug("failed to parse logs", "hash", ethMsg.Hash().Hex(), "error", err.Error())
 	}
 
 	if txResult.EthTxIndex == -1 {
 		// Fallback to find tx index by iterating all valid eth transactions
 		for i := range blockMsgs {
-			if blockMsgs[i].Hash == ethMsg.Hash {
+			if blockMsgs[i].Hash() == ethMsg.Hash() {
 				txResult.EthTxIndex = int32(i) // #nosec G115
 				break
 			}
@@ -613,9 +601,9 @@ func (b *Backend) formatTxReceipt(ethMsg *evmtypes.MsgEthereumTx, blockMsgs []*e
 
 		// Implementation fields: These fields are added by geth when processing a transaction.
 		// They are stored in the chain database.
-		"transactionHash": common.HexToHash(ethMsg.Hash),
+		"transactionHash": ethMsg.Hash(),
 		"contractAddress": nil,
-		"gasUsed":         hexutil.Uint64(b.GetGasUsed(txResult, txData.GetGasPrice(), txData.GetGas())),
+		"gasUsed":         hexutil.Uint64(b.GetGasUsed(txResult, ethTx.GasPrice(), ethTx.Gas())),
 
 		// Inclusion information: These fields provide information about the inclusion of the
 		// transaction corresponding to this receipt.
@@ -624,11 +612,11 @@ func (b *Backend) formatTxReceipt(ethMsg *evmtypes.MsgEthereumTx, blockMsgs []*e
 		"transactionIndex": hexutil.Uint64(txResult.EthTxIndex), //nolint:gosec // G115 // no int overflow expected here
 
 		// https://github.com/foundry-rs/foundry/issues/7640
-		"effectiveGasPrice": (*hexutil.Big)(txData.GetGasPrice()),
+		"effectiveGasPrice": (*hexutil.Big)(ethTx.GasPrice()),
 
 		// sender and receiver (contract or EOA) addreses
 		"from": from,
-		"to":   txData.GetTo(),
+		"to":   ethTx.To(),
 		"type": hexutil.Uint(ethMsg.AsTransaction().Type()),
 	}
 
@@ -637,17 +625,21 @@ func (b *Backend) formatTxReceipt(ethMsg *evmtypes.MsgEthereumTx, blockMsgs []*e
 	}
 
 	// If the ContractAddress is 20 0x0 bytes, assume it is not a contract creation
-	if txData.GetTo() == nil {
-		receipt["contractAddress"] = crypto.CreateAddress(from, txData.GetNonce())
+	if ethTx.To() == nil {
+		receipt["contractAddress"] = crypto.CreateAddress(from, ethTx.Nonce())
 	}
 
-	if dynamicTx, ok := txData.(*evmtypes.DynamicFeeTx); ok {
+	if ethTx.Type() == ethtypes.DynamicFeeTxType {
 		baseFee, err := b.BaseFee(blockRes)
 		if err != nil {
 			// tolerate the error for pruned node.
 			b.logger.Error("fetch basefee failed, node is pruned?", "height", txResult.Height, "error", err)
 		} else {
-			receipt["effectiveGasPrice"] = hexutil.Big(*dynamicTx.EffectiveGasPrice(baseFee))
+			price := new(big.Int).Add(ethTx.GasTipCap(), baseFee)
+			if price.Cmp(ethTx.GasFeeCap()) > 0 {
+				price = ethTx.GasFeeCap()
+			}
+			receipt["effectiveGasPrice"] = (*hexutil.Big)(price)
 		}
 	}
 

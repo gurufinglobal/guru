@@ -6,8 +6,8 @@ package gurud
 import (
 	"fmt"
 
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 
 	"cosmossdk.io/math"
 
@@ -22,37 +22,37 @@ var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 		Denom:         config.ExampleChainDenom,
 		ExtendedDenom: config.ExampleChainDenom,
 		DisplayDenom:  config.ExampleDisplayDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      uint32(evmtypes.EighteenDecimals),
 	},
 	config.SixDecimalsChainID: {
 		Denom:         "utest",
 		ExtendedDenom: "atest",
 		DisplayDenom:  "test",
-		Decimals:      evmtypes.SixDecimals,
+		Decimals:      uint32(evmtypes.SixDecimals),
 	},
 	config.TwelveDecimalsChainID: {
 		Denom:         "ptest2",
 		ExtendedDenom: "atest2",
 		DisplayDenom:  "test2",
-		Decimals:      evmtypes.TwelveDecimals,
+		Decimals:      uint32(evmtypes.TwelveDecimals),
 	},
 	config.TwoDecimalsChainID: {
 		Denom:         "ctest3",
 		ExtendedDenom: "atest3",
 		DisplayDenom:  "test3",
-		Decimals:      evmtypes.TwoDecimals,
+		Decimals:      uint32(evmtypes.TwoDecimals),
 	},
 	config.TestChainID1: {
 		Denom:         config.ExampleChainDenom,
 		ExtendedDenom: config.ExampleChainDenom,
 		DisplayDenom:  config.ExampleChainDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      uint32(evmtypes.EighteenDecimals),
 	},
 	config.TestChainID2: {
 		Denom:         config.ExampleChainDenom,
 		ExtendedDenom: config.ExampleChainDenom,
 		DisplayDenom:  config.ExampleChainDenom,
-		Decimals:      evmtypes.EighteenDecimals,
+		Decimals:      uint32(evmtypes.EighteenDecimals),
 	},
 }
 
@@ -74,26 +74,12 @@ func EvmAppOptions(chainID uint64) error {
 	if !found {
 		coinInfo, found = ChainsCoinInfo[config.CosmosChainID]
 		if !found {
-		return fmt.Errorf("unknown chain id: %d", chainID)
+			return fmt.Errorf("unknown chain id: %d", chainID)
 		}
 	}
 
 	// set the base denom considering if its mainnet or testnet
 	if err := setBaseDenom(coinInfo); err != nil {
-		return err
-	}
-
-	ethCfg := evmtypes.DefaultChainConfig(chainID)
-
-	configurator := evmtypes.NewEVMConfigurator()
-	// reset configuration to set the new one
-	configurator.ResetTestConfig()
-	err := configurator.
-		WithExtendedEips(guruActivators).
-		WithChainConfig(ethCfg).
-		WithEVMCoinInfo(coinInfo).
-		Configure()
-	if err != nil {
 		return err
 	}
 

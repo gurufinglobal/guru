@@ -17,9 +17,9 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // ContractArgs are the params used for calling a smart contract.
@@ -87,7 +87,7 @@ func DeployContract(
 		Input:     data,
 		Accesses:  &ethtypes.AccessList{},
 	})
-	msgEthereumTx.From = from.String()
+	msgEthereumTx.From = from.Bytes()
 
 	res, err := DeliverEthTx(app, priv, msgEthereumTx)
 	if err != nil {
@@ -121,7 +121,7 @@ func DeployContractWithFactory(
 		GasLimit: uint64(100000),
 		GasPrice: big.NewInt(1000000000),
 	})
-	msgEthereumTx.From = from.String()
+	msgEthereumTx.From = from.Bytes()
 
 	res, err := DeliverEthTx(exampleApp, priv, msgEthereumTx)
 	if err != nil {

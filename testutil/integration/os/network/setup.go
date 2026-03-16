@@ -32,12 +32,12 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	gurutypes "github.com/gurufinglobal/guru/v2/types"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // genSetupFn is the type for the module genesis setup functions
@@ -162,6 +162,10 @@ func createBalances(
 
 // createTestingApp creates a guru app
 func createTestingApp(chainID string, evmChainID uint64, customBaseAppOptions ...func(*baseapp.BaseApp)) *exampleapp.GURUD {
+	// v0.6.0 configures EVM globals during PreBlock from keeper state.
+	// Clear any previous test-global coin info to avoid cross-test leakage.
+	evmtypes.NewEVMConfigurator().ResetTestConfig()
+
 	// Create guru app
 	db := dbm.NewMemDB()
 	logger := log.NewNopLogger()
@@ -326,6 +330,7 @@ func setDefaultStakingGenesisState(guruApp *exampleapp.GURUD, genesisState gurut
 type BankCustomGenesisState struct {
 	totalSupply sdktypes.Coins
 	balances    []banktypes.Balance
+	evmCoinInfo evmtypes.EvmCoinInfo
 }
 
 // setDefaultBankGenesisState sets the default bank genesis state
@@ -337,7 +342,7 @@ func setDefaultBankGenesisState(guruApp *exampleapp.GURUD, genesisState gurutype
 		[]banktypes.Metadata{},
 		[]banktypes.SendEnabled{},
 	)
-	updatedBankGen := updateBankGenesisStateForChainID(*bankGenesis)
+	updatedBankGen := updateBankGenesisStateForChainID(*bankGenesis, overwriteParams.evmCoinInfo)
 	genesisState[banktypes.ModuleName] = guruApp.AppCodec().MustMarshalJSON(&updatedBankGen)
 	return genesisState
 }
@@ -440,14 +445,15 @@ func setAuthGenesisState(guruApp *exampleapp.GURUD, genesisState gurutypes.Genes
 
 // GovCustomGenesisState defines the gov genesis state
 type GovCustomGenesisState struct {
-	denom string
+	denom           string
+	evmCoinDecimals evmtypes.Decimals
 }
 
 // setDefaultGovGenesisState sets the default gov genesis state
 func setDefaultGovGenesisState(guruApp *exampleapp.GURUD, genesisState gurutypes.GenesisState, overwriteParams GovCustomGenesisState) gurutypes.GenesisState {
 	govGen := govtypesv1.DefaultGenesisState()
 	updatedParams := govGen.Params
-	minDepositAmt := sdkmath.NewInt(1e18).Quo(evmtypes.GetEVMCoinDecimals().ConversionFactor())
+	minDepositAmt := sdkmath.NewInt(1e18).Quo(overwriteParams.evmCoinDecimals.ConversionFactor())
 	updatedParams.MinDeposit = sdktypes.NewCoins(sdktypes.NewCoin(overwriteParams.denom, minDepositAmt))
 	updatedParams.ExpeditedMinDeposit = sdktypes.NewCoins(sdktypes.NewCoin(overwriteParams.denom, minDepositAmt))
 	govGen.Params = updatedParams
@@ -502,6 +508,23 @@ func setDefaultErc20GenesisState(guruApp *exampleapp.GURUD, evmChainID uint64, g
 	return genesisState
 }
 
+func setDefaultVMGenesisState(guruApp *exampleapp.GURUD, genesisState gurutypes.GenesisState, coinInfo evmtypes.EvmCoinInfo) gurutypes.GenesisState {
+	vmGen := evmtypes.GenesisState{}
+	guruApp.AppCodec().MustUnmarshalJSON(genesisState[evmtypes.ModuleName], &vmGen)
+
+	vmGen.Params.EvmDenom = coinInfo.Denom
+	if evmtypes.Decimals(coinInfo.Decimals) == evmtypes.EighteenDecimals {
+		vmGen.Params.ExtendedDenomOptions = nil
+	} else {
+		vmGen.Params.ExtendedDenomOptions = &evmtypes.ExtendedDenomOptions{
+			ExtendedDenom: coinInfo.ExtendedDenom,
+		}
+	}
+
+	genesisState[evmtypes.ModuleName] = guruApp.AppCodec().MustMarshalJSON(&vmGen)
+	return genesisState
+}
+
 // defaultAuthGenesisState sets the default genesis state
 // for the testing setup
 func newDefaultGenesisState(guruApp *exampleapp.GURUD, evmChainID uint64, params defaultGenesisParams) gurutypes.GenesisState {
@@ -514,6 +537,7 @@ func newDefaultGenesisState(guruApp *exampleapp.GURUD, evmChainID uint64, params
 	genesisState = setDefaultFeeMarketGenesisState(guruApp, genesisState, params.feemarket)
 	genesisState = setDefaultSlashingGenesisState(guruApp, genesisState, params.slashing)
 	genesisState = setDefaultMintGenesisState(guruApp, genesisState, params.mint)
+	genesisState = setDefaultVMGenesisState(guruApp, genesisState, params.bank.evmCoinInfo)
 	genesisState = setDefaultErc20GenesisState(guruApp, evmChainID, genesisState)
 
 	return genesisState

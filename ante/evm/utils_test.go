@@ -35,12 +35,12 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/ante/testutils"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *AnteTestSuite) CreateTxBuilder(privKey cryptotypes.PrivKey, txArgs evmtypes.EvmTxArgs, unsetExtensionOptions ...bool) client.TxBuilder {
@@ -68,10 +68,7 @@ func (suite *AnteTestSuite) CreateTxBuilder(privKey cryptotypes.PrivKey, txArgs 
 	err = builder.SetMsgs(&signedMsg)
 	suite.Require().NoError(err)
 
-	txData, err := evmtypes.UnpackTxData(signedMsg.Data)
-	suite.Require().NoError(err)
-
-	fees := sdk.NewCoins(sdk.NewCoin(suite.GetNetwork().GetBaseDenom(), sdkmath.NewIntFromBigInt(txData.Fee())))
+	fees := sdk.NewCoins(sdk.NewCoin(suite.GetNetwork().GetBaseDenom(), sdkmath.NewIntFromBigInt(signedMsg.GetFee())))
 	builder.SetFeeAmount(fees)
 	builder.SetGasLimit(signedMsg.GetGas())
 	return builder

@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 )
 
 // EthEmitEventDecorator emit events in ante handler in case of tx execution failed (out of block gas limit).
@@ -57,7 +57,7 @@ func EmitTxHashEvent(ctx sdk.Context, msg *evmtypes.MsgEthereumTx, blockTxIndex,
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			evmtypes.EventTypeEthereumTx,
-			sdk.NewAttribute(evmtypes.AttributeKeyEthereumTxHash, msg.Hash),
+			sdk.NewAttribute(evmtypes.AttributeKeyEthereumTxHash, msg.Hash().String()),
 			sdk.NewAttribute(evmtypes.AttributeKeyTxIndex, strconv.FormatUint(blockTxIndex+msgIndex, 10)), // #nosec G115
 		),
 	)

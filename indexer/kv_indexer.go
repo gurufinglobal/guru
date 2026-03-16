@@ -18,9 +18,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	gurutypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 const (
@@ -83,7 +83,7 @@ func (kv *KVIndexer) IndexBlock(block *cmttypes.Block, txResults []*abci.ExecTxR
 		var cumulativeGasUsed uint64
 		for msgIndex, msg := range tx.GetMsgs() {
 			ethMsg := msg.(*evmtypes.MsgEthereumTx)
-			txHash := common.HexToHash(ethMsg.Hash)
+			txHash := ethMsg.Hash()
 
 			txResult := gurutypes.TxResult{
 				Height:     height,

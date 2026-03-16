@@ -25,13 +25,14 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	app "github.com/gurufinglobal/guru/v2/gurud"
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	commonnetwork "github.com/gurufinglobal/guru/v2/testutil/integration/common/network"
 	"github.com/gurufinglobal/guru/v2/types"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // Network is the interface that wraps the methods to interact with integration test network.
@@ -139,7 +140,8 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 		delegations: delegations,
 	}
 	govParams := GovCustomGenesisState{
-		denom: n.cfg.chainCoins.BaseDenom(),
+		denom:           n.cfg.chainCoins.BaseDenom(),
+		evmCoinDecimals: n.cfg.chainCoins.EVMDecimals(),
 	}
 
 	fmParams := FeeMarketCustomGenesisState{
@@ -156,6 +158,20 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 	bankParams := BankCustomGenesisState{
 		totalSupply: totalSupply,
 		balances:    fundedAccountBalances,
+		evmCoinInfo: evmtypes.EvmCoinInfo{
+			Denom:         n.cfg.chainCoins.EVMDenom(),
+			ExtendedDenom: n.cfg.chainCoins.EVMDenom(),
+			DisplayDenom:  n.cfg.chainCoins.EVMDenom(),
+			Decimals:      uint32(n.cfg.chainCoins.EVMDecimals()),
+		},
+	}
+
+	chainCoinInfo, found := testconstants.ExampleChainCoinInfo[testconstants.ChainID{
+		ChainID:    n.cfg.chainID,
+		EVMChainID: n.cfg.eip155ChainID.Uint64(),
+	}]
+	if found {
+		bankParams.evmCoinInfo = chainCoinInfo
 	}
 
 	// Get the corresponding slashing info and missed block info

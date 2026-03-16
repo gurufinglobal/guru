@@ -44,6 +44,7 @@ import (
 	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	gurucmd "github.com/gurufinglobal/guru/v2/client"
 	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
@@ -67,7 +68,11 @@ func NewRootCmd() *cobra.Command {
 		nil,
 		true,
 		simtestutil.EmptyAppOptions{},
-		guruserverconfig.DefaultEVMChainID,
+		// Use the upstream default chain ID for this bootstrap-only app instance.
+		// NewRootCmd pre-instantiates an app for codec/autocli wiring before the real
+		// node app is created in `start`; using DefaultEVMChainID keeps SetChainConfig
+		// re-entrant for the subsequent runtime app initialization.
+		evmtypes.DefaultEVMChainID,
 		testutil.NoOpEvmAppOptions,
 	)
 

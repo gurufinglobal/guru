@@ -5,7 +5,8 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmosevmtypes "github.com/cosmos/evm/types"
+	"github.com/cosmos/evm/ethereum/eip712"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	cryptocodec "github.com/gurufinglobal/guru/v2/crypto/codec"
 	"github.com/gurufinglobal/guru/v2/types"
@@ -23,5 +24,6 @@ func RegisterInterfaces(interfaceRegistry codectypes.InterfaceRegistry) {
 	std.RegisterInterfaces(interfaceRegistry)
 	cryptocodec.RegisterInterfaces(interfaceRegistry)
 	types.RegisterInterfaces(interfaceRegistry)
-	cosmosevmtypes.RegisterInterfaces(interfaceRegistry)
+	evmtypes.RegisterInterfaces(interfaceRegistry)
+	eip712.RegisterInterfaces(interfaceRegistry)
 }

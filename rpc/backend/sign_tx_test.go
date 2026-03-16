@@ -16,15 +16,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *BackendTestSuite) TestSendTransaction() {
 	gasPrice := new(hexutil.Big)
-	gas := hexutil.Uint64(1)
+	gas := hexutil.Uint64(21000)
 	zeroGas := hexutil.Uint64(0)
 	toAddr := utiltx.GenerateAddress()
 	priv, _ := ethsecp256k1.GenerateKey()
@@ -128,10 +128,10 @@ func (suite *BackendTestSuite) TestSendTransaction() {
 				// Sign the transaction and get the hash
 
 				ethSigner := ethtypes.LatestSigner(suite.backend.ChainConfig())
-				msg := callArgsDefault.ToTransaction()
+				msg := evmtypes.NewTxFromArgs(&callArgsDefault)
 				err := msg.Sign(ethSigner, suite.backend.clientCtx.Keyring)
 				suite.Require().NoError(err)
-				tc.expHash = msg.AsTransaction().Hash()
+				tc.expHash = msg.Hash()
 			}
 			responseHash, err := suite.backend.SendTransaction(tc.args)
 			if tc.expPass {
@@ -254,7 +254,7 @@ func broadcastTx(suite *BackendTestSuite, priv *ethsecp256k1.PrivKey, baseFee ma
 	suite.Require().NoError(err)
 	RegisterBaseFee(queryClient, baseFee)
 	ethSigner := ethtypes.LatestSigner(suite.backend.ChainConfig())
-	msg := callArgsDefault.ToTransaction()
+	msg := evmtypes.NewTxFromArgs(&callArgsDefault)
 	err = msg.Sign(ethSigner, suite.backend.clientCtx.Keyring)
 	suite.Require().NoError(err)
 	baseDenom := evmtypes.GetEVMCoinDenom()

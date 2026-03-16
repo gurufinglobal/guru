@@ -28,7 +28,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data types.GenesisState)
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) types.GenesisState {
 	moderatorAddr := keeper.GetModeratorAddress(ctx)
-	exchanges, _, err := keeper.GetPaginatedExchanges(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	exchanges, _, err := keeper.GetPaginatedExchanges(ctx, &query.PageRequest{Limit: ^uint64(0)})
 	if err != nil {
 		panic(fmt.Errorf("unable to fetch exchanges %v", err))
 	}

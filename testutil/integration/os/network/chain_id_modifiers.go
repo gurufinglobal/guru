@@ -7,17 +7,15 @@ package network
 import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
-	"github.com/cosmos/evm/x/precisebank/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 )
 
 // updateErc20GenesisStateForChainID modify the default genesis state for the
 // bank module of the testing suite depending on the chainID.
-func updateBankGenesisStateForChainID(bankGenesisState banktypes.GenesisState) banktypes.GenesisState {
-	metadata := generateBankGenesisMetadata()
+func updateBankGenesisStateForChainID(bankGenesisState banktypes.GenesisState, coinInfo evmtypes.EvmCoinInfo) banktypes.GenesisState {
+	metadata := generateBankGenesisMetadata(coinInfo)
 	bankGenesisState.DenomMetadata = []banktypes.Metadata{metadata}
 
 	return bankGenesisState
@@ -25,27 +23,28 @@ func updateBankGenesisStateForChainID(bankGenesisState banktypes.GenesisState) b
 
 // generateBankGenesisMetadata generates the metadata
 // for the Evm coin depending on the chainID.
-func generateBankGenesisMetadata() banktypes.Metadata {
+func generateBankGenesisMetadata(coinInfo evmtypes.EvmCoinInfo) banktypes.Metadata {
+	decimals := evmtypes.Decimals(coinInfo.Decimals)
 	return banktypes.Metadata{
 		Description: "The native EVM, governance and staking token of the Guru example chain",
-		Base:        evmtypes.GetEVMCoinDenom(),
+		Base:        coinInfo.Denom,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
-				Denom:    evmtypes.GetEVMCoinDenom(),
-				Exponent: uint32(types.ConversionFactor().Int64()), //#nosec G115 -- int overflow is not a concern here -- the conversion factor shouldn't be anything higher than 18.
+				Denom:    coinInfo.Denom,
+				Exponent: uint32(decimals), //#nosec G115 -- int overflow is not a concern here -- the conversion factor shouldn't be anything higher than 18.
 			},
 			{
-				Denom:    types.ExtendedCoinDenom(),
+				Denom:    coinInfo.ExtendedDenom,
 				Exponent: 0,
 			},
 			{
-				Denom:    config.DisplayDenom,
-				Exponent: uint32(evmtypes.GetEVMCoinDecimals()),
+				Denom:    coinInfo.DisplayDenom,
+				Exponent: uint32(decimals),
 			},
 		},
 		Name:    "Guru",
 		Symbol:  "GXN",
-		Display: config.DisplayDenom,
+		Display: coinInfo.DisplayDenom,
 	}
 }
 

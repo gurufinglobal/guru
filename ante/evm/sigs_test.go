@@ -3,8 +3,8 @@ package evm_test
 import (
 	"math/big"
 
-	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
 )
 
 func (suite *AnteTestSuite) TestSignatures() {
@@ -34,12 +34,8 @@ func (suite *AnteTestSuite) TestSignatures() {
 	msg := tx.GetMsgs()[0]
 	msgEthTx, ok := msg.(*evmtypes.MsgEthereumTx)
 	suite.Require().True(ok)
-	txData, err := evmtypes.UnpackTxData(msgEthTx.Data)
-	suite.Require().NoError(err)
-
-	msgV, msgR, msgS := txData.GetRawSignatureValues()
-
 	ethTx := msgEthTx.AsTransaction()
+	msgV, msgR, msgS := ethTx.RawSignatureValues()
 	ethV, ethR, ethS := ethTx.RawSignatureValues()
 
 	// The signatures of MsgEthereumTx should be the same with the corresponding eth tx

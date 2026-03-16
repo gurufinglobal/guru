@@ -26,7 +26,7 @@ func (k Keeper) ModeratorAddress(c context.Context, _ *types.QueryModeratorAddre
 // Exchanges returns the list of all exchanges.
 func (k Keeper) Exchanges(c context.Context, req *types.QueryExchangesRequest) (*types.QueryExchangesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	exchanges, _, err := k.GetPaginatedExchanges(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	exchanges, _, err := k.GetPaginatedExchanges(ctx, &query.PageRequest{Limit: ^uint64(0)})
 	if err != nil {
 		return nil, err
 	}

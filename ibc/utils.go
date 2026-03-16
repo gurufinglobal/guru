@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
+	transferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	"github.com/gurufinglobal/guru/v2/utils"
-	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 )
 
 // GetTransferSenderRecipient returns the sender and recipient sdk.AccAddresses

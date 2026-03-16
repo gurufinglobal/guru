@@ -10,8 +10,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/config"
 )
 
 // EVMOptionsFn defines a function type for setting app options specifically for
@@ -38,18 +38,6 @@ func EvmAppOptions(chainID uint64) error {
 
 	// set the denom info for the chain
 	if err := setBaseDenom(coinInfo); err != nil {
-		return err
-	}
-
-	ethCfg := evmtypes.DefaultChainConfig(chainID)
-
-	err := evmtypes.NewEVMConfigurator().
-		WithExtendedEips(guruActivators).
-		WithChainConfig(ethCfg).
-		// NOTE: we're using the 18 decimals default for the example chain
-		WithEVMCoinInfo(coinInfo).
-		Configure()
-	if err != nil {
 		return err
 	}
 

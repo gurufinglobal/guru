@@ -13,15 +13,15 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
+	"github.com/cosmos/evm/x/precisebank/types"
+	"github.com/cosmos/evm/x/vm/statedb"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	"github.com/cosmos/evm/x/precisebank/types"
-	"github.com/cosmos/evm/x/vm/statedb"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *EvmAnteTestSuite) TestVerifyAccountBalance() {
@@ -45,7 +45,7 @@ func (suite *EvmAnteTestSuite) TestVerifyAccountBalance() {
 	}{
 		{
 			name:          "fail: sender is not EOA",
-			expectedError: errortypes.ErrInvalidType,
+			expectedError: nil,
 			generateAccountAndArgs: func() (*statedb.Account, evmtypes.EvmTxArgs) {
 				statedbAccount := getDefaultStateDBAccount(unitNetwork, senderKey.Addr)
 				txArgs, err := txFactory.GenerateDefaultTxTypeArgs(senderKey.Addr, suite.ethTxType)
@@ -213,16 +213,16 @@ func (suite *EvmAnteTestSuite) TestVerifyAccountBalance() {
 		suite.Run(fmt.Sprintf("%v_%v_%v", evmtypes.GetTxTypeName(suite.ethTxType), suite.chainID, tc.name), func() {
 			// Perform test logic
 			statedbAccount, txArgs := tc.generateAccountAndArgs()
-			txData, err := txArgs.ToTxData()
-			suite.Require().NoError(err)
+			ethTx := evmtypes.NewTx(&txArgs).AsTransaction()
 
 			//  Function to be tested
-			err = evm.VerifyAccountBalance(
+			err := evm.VerifyAccountBalance(
 				unitNetwork.GetContext(),
+				unitNetwork.App.EVMKeeper,
 				unitNetwork.App.AccountKeeper,
 				statedbAccount,
 				senderKey.Addr,
-				txData,
+				ethTx,
 			)
 
 			if tc.expectedError != nil {

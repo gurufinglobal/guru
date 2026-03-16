@@ -52,7 +52,7 @@ func (k Keeper) GetPaginatedExchanges(ctx sdk.Context, pagination *query.PageReq
 }
 
 func (k Keeper) GetExchangesByOracleRequestID(ctx sdk.Context, oracleRequestID uint64) ([]types.Exchange, error) {
-	allExchanges, _, err := k.GetPaginatedExchanges(ctx, &query.PageRequest{Limit: query.PaginationMaxLimit})
+	allExchanges, _, err := k.GetPaginatedExchanges(ctx, &query.PageRequest{Limit: ^uint64(0)})
 	if err != nil {
 		return nil, err
 	}

@@ -10,8 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	cosmosevmtypes "github.com/cosmos/evm/types"
-
+	cosmoseip712 "github.com/cosmos/evm/ethereum/eip712"
 )
 
 // PreprocessLedgerTx reformats Ledger-signed Cosmos transactions to match the fork expected by Guru
@@ -55,7 +54,7 @@ func PreprocessLedgerTx(evmChainID uint64, keyType cosmoskr.KeyType, txBuilder c
 	}
 	// Add ExtensionOptionsWeb3Tx extension with signature
 	var option *codectypes.Any
-	option, err = codectypes.NewAnyWithValue(&cosmosevmtypes.ExtensionOptionsWeb3Tx{
+	option, err = codectypes.NewAnyWithValue(&cosmoseip712.ExtensionOptionsWeb3Tx{
 		FeePayer:         feePayerAddr,
 		TypedDataChainID: evmChainID,
 		FeePayerSig:      sigBytes,

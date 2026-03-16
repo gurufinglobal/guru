@@ -23,8 +23,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/gurufinglobal/guru/v2/rpc/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/rpc/types"
 )
 
 type txGasAndReward struct {
@@ -89,10 +89,7 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 				break
 			}
 
-			sender, err := ethMsg.GetSender(b.chainID)
-			if err != nil {
-				continue
-			}
+			sender := ethMsg.GetSender()
 			if sender == accAddr {
 				nonce++
 			}
@@ -178,7 +175,10 @@ func (b *Backend) processBlock(
 				continue
 			}
 			tx := ethMsg.AsTransaction()
-			reward := tx.EffectiveGasTipValue(blockBaseFee)
+			reward, err := tx.EffectiveGasTip(blockBaseFee)
+			if err != nil {
+				b.logger.Error("failed to calculate effective gas tip", "height", blockHeight, "error", err.Error())
+			}
 			if reward == nil || reward.Sign() < 0 {
 				b.logger.Debug("negative or nil reward found in transaction", "height", blockHeight, "txHash", tx.Hash().Hex(), "reward", reward)
 				reward = big.NewInt(0)
@@ -214,7 +214,7 @@ func (b *Backend) processBlock(
 func AllTxLogsFromEvents(events []abci.Event) ([][]*ethtypes.Log, error) {
 	allLogs := make([][]*ethtypes.Log, 0, 4)
 	for _, event := range events {
-		if event.Type != evmtypes.EventTypeTxLog {
+		if event.Type != evmtypes.EventTypeEthereumTx {
 			continue
 		}
 
@@ -231,7 +231,7 @@ func AllTxLogsFromEvents(events []abci.Event) ([][]*ethtypes.Log, error) {
 // TxLogsFromEvents parses ethereum logs from cosmos events for specific msg index
 func TxLogsFromEvents(events []abci.Event, msgIndex int) ([]*ethtypes.Log, error) {
 	for _, event := range events {
-		if event.Type != evmtypes.EventTypeTxLog {
+		if event.Type != evmtypes.EventTypeEthereumTx {
 			continue
 		}
 

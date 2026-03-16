@@ -21,9 +21,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *AnteTestSuite) TestAnteHandler() {
@@ -619,9 +619,9 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 				tx, err := suite.GetTxFactory().GenerateSignedEthTx(privKey, ethContractCreationTxParams)
 				suite.Require().NoError(err)
 				msg := tx.GetMsgs()[0].(*evmtypes.MsgEthereumTx)
-				msg.From = addr.Hex()
+				msg.From = addr.Bytes()
 				return tx
-			}, true, false, false,
+			}, true, false, true,
 		},
 		{
 			"passes - Single-signer EIP-712",
@@ -1075,7 +1075,7 @@ func (suite *AnteTestSuite) TestAnteHandlerWithDynamicTxFee() {
 				return tx
 			},
 			false,
-			false, false, false,
+			false, false, true,
 		},
 	}
 

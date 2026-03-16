@@ -15,6 +15,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 
+	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/gurud/eips"
 	"github.com/gurufinglobal/guru/v2/gurud/eips/testdata"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
@@ -108,7 +109,7 @@ var _ = Describe("EIP-0000 - ", Ordered, func() {
 
 	It("should enable the new EIP", func() {
 		eips.Multiplier = eipMultiplier
-		newEIP := 0o000
+		newEIP := exampleapp.GuruEIPCreateMultiplier
 
 		qRes, err := gh.GetEvmParams()
 		Expect(err).To(BeNil(), "failed during query to evm params")
@@ -256,7 +257,7 @@ var _ = Describe("EIP0001 - ", Ordered, func() {
 	})
 	It("should enable the new EIP", func() {
 		eips.Multiplier = eipMultiplier
-		newEIP := 0o001
+		newEIP := exampleapp.GuruEIPCallMultiplier
 
 		qRes, err := gh.GetEvmParams()
 		Expect(err).To(BeNil(), "failed during query to evm params")
@@ -398,7 +399,7 @@ var _ = Describe("EIP0002 - ", Ordered, func() {
 
 	It("should enable the new EIP", func() {
 		eips.SstoreConstantGas = constantGas
-		newEIP := 0o002
+		newEIP := exampleapp.GuruEIPSstoreConstant
 
 		qRes, err := gh.GetEvmParams()
 		Expect(err).To(BeNil(), "failed during query to evm params")

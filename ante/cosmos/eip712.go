@@ -19,8 +19,8 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	cosmosevmtypes "github.com/cosmos/evm/types"
 
+	cosmoseip712 "github.com/cosmos/evm/ethereum/eip712"
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
@@ -30,7 +30,7 @@ var evmCodec codec.ProtoCodecMarshaler
 
 func init() {
 	registry := codectypes.NewInterfaceRegistry()
-	cosmosevmtypes.RegisterInterfaces(registry)
+	cosmoseip712.RegisterInterfaces(registry)
 	evmCodec = codec.NewProtoCodec(registry)
 }
 
@@ -204,7 +204,7 @@ func VerifySignature(
 			return errorsmod.Wrap(errortypes.ErrUnknownExtensionOptions, "tx doesn't contain expected amount of extension options")
 		}
 
-		extOpt, ok := opts[0].GetCachedValue().(*cosmosevmtypes.ExtensionOptionsWeb3Tx)
+		extOpt, ok := opts[0].GetCachedValue().(*cosmoseip712.ExtensionOptionsWeb3Tx)
 		if !ok {
 			return errorsmod.Wrap(errortypes.ErrUnknownExtensionOptions, "unknown extension option")
 		}

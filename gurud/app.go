@@ -11,8 +11,8 @@ import (
 	corevm "github.com/ethereum/go-ethereum/core/vm"
 	"github.com/gorilla/mux"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/spf13/cast"
 	_ "github.com/gurufinglobal/guru/v2/api/guru/crypto/v1/ethsecp256k1" // ensure guru.crypto descriptors are linked for Any reflection
+	"github.com/spf13/cast"
 
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js" // Force-load tracer engines (Go-Ethereum v1.10.15+ registration).
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -21,8 +21,10 @@ import (
 
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
-	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	transfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	transferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
 	ibc "github.com/cosmos/ibc-go/v10/modules/core"
 	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
@@ -110,6 +112,16 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/cosmos/evm/x/erc20"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
+	"github.com/cosmos/evm/x/precisebank"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
+	"github.com/cosmos/evm/x/vm"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	evmante "github.com/gurufinglobal/guru/v2/ante"
 	guruante "github.com/gurufinglobal/guru/v2/ante/evm"
 	guruencoding "github.com/gurufinglobal/guru/v2/encoding"
@@ -121,19 +133,12 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/bex"
 	bexkeeper "github.com/gurufinglobal/guru/v2/x/bex/keeper"
 	bextypes "github.com/gurufinglobal/guru/v2/x/bex/types"
-	"github.com/cosmos/evm/x/erc20"
-	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
-	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
 	"github.com/gurufinglobal/guru/v2/x/feemarket"
 	feemarketkeeper "github.com/gurufinglobal/guru/v2/x/feemarket/keeper"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
 	feepolicymodule "github.com/gurufinglobal/guru/v2/x/feepolicy"
 	feepolicykeeper "github.com/gurufinglobal/guru/v2/x/feepolicy/keeper"
 	feepolicytypes "github.com/gurufinglobal/guru/v2/x/feepolicy/types"
-	"github.com/cosmos/evm/x/ibc/transfer" // NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
-	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
-	transferv2 "github.com/cosmos/evm/x/ibc/transfer/v2"
 	"github.com/gurufinglobal/guru/v2/x/ibc/transwap"
 	transwapkeeper "github.com/gurufinglobal/guru/v2/x/ibc/transwap/keeper"
 	transwaptypes "github.com/gurufinglobal/guru/v2/x/ibc/transwap/types"
@@ -141,12 +146,6 @@ import (
 	oraclemodule "github.com/gurufinglobal/guru/v2/x/oracle"
 	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/cosmos/evm/x/precisebank"
-	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
-	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
-	"github.com/cosmos/evm/x/vm"
-	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func init() {
@@ -264,6 +263,9 @@ func NewExampleApp(
 	evmAppOptions EVMOptionsFn,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *GURUD {
+	// Register chain-local EIP activators before keeper/genesis wiring.
+	registerGuruActivators()
+
 	encodingConfig := guruencoding.MakeConfig(evmChainID)
 	// encodingConfig := guruencoding.MakeConfigWithBech32Prefix(evmChainID, "cosmos")
 
@@ -540,6 +542,7 @@ func NewExampleApp(
 		evmFeeMarketAdapter,
 		&app.ConsensusParamsKeeper,
 		&app.Erc20Keeper,
+		evmChainID,
 		tracer,
 	)
 
@@ -572,12 +575,11 @@ func NewExampleApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
 		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper,
+		nil,
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
 		app.BankKeeper,
-		app.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
 		authAddr,
 	)
 
@@ -699,7 +701,7 @@ func NewExampleApp(
 		transferModule,
 		transwapModule,
 		// Cosmos EVM modules
-		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
+		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.PreciseBankKeeper, app.AccountKeeper.AddressCodec()),
 		feemarket.NewAppModule(app.FeeMarketKeeper),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
@@ -723,7 +725,7 @@ func NewExampleApp(
 					paramsclient.ProposalHandler,
 				},
 			),
-			ibctransfertypes.ModuleName: transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
+			ibctransfertypes.ModuleName: transfer.AppModuleBasic{},
 			transwaptypes.ModuleName:    transwap.AppModuleBasic{},
 			oracletypes.ModuleName:      oraclemodule.AppModuleBasic{},
 			feepolicytypes.ModuleName:   feepolicymodule.AppModuleBasic{},
@@ -736,6 +738,7 @@ func NewExampleApp(
 	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
 		authtypes.ModuleName,
+		evmtypes.ModuleName,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

@@ -1,8 +1,6 @@
 package testutils
 
 import (
-	"math"
-
 	"github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
@@ -11,17 +9,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/ante"
 	evmante "github.com/gurufinglobal/guru/v2/ante/evm"
 	chainante "github.com/gurufinglobal/guru/v2/gurud/ante"
 	chainutil "github.com/gurufinglobal/guru/v2/gurud/testutil"
+	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	"github.com/gurufinglobal/guru/v2/types"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 type AnteTestSuite struct {
@@ -59,6 +58,15 @@ func (suite *AnteTestSuite) SetupTest() {
 	customGenesis[feemarkettypes.ModuleName] = feemarketGenesis
 
 	evmGenesis := evmtypes.DefaultGenesisState()
+	defaultCoinInfo := testconstants.ExampleChainCoinInfo[testconstants.ExampleChainID]
+	evmGenesis.Params.EvmDenom = defaultCoinInfo.Denom
+	if evmtypes.Decimals(defaultCoinInfo.Decimals) == evmtypes.EighteenDecimals {
+		evmGenesis.Params.ExtendedDenomOptions = nil
+	} else {
+		evmGenesis.Params.ExtendedDenomOptions = &evmtypes.ExtendedDenomOptions{
+			ExtendedDenom: defaultCoinInfo.ExtendedDenom,
+		}
+	}
 
 	if suite.evmParamsOption != nil {
 		suite.evmParamsOption(&evmGenesis.Params)
@@ -89,18 +97,6 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	suite.Require().NotNil(suite.network.App.AppCodec())
 
-	chainConfig := evmtypes.DefaultChainConfig(suite.network.GetEIP155ChainID().Uint64())
-	if !suite.enableLondonHF {
-		maxInt := sdkmath.NewInt(math.MaxInt64)
-		chainConfig.LondonBlock = &maxInt
-		chainConfig.ArrowGlacierBlock = &maxInt
-		chainConfig.GrayGlacierBlock = &maxInt
-		chainConfig.MergeNetsplitBlock = &maxInt
-		chainConfig.ShanghaiTime = &maxInt
-		chainConfig.CancunTime = &maxInt
-		chainConfig.PragueTime = &maxInt
-	}
-
 	// get the denom and decimals set when initialized the chain
 	// to set them again
 	// when resetting the chain config
@@ -111,11 +107,11 @@ func (suite *AnteTestSuite) SetupTest() {
 	configurator := evmtypes.NewEVMConfigurator()
 	configurator.ResetTestConfig()
 	err := configurator.
-		WithChainConfig(chainConfig).
 		WithEVMCoinInfo(evmtypes.EvmCoinInfo{
 			Denom:         denom,
 			ExtendedDenom: extendedDenom,
-			Decimals:      decimals,
+			DisplayDenom:  testconstants.ExampleDisplayDenom,
+			Decimals:      uint32(decimals),
 		}).
 		Configure()
 	suite.Require().NoError(err)

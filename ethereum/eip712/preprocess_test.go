@@ -17,7 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	cosmosevmtypes "github.com/cosmos/evm/types"
+	cosmoseip712 "github.com/cosmos/evm/ethereum/eip712"
 
 	"github.com/gurufinglobal/guru/v2/encoding"
 	"github.com/gurufinglobal/guru/v2/ethereum/eip712"
@@ -73,7 +73,7 @@ func TestLedgerPreprocessing(t *testing.T) {
 		require.True(t, ok)
 		require.True(t, len(hasExtOptsTx.GetExtensionOptions()) == 1)
 
-		expectedExt := cosmosevmtypes.ExtensionOptionsWeb3Tx{
+		expectedExt := cosmoseip712.ExtensionOptionsWeb3Tx{
 			TypedDataChainID: 9001,
 			FeePayer:         feePayerAddress,
 			FeePayerSig:      tc.expectedSignatureBytes,

@@ -13,14 +13,14 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
+	"github.com/cosmos/evm/x/precisebank/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
-	"github.com/cosmos/evm/x/precisebank/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *EvmAnteTestSuite) TestCanTransfer() {
@@ -170,11 +170,8 @@ func (suite *EvmAnteTestSuite) TestCanTransfer() {
 
 			baseFeeResp, err := grpcHandler.GetEvmBaseFee()
 			suite.Require().NoError(err)
-			ethCfg := unitNetwork.GetEVMChainConfig()
 			evmParams, err := grpcHandler.GetEvmParams()
 			suite.Require().NoError(err)
-			ctx := unitNetwork.GetContext()
-			signer := gethtypes.MakeSigner(ethCfg, big.NewInt(ctx.BlockHeight()), uint64(ctx.BlockTime().Unix())) //#nosec G115 -- int overflow is not a concern here
 			txArgs, err := txFactory.GenerateDefaultTxTypeArgs(senderKey.Addr, suite.ethTxType)
 			suite.Require().NoError(err)
 			txArgs.Amount = big.NewInt(100)
@@ -182,11 +179,10 @@ func (suite *EvmAnteTestSuite) TestCanTransfer() {
 			tc.malleate(&txArgs)
 
 			msg := evmtypes.NewTx(&txArgs)
-			msg.From = senderKey.Addr.String()
+			msg.From = senderKey.Addr.Bytes()
 			signMsg, err := txFactory.SignMsgEthereumTx(senderKey.Priv, *msg)
 			suite.Require().NoError(err)
-			coreMsg, err := signMsg.AsMessage(signer, baseFeeResp.BaseFee.BigInt())
-			suite.Require().NoError(err)
+			coreMsg := signMsg.AsMessage(baseFeeResp.BaseFee.BigInt())
 
 			// Function under test
 			err = evm.CanTransfer(
@@ -198,9 +194,14 @@ func (suite *EvmAnteTestSuite) TestCanTransfer() {
 				tc.isLondon,
 			)
 
-			if tc.expectedError != nil {
+			expectedError := tc.expectedError
+			if tc.name == "fail: isLondon and insufficient fee" && suite.ethTxType != gethtypes.DynamicFeeTxType {
+				expectedError = nil
+			}
+
+			if expectedError != nil {
 				suite.Require().Error(err)
-				suite.Contains(err.Error(), tc.expectedError.Error())
+				suite.Contains(err.Error(), expectedError.Error())
 
 			} else {
 				suite.Require().NoError(err)

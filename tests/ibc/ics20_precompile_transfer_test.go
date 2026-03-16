@@ -21,11 +21,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/gurufinglobal/guru/v2/gurud"
-	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
 	"github.com/cosmos/evm/precompiles/ics20"
 	evmante "github.com/cosmos/evm/x/vm/ante"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/gurufinglobal/guru/v2/gurud"
+	evmibctesting "github.com/gurufinglobal/guru/v2/ibc/testing"
+	"github.com/gurufinglobal/guru/v2/testutil"
 )
 
 type ICS20TransferTestSuite struct {
@@ -46,18 +47,20 @@ func (suite *ICS20TransferTestSuite) SetupTest() {
 	suite.chainB = suite.coordinator.GetChain(evmibctesting.GetEvmChainID(2))
 
 	evmAppA := suite.chainA.App.(*gurud.GURUD)
-	suite.chainAPrecompile, _ = ics20.NewPrecompile(
+	suite.chainAPrecompile = ics20.NewPrecompile(
+		evmAppA.BankKeeper,
 		*evmAppA.StakingKeeper,
 		evmAppA.TransferKeeper,
 		evmAppA.IBCKeeper.ChannelKeeper,
-		evmAppA.EVMKeeper,
+		evmAppA.Erc20Keeper,
 	)
 	evmAppB := suite.chainB.App.(*gurud.GURUD)
-	suite.chainBPrecompile, _ = ics20.NewPrecompile(
+	suite.chainBPrecompile = ics20.NewPrecompile(
+		evmAppB.BankKeeper,
 		*evmAppB.StakingKeeper,
 		evmAppB.TransferKeeper,
 		evmAppB.IBCKeeper.ChannelKeeper,
-		evmAppB.EVMKeeper,
+		evmAppB.Erc20Keeper,
 	)
 }
 
@@ -221,12 +224,16 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 			// denoms query method
 			chainBAddr := common.BytesToAddress(suite.chainB.SenderAccount.GetAddress().Bytes())
 			ctxB := evmante.BuildEvmExecutionCtx(suite.chainB.GetContext())
+			stateDBB := testutil.NewStateDB(ctxB, evmAppB.EVMKeeper)
 			evmRes, err := evmAppB.EVMKeeper.CallEVM(
 				ctxB,
+				stateDBB,
 				suite.chainBPrecompile.ABI,
 				chainBAddr,
 				suite.chainBPrecompile.Address(),
 				false,
+				false,
+				nil,
 				ics20.DenomsMethod,
 				query.PageRequest{
 					Key:        []byte{},
@@ -245,10 +252,13 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 			// denom query method with result
 			evmRes, err = evmAppB.EVMKeeper.CallEVM(
 				ctxB,
+				stateDBB,
 				suite.chainBPrecompile.ABI,
 				chainBAddr,
 				suite.chainBPrecompile.Address(),
 				false,
+				false,
+				nil,
 				ics20.DenomMethod,
 				chainBDenom.Hash().String(),
 			)
@@ -261,10 +271,13 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 			// denom query method not exists case
 			evmRes, err = evmAppB.EVMKeeper.CallEVM(
 				ctxB,
+				stateDBB,
 				suite.chainBPrecompile.ABI,
 				chainBAddr,
 				suite.chainBPrecompile.Address(),
 				false,
+				false,
+				nil,
 				ics20.DenomMethod,
 				"0000000000000000000000000000000000000000000000000000000000000000",
 			)
@@ -277,10 +290,13 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 			// denom query method invalid error case
 			evmRes, err = evmAppB.EVMKeeper.CallEVM(
 				ctxB,
+				stateDBB,
 				suite.chainBPrecompile.ABI,
 				chainBAddr,
 				suite.chainBPrecompile.Address(),
 				false,
+				false,
+				nil,
 				ics20.DenomMethod,
 				"INVALID-DENOM-HASH",
 			)
@@ -292,10 +308,13 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 			// denomHash query method
 			evmRes, err = evmAppB.EVMKeeper.CallEVM(
 				ctxB,
+				stateDBB,
 				suite.chainBPrecompile.ABI,
 				chainBAddr,
 				suite.chainBPrecompile.Address(),
 				false,
+				false,
+				nil,
 				ics20.DenomHashMethod,
 				chainBDenom.Path(),
 			)
@@ -308,10 +327,13 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 			// denomHash query method not exists case
 			evmRes, err = evmAppB.EVMKeeper.CallEVM(
 				ctxB,
+				stateDBB,
 				suite.chainBPrecompile.ABI,
 				chainBAddr,
 				suite.chainBPrecompile.Address(),
 				false,
+				false,
+				nil,
 				ics20.DenomHashMethod,
 				"transfer/channel-0/erc20:not-exists-case",
 			)
@@ -323,10 +345,13 @@ func (suite *ICS20TransferTestSuite) TestHandleMsgTransfer() {
 			// denomHash query method invalid error case
 			evmRes, err = evmAppB.EVMKeeper.CallEVM(
 				ctxB,
+				stateDBB,
 				suite.chainBPrecompile.ABI,
 				chainBAddr,
 				suite.chainBPrecompile.Address(),
 				false,
+				false,
+				nil,
 				ics20.DenomHashMethod,
 				"",
 			)

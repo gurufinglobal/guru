@@ -20,8 +20,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 )
 
 // Resend accepts an existing transaction and a new gas price and limit. It will remove
@@ -45,7 +45,7 @@ func (b *Backend) Resend(args evmtypes.TransactionArgs, gasPrice *hexutil.Big, g
 
 	signer := ethtypes.LatestSigner(cfg)
 
-	matchTx := args.ToTransaction().AsTransaction()
+	matchTx := args.ToTransaction(ethtypes.LegacyTxType)
 
 	// Before replacing the old transaction, ensure the _new_ transaction fee is reasonable.
 	price := matchTx.GasPrice()
@@ -118,10 +118,7 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	}
 
 	ethereumTx := &evmtypes.MsgEthereumTx{}
-	if err := ethereumTx.FromEthereumTx(tx); err != nil {
-		b.logger.Error("transaction converting failed", "error", err.Error())
-		return common.Hash{}, err
-	}
+	ethereumTx.FromEthereumTx(tx)
 
 	if err := ethereumTx.ValidateBasic(); err != nil {
 		b.logger.Debug("tx failed basic validation", "error", err.Error())

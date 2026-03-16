@@ -19,11 +19,11 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/indexer"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpctypes "github.com/gurufinglobal/guru/v2/rpc/types"
 	gurutypes "github.com/gurufinglobal/guru/v2/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *BackendTestSuite) TestGetTransactionByHash() {
@@ -121,11 +121,11 @@ func (suite *BackendTestSuite) TestGetTransactionByHash() {
 			err := suite.backend.indexer.IndexBlock(block, responseDeliver)
 			suite.Require().NoError(err)
 
-			rpcTx, err := suite.backend.GetTransactionByHash(common.HexToHash(tc.tx.Hash))
+			rpcTx, err := suite.backend.GetTransactionByHash(tc.tx.Hash())
 
 			if tc.expPass {
 				suite.Require().NoError(err)
-				suite.Require().Equal(rpcTx, tc.expRPCTx)
+				suite.Require().Equal(tc.expRPCTx, rpcTx)
 			} else {
 				suite.Require().Error(err)
 			}
@@ -181,11 +181,11 @@ func (suite *BackendTestSuite) TestGetTransactionsByHashPending() {
 			suite.SetupTest() // reset
 			tc.registerMock()
 
-			rpcTx, err := suite.backend.getTransactionByHashPending(common.HexToHash(tc.tx.Hash))
+			rpcTx, err := suite.backend.getTransactionByHashPending(tc.tx.Hash())
 
 			if tc.expPass {
 				suite.Require().NoError(err)
-				suite.Require().Equal(rpcTx, tc.expRPCTx)
+				suite.Require().Equal(tc.expRPCTx, rpcTx)
 			} else {
 				suite.Require().Error(err)
 			}
@@ -209,7 +209,7 @@ func (suite *BackendTestSuite) TestGetTxByEthHash() {
 			func() {
 				suite.backend.indexer = nil
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
-				query := fmt.Sprintf("%s.%s='%s'", evmtypes.TypeMsgEthereumTx, evmtypes.AttributeKeyEthereumTxHash, common.HexToHash(msgEthereumTx.Hash).Hex())
+				query := fmt.Sprintf("%s.%s='%s'", evmtypes.TypeMsgEthereumTx, evmtypes.AttributeKeyEthereumTxHash, msgEthereumTx.Hash().Hex())
 				RegisterTxSearch(client, query, bz)
 			},
 			msgEthereumTx,
@@ -223,11 +223,11 @@ func (suite *BackendTestSuite) TestGetTxByEthHash() {
 			suite.SetupTest() // reset
 			tc.registerMock()
 
-			rpcTx, err := suite.backend.GetTxByEthHash(common.HexToHash(tc.tx.Hash))
+			rpcTx, err := suite.backend.GetTxByEthHash(tc.tx.Hash())
 
 			if tc.expPass {
 				suite.Require().NoError(err)
-				suite.Require().Equal(rpcTx, tc.expRPCTx)
+				suite.Require().Equal(tc.expRPCTx, rpcTx)
 			} else {
 				suite.Require().Error(err)
 			}
@@ -278,7 +278,7 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockHashAndIndex() {
 
 			if tc.expPass {
 				suite.Require().NoError(err)
-				suite.Require().Equal(rpcTx, tc.expRPCTx)
+				suite.Require().Equal(tc.expRPCTx.Hash, rpcTx.Hash)
 			} else {
 				suite.Require().Error(err)
 			}
@@ -295,7 +295,7 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockAndIndex() {
 			Code: 0,
 			Events: []abci.Event{
 				{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
-					{Key: "ethereumTxHash", Value: common.HexToHash(msgEthTx.Hash).Hex()},
+					{Key: "ethereumTxHash", Value: msgEthTx.Hash().Hex()},
 					{Key: "txIndex", Value: "0"},
 					{Key: "amount", Value: "1000"},
 					{Key: "txGasUsed", Value: "21000"},
@@ -393,7 +393,7 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockAndIndex() {
 
 			if tc.expPass {
 				suite.Require().NoError(err)
-				suite.Require().Equal(rpcTx, tc.expRPCTx)
+				suite.Require().Equal(tc.expRPCTx.Hash, rpcTx.Hash)
 			} else {
 				suite.Require().Error(err)
 			}
@@ -457,7 +457,7 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockNumberAndIndex() {
 			rpcTx, err := suite.backend.GetTransactionByBlockNumberAndIndex(tc.blockNum, tc.idx)
 			if tc.expPass {
 				suite.Require().NoError(err)
-				suite.Require().Equal(rpcTx, tc.expRPCTx)
+				suite.Require().Equal(tc.expRPCTx.Hash, rpcTx.Hash)
 			} else {
 				suite.Require().Error(err)
 			}
@@ -689,7 +689,7 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 			err := suite.backend.indexer.IndexBlock(tc.block, tc.blockResult)
 			suite.Require().NoError(err)
 
-			hash := common.HexToHash(tc.tx.Hash)
+			hash := tc.tx.Hash()
 			res, err := suite.backend.GetTransactionReceipt(hash)
 			if tc.expPass {
 				suite.Require().Equal(res["transactionHash"], hash)

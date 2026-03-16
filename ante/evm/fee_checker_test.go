@@ -14,14 +14,14 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	cosmosevmtypes "github.com/cosmos/evm/types"
+	antetypes "github.com/cosmos/evm/ante/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	feemarkettypes "github.com/gurufinglobal/guru/v2/x/feemarket/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 var _ anteinterfaces.FeeMarketKeeper = MockFeemarketKeeper{}
@@ -187,7 +187,7 @@ func TestSDKTxFeeChecker(t *testing.T) {
 				txBuilder.SetGasLimit(1)
 				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(testconstants.ExampleAttoDenom, math.NewInt(10).Mul(evmtypes.DefaultPriorityReduction))))
 
-				option, err := codectypes.NewAnyWithValue(&cosmosevmtypes.ExtensionOptionDynamicFeeTx{})
+				option, err := codectypes.NewAnyWithValue(&antetypes.ExtensionOptionDynamicFeeTx{})
 				require.NoError(t, err)
 				txBuilder.SetExtensionOptions(option)
 				return txBuilder.GetTx()
@@ -208,7 +208,7 @@ func TestSDKTxFeeChecker(t *testing.T) {
 				txBuilder.SetGasLimit(1)
 				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(testconstants.ExampleAttoDenom, math.NewInt(10).Mul(evmtypes.DefaultPriorityReduction).Add(math.NewInt(10)))))
 
-				option, err := codectypes.NewAnyWithValue(&cosmosevmtypes.ExtensionOptionDynamicFeeTx{
+				option, err := codectypes.NewAnyWithValue(&antetypes.ExtensionOptionDynamicFeeTx{
 					MaxPriorityPrice: math.LegacyNewDec(5).MulInt(evmtypes.DefaultPriorityReduction),
 				})
 				require.NoError(t, err)
@@ -232,7 +232,7 @@ func TestSDKTxFeeChecker(t *testing.T) {
 				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(testconstants.ExampleAttoDenom, math.NewInt(10).Mul(evmtypes.DefaultPriorityReduction).Add(math.NewInt(10)))))
 
 				// set negative priority fee
-				option, err := codectypes.NewAnyWithValue(&cosmosevmtypes.ExtensionOptionDynamicFeeTx{
+				option, err := codectypes.NewAnyWithValue(&antetypes.ExtensionOptionDynamicFeeTx{
 					MaxPriorityPrice: math.LegacyNewDec(-5).MulInt(evmtypes.DefaultPriorityReduction),
 				})
 				require.NoError(t, err)

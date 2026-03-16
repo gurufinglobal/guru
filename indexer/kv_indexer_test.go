@@ -17,12 +17,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
+	"github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/crypto/ethsecp256k1"
 	"github.com/gurufinglobal/guru/v2/indexer"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/network"
 	utiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/cosmos/evm/x/vm/types"
 )
 
 func TestKVIndexer(t *testing.T) {
@@ -40,7 +40,7 @@ func TestKVIndexer(t *testing.T) {
 		GasLimit: 21000,
 	}
 	tx := types.NewTx(&ethTxParams)
-	tx.From = from.Hex()
+	tx.From = from.Bytes()
 	require.NoError(t, tx.Sign(ethSigner, signer))
 	txHash := tx.AsTransaction().Hash()
 

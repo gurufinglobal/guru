@@ -21,9 +21,9 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // Client defines a mocked object that implements the Tendermint JSON-RPC Client
@@ -187,7 +187,7 @@ func RegisterBlockResultsWithEventLog(client *mocks.Client, height int64) (*cmtr
 		Height: height,
 		TxsResults: []*abci.ExecTxResult{
 			{Code: 0, GasUsed: 0, Events: []abci.Event{{
-				Type: evmtypes.EventTypeTxLog,
+				Type: evmtypes.EventTypeEthereumTx,
 				Attributes: []abci.EventAttribute{{
 					Key:   evmtypes.AttributeKeyTxLog,
 					Value: "{\"test\": \"hello\"}", // TODO refactor the value to unmarshall to a evmtypes.Log struct successfully

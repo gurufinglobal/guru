@@ -19,9 +19,9 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	exampleapp "github.com/gurufinglobal/guru/v2/gurud"
 	"github.com/gurufinglobal/guru/v2/server/config"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // PrepareEthTx creates an ethereum tx and signs it with the provided messages and private key.
@@ -53,7 +53,7 @@ func PrepareEthTx(
 			}
 		}
 
-		msg.From = ""
+		msg.From = nil
 
 		txGasLimit += msg.GetGas()
 		txFee = txFee.Add(sdk.Coin{Denom: baseDenom, Amount: sdkmath.NewIntFromBigInt(msg.GetFee())})
@@ -124,7 +124,7 @@ func CreateEthTx(
 		Accesses:  &ethtypes.AccessList{},
 	}
 	msgEthereumTx := evmtypes.NewTx(evmTxParams)
-	msgEthereumTx.From = fromAddr.String()
+	msgEthereumTx.From = fromAddr.Bytes()
 
 	// If we are creating multiple eth Tx's with different senders, we need to sign here rather than later.
 	if privKey != nil {

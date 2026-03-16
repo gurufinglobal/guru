@@ -12,12 +12,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/cosmos/evm/x/vm/statedb"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ethante "github.com/gurufinglobal/guru/v2/ante/evm"
 	"github.com/gurufinglobal/guru/v2/ante/testutils"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
-	"github.com/cosmos/evm/x/vm/statedb"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func BenchmarkEthGasConsumeDecorator(b *testing.B) {
@@ -61,7 +61,7 @@ func BenchmarkEthGasConsumeDecorator(b *testing.B) {
 				addr := testutiltx.GenerateAddress()
 				args.Accesses = &ethtypes.AccessList{{Address: addr, StorageKeys: nil}}
 				tx := evmtypes.NewTx(args)
-				tx.From = addr.Hex()
+				tx.From = addr.Bytes()
 
 				cacheCtx, _ := ctx.CacheContext()
 				// Create new stateDB for each test case from the cached context
