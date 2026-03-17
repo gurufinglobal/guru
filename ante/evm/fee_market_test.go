@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	"github.com/gurufinglobal/guru/v2/ante/testutils"
 	"github.com/gurufinglobal/guru/v2/server/config"
@@ -37,7 +38,7 @@ func (suite *AnteTestSuite) TestGasWantedDecorator() {
 	}{
 		{
 			"Cosmos Tx",
-			testutils.TestGasLimit,
+			cosmosante.FixedMsgSendGas,
 			func() sdk.Tx {
 				testMsg := banktypes.MsgSend{
 					FromAddress: "cosmos1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0ptzkucp",
@@ -96,7 +97,7 @@ func (suite *AnteTestSuite) TestGasWantedDecorator() {
 		},
 		{
 			"EIP712 message",
-			200000,
+			cosmosante.FixedMsgSendGas,
 			func() sdk.Tx {
 				amount := sdk.NewCoins(sdk.NewCoin(testconstants.ExampleAttoDenom, sdkmath.NewInt(20)))
 				gas := uint64(200000)
@@ -114,10 +115,19 @@ func (suite *AnteTestSuite) TestGasWantedDecorator() {
 			testutils.TestGasLimit,
 			func() sdk.Tx {
 				denom := testconstants.ExampleAttoDenom
-				testMsg := banktypes.MsgSend{
-					FromAddress: "cosmos1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0ptzkucp",
-					ToAddress:   "cosmos1dx67l23hz9l0k9hcher8xz04uj7wf3yu26l2yn",
-					Amount:      sdk.Coins{sdk.Coin{Amount: sdkmath.NewInt(10), Denom: denom}},
+				testMsg := banktypes.MsgMultiSend{
+					Inputs: []banktypes.Input{
+						{
+							Address: "cosmos1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0ptzkucp",
+							Coins:   sdk.Coins{sdk.Coin{Amount: sdkmath.NewInt(10), Denom: denom}},
+						},
+					},
+					Outputs: []banktypes.Output{
+						{
+							Address: "cosmos1dx67l23hz9l0k9hcher8xz04uj7wf3yu26l2yn",
+							Coins:   sdk.Coins{sdk.Coin{Amount: sdkmath.NewInt(10), Denom: denom}},
+						},
+					},
 				}
 				txBuilder := suite.CreateTestCosmosTxBuilder(sdkmath.NewInt(10), testconstants.ExampleAttoDenom, &testMsg)
 				limit := types.BlockGasLimit(ctx)

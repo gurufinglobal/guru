@@ -103,7 +103,7 @@ var _ = Describe("Feemarket", func() {
 					res, err := s.network.CheckTx(bz)
 					Expect(err).To(BeNil())
 					Expect(res.IsOK()).To(BeFalse())
-					Expect(res.Log).To(ContainSubstring("provided fee < minimum global fee"))
+					Expect(res.Log).To(ContainSubstring("insufficient fee"))
 				})
 
 				It("should accept transactions with gasPrice >= MinGasPrices", func() {
@@ -127,7 +127,7 @@ var _ = Describe("Feemarket", func() {
 					res, err := s.factory.ExecuteCosmosTx(privKey, txArgs)
 					Expect(err).To(BeNil())
 					Expect(res.IsOK()).To(BeFalse())
-					Expect(res.Log).To(ContainSubstring("provided fee < minimum global fee"))
+					Expect(res.Log).To(ContainSubstring("insufficient fee"))
 				})
 
 				It("should accept transactions with gasPrice >= MinGasPrices", func() {
@@ -196,7 +196,7 @@ var _ = Describe("Feemarket", func() {
 					res, err := s.factory.ExecuteCosmosTx(privKey, txArgs)
 					Expect(err).To(BeNil())
 					Expect(res.IsOK()).To(BeFalse())
-					Expect(res.Log).To(ContainSubstring("provided fee < minimum global fee"))
+					Expect(res.Log).To(ContainSubstring("insufficient fee"))
 				})
 
 				It("should accept transactions with gasPrice >= MinGasPrices", func() {
@@ -281,7 +281,7 @@ var _ = Describe("Feemarket", func() {
 					res, err := s.factory.ExecuteCosmosTx(privKey, txArgs)
 					Expect(err).To(BeNil())
 					Expect(res.IsOK()).To(BeFalse())
-					Expect(res.Log).To(ContainSubstring("provided fee < minimum global fee"))
+					Expect(res.Log).To(ContainSubstring("insufficient fee"))
 				})
 
 				It("should reject transactions with MinGasPrices < gasPrice < baseFee", func() {
