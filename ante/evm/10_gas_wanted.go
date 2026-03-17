@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
+	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
 	anteinterfaces "github.com/gurufinglobal/guru/v2/ante/interfaces"
 	"github.com/gurufinglobal/guru/v2/types"
 	evmtypes "github.com/gurufinglobal/guru/v2/x/vm/types"
@@ -55,7 +56,7 @@ func CheckGasWanted(ctx sdk.Context, feeMarketKeeper anteinterfaces.FeeMarketKee
 		return nil
 	}
 
-	gasWanted := feeTx.GetGas()
+	gasWanted := cosmosante.EffectiveGasWanted(tx, feeTx)
 
 	// return error if the tx gas is greater than the block limit (max gas)
 	blockGasLimit := types.BlockGasLimit(ctx)

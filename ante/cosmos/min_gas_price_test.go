@@ -9,6 +9,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
+	antetestutils "github.com/gurufinglobal/guru/v2/ante/testutils"
 	"github.com/gurufinglobal/guru/v2/testutil"
 	"github.com/gurufinglobal/guru/v2/testutil/constants"
 	testutiltx "github.com/gurufinglobal/guru/v2/testutil/tx"
@@ -29,6 +30,20 @@ func (suite *AnteTestSuite) TestMinGasPriceDecorator() {
 		FromAddress: "cosmos1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0ptzkucp",
 		ToAddress:   "cosmos1dx67l23hz9l0k9hcher8xz04uj7wf3yu26l2yn",
 		Amount:      sdk.Coins{sdk.Coin{Amount: math.NewInt(10), Denom: denom}},
+	}
+	testMultiSendMsg := banktypes.MsgMultiSend{
+		Inputs: []banktypes.Input{
+			{
+				Address: testMsg.FromAddress,
+				Coins:   testMsg.Amount,
+			},
+		},
+		Outputs: []banktypes.Output{
+			{
+				Address: testMsg.ToAddress,
+				Coins:   testMsg.Amount,
+			},
+		},
 	}
 	nw := suite.GetNetwork()
 	ctx := nw.GetContext()
@@ -92,6 +107,54 @@ func (suite *AnteTestSuite) TestMinGasPriceDecorator() {
 			},
 			true,
 			"",
+			true,
+		},
+		{
+			"single MsgSend required fee uses fixed gas 21000",
+			func() sdk.Tx {
+				params := nw.App.FeeMarketKeeper.GetParams(ctx)
+				params.MinGasPrice = math.LegacyNewDec(10)
+				err := nw.App.FeeMarketKeeper.SetParams(ctx, params)
+				suite.Require().NoError(err)
+
+				txBuilder := suite.GetClientCtx().TxConfig.NewTxBuilder()
+				txBuilder.SetGasLimit(antetestutils.TestGasLimit)
+				txBuilder.SetFeeAmount(
+					sdk.NewCoins(sdk.Coin{
+						Denom:  denom,
+						Amount: math.NewInt(10).MulRaw(int64(cosmosante.FixedMsgSendGas)),
+					}),
+				)
+				err = txBuilder.SetMsgs(&testMsg)
+				suite.Require().NoError(err)
+				return txBuilder.GetTx()
+			},
+			true,
+			"",
+			true,
+		},
+		{
+			"non target msg still requires fees based on tx gas limit",
+			func() sdk.Tx {
+				params := nw.App.FeeMarketKeeper.GetParams(ctx)
+				params.MinGasPrice = math.LegacyNewDec(10)
+				err := nw.App.FeeMarketKeeper.SetParams(ctx, params)
+				suite.Require().NoError(err)
+
+				txBuilder := suite.GetClientCtx().TxConfig.NewTxBuilder()
+				txBuilder.SetGasLimit(antetestutils.TestGasLimit)
+				txBuilder.SetFeeAmount(
+					sdk.NewCoins(sdk.Coin{
+						Denom:  denom,
+						Amount: math.NewInt(10).MulRaw(int64(cosmosante.FixedMsgSendGas)),
+					}),
+				)
+				err = txBuilder.SetMsgs(&testMultiSendMsg)
+				suite.Require().NoError(err)
+				return txBuilder.GetTx()
+			},
+			false,
+			"provided fee < minimum global fee",
 			true,
 		},
 		{

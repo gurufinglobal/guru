@@ -27,7 +27,7 @@ func (d FixedSendGasDecorator) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (sdk.Context, error) {
-	if !isSingleMsgSendTx(tx) {
+	if !IsSingleMsgSendTx(tx) {
 		return next(ctx, tx, simulate)
 	}
 
@@ -49,7 +49,18 @@ func (d FixedSendGasDecorator) AnteHandle(
 	return next(ctx.WithGasMeter(fixedMeter), tx, simulate)
 }
 
-func isSingleMsgSendTx(tx sdk.Tx) bool {
+// EffectiveGasWanted returns the gas used for fee checks and gas wanted
+// aggregation. Single MsgSend txs are normalized to 21,000.
+func EffectiveGasWanted(tx sdk.Tx, feeTx sdk.FeeTx) uint64 {
+	if IsSingleMsgSendTx(tx) {
+		return FixedMsgSendGas
+	}
+	return feeTx.GetGas()
+}
+
+// IsSingleMsgSendTx returns true when the tx contains exactly one message and
+// the message type is bank MsgSend.
+func IsSingleMsgSendTx(tx sdk.Tx) bool {
 	msgs := tx.GetMsgs()
 	if len(msgs) != 1 {
 		return false

@@ -7,9 +7,12 @@ import (
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	cosmosante "github.com/gurufinglobal/guru/v2/ante/cosmos"
 	"github.com/gurufinglobal/guru/v2/ante/evm"
 	testconstants "github.com/gurufinglobal/guru/v2/testutil/constants"
+	commonfactory "github.com/gurufinglobal/guru/v2/testutil/integration/common/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/factory"
 	"github.com/gurufinglobal/guru/v2/testutil/integration/os/grpc"
 	testkeyring "github.com/gurufinglobal/guru/v2/testutil/integration/os/keyring"
@@ -128,6 +131,95 @@ func (suite *EvmAnteTestSuite) TestCheckGasWanted() {
 			}
 
 			// Start from a fresh block and ctx
+			err = unitNetwork.NextBlock()
+			suite.Require().NoError(err)
+		})
+	}
+}
+
+func (suite *EvmAnteTestSuite) TestCheckGasWanted_CosmosTxGasWantedAlignment() {
+	keyring := testkeyring.New(1)
+	unitNetwork := network.NewUnitTestNetwork(
+		network.WithChainID(testconstants.ChainID{
+			ChainID:    suite.chainID,
+			EVMChainID: suite.evmChainID,
+		}),
+		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
+	)
+	grpcHandler := grpc.NewIntegrationHandler(unitNetwork)
+	txFactory := factory.New(unitNetwork, grpcHandler)
+	commonGasLimit := uint64(100_000)
+	recipient := sdktypes.AccAddress([]byte("to_________________"))
+
+	testCases := []struct {
+		name        string
+		msgs        func(sdktypes.AccAddress) []sdktypes.Msg
+		expectedGas uint64
+	}{
+		{
+			name: "single MsgSend uses fixed gas wanted",
+			msgs: func(sender sdktypes.AccAddress) []sdktypes.Msg {
+				return []sdktypes.Msg{
+					banktypes.NewMsgSend(
+						sender,
+						recipient,
+						sdktypes.NewCoins(sdktypes.NewInt64Coin(unitNetwork.GetBaseDenom(), 1)),
+					),
+				}
+			},
+			expectedGas: cosmosante.FixedMsgSendGas,
+		},
+		{
+			name: "non-target cosmos msg uses tx gas wanted",
+			msgs: func(sender sdktypes.AccAddress) []sdktypes.Msg {
+				return []sdktypes.Msg{
+					&banktypes.MsgMultiSend{
+						Inputs: []banktypes.Input{
+							{
+								Address: sender.String(),
+								Coins:   sdktypes.NewCoins(sdktypes.NewInt64Coin(unitNetwork.GetBaseDenom(), 1)),
+							},
+						},
+						Outputs: []banktypes.Output{
+							{
+								Address: recipient.String(),
+								Coins:   sdktypes.NewCoins(sdktypes.NewInt64Coin(unitNetwork.GetBaseDenom(), 1)),
+							},
+						},
+					},
+				}
+			},
+			expectedGas: commonGasLimit,
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(fmt.Sprintf("%s_%s_%s", evmtypes.GetTxTypeName(suite.ethTxType), suite.chainID, tc.name), func() {
+			sender := keyring.GetKey(0)
+			gas := commonGasLimit
+
+			tx, err := txFactory.BuildCosmosTx(
+				sender.Priv,
+				commonfactory.CosmosTxArgs{
+					Msgs: tc.msgs(sender.AccAddr),
+					Gas:  &gas,
+				},
+			)
+			suite.Require().NoError(err)
+
+			ctx := unitNetwork.GetContext().WithBlockGasMeter(storetypes.NewGasMeter(commonGasLimit + 10_000))
+			err = evm.CheckGasWanted(
+				ctx,
+				unitNetwork.App.FeeMarketKeeper,
+				tx,
+				true,
+			)
+			suite.Require().NoError(err)
+
+			transientGasWanted := unitNetwork.App.FeeMarketKeeper.GetTransientGasWanted(unitNetwork.GetContext())
+			suite.Require().Equal(tc.expectedGas, transientGasWanted)
+
+			// Reset transient state between cases.
 			err = unitNetwork.NextBlock()
 			suite.Require().NoError(err)
 		})

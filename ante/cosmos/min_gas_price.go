@@ -63,7 +63,7 @@ func (mpd MinGasPriceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 		},
 	}
 
-	gas := feeTx.GetGas()
+	gas := EffectiveGasWanted(tx, feeTx)
 
 	requiredFees := make(sdk.Coins, 0)
 
