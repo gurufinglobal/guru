@@ -101,6 +101,7 @@ var _ = Describe("when sending a Cosmos transaction", Label("AnteHandler"), Orde
 			)
 			Expect(err).To(BeNil())
 			Expect(res.IsOK()).To(BeTrue())
+			Expect(res.GasUsed).To(Equal(uint64(21_000)))
 
 			// include the tx in a block to update state
 			err = s.network.NextBlock()
@@ -120,6 +121,38 @@ var _ = Describe("when sending a Cosmos transaction", Label("AnteHandler"), Orde
 			// rewards should not be used. Should be more
 			// than the previous value queried
 			Expect(rewardsRes.Total.Sub(rewards).IsAllPositive()).To(BeTrue())
+		})
+
+		It("should return 21000 gas on simulation for a single MsgSend", func() {
+			tx, err := s.factory.BuildCosmosTx(
+				priv,
+				commonfactory.CosmosTxArgs{
+					Msgs: []sdk.Msg{msg},
+				},
+			)
+			Expect(err).To(BeNil())
+
+			txBytes, err := s.factory.EncodeTx(tx)
+			Expect(err).To(BeNil())
+
+			simRes, err := s.network.Simulate(txBytes)
+			Expect(err).To(BeNil())
+			Expect(simRes.GasInfo).ToNot(BeNil())
+			Expect(simRes.GasInfo.GasUsed).To(Equal(uint64(21_000)))
+		})
+
+		It("should fail with out of gas when gas limit is below 21000", func() {
+			var gas uint64 = 20_999
+			res, err := s.factory.ExecuteCosmosTx(
+				priv,
+				commonfactory.CosmosTxArgs{
+					Msgs: []sdk.Msg{msg},
+					Gas:  &gas,
+				},
+			)
+			Expect(err).To(BeNil())
+			Expect(res.IsErr()).To(BeTrue())
+			Expect(res.GetLog()).To(ContainSubstring("minimum gas limit 21000"))
 		})
 	})
 

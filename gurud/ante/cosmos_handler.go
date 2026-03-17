@@ -21,6 +21,7 @@ func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 			sdk.MsgTypeURL(&sdkvesting.MsgCreateVestingAccount{}),
 		),
 		ante.NewSetUpContextDecorator(),
+		cosmosante.NewFixedSendGasDecorator(),
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
