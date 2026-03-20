@@ -2,16 +2,14 @@ package aggregator
 
 import (
 	"context"
-	"fmt"
-	"math/big"
 	"runtime"
 	"slices"
-	"strings"
 	"sync"
 
 	"github.com/creachadair/taskgroup"
 
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/gurufinglobal/guru/v2/oracle/provider"
 	"github.com/gurufinglobal/guru/v2/oracle/types"
@@ -21,7 +19,7 @@ import (
 type providerSample struct {
 	provider string
 	raw      string
-	val      *big.Rat
+	val      sdkmath.LegacyDec
 }
 
 type Aggregator struct {
@@ -113,7 +111,7 @@ func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, res
 				return
 			}
 
-			rat, err := parseChainDecimalToRat(raw)
+			dec, err := oracletypes.ParseOracleDecimal(raw)
 			if err != nil {
 				a.logger.Debug("provider returned invalid decimal",
 					"error", err,
@@ -129,7 +127,7 @@ func (a *Aggregator) processTask(ctx context.Context, task types.OracleTask, res
 			results[idx] = &providerSample{
 				provider: pv.ID(),
 				raw:      raw,
-				val:      rat,
+				val:      dec,
 			}
 		}(i, pv)
 	}
@@ -195,7 +193,14 @@ func selectMiddleValue(values []*providerSample) *providerSample {
 	copy(sorted, valid)
 
 	slices.SortFunc(sorted, func(a, b *providerSample) int {
-		return a.val.Cmp(b.val)
+		switch {
+		case a.val.LT(b.val):
+			return -1
+		case a.val.GT(b.val):
+			return 1
+		default:
+			return 0
+		}
 	})
 
 	mid := len(sorted) / 2
@@ -213,23 +218,4 @@ func countNonNil(values []*providerSample) int {
 		}
 	}
 	return count
-}
-
-func parseChainDecimalToRat(raw string) (*big.Rat, error) {
-	if raw == "" {
-		return nil, fmt.Errorf("raw_data is empty")
-	}
-	// Chain validation is big.Float.SetString (decimal only).
-	if _, ok := new(big.Float).SetString(raw); !ok {
-		return nil, fmt.Errorf("raw_data is not a valid decimal")
-	}
-	// big.Rat also accepts fractions like "1/3" which chain does not; reject explicitly.
-	if strings.Contains(raw, "/") {
-		return nil, fmt.Errorf("raw_data must be a decimal, not a fraction")
-	}
-	r, ok := new(big.Rat).SetString(raw)
-	if !ok {
-		return nil, fmt.Errorf("failed to parse raw_data as rational")
-	}
-	return r, nil
 }

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"math/big"
 	"sort"
 
 	"cosmossdk.io/math"
@@ -18,26 +17,27 @@ func aggregateReports(reports []types.OracleReport) (string, error) {
 		return "", fmt.Errorf("no reports to aggregate")
 	}
 
-	values := make([]*big.Float, len(reports))
+	values := make([]math.LegacyDec, len(reports))
 	for i, r := range reports {
-		values[i] = new(big.Float)
-		if _, ok := values[i].SetString(r.RawData); !ok {
-			return "", fmt.Errorf("invalid raw data: %q", r.RawData)
+		dec, err := types.ParseOracleDecimal(r.RawData)
+		if err != nil {
+			return "", fmt.Errorf("invalid raw data: %q: %w", r.RawData, err)
 		}
+		values[i] = dec
 	}
 
 	// Use standard sort.Slice
 	sort.Slice(values, func(i, j int) bool {
-		return values[i].Cmp(values[j]) < 0
+		return values[i].LT(values[j])
 	})
 
 	mid := len(values) / 2
 	if len(values)%2 == 0 {
-		sum := new(big.Float).Add(values[mid-1], values[mid])
-		sum.Quo(sum, big.NewFloat(2))
-		return sum.Text('f', -1), nil
+		sum := values[mid-1].Add(values[mid])
+		avg := sum.Quo(math.LegacyNewDec(2))
+		return types.FormatOracleDecimal(avg), nil
 	}
-	return values[mid].Text('f', -1), nil
+	return types.FormatOracleDecimal(values[mid]), nil
 }
 
 // calculateQuorumThreshold calculates the minimum number of reports required based on quorum_ratio.

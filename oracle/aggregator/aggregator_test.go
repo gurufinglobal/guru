@@ -30,30 +30,47 @@ func (m mockProvider) Fetch(ctx context.Context, symbol string) (string, error) 
 	return m.fetchFn(ctx, symbol)
 }
 
-func TestParseChainDecimalToRat(t *testing.T) {
+func TestParseOracleDecimal(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name    string
-		in      string
-		wantErr bool
+		name       string
+		in         string
+		wantErr    bool
+		wantString string
 	}{
 		{name: "valid_int", in: "1", wantErr: false},
 		{name: "valid_decimal", in: "1.25", wantErr: false},
 		{name: "valid_small", in: "0.0000001", wantErr: false},
+		{
+			name:       "precision_truncated",
+			in:         "0.107439747239410490763297",
+			wantErr:    false,
+			wantString: "0.107439747239410490",
+		},
+		{
+			name:       "precision_truncated_negative",
+			in:         "-0.107439747239410490763297",
+			wantErr:    false,
+			wantString: "-0.107439747239410490",
+		},
 		{name: "empty", in: "", wantErr: true},
 		{name: "invalid", in: "abc", wantErr: true},
+		{name: "exponent_rejected", in: "1e-3", wantErr: true},
 		{name: "fraction_rejected", in: "1/3", wantErr: true},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := parseChainDecimalToRat(tc.in)
+			got, err := oracletypes.ParseOracleDecimal(tc.in)
 			if tc.wantErr && err == nil {
 				t.Fatalf("expected error, got nil (value=%v)", got)
 			}
 			if !tc.wantErr && err != nil {
 				t.Fatalf("expected nil error, got %v", err)
+			}
+			if !tc.wantErr && tc.wantString != "" && got.String() != tc.wantString {
+				t.Fatalf("expected string=%q, got %q", tc.wantString, got.String())
 			}
 		})
 	}
@@ -190,11 +207,11 @@ func TestProcessTask_SkipsInvalidProviderValue(t *testing.T) {
 
 func mustSample(t *testing.T, providerID, raw string) *providerSample {
 	t.Helper()
-	r, err := parseChainDecimalToRat(raw)
+	dec, err := oracletypes.ParseOracleDecimal(raw)
 	if err != nil {
-		t.Fatalf("parseChainDecimalToRat(%q): %v", raw, err)
+		t.Fatalf("ParseOracleDecimal(%q): %v", raw, err)
 	}
-	return &providerSample{provider: providerID, raw: raw, val: r}
+	return &providerSample{provider: providerID, raw: raw, val: dec}
 }
 
 func TestAggregatorStart_WaitsForActiveTasksOnContextCancel(t *testing.T) {

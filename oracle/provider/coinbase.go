@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/big"
 	"net/http"
 	"strings"
 	"unicode/utf8"
+
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 type CoinbaseProvider struct {
@@ -82,7 +83,7 @@ func (p *CoinbaseProvider) Fetch(ctx context.Context, symbol string) (string, er
 		return "", fmt.Errorf("amount not found")
 	}
 
-	// Must be parseable by big.Float.SetString (matches chain validation).
+	// Must be accepted by oracletypes.ParseOracleDecimal (matches chain validation).
 	if !isChainDecimal(payload.Data.Amount) {
 		return "", fmt.Errorf("invalid amount: %s", payload.Data.Amount)
 	}
@@ -91,16 +92,8 @@ func (p *CoinbaseProvider) Fetch(ctx context.Context, symbol string) (string, er
 }
 
 func isChainDecimal(s string) bool {
-	// Chain uses big.Float.SetString for validation; accept the same format.
-	if _, ok := new(big.Float).SetString(s); !ok {
-		return false
-	}
-	// Additionally ensure it's a decimal representation (big.Rat also accepts fractions like "1/3").
-	if strings.Contains(s, "/") {
-		return false
-	}
-	_, ok := new(big.Rat).SetString(s)
-	return ok
+	_, err := oracletypes.ParseOracleDecimal(s)
+	return err == nil
 }
 
 func readBodySnippet(r io.Reader, limit int64) (string, error) {
