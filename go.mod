@@ -2,6 +2,8 @@ module github.com/gurufinglobal/guru/v2
 
 go 1.24.12
 
+toolchain go1.25.8
+
 require (
 	cosmossdk.io/api v0.9.2
 	cosmossdk.io/client/v2 v2.0.0-beta.7
@@ -275,6 +277,9 @@ require (
 )
 
 replace (
+	cosmossdk.io/api => github.com/gurufinglobal/cosmos-sdk/api v0.9.2-guru.1
+	cosmossdk.io/store v1.1.2 => github.com/gurufinglobal/cosmos-sdk/store v1.1.2-guru.2
+
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// Pin this pebble version to avoid breaking compilation of geth
@@ -284,6 +289,8 @@ replace (
 	github.com/cometbft/cometbft => github.com/cometbft/cometbft v0.38.21
 	// Fix GO-2025-4087: Unchecked memory allocation during vector deserialization
 	github.com/consensys/gnark-crypto => github.com/consensys/gnark-crypto v0.18.1
+	github.com/cosmos/cosmos-sdk => github.com/gurufinglobal/cosmos-sdk v0.53.6-guru.1
+
 	// use Cosmos geth fork
 	github.com/ethereum/go-ethereum => github.com/cosmos/go-ethereum v1.16.2-cosmos-1
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
