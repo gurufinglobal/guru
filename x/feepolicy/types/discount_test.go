@@ -68,11 +68,76 @@ func (suite *DiscountTestSuite) TestDiscountValidate() {
 			},
 			true,
 		},
+		{
+			"invalid: percent discount is greater than 100",
+			Discount{
+				DiscountType: "percent",
+				MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+				Amount:       math.LegacyNewDec(101),
+			},
+			true,
+		},
 	}
 
 	for _, tc := range testCases {
 		err := ValidateFeeDiscount(tc.discount)
 
+		if tc.expError {
+			suite.Require().Error(err, tc.name)
+		} else {
+			suite.Require().NoError(err, tc.name)
+		}
+	}
+}
+
+func (suite *DiscountTestSuite) TestAccountDiscountValidate() {
+	testCases := []struct {
+		name     string
+		discount AccountDiscount
+		expError bool
+	}{
+		{
+			name: "valid global discount with empty address",
+			discount: AccountDiscount{
+				Address: "",
+				Modules: []ModuleDiscount{
+					{
+						Module: "bank",
+						Discounts: []Discount{
+							{
+								DiscountType: "percent",
+								MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+								Amount:       math.LegacyNewDec(10),
+							},
+						},
+					},
+				},
+			},
+			expError: false,
+		},
+		{
+			name: "invalid account address",
+			discount: AccountDiscount{
+				Address: "invalid",
+				Modules: []ModuleDiscount{
+					{
+						Module: "bank",
+						Discounts: []Discount{
+							{
+								DiscountType: "percent",
+								MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+								Amount:       math.LegacyNewDec(10),
+							},
+						},
+					},
+				},
+			},
+			expError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		err := ValidateAccountDiscount(tc.discount)
 		if tc.expError {
 			suite.Require().Error(err, tc.name)
 		} else {
