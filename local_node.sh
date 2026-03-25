@@ -183,6 +183,9 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# Set oracle moderator address
 	jq -r --arg moderator_address "$(gurud keys show moderator --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["oracle"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
+	# Set bex moderator address
+	jq -r --arg moderator_address "$(gurud keys show moderator --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["bex"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
 	# Set auth module parameters for transaction costs
 	jq '.app_state["auth"]["params"]["tx_size_cost_per_byte"]="2"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["auth"]["params"]["sig_verify_cost_ed25519"]="118"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
