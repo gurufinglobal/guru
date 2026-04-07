@@ -187,6 +187,10 @@ func (k Keeper) OnRecvExchangePacket(
 	feeCoin := sdk.NewCoin(oppDenom, feeInt)
 
 	swapAmountDec := recvAmountDec.Sub(feeDec).Mul(rate)
+	if err := validateExchangeOutputLimit(exchange.Limit, rate, swapAmountDec); err != nil {
+		return err
+	}
+
 	swapAmountInt := swapAmountDec.TruncateInt()
 
 	coin, err := sdk.ParseCoinNormalized(swapAmountInt.String() + swapDenom)
@@ -374,6 +378,26 @@ func truncatePrecision(value string, maxPrecision int) string {
 		return parts[0] + "." + parts[1][:maxPrecision]
 	}
 	return value
+}
+
+func validateExchangeOutputLimit(limit, rate, swapAmount sdkmath.LegacyDec) error {
+	if limit.IsNil() || limit.IsZero() {
+		return nil
+	}
+
+	outputLimitDec := limit.Mul(rate)
+	if !swapAmount.GT(outputLimitDec) {
+		return nil
+	}
+
+	return errorsmod.Wrapf(
+		bextypes.ErrExchangeLimitExceeded,
+		"swap amount %s exceeds output limit %s (limit %s * rate %s)",
+		swapAmount.String(),
+		outputLimitDec.String(),
+		limit.String(),
+		rate.String(),
+	)
 }
 
 func validateInheritedTimeout(ctx sdk.Context, inheritedTimeoutTimestampNano uint64) error {
