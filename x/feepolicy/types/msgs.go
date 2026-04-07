@@ -119,8 +119,10 @@ func (msg MsgRemoveDiscounts) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.ModeratorAddress); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " moderator address, %s", err)
 	}
-	if _, err := sdk.AccAddressFromBech32(msg.Address); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " discount address, %s", err)
+	if msg.Address != "" {
+		if _, err := sdk.AccAddressFromBech32(msg.Address); err != nil {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, " discount address, %s", err)
+		}
 	}
 
 	return nil

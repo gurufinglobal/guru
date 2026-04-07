@@ -11,21 +11,30 @@ import (
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
-func EventToRequestID(event coretypes.ResultEvent) (uint64, error) {
+func EventToRequestIDs(event coretypes.ResultEvent) ([]uint64, error) {
 	eventKey := oracletypes.EventTypeOracleTask + "." + oracletypes.AttributeKeyRequestID
 
-	ids, ok := event.Events[eventKey]
+	rawIDs, ok := event.Events[eventKey]
 	if !ok {
 		if _, ok := event.Events[oracletypes.EventTypeUpdateMinGasPrice+"."+feemarkettypes.AttributeKeyMinGasPrice]; ok {
-			return 0, nil
+			return []uint64{0}, nil
 		}
-		return 0, fmt.Errorf("event '%s' missing request id", eventKey)
+		return nil, fmt.Errorf("event '%s' missing request id", eventKey)
 	}
-	if len(ids) == 0 {
-		return 0, fmt.Errorf("event '%s' has no request id", eventKey)
+	if len(rawIDs) == 0 {
+		return nil, fmt.Errorf("event '%s' has no request id", eventKey)
 	}
 
-	return strconv.ParseUint(ids[0], 10, 64)
+	ids := make([]uint64, 0, len(rawIDs))
+	for _, rawID := range rawIDs {
+		id, err := strconv.ParseUint(rawID, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
 }
 
 func TrackFailStreak() (count func() int64, reset func(), inc func()) {

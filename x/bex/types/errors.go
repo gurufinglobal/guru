@@ -25,4 +25,5 @@ var (
 	ErrInvalidRequestPeriod     = errorsmod.Register(ModuleName, 18, "invalid request period")
 	ErrInvalidJSONFile          = errorsmod.Register(ModuleName, 19, "invalid json file")
 	ErrInsufficientBalance      = errorsmod.Register(ModuleName, 20, "unsufficient balance")
+	ErrExchangeLimitExceeded    = errorsmod.Register(ModuleName, 21, "exchange limit exceeded")
 )

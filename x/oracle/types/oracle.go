@@ -3,11 +3,100 @@ package types
 import (
 	"encoding/binary"
 	"fmt"
-	"math/big"
 	"sort"
+	"strings"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// ParseOracleDecimal parses a chain-acceptable decimal string into a LegacyDec.
+//
+// We intentionally use sdkmath.LegacyDec (fixed precision, deterministic) rather than
+// math/big.Float to avoid consensus-sensitive floating point behavior.
+//
+// Accepted forms:
+// - "123", "-123"
+// - "123.456", "-123.456"
+// - ".5" (normalized to "0.5")
+// - "5." (normalized to "5")
+// - optional leading '+' (ignored)
+//
+// Exponents (e/E/p/P), hex prefixes, underscores, and fractions are rejected.
+// Fractional digits beyond sdkmath.LegacyPrecision (18) are truncated (discarded).
+func ParseOracleDecimal(raw string) (sdkmath.LegacyDec, error) {
+	if raw == "" {
+		return sdkmath.LegacyDec{}, fmt.Errorf("raw data is empty")
+	}
+
+	sign := ""
+	if raw[0] == '+' || raw[0] == '-' {
+		sign = string(raw[0])
+		raw = raw[1:]
+		if raw == "" {
+			return sdkmath.LegacyDec{}, fmt.Errorf("raw data is empty")
+		}
+		if sign == "+" {
+			sign = ""
+		}
+	}
+
+	// Reject bare ".".
+	if raw == "." {
+		return sdkmath.LegacyDec{}, fmt.Errorf("raw data is not a valid decimal")
+	}
+
+	// Normalize forms accepted by big.Float.Parse but rejected by LegacyNewDecFromStr.
+	if strings.HasPrefix(raw, ".") {
+		raw = "0" + raw
+	}
+	if strings.HasSuffix(raw, ".") {
+		raw = strings.TrimSuffix(raw, ".")
+	}
+
+	// Enforce strict decimal format before truncation.
+	dotCount := 0
+	for i := 0; i < len(raw); i++ {
+		c := raw[i]
+		if c == '.' {
+			dotCount++
+			if dotCount > 1 {
+				return sdkmath.LegacyDec{}, fmt.Errorf("raw data is not a valid decimal")
+			}
+			if i == 0 || i == len(raw)-1 {
+				return sdkmath.LegacyDec{}, fmt.Errorf("raw data is not a valid decimal")
+			}
+			continue
+		}
+		if c < '0' || c > '9' {
+			return sdkmath.LegacyDec{}, fmt.Errorf("raw data is not a valid decimal")
+		}
+	}
+
+	// Truncate fractional digits (no rounding) to LegacyDec precision.
+	if dot := strings.IndexByte(raw, '.'); dot >= 0 {
+		frac := raw[dot+1:]
+		if len(frac) > sdkmath.LegacyPrecision {
+			raw = raw[:dot+1] + frac[:sdkmath.LegacyPrecision]
+		}
+	}
+
+	dec, err := sdkmath.LegacyNewDecFromStr(sign + raw)
+	if err != nil {
+		return sdkmath.LegacyDec{}, err
+	}
+	return dec, nil
+}
+
+// FormatOracleDecimal returns a deterministic, minimal decimal string (no exponent,
+// no trailing zeros) for a LegacyDec.
+func FormatOracleDecimal(d sdkmath.LegacyDec) string {
+	s := d.String()
+	s = strings.TrimRight(s, "0")
+	s = strings.TrimRight(s, ".")
+	return s
+}
 
 // ProtoDefinedCategories returns all categories defined in the proto enum (excluding UNSPECIFIED),
 // in deterministic order.
@@ -69,8 +158,8 @@ func (r OracleReport) ValidateBasic() error {
 	if r.RawData == "" {
 		return fmt.Errorf("raw data cannot be empty")
 	}
-	if _, ok := new(big.Float).SetString(r.RawData); !ok {
-		return fmt.Errorf("raw data must be a valid decimal")
+	if _, err := ParseOracleDecimal(r.RawData); err != nil {
+		return fmt.Errorf("raw data must be a valid decimal: %w", err)
 	}
 	if len(r.Signature) == 0 {
 		return fmt.Errorf("signature cannot be empty")

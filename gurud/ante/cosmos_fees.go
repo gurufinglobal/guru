@@ -82,33 +82,11 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 		}
 	}
 
-	discount := dfd.feepolicyKeeper.GetDiscount(ctx, feeGranter, tx.GetMsgs())
+	discount := dfd.feepolicyKeeper.ResolveDiscount(ctx, feeGranter, tx.GetMsgs())
 
 	// apply discounts
-	var deductedFee sdk.Coins
 	baseFee := fee.Sub(tips...)
-
-	switch discount.DiscountType {
-	case feepolicytypes.FeeDiscountTypePercent:
-		for _, f := range baseFee {
-			// Calculate percentage multiplier as (100 - discountAmount) / 100
-			// Example: if discount = 25.5%, multiplier = 0.745
-			discountMultiplier := math.LegacyNewDec(100).Sub(discount.Amount).Quo(math.LegacyNewDec(100))
-
-			// Apply multiplier to base fee amount
-			finalAmt := math.LegacyNewDecFromInt(f.Amount).Mul(discountMultiplier).TruncateInt()
-
-			deductedFee = deductedFee.Add(sdk.NewCoin(f.Denom, finalAmt))
-		}
-	case feepolicytypes.FeeDiscountTypeFixed:
-		for _, f := range baseFee {
-			// type: "fixed"
-			deductedFee = deductedFee.Add(sdk.NewCoin(f.Denom, discount.Amount.TruncateInt()))
-		}
-	default:
-		// if no discount, deduct full fee
-		deductedFee = baseFee
-	}
+	deductedFee := applyDiscountToBaseFee(baseFee, discount)
 	deductedFee = deductedFee.Add(tips...)
 
 	if err = dfd.checkDeductFee(ctx, tx, deductedFee); err != nil {
@@ -118,6 +96,48 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 	newCtx := ctx.WithPriority(priority)
 
 	return next(newCtx, tx, simulate)
+}
+
+func applyDiscountToBaseFee(baseFee sdk.Coins, discount feepolicytypes.Discount) sdk.Coins {
+	var deductedFee sdk.Coins
+	switch discount.DiscountType {
+	case feepolicytypes.FeeDiscountTypePercent:
+		discountMultiplier := math.LegacyNewDec(100).Sub(discount.Amount).Quo(math.LegacyNewDec(100))
+		if discountMultiplier.IsNegative() {
+			discountMultiplier = math.LegacyZeroDec()
+		}
+
+		for _, f := range baseFee {
+			finalAmt := math.LegacyNewDecFromInt(f.Amount).Mul(discountMultiplier).TruncateInt()
+			if finalAmt.IsNegative() {
+				finalAmt = math.ZeroInt()
+			}
+			// Never charge more than the original base fee amount.
+			if finalAmt.GT(f.Amount) {
+				finalAmt = f.Amount
+			}
+
+			deductedFee = deductedFee.Add(sdk.NewCoin(f.Denom, finalAmt))
+		}
+	case feepolicytypes.FeeDiscountTypeFixed:
+		fixedAmt := discount.Amount.TruncateInt()
+		if fixedAmt.IsNegative() {
+			fixedAmt = math.ZeroInt()
+		}
+
+		for _, f := range baseFee {
+			finalAmt := fixedAmt
+			// Never charge more than the original base fee amount.
+			if finalAmt.GT(f.Amount) {
+				finalAmt = f.Amount
+			}
+			deductedFee = deductedFee.Add(sdk.NewCoin(f.Denom, finalAmt))
+		}
+	default:
+		deductedFee = baseFee
+	}
+
+	return deductedFee
 }
 
 func (dfd DeductFeeDecorator) checkDeductFee(ctx sdk.Context, sdkTx sdk.Tx, fee sdk.Coins) error {

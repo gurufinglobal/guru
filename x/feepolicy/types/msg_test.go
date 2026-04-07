@@ -197,6 +197,16 @@ func (suite *MsgsTestSuite) TestMsgRemoveDiscounts() {
 			},
 			true,
 		},
+		{
+			"pass - valid global remove msg",
+			&MsgRemoveDiscounts{
+				ModeratorAddress: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+				Address:          "",
+				Module:           "bank",
+				MsgType:          "/cosmos.bank.v1beta1.MsgSend",
+			},
+			true,
+		},
 	}
 
 	for _, tc := range testCases {

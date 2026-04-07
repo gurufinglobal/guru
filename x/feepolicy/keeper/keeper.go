@@ -14,6 +14,8 @@ import (
 	"github.com/gurufinglobal/guru/v2/x/feepolicy/types"
 )
 
+const globalDiscountStoreKey = "__global__"
+
 // Keeper of the xmsquare store
 type Keeper struct {
 	// Protobuf codec
@@ -97,7 +99,7 @@ func (k Keeper) GetAccountDiscounts(ctx sdk.Context, accStr string) (types.Accou
 	store := ctx.KVStore(k.storeKey)
 	discountStore := prefix.NewStore(store, types.KeyDiscounts)
 
-	bz := discountStore.Get([]byte(accStr))
+	bz := discountStore.Get(discountStoreKey(accStr))
 	if bz == nil {
 		return types.AccountDiscount{}, false
 	}
@@ -109,16 +111,10 @@ func (k Keeper) GetAccountDiscounts(ctx sdk.Context, accStr string) (types.Accou
 }
 
 func (k Keeper) GetModuleDiscounts(ctx sdk.Context, accStr, module string) ([]types.Discount, bool) {
-	store := ctx.KVStore(k.storeKey)
-	discountStore := prefix.NewStore(store, types.KeyDiscounts)
-
-	bz := discountStore.Get([]byte(accStr))
-	if bz == nil {
+	accDiscount, ok := k.GetAccountDiscounts(ctx, accStr)
+	if !ok {
 		return nil, false
 	}
-
-	accDiscount := types.AccountDiscount{}
-	k.cdc.MustUnmarshal(bz, &accDiscount)
 
 	for _, discount := range accDiscount.Modules {
 		if discount.Module == module {
@@ -132,13 +128,13 @@ func (k Keeper) GetModuleDiscounts(ctx sdk.Context, accStr, module string) ([]ty
 func (k Keeper) SetAccountDiscounts(ctx sdk.Context, discount types.AccountDiscount) {
 	store := ctx.KVStore(k.storeKey)
 	discountStore := prefix.NewStore(store, types.KeyDiscounts)
-	discountStore.Set([]byte(discount.Address), k.cdc.MustMarshal(&discount))
+	discountStore.Set(discountStoreKey(discount.Address), k.cdc.MustMarshal(&discount))
 }
 
 func (k Keeper) DeleteAccountDiscounts(ctx sdk.Context, accStr string) {
 	store := ctx.KVStore(k.storeKey)
 	discountStore := prefix.NewStore(store, types.KeyDiscounts)
-	discountStore.Delete([]byte(accStr))
+	discountStore.Delete(discountStoreKey(accStr))
 }
 
 func (k Keeper) DeleteModuleDiscounts(ctx sdk.Context, accStr, module string) {
@@ -175,28 +171,31 @@ func (k Keeper) DeleteMsgTypeDiscounts(ctx sdk.Context, accStr, msgType string) 
 	k.SetAccountDiscounts(ctx, discounts)
 }
 
-func (k Keeper) GetDiscount(ctx sdk.Context, feePayerAddr string, msgs []sdk.Msg) types.Discount {
-	accDiscount, ok := k.GetAccountDiscounts(ctx, feePayerAddr)
-	if !ok {
+func (k Keeper) ResolveDiscount(ctx sdk.Context, feePayerAddr string, msgs []sdk.Msg) types.Discount {
+	// Never apply discounts to multi-message txs.
+	if len(msgs) != 1 {
 		return types.Discount{}
 	}
 
-	discount := types.Discount{}
-	module := ""
-	for _, m := range msgs {
-		t := sdk.MsgTypeURL(m) // converts from (ex.) *types.MsgRecvPacket to "/ibc.core.channel.v1.MsgRecvPacket"
-		for _, moduleDiscount := range accDiscount.Modules {
-			for _, d := range moduleDiscount.Discounts {
-				if d.MsgType == t {
-					discount = d
-					module = moduleDiscount.Module
-					break
-				}
-			}
-		}
+	discount, module, ok := k.getMatchedDiscount(ctx, feePayerAddr, msgs)
+	if ok {
+		return k.getDiscountWithModuleCheck(ctx, discount, module, msgs)
 	}
 
-	// check if the module has additional checker layers
+	discount, module, ok = k.getMatchedDiscount(ctx, "", msgs)
+	if ok {
+		return k.getDiscountWithModuleCheck(ctx, discount, module, msgs)
+	}
+
+	return types.Discount{}
+}
+
+// GetDiscount keeps backward compatibility and proxies to ResolveDiscount.
+func (k Keeper) GetDiscount(ctx sdk.Context, feePayerAddr string, msgs []sdk.Msg) types.Discount {
+	return k.ResolveDiscount(ctx, feePayerAddr, msgs)
+}
+
+func (k Keeper) getDiscountWithModuleCheck(ctx sdk.Context, discount types.Discount, module string, msgs []sdk.Msg) types.Discount {
 	if k.moduleKeepers[module] == nil {
 		return discount
 	}
@@ -205,4 +204,29 @@ func (k Keeper) GetDiscount(ctx sdk.Context, feePayerAddr string, msgs []sdk.Msg
 	}
 
 	return types.Discount{}
+}
+
+func (k Keeper) getMatchedDiscount(ctx sdk.Context, accStr string, msgs []sdk.Msg) (types.Discount, string, bool) {
+	accDiscount, ok := k.GetAccountDiscounts(ctx, accStr)
+	if !ok || len(msgs) == 0 {
+		return types.Discount{}, "", false
+	}
+
+	msgTypeURL := sdk.MsgTypeURL(msgs[0])
+	for _, moduleDiscount := range accDiscount.Modules {
+		for _, d := range moduleDiscount.Discounts {
+			if d.MsgType == msgTypeURL {
+				return d, moduleDiscount.Module, true
+			}
+		}
+	}
+
+	return types.Discount{}, "", false
+}
+
+func discountStoreKey(address string) []byte {
+	if address == "" {
+		return []byte(globalDiscountStoreKey)
+	}
+	return []byte(address)
 }

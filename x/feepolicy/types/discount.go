@@ -2,6 +2,7 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -26,6 +27,9 @@ func ValidateFeeDiscount(discount Discount) error {
 	if discount.Amount.IsNegative() || discount.Amount.IsZero() {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "discount value must be greater than 0")
 	}
+	if discount.DiscountType == FeeDiscountTypePercent && discount.Amount.GT(math.LegacyNewDec(100)) {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "percent discount must be less than or equal to 100")
+	}
 
 	return nil
 }
@@ -33,9 +37,12 @@ func ValidateFeeDiscount(discount Discount) error {
 // ValidateAccountDiscount validates an account discount
 // AccountDiscount contains all discounts for a single account
 func ValidateAccountDiscount(discount AccountDiscount) error {
-	_, err := sdk.AccAddressFromBech32(discount.Address)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+	// Empty address is reserved for global discount policy.
+	if discount.Address != "" {
+		_, err := sdk.AccAddressFromBech32(discount.Address)
+		if err != nil {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+		}
 	}
 
 	for _, moduleDiscount := range discount.Modules {

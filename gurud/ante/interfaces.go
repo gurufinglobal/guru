@@ -7,5 +7,5 @@ import (
 )
 
 type FeePolicyKeeper interface {
-	GetDiscount(ctx sdk.Context, feePayerAddr string, msgs []sdk.Msg) feepolicytypes.Discount
+	ResolveDiscount(ctx sdk.Context, feePayerAddr string, msgs []sdk.Msg) feepolicytypes.Discount
 }

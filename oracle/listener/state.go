@@ -124,15 +124,17 @@ func (s *subscriptionState) eventLoop(ctx context.Context, eventCh <-chan corety
 				return
 			}
 
-			requestID, err := utils.EventToRequestID(event)
+			requestIDs, err := utils.EventToRequestIDs(event)
 			if err != nil {
 				continue
 			}
 
-			select {
-			case reqIDCh <- requestID:
-			case <-ctx.Done():
-				return
+			for _, requestID := range requestIDs {
+				select {
+				case reqIDCh <- requestID:
+				case <-ctx.Done():
+					return
+				}
 			}
 		}
 	}

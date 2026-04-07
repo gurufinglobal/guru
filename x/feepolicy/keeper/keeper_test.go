@@ -130,3 +130,68 @@ func TestKeeperGetDiscountAndLogger(t *testing.T) {
 	discount = nw.App.FeePolicyKeeper.GetDiscount(ctx, addr2, []sdk.Msg{msg})
 	require.Equal(t, types.Discount{}, discount)
 }
+
+func TestKeeperResolveDiscount_GlobalFallbackAndMultiMsg(t *testing.T) {
+	nw := network.NewUnitTestNetwork()
+	ctx := nw.GetContext()
+
+	const (
+		addr1 = "guru1gzsvk8rruqn2sx64acfsskrwy8hvrmaf6dvhj3"
+		addr2 = "guru1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqg3d5d2"
+		addr3 = "guru1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5f2m6u8"
+	)
+
+	globalDiscount := types.AccountDiscount{
+		Address: "",
+		Modules: []types.ModuleDiscount{
+			{
+				Module: "bank",
+				Discounts: []types.Discount{
+					{
+						DiscountType: "percent",
+						MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+						Amount:       sdkmath.LegacyNewDec(25),
+					},
+				},
+			},
+		},
+	}
+	nw.App.FeePolicyKeeper.SetAccountDiscounts(ctx, globalDiscount)
+
+	accountDiscount := types.AccountDiscount{
+		Address: addr1,
+		Modules: []types.ModuleDiscount{
+			{
+				Module: "bank",
+				Discounts: []types.Discount{
+					{
+						DiscountType: "percent",
+						MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+						Amount:       sdkmath.LegacyNewDec(10),
+					},
+				},
+			},
+		},
+	}
+	nw.App.FeePolicyKeeper.SetAccountDiscounts(ctx, accountDiscount)
+
+	msgSend := &banktypes.MsgSend{
+		FromAddress: addr1,
+		ToAddress:   addr2,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)),
+	}
+	msgSend2 := &banktypes.MsgSend{
+		FromAddress: addr1,
+		ToAddress:   addr3,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)),
+	}
+
+	discount := nw.App.FeePolicyKeeper.ResolveDiscount(ctx, addr1, []sdk.Msg{msgSend})
+	require.Equal(t, accountDiscount.Modules[0].Discounts[0], discount)
+
+	discount = nw.App.FeePolicyKeeper.ResolveDiscount(ctx, addr2, []sdk.Msg{msgSend})
+	require.Equal(t, globalDiscount.Modules[0].Discounts[0], discount)
+
+	discount = nw.App.FeePolicyKeeper.ResolveDiscount(ctx, addr2, []sdk.Msg{msgSend, msgSend2})
+	require.Equal(t, types.Discount{}, discount)
+}

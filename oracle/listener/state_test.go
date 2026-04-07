@@ -140,6 +140,39 @@ func TestSubscriptionState_EventLoop_EmitsRequestID(t *testing.T) {
 	}
 }
 
+func TestSubscriptionState_EventLoop_EmitsAllRequestIDs(t *testing.T) {
+	t.Parallel()
+
+	client := &mockSubscriptionClient{running: true}
+	state := newSubscriptionState("q1")
+	reqCh := make(chan uint64, 3)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := state.start(ctx, client, reqCh); err != nil {
+		t.Fatalf("start error: %v", err)
+	}
+	defer func() { _ = state.stop(client) }()
+
+	eventKey := oracletypes.EventTypeOracleTask + "." + oracletypes.AttributeKeyRequestID
+	client.subscribeCh <- coretypes.ResultEvent{
+		Events: map[string][]string{eventKey: {"10", "11", "12"}},
+	}
+
+	expected := []uint64{10, 11, 12}
+	for i, want := range expected {
+		select {
+		case got := <-reqCh:
+			if got != want {
+				t.Fatalf("index %d: expected %d, got %d", i, want, got)
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timed out waiting for request id at index %d", i)
+		}
+	}
+}
+
 func TestSubscriptionManager_Start_CancelStopsAll(t *testing.T) {
 	t.Parallel()
 
