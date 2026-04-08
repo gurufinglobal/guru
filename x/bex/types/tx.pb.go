@@ -919,7 +919,6 @@ func _Msg_ChangeModerator_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "guru.bex.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
