@@ -30,4 +30,10 @@ yarn.lock
 contracts/@openzeppelin/*
 
 # Build files
+evmd/build/
+
 build/
+
+tests/systemtests/binaries
+tests/systemtests/testnet
+.testnets
