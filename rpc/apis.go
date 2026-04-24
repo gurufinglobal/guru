@@ -19,6 +19,15 @@ import (
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/personal"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/txpool"
 	"github.com/gurufinglobal/guru/v2/rpc/namespaces/ethereum/web3"
+	// "github.com/cosmos/evm/rpc/backend"
+	// "github.com/cosmos/evm/rpc/namespaces/ethereum/debug"
+	// "github.com/cosmos/evm/rpc/namespaces/ethereum/eth"
+	// "github.com/cosmos/evm/rpc/namespaces/ethereum/eth/filters"
+	// "github.com/cosmos/evm/rpc/namespaces/ethereum/miner"
+	// "github.com/cosmos/evm/rpc/namespaces/ethereum/net"
+	// "github.com/cosmos/evm/rpc/namespaces/ethereum/personal"
+	// "github.com/cosmos/evm/rpc/namespaces/ethereum/txpool"
+	// "github.com/cosmos/evm/rpc/namespaces/ethereum/web3"
 	"github.com/gurufinglobal/guru/v2/types"
 )
 
