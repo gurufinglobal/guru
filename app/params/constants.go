@@ -1,14 +1,15 @@
-package app
+package params
 
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
 const (
-	appName   = "guru"
-	BaseDenom = "agxn"
+	AppName      = "guru"
+	BaseDenom    = "agxn"
+	DisplayDenom = "gxn"
 )
 
 const (
-	Bech32Prefix         = appName
+	Bech32Prefix         = AppName
 	Bech32PrefixAccAddr  = Bech32Prefix
 	Bech32PrefixAccPub   = Bech32PrefixAccAddr + sdk.PrefixPublic
 	Bech32PrefixValAddr  = Bech32Prefix + sdk.PrefixValidator + sdk.PrefixOperator
