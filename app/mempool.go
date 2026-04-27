@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/log/v2"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	evmmempool "github.com/cosmos/evm/mempool"
 	evmserver "github.com/cosmos/evm/server"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -46,11 +47,19 @@ func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.L
 		cosmosPoolMaxTx,
 	)
 
-	prepareProposalHandler := baseapp.
-		NewDefaultProposalHandler(evmMempool, NewNoCheckProposalTxVerifier(app.BaseApp)).
-		PrepareProposalHandler()
+	proposalHandler := baseapp.NewDefaultProposalHandler(
+		evmMempool,
+		NewNoCheckProposalTxVerifier(app.BaseApp),
+	)
+	proposalHandler.SetSignerExtractionAdapter(
+		evmmempool.NewEthSignerExtractionAdapter(
+			sdkmempool.NewDefaultSignerExtractionAdapter(),
+		),
+	)
+
 	txDecoder := app.txConfig.TxDecoder()
-	app.SetPrepareProposal(prepareProposalHandler)
+	app.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
+	app.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 	app.SetInsertTxHandler(evmMempool.NewInsertTxHandler(txDecoder))
 	app.SetReapTxsHandler(evmMempool.NewReapTxsHandler())
 	app.SetCheckTxHandler(evmMempool.NewCheckTxHandler(

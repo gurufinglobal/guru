@@ -280,6 +280,9 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 			appKeepers.GovKeeper,
 			appKeepers.SlashingKeeper,
 			cfg.AppCodec,
+			precompiletypes.WithAddressCodec(evmaddress.NewEvmCodec(cfg.AccountAddressPrefix)),
+			precompiletypes.WithValidatorAddrCodec(evmaddress.NewEvmCodec(cfg.ValidatorAddressPrefix)),
+			precompiletypes.WithConsensusAddrCodec(evmaddress.NewEvmCodec(cfg.ConsensusAddressPrefix)),
 		),
 	)
 	appKeepers.EVMKeeper.EnableVirtualFeeCollection()
