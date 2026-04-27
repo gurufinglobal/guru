@@ -1,6 +1,7 @@
 package keepers
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -30,7 +31,6 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	precompiletypes "github.com/cosmos/evm/precompiles/types"
-	evmutils "github.com/cosmos/evm/utils"
 	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
@@ -42,6 +42,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
+	"github.com/ethereum/go-ethereum/common"
 	corevm "github.com/ethereum/go-ethereum/core/vm"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 )
@@ -88,7 +89,13 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		panic("base app cannot be nil")
 	}
 
-	authority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	govAddress := authtypes.NewModuleAddress(govtypes.ModuleName)
+	addressCodec := evmaddress.NewEvmCodec(cfg.AccountAddressPrefix)
+	authority, err := addressCodec.BytesToString(govAddress)
+	if err != nil {
+		panic(fmt.Errorf("failed to convert gov address to string: %v", err))
+	}
+	
 	moduleAccountPerms := cfg.ModuleAccountPerms
 	if len(moduleAccountPerms) == 0 {
 		panic("module account permissions cannot be empty")
@@ -120,7 +127,12 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	sort.Strings(modules)
 
 	for _, module := range modules {
-		blockedAddrs[authtypes.NewModuleAddress(module).String()] = true
+		moduleAddress := authtypes.NewModuleAddress(module)
+		moduleAddressString, err := addressCodec.BytesToString(moduleAddress)
+		if err != nil {
+			panic(fmt.Errorf("failed to convert module address to string: %v", err))
+		}
+		blockedAddrs[moduleAddressString] = true
 	}
 
 	blockedPrecompilesHex := append([]string{}, evmtypes.AvailableStaticPrecompiles...)
@@ -129,7 +141,12 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	}
 
 	for _, precompile := range blockedPrecompilesHex {
-		blockedAddrs[evmutils.Bech32StringFromHexAddress(precompile)] = true
+		precompileAddress := common.HexToAddress(precompile)
+		precompileAddressString, err := addressCodec.BytesToString(precompileAddress.Bytes())
+		if err != nil {
+			panic(fmt.Errorf("failed to convert precompile address to string: %v", err))
+		}
+		blockedAddrs[precompileAddressString] = true
 	}
 
 	appKeepers.BankKeeper = bankkeeper.NewBaseKeeper(

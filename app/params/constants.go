@@ -1,11 +1,31 @@
 package params
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"fmt"
+	"os"
+
+	clienthelpers "cosmossdk.io/client/v2/helpers"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 const (
-	AppName      = "guru"
-	BaseDenom    = "agxn"
+	AppName = "guru"
+	EvnName = AppName + "d"
+	HomeDir = "." + EvnName
+)
+
+func MustDefaultHomeDir() string {
+	defaultNodeHome, err := clienthelpers.GetNodeHomeDirectory(HomeDir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error getting default home directory:", err)
+		os.Exit(1)
+	}
+	return defaultNodeHome
+}
+
+const (
 	DisplayDenom = "gxn"
+	BaseDenom    = "a" + DisplayDenom // atto-gxn
 )
 
 const (
