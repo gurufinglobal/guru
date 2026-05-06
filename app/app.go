@@ -420,3 +420,15 @@ func (app *App) setPostHandler() {
 
 	app.SetPostHandler(postHandler)
 }
+
+func (app *App) AppCodec() codec.Codec {
+	return app.appCodec
+}
+
+func (app *App) InterfaceRegistry() codectypes.InterfaceRegistry {
+	return app.interfaceRegistry
+}
+
+func (app *App) TxConfig() client.TxConfig {
+	return app.txConfig
+}
