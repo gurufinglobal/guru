@@ -20,6 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/baseapp/txnrunner"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -128,13 +129,14 @@ func NewApp(
 	for _, h := range cast.ToIntSlice(appOpts.Get(sdkserver.FlagUnsafeSkipUpgrades)) {
 		skipUpgradeHeights[int64(h)] = true
 	}
+	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 	evmTracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
 
 	appKeepers := appkeepers.NewAppKeepers(appparams.KeepersInitConfig{
 		AppCodec:               encodingConfig.Codec,
 		BaseApp:                bApp,
 		Logger:                 logger,
-		HomePath:               appparams.MustDefaultHomeDir(),
+		HomePath:               homePath,
 		SkipUpgradeHeights:     skipUpgradeHeights,
 		AccountAddressPrefix:   appparams.Bech32PrefixAccAddr,
 		ValidatorAddressPrefix: appparams.Bech32PrefixValAddr,

@@ -9,9 +9,15 @@ import (
 )
 
 const (
+	DisplayDenom = "gxn"
+	BaseDenom    = "a" + DisplayDenom // atto-gxn
+)
+
+const (
+	ChainID = uint64(631)
 	AppName = "guru"
-	EvnName = AppName + "d"
-	HomeDir = "." + EvnName
+	EnvName = AppName + "d"
+	HomeDir = "." + EnvName
 )
 
 func MustDefaultHomeDir() string {
@@ -22,11 +28,6 @@ func MustDefaultHomeDir() string {
 	}
 	return defaultNodeHome
 }
-
-const (
-	DisplayDenom = "gxn"
-	BaseDenom    = "a" + DisplayDenom // atto-gxn
-)
 
 const (
 	Bech32Prefix         = AppName
