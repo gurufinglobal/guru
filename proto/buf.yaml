@@ -1,0 +1,11 @@
+version: v1
+name: buf.build/gurufinglobal/guru
+deps:
+  - buf.build/cosmos/cosmos-sdk
+  - buf.build/cosmos/cosmos-proto
+  - buf.build/cosmos/gogo-proto
+  - buf.build/cosmos/evm
+build:
+  excludes:
+    - buf.build/cosmos/cosmos-sdk
+    - buf.build/cosmos/evm

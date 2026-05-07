@@ -43,6 +43,9 @@ func defaultAppToml() (string, any) {
 func defaultConfigToml() *cmtcfg.Config {
 	cfg := cmtcfg.DefaultConfig()
 
+	// Krakatoa EVM mempool is enabled by default (mempool.max-txs=0),
+	// so CometBFT must use the app-side mempool type.
+	cfg.Mempool.Type = cmtcfg.MempoolTypeApp
 	cfg.Consensus.TimeoutCommit = 500 * time.Millisecond
 
 	return cfg

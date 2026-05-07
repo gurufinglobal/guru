@@ -1,6 +1,9 @@
 package keepers
 
 import (
+	"slices"
+	"strings"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -66,12 +69,26 @@ func (ak *AppKeepers) GetObjectStoreKeys() map[string]*storetypes.ObjectStoreKey
 }
 
 func (ak *AppKeepers) GetNonTransientKeys() []storetypes.StoreKey {
-	var nonTransientKeys []storetypes.StoreKey
-	for _, key := range ak.kvKeys {
-		nonTransientKeys = append(nonTransientKeys, key)
+	names := make([]string, 0, len(ak.kvKeys)+len(ak.objKeys))
+	for name := range ak.kvKeys {
+		names = append(names, name)
 	}
-	for _, key := range ak.objKeys {
-		nonTransientKeys = append(nonTransientKeys, key)
+	for name := range ak.objKeys {
+		names = append(names, name)
+	}
+	slices.SortStableFunc(names, func(a, b string) int {
+		return strings.Compare(a, b)
+	})
+
+	nonTransientKeys := make([]storetypes.StoreKey, 0, len(names))
+	for _, name := range names {
+		if key, ok := ak.kvKeys[name]; ok {
+			nonTransientKeys = append(nonTransientKeys, key)
+			continue
+		}
+		if key, ok := ak.objKeys[name]; ok {
+			nonTransientKeys = append(nonTransientKeys, key)
+		}
 	}
 	return nonTransientKeys
 }

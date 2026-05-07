@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/baseapp/txnrunner"
@@ -25,6 +26,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -40,9 +42,12 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	evmante "github.com/cosmos/evm/ante"
 	evmaddress "github.com/cosmos/evm/encoding/address"
+	cosmosevmserver "github.com/cosmos/evm/server"
+	srvflags "github.com/cosmos/evm/server/flags"
 	evmutils "github.com/cosmos/evm/utils"
 	"github.com/cosmos/evm/x/erc20"
 	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
+	vmrunner "github.com/cosmos/evm/x/vm/runner"
 	"github.com/cosmos/gogoproto/proto"
 	ibccallbacks "github.com/cosmos/ibc-go/v11/modules/apps/callbacks"
 	transfer "github.com/cosmos/ibc-go/v11/modules/apps/transfer"
@@ -51,19 +56,23 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
 	ibcapi "github.com/cosmos/ibc-go/v11/modules/core/api"
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
+	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 	appkeepers "github.com/gurufinglobal/guru/v3/app/keepers"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	"github.com/spf13/cast"
-
-	srvflags "github.com/cosmos/evm/server/flags"
-	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
-	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 )
 
 func init() {
 	// manually update the power reduction by replacing micro (u) -> atto (a) evmos
 	sdk.DefaultPowerReduction = evmutils.AttoPowerReduction
 }
+
+var (
+	_ runtime.AppI                = (*App)(nil)
+	_ cosmosevmserver.Application = (*App)(nil)
+	// _ ibctesting.TestingApp       = (*App)(nil)
+)
 
 type App struct {
 	*baseapp.BaseApp
@@ -146,14 +155,6 @@ func NewApp(
 		ModuleAccountPerms:     appparams.DefaultModuleAccountPermissions(),
 	})
 
-	bApp.SetBlockSTMTxRunner(txnrunner.NewSTMRunner(
-		encodingConfig.TxConfig.TxDecoder(),
-		appKeepers.GetNonTransientKeys(),
-		min(goruntime.GOMAXPROCS(0), goruntime.NumCPU()),
-		true,
-		func(ms storetypes.MultiStore) string { return appparams.BaseDenom },
-	))
-
 	// disable block gas meter
 	bApp.SetDisableBlockGasMeter(true)
 
@@ -203,8 +204,9 @@ func NewApp(
 	tmLightClientModule := ibctm.NewLightClientModule(app.appCodec, storeProvider)
 	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
+	modules := appModules(app, app.appCodec, app.txConfig, tmLightClientModule)
 	app.ModuleManager = module.NewManager(
-		moduleManagerModules(appModules(app, app.appCodec, app.txConfig, tmLightClientModule))...,
+		moduleManagerModules(modules.modules)...,
 	)
 	app.BasicModuleManager = newBasicManagerFromManager(app)
 
@@ -270,7 +272,29 @@ func NewApp(
 			logger.Error("error on loading last version", "err", err)
 			os.Exit(1)
 		}
+
+		// Ensure EVM globals are hydrated before servicing RPC/query traffic after restart.
+		modules.evm.HydrateGlobals(app.NewContextLegacy(true, cmtproto.Header{
+			Height:  app.LastBlockHeight(),
+			ChainID: app.ChainID(),
+		}))
 	}
+
+	vmrunner.SetRunner(bApp, txnrunner.NewSTMRunner(
+		encodingConfig.TxConfig.TxDecoder(),
+		appKeepers.GetNonTransientKeys(),
+		min(goruntime.GOMAXPROCS(0), goruntime.NumCPU()),
+		true,
+		func(ms storetypes.MultiStore) string {
+			denom := app.EVMKeeper.GetParams(
+				sdk.NewContext(ms, cmtproto.Header{}, false, log.NewNopLogger()),
+			).EvmDenom
+			if denom == "" {
+				return appparams.BaseDenom
+			}
+			return denom
+		},
+	))
 
 	return app
 }
@@ -421,6 +445,10 @@ func (app *App) setPostHandler() {
 	app.SetPostHandler(postHandler)
 }
 
+func (app *App) LegacyAmino() *codec.LegacyAmino {
+	return nil
+}
+
 func (app *App) AppCodec() codec.Codec {
 	return app.appCodec
 }
@@ -431,4 +459,8 @@ func (app *App) InterfaceRegistry() codectypes.InterfaceRegistry {
 
 func (app *App) TxConfig() client.TxConfig {
 	return app.txConfig
+}
+
+func (app *App) SimulationManager() *module.SimulationManager {
+	return app.sm
 }

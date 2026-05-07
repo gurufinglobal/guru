@@ -139,31 +139,41 @@ func appModules(
 	appCodec codec.Codec,
 	txConfig client.TxConfig,
 	tmLightClientModule ibctm.LightClientModule,
-) []appmodule.AppModule {
-	return []appmodule.AppModule{
-		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app, txConfig),
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, nil),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, nil),
-		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
-		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
-		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
-		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
-		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
-		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
-		evidence.NewAppModule(app.EvidenceKeeper),
-		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
-		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
-		// IBC modules
-		ibc.NewAppModule(app.IBCKeeper),
-		ibctm.NewAppModule(tmLightClientModule),
-		transfer.NewAppModule(app.TransferKeeper),
-		// Cosmos EVM modules
-		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.BankKeeper, app.AccountKeeper.AddressCodec()),
-		feemarket.NewAppModule(app.FeeMarketKeeper),
-		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
+) wiredAppModules {
+	vmModule := vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.BankKeeper, app.AccountKeeper.AddressCodec())
+
+	return wiredAppModules{
+		modules: []appmodule.AppModule{
+			genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app, txConfig),
+			auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, nil),
+			bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, nil),
+			feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
+			gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
+			mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
+			slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
+			distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
+			staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
+			upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
+			evidence.NewAppModule(app.EvidenceKeeper),
+			authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+			consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
+			vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+			// IBC modules
+			ibc.NewAppModule(app.IBCKeeper),
+			ibctm.NewAppModule(tmLightClientModule),
+			transfer.NewAppModule(app.TransferKeeper),
+			// Cosmos EVM modules
+			vmModule,
+			feemarket.NewAppModule(app.FeeMarketKeeper),
+			erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
+		},
+		evm: vmModule,
 	}
+}
+
+type wiredAppModules struct {
+	modules []appmodule.AppModule
+	evm     vm.AppModule
 }
 
 // module.NewManager still expects the legacy module.AppModule type in SDK v0.54.

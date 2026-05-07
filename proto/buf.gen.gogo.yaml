@@ -1,0 +1,8 @@
+version: v1
+plugins:
+  - plugin: buf.build/cosmos/gogo-grpc
+    out: ..
+    opt: paths=source_relative
+  - plugin: buf.build/cosmos/gogo-proto
+    out: ..
+    opt: paths=source_relative,plugins=grpc
