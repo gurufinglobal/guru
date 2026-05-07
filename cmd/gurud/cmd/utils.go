@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"time"
 
 	"cosmossdk.io/log/v2"
 	cmtcfg "github.com/cometbft/cometbft/config"
@@ -31,7 +32,7 @@ func defaultAppToml() (string, any) {
 
 	cfg := cosmosevmserverconfig.DefaultConfig()
 	cfg.MinGasPrices = "0" + appparams.BaseDenom
-	cfg.EVM.EVMChainID = appparams.ChainID
+	cfg.EVM.EVMChainID = appparams.EVMChainID
 	cfg.API.Enable = true
 	cfg.JSONRPC.Enable = true
 	cfg.JSONRPC.Address = "0.0.0.0:8545"
@@ -42,7 +43,7 @@ func defaultAppToml() (string, any) {
 func defaultConfigToml() *cmtcfg.Config {
 	cfg := cmtcfg.DefaultConfig()
 
-	// TODO: modify config
+	cfg.Consensus.TimeoutCommit = 500 * time.Millisecond
 
 	return cfg
 }
@@ -135,8 +136,6 @@ func appExport(
 		if err := emptyApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
-	} else {
-		emptyApp = app.NewApp(logger, db, true, appOpts, baseapp.SetChainID(chainID))
 	}
 
 	return emptyApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)

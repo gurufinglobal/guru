@@ -3,6 +3,7 @@ package params
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	clienthelpers "cosmossdk.io/client/v2/helpers"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,10 +15,14 @@ const (
 )
 
 const (
-	ChainID = uint64(631)
-	AppName = "guru"
-	EnvName = AppName + "d"
-	HomeDir = "." + EnvName
+	AppName    = "guru"
+	EVMChainID = uint64(631)
+	EnvName    = AppName + "d"
+	HomeDir    = "." + EnvName
+)
+
+var (
+	SDKChainID = AppName + "-" + strconv.Itoa(int(EVMChainID))
 )
 
 func MustDefaultHomeDir() string {

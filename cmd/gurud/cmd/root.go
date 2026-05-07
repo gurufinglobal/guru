@@ -55,7 +55,8 @@ func NewRootCmd() *cobra.Command {
 		WithHomeDir(nodeHome).
 		WithViper(appparams.EnvName).
 		WithKeyringOptions(hd.EthSecp256k1Option()).
-		WithLedgerHasProtobuf(true)
+		WithLedgerHasProtobuf(true).
+		WithChainID(appparams.SDKChainID)
 
 	rootCmd := &cobra.Command{
 		Use:   appparams.EnvName,
