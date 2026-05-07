@@ -1,0 +1,181 @@
+syntax = "proto3";
+
+package guru.example.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "guru/example/v1/types.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/example/types";
+
+// Msg defines x/example transaction messages.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // CreateProject creates a new project.
+  rpc CreateProject(MsgCreateProject) returns (MsgCreateProjectResponse);
+
+  // UpdateProject updates mutable project fields.
+  rpc UpdateProject(MsgUpdateProject) returns (MsgUpdateProjectResponse);
+
+  // AddProjectMember adds or updates project member role.
+  rpc AddProjectMember(MsgAddProjectMember) returns (MsgAddProjectMemberResponse);
+
+  // RemoveProjectMember removes a project member.
+  rpc RemoveProjectMember(MsgRemoveProjectMember) returns (MsgRemoveProjectMemberResponse);
+
+  // CreateTask creates a new task under a project.
+  rpc CreateTask(MsgCreateTask) returns (MsgCreateTaskResponse);
+
+  // AssignTask updates task assignee.
+  rpc AssignTask(MsgAssignTask) returns (MsgAssignTaskResponse);
+
+  // UpdateTaskStatus updates task status.
+  rpc UpdateTaskStatus(MsgUpdateTaskStatus) returns (MsgUpdateTaskStatusResponse);
+
+  // AppendTaskEvent appends an event to the task event log.
+  rpc AppendTaskEvent(MsgAppendTaskEvent) returns (MsgAppendTaskEventResponse);
+
+  // DeleteTask deletes a task.
+  rpc DeleteTask(MsgDeleteTask) returns (MsgDeleteTaskResponse);
+
+  // MigrateLegacyTaskValues demonstrates authority-triggered lazy migration flow.
+  rpc MigrateLegacyTaskValues(MsgMigrateLegacyTaskValues) returns (MsgMigrateLegacyTaskValuesResponse);
+
+  // UpdateParams updates x/example parameters.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+message MsgCreateProject {
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string name = 2;
+  string description = 3;
+  string metadata_json = 4;
+}
+
+message MsgCreateProjectResponse {
+  uint64 project_id = 1;
+}
+
+message MsgUpdateProject {
+  option (cosmos.msg.v1.signer) = "editor";
+
+  string editor = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 project_id = 2;
+  string name = 3;
+  string description = 4;
+  string metadata_json = 5;
+  bool archived = 6;
+}
+
+message MsgUpdateProjectResponse {}
+
+message MsgAddProjectMember {
+  option (cosmos.msg.v1.signer) = "actor";
+
+  string actor = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 project_id = 2;
+  string member = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  MemberRole role = 4;
+}
+
+message MsgAddProjectMemberResponse {}
+
+message MsgRemoveProjectMember {
+  option (cosmos.msg.v1.signer) = "actor";
+
+  string actor = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 project_id = 2;
+  string member = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message MsgRemoveProjectMemberResponse {}
+
+message MsgCreateTask {
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 project_id = 2;
+  string external_ref = 3;
+  string title = 4;
+  string description = 5;
+  string assignee = 6 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint32 priority = 7;
+  repeated string labels = 8;
+  string metadata_json = 9;
+  google.protobuf.Timestamp due_at = 10 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgCreateTaskResponse {
+  uint64 task_id = 1;
+}
+
+message MsgAssignTask {
+  option (cosmos.msg.v1.signer) = "operator";
+
+  string operator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 task_id = 2;
+  string assignee = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message MsgAssignTaskResponse {}
+
+message MsgUpdateTaskStatus {
+  option (cosmos.msg.v1.signer) = "operator";
+
+  string operator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 task_id = 2;
+  TaskStatus status = 3;
+  string reason = 4;
+}
+
+message MsgUpdateTaskStatusResponse {}
+
+message MsgAppendTaskEvent {
+  option (cosmos.msg.v1.signer) = "actor";
+
+  string actor = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 task_id = 2;
+  string event_type = 3;
+  string payload_json = 4;
+}
+
+message MsgAppendTaskEventResponse {
+  uint64 task_event_id = 1;
+}
+
+message MsgDeleteTask {
+  option (cosmos.msg.v1.signer) = "operator";
+
+  string operator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 task_id = 2;
+}
+
+message MsgDeleteTaskResponse {}
+
+message MsgMigrateLegacyTaskValues {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 limit = 2;
+}
+
+message MsgMigrateLegacyTaskValuesResponse {
+  uint64 migrated_count = 1;
+}
+
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+message MsgUpdateParamsResponse {}

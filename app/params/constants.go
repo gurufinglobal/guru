@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	SDKChainID = AppName + "-" + strconv.Itoa(int(EVMChainID))
+	SDKChainID = AppName + "_" + strconv.Itoa(int(EVMChainID))
 )
 
 func MustDefaultHomeDir() string {

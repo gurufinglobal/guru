@@ -95,19 +95,23 @@ lint:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-# 공식 buf 도커 이미지를 사용하여 로컬 환경 편차 없이 일관된 코드 생성을 보장합니다.
-BUF_IMAGE := bufbuild/buf:latest
-DOCKER_BUF := docker run --rm -v $(CURDIR):/workspace --workdir /workspace $(BUF_IMAGE)
+BUF_IMAGE := ghcr.io/cosmos/proto-builder:0.18.1
+DOCKER_BUF := docker run --rm -v $(CURDIR):/workspace --workdir /workspace --user 0 $(BUF_IMAGE) buf
 
 .PHONY: proto-all proto-gen proto-format proto-lint
 
 proto-all: proto-format proto-lint proto-gen
 
 proto-gen:
+	@echo "Downloading Protobuf dependencies (buf dep update)..."
+	@$(DOCKER_BUF) dep update proto
 	@echo "Generating Gogo Protobuf files (*.pb.go) for State Machine..."
 	@$(DOCKER_BUF) generate proto --template proto/buf.gen.gogo.yaml
 	@echo "Generating Pulsar Protobuf files (*.pulsar.go) for SDK v0.50+ API..."
 	@$(DOCKER_BUF) generate proto --template proto/buf.gen.pulsar.yaml
+	@echo "Relocating Gogo files to internal modules..."
+	@cp -r github.com/gurufinglobal/guru/v3/* ./
+	@rm -rf github.com
 	@echo "Protobuf generation complete."
 
 proto-format:

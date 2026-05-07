@@ -1,8 +1,8 @@
 version: v1
 plugins:
-  - plugin: buf.build/cosmos/gogo-grpc
-    out: ..
-    opt: paths=source_relative
-  - plugin: buf.build/cosmos/gogo-proto
-    out: ..
-    opt: paths=source_relative,plugins=grpc
+  - name: gocosmos
+    out: .
+    opt: plugins=grpc,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types
+  - name: grpc-gateway
+    out: .
+    opt: logtostderr=true,allow_colon_final_segments=true
