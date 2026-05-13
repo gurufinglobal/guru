@@ -329,6 +329,9 @@ func (app *App) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
+	if err := app.ValidateChainGenesis(genesisState); err != nil {
+		return nil, fmt.Errorf("invalid chain genesis: %w", err)
+	}
 
 	if err := app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap()); err != nil {
 		panic(err)

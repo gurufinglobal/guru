@@ -17,7 +17,6 @@ import (
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	cosmosevmcmd "github.com/cosmos/evm/client"
 	evmdebug "github.com/cosmos/evm/client/debug"
 	"github.com/cosmos/evm/crypto/hd"
@@ -91,8 +90,8 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	rootCmd.AddCommand(
-		genutilcli.InitCmd(tempApp.BasicModuleManager, nodeHome),
-		genutilcli.Commands(tempApp.TxConfig(), tempApp.BasicModuleManager, nodeHome),
+		InitCmd(tempApp, nodeHome),
+		genesisCommand(tempApp, nodeHome),
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		evmdebug.Cmd(),
 		confixcmd.ConfigCommand(),
