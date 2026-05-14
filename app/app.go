@@ -37,6 +37,7 @@ import (
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
+	sdkregistry "github.com/cosmos/cosmos-sdk/types/registry"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -48,7 +49,6 @@ import (
 	"github.com/cosmos/evm/x/erc20"
 	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
 	vmrunner "github.com/cosmos/evm/x/vm/runner"
-	"github.com/cosmos/gogoproto/proto"
 	ibccallbacks "github.com/cosmos/ibc-go/v11/modules/apps/callbacks"
 	transfer "github.com/cosmos/ibc-go/v11/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
@@ -258,11 +258,7 @@ func NewApp(
 	app.setPostHandler()
 
 	// 4. Protobuf 검증 (선택적이지만 권장)
-	protoFiles, err := proto.MergedRegistry()
-	if err != nil {
-		panic(err)
-	}
-	if err := msgservice.ValidateProtoAnnotations(protoFiles); err != nil {
+	if err := msgservice.ValidateProtoAnnotations(sdkregistry.MergedProtoRegistry()); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
 

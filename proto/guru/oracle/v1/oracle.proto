@@ -1,0 +1,32 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
+
+// Category defines the classification of the oracle data.
+// It dictates both the Sidecar's routing and the Chain's aggregation algorithm.
+enum Category {
+  CATEGORY_UNSPECIFIED = 0;
+  CATEGORY_CRYPTO = 1; // Requires Median Aggregation
+  CATEGORY_FIAT = 2;   // Requires Median Aggregation
+  // CATEGORY_WEATHER = 3; // Future: Requires Median Aggregation
+  // CATEGORY_EVENT = 4;   // Future: Requires Majority Voting Aggregation
+}
+
+message OracleTask {
+  string symbol = 1; // 예: "BTC/USD", "SEOUL_TEMP", "US_ELECTION_2024"
+  Category category = 2;
+  int64 update_interval_blocks = 3;
+  int32 required_min_sources = 4;
+}
+
+// OracleResult represents the generalized data brought on-chain.
+message OracleResult {
+  string symbol = 1;
+  // value represents numeric data as a Cosmos decimal scalar.
+  string value = 2;
+  int64 resolve_height = 3; // 체인 확정 높이
+  int64 resolve_time = 4;   // 사이드카 수집 타임스탬프
+}

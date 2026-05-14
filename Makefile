@@ -105,13 +105,8 @@ proto-all: proto-format proto-lint proto-gen
 proto-gen:
 	@echo "Downloading Protobuf dependencies (buf dep update)..."
 	@$(DOCKER_BUF) dep update proto
-	@echo "Generating Gogo Protobuf files (*.pb.go) for State Machine..."
-	@$(DOCKER_BUF) generate proto --template proto/buf.gen.gogo.yaml
 	@echo "Generating Pulsar Protobuf files (*.pulsar.go) for SDK v0.50+ API..."
 	@$(DOCKER_BUF) generate proto --template proto/buf.gen.pulsar.yaml
-	@echo "Relocating Gogo files to internal modules..."
-	@cp -r github.com/gurufinglobal/guru/v3/* ./
-	@rm -rf github.com
 	@echo "Protobuf generation complete."
 
 proto-format:

@@ -1,0 +1,13 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "guru/oracle/v1/oracle.proto";
+import "guru/oracle/v1/params.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
+
+message GenesisState {
+  Params params = 1;
+  repeated OracleTask active_tasks = 2;
+  repeated OracleResult oracle_results = 3;
+}

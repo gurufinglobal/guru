@@ -5,9 +5,7 @@ go 1.25.9
 require (
 	cosmossdk.io/api v1.0.0
 	cosmossdk.io/client/v2 v2.0.0-beta.10.0.20260227212600-39d4711b8970
-	cosmossdk.io/collections v1.4.0
 	cosmossdk.io/core v1.1.0
-	cosmossdk.io/depinject v1.2.1
 	cosmossdk.io/errors v1.1.0
 	cosmossdk.io/log/v2 v2.1.0
 	cosmossdk.io/math v1.5.3
@@ -19,16 +17,12 @@ require (
 	github.com/cosmos/cosmos-sdk/store/v2 v2.0.0
 	github.com/cosmos/evm v0.7.0
 	github.com/cosmos/go-bip39 v1.0.0
-	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/ibc-go/v11 v11.0.0
 	github.com/ethereum/go-ethereum v1.16.8
-	github.com/golang/protobuf v1.5.4
-	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478
-	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
 )
 
@@ -41,6 +35,8 @@ require (
 	cloud.google.com/go/iam v1.9.0 // indirect
 	cloud.google.com/go/monitoring v1.27.0 // indirect
 	cloud.google.com/go/storage v1.62.1 // indirect
+	cosmossdk.io/collections v1.4.0 // indirect
+	cosmossdk.io/depinject v1.2.1 // indirect
 	cosmossdk.io/schema v1.1.0 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -102,6 +98,7 @@ require (
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/btree v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
+	github.com/cosmos/gogoproto v1.7.2 // indirect
 	github.com/cosmos/iavl v1.2.8 // indirect
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v1.0.0 // indirect
@@ -147,6 +144,7 @@ require (
 	github.com/gofrs/flock v0.12.1 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/flatbuffers v25.2.10+incompatible // indirect
@@ -161,6 +159,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.72 // indirect
@@ -352,6 +351,7 @@ require (
 	google.golang.org/api v0.276.0 // indirect
 	google.golang.org/genproto v0.0.0-20260414002931-afd174a4e478 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
+	google.golang.org/grpc v1.80.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.2 // indirect

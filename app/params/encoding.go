@@ -4,6 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdkregistry "github.com/cosmos/cosmos-sdk/types/registry"
 	"github.com/cosmos/cosmos-sdk/std"
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -13,7 +14,6 @@ import (
 	"github.com/cosmos/evm/ethereum/eip712"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -36,7 +36,7 @@ func MakeEncodingConfig(accountPrefix, validatorPrefix, consensusPrefix string) 
 	}
 
 	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
-		ProtoFiles:     proto.HybridResolver,
+		ProtoFiles:     sdkregistry.MergedProtoRegistry(),
 		SigningOptions: *signingOptions,
 	})
 	if err != nil {
