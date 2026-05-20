@@ -19,15 +19,15 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
-  rpc ExchangeRate(QueryExchangeRateRequest)
-      returns (QueryExchangeRateResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/exchange_rates/{symbol}";
+  rpc OracleValue(QueryOracleValueRequest)
+      returns (QueryOracleValueResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/oracle_values/{symbol}";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
-  rpc ExchangeRates(QueryExchangeRatesRequest)
-      returns (QueryExchangeRatesResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/exchange_rates";
+  rpc OracleValues(QueryOracleValuesRequest)
+      returns (QueryOracleValuesResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/oracle_values";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 }
@@ -38,8 +38,8 @@ message QueryParamsResponse { Params params = 1; }
 message QueryActiveTasksRequest {}
 message QueryActiveTasksResponse { repeated OracleTask tasks = 1; }
 
-message QueryExchangeRateRequest { string symbol = 1; }
-message QueryExchangeRateResponse { OracleResult rate = 1; }
+message QueryOracleValueRequest { string symbol = 1; }
+message QueryOracleValueResponse { OracleResult result = 1; }
 
-message QueryExchangeRatesRequest {}
-message QueryExchangeRatesResponse { repeated OracleResult rates = 1; }
+message QueryOracleValuesRequest {}
+message QueryOracleValuesResponse { repeated OracleResult results = 1; }

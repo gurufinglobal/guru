@@ -7,9 +7,9 @@ import "guru/oracle/v1/oracle.proto";
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
 
 service OracleSidecar {
-  rpc GetLatestPrices(GetLatestPricesRequest) returns (GetLatestPricesResponse);
+  rpc GetLatestValues(GetLatestValuesRequest) returns (GetLatestValuesResponse);
 }
 
-message GetLatestPricesRequest { repeated string symbols = 1; }
+message GetLatestValuesRequest { repeated string symbols = 1; }
 
-message GetLatestPricesResponse { repeated OracleResult prices = 1; }
+message GetLatestValuesResponse { repeated OracleResult results = 1; }

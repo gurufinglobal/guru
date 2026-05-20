@@ -105,7 +105,7 @@ proto-all: proto-format proto-lint proto-gen
 proto-gen:
 	@echo "Downloading Protobuf dependencies (buf dep update)..."
 	@$(DOCKER_BUF) dep update proto
-	@echo "Generating Pulsar Protobuf files (*.pulsar.go) for SDK v0.50+ API..."
+	@echo "Generating Protobuf files (*.pulsar.go, *_grpc.pb.go, *.pb.gw.go)..."
 	@$(DOCKER_BUF) generate proto --template proto/buf.gen.pulsar.yaml
 	@echo "Protobuf generation complete."
 

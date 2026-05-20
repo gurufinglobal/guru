@@ -12,72 +12,72 @@ import (
 	sync "sync"
 )
 
-var _ protoreflect.List = (*_GetLatestPricesRequest_1_list)(nil)
+var _ protoreflect.List = (*_GetLatestValuesRequest_1_list)(nil)
 
-type _GetLatestPricesRequest_1_list struct {
+type _GetLatestValuesRequest_1_list struct {
 	list *[]string
 }
 
-func (x *_GetLatestPricesRequest_1_list) Len() int {
+func (x *_GetLatestValuesRequest_1_list) Len() int {
 	if x.list == nil {
 		return 0
 	}
 	return len(*x.list)
 }
 
-func (x *_GetLatestPricesRequest_1_list) Get(i int) protoreflect.Value {
+func (x *_GetLatestValuesRequest_1_list) Get(i int) protoreflect.Value {
 	return protoreflect.ValueOfString((*x.list)[i])
 }
 
-func (x *_GetLatestPricesRequest_1_list) Set(i int, value protoreflect.Value) {
+func (x *_GetLatestValuesRequest_1_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.String()
 	concreteValue := valueUnwrapped
 	(*x.list)[i] = concreteValue
 }
 
-func (x *_GetLatestPricesRequest_1_list) Append(value protoreflect.Value) {
+func (x *_GetLatestValuesRequest_1_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.String()
 	concreteValue := valueUnwrapped
 	*x.list = append(*x.list, concreteValue)
 }
 
-func (x *_GetLatestPricesRequest_1_list) AppendMutable() protoreflect.Value {
-	panic(fmt.Errorf("AppendMutable can not be called on message GetLatestPricesRequest at list field Symbols as it is not of Message kind"))
+func (x *_GetLatestValuesRequest_1_list) AppendMutable() protoreflect.Value {
+	panic(fmt.Errorf("AppendMutable can not be called on message GetLatestValuesRequest at list field Symbols as it is not of Message kind"))
 }
 
-func (x *_GetLatestPricesRequest_1_list) Truncate(n int) {
+func (x *_GetLatestValuesRequest_1_list) Truncate(n int) {
 	*x.list = (*x.list)[:n]
 }
 
-func (x *_GetLatestPricesRequest_1_list) NewElement() protoreflect.Value {
+func (x *_GetLatestValuesRequest_1_list) NewElement() protoreflect.Value {
 	v := ""
 	return protoreflect.ValueOfString(v)
 }
 
-func (x *_GetLatestPricesRequest_1_list) IsValid() bool {
+func (x *_GetLatestValuesRequest_1_list) IsValid() bool {
 	return x.list != nil
 }
 
 var (
-	md_GetLatestPricesRequest         protoreflect.MessageDescriptor
-	fd_GetLatestPricesRequest_symbols protoreflect.FieldDescriptor
+	md_GetLatestValuesRequest         protoreflect.MessageDescriptor
+	fd_GetLatestValuesRequest_symbols protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_daemon_proto_init()
-	md_GetLatestPricesRequest = File_guru_oracle_v1_daemon_proto.Messages().ByName("GetLatestPricesRequest")
-	fd_GetLatestPricesRequest_symbols = md_GetLatestPricesRequest.Fields().ByName("symbols")
+	md_GetLatestValuesRequest = File_guru_oracle_v1_daemon_proto.Messages().ByName("GetLatestValuesRequest")
+	fd_GetLatestValuesRequest_symbols = md_GetLatestValuesRequest.Fields().ByName("symbols")
 }
 
-var _ protoreflect.Message = (*fastReflection_GetLatestPricesRequest)(nil)
+var _ protoreflect.Message = (*fastReflection_GetLatestValuesRequest)(nil)
 
-type fastReflection_GetLatestPricesRequest GetLatestPricesRequest
+type fastReflection_GetLatestValuesRequest GetLatestValuesRequest
 
-func (x *GetLatestPricesRequest) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_GetLatestPricesRequest)(x)
+func (x *GetLatestValuesRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_GetLatestValuesRequest)(x)
 }
 
-func (x *GetLatestPricesRequest) slowProtoReflect() protoreflect.Message {
+func (x *GetLatestValuesRequest) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_daemon_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -89,43 +89,43 @@ func (x *GetLatestPricesRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_GetLatestPricesRequest_messageType fastReflection_GetLatestPricesRequest_messageType
-var _ protoreflect.MessageType = fastReflection_GetLatestPricesRequest_messageType{}
+var _fastReflection_GetLatestValuesRequest_messageType fastReflection_GetLatestValuesRequest_messageType
+var _ protoreflect.MessageType = fastReflection_GetLatestValuesRequest_messageType{}
 
-type fastReflection_GetLatestPricesRequest_messageType struct{}
+type fastReflection_GetLatestValuesRequest_messageType struct{}
 
-func (x fastReflection_GetLatestPricesRequest_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_GetLatestPricesRequest)(nil)
+func (x fastReflection_GetLatestValuesRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_GetLatestValuesRequest)(nil)
 }
-func (x fastReflection_GetLatestPricesRequest_messageType) New() protoreflect.Message {
-	return new(fastReflection_GetLatestPricesRequest)
+func (x fastReflection_GetLatestValuesRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_GetLatestValuesRequest)
 }
-func (x fastReflection_GetLatestPricesRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_GetLatestPricesRequest
+func (x fastReflection_GetLatestValuesRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_GetLatestValuesRequest
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_GetLatestPricesRequest) Descriptor() protoreflect.MessageDescriptor {
-	return md_GetLatestPricesRequest
+func (x *fastReflection_GetLatestValuesRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_GetLatestValuesRequest
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_GetLatestPricesRequest) Type() protoreflect.MessageType {
-	return _fastReflection_GetLatestPricesRequest_messageType
+func (x *fastReflection_GetLatestValuesRequest) Type() protoreflect.MessageType {
+	return _fastReflection_GetLatestValuesRequest_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_GetLatestPricesRequest) New() protoreflect.Message {
-	return new(fastReflection_GetLatestPricesRequest)
+func (x *fastReflection_GetLatestValuesRequest) New() protoreflect.Message {
+	return new(fastReflection_GetLatestValuesRequest)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_GetLatestPricesRequest) Interface() protoreflect.ProtoMessage {
-	return (*GetLatestPricesRequest)(x)
+func (x *fastReflection_GetLatestValuesRequest) Interface() protoreflect.ProtoMessage {
+	return (*GetLatestValuesRequest)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -133,10 +133,10 @@ func (x *fastReflection_GetLatestPricesRequest) Interface() protoreflect.ProtoMe
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_GetLatestPricesRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_GetLatestValuesRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 	if len(x.Symbols) != 0 {
-		value := protoreflect.ValueOfList(&_GetLatestPricesRequest_1_list{list: &x.Symbols})
-		if !f(fd_GetLatestPricesRequest_symbols, value) {
+		value := protoreflect.ValueOfList(&_GetLatestValuesRequest_1_list{list: &x.Symbols})
+		if !f(fd_GetLatestValuesRequest_symbols, value) {
 			return
 		}
 	}
@@ -153,15 +153,15 @@ func (x *fastReflection_GetLatestPricesRequest) Range(f func(protoreflect.FieldD
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_GetLatestPricesRequest) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_GetLatestValuesRequest) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesRequest.symbols":
+	case "guru.oracle.v1.GetLatestValuesRequest.symbols":
 		return len(x.Symbols) != 0
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -171,15 +171,15 @@ func (x *fastReflection_GetLatestPricesRequest) Has(fd protoreflect.FieldDescrip
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetLatestPricesRequest) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_GetLatestValuesRequest) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesRequest.symbols":
+	case "guru.oracle.v1.GetLatestValuesRequest.symbols":
 		x.Symbols = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -189,19 +189,19 @@ func (x *fastReflection_GetLatestPricesRequest) Clear(fd protoreflect.FieldDescr
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_GetLatestPricesRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetLatestValuesRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.GetLatestPricesRequest.symbols":
+	case "guru.oracle.v1.GetLatestValuesRequest.symbols":
 		if len(x.Symbols) == 0 {
-			return protoreflect.ValueOfList(&_GetLatestPricesRequest_1_list{})
+			return protoreflect.ValueOfList(&_GetLatestValuesRequest_1_list{})
 		}
-		listValue := &_GetLatestPricesRequest_1_list{list: &x.Symbols}
+		listValue := &_GetLatestValuesRequest_1_list{list: &x.Symbols}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesRequest does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesRequest does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -215,17 +215,17 @@ func (x *fastReflection_GetLatestPricesRequest) Get(descriptor protoreflect.Fiel
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetLatestPricesRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_GetLatestValuesRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesRequest.symbols":
+	case "guru.oracle.v1.GetLatestValuesRequest.symbols":
 		lv := value.List()
-		clv := lv.(*_GetLatestPricesRequest_1_list)
+		clv := lv.(*_GetLatestValuesRequest_1_list)
 		x.Symbols = *clv.list
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -239,45 +239,45 @@ func (x *fastReflection_GetLatestPricesRequest) Set(fd protoreflect.FieldDescrip
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetLatestPricesRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetLatestValuesRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesRequest.symbols":
+	case "guru.oracle.v1.GetLatestValuesRequest.symbols":
 		if x.Symbols == nil {
 			x.Symbols = []string{}
 		}
-		value := &_GetLatestPricesRequest_1_list{list: &x.Symbols}
+		value := &_GetLatestValuesRequest_1_list{list: &x.Symbols}
 		return protoreflect.ValueOfList(value)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_GetLatestPricesRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetLatestValuesRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesRequest.symbols":
+	case "guru.oracle.v1.GetLatestValuesRequest.symbols":
 		list := []string{}
-		return protoreflect.ValueOfList(&_GetLatestPricesRequest_1_list{list: &list})
+		return protoreflect.ValueOfList(&_GetLatestValuesRequest_1_list{list: &list})
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_GetLatestPricesRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_GetLatestValuesRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.GetLatestPricesRequest", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.GetLatestValuesRequest", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -285,7 +285,7 @@ func (x *fastReflection_GetLatestPricesRequest) WhichOneof(d protoreflect.OneofD
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_GetLatestPricesRequest) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_GetLatestValuesRequest) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -296,7 +296,7 @@ func (x *fastReflection_GetLatestPricesRequest) GetUnknown() protoreflect.RawFie
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetLatestPricesRequest) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_GetLatestValuesRequest) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -308,7 +308,7 @@ func (x *fastReflection_GetLatestPricesRequest) SetUnknown(fields protoreflect.R
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_GetLatestPricesRequest) IsValid() bool {
+func (x *fastReflection_GetLatestValuesRequest) IsValid() bool {
 	return x != nil
 }
 
@@ -318,9 +318,9 @@ func (x *fastReflection_GetLatestPricesRequest) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_GetLatestPricesRequest) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_GetLatestValuesRequest) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*GetLatestPricesRequest)
+		x := input.Message.Interface().(*GetLatestValuesRequest)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -348,7 +348,7 @@ func (x *fastReflection_GetLatestPricesRequest) ProtoMethods() *protoiface.Metho
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*GetLatestPricesRequest)
+		x := input.Message.Interface().(*GetLatestValuesRequest)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -387,7 +387,7 @@ func (x *fastReflection_GetLatestPricesRequest) ProtoMethods() *protoiface.Metho
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*GetLatestPricesRequest)
+		x := input.Message.Interface().(*GetLatestValuesRequest)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -419,10 +419,10 @@ func (x *fastReflection_GetLatestPricesRequest) ProtoMethods() *protoiface.Metho
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetLatestPricesRequest: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetLatestValuesRequest: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetLatestPricesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetLatestValuesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
@@ -492,77 +492,77 @@ func (x *fastReflection_GetLatestPricesRequest) ProtoMethods() *protoiface.Metho
 	}
 }
 
-var _ protoreflect.List = (*_GetLatestPricesResponse_1_list)(nil)
+var _ protoreflect.List = (*_GetLatestValuesResponse_1_list)(nil)
 
-type _GetLatestPricesResponse_1_list struct {
+type _GetLatestValuesResponse_1_list struct {
 	list *[]*OracleResult
 }
 
-func (x *_GetLatestPricesResponse_1_list) Len() int {
+func (x *_GetLatestValuesResponse_1_list) Len() int {
 	if x.list == nil {
 		return 0
 	}
 	return len(*x.list)
 }
 
-func (x *_GetLatestPricesResponse_1_list) Get(i int) protoreflect.Value {
+func (x *_GetLatestValuesResponse_1_list) Get(i int) protoreflect.Value {
 	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
 }
 
-func (x *_GetLatestPricesResponse_1_list) Set(i int, value protoreflect.Value) {
+func (x *_GetLatestValuesResponse_1_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
 	concreteValue := valueUnwrapped.Interface().(*OracleResult)
 	(*x.list)[i] = concreteValue
 }
 
-func (x *_GetLatestPricesResponse_1_list) Append(value protoreflect.Value) {
+func (x *_GetLatestValuesResponse_1_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
 	concreteValue := valueUnwrapped.Interface().(*OracleResult)
 	*x.list = append(*x.list, concreteValue)
 }
 
-func (x *_GetLatestPricesResponse_1_list) AppendMutable() protoreflect.Value {
+func (x *_GetLatestValuesResponse_1_list) AppendMutable() protoreflect.Value {
 	v := new(OracleResult)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_GetLatestPricesResponse_1_list) Truncate(n int) {
+func (x *_GetLatestValuesResponse_1_list) Truncate(n int) {
 	for i := n; i < len(*x.list); i++ {
 		(*x.list)[i] = nil
 	}
 	*x.list = (*x.list)[:n]
 }
 
-func (x *_GetLatestPricesResponse_1_list) NewElement() protoreflect.Value {
+func (x *_GetLatestValuesResponse_1_list) NewElement() protoreflect.Value {
 	v := new(OracleResult)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_GetLatestPricesResponse_1_list) IsValid() bool {
+func (x *_GetLatestValuesResponse_1_list) IsValid() bool {
 	return x.list != nil
 }
 
 var (
-	md_GetLatestPricesResponse        protoreflect.MessageDescriptor
-	fd_GetLatestPricesResponse_prices protoreflect.FieldDescriptor
+	md_GetLatestValuesResponse         protoreflect.MessageDescriptor
+	fd_GetLatestValuesResponse_results protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_daemon_proto_init()
-	md_GetLatestPricesResponse = File_guru_oracle_v1_daemon_proto.Messages().ByName("GetLatestPricesResponse")
-	fd_GetLatestPricesResponse_prices = md_GetLatestPricesResponse.Fields().ByName("prices")
+	md_GetLatestValuesResponse = File_guru_oracle_v1_daemon_proto.Messages().ByName("GetLatestValuesResponse")
+	fd_GetLatestValuesResponse_results = md_GetLatestValuesResponse.Fields().ByName("results")
 }
 
-var _ protoreflect.Message = (*fastReflection_GetLatestPricesResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_GetLatestValuesResponse)(nil)
 
-type fastReflection_GetLatestPricesResponse GetLatestPricesResponse
+type fastReflection_GetLatestValuesResponse GetLatestValuesResponse
 
-func (x *GetLatestPricesResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_GetLatestPricesResponse)(x)
+func (x *GetLatestValuesResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_GetLatestValuesResponse)(x)
 }
 
-func (x *GetLatestPricesResponse) slowProtoReflect() protoreflect.Message {
+func (x *GetLatestValuesResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_daemon_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -574,43 +574,43 @@ func (x *GetLatestPricesResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_GetLatestPricesResponse_messageType fastReflection_GetLatestPricesResponse_messageType
-var _ protoreflect.MessageType = fastReflection_GetLatestPricesResponse_messageType{}
+var _fastReflection_GetLatestValuesResponse_messageType fastReflection_GetLatestValuesResponse_messageType
+var _ protoreflect.MessageType = fastReflection_GetLatestValuesResponse_messageType{}
 
-type fastReflection_GetLatestPricesResponse_messageType struct{}
+type fastReflection_GetLatestValuesResponse_messageType struct{}
 
-func (x fastReflection_GetLatestPricesResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_GetLatestPricesResponse)(nil)
+func (x fastReflection_GetLatestValuesResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_GetLatestValuesResponse)(nil)
 }
-func (x fastReflection_GetLatestPricesResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_GetLatestPricesResponse)
+func (x fastReflection_GetLatestValuesResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_GetLatestValuesResponse)
 }
-func (x fastReflection_GetLatestPricesResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_GetLatestPricesResponse
+func (x fastReflection_GetLatestValuesResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_GetLatestValuesResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_GetLatestPricesResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_GetLatestPricesResponse
+func (x *fastReflection_GetLatestValuesResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_GetLatestValuesResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_GetLatestPricesResponse) Type() protoreflect.MessageType {
-	return _fastReflection_GetLatestPricesResponse_messageType
+func (x *fastReflection_GetLatestValuesResponse) Type() protoreflect.MessageType {
+	return _fastReflection_GetLatestValuesResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_GetLatestPricesResponse) New() protoreflect.Message {
-	return new(fastReflection_GetLatestPricesResponse)
+func (x *fastReflection_GetLatestValuesResponse) New() protoreflect.Message {
+	return new(fastReflection_GetLatestValuesResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_GetLatestPricesResponse) Interface() protoreflect.ProtoMessage {
-	return (*GetLatestPricesResponse)(x)
+func (x *fastReflection_GetLatestValuesResponse) Interface() protoreflect.ProtoMessage {
+	return (*GetLatestValuesResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -618,10 +618,10 @@ func (x *fastReflection_GetLatestPricesResponse) Interface() protoreflect.ProtoM
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_GetLatestPricesResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if len(x.Prices) != 0 {
-		value := protoreflect.ValueOfList(&_GetLatestPricesResponse_1_list{list: &x.Prices})
-		if !f(fd_GetLatestPricesResponse_prices, value) {
+func (x *fastReflection_GetLatestValuesResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if len(x.Results) != 0 {
+		value := protoreflect.ValueOfList(&_GetLatestValuesResponse_1_list{list: &x.Results})
+		if !f(fd_GetLatestValuesResponse_results, value) {
 			return
 		}
 	}
@@ -638,15 +638,15 @@ func (x *fastReflection_GetLatestPricesResponse) Range(f func(protoreflect.Field
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_GetLatestPricesResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_GetLatestValuesResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesResponse.prices":
-		return len(x.Prices) != 0
+	case "guru.oracle.v1.GetLatestValuesResponse.results":
+		return len(x.Results) != 0
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -656,15 +656,15 @@ func (x *fastReflection_GetLatestPricesResponse) Has(fd protoreflect.FieldDescri
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetLatestPricesResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_GetLatestValuesResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesResponse.prices":
-		x.Prices = nil
+	case "guru.oracle.v1.GetLatestValuesResponse.results":
+		x.Results = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -674,19 +674,19 @@ func (x *fastReflection_GetLatestPricesResponse) Clear(fd protoreflect.FieldDesc
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_GetLatestPricesResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetLatestValuesResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.GetLatestPricesResponse.prices":
-		if len(x.Prices) == 0 {
-			return protoreflect.ValueOfList(&_GetLatestPricesResponse_1_list{})
+	case "guru.oracle.v1.GetLatestValuesResponse.results":
+		if len(x.Results) == 0 {
+			return protoreflect.ValueOfList(&_GetLatestValuesResponse_1_list{})
 		}
-		listValue := &_GetLatestPricesResponse_1_list{list: &x.Prices}
+		listValue := &_GetLatestValuesResponse_1_list{list: &x.Results}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -700,17 +700,17 @@ func (x *fastReflection_GetLatestPricesResponse) Get(descriptor protoreflect.Fie
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetLatestPricesResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_GetLatestValuesResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesResponse.prices":
+	case "guru.oracle.v1.GetLatestValuesResponse.results":
 		lv := value.List()
-		clv := lv.(*_GetLatestPricesResponse_1_list)
-		x.Prices = *clv.list
+		clv := lv.(*_GetLatestValuesResponse_1_list)
+		x.Results = *clv.list
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -724,45 +724,45 @@ func (x *fastReflection_GetLatestPricesResponse) Set(fd protoreflect.FieldDescri
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetLatestPricesResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetLatestValuesResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesResponse.prices":
-		if x.Prices == nil {
-			x.Prices = []*OracleResult{}
+	case "guru.oracle.v1.GetLatestValuesResponse.results":
+		if x.Results == nil {
+			x.Results = []*OracleResult{}
 		}
-		value := &_GetLatestPricesResponse_1_list{list: &x.Prices}
+		value := &_GetLatestValuesResponse_1_list{list: &x.Results}
 		return protoreflect.ValueOfList(value)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_GetLatestPricesResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetLatestValuesResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetLatestPricesResponse.prices":
+	case "guru.oracle.v1.GetLatestValuesResponse.results":
 		list := []*OracleResult{}
-		return protoreflect.ValueOfList(&_GetLatestPricesResponse_1_list{list: &list})
+		return protoreflect.ValueOfList(&_GetLatestValuesResponse_1_list{list: &list})
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestPricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetLatestPricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_GetLatestPricesResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_GetLatestValuesResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.GetLatestPricesResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.GetLatestValuesResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -770,7 +770,7 @@ func (x *fastReflection_GetLatestPricesResponse) WhichOneof(d protoreflect.Oneof
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_GetLatestPricesResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_GetLatestValuesResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -781,7 +781,7 @@ func (x *fastReflection_GetLatestPricesResponse) GetUnknown() protoreflect.RawFi
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetLatestPricesResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_GetLatestValuesResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -793,7 +793,7 @@ func (x *fastReflection_GetLatestPricesResponse) SetUnknown(fields protoreflect.
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_GetLatestPricesResponse) IsValid() bool {
+func (x *fastReflection_GetLatestValuesResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -803,9 +803,9 @@ func (x *fastReflection_GetLatestPricesResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_GetLatestPricesResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_GetLatestValuesResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*GetLatestPricesResponse)
+		x := input.Message.Interface().(*GetLatestValuesResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -817,8 +817,8 @@ func (x *fastReflection_GetLatestPricesResponse) ProtoMethods() *protoiface.Meth
 		var n int
 		var l int
 		_ = l
-		if len(x.Prices) > 0 {
-			for _, e := range x.Prices {
+		if len(x.Results) > 0 {
+			for _, e := range x.Results {
 				l = options.Size(e)
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
@@ -833,7 +833,7 @@ func (x *fastReflection_GetLatestPricesResponse) ProtoMethods() *protoiface.Meth
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*GetLatestPricesResponse)
+		x := input.Message.Interface().(*GetLatestValuesResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -852,9 +852,9 @@ func (x *fastReflection_GetLatestPricesResponse) ProtoMethods() *protoiface.Meth
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.Prices) > 0 {
-			for iNdEx := len(x.Prices) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.Prices[iNdEx])
+		if len(x.Results) > 0 {
+			for iNdEx := len(x.Results) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.Results[iNdEx])
 				if err != nil {
 					return protoiface.MarshalOutput{
 						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -879,7 +879,7 @@ func (x *fastReflection_GetLatestPricesResponse) ProtoMethods() *protoiface.Meth
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*GetLatestPricesResponse)
+		x := input.Message.Interface().(*GetLatestValuesResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -911,15 +911,15 @@ func (x *fastReflection_GetLatestPricesResponse) ProtoMethods() *protoiface.Meth
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetLatestPricesResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetLatestValuesResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetLatestPricesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetLatestValuesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Prices", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Results", wireType)
 				}
 				var msglen int
 				for shift := uint(0); ; shift += 7 {
@@ -946,8 +946,8 @@ func (x *fastReflection_GetLatestPricesResponse) ProtoMethods() *protoiface.Meth
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Prices = append(x.Prices, &OracleResult{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Prices[len(x.Prices)-1]); err != nil {
+				x.Results = append(x.Results, &OracleResult{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Results[len(x.Results)-1]); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -999,7 +999,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetLatestPricesRequest struct {
+type GetLatestValuesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -1007,8 +1007,8 @@ type GetLatestPricesRequest struct {
 	Symbols []string `protobuf:"bytes,1,rep,name=symbols,proto3" json:"symbols,omitempty"`
 }
 
-func (x *GetLatestPricesRequest) Reset() {
-	*x = GetLatestPricesRequest{}
+func (x *GetLatestValuesRequest) Reset() {
+	*x = GetLatestValuesRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_daemon_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1016,34 +1016,34 @@ func (x *GetLatestPricesRequest) Reset() {
 	}
 }
 
-func (x *GetLatestPricesRequest) String() string {
+func (x *GetLatestValuesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetLatestPricesRequest) ProtoMessage() {}
+func (*GetLatestValuesRequest) ProtoMessage() {}
 
-// Deprecated: Use GetLatestPricesRequest.ProtoReflect.Descriptor instead.
-func (*GetLatestPricesRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetLatestValuesRequest.ProtoReflect.Descriptor instead.
+func (*GetLatestValuesRequest) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_daemon_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetLatestPricesRequest) GetSymbols() []string {
+func (x *GetLatestValuesRequest) GetSymbols() []string {
 	if x != nil {
 		return x.Symbols
 	}
 	return nil
 }
 
-type GetLatestPricesResponse struct {
+type GetLatestValuesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Prices []*OracleResult `protobuf:"bytes,1,rep,name=prices,proto3" json:"prices,omitempty"`
+	Results []*OracleResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
 }
 
-func (x *GetLatestPricesResponse) Reset() {
-	*x = GetLatestPricesResponse{}
+func (x *GetLatestValuesResponse) Reset() {
+	*x = GetLatestValuesResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_daemon_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1051,20 +1051,20 @@ func (x *GetLatestPricesResponse) Reset() {
 	}
 }
 
-func (x *GetLatestPricesResponse) String() string {
+func (x *GetLatestValuesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetLatestPricesResponse) ProtoMessage() {}
+func (*GetLatestValuesResponse) ProtoMessage() {}
 
-// Deprecated: Use GetLatestPricesResponse.ProtoReflect.Descriptor instead.
-func (*GetLatestPricesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetLatestValuesResponse.ProtoReflect.Descriptor instead.
+func (*GetLatestValuesResponse) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_daemon_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetLatestPricesResponse) GetPrices() []*OracleResult {
+func (x *GetLatestValuesResponse) GetResults() []*OracleResult {
 	if x != nil {
-		return x.Prices
+		return x.Results
 	}
 	return nil
 }
@@ -1077,34 +1077,34 @@ var file_guru_oracle_v1_daemon_proto_rawDesc = []byte{
 	0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x1a, 0x1b, 0x67,
 	0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x6f, 0x72,
 	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x32, 0x0a, 0x16, 0x47, 0x65,
-	0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x73, 0x18,
-	0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x73, 0x22, 0x4f,
-	0x0a, 0x17, 0x47, 0x65, 0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65,
-	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x34, 0x0a, 0x06, 0x70, 0x72, 0x69,
-	0x63, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c,
-	0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x06, 0x70, 0x72, 0x69, 0x63, 0x65, 0x73, 0x32,
-	0x73, 0x0a, 0x0d, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x64, 0x65, 0x63, 0x61, 0x72,
-	0x12, 0x62, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x50, 0x72, 0x69,
-	0x63, 0x65, 0x73, 0x12, 0x26, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c,
-	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x50, 0x72,
-	0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x27, 0x2e, 0x67, 0x75,
-	0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74,
-	0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x50, 0x72, 0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x42, 0xb9, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72,
-	0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b, 0x44, 0x61, 0x65,
-	0x6d, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c,
-	0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69,
-	0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b,
-	0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02,
-	0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca,
-	0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31,
-	0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56,
-	0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10,
-	0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x73, 0x22, 0x51,
+	0x0a, 0x17, 0x47, 0x65, 0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x36, 0x0a, 0x07, 0x72, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x75, 0x72,
+	0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63,
+	0x6c, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x73, 0x32, 0x73, 0x0a, 0x0d, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x64, 0x65, 0x63,
+	0x61, 0x72, 0x12, 0x62, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56,
+	0x61, 0x6c, 0x75, 0x65, 0x73, 0x12, 0x26, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61,
+	0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74,
+	0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x27, 0x2e,
+	0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47,
+	0x65, 0x74, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0xb9, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67,
+	0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b, 0x44,
+	0x61, 0x65, 0x6d, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e,
+	0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61,
+	0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76,
+	0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58,
+	0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56,
+	0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c,
+	0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65,
+	0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea,
+	0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a,
+	0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1121,14 +1121,14 @@ func file_guru_oracle_v1_daemon_proto_rawDescGZIP() []byte {
 
 var file_guru_oracle_v1_daemon_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_guru_oracle_v1_daemon_proto_goTypes = []interface{}{
-	(*GetLatestPricesRequest)(nil),  // 0: guru.oracle.v1.GetLatestPricesRequest
-	(*GetLatestPricesResponse)(nil), // 1: guru.oracle.v1.GetLatestPricesResponse
+	(*GetLatestValuesRequest)(nil),  // 0: guru.oracle.v1.GetLatestValuesRequest
+	(*GetLatestValuesResponse)(nil), // 1: guru.oracle.v1.GetLatestValuesResponse
 	(*OracleResult)(nil),            // 2: guru.oracle.v1.OracleResult
 }
 var file_guru_oracle_v1_daemon_proto_depIdxs = []int32{
-	2, // 0: guru.oracle.v1.GetLatestPricesResponse.prices:type_name -> guru.oracle.v1.OracleResult
-	0, // 1: guru.oracle.v1.OracleSidecar.GetLatestPrices:input_type -> guru.oracle.v1.GetLatestPricesRequest
-	1, // 2: guru.oracle.v1.OracleSidecar.GetLatestPrices:output_type -> guru.oracle.v1.GetLatestPricesResponse
+	2, // 0: guru.oracle.v1.GetLatestValuesResponse.results:type_name -> guru.oracle.v1.OracleResult
+	0, // 1: guru.oracle.v1.OracleSidecar.GetLatestValues:input_type -> guru.oracle.v1.GetLatestValuesRequest
+	1, // 2: guru.oracle.v1.OracleSidecar.GetLatestValues:output_type -> guru.oracle.v1.GetLatestValuesResponse
 	2, // [2:3] is the sub-list for method output_type
 	1, // [1:2] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -1144,7 +1144,7 @@ func file_guru_oracle_v1_daemon_proto_init() {
 	file_guru_oracle_v1_oracle_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_guru_oracle_v1_daemon_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetLatestPricesRequest); i {
+			switch v := v.(*GetLatestValuesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1156,7 +1156,7 @@ func file_guru_oracle_v1_daemon_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_daemon_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetLatestPricesResponse); i {
+			switch v := v.(*GetLatestValuesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
