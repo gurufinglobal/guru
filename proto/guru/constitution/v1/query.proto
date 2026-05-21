@@ -1,0 +1,19 @@
+syntax = "proto3";
+package guru.constitution.v1;
+
+import "cosmos/query/v1/query.proto";
+import "google/api/annotations.proto";
+import "guru/constitution/v1/params.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
+
+service Query {
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/guru/constitution/v1/params";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+}
+
+message QueryParamsRequest {}
+
+message QueryParamsResponse { Params params = 1; }

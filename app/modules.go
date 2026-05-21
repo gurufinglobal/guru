@@ -45,6 +45,8 @@ import (
 	ibc "github.com/cosmos/ibc-go/v11/modules/core"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
+	constitution "github.com/gurufinglobal/guru/v3/x/constitution"
+	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 var (
@@ -84,6 +86,7 @@ var (
 	endBlockerOrder = []string{
 		banktypes.ModuleName,
 		govtypes.ModuleName,
+		constitutiontypes.ModuleName,
 		stakingtypes.ModuleName,
 		authtypes.ModuleName,
 
@@ -114,6 +117,7 @@ var (
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
+		constitutiontypes.ModuleName,
 		minttypes.ModuleName,
 		ibcexported.ModuleName,
 
@@ -149,6 +153,7 @@ func appModules(
 			bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, nil),
 			feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 			gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
+			constitution.NewAppModule(app.ConstitutionKeeper),
 			mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 			slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 			distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
@@ -176,25 +181,25 @@ type wiredAppModules struct {
 	evm     vm.AppModule
 }
 
-// module.NewManager still expects the legacy module.AppModule type in SDK v0.54.
-// Keep appModules in the modern appmodule.AppModule form and bridge only here.
-func moduleManagerModules(mods []appmodule.AppModule) []module.AppModule {
-	legacyMods := make([]module.AppModule, 0, len(mods))
+// Keep appModules in the core appmodule.AppModule form and materialize
+// the module map expected by module.NewManagerFromMap.
+func moduleManagerMap(mods []appmodule.AppModule) map[string]appmodule.AppModule {
+	moduleMap := make(map[string]appmodule.AppModule, len(mods))
 
 	for _, m := range mods {
-		if legacy, ok := m.(module.AppModule); ok {
-			legacyMods = append(legacyMods, legacy)
-			continue
-		}
-
 		namedModule, ok := m.(module.HasName)
 		if !ok {
 			panic("app module does not implement HasName")
 		}
-		legacyMods = append(legacyMods, module.CoreAppModuleAdaptor(namedModule.Name(), m))
+
+		moduleName := namedModule.Name()
+		if _, exists := moduleMap[moduleName]; exists {
+			panic("duplicate app module name: " + moduleName)
+		}
+		moduleMap[moduleName] = m
 	}
 
-	return legacyMods
+	return moduleMap
 }
 
 func newBasicManagerFromManager(app *App) module.BasicManager {

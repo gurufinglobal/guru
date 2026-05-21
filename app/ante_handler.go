@@ -36,6 +36,11 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) er
 	if err != nil {
 		return err
 	}
+	anteHandler = appante.WrapAnteHandlerWithConstitutionSelfBondCheck(
+		anteHandler,
+		&app.ConstitutionKeeper,
+		app.AccountKeeper.AddressCodec(),
+	)
 
 	app.anteHandler = anteHandler
 	app.SetAnteHandler(anteHandler)

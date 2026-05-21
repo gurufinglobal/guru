@@ -1,0 +1,8 @@
+syntax = "proto3";
+package guru.constitution.v1;
+
+import "guru/constitution/v1/params.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
+
+message GenesisState { Params params = 1; }

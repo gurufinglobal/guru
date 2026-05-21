@@ -22,6 +22,7 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
+	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 func (ak *AppKeepers) GenerateKeys() {
@@ -45,6 +46,7 @@ func (ak *AppKeepers) GenerateKeys() {
 		evmtypes.StoreKey,
 		feemarkettypes.StoreKey,
 		erc20types.StoreKey,
+		constitutiontypes.StoreKey,
 	)
 	ak.objKeys = storetypes.NewObjectStoreKeys(
 		banktypes.ObjectStoreKey,

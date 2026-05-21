@@ -205,8 +205,8 @@ func NewApp(
 	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
 	modules := appModules(app, app.appCodec, app.txConfig, tmLightClientModule)
-	app.ModuleManager = module.NewManager(
-		moduleManagerModules(modules.modules)...,
+	app.ModuleManager = module.NewManagerFromMap(
+		moduleManagerMap(modules.modules),
 	)
 	app.BasicModuleManager = newBasicManagerFromManager(app)
 
@@ -248,7 +248,7 @@ func NewApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 
-	// 3. 트랜잭션 문지기 및 EVM 멤풀 연결
+	// 3. 트랜잭션 문지기 및 멤풀 연결
 	if err := app.setAnteHandler(app.txConfig, maxGasWanted); err != nil {
 		panic(fmt.Sprintf("failed to configure ante handler: %s", err.Error()))
 	}
@@ -404,13 +404,10 @@ func (app *App) Close() error {
 }
 
 func (app *App) AutoCliOpts() autocli.AppOptions {
-	modules := make(map[string]appmodule.AppModule, 0)
-	for _, m := range app.ModuleManager.Modules {
-		if moduleWithName, ok := m.(module.HasName); ok {
-			moduleName := moduleWithName.Name()
-			if appModule, ok := moduleWithName.(appmodule.AppModule); ok {
-				modules[moduleName] = appModule
-			}
+	modules := make(map[string]appmodule.AppModule, len(app.ModuleManager.Modules))
+	for moduleName, m := range app.ModuleManager.Modules {
+		if appModule, ok := m.(appmodule.AppModule); ok {
+			modules[moduleName] = appModule
 		}
 	}
 

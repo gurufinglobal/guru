@@ -45,6 +45,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	corevm "github.com/ethereum/go-ethereum/core/vm"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
+	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 type AppKeepers struct {
@@ -76,7 +78,7 @@ type AppKeepers struct {
 	CallbackKeeper ibccallbackskeeper.ContractKeeper
 
 	// guru keepers
-	// ...
+	ConstitutionKeeper constitutionkeeper.Keeper
 }
 
 func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
@@ -95,7 +97,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	if err != nil {
 		panic(fmt.Errorf("failed to convert gov address to string: %v", err))
 	}
-	
+
 	moduleAccountPerms := cfg.ModuleAccountPerms
 	if len(moduleAccountPerms) == 0 {
 		panic("module account permissions cannot be empty")
@@ -169,6 +171,12 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		evmaddress.NewEvmCodec(cfg.ConsensusAddressPrefix),
 	)
 
+	appKeepers.ConstitutionKeeper = constitutionkeeper.NewKeeper(
+		govAddress,
+		appKeepers.StakingKeeper,
+		runtime.NewKVStoreService(appKeepers.kvKeys[constitutiontypes.StoreKey]),
+	)
+
 	appKeepers.MintKeeper = mintkeeper.NewKeeper(
 		cfg.AppCodec,
 		runtime.NewKVStoreService(appKeepers.kvKeys[minttypes.StoreKey]),
@@ -198,7 +206,11 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	)
 
 	appKeepers.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(appKeepers.DistrKeeper.Hooks(), appKeepers.SlashingKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(
+			appKeepers.DistrKeeper.Hooks(),
+			appKeepers.SlashingKeeper.Hooks(),
+			constitutionkeeper.NewStakingHooks(&appKeepers.ConstitutionKeeper),
+		),
 	)
 
 	appKeepers.FeeGrantKeeper = feegrantkeeper.NewKeeper(

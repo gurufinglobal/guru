@@ -20,7 +20,8 @@ func (app *App) BuildChainDefaultGenesis() map[string]json.RawMessage {
 	return app.DefaultGenesis()
 }
 
-// ValidateChainGenesis enforces chain-level invariants in addition to module validation.
+// ValidateChainGenesis validates chain-level and cross-module invariants only.
+// Module-level schema/default validation is owned by each module's ValidateGenesis.
 func (app *App) ValidateChainGenesis(genesis map[string]json.RawMessage) error {
 	if err := app.BasicModuleManager.ValidateGenesis(app.appCodec, app.txConfig, genesis); err != nil {
 		return fmt.Errorf("module validation failed: %w", err)

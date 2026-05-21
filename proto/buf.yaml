@@ -7,9 +7,8 @@ deps:
   - buf.build/cosmos/gogo-proto
   - buf.build/googleapis/googleapis
   - buf.build/protocolbuffers/wellknowntypes
-  - buf.build/cometbft/cometbft
-  - buf.build/cosmos/ibc
-  - buf.build/evmos/evmos
+  # - buf.build/cometbft/cometbft
+  # - buf.build/cosmos/ibc
 
 lint:
   use:
