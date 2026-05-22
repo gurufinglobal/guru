@@ -82,7 +82,7 @@ func (k *Keeper) validateCreateValidatorSelfBond(
 		)
 	}
 
-	validatorAddr, err := k.selfBondSource.ValidatorAddressCodec().StringToBytes(msg.ValidatorAddress)
+	validatorAddr, err := k.ValidatorAddressCodec().StringToBytes(msg.ValidatorAddress)
 	if err != nil {
 		return err
 	}
@@ -240,7 +240,7 @@ func (k *Keeper) parseSelfDelegationAddresses(
 	validatorAddress string,
 	delegatorAddress string,
 ) (sdk.ValAddress, bool, error) {
-	validatorAddr, err := k.selfBondSource.ValidatorAddressCodec().StringToBytes(validatorAddress)
+	validatorAddr, err := k.ValidatorAddressCodec().StringToBytes(validatorAddress)
 	if err != nil {
 		return nil, false, err
 	}
@@ -275,7 +275,7 @@ func (k *Keeper) getProjectedSelfBond(
 }
 
 func (k *Keeper) mustValidatorAddressString(addr sdk.ValAddress) string {
-	validatorAddress, err := k.selfBondSource.ValidatorAddressCodec().BytesToString(addr)
+	validatorAddress, err := k.ValidatorAddressCodec().BytesToString(addr)
 	if err != nil {
 		return "<invalid-validator-address>"
 	}

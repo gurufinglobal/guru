@@ -15,9 +15,8 @@ import (
 
 type Keeper struct {
 	*stakingkeeper.Keeper
-	minBondSource  MinValidatorBondSource
-	accountCodec   address.Codec
-	selfBondSource selfBondSource
+	minBondSource MinValidatorBondSource
+	accountCodec  address.Codec
 }
 
 func NewKeeper(
@@ -26,17 +25,10 @@ func NewKeeper(
 	accountCodec address.Codec,
 ) *Keeper {
 	return &Keeper{
-		Keeper:         stakingKeeper,
-		minBondSource:  minBondSource,
-		accountCodec:   accountCodec,
-		selfBondSource: stakingKeeper,
+		Keeper:        stakingKeeper,
+		minBondSource: minBondSource,
+		accountCodec:  accountCodec,
 	}
-}
-
-type selfBondSource interface {
-	GetValidator(ctx context.Context, addr sdk.ValAddress) (stakingtypes.Validator, error)
-	GetDelegation(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (stakingtypes.Delegation, error)
-	ValidatorAddressCodec() address.Codec
 }
 
 func (k *Keeper) EndBlocker(ctx context.Context) ([]abci.ValidatorUpdate, error) {
@@ -173,25 +165,17 @@ func (k *Keeper) GetValidatorSelfBond(
 	ctx context.Context,
 	validatorAddr sdk.ValAddress,
 ) (sdkmath.Int, error) {
-	_, selfBond, err := k.getValidatorAndSelfBond(ctx, validatorAddr)
-	return selfBond, err
-}
-
-func (k *Keeper) getValidatorAndSelfBond(
-	ctx context.Context,
-	validatorAddr sdk.ValAddress,
-) (stakingtypes.Validator, sdkmath.Int, error) {
-	validator, err := k.selfBondSource.GetValidator(ctx, validatorAddr)
+	validator, err := k.GetValidator(ctx, validatorAddr)
 	if err != nil {
-		return stakingtypes.Validator{}, sdkmath.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
 	selfBond, err := k.getValidatorSelfBondFromDelegation(ctx, validatorAddr, validator)
 	if err != nil {
-		return stakingtypes.Validator{}, sdkmath.Int{}, err
+		return sdkmath.Int{}, err
 	}
 
-	return validator, selfBond, nil
+	return selfBond, nil
 }
 
 func (k *Keeper) getValidatorSelfBondFromDelegation(
@@ -199,7 +183,7 @@ func (k *Keeper) getValidatorSelfBondFromDelegation(
 	validatorAddr sdk.ValAddress,
 	validator stakingtypes.Validator,
 ) (sdkmath.Int, error) {
-	delegation, err := k.selfBondSource.GetDelegation(ctx, sdk.AccAddress(validatorAddr), validatorAddr)
+	delegation, err := k.GetDelegation(ctx, sdk.AccAddress(validatorAddr), validatorAddr)
 	if err != nil {
 		if errors.Is(err, stakingtypes.ErrNoDelegation) {
 			return sdkmath.ZeroInt(), nil
