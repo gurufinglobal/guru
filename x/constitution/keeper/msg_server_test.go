@@ -38,12 +38,12 @@ func TestMsgServerUpdateParams(t *testing.T) {
 			shouldErr: true,
 		},
 		{
-			name:          "fails when current params are missing",
+			name:          "updates params even when current params are missing",
 			withInitParam: false,
 			request: &constitutionv1.MsgUpdateParams{
 				Params: testParams("12"),
 			},
-			shouldErr: true,
+			shouldErr: false,
 		},
 		{
 			name:          "updates params successfully",
@@ -57,11 +57,11 @@ func TestMsgServerUpdateParams(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			var f selfBondTestFixture
+			var f keeperTestFixture
 			if tc.withInitParam {
-				f = setupSelfBondFixture(t)
+				f = setupKeeperFixture(t)
 			} else {
-				f = setupSelfBondFixtureWithoutParams(t)
+				f = setupKeeperFixtureWithoutParams(t)
 			}
 
 			var req *constitutionv1.MsgUpdateParams

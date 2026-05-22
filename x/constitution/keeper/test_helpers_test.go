@@ -1,42 +1,63 @@
 package keeper
 
 import (
-	"errors"
+	"bytes"
 	"testing"
 
-	"cosmossdk.io/math"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	"github.com/stretchr/testify/require"
 )
 
-type failingCodec struct{}
-
-func (failingCodec) StringToBytes(string) ([]byte, error) {
-	return nil, errors.New("string to bytes failed")
+type keeperTestFixture struct {
+	ctx    sdk.Context
+	keeper Keeper
 }
 
-func (failingCodec) BytesToString([]byte) (string, error) {
-	return "", errors.New("bytes to string failed")
-}
-
-func mustInt(t *testing.T, amount string) math.Int {
+func setupKeeperFixture(t *testing.T) keeperTestFixture {
 	t.Helper()
 
-	value, ok := math.NewIntFromString(amount)
-	if !ok {
-		t.Fatalf("failed to parse int: %s", amount)
-	}
+	key := storetypes.NewKVStoreKey(constitutiontypes.StoreKey)
+	transientKey := storetypes.NewTransientStoreKey("transient_constitution_test")
+	testCtx := testutil.DefaultContextWithDB(t, key, transientKey)
 
-	return value
+	authority := sdk.AccAddress(bytes.Repeat([]byte{0x01}, 20))
+	keeper := NewKeeper(authority, runtime.NewKVStoreService(key))
+	require.NoError(t, keeper.SetParams(testCtx.Ctx, testParams("10")))
+
+	return keeperTestFixture{
+		ctx:    testCtx.Ctx,
+		keeper: keeper,
+	}
 }
 
-func mustAnyWithValue(t *testing.T, msg sdk.Msg) *codectypes.Any {
+func setupKeeperFixtureWithoutParams(t *testing.T) keeperTestFixture {
 	t.Helper()
 
-	any, err := codectypes.NewAnyWithValue(msg)
-	if err != nil {
-		t.Fatalf("failed to pack message into Any: %v", err)
-	}
+	key := storetypes.NewKVStoreKey(constitutiontypes.StoreKey)
+	transientKey := storetypes.NewTransientStoreKey("transient_constitution_test")
+	testCtx := testutil.DefaultContextWithDB(t, key, transientKey)
 
-	return any
+	authority := sdk.AccAddress(bytes.Repeat([]byte{0x01}, 20))
+	keeper := NewKeeper(authority, runtime.NewKVStoreService(key))
+
+	return keeperTestFixture{
+		ctx:    testCtx.Ctx,
+		keeper: keeper,
+	}
+}
+
+func testParams(amount string) *constitutionv1.Params {
+	return &constitutionv1.Params{
+		MinValidatorBondAmount: &basev1beta1.Coin{
+			Denom:  appparams.BaseDenom,
+			Amount: amount,
+		},
+	}
 }

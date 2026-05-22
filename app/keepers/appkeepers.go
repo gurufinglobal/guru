@@ -47,16 +47,19 @@ import (
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	customstakingkeeper "github.com/gurufinglobal/guru/v3/x/staking/keeper"
 )
 
 type AppKeepers struct {
 	kvKeys  map[string]*storetypes.KVStoreKey
+	tKeys   map[string]*storetypes.TransientStoreKey
 	objKeys map[string]*storetypes.ObjectStoreKey
 
 	// cosmos sdk keepers
 	AccountKeeper         authkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
 	StakingKeeper         *stakingkeeper.Keeper
+	CustomStakingKeeper   *customstakingkeeper.Keeper
 	SlashingKeeper        slashingkeeper.Keeper
 	MintKeeper            mintkeeper.Keeper
 	DistrKeeper           distrkeeper.Keeper
@@ -173,8 +176,12 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 
 	appKeepers.ConstitutionKeeper = constitutionkeeper.NewKeeper(
 		govAddress,
-		appKeepers.StakingKeeper,
 		runtime.NewKVStoreService(appKeepers.kvKeys[constitutiontypes.StoreKey]),
+	)
+	appKeepers.CustomStakingKeeper = customstakingkeeper.NewKeeper(
+		appKeepers.StakingKeeper,
+		&appKeepers.ConstitutionKeeper,
+		appKeepers.AccountKeeper.AddressCodec(),
 	)
 
 	appKeepers.MintKeeper = mintkeeper.NewKeeper(
@@ -209,7 +216,6 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		stakingtypes.NewMultiStakingHooks(
 			appKeepers.DistrKeeper.Hooks(),
 			appKeepers.SlashingKeeper.Hooks(),
-			constitutionkeeper.NewStakingHooks(&appKeepers.ConstitutionKeeper),
 		),
 	)
 

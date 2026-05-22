@@ -48,7 +48,7 @@ func TestValidateParamsAndMinValidatorBondAmount(t *testing.T) {
 }
 
 func TestParamsGetSetAndMinBondGetters(t *testing.T) {
-	f := setupSelfBondFixtureWithoutParams(t)
+	f := setupKeeperFixtureWithoutParams(t)
 
 	require.NoError(t, f.keeper.SetParams(f.ctx, testParams("13")))
 
@@ -66,7 +66,7 @@ func TestParamsGetSetAndMinBondGetters(t *testing.T) {
 }
 
 func TestGetMinValidatorBondAmountFailsOnCorruptedStoredParams(t *testing.T) {
-	f := setupSelfBondFixtureWithoutParams(t)
+	f := setupKeeperFixtureWithoutParams(t)
 	require.NoError(t, f.keeper.params.Set(f.ctx, &constitutionv1.Params{
 		MinValidatorBondAmount: &basev1beta1.Coin{
 			Denom:  "uatom",
@@ -78,45 +78,47 @@ func TestGetMinValidatorBondAmountFailsOnCorruptedStoredParams(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestUpdateParamsSetsFullBondedEnforcementFlag(t *testing.T) {
+func TestUpdateParams(t *testing.T) {
 	tests := []struct {
-		name          string
-		oldAmount     string
-		newAmount     string
-		shouldEnforce bool
+		name      string
+		oldAmount string
+		newAmount string
 	}{
-		{"sets flag on increase", "10", "20", true},
-		{"keeps flag off when unchanged", "10", "10", false},
-		{"keeps flag off on decrease", "20", "10", false},
+		{"updates when increased", "10", "20"},
+		{"updates when unchanged", "10", "10"},
+		{"updates when decreased", "20", "10"},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			f := setupSelfBondFixture(t)
+			f := setupKeeperFixture(t)
 			require.NoError(t, f.keeper.SetParams(f.ctx, testParams(tc.oldAmount)))
 			require.NoError(t, f.keeper.UpdateParams(f.ctx, testParams(tc.newAmount)))
 
-			enforceAll, err := f.keeper.ShouldEnforceAllBonded(f.ctx)
+			amount, err := f.keeper.GetMinValidatorBondAmount(f.ctx)
 			require.NoError(t, err)
-			require.Equal(t, tc.shouldEnforce, enforceAll)
+			require.Equal(t, tc.newAmount, amount.String())
 		})
 	}
 }
 
-func TestUpdateParamsFailsWithoutExistingParams(t *testing.T) {
-	f := setupSelfBondFixtureWithoutParams(t)
+func TestUpdateParamsWithoutExistingParams(t *testing.T) {
+	f := setupKeeperFixtureWithoutParams(t)
 
 	err := f.keeper.UpdateParams(f.ctx, testParams("11"))
-	require.Error(t, err)
+	require.NoError(t, err)
+
+	amount, err := f.keeper.GetMinValidatorBondAmount(f.ctx)
+	require.NoError(t, err)
+	require.Equal(t, "11", amount.String())
 }
 
 func TestSetMinValidatorBondAmount(t *testing.T) {
 	tests := []struct {
-		name             string
-		minBond          *basev1beta1.Coin
-		expectErr        bool
-		expectedAmount   string
-		expectedEnforced bool
+		name           string
+		minBond        *basev1beta1.Coin
+		expectErr      bool
+		expectedAmount string
 	}{
 		{
 			name: "updates and sets full scan flag on increase",
@@ -124,8 +126,7 @@ func TestSetMinValidatorBondAmount(t *testing.T) {
 				Denom:  appparams.BaseDenom,
 				Amount: "15",
 			},
-			expectedAmount:   "15",
-			expectedEnforced: true,
+			expectedAmount: "15",
 		},
 		{
 			name: "fails on invalid denom",
@@ -133,15 +134,14 @@ func TestSetMinValidatorBondAmount(t *testing.T) {
 				Denom:  "uatom",
 				Amount: "15",
 			},
-			expectErr:        true,
-			expectedAmount:   "10",
-			expectedEnforced: false,
+			expectErr:      true,
+			expectedAmount: "10",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			f := setupSelfBondFixture(t)
+			f := setupKeeperFixture(t)
 			err := f.keeper.SetMinValidatorBondAmount(f.ctx, tc.minBond)
 			if tc.expectErr {
 				require.Error(t, err)
@@ -152,28 +152,6 @@ func TestSetMinValidatorBondAmount(t *testing.T) {
 			amount, err := f.keeper.GetMinValidatorBondAmount(f.ctx)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedAmount, amount.String())
-
-			enforceAll, err := f.keeper.ShouldEnforceAllBonded(f.ctx)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedEnforced, enforceAll)
 		})
 	}
-}
-
-func TestEnforceAllBondedFlagLifecycle(t *testing.T) {
-	f := setupSelfBondFixtureWithoutParams(t)
-
-	enabled, err := f.keeper.ShouldEnforceAllBonded(f.ctx)
-	require.NoError(t, err)
-	require.False(t, enabled)
-
-	require.NoError(t, f.keeper.SetEnforceAllBonded(f.ctx, true))
-	enabled, err = f.keeper.ShouldEnforceAllBonded(f.ctx)
-	require.NoError(t, err)
-	require.True(t, enabled)
-
-	require.NoError(t, f.keeper.SetEnforceAllBonded(f.ctx, false))
-	enabled, err = f.keeper.ShouldEnforceAllBonded(f.ctx)
-	require.NoError(t, err)
-	require.False(t, enabled)
 }

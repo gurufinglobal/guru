@@ -24,10 +24,9 @@ const ConsensusVersion = 1
 const defaultMinValidatorBondAmount = "10"
 
 var (
-	_ appmodule.AppModule     = AppModule{}
-	_ appmodule.HasServices   = AppModule{}
-	_ appmodule.HasGenesis    = AppModule{}
-	_ appmodule.HasEndBlocker = AppModule{}
+	_ appmodule.AppModule   = AppModule{}
+	_ appmodule.HasServices = AppModule{}
+	_ appmodule.HasGenesis  = AppModule{}
 )
 
 // AppModule implements x/constitution using the core appmodule extension interfaces.
@@ -74,10 +73,6 @@ func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
 
 // ConsensusVersion returns the x/constitution consensus version.
 func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
-
-func (am AppModule) EndBlock(ctx context.Context) error {
-	return am.keeper.EndBlocker(ctx)
-}
 
 // DefaultGenesis writes default genesis in core GenesisTarget form.
 func (AppModule) DefaultGenesis(target appmodule.GenesisTarget) error {

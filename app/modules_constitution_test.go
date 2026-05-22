@@ -8,21 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConstitutionEndBlockerRunsBeforeStaking(t *testing.T) {
+func TestConstitutionModuleHasNoEndBlockerOrderEntry(t *testing.T) {
 	order := ModuleOrderEndBlockers()
 
 	constitutionIndex := indexOf(order, constitutiontypes.ModuleName)
-	stakingIndex := indexOf(order, stakingtypes.ModuleName)
-
-	require.NotEqual(t, -1, constitutionIndex, "constitution module must be in endblocker order")
-	require.NotEqual(t, -1, stakingIndex, "staking module must be in endblocker order")
-	require.Less(t, constitutionIndex, stakingIndex, "constitution must run before staking")
+	require.Equal(t, -1, constitutionIndex, "constitution module should not be in endblocker order")
 }
 
 func TestConstitutionModuleIsInGenesisOrder(t *testing.T) {
 	order := ModuleOrderInitGenesis()
 	constitutionIndex := indexOf(order, constitutiontypes.ModuleName)
+	stakingIndex := indexOf(order, stakingtypes.ModuleName)
 	require.NotEqual(t, -1, constitutionIndex, "constitution module must be initialized in genesis")
+	require.NotEqual(t, -1, stakingIndex, "staking module must be initialized in genesis")
+	require.Less(t, constitutionIndex, stakingIndex, "constitution must initialize before staking")
 }
 
 func indexOf(values []string, target string) int {

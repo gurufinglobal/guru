@@ -803,6 +803,7 @@ func waitForTx(t *testing.T, repoRoot, bin, home, rpcAddr, txHash string) {
 		"query", "wait-tx", txHash,
 		"--node", rpcAddr,
 		"--home", home,
+		"--timeout", "60s",
 		"--output", "json",
 	)
 	var txResp struct {

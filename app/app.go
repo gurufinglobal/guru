@@ -239,6 +239,7 @@ func NewApp(
 
 	// 1. 스토어 마운트
 	app.MountKVStores(app.GetKVStoreKeys())
+	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountObjectStores(app.GetObjectStoreKeys())
 
 	// 2. 가스 제한 및 ABCI 라이프사이클 연결

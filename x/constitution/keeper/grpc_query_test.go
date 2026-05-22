@@ -21,11 +21,11 @@ func TestQueryServerParams(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			var f selfBondTestFixture
+			var f keeperTestFixture
 			if tc.withInitParam {
-				f = setupSelfBondFixture(t)
+				f = setupKeeperFixture(t)
 			} else {
-				f = setupSelfBondFixtureWithoutParams(t)
+				f = setupKeeperFixtureWithoutParams(t)
 			}
 
 			queryServer := NewQueryServer(&f.keeper)

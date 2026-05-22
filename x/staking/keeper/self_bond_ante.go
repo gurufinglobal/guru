@@ -5,8 +5,7 @@ import (
 	"context"
 	"errors"
 
-	"cosmossdk.io/core/address"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -14,19 +13,19 @@ import (
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
-func (k Keeper) ValidateTxSelfBondConstraints(ctx context.Context, tx sdk.Tx, accountCodec address.Codec) error {
+func (k *Keeper) ValidateTxSelfBondConstraints(ctx context.Context, tx sdk.Tx) error {
 	if tx == nil {
 		return nil
 	}
 
-	minBond, err := k.GetMinValidatorBondAmount(ctx)
+	minBond, err := k.minBondSource.GetMinValidatorBondAmount(ctx)
 	if err != nil {
 		return err
 	}
 
-	projectedSelfBond := make(map[string]math.Int, len(tx.GetMsgs()))
+	projectedSelfBond := make(map[string]sdkmath.Int, len(tx.GetMsgs()))
 	for _, msg := range tx.GetMsgs() {
-		if err := k.validateMsgSelfBondConstraints(ctx, msg, accountCodec, minBond, projectedSelfBond); err != nil {
+		if err := k.validateMsgSelfBondConstraints(ctx, msg, minBond, projectedSelfBond); err != nil {
 			return err
 		}
 	}
@@ -34,31 +33,30 @@ func (k Keeper) ValidateTxSelfBondConstraints(ctx context.Context, tx sdk.Tx, ac
 	return nil
 }
 
-func (k Keeper) validateMsgSelfBondConstraints(
+func (k *Keeper) validateMsgSelfBondConstraints(
 	ctx context.Context,
 	msg sdk.Msg,
-	accountCodec address.Codec,
-	minBond math.Int,
-	projectedSelfBond map[string]math.Int,
+	minBond sdkmath.Int,
+	projectedSelfBond map[string]sdkmath.Int,
 ) error {
 	switch m := msg.(type) {
 	case *stakingtypes.MsgCreateValidator:
 		return k.validateCreateValidatorSelfBond(m, minBond, projectedSelfBond)
 	case *stakingtypes.MsgDelegate:
-		return k.validateDelegateSelfBond(ctx, m, accountCodec, projectedSelfBond)
+		return k.validateDelegateSelfBond(ctx, m, projectedSelfBond)
 	case *stakingtypes.MsgUndelegate:
-		return k.validateUndelegateSelfBond(ctx, m, accountCodec, minBond, projectedSelfBond)
+		return k.validateUndelegateSelfBond(ctx, m, minBond, projectedSelfBond)
 	case *stakingtypes.MsgBeginRedelegate:
-		return k.validateBeginRedelegateSelfBond(ctx, m, accountCodec, minBond, projectedSelfBond)
+		return k.validateBeginRedelegateSelfBond(ctx, m, minBond, projectedSelfBond)
 	case *stakingtypes.MsgCancelUnbondingDelegation:
-		return k.validateCancelUnbondingDelegationSelfBond(ctx, m, accountCodec, projectedSelfBond)
+		return k.validateCancelUnbondingDelegationSelfBond(ctx, m, projectedSelfBond)
 	case *authztypes.MsgExec:
 		msgs, err := m.GetMessages()
 		if err != nil {
 			return err
 		}
 		for _, nested := range msgs {
-			if err := k.validateMsgSelfBondConstraints(ctx, nested, accountCodec, minBond, projectedSelfBond); err != nil {
+			if err := k.validateMsgSelfBondConstraints(ctx, nested, minBond, projectedSelfBond); err != nil {
 				return err
 			}
 		}
@@ -67,10 +65,10 @@ func (k Keeper) validateMsgSelfBondConstraints(
 	return nil
 }
 
-func (k Keeper) validateCreateValidatorSelfBond(
+func (k *Keeper) validateCreateValidatorSelfBond(
 	msg *stakingtypes.MsgCreateValidator,
-	minBond math.Int,
-	projectedSelfBond map[string]math.Int,
+	minBond sdkmath.Int,
+	projectedSelfBond map[string]sdkmath.Int,
 ) error {
 	if msg.Value.Denom != appparams.BaseDenom {
 		return nil
@@ -84,7 +82,7 @@ func (k Keeper) validateCreateValidatorSelfBond(
 		)
 	}
 
-	validatorAddr, err := k.stakingKeeper.ValidatorAddressCodec().StringToBytes(msg.ValidatorAddress)
+	validatorAddr, err := k.selfBondSource.ValidatorAddressCodec().StringToBytes(msg.ValidatorAddress)
 	if err != nil {
 		return err
 	}
@@ -93,17 +91,16 @@ func (k Keeper) validateCreateValidatorSelfBond(
 	return nil
 }
 
-func (k Keeper) validateDelegateSelfBond(
+func (k *Keeper) validateDelegateSelfBond(
 	ctx context.Context,
 	msg *stakingtypes.MsgDelegate,
-	accountCodec address.Codec,
-	projectedSelfBond map[string]math.Int,
+	projectedSelfBond map[string]sdkmath.Int,
 ) error {
 	if msg.Amount.Denom != appparams.BaseDenom {
 		return nil
 	}
 
-	validatorAddr, isSelfDelegation, err := k.parseSelfDelegationAddresses(msg.ValidatorAddress, msg.DelegatorAddress, accountCodec)
+	validatorAddr, isSelfDelegation, err := k.parseSelfDelegationAddresses(msg.ValidatorAddress, msg.DelegatorAddress)
 	if err != nil {
 		return err
 	}
@@ -123,18 +120,17 @@ func (k Keeper) validateDelegateSelfBond(
 	return nil
 }
 
-func (k Keeper) validateUndelegateSelfBond(
+func (k *Keeper) validateUndelegateSelfBond(
 	ctx context.Context,
 	msg *stakingtypes.MsgUndelegate,
-	accountCodec address.Codec,
-	minBond math.Int,
-	projectedSelfBond map[string]math.Int,
+	minBond sdkmath.Int,
+	projectedSelfBond map[string]sdkmath.Int,
 ) error {
 	if msg.Amount.Denom != appparams.BaseDenom {
 		return nil
 	}
 
-	validatorAddr, isSelfDelegation, err := k.parseSelfDelegationAddresses(msg.ValidatorAddress, msg.DelegatorAddress, accountCodec)
+	validatorAddr, isSelfDelegation, err := k.parseSelfDelegationAddresses(msg.ValidatorAddress, msg.DelegatorAddress)
 	if err != nil {
 		return err
 	}
@@ -152,18 +148,17 @@ func (k Keeper) validateUndelegateSelfBond(
 	)
 }
 
-func (k Keeper) validateBeginRedelegateSelfBond(
+func (k *Keeper) validateBeginRedelegateSelfBond(
 	ctx context.Context,
 	msg *stakingtypes.MsgBeginRedelegate,
-	accountCodec address.Codec,
-	minBond math.Int,
-	projectedSelfBond map[string]math.Int,
+	minBond sdkmath.Int,
+	projectedSelfBond map[string]sdkmath.Int,
 ) error {
 	if msg.Amount.Denom != appparams.BaseDenom {
 		return nil
 	}
 
-	validatorAddr, isSelfDelegation, err := k.parseSelfDelegationAddresses(msg.ValidatorSrcAddress, msg.DelegatorAddress, accountCodec)
+	validatorAddr, isSelfDelegation, err := k.parseSelfDelegationAddresses(msg.ValidatorSrcAddress, msg.DelegatorAddress)
 	if err != nil {
 		return err
 	}
@@ -181,17 +176,16 @@ func (k Keeper) validateBeginRedelegateSelfBond(
 	)
 }
 
-func (k Keeper) validateCancelUnbondingDelegationSelfBond(
+func (k *Keeper) validateCancelUnbondingDelegationSelfBond(
 	ctx context.Context,
 	msg *stakingtypes.MsgCancelUnbondingDelegation,
-	accountCodec address.Codec,
-	projectedSelfBond map[string]math.Int,
+	projectedSelfBond map[string]sdkmath.Int,
 ) error {
 	if msg.Amount.Denom != appparams.BaseDenom {
 		return nil
 	}
 
-	validatorAddr, isSelfDelegation, err := k.parseSelfDelegationAddresses(msg.ValidatorAddress, msg.DelegatorAddress, accountCodec)
+	validatorAddr, isSelfDelegation, err := k.parseSelfDelegationAddresses(msg.ValidatorAddress, msg.DelegatorAddress)
 	if err != nil {
 		return err
 	}
@@ -211,13 +205,13 @@ func (k Keeper) validateCancelUnbondingDelegationSelfBond(
 	return nil
 }
 
-func (k Keeper) ensureProjectedSelfBondAfterDecrease(
+func (k *Keeper) ensureProjectedSelfBondAfterDecrease(
 	ctx context.Context,
 	validatorAddr sdk.ValAddress,
-	decrease math.Int,
-	minBond math.Int,
+	decrease sdkmath.Int,
+	minBond sdkmath.Int,
 	messageType string,
-	projectedSelfBond map[string]math.Int,
+	projectedSelfBond map[string]sdkmath.Int,
 ) error {
 	currentSelfBond, exists, err := k.getProjectedSelfBond(ctx, validatorAddr, projectedSelfBond)
 	if err != nil {
@@ -242,16 +236,15 @@ func (k Keeper) ensureProjectedSelfBondAfterDecrease(
 	return nil
 }
 
-func (k Keeper) parseSelfDelegationAddresses(
+func (k *Keeper) parseSelfDelegationAddresses(
 	validatorAddress string,
 	delegatorAddress string,
-	accountCodec address.Codec,
 ) (sdk.ValAddress, bool, error) {
-	validatorAddr, err := k.stakingKeeper.ValidatorAddressCodec().StringToBytes(validatorAddress)
+	validatorAddr, err := k.selfBondSource.ValidatorAddressCodec().StringToBytes(validatorAddress)
 	if err != nil {
 		return nil, false, err
 	}
-	delegatorAddr, err := accountCodec.StringToBytes(delegatorAddress)
+	delegatorAddr, err := k.accountCodec.StringToBytes(delegatorAddress)
 	if err != nil {
 		return nil, false, err
 	}
@@ -259,11 +252,11 @@ func (k Keeper) parseSelfDelegationAddresses(
 	return sdk.ValAddress(validatorAddr), bytes.Equal(validatorAddr, delegatorAddr), nil
 }
 
-func (k Keeper) getProjectedSelfBond(
+func (k *Keeper) getProjectedSelfBond(
 	ctx context.Context,
 	validatorAddr sdk.ValAddress,
-	projectedSelfBond map[string]math.Int,
-) (math.Int, bool, error) {
+	projectedSelfBond map[string]sdkmath.Int,
+) (sdkmath.Int, bool, error) {
 	key := string(validatorAddr)
 	if selfBond, ok := projectedSelfBond[key]; ok {
 		return selfBond, true, nil
@@ -272,57 +265,17 @@ func (k Keeper) getProjectedSelfBond(
 	selfBond, err := k.GetValidatorSelfBond(ctx, validatorAddr)
 	if err != nil {
 		if errors.Is(err, stakingtypes.ErrNoValidatorFound) {
-			return math.Int{}, false, nil
+			return sdkmath.Int{}, false, nil
 		}
-		return math.Int{}, false, err
+		return sdkmath.Int{}, false, err
 	}
 
 	projectedSelfBond[key] = selfBond
 	return selfBond, true, nil
 }
 
-func (k Keeper) EnsureValidatorMinSelfBond(ctx context.Context, validatorAddr sdk.ValAddress, minBond math.Int) error {
-	selfBond, err := k.GetValidatorSelfBond(ctx, validatorAddr)
-	if err != nil {
-		return err
-	}
-	if selfBond.LT(minBond) {
-		return constitutiontypes.ErrSelfBondBelowMin.Wrapf(
-			"validator self-bond below minimum: self_bond=%s min=%s validator=%s",
-			selfBond,
-			minBond,
-			k.mustValidatorAddressString(validatorAddr),
-		)
-	}
-
-	return nil
-}
-
-func (k Keeper) GetValidatorSelfBond(ctx context.Context, validatorAddr sdk.ValAddress) (math.Int, error) {
-	_, selfBond, err := k.getValidatorAndSelfBond(ctx, validatorAddr)
-	return selfBond, err
-}
-
-func (k Keeper) getValidatorAndSelfBond(ctx context.Context, validatorAddr sdk.ValAddress) (stakingtypes.Validator, math.Int, error) {
-	validator, err := k.stakingKeeper.GetValidator(ctx, validatorAddr)
-	if err != nil {
-		return stakingtypes.Validator{}, math.Int{}, err
-	}
-
-	delegation, err := k.stakingKeeper.GetDelegation(ctx, sdk.AccAddress(validatorAddr), validatorAddr)
-	if err != nil {
-		if errors.Is(err, stakingtypes.ErrNoDelegation) {
-			return validator, math.ZeroInt(), nil
-		}
-		return stakingtypes.Validator{}, math.Int{}, err
-	}
-
-	selfBond := validator.TokensFromSharesTruncated(delegation.GetShares()).TruncateInt()
-	return validator, selfBond, nil
-}
-
-func (k Keeper) mustValidatorAddressString(addr sdk.ValAddress) string {
-	validatorAddress, err := k.stakingKeeper.ValidatorAddressCodec().BytesToString(addr)
+func (k *Keeper) mustValidatorAddressString(addr sdk.ValAddress) string {
+	validatorAddress, err := k.selfBondSource.ValidatorAddressCodec().BytesToString(addr)
 	if err != nil {
 		return "<invalid-validator-address>"
 	}

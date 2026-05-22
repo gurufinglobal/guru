@@ -30,7 +30,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	sdkstaking "github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -47,6 +47,7 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	constitution "github.com/gurufinglobal/guru/v3/x/constitution"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	customstaking "github.com/gurufinglobal/guru/v3/x/staking"
 )
 
 var (
@@ -86,7 +87,6 @@ var (
 	endBlockerOrder = []string{
 		banktypes.ModuleName,
 		govtypes.ModuleName,
-		constitutiontypes.ModuleName,
 		stakingtypes.ModuleName,
 		authtypes.ModuleName,
 
@@ -113,11 +113,11 @@ var (
 	initGenesisOrder = []string{
 		authtypes.ModuleName,
 		banktypes.ModuleName,
+		constitutiontypes.ModuleName,
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
-		constitutiontypes.ModuleName,
 		minttypes.ModuleName,
 		ibcexported.ModuleName,
 
@@ -157,7 +157,10 @@ func appModules(
 			mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 			slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 			distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
-			staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
+			customstaking.NewAppModule(
+				sdkstaking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
+				app.CustomStakingKeeper,
+			),
 			upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 			evidence.NewAppModule(app.EvidenceKeeper),
 			authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
@@ -207,7 +210,7 @@ func newBasicManagerFromManager(app *App) module.BasicManager {
 		app.ModuleManager,
 		map[string]module.AppModuleBasic{
 			genutiltypes.ModuleName:     genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
-			stakingtypes.ModuleName:     staking.AppModuleBasic{},
+			stakingtypes.ModuleName:     sdkstaking.AppModuleBasic{},
 			govtypes.ModuleName:         gov.NewAppModuleBasic(nil),
 			ibctransfertypes.ModuleName: transfer.AppModuleBasic{},
 		},

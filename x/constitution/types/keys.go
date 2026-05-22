@@ -7,8 +7,7 @@ const (
 	StoreKey   = ModuleName
 )
 
+// Keys of the KVStore
 var (
-	ParamsKey            = collections.NewPrefix(0x01)
-	ChangedValidatorsKey = collections.NewPrefix(0x02)
-	EnforceAllBondedKey  = collections.NewPrefix(0x03)
+	ParamsKey = collections.NewPrefix(0x01)
 )

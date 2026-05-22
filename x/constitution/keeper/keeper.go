@@ -16,26 +16,22 @@ import (
 type Keeper struct {
 	authority sdk.AccAddress
 
-	stakingKeeper types.StakingKeeper
-
-	params            collections.Item[*constitutionv1.Params]
-	changedValidators collections.KeySet[[]byte]
-	enforceAllBonded  collections.Item[bool]
+	params collections.Item[*constitutionv1.Params]
 
 	schema collections.Schema
 }
 
-func NewKeeper(authority sdk.AccAddress, stakingKeeper types.StakingKeeper, storeService store.KVStoreService) Keeper {
+func NewKeeper(
+	authority sdk.AccAddress,
+	storeService store.KVStoreService,
+) Keeper {
 	k := Keeper{
-		authority:     authority,
-		stakingKeeper: stakingKeeper,
+		authority: authority,
 	}
 
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k.params = collections.NewItem(sb, types.ParamsKey, "params", codec.CollValueV2[constitutionv1.Params]())
-	k.changedValidators = collections.NewKeySet(sb, types.ChangedValidatorsKey, "changed_validators", collections.BytesKey)
-	k.enforceAllBonded = collections.NewItem(sb, types.EnforceAllBondedKey, "enforce_all_bonded", collections.BoolValue)
 	schema, err := sb.Build()
 	if err != nil {
 		panic(err)

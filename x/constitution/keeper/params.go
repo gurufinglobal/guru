@@ -27,25 +27,11 @@ func (k Keeper) SetParams(ctx context.Context, params *constitutionv1.Params) er
 }
 
 func (k Keeper) UpdateParams(ctx context.Context, params *constitutionv1.Params) error {
-	currentMinBond, err := k.GetMinValidatorBondAmount(ctx)
-	if err != nil {
+	if err := ValidateParams(params); err != nil {
 		return err
 	}
 
-	newMinBond, err := validateAndGetMinValidatorBondAmount(params)
-	if err != nil {
-		return err
-	}
-
-	if err := k.params.Set(ctx, params); err != nil {
-		return err
-	}
-
-	if newMinBond.GT(currentMinBond) {
-		return k.SetEnforceAllBonded(ctx, true)
-	}
-
-	return nil
+	return k.params.Set(ctx, params)
 }
 
 func ValidateParams(params *constitutionv1.Params) error {
@@ -135,24 +121,4 @@ func (k Keeper) SetMinValidatorBondAmount(ctx context.Context, minBond *basev1be
 	params.MinValidatorBondAmount = minBond
 
 	return k.UpdateParams(ctx, params)
-}
-
-func (k Keeper) ShouldEnforceAllBonded(ctx context.Context) (bool, error) {
-	has, err := k.enforceAllBonded.Has(ctx)
-	if err != nil {
-		return false, err
-	}
-	if !has {
-		return false, nil
-	}
-
-	return k.enforceAllBonded.Get(ctx)
-}
-
-func (k Keeper) SetEnforceAllBonded(ctx context.Context, enforce bool) error {
-	if !enforce {
-		return k.enforceAllBonded.Remove(ctx)
-	}
-
-	return k.enforceAllBonded.Set(ctx, true)
 }

@@ -52,6 +52,7 @@ func (ak *AppKeepers) GenerateKeys() {
 		banktypes.ObjectStoreKey,
 		evmtypes.ObjectKey,
 	)
+	ak.tKeys = storetypes.NewTransientStoreKeys()
 }
 
 func (ak *AppKeepers) GetKVStoreKey(key string) *storetypes.KVStoreKey {
@@ -68,6 +69,14 @@ func (ak *AppKeepers) GetObjectStoreKey(key string) *storetypes.ObjectStoreKey {
 
 func (ak *AppKeepers) GetObjectStoreKeys() map[string]*storetypes.ObjectStoreKey {
 	return ak.objKeys
+}
+
+func (ak *AppKeepers) GetTransientStoreKey(key string) *storetypes.TransientStoreKey {
+	return ak.tKeys[key]
+}
+
+func (ak *AppKeepers) GetTransientStoreKeys() map[string]*storetypes.TransientStoreKey {
+	return ak.tKeys
 }
 
 func (ak *AppKeepers) GetNonTransientKeys() []storetypes.StoreKey {
