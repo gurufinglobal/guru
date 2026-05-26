@@ -69,6 +69,9 @@ var (
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
 
+		// constitution separation must run before distribution.
+		constitutiontypes.ModuleName,
+
 		// no-op and legacy blockers
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,

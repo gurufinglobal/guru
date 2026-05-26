@@ -18,9 +18,10 @@ import (
 const ConsensusVersion = 1
 
 var (
-	_ appmodule.AppModule   = AppModule{}
-	_ appmodule.HasServices = AppModule{}
-	_ appmodule.HasGenesis  = AppModule{}
+	_ appmodule.AppModule       = AppModule{}
+	_ appmodule.HasServices     = AppModule{}
+	_ appmodule.HasGenesis      = AppModule{}
+	_ appmodule.HasBeginBlocker = AppModule{}
 )
 
 // AppModule implements x/constitution using the core appmodule extension interfaces.
@@ -63,6 +64,11 @@ func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
 	constitutionv1.RegisterMsgServer(registrar, constitutionkeeper.NewMsgServer(&am.keeper))
 	constitutionv1.RegisterQueryServer(registrar, constitutionkeeper.NewQueryServer(&am.keeper))
 	return nil
+}
+
+// BeginBlock executes constitution separation before other dependent begin blockers.
+func (am AppModule) BeginBlock(ctx context.Context) error {
+	return am.keeper.ExecuteSeparation(ctx)
 }
 
 // ConsensusVersion returns the x/constitution consensus version.

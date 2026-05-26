@@ -40,7 +40,7 @@ func setupGenesisTestFixture(t *testing.T) genesisTestFixture {
 
 	accountCodec := evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr)
 	authorityBytes := sdk.AccAddress(bytes.Repeat([]byte{0x01}, 20))
-	keeper := constitutionkeeper.NewKeeper(authorityBytes, runtime.NewKVStoreService(key), accountCodec)
+	keeper := constitutionkeeper.NewKeeper(authorityBytes, runtime.NewKVStoreService(key), accountCodec, nil)
 	module := NewAppModule(keeper)
 
 	authorityAddress, err := keeper.AuthorityAddressString()

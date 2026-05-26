@@ -7,6 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -166,7 +167,15 @@ func (app *App) DefaultGenesis() map[string]json.RawMessage {
 	}
 	genesis[govtypes.ModuleName] = app.appCodec.MustMarshalJSON(govGenesis)
 
-	// 5) EVM denom and extended denom
+	// 5) distribution community tax
+	distrGenesis := distrtypes.DefaultGenesisState()
+	if bz, ok := genesis[distrtypes.ModuleName]; ok {
+		app.appCodec.MustUnmarshalJSON(bz, distrGenesis)
+	}
+	distrGenesis.Params.CommunityTax = sdkmath.LegacyZeroDec()
+	genesis[distrtypes.ModuleName] = app.appCodec.MustMarshalJSON(distrGenesis)
+
+	// 6) EVM denom and extended denom
 	evmGenesis := evmtypes.DefaultGenesisState()
 	if bz, ok := genesis[evmtypes.ModuleName]; ok {
 		app.appCodec.MustUnmarshalJSON(bz, evmGenesis)

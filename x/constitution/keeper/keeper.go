@@ -18,6 +18,7 @@ import (
 type Keeper struct {
 	authority    sdk.AccAddress
 	accountCodec address.Codec
+	bankKeeper   BankKeeper
 
 	params           collections.Item[*constitutionv1.Params]
 	baseAddress      collections.Item[string]
@@ -31,10 +32,12 @@ func NewKeeper(
 	authority sdk.AccAddress,
 	storeService store.KVStoreService,
 	accountCodec address.Codec,
+	bankKeeper BankKeeper,
 ) Keeper {
 	k := Keeper{
 		authority:    authority,
 		accountCodec: accountCodec,
+		bankKeeper:   bankKeeper,
 	}
 
 	sb := collections.NewSchemaBuilder(storeService)
