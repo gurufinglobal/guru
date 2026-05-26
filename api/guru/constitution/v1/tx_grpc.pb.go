@@ -19,7 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Msg_UpdateParams_FullMethodName = "/guru.constitution.v1.Msg/UpdateParams"
+	Msg_UpdateParams_FullMethodName           = "/guru.constitution.v1.Msg/UpdateParams"
+	Msg_UpdateBaseAddress_FullMethodName      = "/guru.constitution.v1.Msg/UpdateBaseAddress"
+	Msg_UpdateModeratorAddress_FullMethodName = "/guru.constitution.v1.Msg/UpdateModeratorAddress"
+	Msg_UpdateSeparationRatio_FullMethodName  = "/guru.constitution.v1.Msg/UpdateSeparationRatio"
 )
 
 // MsgClient is the client API for Msg service.
@@ -28,6 +31,13 @@ const (
 type MsgClient interface {
 	// UpdateParams defines a governance operation for updating the parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
+	// UpdateBaseAddress updates base address controlled by the moderator.
+	UpdateBaseAddress(ctx context.Context, in *MsgUpdateBaseAddress, opts ...grpc.CallOption) (*MsgUpdateBaseAddressResponse, error)
+	// UpdateModeratorAddress updates moderator address controlled by the
+	// moderator.
+	UpdateModeratorAddress(ctx context.Context, in *MsgUpdateModeratorAddress, opts ...grpc.CallOption) (*MsgUpdateModeratorAddressResponse, error)
+	// UpdateSeparationRatio updates separation ratio controlled by the moderator.
+	UpdateSeparationRatio(ctx context.Context, in *MsgUpdateSeparationRatio, opts ...grpc.CallOption) (*MsgUpdateSeparationRatioResponse, error)
 }
 
 type msgClient struct {
@@ -48,12 +58,49 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
+func (c *msgClient) UpdateBaseAddress(ctx context.Context, in *MsgUpdateBaseAddress, opts ...grpc.CallOption) (*MsgUpdateBaseAddressResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgUpdateBaseAddressResponse)
+	err := c.cc.Invoke(ctx, Msg_UpdateBaseAddress_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) UpdateModeratorAddress(ctx context.Context, in *MsgUpdateModeratorAddress, opts ...grpc.CallOption) (*MsgUpdateModeratorAddressResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgUpdateModeratorAddressResponse)
+	err := c.cc.Invoke(ctx, Msg_UpdateModeratorAddress_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) UpdateSeparationRatio(ctx context.Context, in *MsgUpdateSeparationRatio, opts ...grpc.CallOption) (*MsgUpdateSeparationRatioResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgUpdateSeparationRatioResponse)
+	err := c.cc.Invoke(ctx, Msg_UpdateSeparationRatio_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility.
 type MsgServer interface {
 	// UpdateParams defines a governance operation for updating the parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
+	// UpdateBaseAddress updates base address controlled by the moderator.
+	UpdateBaseAddress(context.Context, *MsgUpdateBaseAddress) (*MsgUpdateBaseAddressResponse, error)
+	// UpdateModeratorAddress updates moderator address controlled by the
+	// moderator.
+	UpdateModeratorAddress(context.Context, *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error)
+	// UpdateSeparationRatio updates separation ratio controlled by the moderator.
+	UpdateSeparationRatio(context.Context, *MsgUpdateSeparationRatio) (*MsgUpdateSeparationRatioResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -66,6 +113,15 @@ type UnimplementedMsgServer struct{}
 
 func (UnimplementedMsgServer) UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateParams not implemented")
+}
+func (UnimplementedMsgServer) UpdateBaseAddress(context.Context, *MsgUpdateBaseAddress) (*MsgUpdateBaseAddressResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateBaseAddress not implemented")
+}
+func (UnimplementedMsgServer) UpdateModeratorAddress(context.Context, *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateModeratorAddress not implemented")
+}
+func (UnimplementedMsgServer) UpdateSeparationRatio(context.Context, *MsgUpdateSeparationRatio) (*MsgUpdateSeparationRatioResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateSeparationRatio not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 func (UnimplementedMsgServer) testEmbeddedByValue()             {}
@@ -106,6 +162,60 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_UpdateBaseAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateBaseAddress)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateBaseAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_UpdateBaseAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateBaseAddress(ctx, req.(*MsgUpdateBaseAddress))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_UpdateModeratorAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateModeratorAddress)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateModeratorAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_UpdateModeratorAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateModeratorAddress(ctx, req.(*MsgUpdateModeratorAddress))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_UpdateSeparationRatio_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateSeparationRatio)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateSeparationRatio(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_UpdateSeparationRatio_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateSeparationRatio(ctx, req.(*MsgUpdateSeparationRatio))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Msg_ServiceDesc is the grpc.ServiceDesc for Msg service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -116,6 +226,18 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateParams",
 			Handler:    _Msg_UpdateParams_Handler,
+		},
+		{
+			MethodName: "UpdateBaseAddress",
+			Handler:    _Msg_UpdateBaseAddress_Handler,
+		},
+		{
+			MethodName: "UpdateModeratorAddress",
+			Handler:    _Msg_UpdateModeratorAddress_Handler,
+		},
+		{
+			MethodName: "UpdateSeparationRatio",
+			Handler:    _Msg_UpdateSeparationRatio_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

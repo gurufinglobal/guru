@@ -1,0 +1,12 @@
+syntax = "proto3";
+package guru.constitution.v1;
+
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
+
+message SeparationRatio {
+  string base = 1 [ (cosmos_proto.scalar) = "cosmos.Dec" ];
+  string burn = 2 [ (cosmos_proto.scalar) = "cosmos.Dec" ];
+  string validators = 3 [ (cosmos_proto.scalar) = "cosmos.Dec" ];
+}

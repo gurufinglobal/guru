@@ -3,6 +3,7 @@ package constitutionv1
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-proto"
 	runtime "github.com/cosmos/cosmos-proto/runtime"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoiface "google.golang.org/protobuf/runtime/protoiface"
@@ -13,14 +14,20 @@ import (
 )
 
 var (
-	md_GenesisState        protoreflect.MessageDescriptor
-	fd_GenesisState_params protoreflect.FieldDescriptor
+	md_GenesisState                   protoreflect.MessageDescriptor
+	fd_GenesisState_params            protoreflect.FieldDescriptor
+	fd_GenesisState_base_address      protoreflect.FieldDescriptor
+	fd_GenesisState_moderator_address protoreflect.FieldDescriptor
+	fd_GenesisState_separation_ratio  protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_constitution_v1_genesis_proto_init()
 	md_GenesisState = File_guru_constitution_v1_genesis_proto.Messages().ByName("GenesisState")
 	fd_GenesisState_params = md_GenesisState.Fields().ByName("params")
+	fd_GenesisState_base_address = md_GenesisState.Fields().ByName("base_address")
+	fd_GenesisState_moderator_address = md_GenesisState.Fields().ByName("moderator_address")
+	fd_GenesisState_separation_ratio = md_GenesisState.Fields().ByName("separation_ratio")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -94,6 +101,24 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if x.BaseAddress != "" {
+		value := protoreflect.ValueOfString(x.BaseAddress)
+		if !f(fd_GenesisState_base_address, value) {
+			return
+		}
+	}
+	if x.ModeratorAddress != "" {
+		value := protoreflect.ValueOfString(x.ModeratorAddress)
+		if !f(fd_GenesisState_moderator_address, value) {
+			return
+		}
+	}
+	if x.SeparationRatio != nil {
+		value := protoreflect.ValueOfMessage(x.SeparationRatio.ProtoReflect())
+		if !f(fd_GenesisState_separation_ratio, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -111,6 +136,12 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 	switch fd.FullName() {
 	case "guru.constitution.v1.GenesisState.params":
 		return x.Params != nil
+	case "guru.constitution.v1.GenesisState.base_address":
+		return x.BaseAddress != ""
+	case "guru.constitution.v1.GenesisState.moderator_address":
+		return x.ModeratorAddress != ""
+	case "guru.constitution.v1.GenesisState.separation_ratio":
+		return x.SeparationRatio != nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.GenesisState"))
@@ -129,6 +160,12 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
 	case "guru.constitution.v1.GenesisState.params":
 		x.Params = nil
+	case "guru.constitution.v1.GenesisState.base_address":
+		x.BaseAddress = ""
+	case "guru.constitution.v1.GenesisState.moderator_address":
+		x.ModeratorAddress = ""
+	case "guru.constitution.v1.GenesisState.separation_ratio":
+		x.SeparationRatio = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.GenesisState"))
@@ -147,6 +184,15 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 	switch descriptor.FullName() {
 	case "guru.constitution.v1.GenesisState.params":
 		value := x.Params
+		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	case "guru.constitution.v1.GenesisState.base_address":
+		value := x.BaseAddress
+		return protoreflect.ValueOfString(value)
+	case "guru.constitution.v1.GenesisState.moderator_address":
+		value := x.ModeratorAddress
+		return protoreflect.ValueOfString(value)
+	case "guru.constitution.v1.GenesisState.separation_ratio":
+		value := x.SeparationRatio
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	default:
 		if descriptor.IsExtension() {
@@ -170,6 +216,12 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 	switch fd.FullName() {
 	case "guru.constitution.v1.GenesisState.params":
 		x.Params = value.Message().Interface().(*Params)
+	case "guru.constitution.v1.GenesisState.base_address":
+		x.BaseAddress = value.Interface().(string)
+	case "guru.constitution.v1.GenesisState.moderator_address":
+		x.ModeratorAddress = value.Interface().(string)
+	case "guru.constitution.v1.GenesisState.separation_ratio":
+		x.SeparationRatio = value.Message().Interface().(*SeparationRatio)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.GenesisState"))
@@ -195,6 +247,15 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 			x.Params = new(Params)
 		}
 		return protoreflect.ValueOfMessage(x.Params.ProtoReflect())
+	case "guru.constitution.v1.GenesisState.separation_ratio":
+		if x.SeparationRatio == nil {
+			x.SeparationRatio = new(SeparationRatio)
+		}
+		return protoreflect.ValueOfMessage(x.SeparationRatio.ProtoReflect())
+	case "guru.constitution.v1.GenesisState.base_address":
+		panic(fmt.Errorf("field base_address of message guru.constitution.v1.GenesisState is not mutable"))
+	case "guru.constitution.v1.GenesisState.moderator_address":
+		panic(fmt.Errorf("field moderator_address of message guru.constitution.v1.GenesisState is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.GenesisState"))
@@ -210,6 +271,13 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 	switch fd.FullName() {
 	case "guru.constitution.v1.GenesisState.params":
 		m := new(Params)
+		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	case "guru.constitution.v1.GenesisState.base_address":
+		return protoreflect.ValueOfString("")
+	case "guru.constitution.v1.GenesisState.moderator_address":
+		return protoreflect.ValueOfString("")
+	case "guru.constitution.v1.GenesisState.separation_ratio":
+		m := new(SeparationRatio)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	default:
 		if fd.IsExtension() {
@@ -284,6 +352,18 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 			l = options.Size(x.Params)
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		l = len(x.BaseAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		l = len(x.ModeratorAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.SeparationRatio != nil {
+			l = options.Size(x.SeparationRatio)
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -312,6 +392,34 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.SeparationRatio != nil {
+			encoded, err := options.Marshal(x.SeparationRatio)
+			if err != nil {
+				return protoiface.MarshalOutput{
+					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+					Buf:               input.Buf,
+				}, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0x22
+		}
+		if len(x.ModeratorAddress) > 0 {
+			i -= len(x.ModeratorAddress)
+			copy(dAtA[i:], x.ModeratorAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ModeratorAddress)))
+			i--
+			dAtA[i] = 0x1a
+		}
+		if len(x.BaseAddress) > 0 {
+			i -= len(x.BaseAddress)
+			copy(dAtA[i:], x.BaseAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.BaseAddress)))
+			i--
+			dAtA[i] = 0x12
 		}
 		if x.Params != nil {
 			encoded, err := options.Marshal(x.Params)
@@ -412,6 +520,106 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
+			case 2:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BaseAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.BaseAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 3:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ModeratorAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.ModeratorAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 4:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SeparationRatio", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if x.SeparationRatio == nil {
+					x.SeparationRatio = &SeparationRatio{}
+				}
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.SeparationRatio); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -465,7 +673,10 @@ type GenesisState struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Params *Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	Params           *Params          `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	BaseAddress      string           `protobuf:"bytes,2,opt,name=base_address,json=baseAddress,proto3" json:"base_address,omitempty"`
+	ModeratorAddress string           `protobuf:"bytes,3,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	SeparationRatio  *SeparationRatio `protobuf:"bytes,4,opt,name=separation_ratio,json=separationRatio,proto3" json:"separation_ratio,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -495,35 +706,73 @@ func (x *GenesisState) GetParams() *Params {
 	return nil
 }
 
+func (x *GenesisState) GetBaseAddress() string {
+	if x != nil {
+		return x.BaseAddress
+	}
+	return ""
+}
+
+func (x *GenesisState) GetModeratorAddress() string {
+	if x != nil {
+		return x.ModeratorAddress
+	}
+	return ""
+}
+
+func (x *GenesisState) GetSeparationRatio() *SeparationRatio {
+	if x != nil {
+		return x.SeparationRatio
+	}
+	return nil
+}
+
 var File_guru_constitution_v1_genesis_proto protoreflect.FileDescriptor
 
 var file_guru_constitution_v1_genesis_proto_rawDesc = []byte{
 	0x0a, 0x22, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74,
 	0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x2f, 0x67, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x14, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74,
-	0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x1a, 0x21, 0x67, 0x75, 0x72, 0x75,
-	0x2f, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31,
-	0x2f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x44, 0x0a,
-	0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x34, 0x0a,
-	0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e,
+	0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x1a, 0x19, 0x63, 0x6f, 0x73, 0x6d,
+	0x6f, 0x73, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x21, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63, 0x6f, 0x6e, 0x73,
+	0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x61, 0x72, 0x61,
+	0x6d, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x20, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63,
+	0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x2f, 0x74,
+	0x79, 0x70, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9a, 0x02, 0x0a, 0x0c, 0x47,
+	0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x34, 0x0a, 0x06, 0x70,
+	0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x75,
+	0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e,
+	0x76, 0x31, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d,
+	0x73, 0x12, 0x3b, 0x0a, 0x0c, 0x62, 0x61, 0x73, 0x65, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
+	0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73,
+	0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e,
+	0x67, 0x52, 0x0b, 0x62, 0x61, 0x73, 0x65, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x45,
+	0x0a, 0x11, 0x6d, 0x6f, 0x64, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72,
+	0x65, 0x73, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63,
+	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72,
+	0x69, 0x6e, 0x67, 0x52, 0x10, 0x6d, 0x6f, 0x64, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x41, 0x64,
+	0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x50, 0x0a, 0x10, 0x73, 0x65, 0x70, 0x61, 0x72, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x5f, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x25, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74,
+	0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x70, 0x61, 0x72, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x52, 0x61, 0x74, 0x69, 0x6f, 0x52, 0x0f, 0x73, 0x65, 0x70, 0x61, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x61, 0x74, 0x69, 0x6f, 0x42, 0xe4, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e,
 	0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f,
-	0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x06, 0x70, 0x61, 0x72,
-	0x61, 0x6d, 0x73, 0x42, 0xe4, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31,
-	0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
-	0x5a, 0x48, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72,
-	0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f,
-	0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63, 0x6f, 0x6e, 0x73,
-	0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x3b, 0x63, 0x6f, 0x6e, 0x73,
-	0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x43, 0x58,
-	0xaa, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43,
-	0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0xe2, 0x02,
-	0x20, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69,
-	0x6f, 0x6e, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74,
-	0x61, 0xea, 0x02, 0x16, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69,
-	0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x6e, 0x2e, 0x76, 0x31, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f,
+	0x74, 0x6f, 0x50, 0x01, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67,
+	0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f,
+	0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x3b,
+	0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x76, 0x31, 0xa2, 0x02,
+	0x03, 0x47, 0x43, 0x58, 0xaa, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x43, 0x6f, 0x6e, 0x73,
+	0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x14, 0x47, 0x75,
+	0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c,
+	0x56, 0x31, 0xe2, 0x02, 0x20, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69,
+	0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74,
+	0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x16, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x43, 0x6f,
+	0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -540,16 +789,18 @@ func file_guru_constitution_v1_genesis_proto_rawDescGZIP() []byte {
 
 var file_guru_constitution_v1_genesis_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_guru_constitution_v1_genesis_proto_goTypes = []interface{}{
-	(*GenesisState)(nil), // 0: guru.constitution.v1.GenesisState
-	(*Params)(nil),       // 1: guru.constitution.v1.Params
+	(*GenesisState)(nil),    // 0: guru.constitution.v1.GenesisState
+	(*Params)(nil),          // 1: guru.constitution.v1.Params
+	(*SeparationRatio)(nil), // 2: guru.constitution.v1.SeparationRatio
 }
 var file_guru_constitution_v1_genesis_proto_depIdxs = []int32{
 	1, // 0: guru.constitution.v1.GenesisState.params:type_name -> guru.constitution.v1.Params
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 1: guru.constitution.v1.GenesisState.separation_ratio:type_name -> guru.constitution.v1.SeparationRatio
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_guru_constitution_v1_genesis_proto_init() }
@@ -558,6 +809,7 @@ func file_guru_constitution_v1_genesis_proto_init() {
 		return
 	}
 	file_guru_constitution_v1_params_proto_init()
+	file_guru_constitution_v1_types_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_guru_constitution_v1_genesis_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GenesisState); i {

@@ -1,8 +1,16 @@
 syntax = "proto3";
 package guru.constitution.v1;
 
+import "cosmos_proto/cosmos.proto";
 import "guru/constitution/v1/params.proto";
+import "guru/constitution/v1/types.proto";
 
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
 
-message GenesisState { Params params = 1; }
+message GenesisState {
+  Params params = 1;
+  string base_address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string moderator_address = 3
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  SeparationRatio separation_ratio = 4;
+}

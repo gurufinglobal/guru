@@ -19,7 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Query_Params_FullMethodName = "/guru.constitution.v1.Query/Params"
+	Query_Params_FullMethodName           = "/guru.constitution.v1.Query/Params"
+	Query_BaseAddress_FullMethodName      = "/guru.constitution.v1.Query/BaseAddress"
+	Query_ModeratorAddress_FullMethodName = "/guru.constitution.v1.Query/ModeratorAddress"
+	Query_SeparationRatio_FullMethodName  = "/guru.constitution.v1.Query/SeparationRatio"
 )
 
 // QueryClient is the client API for Query service.
@@ -27,6 +30,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
+	BaseAddress(ctx context.Context, in *QueryBaseAddressRequest, opts ...grpc.CallOption) (*QueryBaseAddressResponse, error)
+	ModeratorAddress(ctx context.Context, in *QueryModeratorAddressRequest, opts ...grpc.CallOption) (*QueryModeratorAddressResponse, error)
+	SeparationRatio(ctx context.Context, in *QuerySeparationRatioRequest, opts ...grpc.CallOption) (*QuerySeparationRatioResponse, error)
 }
 
 type queryClient struct {
@@ -47,11 +53,44 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
+func (c *queryClient) BaseAddress(ctx context.Context, in *QueryBaseAddressRequest, opts ...grpc.CallOption) (*QueryBaseAddressResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryBaseAddressResponse)
+	err := c.cc.Invoke(ctx, Query_BaseAddress_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) ModeratorAddress(ctx context.Context, in *QueryModeratorAddressRequest, opts ...grpc.CallOption) (*QueryModeratorAddressResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryModeratorAddressResponse)
+	err := c.cc.Invoke(ctx, Query_ModeratorAddress_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) SeparationRatio(ctx context.Context, in *QuerySeparationRatioRequest, opts ...grpc.CallOption) (*QuerySeparationRatioResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QuerySeparationRatioResponse)
+	err := c.cc.Invoke(ctx, Query_SeparationRatio_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility.
 type QueryServer interface {
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
+	BaseAddress(context.Context, *QueryBaseAddressRequest) (*QueryBaseAddressResponse, error)
+	ModeratorAddress(context.Context, *QueryModeratorAddressRequest) (*QueryModeratorAddressResponse, error)
+	SeparationRatio(context.Context, *QuerySeparationRatioRequest) (*QuerySeparationRatioResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -64,6 +103,15 @@ type UnimplementedQueryServer struct{}
 
 func (UnimplementedQueryServer) Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Params not implemented")
+}
+func (UnimplementedQueryServer) BaseAddress(context.Context, *QueryBaseAddressRequest) (*QueryBaseAddressResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BaseAddress not implemented")
+}
+func (UnimplementedQueryServer) ModeratorAddress(context.Context, *QueryModeratorAddressRequest) (*QueryModeratorAddressResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ModeratorAddress not implemented")
+}
+func (UnimplementedQueryServer) SeparationRatio(context.Context, *QuerySeparationRatioRequest) (*QuerySeparationRatioResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SeparationRatio not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 func (UnimplementedQueryServer) testEmbeddedByValue()               {}
@@ -104,6 +152,60 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_BaseAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryBaseAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).BaseAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_BaseAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).BaseAddress(ctx, req.(*QueryBaseAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_ModeratorAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryModeratorAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ModeratorAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_ModeratorAddress_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ModeratorAddress(ctx, req.(*QueryModeratorAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_SeparationRatio_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySeparationRatioRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).SeparationRatio(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_SeparationRatio_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).SeparationRatio(ctx, req.(*QuerySeparationRatioRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +216,18 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Params",
 			Handler:    _Query_Params_Handler,
+		},
+		{
+			MethodName: "BaseAddress",
+			Handler:    _Query_BaseAddress_Handler,
+		},
+		{
+			MethodName: "ModeratorAddress",
+			Handler:    _Query_ModeratorAddress_Handler,
+		},
+		{
+			MethodName: "SeparationRatio",
+			Handler:    _Query_SeparationRatio_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

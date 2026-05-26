@@ -161,10 +161,7 @@ func (k *Keeper) pruneValidatorsBelowMinSelfBond(ctx context.Context) error {
 	return nil
 }
 
-func (k *Keeper) GetValidatorSelfBond(
-	ctx context.Context,
-	validatorAddr sdk.ValAddress,
-) (sdkmath.Int, error) {
+func (k *Keeper) GetValidatorSelfBond(ctx context.Context, validatorAddr sdk.ValAddress) (sdkmath.Int, error) {
 	validator, err := k.GetValidator(ctx, validatorAddr)
 	if err != nil {
 		return sdkmath.Int{}, err
@@ -178,11 +175,7 @@ func (k *Keeper) GetValidatorSelfBond(
 	return selfBond, nil
 }
 
-func (k *Keeper) getValidatorSelfBondFromDelegation(
-	ctx context.Context,
-	validatorAddr sdk.ValAddress,
-	validator stakingtypes.Validator,
-) (sdkmath.Int, error) {
+func (k *Keeper) getValidatorSelfBondFromDelegation(ctx context.Context, validatorAddr sdk.ValAddress, validator stakingtypes.Validator) (sdkmath.Int, error) {
 	delegation, err := k.GetDelegation(ctx, sdk.AccAddress(validatorAddr), validatorAddr)
 	if err != nil {
 		if errors.Is(err, stakingtypes.ErrNoDelegation) {
