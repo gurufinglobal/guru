@@ -177,6 +177,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	appKeepers.ConstitutionKeeper = constitutionkeeper.NewKeeper(
 		govAddress,
 		runtime.NewKVStoreService(appKeepers.kvKeys[constitutiontypes.StoreKey]),
+		appKeepers.AccountKeeper.AddressCodec(),
 	)
 	appKeepers.CustomStakingKeeper = customstakingkeeper.NewKeeper(
 		appKeepers.StakingKeeper,

@@ -10,9 +10,15 @@ import (
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&constitutionv1.MsgUpdateParams{},
+		&constitutionv1.MsgUpdateBaseAddress{},
+		&constitutionv1.MsgUpdateModeratorAddress{},
+		&constitutionv1.MsgUpdateSeparationRatio{},
 	)
 
 	registry.RegisterImplementations((*tx.MsgResponse)(nil),
 		&constitutionv1.MsgUpdateParamsResponse{},
+		&constitutionv1.MsgUpdateBaseAddressResponse{},
+		&constitutionv1.MsgUpdateModeratorAddressResponse{},
+		&constitutionv1.MsgUpdateSeparationRatioResponse{},
 	)
 }

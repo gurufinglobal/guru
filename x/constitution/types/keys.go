@@ -9,5 +9,8 @@ const (
 
 // Keys of the KVStore
 var (
-	ParamsKey = collections.NewPrefix(0x01)
+	ParamsKey           = collections.NewPrefix(0x01)
+	BaseAddressKey      = collections.NewPrefix(0x02)
+	ModeratorAddressKey = collections.NewPrefix(0x03)
+	SeparationRatioKey  = collections.NewPrefix(0x04)
 )

@@ -2,10 +2,6 @@ package constitution
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 
@@ -14,14 +10,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 // ConsensusVersion defines the current x/constitution module consensus version.
 const ConsensusVersion = 1
-const defaultMinValidatorBondAmount = "10"
 
 var (
 	_ appmodule.AppModule   = AppModule{}
@@ -73,102 +67,3 @@ func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
 
 // ConsensusVersion returns the x/constitution consensus version.
 func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
-
-// DefaultGenesis writes default genesis in core GenesisTarget form.
-func (AppModule) DefaultGenesis(target appmodule.GenesisTarget) error {
-	return writeGenesisState(target, defaultGenesisState())
-}
-
-// ValidateGenesis validates provided genesis in core GenesisSource form.
-func (AppModule) ValidateGenesis(source appmodule.GenesisSource) error {
-	genesis, err := readGenesisState(source)
-	if err != nil {
-		return err
-	}
-	return validateGenesisState(genesis)
-}
-
-// InitGenesis initializes store state from genesis.
-func (am AppModule) InitGenesis(ctx context.Context, source appmodule.GenesisSource) error {
-	genesis, err := readGenesisState(source)
-	if err != nil {
-		return err
-	}
-	if err := validateGenesisState(genesis); err != nil {
-		return err
-	}
-	return am.keeper.SetParams(ctx, genesis.Params)
-}
-
-// ExportGenesis writes current module state to genesis target.
-func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisTarget) error {
-	params, err := am.keeper.GetParams(ctx)
-	if err != nil {
-		params = defaultGenesisState().Params
-	}
-	return writeGenesisState(target, &constitutionv1.GenesisState{Params: params})
-}
-
-func defaultGenesisState() *constitutionv1.GenesisState {
-	return &constitutionv1.GenesisState{
-		Params: &constitutionv1.Params{
-			MinValidatorBondAmount: &basev1beta1.Coin{
-				Denom:  appparams.BaseDenom,
-				Amount: defaultMinValidatorBondAmount,
-			},
-		},
-	}
-}
-
-func validateGenesisState(data *constitutionv1.GenesisState) error {
-	if data == nil {
-		return constitutiontypes.ErrInvalidParams.Wrap("genesis state cannot be nil")
-	}
-
-	return constitutionkeeper.ValidateParams(data.Params)
-}
-
-func readGenesisState(source appmodule.GenesisSource) (*constitutionv1.GenesisState, error) {
-	genesis := defaultGenesisState()
-
-	reader, err := source("params")
-	if err != nil {
-		return nil, fmt.Errorf("failed to read params genesis field: %w", err)
-	}
-	if reader == nil {
-		return genesis, nil
-	}
-	defer reader.Close()
-
-	params := &constitutionv1.Params{}
-	if err := json.NewDecoder(reader).Decode(params); err != nil {
-		return nil, fmt.Errorf("failed to decode params genesis field: %w", err)
-	}
-
-	genesis.Params = params
-	return genesis, nil
-}
-
-func writeGenesisState(target appmodule.GenesisTarget, genesis *constitutionv1.GenesisState) error {
-	if genesis == nil {
-		return constitutiontypes.ErrInvalidParams.Wrap("genesis state cannot be nil")
-	}
-
-	writer, err := target("params")
-	if err != nil {
-		return fmt.Errorf("failed to open params genesis target field: %w", err)
-	}
-	if writer == nil {
-		return fmt.Errorf("params genesis target field writer is nil")
-	}
-
-	if err := json.NewEncoder(writer).Encode(genesis.Params); err != nil {
-		_ = writer.Close()
-		return fmt.Errorf("failed to encode params genesis field: %w", err)
-	}
-	if err := writer.Close(); err != nil {
-		return fmt.Errorf("failed to close params genesis field writer: %w", err)
-	}
-
-	return nil
-}

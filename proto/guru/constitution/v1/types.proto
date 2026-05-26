@@ -1,12 +1,13 @@
 syntax = "proto3";
 package guru.constitution.v1;
 
-import "cosmos_proto/cosmos.proto";
-
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
 
+// SeparationRatio values are expressed in parts per million (ppm).
+// The _ppm suffix means 1,000,000 ppm is exactly 100%.
+// The sum of all ratio fields must be exactly 1,000,000.
 message SeparationRatio {
-  string base = 1 [ (cosmos_proto.scalar) = "cosmos.Dec" ];
-  string burn = 2 [ (cosmos_proto.scalar) = "cosmos.Dec" ];
-  string validators = 3 [ (cosmos_proto.scalar) = "cosmos.Dec" ];
+  uint32 base_ppm = 1;
+  uint32 burn_ppm = 2;
+  uint32 validators_ppm = 3;
 }

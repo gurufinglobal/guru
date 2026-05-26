@@ -15,6 +15,9 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	evmaddress "github.com/cosmos/evm/encoding/address"
+	appparams "github.com/gurufinglobal/guru/v3/app/params"
 )
 
 const (
@@ -136,7 +139,7 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 		)
 
 		restoreHome := filepath.Join(t.TempDir(), "node-b")
-		runCmd(t, repoRoot, bin, "init", "restore", "--chain-id", e2eChainID, "--home", restoreHome)
+		runInitWithConstitutionAddresses(t, repoRoot, bin, "restore", restoreHome)
 		runCmd(t, repoRoot, bin, "snapshots", "load", archive, "--home", restoreHome)
 
 		restoreListOut := runCmd(t, repoRoot, bin, "snapshots", "list", "--home", restoreHome)
@@ -279,7 +282,7 @@ func TestE2ECometStateSyncFromPeerSnapshot(t *testing.T) {
 	}
 
 	homeB := filepath.Join(t.TempDir(), "node-b")
-	runCmd(t, repoRoot, bin, "init", "nodeb", "--chain-id", e2eChainID, "--home", homeB)
+	runInitWithConstitutionAddresses(t, repoRoot, bin, "nodeb", homeB)
 	copyFile(t, filepath.Join(homeA, "config", "genesis.json"), filepath.Join(homeB, "config", "genesis.json"))
 	enableStateSyncInConfig(t, homeB, rpcPortA, trustHeight, trustHash)
 
@@ -568,11 +571,44 @@ func waitForProposalStatus(
 
 func bootstrapSingleValidatorGenesis(t *testing.T, repoRoot, bin, home string) {
 	t.Helper()
-	runCmd(t, repoRoot, bin, "init", "e2e", "--chain-id", e2eChainID, "--home", home)
+	runInitWithConstitutionAddresses(t, repoRoot, bin, "e2e", home)
 	runCmd(t, repoRoot, bin, "keys", "add", "validator", "--keyring-backend", "test", "--home", home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", "validator", "100000000000000000000agxn", "--keyring-backend", "test", "--home", home)
 	runCmd(t, repoRoot, bin, "genesis", "gentx", "validator", "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", home)
 	runCmd(t, repoRoot, bin, "genesis", "collect-gentxs", "--home", home)
+}
+
+func runInitWithConstitutionAddresses(t *testing.T, repoRoot, bin, moniker, home string) {
+	t.Helper()
+
+	baseAddress, moderatorAddress := e2eConstitutionAddresses(t)
+	runCmd(
+		t,
+		repoRoot,
+		bin,
+		"init",
+		moniker,
+		"--chain-id", e2eChainID,
+		"--home", home,
+		"--constitution-base-address", baseAddress,
+		"--constitution-moderator-address", moderatorAddress,
+	)
+}
+
+func e2eConstitutionAddresses(t *testing.T) (string, string) {
+	t.Helper()
+
+	accountCodec := evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr)
+	baseAddress, err := accountCodec.BytesToString(bytes.Repeat([]byte{0x21}, 20))
+	if err != nil {
+		t.Fatalf("encode constitution base address: %v", err)
+	}
+	moderatorAddress, err := accountCodec.BytesToString(bytes.Repeat([]byte{0x22}, 20))
+	if err != nil {
+		t.Fatalf("encode constitution moderator address: %v", err)
+	}
+
+	return baseAddress, moderatorAddress
 }
 
 func setFastGovernanceTimings(t *testing.T, home string) {

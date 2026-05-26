@@ -3,7 +3,6 @@ package constitutionv1
 
 import (
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-proto"
 	runtime "github.com/cosmos/cosmos-proto/runtime"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoiface "google.golang.org/protobuf/runtime/protoiface"
@@ -14,18 +13,18 @@ import (
 )
 
 var (
-	md_SeparationRatio            protoreflect.MessageDescriptor
-	fd_SeparationRatio_base       protoreflect.FieldDescriptor
-	fd_SeparationRatio_burn       protoreflect.FieldDescriptor
-	fd_SeparationRatio_validators protoreflect.FieldDescriptor
+	md_SeparationRatio                protoreflect.MessageDescriptor
+	fd_SeparationRatio_base_ppm       protoreflect.FieldDescriptor
+	fd_SeparationRatio_burn_ppm       protoreflect.FieldDescriptor
+	fd_SeparationRatio_validators_ppm protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_constitution_v1_types_proto_init()
 	md_SeparationRatio = File_guru_constitution_v1_types_proto.Messages().ByName("SeparationRatio")
-	fd_SeparationRatio_base = md_SeparationRatio.Fields().ByName("base")
-	fd_SeparationRatio_burn = md_SeparationRatio.Fields().ByName("burn")
-	fd_SeparationRatio_validators = md_SeparationRatio.Fields().ByName("validators")
+	fd_SeparationRatio_base_ppm = md_SeparationRatio.Fields().ByName("base_ppm")
+	fd_SeparationRatio_burn_ppm = md_SeparationRatio.Fields().ByName("burn_ppm")
+	fd_SeparationRatio_validators_ppm = md_SeparationRatio.Fields().ByName("validators_ppm")
 }
 
 var _ protoreflect.Message = (*fastReflection_SeparationRatio)(nil)
@@ -93,21 +92,21 @@ func (x *fastReflection_SeparationRatio) Interface() protoreflect.ProtoMessage {
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_SeparationRatio) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.Base != "" {
-		value := protoreflect.ValueOfString(x.Base)
-		if !f(fd_SeparationRatio_base, value) {
+	if x.BasePpm != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.BasePpm)
+		if !f(fd_SeparationRatio_base_ppm, value) {
 			return
 		}
 	}
-	if x.Burn != "" {
-		value := protoreflect.ValueOfString(x.Burn)
-		if !f(fd_SeparationRatio_burn, value) {
+	if x.BurnPpm != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.BurnPpm)
+		if !f(fd_SeparationRatio_burn_ppm, value) {
 			return
 		}
 	}
-	if x.Validators != "" {
-		value := protoreflect.ValueOfString(x.Validators)
-		if !f(fd_SeparationRatio_validators, value) {
+	if x.ValidatorsPpm != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.ValidatorsPpm)
+		if !f(fd_SeparationRatio_validators_ppm, value) {
 			return
 		}
 	}
@@ -126,12 +125,12 @@ func (x *fastReflection_SeparationRatio) Range(f func(protoreflect.FieldDescript
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_SeparationRatio) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.constitution.v1.SeparationRatio.base":
-		return x.Base != ""
-	case "guru.constitution.v1.SeparationRatio.burn":
-		return x.Burn != ""
-	case "guru.constitution.v1.SeparationRatio.validators":
-		return x.Validators != ""
+	case "guru.constitution.v1.SeparationRatio.base_ppm":
+		return x.BasePpm != uint32(0)
+	case "guru.constitution.v1.SeparationRatio.burn_ppm":
+		return x.BurnPpm != uint32(0)
+	case "guru.constitution.v1.SeparationRatio.validators_ppm":
+		return x.ValidatorsPpm != uint32(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.SeparationRatio"))
@@ -148,12 +147,12 @@ func (x *fastReflection_SeparationRatio) Has(fd protoreflect.FieldDescriptor) bo
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_SeparationRatio) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.constitution.v1.SeparationRatio.base":
-		x.Base = ""
-	case "guru.constitution.v1.SeparationRatio.burn":
-		x.Burn = ""
-	case "guru.constitution.v1.SeparationRatio.validators":
-		x.Validators = ""
+	case "guru.constitution.v1.SeparationRatio.base_ppm":
+		x.BasePpm = uint32(0)
+	case "guru.constitution.v1.SeparationRatio.burn_ppm":
+		x.BurnPpm = uint32(0)
+	case "guru.constitution.v1.SeparationRatio.validators_ppm":
+		x.ValidatorsPpm = uint32(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.SeparationRatio"))
@@ -170,15 +169,15 @@ func (x *fastReflection_SeparationRatio) Clear(fd protoreflect.FieldDescriptor) 
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_SeparationRatio) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.constitution.v1.SeparationRatio.base":
-		value := x.Base
-		return protoreflect.ValueOfString(value)
-	case "guru.constitution.v1.SeparationRatio.burn":
-		value := x.Burn
-		return protoreflect.ValueOfString(value)
-	case "guru.constitution.v1.SeparationRatio.validators":
-		value := x.Validators
-		return protoreflect.ValueOfString(value)
+	case "guru.constitution.v1.SeparationRatio.base_ppm":
+		value := x.BasePpm
+		return protoreflect.ValueOfUint32(value)
+	case "guru.constitution.v1.SeparationRatio.burn_ppm":
+		value := x.BurnPpm
+		return protoreflect.ValueOfUint32(value)
+	case "guru.constitution.v1.SeparationRatio.validators_ppm":
+		value := x.ValidatorsPpm
+		return protoreflect.ValueOfUint32(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.SeparationRatio"))
@@ -199,12 +198,12 @@ func (x *fastReflection_SeparationRatio) Get(descriptor protoreflect.FieldDescri
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_SeparationRatio) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.constitution.v1.SeparationRatio.base":
-		x.Base = value.Interface().(string)
-	case "guru.constitution.v1.SeparationRatio.burn":
-		x.Burn = value.Interface().(string)
-	case "guru.constitution.v1.SeparationRatio.validators":
-		x.Validators = value.Interface().(string)
+	case "guru.constitution.v1.SeparationRatio.base_ppm":
+		x.BasePpm = uint32(value.Uint())
+	case "guru.constitution.v1.SeparationRatio.burn_ppm":
+		x.BurnPpm = uint32(value.Uint())
+	case "guru.constitution.v1.SeparationRatio.validators_ppm":
+		x.ValidatorsPpm = uint32(value.Uint())
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.SeparationRatio"))
@@ -225,12 +224,12 @@ func (x *fastReflection_SeparationRatio) Set(fd protoreflect.FieldDescriptor, va
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_SeparationRatio) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.constitution.v1.SeparationRatio.base":
-		panic(fmt.Errorf("field base of message guru.constitution.v1.SeparationRatio is not mutable"))
-	case "guru.constitution.v1.SeparationRatio.burn":
-		panic(fmt.Errorf("field burn of message guru.constitution.v1.SeparationRatio is not mutable"))
-	case "guru.constitution.v1.SeparationRatio.validators":
-		panic(fmt.Errorf("field validators of message guru.constitution.v1.SeparationRatio is not mutable"))
+	case "guru.constitution.v1.SeparationRatio.base_ppm":
+		panic(fmt.Errorf("field base_ppm of message guru.constitution.v1.SeparationRatio is not mutable"))
+	case "guru.constitution.v1.SeparationRatio.burn_ppm":
+		panic(fmt.Errorf("field burn_ppm of message guru.constitution.v1.SeparationRatio is not mutable"))
+	case "guru.constitution.v1.SeparationRatio.validators_ppm":
+		panic(fmt.Errorf("field validators_ppm of message guru.constitution.v1.SeparationRatio is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.SeparationRatio"))
@@ -244,12 +243,12 @@ func (x *fastReflection_SeparationRatio) Mutable(fd protoreflect.FieldDescriptor
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_SeparationRatio) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.constitution.v1.SeparationRatio.base":
-		return protoreflect.ValueOfString("")
-	case "guru.constitution.v1.SeparationRatio.burn":
-		return protoreflect.ValueOfString("")
-	case "guru.constitution.v1.SeparationRatio.validators":
-		return protoreflect.ValueOfString("")
+	case "guru.constitution.v1.SeparationRatio.base_ppm":
+		return protoreflect.ValueOfUint32(uint32(0))
+	case "guru.constitution.v1.SeparationRatio.burn_ppm":
+		return protoreflect.ValueOfUint32(uint32(0))
+	case "guru.constitution.v1.SeparationRatio.validators_ppm":
+		return protoreflect.ValueOfUint32(uint32(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.SeparationRatio"))
@@ -319,17 +318,14 @@ func (x *fastReflection_SeparationRatio) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		l = len(x.Base)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
+		if x.BasePpm != 0 {
+			n += 1 + runtime.Sov(uint64(x.BasePpm))
 		}
-		l = len(x.Burn)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
+		if x.BurnPpm != 0 {
+			n += 1 + runtime.Sov(uint64(x.BurnPpm))
 		}
-		l = len(x.Validators)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
+		if x.ValidatorsPpm != 0 {
+			n += 1 + runtime.Sov(uint64(x.ValidatorsPpm))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -360,26 +356,20 @@ func (x *fastReflection_SeparationRatio) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.Validators) > 0 {
-			i -= len(x.Validators)
-			copy(dAtA[i:], x.Validators)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Validators)))
+		if x.ValidatorsPpm != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.ValidatorsPpm))
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x18
 		}
-		if len(x.Burn) > 0 {
-			i -= len(x.Burn)
-			copy(dAtA[i:], x.Burn)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Burn)))
+		if x.BurnPpm != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.BurnPpm))
 			i--
-			dAtA[i] = 0x12
+			dAtA[i] = 0x10
 		}
-		if len(x.Base) > 0 {
-			i -= len(x.Base)
-			copy(dAtA[i:], x.Base)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Base)))
+		if x.BasePpm != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.BasePpm))
 			i--
-			dAtA[i] = 0xa
+			dAtA[i] = 0x8
 		}
 		if input.Buf != nil {
 			input.Buf = append(input.Buf, dAtA...)
@@ -431,10 +421,10 @@ func (x *fastReflection_SeparationRatio) ProtoMethods() *protoiface.Methods {
 			}
 			switch fieldNum {
 			case 1:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Base", wireType)
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BasePpm", wireType)
 				}
-				var stringLen uint64
+				x.BasePpm = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -444,29 +434,16 @@ func (x *fastReflection_SeparationRatio) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
+					x.BasePpm |= uint32(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.Base = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
 			case 2:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Burn", wireType)
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BurnPpm", wireType)
 				}
-				var stringLen uint64
+				x.BurnPpm = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -476,29 +453,16 @@ func (x *fastReflection_SeparationRatio) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
+					x.BurnPpm |= uint32(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.Burn = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
 			case 3:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Validators", wireType)
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ValidatorsPpm", wireType)
 				}
-				var stringLen uint64
+				x.ValidatorsPpm = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -508,24 +472,11 @@ func (x *fastReflection_SeparationRatio) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
+					x.ValidatorsPpm |= uint32(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.Validators = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -574,14 +525,17 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// SeparationRatio values are expressed in parts per million (ppm).
+// The _ppm suffix means 1,000,000 ppm is exactly 100%.
+// The sum of all ratio fields must be exactly 1,000,000.
 type SeparationRatio struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Base       string `protobuf:"bytes,1,opt,name=base,proto3" json:"base,omitempty"`
-	Burn       string `protobuf:"bytes,2,opt,name=burn,proto3" json:"burn,omitempty"`
-	Validators string `protobuf:"bytes,3,opt,name=validators,proto3" json:"validators,omitempty"`
+	BasePpm       uint32 `protobuf:"varint,1,opt,name=base_ppm,json=basePpm,proto3" json:"base_ppm,omitempty"`
+	BurnPpm       uint32 `protobuf:"varint,2,opt,name=burn_ppm,json=burnPpm,proto3" json:"burn_ppm,omitempty"`
+	ValidatorsPpm uint32 `protobuf:"varint,3,opt,name=validators_ppm,json=validatorsPpm,proto3" json:"validators_ppm,omitempty"`
 }
 
 func (x *SeparationRatio) Reset() {
@@ -604,25 +558,25 @@ func (*SeparationRatio) Descriptor() ([]byte, []int) {
 	return file_guru_constitution_v1_types_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *SeparationRatio) GetBase() string {
+func (x *SeparationRatio) GetBasePpm() uint32 {
 	if x != nil {
-		return x.Base
+		return x.BasePpm
 	}
-	return ""
+	return 0
 }
 
-func (x *SeparationRatio) GetBurn() string {
+func (x *SeparationRatio) GetBurnPpm() uint32 {
 	if x != nil {
-		return x.Burn
+		return x.BurnPpm
 	}
-	return ""
+	return 0
 }
 
-func (x *SeparationRatio) GetValidators() string {
+func (x *SeparationRatio) GetValidatorsPpm() uint32 {
 	if x != nil {
-		return x.Validators
+		return x.ValidatorsPpm
 	}
-	return ""
+	return 0
 }
 
 var File_guru_constitution_v1_types_proto protoreflect.FileDescriptor
@@ -631,32 +585,29 @@ var file_guru_constitution_v1_types_proto_rawDesc = []byte{
 	0x0a, 0x20, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74,
 	0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x12, 0x14, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74,
-	0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x1a, 0x19, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
-	0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x22, 0x89, 0x01, 0x0a, 0x0f, 0x53, 0x65, 0x70, 0x61, 0x72, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x52, 0x61, 0x74, 0x69, 0x6f, 0x12, 0x22, 0x0a, 0x04, 0x62, 0x61, 0x73, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
-	0x73, 0x2e, 0x44, 0x65, 0x63, 0x52, 0x04, 0x62, 0x61, 0x73, 0x65, 0x12, 0x22, 0x0a, 0x04, 0x62,
-	0x75, 0x72, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63,
-	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x44, 0x65, 0x63, 0x52, 0x04, 0x62, 0x75, 0x72, 0x6e, 0x12,
-	0x2e, 0x0a, 0x0a, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
-	0x44, 0x65, 0x63, 0x52, 0x0a, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x42,
-	0xe2, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e,
-	0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x42, 0x0a, 0x54, 0x79,
-	0x70, 0x65, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c,
-	0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69,
-	0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69,
-	0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x3b, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69,
-	0x6f, 0x6e, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x43, 0x58, 0xaa, 0x02, 0x14, 0x47, 0x75, 0x72,
-	0x75, 0x2e, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56,
-	0x31, 0xca, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74,
-	0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x20, 0x47, 0x75, 0x72, 0x75, 0x5c,
-	0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0x5c,
-	0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x16, 0x47, 0x75,
-	0x72, 0x75, 0x3a, 0x3a, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e,
-	0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x22, 0x6e, 0x0a, 0x0f, 0x53, 0x65, 0x70, 0x61,
+	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x61, 0x74, 0x69, 0x6f, 0x12, 0x19, 0x0a, 0x08, 0x62,
+	0x61, 0x73, 0x65, 0x5f, 0x70, 0x70, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x07, 0x62,
+	0x61, 0x73, 0x65, 0x50, 0x70, 0x6d, 0x12, 0x19, 0x0a, 0x08, 0x62, 0x75, 0x72, 0x6e, 0x5f, 0x70,
+	0x70, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x07, 0x62, 0x75, 0x72, 0x6e, 0x50, 0x70,
+	0x6d, 0x12, 0x25, 0x0a, 0x0e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x5f,
+	0x70, 0x70, 0x6d, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0d, 0x76, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x6f, 0x72, 0x73, 0x50, 0x70, 0x6d, 0x42, 0xe2, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d,
+	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69,
+	0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x42, 0x0a, 0x54, 0x79, 0x70, 0x65, 0x73, 0x50, 0x72, 0x6f, 0x74,
+	0x6f, 0x50, 0x01, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
+	0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75,
+	0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63,
+	0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x3b, 0x63,
+	0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x76, 0x31, 0xa2, 0x02, 0x03,
+	0x47, 0x43, 0x58, 0xaa, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x43, 0x6f, 0x6e, 0x73, 0x74,
+	0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x14, 0x47, 0x75, 0x72,
+	0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56,
+	0x31, 0xe2, 0x02, 0x20, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74,
+	0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x16, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x43, 0x6f, 0x6e,
+	0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (

@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
+	"cosmossdk.io/core/address"
 	"cosmossdk.io/log/v2"
 
 	"cosmossdk.io/collections"
@@ -14,9 +16,13 @@ import (
 )
 
 type Keeper struct {
-	authority sdk.AccAddress
+	authority    sdk.AccAddress
+	accountCodec address.Codec
 
-	params collections.Item[*constitutionv1.Params]
+	params           collections.Item[*constitutionv1.Params]
+	baseAddress      collections.Item[string]
+	moderatorAddress collections.Item[string]
+	separationRatio  collections.Item[*constitutionv1.SeparationRatio]
 
 	schema collections.Schema
 }
@@ -24,14 +30,19 @@ type Keeper struct {
 func NewKeeper(
 	authority sdk.AccAddress,
 	storeService store.KVStoreService,
+	accountCodec address.Codec,
 ) Keeper {
 	k := Keeper{
-		authority: authority,
+		authority:    authority,
+		accountCodec: accountCodec,
 	}
 
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k.params = collections.NewItem(sb, types.ParamsKey, "params", codec.CollValueV2[constitutionv1.Params]())
+	k.baseAddress = collections.NewItem(sb, types.BaseAddressKey, "base_address", collections.StringValue)
+	k.moderatorAddress = collections.NewItem(sb, types.ModeratorAddressKey, "moderator_address", collections.StringValue)
+	k.separationRatio = collections.NewItem(sb, types.SeparationRatioKey, "separation_ratio", codec.CollValueV2[constitutionv1.SeparationRatio]())
 	schema, err := sb.Build()
 	if err != nil {
 		panic(err)
@@ -43,4 +54,68 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx context.Context) log.Logger {
 	return sdk.UnwrapSDKContext(ctx).Logger().With("module", "x/"+types.ModuleName)
+}
+
+func (k Keeper) AuthorityAddressString() (string, error) {
+	return k.accountCodec.BytesToString(k.authority)
+}
+
+func (k Keeper) GetBaseAddress(ctx context.Context) (string, error) {
+	return k.baseAddress.Get(ctx)
+}
+
+func (k Keeper) SetBaseAddress(ctx context.Context, baseAddress string) error {
+	if err := k.ValidateBaseAddress(baseAddress); err != nil {
+		return err
+	}
+
+	return k.baseAddress.Set(ctx, baseAddress)
+}
+
+func (k Keeper) UpdateBaseAddress(ctx context.Context, baseAddress string) error {
+	return k.SetBaseAddress(ctx, baseAddress)
+}
+
+func (k Keeper) ValidateBaseAddress(baseAddress string) error {
+	return k.validateAddress("base_address", baseAddress)
+}
+
+func (k Keeper) GetModeratorAddress(ctx context.Context) (string, error) {
+	return k.moderatorAddress.Get(ctx)
+}
+
+func (k Keeper) SetModeratorAddress(ctx context.Context, moderatorAddress string) error {
+	if err := k.ValidateModeratorAddress(moderatorAddress); err != nil {
+		return err
+	}
+
+	return k.moderatorAddress.Set(ctx, moderatorAddress)
+}
+
+func (k Keeper) UpdateModeratorAddress(ctx context.Context, moderatorAddress string) error {
+	return k.SetModeratorAddress(ctx, moderatorAddress)
+}
+
+func (k Keeper) ValidateModeratorAddress(moderatorAddress string) error {
+	return k.validateAddress("moderator_address", moderatorAddress)
+}
+
+func (k Keeper) validateAddress(fieldName, value string) error {
+	if strings.TrimSpace(value) == "" {
+		return types.ErrInvalidParams.Wrapf("%s cannot be empty", fieldName)
+	}
+
+	if _, err := k.accountCodec.StringToBytes(value); err != nil {
+		return types.ErrInvalidParams.Wrapf("invalid %s: %v", fieldName, err)
+	}
+
+	authorityAddress, err := k.AuthorityAddressString()
+	if err != nil {
+		return types.ErrInvalidParams.Wrapf("failed to encode authority address: %v", err)
+	}
+	if value == authorityAddress {
+		return types.ErrInvalidParams.Wrapf("%s must be explicitly configured and cannot equal authority", fieldName)
+	}
+
+	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	constitutioncli "github.com/gurufinglobal/guru/v3/x/constitution/client/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +27,7 @@ func txCommand() *cobra.Command {
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
 		authcmd.GetSimulateCmd(),
+		constitutioncli.GetTxCmd(),
 	)
 
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")

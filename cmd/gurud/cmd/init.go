@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	cfg "github.com/cometbft/cometbft/config"
 	cmttypes "github.com/cometbft/cometbft/types"
@@ -25,7 +26,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
+	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	"github.com/gurufinglobal/guru/v3/app"
+	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 const (
@@ -37,6 +40,12 @@ const (
 
 	// FlagConsensusKeyAlgo defines the algorithm to use for the consensus signing key.
 	FlagConsensusKeyAlgo = "consensus-key-algo"
+
+	// FlagConstitutionBaseAddress defines the constitution base address for genesis.
+	FlagConstitutionBaseAddress = "constitution-base-address"
+
+	// FlagConstitutionModeratorAddress defines the constitution moderator address for genesis.
+	FlagConstitutionModeratorAddress = "constitution-moderator-address"
 )
 
 type printInfo struct {
@@ -131,6 +140,11 @@ func InitCmd(tempApp *app.App, defaultNodeHome string) *cobra.Command {
 			}
 
 			appGenState := tempApp.BuildChainDefaultGenesis()
+			constitutionBaseAddress, _ := cmd.Flags().GetString(FlagConstitutionBaseAddress)
+			constitutionModeratorAddress, _ := cmd.Flags().GetString(FlagConstitutionModeratorAddress)
+			if err := applyConstitutionGenesisAddresses(appGenState, constitutionBaseAddress, constitutionModeratorAddress); err != nil {
+				return err
+			}
 			if err := tempApp.ValidateChainGenesis(appGenState); err != nil {
 				return errorsmod.Wrap(err, "failed to validate chain genesis state")
 			}
@@ -192,6 +206,44 @@ func InitCmd(tempApp *app.App, defaultNodeHome string) *cobra.Command {
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().Int64(flags.FlagInitHeight, 1, "specify the initial block height at genesis")
 	cmd.Flags().String(FlagConsensusKeyAlgo, ed25519.KeyType, "algorithm to use for the consensus key")
+	cmd.Flags().String(FlagConstitutionBaseAddress, "", "constitution base address written to genesis (required)")
+	cmd.Flags().String(FlagConstitutionModeratorAddress, "", "constitution moderator address written to genesis (required)")
+	_ = cmd.MarkFlagRequired(FlagConstitutionBaseAddress)
+	_ = cmd.MarkFlagRequired(FlagConstitutionModeratorAddress)
 
 	return cmd
+}
+
+func applyConstitutionGenesisAddresses(
+	appGenState map[string]json.RawMessage,
+	baseAddress string,
+	moderatorAddress string,
+) error {
+	if strings.TrimSpace(baseAddress) == "" {
+		return fmt.Errorf("%s must be explicitly set", FlagConstitutionBaseAddress)
+	}
+	if strings.TrimSpace(moderatorAddress) == "" {
+		return fmt.Errorf("%s must be explicitly set", FlagConstitutionModeratorAddress)
+	}
+
+	constitutionStateBz, ok := appGenState[constitutiontypes.ModuleName]
+	if !ok {
+		return fmt.Errorf("constitution genesis state not found")
+	}
+
+	var constitutionState constitutionv1.GenesisState
+	if err := json.Unmarshal(constitutionStateBz, &constitutionState); err != nil {
+		return fmt.Errorf("failed to decode constitution genesis state: %w", err)
+	}
+
+	constitutionState.BaseAddress = baseAddress
+	constitutionState.ModeratorAddress = moderatorAddress
+
+	updatedConstitutionStateBz, err := json.Marshal(&constitutionState)
+	if err != nil {
+		return fmt.Errorf("failed to encode constitution genesis state: %w", err)
+	}
+	appGenState[constitutiontypes.ModuleName] = updatedConstitutionStateBz
+
+	return nil
 }
