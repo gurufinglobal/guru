@@ -71,6 +71,20 @@ func TestValidateChainGenesisRejectsInvalidConstitutionSeparationRatio(t *testin
 	require.ErrorContains(t, err, "separation_ratio total must be exactly")
 }
 
+func TestValidateChainGenesisRejectsBlockedConstitutionBaseAddress(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+
+	constitutionGenesis := &constitutionv1.GenesisState{}
+	testApp.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
+	constitutionGenesis.BaseAddress = "0x0000000000000000000000000000000000000001"
+	genesis[constitutiontypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(constitutionGenesis)
+
+	err := testApp.ValidateChainGenesis(genesis)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "base_address cannot be a blocked address")
+}
+
 func indexOf(values []string, target string) int {
 	for i, value := range values {
 		if value == target {

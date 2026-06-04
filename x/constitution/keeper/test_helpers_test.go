@@ -145,8 +145,16 @@ func (m *mockBankKeeper) SetBlockedAddr(address sdk.AccAddress, blocked bool) {
 	m.blockedAddrs[string(address)] = blocked
 }
 
+func (m *mockBankKeeper) SetBlockedAddressString(address string, blocked bool) {
+	m.blockedAddrs[address] = blocked
+}
+
 func (m *mockBankKeeper) BlockedAddr(address sdk.AccAddress) bool {
 	return m.blockedAddrs[string(address)]
+}
+
+func (m *mockBankKeeper) GetBlockedAddresses() map[string]bool {
+	return m.blockedAddrs
 }
 
 func (m *mockBankKeeper) GetAllBalances(_ context.Context, address sdk.AccAddress) sdk.Coins {

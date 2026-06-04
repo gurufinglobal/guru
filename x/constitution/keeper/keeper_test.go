@@ -82,3 +82,12 @@ func TestKeeperBaseAddressRejectsBlockedAddress(t *testing.T) {
 	require.Error(t, f.keeper.SetBaseAddress(f.ctx, blockedAddress))
 	require.NoError(t, f.keeper.SetModeratorAddress(f.ctx, blockedAddress))
 }
+
+func TestKeeperBaseAddressRejectsCodecCanonicalBlockedAddress(t *testing.T) {
+	f := setupKeeperFixtureWithoutParams(t)
+	blockedAddress := testAddress(t, f.keeper.accountCodec, 0x16)
+	f.bankKeeper.SetBlockedAddressString(blockedAddress, true)
+
+	require.Error(t, f.keeper.SetBaseAddress(f.ctx, testHexAddress(0x16)))
+	require.NoError(t, f.keeper.SetModeratorAddress(f.ctx, testHexAddress(0x16)))
+}

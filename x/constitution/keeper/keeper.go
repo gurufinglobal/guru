@@ -118,8 +118,21 @@ func (k Keeper) validateAddress(fieldName, value string, rejectBlocked bool) err
 	if bytes.Equal(address, k.authority) {
 		return types.ErrInvalidParams.Wrapf("%s must be explicitly configured and cannot equal authority", fieldName)
 	}
-	if rejectBlocked && k.bankKeeper != nil && k.bankKeeper.BlockedAddr(address) {
-		return types.ErrInvalidParams.Wrapf("%s cannot be a blocked address", fieldName)
+	if rejectBlocked && k.bankKeeper != nil {
+		blocked := k.bankKeeper.BlockedAddr(address)
+		if !blocked {
+			// The SDK bank keeper keys blocked addresses by address string. Use
+			// the injected codec too, so this check is not coupled to global SDK
+			// Bech32 configuration.
+			canonical, err := k.accountCodec.BytesToString(address)
+			if err != nil {
+				return types.ErrInvalidParams.Wrapf("invalid %s: %v", fieldName, err)
+			}
+			blocked = k.bankKeeper.GetBlockedAddresses()[canonical]
+		}
+		if blocked {
+			return types.ErrInvalidParams.Wrapf("%s cannot be a blocked address", fieldName)
+		}
 	}
 
 	return nil

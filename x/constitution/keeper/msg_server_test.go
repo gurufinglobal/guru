@@ -114,6 +114,17 @@ func TestMsgServerUpdateParamsIgnoresConsensusParamsAuthority(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestMsgServerUpdateParamsAcceptsAuthorityHexEquivalent(t *testing.T) {
+	f := setupKeeperFixture(t)
+	msgServer := NewMsgServer(&f.keeper)
+
+	_, err := msgServer.UpdateParams(f.ctx, &constitutionv1.MsgUpdateParams{
+		Authority: testHexAddress(0x01),
+		Params:    testParams("12"),
+	})
+	require.NoError(t, err)
+}
+
 func TestMsgServerUpdateBaseAddress(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -247,6 +258,68 @@ func TestMsgServerModeratorMessagesIgnoreConsensusParamsAuthority(t *testing.T) 
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestMsgServerModeratorMessagesAcceptModeratorHexEquivalent(t *testing.T) {
+	tests := []struct {
+		name string
+		run  func(MsgServer, keeperTestFixture, string) error
+	}{
+		{
+			name: "update base address",
+			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
+				_, err := msgServer.UpdateBaseAddress(f.ctx, &constitutionv1.MsgUpdateBaseAddress{
+					Moderator:   moderator,
+					BaseAddress: testAddress(t, f.keeper.accountCodec, 0x0c),
+				})
+				return err
+			},
+		},
+		{
+			name: "update moderator address",
+			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
+				_, err := msgServer.UpdateModeratorAddress(f.ctx, &constitutionv1.MsgUpdateModeratorAddress{
+					Moderator:        moderator,
+					ModeratorAddress: testAddress(t, f.keeper.accountCodec, 0x0d),
+				})
+				return err
+			},
+		},
+		{
+			name: "update separation ratio",
+			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
+				_, err := msgServer.UpdateSeparationRatio(f.ctx, &constitutionv1.MsgUpdateSeparationRatio{
+					Moderator:       moderator,
+					SeparationRatio: testSeparationRatio(100_000, 200_000, 700_000),
+				})
+				return err
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			f := setupKeeperFixture(t)
+			msgServer := NewMsgServer(&f.keeper)
+
+			err := tc.run(msgServer, f, testHexAddress(0x02))
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestMsgServerUpdateBaseAddressRejectsBlockedAddressHexEquivalent(t *testing.T) {
+	f := setupKeeperFixture(t)
+	blockedAddress := testAddress(t, f.keeper.accountCodec, 0x0e)
+	f.bankKeeper.SetBlockedAddressString(blockedAddress, true)
+	msgServer := NewMsgServer(&f.keeper)
+
+	_, err := msgServer.UpdateBaseAddress(f.ctx, &constitutionv1.MsgUpdateBaseAddress{
+		Moderator:   f.moderatorAddress,
+		BaseAddress: testHexAddress(0x0e),
+	})
+	require.Error(t, err)
+	require.ErrorIs(t, err, constitutiontypes.ErrInvalidParams)
 }
 
 func TestMsgServerUpdateModeratorAddress(t *testing.T) {
