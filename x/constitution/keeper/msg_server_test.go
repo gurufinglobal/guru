@@ -3,7 +3,9 @@ package keeper
 import (
 	"testing"
 
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -90,6 +92,28 @@ func TestMsgServerUpdateParams(t *testing.T) {
 	}
 }
 
+func TestMsgServerUpdateParamsIgnoresConsensusParamsAuthority(t *testing.T) {
+	f := setupKeeperFixture(t)
+	consensusAuthority := testAddress(t, f.keeper.accountCodec, 0x08)
+	f.ctx = f.ctx.WithConsensusParams(cmtproto.ConsensusParams{
+		Authority: &cmtproto.AuthorityParams{Authority: consensusAuthority},
+	})
+	msgServer := NewMsgServer(&f.keeper)
+
+	_, err := msgServer.UpdateParams(f.ctx, &constitutionv1.MsgUpdateParams{
+		Authority: consensusAuthority,
+		Params:    testParams("12"),
+	})
+	require.Error(t, err)
+	require.ErrorIs(t, err, constitutiontypes.ErrInvalidAuthority)
+
+	_, err = msgServer.UpdateParams(f.ctx, &constitutionv1.MsgUpdateParams{
+		Authority: f.authority,
+		Params:    testParams("12"),
+	})
+	require.NoError(t, err)
+}
+
 func TestMsgServerUpdateBaseAddress(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -165,6 +189,62 @@ func TestMsgServerUpdateBaseAddress(t *testing.T) {
 			baseAddress, err := f.keeper.GetBaseAddress(f.ctx)
 			require.NoError(t, err)
 			require.Equal(t, req.BaseAddress, baseAddress)
+		})
+	}
+}
+
+func TestMsgServerModeratorMessagesIgnoreConsensusParamsAuthority(t *testing.T) {
+	tests := []struct {
+		name string
+		run  func(MsgServer, keeperTestFixture, string) error
+	}{
+		{
+			name: "update base address",
+			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
+				_, err := msgServer.UpdateBaseAddress(f.ctx, &constitutionv1.MsgUpdateBaseAddress{
+					Moderator:   moderator,
+					BaseAddress: testAddress(t, f.keeper.accountCodec, 0x09),
+				})
+				return err
+			},
+		},
+		{
+			name: "update moderator address",
+			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
+				_, err := msgServer.UpdateModeratorAddress(f.ctx, &constitutionv1.MsgUpdateModeratorAddress{
+					Moderator:        moderator,
+					ModeratorAddress: testAddress(t, f.keeper.accountCodec, 0x0a),
+				})
+				return err
+			},
+		},
+		{
+			name: "update separation ratio",
+			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
+				_, err := msgServer.UpdateSeparationRatio(f.ctx, &constitutionv1.MsgUpdateSeparationRatio{
+					Moderator:       moderator,
+					SeparationRatio: testSeparationRatio(100_000, 200_000, 700_000),
+				})
+				return err
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			f := setupKeeperFixture(t)
+			consensusAuthority := testAddress(t, f.keeper.accountCodec, 0x0b)
+			f.ctx = f.ctx.WithConsensusParams(cmtproto.ConsensusParams{
+				Authority: &cmtproto.AuthorityParams{Authority: consensusAuthority},
+			})
+			msgServer := NewMsgServer(&f.keeper)
+
+			err := tc.run(msgServer, f, consensusAuthority)
+			require.Error(t, err)
+			require.ErrorIs(t, err, constitutiontypes.ErrInvalidAuthority)
+
+			err = tc.run(msgServer, f, f.moderatorAddress)
+			require.NoError(t, err)
 		})
 	}
 }
