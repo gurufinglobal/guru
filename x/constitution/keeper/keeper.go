@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"strings"
 
@@ -80,7 +81,7 @@ func (k Keeper) UpdateBaseAddress(ctx context.Context, baseAddress string) error
 }
 
 func (k Keeper) ValidateBaseAddress(baseAddress string) error {
-	return k.validateAddress("base_address", baseAddress)
+	return k.validateAddress("base_address", baseAddress, true)
 }
 
 func (k Keeper) GetModeratorAddress(ctx context.Context) (string, error) {
@@ -100,24 +101,25 @@ func (k Keeper) UpdateModeratorAddress(ctx context.Context, moderatorAddress str
 }
 
 func (k Keeper) ValidateModeratorAddress(moderatorAddress string) error {
-	return k.validateAddress("moderator_address", moderatorAddress)
+	return k.validateAddress("moderator_address", moderatorAddress, false)
 }
 
-func (k Keeper) validateAddress(fieldName, value string) error {
+func (k Keeper) validateAddress(fieldName, value string, rejectBlocked bool) error {
 	if strings.TrimSpace(value) == "" {
 		return types.ErrInvalidParams.Wrapf("%s cannot be empty", fieldName)
 	}
 
-	if _, err := k.accountCodec.StringToBytes(value); err != nil {
+	addressBytes, err := k.accountCodec.StringToBytes(value)
+	if err != nil {
 		return types.ErrInvalidParams.Wrapf("invalid %s: %v", fieldName, err)
 	}
+	address := sdk.AccAddress(addressBytes)
 
-	authorityAddress, err := k.AuthorityAddressString()
-	if err != nil {
-		return types.ErrInvalidParams.Wrapf("failed to encode authority address: %v", err)
-	}
-	if value == authorityAddress {
+	if bytes.Equal(address, k.authority) {
 		return types.ErrInvalidParams.Wrapf("%s must be explicitly configured and cannot equal authority", fieldName)
+	}
+	if rejectBlocked && k.bankKeeper != nil && k.bankKeeper.BlockedAddr(address) {
+		return types.ErrInvalidParams.Wrapf("%s cannot be a blocked address", fieldName)
 	}
 
 	return nil

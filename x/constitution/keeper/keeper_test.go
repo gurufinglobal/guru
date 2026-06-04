@@ -3,6 +3,7 @@ package keeper
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -64,7 +65,20 @@ func TestKeeperBaseAndModeratorAddressValidation(t *testing.T) {
 	require.Error(t, f.keeper.SetBaseAddress(f.ctx, "invalid"))
 	require.Error(t, f.keeper.SetBaseAddress(f.ctx, ""))
 	require.Error(t, f.keeper.SetBaseAddress(f.ctx, f.authority))
+	require.Error(t, f.keeper.SetBaseAddress(f.ctx, testHexAddress(0x01)))
 	require.Error(t, f.keeper.SetModeratorAddress(f.ctx, "invalid"))
 	require.Error(t, f.keeper.SetModeratorAddress(f.ctx, ""))
 	require.Error(t, f.keeper.SetModeratorAddress(f.ctx, f.authority))
+	require.Error(t, f.keeper.SetModeratorAddress(f.ctx, testHexAddress(0x01)))
+}
+
+func TestKeeperBaseAddressRejectsBlockedAddress(t *testing.T) {
+	f := setupKeeperFixtureWithoutParams(t)
+	blockedAddress := testAddress(t, f.keeper.accountCodec, 0x15)
+	blockedAddressBytes, err := f.keeper.accountCodec.StringToBytes(blockedAddress)
+	require.NoError(t, err)
+	f.bankKeeper.SetBlockedAddr(sdk.AccAddress(blockedAddressBytes), true)
+
+	require.Error(t, f.keeper.SetBaseAddress(f.ctx, blockedAddress))
+	require.NoError(t, f.keeper.SetModeratorAddress(f.ctx, blockedAddress))
 }

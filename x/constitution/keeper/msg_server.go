@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"strings"
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,8 +29,8 @@ func (m MsgServer) UpdateParams(goCtx context.Context, req *constitutionv1.MsgUp
 	if req == nil {
 		return nil, constitutiontypes.ErrInvalidRequest.Wrap("empty request")
 	}
-	if err := m.validateAuthority(ctx, req.Authority); err != nil {
-		return nil, constitutiontypes.ErrInvalidAuthority.Wrap(err.Error())
+	if err := m.validateAuthority(req.Authority); err != nil {
+		return nil, err
 	}
 	if err := m.keeper.UpdateParams(ctx, req.Params); err != nil {
 		return nil, err
@@ -82,13 +84,13 @@ func (m MsgServer) UpdateSeparationRatio(goCtx context.Context, req *constitutio
 	return &constitutionv1.MsgUpdateSeparationRatioResponse{}, nil
 }
 
-func (m MsgServer) validateAuthority(ctx sdk.Context, authority string) error {
+func (m MsgServer) validateAuthority(authority string) error {
 	expectedAuthority, err := m.keeper.AuthorityAddressString()
 	if err != nil {
 		return err
 	}
 
-	return sdk.ValidateAuthority(ctx, expectedAuthority, authority)
+	return m.validateAddressMatches("authority", expectedAuthority, authority)
 }
 
 func (m MsgServer) validateModerator(ctx sdk.Context, moderator string) error {
@@ -100,9 +102,34 @@ func (m MsgServer) validateModerator(ctx sdk.Context, moderator string) error {
 		return err
 	}
 
-	if err := sdk.ValidateAuthority(ctx, currentModerator, moderator); err != nil {
-		return constitutiontypes.ErrInvalidAuthority.Wrap(err.Error())
+	return m.validateAddressMatches("moderator", currentModerator, moderator)
+}
+
+func (m MsgServer) validateAddressMatches(fieldName, expected, actual string) error {
+	expectedAddress, err := m.decodeAuthorityAddress("expected "+fieldName, expected)
+	if err != nil {
+		return err
+	}
+	actualAddress, err := m.decodeAuthorityAddress(fieldName, actual)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(expectedAddress, actualAddress) {
+		return constitutiontypes.ErrInvalidAuthority.Wrapf("invalid authority: expected %s, got %s", expected, actual)
 	}
 
 	return nil
+}
+
+func (m MsgServer) decodeAuthorityAddress(fieldName, value string) ([]byte, error) {
+	if strings.TrimSpace(value) == "" {
+		return nil, constitutiontypes.ErrInvalidAuthority.Wrapf("%s cannot be empty", fieldName)
+	}
+
+	address, err := m.keeper.accountCodec.StringToBytes(value)
+	if err != nil {
+		return nil, constitutiontypes.ErrInvalidAuthority.Wrapf("invalid %s: %v", fieldName, err)
+	}
+
+	return address, nil
 }

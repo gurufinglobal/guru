@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"testing"
 
@@ -110,15 +111,21 @@ func testAddress(t *testing.T, accountCodec address.Codec, b byte) string {
 	return address
 }
 
+func testHexAddress(b byte) string {
+	return "0x" + hex.EncodeToString(bytes.Repeat([]byte{b}, 20))
+}
+
 type mockBankKeeper struct {
 	moduleBalances  map[string]sdk.Coins
 	accountBalances map[string]sdk.Coins
+	blockedAddrs    map[string]bool
 }
 
 func newMockBankKeeper() *mockBankKeeper {
 	return &mockBankKeeper{
 		moduleBalances:  make(map[string]sdk.Coins),
 		accountBalances: make(map[string]sdk.Coins),
+		blockedAddrs:    make(map[string]bool),
 	}
 }
 
@@ -132,6 +139,14 @@ func (m *mockBankKeeper) GetModuleBalance(moduleName string) sdk.Coins {
 
 func (m *mockBankKeeper) GetAccountBalance(address sdk.AccAddress) sdk.Coins {
 	return m.accountBalances[address.String()]
+}
+
+func (m *mockBankKeeper) SetBlockedAddr(address sdk.AccAddress, blocked bool) {
+	m.blockedAddrs[string(address)] = blocked
+}
+
+func (m *mockBankKeeper) BlockedAddr(address sdk.AccAddress) bool {
+	return m.blockedAddrs[string(address)]
 }
 
 func (m *mockBankKeeper) GetAllBalances(_ context.Context, address sdk.AccAddress) sdk.Coins {
