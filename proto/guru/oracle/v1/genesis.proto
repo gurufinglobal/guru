@@ -8,6 +8,7 @@ option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev
 
 message GenesisState {
   Params params = 1;
-  repeated OracleTask active_tasks = 2;
-  repeated OracleResult oracle_results = 3;
+  repeated OracleTask tasks = 2;
+  repeated OracleValue latest_values = 3;
+  repeated OracleHistory history = 4;
 }

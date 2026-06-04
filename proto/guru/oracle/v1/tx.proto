@@ -8,39 +8,37 @@ import "guru/oracle/v1/params.proto";
 
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
 
+// Msg exposes moderator-controlled oracle mutations.
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  // UpdateParams defines a governance operation for updating the parameters.
+  // UpdateParams defines a moderator operation for updating the parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 
-  // UpdateOracleTask is called by governance or authority to manage tasks.
-  rpc UpdateOracleTask(MsgUpdateOracleTask)
-      returns (MsgUpdateOracleTaskResponse);
+  // UpsertTask manages one oracle task keyed by symbol.
+  rpc UpsertTask(MsgUpsertTask) returns (MsgUpsertTaskResponse);
 
-  // UpdatePrices is a system message injected during PrepareProposal.
-  rpc UpdatePrices(MsgUpdatePrices) returns (MsgUpdatePricesResponse);
+  // RemoveTask deletes one oracle task by symbol.
+  rpc RemoveTask(MsgRemoveTask) returns (MsgRemoveTaskResponse);
 }
 
 message MsgUpdateParams {
-  option (cosmos.msg.v1.signer) = "authority";
-  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  option (cosmos.msg.v1.signer) = "moderator";
+  string moderator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   Params params = 2;
 }
 message MsgUpdateParamsResponse {}
 
-message MsgUpdateOracleTask {
-  option (cosmos.msg.v1.signer) = "authority";
-  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+message MsgUpsertTask {
+  option (cosmos.msg.v1.signer) = "moderator";
+  string moderator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   OracleTask task = 2;
-  bool is_remove = 3;
 }
-message MsgUpdateOracleTaskResponse {}
+message MsgUpsertTaskResponse {}
 
-message MsgUpdatePrices {
-  option (cosmos.msg.v1.signer) = "authority";
-  // 오라클 모듈 자체의 계정 주소가 서명자로 들어갑니다 (system tx).
-  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  repeated OracleResult rates = 2;
+message MsgRemoveTask {
+  option (cosmos.msg.v1.signer) = "moderator";
+  string moderator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string symbol = 2;
 }
-message MsgUpdatePricesResponse {}
+message MsgRemoveTaskResponse {}

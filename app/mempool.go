@@ -9,6 +9,7 @@ import (
 	evmmempool "github.com/cosmos/evm/mempool"
 	evmserver "github.com/cosmos/evm/server"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	oracleabci "github.com/gurufinglobal/guru/v3/x/oracle/abci"
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 )
@@ -56,10 +57,16 @@ func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.L
 			sdkmempool.NewDefaultSignerExtractionAdapter(),
 		),
 	)
+	oracleAggregator := oracleabci.NewAggregator(app.OracleKeeper, app.StakingKeeper)
+	oracleProposalHandler := oracleabci.NewProposalHandler(
+		oracleAggregator,
+		proposalHandler.PrepareProposalHandler(),
+		proposalHandler.ProcessProposalHandler(),
+	)
 
 	txDecoder := app.txConfig.TxDecoder()
-	app.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
-	app.SetProcessProposal(proposalHandler.ProcessProposalHandler())
+	app.SetPrepareProposal(oracleProposalHandler.PrepareProposal)
+	app.SetProcessProposal(oracleProposalHandler.ProcessProposal)
 	app.SetInsertTxHandler(evmMempool.NewInsertTxHandler(txDecoder))
 	app.SetReapTxsHandler(evmMempool.NewReapTxsHandler())
 	app.SetCheckTxHandler(evmMempool.NewCheckTxHandler(
@@ -68,6 +75,7 @@ func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.L
 	))
 	app.SetMempool(evmMempool)
 	app.EVMMempool = evmMempool
+	app.OracleProposalHandler = &oracleProposalHandler
 
 	return nil
 }

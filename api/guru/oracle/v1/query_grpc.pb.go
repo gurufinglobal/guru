@@ -21,18 +21,30 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	Query_Params_FullMethodName       = "/guru.oracle.v1.Query/Params"
 	Query_ActiveTasks_FullMethodName  = "/guru.oracle.v1.Query/ActiveTasks"
-	Query_OracleValue_FullMethodName  = "/guru.oracle.v1.Query/OracleValue"
-	Query_OracleValues_FullMethodName = "/guru.oracle.v1.Query/OracleValues"
+	Query_Task_FullMethodName         = "/guru.oracle.v1.Query/Task"
+	Query_LatestValue_FullMethodName  = "/guru.oracle.v1.Query/LatestValue"
+	Query_LatestValues_FullMethodName = "/guru.oracle.v1.Query/LatestValues"
+	Query_History_FullMethodName      = "/guru.oracle.v1.Query/History"
 )
 
 // QueryClient is the client API for Query service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Query exposes read-only oracle state.
 type QueryClient interface {
+	// Params returns oracle module parameters.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
+	// ActiveTasks returns configured oracle tasks.
 	ActiveTasks(ctx context.Context, in *QueryActiveTasksRequest, opts ...grpc.CallOption) (*QueryActiveTasksResponse, error)
-	OracleValue(ctx context.Context, in *QueryOracleValueRequest, opts ...grpc.CallOption) (*QueryOracleValueResponse, error)
-	OracleValues(ctx context.Context, in *QueryOracleValuesRequest, opts ...grpc.CallOption) (*QueryOracleValuesResponse, error)
+	// Task returns a configured oracle task by symbol.
+	Task(ctx context.Context, in *QueryTaskRequest, opts ...grpc.CallOption) (*QueryTaskResponse, error)
+	// LatestValue returns the latest accepted oracle value for a symbol.
+	LatestValue(ctx context.Context, in *QueryLatestValueRequest, opts ...grpc.CallOption) (*QueryLatestValueResponse, error)
+	// LatestValues returns all latest accepted oracle values.
+	LatestValues(ctx context.Context, in *QueryLatestValuesRequest, opts ...grpc.CallOption) (*QueryLatestValuesResponse, error)
+	// History returns bounded oracle value history for a symbol.
+	History(ctx context.Context, in *QueryHistoryRequest, opts ...grpc.CallOption) (*QueryHistoryResponse, error)
 }
 
 type queryClient struct {
@@ -63,20 +75,40 @@ func (c *queryClient) ActiveTasks(ctx context.Context, in *QueryActiveTasksReque
 	return out, nil
 }
 
-func (c *queryClient) OracleValue(ctx context.Context, in *QueryOracleValueRequest, opts ...grpc.CallOption) (*QueryOracleValueResponse, error) {
+func (c *queryClient) Task(ctx context.Context, in *QueryTaskRequest, opts ...grpc.CallOption) (*QueryTaskResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(QueryOracleValueResponse)
-	err := c.cc.Invoke(ctx, Query_OracleValue_FullMethodName, in, out, cOpts...)
+	out := new(QueryTaskResponse)
+	err := c.cc.Invoke(ctx, Query_Task_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) OracleValues(ctx context.Context, in *QueryOracleValuesRequest, opts ...grpc.CallOption) (*QueryOracleValuesResponse, error) {
+func (c *queryClient) LatestValue(ctx context.Context, in *QueryLatestValueRequest, opts ...grpc.CallOption) (*QueryLatestValueResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(QueryOracleValuesResponse)
-	err := c.cc.Invoke(ctx, Query_OracleValues_FullMethodName, in, out, cOpts...)
+	out := new(QueryLatestValueResponse)
+	err := c.cc.Invoke(ctx, Query_LatestValue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) LatestValues(ctx context.Context, in *QueryLatestValuesRequest, opts ...grpc.CallOption) (*QueryLatestValuesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryLatestValuesResponse)
+	err := c.cc.Invoke(ctx, Query_LatestValues_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) History(ctx context.Context, in *QueryHistoryRequest, opts ...grpc.CallOption) (*QueryHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryHistoryResponse)
+	err := c.cc.Invoke(ctx, Query_History_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,11 +118,21 @@ func (c *queryClient) OracleValues(ctx context.Context, in *QueryOracleValuesReq
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility.
+//
+// Query exposes read-only oracle state.
 type QueryServer interface {
+	// Params returns oracle module parameters.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
+	// ActiveTasks returns configured oracle tasks.
 	ActiveTasks(context.Context, *QueryActiveTasksRequest) (*QueryActiveTasksResponse, error)
-	OracleValue(context.Context, *QueryOracleValueRequest) (*QueryOracleValueResponse, error)
-	OracleValues(context.Context, *QueryOracleValuesRequest) (*QueryOracleValuesResponse, error)
+	// Task returns a configured oracle task by symbol.
+	Task(context.Context, *QueryTaskRequest) (*QueryTaskResponse, error)
+	// LatestValue returns the latest accepted oracle value for a symbol.
+	LatestValue(context.Context, *QueryLatestValueRequest) (*QueryLatestValueResponse, error)
+	// LatestValues returns all latest accepted oracle values.
+	LatestValues(context.Context, *QueryLatestValuesRequest) (*QueryLatestValuesResponse, error)
+	// History returns bounded oracle value history for a symbol.
+	History(context.Context, *QueryHistoryRequest) (*QueryHistoryResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -107,11 +149,17 @@ func (UnimplementedQueryServer) Params(context.Context, *QueryParamsRequest) (*Q
 func (UnimplementedQueryServer) ActiveTasks(context.Context, *QueryActiveTasksRequest) (*QueryActiveTasksResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ActiveTasks not implemented")
 }
-func (UnimplementedQueryServer) OracleValue(context.Context, *QueryOracleValueRequest) (*QueryOracleValueResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method OracleValue not implemented")
+func (UnimplementedQueryServer) Task(context.Context, *QueryTaskRequest) (*QueryTaskResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Task not implemented")
 }
-func (UnimplementedQueryServer) OracleValues(context.Context, *QueryOracleValuesRequest) (*QueryOracleValuesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method OracleValues not implemented")
+func (UnimplementedQueryServer) LatestValue(context.Context, *QueryLatestValueRequest) (*QueryLatestValueResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LatestValue not implemented")
+}
+func (UnimplementedQueryServer) LatestValues(context.Context, *QueryLatestValuesRequest) (*QueryLatestValuesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LatestValues not implemented")
+}
+func (UnimplementedQueryServer) History(context.Context, *QueryHistoryRequest) (*QueryHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method History not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 func (UnimplementedQueryServer) testEmbeddedByValue()               {}
@@ -170,38 +218,74 @@ func _Query_ActiveTasks_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_OracleValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryOracleValueRequest)
+func _Query_Task_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryTaskRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).OracleValue(ctx, in)
+		return srv.(QueryServer).Task(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Query_OracleValue_FullMethodName,
+		FullMethod: Query_Task_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).OracleValue(ctx, req.(*QueryOracleValueRequest))
+		return srv.(QueryServer).Task(ctx, req.(*QueryTaskRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_OracleValues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryOracleValuesRequest)
+func _Query_LatestValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryLatestValueRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).OracleValues(ctx, in)
+		return srv.(QueryServer).LatestValue(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Query_OracleValues_FullMethodName,
+		FullMethod: Query_LatestValue_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).OracleValues(ctx, req.(*QueryOracleValuesRequest))
+		return srv.(QueryServer).LatestValue(ctx, req.(*QueryLatestValueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_LatestValues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryLatestValuesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).LatestValues(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_LatestValues_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).LatestValues(ctx, req.(*QueryLatestValuesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_History_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).History(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_History_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).History(ctx, req.(*QueryHistoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -222,12 +306,20 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Query_ActiveTasks_Handler,
 		},
 		{
-			MethodName: "OracleValue",
-			Handler:    _Query_OracleValue_Handler,
+			MethodName: "Task",
+			Handler:    _Query_Task_Handler,
 		},
 		{
-			MethodName: "OracleValues",
-			Handler:    _Query_OracleValues_Handler,
+			MethodName: "LatestValue",
+			Handler:    _Query_LatestValue_Handler,
+		},
+		{
+			MethodName: "LatestValues",
+			Handler:    _Query_LatestValues_Handler,
+		},
+		{
+			MethodName: "History",
+			Handler:    _Query_History_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

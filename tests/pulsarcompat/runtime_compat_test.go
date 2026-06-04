@@ -26,12 +26,13 @@ import (
 var _ legacyproto.Message = (*oraclev1.QueryParamsResponse)(nil)
 
 func TestLegacyProtoV1MarshalCompatibility(t *testing.T) {
-	in := &oraclev1.QueryOracleValueResponse{
-		Result: &oraclev1.OracleResult{
+	in := &oraclev1.QueryLatestValueResponse{
+		Value: &oraclev1.OracleValue{
 			Symbol:        "BTC/USD",
+			ValueType:     oraclev1.ValueType_VALUE_TYPE_NUMERIC,
 			Value:         "65000.1234",
-			ResolveHeight: 10,
-			ResolveTime:   20,
+			BlockHeight:   10,
+			BlockTimeUnix: 20,
 		},
 	}
 
@@ -43,12 +44,12 @@ func TestLegacyProtoV1MarshalCompatibility(t *testing.T) {
 		t.Fatalf("legacy proto marshal returned empty bytes")
 	}
 
-	var out oraclev1.QueryOracleValueResponse
+	var out oraclev1.QueryLatestValueResponse
 	if err := legacyproto.Unmarshal(bz, &out); err != nil {
 		t.Fatalf("legacy proto unmarshal failed: %v", err)
 	}
-	if out.Result == nil || out.Result.Symbol != in.Result.Symbol || out.Result.Value != in.Result.Value {
-		t.Fatalf("unexpected legacy proto round-trip result: got=%+v want=%+v", out.Result, in.Result)
+	if out.Value == nil || out.Value.Symbol != in.Value.Symbol || out.Value.Value != in.Value.Value {
+		t.Fatalf("unexpected legacy proto round-trip result: got=%+v want=%+v", out.Value, in.Value)
 	}
 }
 
@@ -64,19 +65,34 @@ func (mockGatewayQueryServer) ActiveTasks(context.Context, *oraclev1.QueryActive
 	return &oraclev1.QueryActiveTasksResponse{}, nil
 }
 
-func (mockGatewayQueryServer) OracleValue(_ context.Context, req *oraclev1.QueryOracleValueRequest) (*oraclev1.QueryOracleValueResponse, error) {
-	return &oraclev1.QueryOracleValueResponse{
-		Result: &oraclev1.OracleResult{
-			Symbol:        req.Symbol,
-			Value:         "42000.01",
-			ResolveHeight: 11,
-			ResolveTime:   22,
+func (mockGatewayQueryServer) Task(_ context.Context, req *oraclev1.QueryTaskRequest) (*oraclev1.QueryTaskResponse, error) {
+	return &oraclev1.QueryTaskResponse{
+		Task: &oraclev1.OracleTask{
+			Symbol:    req.Symbol,
+			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:   true,
 		},
 	}, nil
 }
 
-func (mockGatewayQueryServer) OracleValues(context.Context, *oraclev1.QueryOracleValuesRequest) (*oraclev1.QueryOracleValuesResponse, error) {
-	return &oraclev1.QueryOracleValuesResponse{}, nil
+func (mockGatewayQueryServer) LatestValue(_ context.Context, req *oraclev1.QueryLatestValueRequest) (*oraclev1.QueryLatestValueResponse, error) {
+	return &oraclev1.QueryLatestValueResponse{
+		Value: &oraclev1.OracleValue{
+			Symbol:        req.Symbol,
+			ValueType:     oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Value:         "42000.01",
+			BlockHeight:   11,
+			BlockTimeUnix: 22,
+		},
+	}, nil
+}
+
+func (mockGatewayQueryServer) LatestValues(context.Context, *oraclev1.QueryLatestValuesRequest) (*oraclev1.QueryLatestValuesResponse, error) {
+	return &oraclev1.QueryLatestValuesResponse{}, nil
+}
+
+func (mockGatewayQueryServer) History(context.Context, *oraclev1.QueryHistoryRequest) (*oraclev1.QueryHistoryResponse, error) {
+	return &oraclev1.QueryHistoryResponse{}, nil
 }
 
 func TestGRPCGatewayHandlesPulsarQueryMessages(t *testing.T) {
@@ -109,26 +125,26 @@ func TestGRPCGatewayHandlesPulsarQueryMessages(t *testing.T) {
 		t.Fatalf("unexpected /params response payload: %+v", paramsResp)
 	}
 
-	resp2, err := http.Get(srv.URL + "/guru/oracle/v1/oracle_values/BTC-USD")
+	resp2, err := http.Get(srv.URL + "/guru/oracle/v1/values/BTC-USD")
 	if err != nil {
-		t.Fatalf("GET /oracle_values/{symbol} failed: %v", err)
+		t.Fatalf("GET /values/{symbol} failed: %v", err)
 	}
 	defer resp2.Body.Close()
 	if resp2.StatusCode != http.StatusOK {
-		t.Fatalf("unexpected /oracle_values/{symbol} status: got=%d", resp2.StatusCode)
+		t.Fatalf("unexpected /values/{symbol} status: got=%d", resp2.StatusCode)
 	}
 
 	var valueResp struct {
-		Result struct {
+		Value struct {
 			Symbol string `json:"symbol"`
 			Value  string `json:"value"`
-		} `json:"result"`
+		} `json:"value"`
 	}
 	if err := json.NewDecoder(resp2.Body).Decode(&valueResp); err != nil {
-		t.Fatalf("decode /oracle_values/{symbol} response: %v", err)
+		t.Fatalf("decode /values/{symbol} response: %v", err)
 	}
-	if valueResp.Result.Symbol != "BTC-USD" || valueResp.Result.Value != "42000.01" {
-		t.Fatalf("unexpected /oracle_values/{symbol} payload: %+v", valueResp)
+	if valueResp.Value.Symbol != "BTC-USD" || valueResp.Value.Value != "42000.01" {
+		t.Fatalf("unexpected /values/{symbol} payload: %+v", valueResp)
 	}
 }
 
@@ -136,14 +152,14 @@ type mockMsgServer struct {
 	oraclev1.UnimplementedMsgServer
 }
 
-func (mockMsgServer) UpdatePrices(_ context.Context, req *oraclev1.MsgUpdatePrices) (*oraclev1.MsgUpdatePricesResponse, error) {
-	if req.Authority == "" {
-		return nil, status.Error(codes.InvalidArgument, "authority is required")
+func (mockMsgServer) UpsertTask(_ context.Context, req *oraclev1.MsgUpsertTask) (*oraclev1.MsgUpsertTaskResponse, error) {
+	if req.Moderator == "" {
+		return nil, status.Error(codes.InvalidArgument, "moderator is required")
 	}
-	if len(req.Rates) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "rates are required")
+	if req.Task == nil {
+		return nil, status.Error(codes.InvalidArgument, "task is required")
 	}
-	return &oraclev1.MsgUpdatePricesResponse{}, nil
+	return &oraclev1.MsgUpsertTaskResponse{}, nil
 }
 
 func TestGRPCMsgClientServerWithPulsarMessages(t *testing.T) {
@@ -170,19 +186,16 @@ func TestGRPCMsgClientServerWithPulsarMessages(t *testing.T) {
 	defer conn.Close()
 
 	client := oraclev1.NewMsgClient(conn)
-	_, err = client.UpdatePrices(context.Background(), &oraclev1.MsgUpdatePrices{
-		Authority: "guru1authority",
-		Rates: []*oraclev1.OracleResult{
-			{
-				Symbol:        "BTC/USD",
-				Value:         "60000.0",
-				ResolveHeight: 1,
-				ResolveTime:   2,
-			},
+	_, err = client.UpsertTask(context.Background(), &oraclev1.MsgUpsertTask{
+		Moderator: "guru1moderator",
+		Task: &oraclev1.OracleTask{
+			Symbol:    "BTC/USD",
+			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:   true,
 		},
 	})
 	if err != nil {
-		t.Fatalf("grpc UpdatePrices failed: %v", err)
+		t.Fatalf("grpc UpsertTask failed: %v", err)
 	}
 }
 
@@ -190,13 +203,12 @@ func TestInterfaceRegistryCanUnpackPulsarMsgAndResponse(t *testing.T) {
 	registry := codectypes.NewInterfaceRegistry()
 	oracletypes.RegisterInterfaces(registry)
 
-	msgIn := &oraclev1.MsgUpdatePrices{
-		Authority: "guru1authority",
-		Rates: []*oraclev1.OracleResult{
-			{
-				Symbol: "BTC/USD",
-				Value:  "60000.0",
-			},
+	msgIn := &oraclev1.MsgUpsertTask{
+		Moderator: "guru1moderator",
+		Task: &oraclev1.OracleTask{
+			Symbol:    "BTC/USD",
+			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:   true,
 		},
 	}
 
@@ -209,15 +221,15 @@ func TestInterfaceRegistryCanUnpackPulsarMsgAndResponse(t *testing.T) {
 	if err := registry.UnpackAny(msgAny, &msgOut); err != nil {
 		t.Fatalf("unpack sdk.Msg from Any failed: %v", err)
 	}
-	unpackedMsg, ok := msgOut.(*oraclev1.MsgUpdatePrices)
+	unpackedMsg, ok := msgOut.(*oraclev1.MsgUpsertTask)
 	if !ok {
 		t.Fatalf("unexpected unpacked sdk.Msg type: %T", msgOut)
 	}
-	if unpackedMsg.Authority != msgIn.Authority {
-		t.Fatalf("unexpected unpacked authority: got=%s want=%s", unpackedMsg.Authority, msgIn.Authority)
+	if unpackedMsg.Moderator != msgIn.Moderator {
+		t.Fatalf("unexpected unpacked moderator: got=%s want=%s", unpackedMsg.Moderator, msgIn.Moderator)
 	}
 
-	respAny, err := codectypes.NewAnyWithValue(&oraclev1.MsgUpdatePricesResponse{})
+	respAny, err := codectypes.NewAnyWithValue(&oraclev1.MsgUpsertTaskResponse{})
 	if err != nil {
 		t.Fatalf("pack tx.MsgResponse into Any failed: %v", err)
 	}
@@ -226,7 +238,7 @@ func TestInterfaceRegistryCanUnpackPulsarMsgAndResponse(t *testing.T) {
 	if err := registry.UnpackAny(respAny, &respOut); err != nil {
 		t.Fatalf("unpack tx.MsgResponse from Any failed: %v", err)
 	}
-	if _, ok := respOut.(*oraclev1.MsgUpdatePricesResponse); !ok {
+	if _, ok := respOut.(*oraclev1.MsgUpsertTaskResponse); !ok {
 		t.Fatalf("unexpected unpacked tx.MsgResponse type: %T", respOut)
 	}
 }

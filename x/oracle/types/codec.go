@@ -12,13 +12,13 @@ import (
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&oraclev1.MsgUpdateParams{},
-		&oraclev1.MsgUpdateOracleTask{},
-		&oraclev1.MsgUpdatePrices{},
+		&oraclev1.MsgUpsertTask{},
+		&oraclev1.MsgRemoveTask{},
 	)
 
 	registry.RegisterImplementations((*tx.MsgResponse)(nil),
 		&oraclev1.MsgUpdateParamsResponse{},
-		&oraclev1.MsgUpdateOracleTaskResponse{},
-		&oraclev1.MsgUpdatePricesResponse{},
+		&oraclev1.MsgUpsertTaskResponse{},
+		&oraclev1.MsgRemoveTaskResponse{},
 	)
 }

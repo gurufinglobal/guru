@@ -27,8 +27,33 @@ import (
 
 func addModuleInitFlags(_ *cobra.Command) {}
 
+const defaultOracleConfigTemplate = `
+[oracle]
+
+# Enables local validator oracle vote-extension participation.
+enabled = {{ .Oracle.Enabled }}
+
+# Unix domain socket used by validator nodes to query the oracle sidecar.
+sidecar_socket = "{{ .Oracle.SidecarSocket }}"
+
+# Timeout for one oracle sidecar request during ExtendVote.
+sidecar_timeout = "{{ .Oracle.SidecarTimeout }}"
+`
+
+type guruConfig struct {
+	cosmosevmserverconfig.Config `mapstructure:",squash"`
+
+	Oracle oracleConfig `mapstructure:"oracle"`
+}
+
+type oracleConfig struct {
+	Enabled        bool   `mapstructure:"enabled"`
+	SidecarSocket  string `mapstructure:"sidecar_socket"`
+	SidecarTimeout string `mapstructure:"sidecar_timeout"`
+}
+
 func defaultAppToml() (string, any) {
-	template := serverconfig.DefaultConfigTemplate + cosmosevmserverconfig.DefaultEVMConfigTemplate
+	template := serverconfig.DefaultConfigTemplate + cosmosevmserverconfig.DefaultEVMConfigTemplate + defaultOracleConfigTemplate
 
 	cfg := cosmosevmserverconfig.DefaultConfig()
 	cfg.MinGasPrices = "0" + appparams.BaseDenom
@@ -37,7 +62,14 @@ func defaultAppToml() (string, any) {
 	cfg.JSONRPC.Enable = true
 	cfg.JSONRPC.Address = "0.0.0.0:8545"
 
-	return template, cfg
+	return template, guruConfig{
+		Config: *cfg,
+		Oracle: oracleConfig{
+			Enabled:        true,
+			SidecarSocket:  "",
+			SidecarTimeout: "200ms",
+		},
+	}
 }
 
 func defaultConfigToml() *cmtcfg.Config {

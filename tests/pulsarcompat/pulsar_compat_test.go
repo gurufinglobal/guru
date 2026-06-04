@@ -9,7 +9,7 @@ import (
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 )
 
-var _ sdk.Msg = (*oraclev1.MsgUpdatePrices)(nil)
+var _ sdk.Msg = (*oraclev1.MsgUpsertTask)(nil)
 
 func TestProtoCodecCanMarshalPulsarTypes(t *testing.T) {
 	cdc := sdkcodec.NewProtoCodec(codectypes.NewInterfaceRegistry())

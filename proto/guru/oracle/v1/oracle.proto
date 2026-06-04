@@ -1,32 +1,73 @@
 syntax = "proto3";
 package guru.oracle.v1;
 
-import "cosmos_proto/cosmos.proto";
-
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
 
-// Category defines the classification of the oracle data.
-// It dictates both the Sidecar's routing and the Chain's aggregation algorithm.
-enum Category {
-  CATEGORY_UNSPECIFIED = 0;
-  CATEGORY_CRYPTO = 1; // Requires Median Aggregation
-  CATEGORY_FIAT = 2;   // Requires Median Aggregation
-  // CATEGORY_WEATHER = 3; // Future: Requires Median Aggregation
-  // CATEGORY_EVENT = 4;   // Future: Requires Majority Voting Aggregation
+// ValueType classifies the string-encoded oracle value.
+enum ValueType {
+  // VALUE_TYPE_UNSPECIFIED is invalid for configured tasks and results.
+  VALUE_TYPE_UNSPECIFIED = 0;
+  // VALUE_TYPE_NUMERIC is aggregated as a Cosmos decimal string.
+  VALUE_TYPE_NUMERIC = 1;
+  // VALUE_TYPE_STRING is reserved for future non-numeric aggregation.
+  VALUE_TYPE_STRING = 2;
+  // VALUE_TYPE_BOOL is reserved for future non-numeric aggregation.
+  VALUE_TYPE_BOOL = 3;
 }
 
 message OracleTask {
-  string symbol = 1; // 예: "BTC/USD", "SEOUL_TEMP", "US_ELECTION_2024"
-  Category category = 2;
-  int64 update_interval_blocks = 3;
-  int32 required_min_sources = 4;
+  string symbol = 1;
+  ValueType value_type = 2;
+  bool enabled = 3;
 }
 
-// OracleResult represents the generalized data brought on-chain.
-message OracleResult {
+message OracleValue {
   string symbol = 1;
-  // value represents numeric data as a Cosmos decimal scalar.
-  string value = 2;
-  int64 resolve_height = 3; // 체인 확정 높이
-  int64 resolve_time = 4;   // 사이드카 수집 타임스탬프
+  ValueType value_type = 2;
+  string value = 3;
+  int64 block_height = 4;
+  int64 block_time_unix = 5;
+}
+
+message OracleSample {
+  string source = 1;
+  ValueType value_type = 2;
+  string value = 3;
+  int64 sample_time_unix = 4;
+}
+
+message OracleSymbolSamples {
+  string symbol = 1;
+  repeated OracleSample samples = 2;
+}
+
+message OracleValidatorResult {
+  string symbol = 1;
+  ValueType value_type = 2;
+  string value = 3;
+  uint32 source_count = 4;
+}
+
+message OracleSignedVoteExtension {
+  bytes validator_address = 1;
+  int64 validator_power = 2;
+  int32 block_id_flag = 3;
+  bytes vote_extension = 4;
+  bytes extension_signature = 5;
+}
+
+message OracleSignedVoteExtensions {
+  int32 round = 1;
+  repeated OracleSignedVoteExtension votes = 2;
+}
+
+message OracleProposalPayload {
+  int64 height = 1;
+  OracleSignedVoteExtensions vote_extensions = 2;
+  repeated OracleValue values = 3;
+}
+
+message OracleHistory {
+  string symbol = 1;
+  repeated OracleValue values = 2;
 }

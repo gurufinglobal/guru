@@ -175,6 +175,7 @@ func InitCmd(tempApp *app.App, defaultNodeHome string) *cobra.Command {
 				Validators: nil,
 				Params:     cmttypes.DefaultConsensusParams(),
 			}
+			appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = 1
 
 			consensusKey, err := cmd.Flags().GetString(FlagConsensusKeyAlgo)
 			if err != nil {

@@ -19,21 +19,23 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Msg_UpdateParams_FullMethodName     = "/guru.oracle.v1.Msg/UpdateParams"
-	Msg_UpdateOracleTask_FullMethodName = "/guru.oracle.v1.Msg/UpdateOracleTask"
-	Msg_UpdatePrices_FullMethodName     = "/guru.oracle.v1.Msg/UpdatePrices"
+	Msg_UpdateParams_FullMethodName = "/guru.oracle.v1.Msg/UpdateParams"
+	Msg_UpsertTask_FullMethodName   = "/guru.oracle.v1.Msg/UpsertTask"
+	Msg_RemoveTask_FullMethodName   = "/guru.oracle.v1.Msg/RemoveTask"
 )
 
 // MsgClient is the client API for Msg service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Msg exposes moderator-controlled oracle mutations.
 type MsgClient interface {
-	// UpdateParams defines a governance operation for updating the parameters.
+	// UpdateParams defines a moderator operation for updating the parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
-	// UpdateOracleTask is called by governance or authority to manage tasks.
-	UpdateOracleTask(ctx context.Context, in *MsgUpdateOracleTask, opts ...grpc.CallOption) (*MsgUpdateOracleTaskResponse, error)
-	// UpdatePrices is a system message injected during PrepareProposal.
-	UpdatePrices(ctx context.Context, in *MsgUpdatePrices, opts ...grpc.CallOption) (*MsgUpdatePricesResponse, error)
+	// UpsertTask manages one oracle task keyed by symbol.
+	UpsertTask(ctx context.Context, in *MsgUpsertTask, opts ...grpc.CallOption) (*MsgUpsertTaskResponse, error)
+	// RemoveTask deletes one oracle task by symbol.
+	RemoveTask(ctx context.Context, in *MsgRemoveTask, opts ...grpc.CallOption) (*MsgRemoveTaskResponse, error)
 }
 
 type msgClient struct {
@@ -54,20 +56,20 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
-func (c *msgClient) UpdateOracleTask(ctx context.Context, in *MsgUpdateOracleTask, opts ...grpc.CallOption) (*MsgUpdateOracleTaskResponse, error) {
+func (c *msgClient) UpsertTask(ctx context.Context, in *MsgUpsertTask, opts ...grpc.CallOption) (*MsgUpsertTaskResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MsgUpdateOracleTaskResponse)
-	err := c.cc.Invoke(ctx, Msg_UpdateOracleTask_FullMethodName, in, out, cOpts...)
+	out := new(MsgUpsertTaskResponse)
+	err := c.cc.Invoke(ctx, Msg_UpsertTask_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *msgClient) UpdatePrices(ctx context.Context, in *MsgUpdatePrices, opts ...grpc.CallOption) (*MsgUpdatePricesResponse, error) {
+func (c *msgClient) RemoveTask(ctx context.Context, in *MsgRemoveTask, opts ...grpc.CallOption) (*MsgRemoveTaskResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MsgUpdatePricesResponse)
-	err := c.cc.Invoke(ctx, Msg_UpdatePrices_FullMethodName, in, out, cOpts...)
+	out := new(MsgRemoveTaskResponse)
+	err := c.cc.Invoke(ctx, Msg_RemoveTask_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,13 +79,15 @@ func (c *msgClient) UpdatePrices(ctx context.Context, in *MsgUpdatePrices, opts 
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility.
+//
+// Msg exposes moderator-controlled oracle mutations.
 type MsgServer interface {
-	// UpdateParams defines a governance operation for updating the parameters.
+	// UpdateParams defines a moderator operation for updating the parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
-	// UpdateOracleTask is called by governance or authority to manage tasks.
-	UpdateOracleTask(context.Context, *MsgUpdateOracleTask) (*MsgUpdateOracleTaskResponse, error)
-	// UpdatePrices is a system message injected during PrepareProposal.
-	UpdatePrices(context.Context, *MsgUpdatePrices) (*MsgUpdatePricesResponse, error)
+	// UpsertTask manages one oracle task keyed by symbol.
+	UpsertTask(context.Context, *MsgUpsertTask) (*MsgUpsertTaskResponse, error)
+	// RemoveTask deletes one oracle task by symbol.
+	RemoveTask(context.Context, *MsgRemoveTask) (*MsgRemoveTaskResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }
 
@@ -97,11 +101,11 @@ type UnimplementedMsgServer struct{}
 func (UnimplementedMsgServer) UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateParams not implemented")
 }
-func (UnimplementedMsgServer) UpdateOracleTask(context.Context, *MsgUpdateOracleTask) (*MsgUpdateOracleTaskResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method UpdateOracleTask not implemented")
+func (UnimplementedMsgServer) UpsertTask(context.Context, *MsgUpsertTask) (*MsgUpsertTaskResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpsertTask not implemented")
 }
-func (UnimplementedMsgServer) UpdatePrices(context.Context, *MsgUpdatePrices) (*MsgUpdatePricesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method UpdatePrices not implemented")
+func (UnimplementedMsgServer) RemoveTask(context.Context, *MsgRemoveTask) (*MsgRemoveTaskResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveTask not implemented")
 }
 func (UnimplementedMsgServer) mustEmbedUnimplementedMsgServer() {}
 func (UnimplementedMsgServer) testEmbeddedByValue()             {}
@@ -142,38 +146,38 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_UpdateOracleTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgUpdateOracleTask)
+func _Msg_UpsertTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpsertTask)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).UpdateOracleTask(ctx, in)
+		return srv.(MsgServer).UpsertTask(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Msg_UpdateOracleTask_FullMethodName,
+		FullMethod: Msg_UpsertTask_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).UpdateOracleTask(ctx, req.(*MsgUpdateOracleTask))
+		return srv.(MsgServer).UpsertTask(ctx, req.(*MsgUpsertTask))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_UpdatePrices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgUpdatePrices)
+func _Msg_RemoveTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveTask)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).UpdatePrices(ctx, in)
+		return srv.(MsgServer).RemoveTask(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Msg_UpdatePrices_FullMethodName,
+		FullMethod: Msg_RemoveTask_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).UpdatePrices(ctx, req.(*MsgUpdatePrices))
+		return srv.(MsgServer).RemoveTask(ctx, req.(*MsgRemoveTask))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -190,12 +194,12 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_UpdateParams_Handler,
 		},
 		{
-			MethodName: "UpdateOracleTask",
-			Handler:    _Msg_UpdateOracleTask_Handler,
+			MethodName: "UpsertTask",
+			Handler:    _Msg_UpsertTask_Handler,
 		},
 		{
-			MethodName: "UpdatePrices",
-			Handler:    _Msg_UpdatePrices_Handler,
+			MethodName: "RemoveTask",
+			Handler:    _Msg_RemoveTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -23,6 +23,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 func (ak *AppKeepers) GenerateKeys() {
@@ -47,6 +48,7 @@ func (ak *AppKeepers) GenerateKeys() {
 		feemarkettypes.StoreKey,
 		erc20types.StoreKey,
 		constitutiontypes.StoreKey,
+		oracletypes.StoreKey,
 	)
 	ak.objKeys = storetypes.NewObjectStoreKeys(
 		banktypes.ObjectStoreKey,

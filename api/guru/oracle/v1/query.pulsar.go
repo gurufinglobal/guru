@@ -1656,25 +1656,25 @@ func (x *fastReflection_QueryActiveTasksResponse) ProtoMethods() *protoiface.Met
 }
 
 var (
-	md_QueryOracleValueRequest        protoreflect.MessageDescriptor
-	fd_QueryOracleValueRequest_symbol protoreflect.FieldDescriptor
+	md_QueryTaskRequest        protoreflect.MessageDescriptor
+	fd_QueryTaskRequest_symbol protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_query_proto_init()
-	md_QueryOracleValueRequest = File_guru_oracle_v1_query_proto.Messages().ByName("QueryOracleValueRequest")
-	fd_QueryOracleValueRequest_symbol = md_QueryOracleValueRequest.Fields().ByName("symbol")
+	md_QueryTaskRequest = File_guru_oracle_v1_query_proto.Messages().ByName("QueryTaskRequest")
+	fd_QueryTaskRequest_symbol = md_QueryTaskRequest.Fields().ByName("symbol")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryOracleValueRequest)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryTaskRequest)(nil)
 
-type fastReflection_QueryOracleValueRequest QueryOracleValueRequest
+type fastReflection_QueryTaskRequest QueryTaskRequest
 
-func (x *QueryOracleValueRequest) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryOracleValueRequest)(x)
+func (x *QueryTaskRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryTaskRequest)(x)
 }
 
-func (x *QueryOracleValueRequest) slowProtoReflect() protoreflect.Message {
+func (x *QueryTaskRequest) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_query_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1686,43 +1686,43 @@ func (x *QueryOracleValueRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryOracleValueRequest_messageType fastReflection_QueryOracleValueRequest_messageType
-var _ protoreflect.MessageType = fastReflection_QueryOracleValueRequest_messageType{}
+var _fastReflection_QueryTaskRequest_messageType fastReflection_QueryTaskRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryTaskRequest_messageType{}
 
-type fastReflection_QueryOracleValueRequest_messageType struct{}
+type fastReflection_QueryTaskRequest_messageType struct{}
 
-func (x fastReflection_QueryOracleValueRequest_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryOracleValueRequest)(nil)
+func (x fastReflection_QueryTaskRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryTaskRequest)(nil)
 }
-func (x fastReflection_QueryOracleValueRequest_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryOracleValueRequest)
+func (x fastReflection_QueryTaskRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryTaskRequest)
 }
-func (x fastReflection_QueryOracleValueRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryOracleValueRequest
+func (x fastReflection_QueryTaskRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryTaskRequest
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryOracleValueRequest) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryOracleValueRequest
+func (x *fastReflection_QueryTaskRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryTaskRequest
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryOracleValueRequest) Type() protoreflect.MessageType {
-	return _fastReflection_QueryOracleValueRequest_messageType
+func (x *fastReflection_QueryTaskRequest) Type() protoreflect.MessageType {
+	return _fastReflection_QueryTaskRequest_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryOracleValueRequest) New() protoreflect.Message {
-	return new(fastReflection_QueryOracleValueRequest)
+func (x *fastReflection_QueryTaskRequest) New() protoreflect.Message {
+	return new(fastReflection_QueryTaskRequest)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryOracleValueRequest) Interface() protoreflect.ProtoMessage {
-	return (*QueryOracleValueRequest)(x)
+func (x *fastReflection_QueryTaskRequest) Interface() protoreflect.ProtoMessage {
+	return (*QueryTaskRequest)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -1730,10 +1730,10 @@ func (x *fastReflection_QueryOracleValueRequest) Interface() protoreflect.ProtoM
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryOracleValueRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_QueryTaskRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 	if x.Symbol != "" {
 		value := protoreflect.ValueOfString(x.Symbol)
-		if !f(fd_QueryOracleValueRequest_symbol, value) {
+		if !f(fd_QueryTaskRequest_symbol, value) {
 			return
 		}
 	}
@@ -1750,15 +1750,15 @@ func (x *fastReflection_QueryOracleValueRequest) Range(f func(protoreflect.Field
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryOracleValueRequest) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryTaskRequest) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueRequest.symbol":
+	case "guru.oracle.v1.QueryTaskRequest.symbol":
 		return x.Symbol != ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1768,15 +1768,15 @@ func (x *fastReflection_QueryOracleValueRequest) Has(fd protoreflect.FieldDescri
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValueRequest) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryTaskRequest) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueRequest.symbol":
+	case "guru.oracle.v1.QueryTaskRequest.symbol":
 		x.Symbol = ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1786,16 +1786,16 @@ func (x *fastReflection_QueryOracleValueRequest) Clear(fd protoreflect.FieldDesc
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryOracleValueRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryTaskRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.QueryOracleValueRequest.symbol":
+	case "guru.oracle.v1.QueryTaskRequest.symbol":
 		value := x.Symbol
 		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueRequest does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskRequest does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -1809,15 +1809,15 @@ func (x *fastReflection_QueryOracleValueRequest) Get(descriptor protoreflect.Fie
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValueRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryTaskRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueRequest.symbol":
+	case "guru.oracle.v1.QueryTaskRequest.symbol":
 		x.Symbol = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1831,40 +1831,40 @@ func (x *fastReflection_QueryOracleValueRequest) Set(fd protoreflect.FieldDescri
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValueRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryTaskRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueRequest.symbol":
-		panic(fmt.Errorf("field symbol of message guru.oracle.v1.QueryOracleValueRequest is not mutable"))
+	case "guru.oracle.v1.QueryTaskRequest.symbol":
+		panic(fmt.Errorf("field symbol of message guru.oracle.v1.QueryTaskRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryOracleValueRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryTaskRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueRequest.symbol":
+	case "guru.oracle.v1.QueryTaskRequest.symbol":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryOracleValueRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryTaskRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryOracleValueRequest", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryTaskRequest", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -1872,7 +1872,7 @@ func (x *fastReflection_QueryOracleValueRequest) WhichOneof(d protoreflect.Oneof
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryOracleValueRequest) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryTaskRequest) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -1883,7 +1883,7 @@ func (x *fastReflection_QueryOracleValueRequest) GetUnknown() protoreflect.RawFi
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValueRequest) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryTaskRequest) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -1895,7 +1895,7 @@ func (x *fastReflection_QueryOracleValueRequest) SetUnknown(fields protoreflect.
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryOracleValueRequest) IsValid() bool {
+func (x *fastReflection_QueryTaskRequest) IsValid() bool {
 	return x != nil
 }
 
@@ -1905,9 +1905,9 @@ func (x *fastReflection_QueryOracleValueRequest) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryOracleValueRequest) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryTaskRequest) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryOracleValueRequest)
+		x := input.Message.Interface().(*QueryTaskRequest)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1933,7 +1933,7 @@ func (x *fastReflection_QueryOracleValueRequest) ProtoMethods() *protoiface.Meth
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryOracleValueRequest)
+		x := input.Message.Interface().(*QueryTaskRequest)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1970,7 +1970,7 @@ func (x *fastReflection_QueryOracleValueRequest) ProtoMethods() *protoiface.Meth
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryOracleValueRequest)
+		x := input.Message.Interface().(*QueryTaskRequest)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2002,10 +2002,10 @@ func (x *fastReflection_QueryOracleValueRequest) ProtoMethods() *protoiface.Meth
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryOracleValueRequest: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryTaskRequest: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryOracleValueRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryTaskRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
@@ -2076,25 +2076,25 @@ func (x *fastReflection_QueryOracleValueRequest) ProtoMethods() *protoiface.Meth
 }
 
 var (
-	md_QueryOracleValueResponse        protoreflect.MessageDescriptor
-	fd_QueryOracleValueResponse_result protoreflect.FieldDescriptor
+	md_QueryTaskResponse      protoreflect.MessageDescriptor
+	fd_QueryTaskResponse_task protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_query_proto_init()
-	md_QueryOracleValueResponse = File_guru_oracle_v1_query_proto.Messages().ByName("QueryOracleValueResponse")
-	fd_QueryOracleValueResponse_result = md_QueryOracleValueResponse.Fields().ByName("result")
+	md_QueryTaskResponse = File_guru_oracle_v1_query_proto.Messages().ByName("QueryTaskResponse")
+	fd_QueryTaskResponse_task = md_QueryTaskResponse.Fields().ByName("task")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryOracleValueResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryTaskResponse)(nil)
 
-type fastReflection_QueryOracleValueResponse QueryOracleValueResponse
+type fastReflection_QueryTaskResponse QueryTaskResponse
 
-func (x *QueryOracleValueResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryOracleValueResponse)(x)
+func (x *QueryTaskResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryTaskResponse)(x)
 }
 
-func (x *QueryOracleValueResponse) slowProtoReflect() protoreflect.Message {
+func (x *QueryTaskResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_query_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2106,43 +2106,43 @@ func (x *QueryOracleValueResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryOracleValueResponse_messageType fastReflection_QueryOracleValueResponse_messageType
-var _ protoreflect.MessageType = fastReflection_QueryOracleValueResponse_messageType{}
+var _fastReflection_QueryTaskResponse_messageType fastReflection_QueryTaskResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryTaskResponse_messageType{}
 
-type fastReflection_QueryOracleValueResponse_messageType struct{}
+type fastReflection_QueryTaskResponse_messageType struct{}
 
-func (x fastReflection_QueryOracleValueResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryOracleValueResponse)(nil)
+func (x fastReflection_QueryTaskResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryTaskResponse)(nil)
 }
-func (x fastReflection_QueryOracleValueResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryOracleValueResponse)
+func (x fastReflection_QueryTaskResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryTaskResponse)
 }
-func (x fastReflection_QueryOracleValueResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryOracleValueResponse
+func (x fastReflection_QueryTaskResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryTaskResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryOracleValueResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryOracleValueResponse
+func (x *fastReflection_QueryTaskResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryTaskResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryOracleValueResponse) Type() protoreflect.MessageType {
-	return _fastReflection_QueryOracleValueResponse_messageType
+func (x *fastReflection_QueryTaskResponse) Type() protoreflect.MessageType {
+	return _fastReflection_QueryTaskResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryOracleValueResponse) New() protoreflect.Message {
-	return new(fastReflection_QueryOracleValueResponse)
+func (x *fastReflection_QueryTaskResponse) New() protoreflect.Message {
+	return new(fastReflection_QueryTaskResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryOracleValueResponse) Interface() protoreflect.ProtoMessage {
-	return (*QueryOracleValueResponse)(x)
+func (x *fastReflection_QueryTaskResponse) Interface() protoreflect.ProtoMessage {
+	return (*QueryTaskResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -2150,10 +2150,10 @@ func (x *fastReflection_QueryOracleValueResponse) Interface() protoreflect.Proto
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryOracleValueResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.Result != nil {
-		value := protoreflect.ValueOfMessage(x.Result.ProtoReflect())
-		if !f(fd_QueryOracleValueResponse_result, value) {
+func (x *fastReflection_QueryTaskResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Task != nil {
+		value := protoreflect.ValueOfMessage(x.Task.ProtoReflect())
+		if !f(fd_QueryTaskResponse_task, value) {
 			return
 		}
 	}
@@ -2170,15 +2170,15 @@ func (x *fastReflection_QueryOracleValueResponse) Range(f func(protoreflect.Fiel
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryOracleValueResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryTaskResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueResponse.result":
-		return x.Result != nil
+	case "guru.oracle.v1.QueryTaskResponse.task":
+		return x.Task != nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2188,15 +2188,15 @@ func (x *fastReflection_QueryOracleValueResponse) Has(fd protoreflect.FieldDescr
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValueResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryTaskResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueResponse.result":
-		x.Result = nil
+	case "guru.oracle.v1.QueryTaskResponse.task":
+		x.Task = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2206,16 +2206,16 @@ func (x *fastReflection_QueryOracleValueResponse) Clear(fd protoreflect.FieldDes
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryOracleValueResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryTaskResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.QueryOracleValueResponse.result":
-		value := x.Result
+	case "guru.oracle.v1.QueryTaskResponse.task":
+		value := x.Task
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -2229,15 +2229,15 @@ func (x *fastReflection_QueryOracleValueResponse) Get(descriptor protoreflect.Fi
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValueResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryTaskResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueResponse.result":
-		x.Result = value.Message().Interface().(*OracleResult)
+	case "guru.oracle.v1.QueryTaskResponse.task":
+		x.Task = value.Message().Interface().(*OracleTask)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2251,44 +2251,44 @@ func (x *fastReflection_QueryOracleValueResponse) Set(fd protoreflect.FieldDescr
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValueResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryTaskResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueResponse.result":
-		if x.Result == nil {
-			x.Result = new(OracleResult)
+	case "guru.oracle.v1.QueryTaskResponse.task":
+		if x.Task == nil {
+			x.Task = new(OracleTask)
 		}
-		return protoreflect.ValueOfMessage(x.Result.ProtoReflect())
+		return protoreflect.ValueOfMessage(x.Task.ProtoReflect())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryOracleValueResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryTaskResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValueResponse.result":
-		m := new(OracleResult)
+	case "guru.oracle.v1.QueryTaskResponse.task":
+		m := new(OracleTask)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValueResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValueResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryOracleValueResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryTaskResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryOracleValueResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryTaskResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -2296,7 +2296,7 @@ func (x *fastReflection_QueryOracleValueResponse) WhichOneof(d protoreflect.Oneo
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryOracleValueResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryTaskResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -2307,7 +2307,7 @@ func (x *fastReflection_QueryOracleValueResponse) GetUnknown() protoreflect.RawF
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValueResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryTaskResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -2319,7 +2319,7 @@ func (x *fastReflection_QueryOracleValueResponse) SetUnknown(fields protoreflect
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryOracleValueResponse) IsValid() bool {
+func (x *fastReflection_QueryTaskResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -2329,9 +2329,9 @@ func (x *fastReflection_QueryOracleValueResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryOracleValueResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryTaskResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryOracleValueResponse)
+		x := input.Message.Interface().(*QueryTaskResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2343,8 +2343,8 @@ func (x *fastReflection_QueryOracleValueResponse) ProtoMethods() *protoiface.Met
 		var n int
 		var l int
 		_ = l
-		if x.Result != nil {
-			l = options.Size(x.Result)
+		if x.Task != nil {
+			l = options.Size(x.Task)
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		if x.unknownFields != nil {
@@ -2357,7 +2357,7 @@ func (x *fastReflection_QueryOracleValueResponse) ProtoMethods() *protoiface.Met
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryOracleValueResponse)
+		x := input.Message.Interface().(*QueryTaskResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2376,8 +2376,8 @@ func (x *fastReflection_QueryOracleValueResponse) ProtoMethods() *protoiface.Met
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if x.Result != nil {
-			encoded, err := options.Marshal(x.Result)
+		if x.Task != nil {
+			encoded, err := options.Marshal(x.Task)
 			if err != nil {
 				return protoiface.MarshalOutput{
 					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2401,7 +2401,7 @@ func (x *fastReflection_QueryOracleValueResponse) ProtoMethods() *protoiface.Met
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryOracleValueResponse)
+		x := input.Message.Interface().(*QueryTaskResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2433,15 +2433,15 @@ func (x *fastReflection_QueryOracleValueResponse) ProtoMethods() *protoiface.Met
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryOracleValueResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryTaskResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryOracleValueResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryTaskResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Result", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Task", wireType)
 				}
 				var msglen int
 				for shift := uint(0); ; shift += 7 {
@@ -2468,10 +2468,10 @@ func (x *fastReflection_QueryOracleValueResponse) ProtoMethods() *protoiface.Met
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				if x.Result == nil {
-					x.Result = &OracleResult{}
+				if x.Task == nil {
+					x.Task = &OracleTask{}
 				}
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Result); err != nil {
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Task); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -2511,23 +2511,25 @@ func (x *fastReflection_QueryOracleValueResponse) ProtoMethods() *protoiface.Met
 }
 
 var (
-	md_QueryOracleValuesRequest protoreflect.MessageDescriptor
+	md_QueryLatestValueRequest        protoreflect.MessageDescriptor
+	fd_QueryLatestValueRequest_symbol protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_query_proto_init()
-	md_QueryOracleValuesRequest = File_guru_oracle_v1_query_proto.Messages().ByName("QueryOracleValuesRequest")
+	md_QueryLatestValueRequest = File_guru_oracle_v1_query_proto.Messages().ByName("QueryLatestValueRequest")
+	fd_QueryLatestValueRequest_symbol = md_QueryLatestValueRequest.Fields().ByName("symbol")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryOracleValuesRequest)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryLatestValueRequest)(nil)
 
-type fastReflection_QueryOracleValuesRequest QueryOracleValuesRequest
+type fastReflection_QueryLatestValueRequest QueryLatestValueRequest
 
-func (x *QueryOracleValuesRequest) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryOracleValuesRequest)(x)
+func (x *QueryLatestValueRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryLatestValueRequest)(x)
 }
 
-func (x *QueryOracleValuesRequest) slowProtoReflect() protoreflect.Message {
+func (x *QueryLatestValueRequest) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_query_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2539,43 +2541,43 @@ func (x *QueryOracleValuesRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryOracleValuesRequest_messageType fastReflection_QueryOracleValuesRequest_messageType
-var _ protoreflect.MessageType = fastReflection_QueryOracleValuesRequest_messageType{}
+var _fastReflection_QueryLatestValueRequest_messageType fastReflection_QueryLatestValueRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryLatestValueRequest_messageType{}
 
-type fastReflection_QueryOracleValuesRequest_messageType struct{}
+type fastReflection_QueryLatestValueRequest_messageType struct{}
 
-func (x fastReflection_QueryOracleValuesRequest_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryOracleValuesRequest)(nil)
+func (x fastReflection_QueryLatestValueRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryLatestValueRequest)(nil)
 }
-func (x fastReflection_QueryOracleValuesRequest_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryOracleValuesRequest)
+func (x fastReflection_QueryLatestValueRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryLatestValueRequest)
 }
-func (x fastReflection_QueryOracleValuesRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryOracleValuesRequest
+func (x fastReflection_QueryLatestValueRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryLatestValueRequest
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryOracleValuesRequest) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryOracleValuesRequest
+func (x *fastReflection_QueryLatestValueRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryLatestValueRequest
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryOracleValuesRequest) Type() protoreflect.MessageType {
-	return _fastReflection_QueryOracleValuesRequest_messageType
+func (x *fastReflection_QueryLatestValueRequest) Type() protoreflect.MessageType {
+	return _fastReflection_QueryLatestValueRequest_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryOracleValuesRequest) New() protoreflect.Message {
-	return new(fastReflection_QueryOracleValuesRequest)
+func (x *fastReflection_QueryLatestValueRequest) New() protoreflect.Message {
+	return new(fastReflection_QueryLatestValueRequest)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryOracleValuesRequest) Interface() protoreflect.ProtoMessage {
-	return (*QueryOracleValuesRequest)(x)
+func (x *fastReflection_QueryLatestValueRequest) Interface() protoreflect.ProtoMessage {
+	return (*QueryLatestValueRequest)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -2583,7 +2585,13 @@ func (x *fastReflection_QueryOracleValuesRequest) Interface() protoreflect.Proto
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryOracleValuesRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_QueryLatestValueRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Symbol != "" {
+		value := protoreflect.ValueOfString(x.Symbol)
+		if !f(fd_QueryLatestValueRequest_symbol, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -2597,13 +2605,15 @@ func (x *fastReflection_QueryOracleValuesRequest) Range(f func(protoreflect.Fiel
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryOracleValuesRequest) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryLatestValueRequest) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueRequest.symbol":
+		return x.Symbol != ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2613,13 +2623,15 @@ func (x *fastReflection_QueryOracleValuesRequest) Has(fd protoreflect.FieldDescr
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValuesRequest) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryLatestValueRequest) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueRequest.symbol":
+		x.Symbol = ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2629,13 +2641,16 @@ func (x *fastReflection_QueryOracleValuesRequest) Clear(fd protoreflect.FieldDes
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryOracleValuesRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryLatestValueRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
+	case "guru.oracle.v1.QueryLatestValueRequest.symbol":
+		value := x.Symbol
+		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesRequest does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueRequest does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -2649,13 +2664,15 @@ func (x *fastReflection_QueryOracleValuesRequest) Get(descriptor protoreflect.Fi
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValuesRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryLatestValueRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueRequest.symbol":
+		x.Symbol = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2669,36 +2686,40 @@ func (x *fastReflection_QueryOracleValuesRequest) Set(fd protoreflect.FieldDescr
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValuesRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryLatestValueRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueRequest.symbol":
+		panic(fmt.Errorf("field symbol of message guru.oracle.v1.QueryLatestValueRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryOracleValuesRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryLatestValueRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueRequest.symbol":
+		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryOracleValuesRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryLatestValueRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryOracleValuesRequest", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryLatestValueRequest", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -2706,7 +2727,7 @@ func (x *fastReflection_QueryOracleValuesRequest) WhichOneof(d protoreflect.Oneo
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryOracleValuesRequest) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryLatestValueRequest) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -2717,7 +2738,7 @@ func (x *fastReflection_QueryOracleValuesRequest) GetUnknown() protoreflect.RawF
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValuesRequest) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryLatestValueRequest) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -2729,7 +2750,7 @@ func (x *fastReflection_QueryOracleValuesRequest) SetUnknown(fields protoreflect
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryOracleValuesRequest) IsValid() bool {
+func (x *fastReflection_QueryLatestValueRequest) IsValid() bool {
 	return x != nil
 }
 
@@ -2739,9 +2760,9 @@ func (x *fastReflection_QueryOracleValuesRequest) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryOracleValuesRequest) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryLatestValueRequest) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryOracleValuesRequest)
+		x := input.Message.Interface().(*QueryLatestValueRequest)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2753,6 +2774,10 @@ func (x *fastReflection_QueryOracleValuesRequest) ProtoMethods() *protoiface.Met
 		var n int
 		var l int
 		_ = l
+		l = len(x.Symbol)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -2763,7 +2788,7 @@ func (x *fastReflection_QueryOracleValuesRequest) ProtoMethods() *protoiface.Met
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryOracleValuesRequest)
+		x := input.Message.Interface().(*QueryLatestValueRequest)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2782,6 +2807,13 @@ func (x *fastReflection_QueryOracleValuesRequest) ProtoMethods() *protoiface.Met
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
+		if len(x.Symbol) > 0 {
+			i -= len(x.Symbol)
+			copy(dAtA[i:], x.Symbol)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Symbol)))
+			i--
+			dAtA[i] = 0xa
+		}
 		if input.Buf != nil {
 			input.Buf = append(input.Buf, dAtA...)
 		} else {
@@ -2793,7 +2825,7 @@ func (x *fastReflection_QueryOracleValuesRequest) ProtoMethods() *protoiface.Met
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryOracleValuesRequest)
+		x := input.Message.Interface().(*QueryLatestValueRequest)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2825,10 +2857,833 @@ func (x *fastReflection_QueryOracleValuesRequest) ProtoMethods() *protoiface.Met
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryOracleValuesRequest: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryLatestValueRequest: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryOracleValuesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryLatestValueRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Symbol = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_QueryLatestValueResponse       protoreflect.MessageDescriptor
+	fd_QueryLatestValueResponse_value protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_guru_oracle_v1_query_proto_init()
+	md_QueryLatestValueResponse = File_guru_oracle_v1_query_proto.Messages().ByName("QueryLatestValueResponse")
+	fd_QueryLatestValueResponse_value = md_QueryLatestValueResponse.Fields().ByName("value")
+}
+
+var _ protoreflect.Message = (*fastReflection_QueryLatestValueResponse)(nil)
+
+type fastReflection_QueryLatestValueResponse QueryLatestValueResponse
+
+func (x *QueryLatestValueResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryLatestValueResponse)(x)
+}
+
+func (x *QueryLatestValueResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_oracle_v1_query_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_QueryLatestValueResponse_messageType fastReflection_QueryLatestValueResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryLatestValueResponse_messageType{}
+
+type fastReflection_QueryLatestValueResponse_messageType struct{}
+
+func (x fastReflection_QueryLatestValueResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryLatestValueResponse)(nil)
+}
+func (x fastReflection_QueryLatestValueResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryLatestValueResponse)
+}
+func (x fastReflection_QueryLatestValueResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryLatestValueResponse
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_QueryLatestValueResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryLatestValueResponse
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_QueryLatestValueResponse) Type() protoreflect.MessageType {
+	return _fastReflection_QueryLatestValueResponse_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_QueryLatestValueResponse) New() protoreflect.Message {
+	return new(fastReflection_QueryLatestValueResponse)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_QueryLatestValueResponse) Interface() protoreflect.ProtoMessage {
+	return (*QueryLatestValueResponse)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_QueryLatestValueResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Value != nil {
+		value := protoreflect.ValueOfMessage(x.Value.ProtoReflect())
+		if !f(fd_QueryLatestValueResponse_value, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_QueryLatestValueResponse) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueResponse.value":
+		return x.Value != nil
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryLatestValueResponse) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueResponse.value":
+		x.Value = nil
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_QueryLatestValueResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "guru.oracle.v1.QueryLatestValueResponse.value":
+		value := x.Value
+		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueResponse does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryLatestValueResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueResponse.value":
+		x.Value = value.Message().Interface().(*OracleValue)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryLatestValueResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueResponse.value":
+		if x.Value == nil {
+			x.Value = new(OracleValue)
+		}
+		return protoreflect.ValueOfMessage(x.Value.ProtoReflect())
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_QueryLatestValueResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryLatestValueResponse.value":
+		m := new(OracleValue)
+		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValueResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValueResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_QueryLatestValueResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryLatestValueResponse", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_QueryLatestValueResponse) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryLatestValueResponse) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_QueryLatestValueResponse) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_QueryLatestValueResponse) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*QueryLatestValueResponse)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.Value != nil {
+			l = options.Size(x.Value)
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*QueryLatestValueResponse)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.Value != nil {
+			encoded, err := options.Marshal(x.Value)
+			if err != nil {
+				return protoiface.MarshalOutput{
+					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+					Buf:               input.Buf,
+				}, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*QueryLatestValueResponse)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryLatestValueResponse: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryLatestValueResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if x.Value == nil {
+					x.Value = &OracleValue{}
+				}
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Value); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_QueryLatestValuesRequest protoreflect.MessageDescriptor
+)
+
+func init() {
+	file_guru_oracle_v1_query_proto_init()
+	md_QueryLatestValuesRequest = File_guru_oracle_v1_query_proto.Messages().ByName("QueryLatestValuesRequest")
+}
+
+var _ protoreflect.Message = (*fastReflection_QueryLatestValuesRequest)(nil)
+
+type fastReflection_QueryLatestValuesRequest QueryLatestValuesRequest
+
+func (x *QueryLatestValuesRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryLatestValuesRequest)(x)
+}
+
+func (x *QueryLatestValuesRequest) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_oracle_v1_query_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_QueryLatestValuesRequest_messageType fastReflection_QueryLatestValuesRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryLatestValuesRequest_messageType{}
+
+type fastReflection_QueryLatestValuesRequest_messageType struct{}
+
+func (x fastReflection_QueryLatestValuesRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryLatestValuesRequest)(nil)
+}
+func (x fastReflection_QueryLatestValuesRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryLatestValuesRequest)
+}
+func (x fastReflection_QueryLatestValuesRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryLatestValuesRequest
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_QueryLatestValuesRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryLatestValuesRequest
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_QueryLatestValuesRequest) Type() protoreflect.MessageType {
+	return _fastReflection_QueryLatestValuesRequest_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_QueryLatestValuesRequest) New() protoreflect.Message {
+	return new(fastReflection_QueryLatestValuesRequest)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_QueryLatestValuesRequest) Interface() protoreflect.ProtoMessage {
+	return (*QueryLatestValuesRequest)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_QueryLatestValuesRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_QueryLatestValuesRequest) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryLatestValuesRequest) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_QueryLatestValuesRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesRequest does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryLatestValuesRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryLatestValuesRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_QueryLatestValuesRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_QueryLatestValuesRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryLatestValuesRequest", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_QueryLatestValuesRequest) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryLatestValuesRequest) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_QueryLatestValuesRequest) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_QueryLatestValuesRequest) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*QueryLatestValuesRequest)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*QueryLatestValuesRequest)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*QueryLatestValuesRequest)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryLatestValuesRequest: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryLatestValuesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			default:
@@ -2866,78 +3721,78 @@ func (x *fastReflection_QueryOracleValuesRequest) ProtoMethods() *protoiface.Met
 	}
 }
 
-var _ protoreflect.List = (*_QueryOracleValuesResponse_1_list)(nil)
+var _ protoreflect.List = (*_QueryLatestValuesResponse_1_list)(nil)
 
-type _QueryOracleValuesResponse_1_list struct {
-	list *[]*OracleResult
+type _QueryLatestValuesResponse_1_list struct {
+	list *[]*OracleValue
 }
 
-func (x *_QueryOracleValuesResponse_1_list) Len() int {
+func (x *_QueryLatestValuesResponse_1_list) Len() int {
 	if x.list == nil {
 		return 0
 	}
 	return len(*x.list)
 }
 
-func (x *_QueryOracleValuesResponse_1_list) Get(i int) protoreflect.Value {
+func (x *_QueryLatestValuesResponse_1_list) Get(i int) protoreflect.Value {
 	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
 }
 
-func (x *_QueryOracleValuesResponse_1_list) Set(i int, value protoreflect.Value) {
+func (x *_QueryLatestValuesResponse_1_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleResult)
+	concreteValue := valueUnwrapped.Interface().(*OracleValue)
 	(*x.list)[i] = concreteValue
 }
 
-func (x *_QueryOracleValuesResponse_1_list) Append(value protoreflect.Value) {
+func (x *_QueryLatestValuesResponse_1_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleResult)
+	concreteValue := valueUnwrapped.Interface().(*OracleValue)
 	*x.list = append(*x.list, concreteValue)
 }
 
-func (x *_QueryOracleValuesResponse_1_list) AppendMutable() protoreflect.Value {
-	v := new(OracleResult)
+func (x *_QueryLatestValuesResponse_1_list) AppendMutable() protoreflect.Value {
+	v := new(OracleValue)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_QueryOracleValuesResponse_1_list) Truncate(n int) {
+func (x *_QueryLatestValuesResponse_1_list) Truncate(n int) {
 	for i := n; i < len(*x.list); i++ {
 		(*x.list)[i] = nil
 	}
 	*x.list = (*x.list)[:n]
 }
 
-func (x *_QueryOracleValuesResponse_1_list) NewElement() protoreflect.Value {
-	v := new(OracleResult)
+func (x *_QueryLatestValuesResponse_1_list) NewElement() protoreflect.Value {
+	v := new(OracleValue)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_QueryOracleValuesResponse_1_list) IsValid() bool {
+func (x *_QueryLatestValuesResponse_1_list) IsValid() bool {
 	return x.list != nil
 }
 
 var (
-	md_QueryOracleValuesResponse         protoreflect.MessageDescriptor
-	fd_QueryOracleValuesResponse_results protoreflect.FieldDescriptor
+	md_QueryLatestValuesResponse        protoreflect.MessageDescriptor
+	fd_QueryLatestValuesResponse_values protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_query_proto_init()
-	md_QueryOracleValuesResponse = File_guru_oracle_v1_query_proto.Messages().ByName("QueryOracleValuesResponse")
-	fd_QueryOracleValuesResponse_results = md_QueryOracleValuesResponse.Fields().ByName("results")
+	md_QueryLatestValuesResponse = File_guru_oracle_v1_query_proto.Messages().ByName("QueryLatestValuesResponse")
+	fd_QueryLatestValuesResponse_values = md_QueryLatestValuesResponse.Fields().ByName("values")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryOracleValuesResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryLatestValuesResponse)(nil)
 
-type fastReflection_QueryOracleValuesResponse QueryOracleValuesResponse
+type fastReflection_QueryLatestValuesResponse QueryLatestValuesResponse
 
-func (x *QueryOracleValuesResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryOracleValuesResponse)(x)
+func (x *QueryLatestValuesResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryLatestValuesResponse)(x)
 }
 
-func (x *QueryOracleValuesResponse) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_oracle_v1_query_proto_msgTypes[7]
+func (x *QueryLatestValuesResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_oracle_v1_query_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2948,43 +3803,43 @@ func (x *QueryOracleValuesResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryOracleValuesResponse_messageType fastReflection_QueryOracleValuesResponse_messageType
-var _ protoreflect.MessageType = fastReflection_QueryOracleValuesResponse_messageType{}
+var _fastReflection_QueryLatestValuesResponse_messageType fastReflection_QueryLatestValuesResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryLatestValuesResponse_messageType{}
 
-type fastReflection_QueryOracleValuesResponse_messageType struct{}
+type fastReflection_QueryLatestValuesResponse_messageType struct{}
 
-func (x fastReflection_QueryOracleValuesResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryOracleValuesResponse)(nil)
+func (x fastReflection_QueryLatestValuesResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryLatestValuesResponse)(nil)
 }
-func (x fastReflection_QueryOracleValuesResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryOracleValuesResponse)
+func (x fastReflection_QueryLatestValuesResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryLatestValuesResponse)
 }
-func (x fastReflection_QueryOracleValuesResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryOracleValuesResponse
+func (x fastReflection_QueryLatestValuesResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryLatestValuesResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryOracleValuesResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryOracleValuesResponse
+func (x *fastReflection_QueryLatestValuesResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryLatestValuesResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryOracleValuesResponse) Type() protoreflect.MessageType {
-	return _fastReflection_QueryOracleValuesResponse_messageType
+func (x *fastReflection_QueryLatestValuesResponse) Type() protoreflect.MessageType {
+	return _fastReflection_QueryLatestValuesResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryOracleValuesResponse) New() protoreflect.Message {
-	return new(fastReflection_QueryOracleValuesResponse)
+func (x *fastReflection_QueryLatestValuesResponse) New() protoreflect.Message {
+	return new(fastReflection_QueryLatestValuesResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryOracleValuesResponse) Interface() protoreflect.ProtoMessage {
-	return (*QueryOracleValuesResponse)(x)
+func (x *fastReflection_QueryLatestValuesResponse) Interface() protoreflect.ProtoMessage {
+	return (*QueryLatestValuesResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -2992,10 +3847,10 @@ func (x *fastReflection_QueryOracleValuesResponse) Interface() protoreflect.Prot
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryOracleValuesResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if len(x.Results) != 0 {
-		value := protoreflect.ValueOfList(&_QueryOracleValuesResponse_1_list{list: &x.Results})
-		if !f(fd_QueryOracleValuesResponse_results, value) {
+func (x *fastReflection_QueryLatestValuesResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if len(x.Values) != 0 {
+		value := protoreflect.ValueOfList(&_QueryLatestValuesResponse_1_list{list: &x.Values})
+		if !f(fd_QueryLatestValuesResponse_values, value) {
 			return
 		}
 	}
@@ -3012,15 +3867,15 @@ func (x *fastReflection_QueryOracleValuesResponse) Range(f func(protoreflect.Fie
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryOracleValuesResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryLatestValuesResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValuesResponse.results":
-		return len(x.Results) != 0
+	case "guru.oracle.v1.QueryLatestValuesResponse.values":
+		return len(x.Values) != 0
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3030,15 +3885,15 @@ func (x *fastReflection_QueryOracleValuesResponse) Has(fd protoreflect.FieldDesc
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValuesResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryLatestValuesResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValuesResponse.results":
-		x.Results = nil
+	case "guru.oracle.v1.QueryLatestValuesResponse.values":
+		x.Values = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3048,19 +3903,19 @@ func (x *fastReflection_QueryOracleValuesResponse) Clear(fd protoreflect.FieldDe
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryOracleValuesResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryLatestValuesResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.QueryOracleValuesResponse.results":
-		if len(x.Results) == 0 {
-			return protoreflect.ValueOfList(&_QueryOracleValuesResponse_1_list{})
+	case "guru.oracle.v1.QueryLatestValuesResponse.values":
+		if len(x.Values) == 0 {
+			return protoreflect.ValueOfList(&_QueryLatestValuesResponse_1_list{})
 		}
-		listValue := &_QueryOracleValuesResponse_1_list{list: &x.Results}
+		listValue := &_QueryLatestValuesResponse_1_list{list: &x.Values}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -3074,17 +3929,17 @@ func (x *fastReflection_QueryOracleValuesResponse) Get(descriptor protoreflect.F
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValuesResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryLatestValuesResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValuesResponse.results":
+	case "guru.oracle.v1.QueryLatestValuesResponse.values":
 		lv := value.List()
-		clv := lv.(*_QueryOracleValuesResponse_1_list)
-		x.Results = *clv.list
+		clv := lv.(*_QueryLatestValuesResponse_1_list)
+		x.Values = *clv.list
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3098,45 +3953,45 @@ func (x *fastReflection_QueryOracleValuesResponse) Set(fd protoreflect.FieldDesc
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValuesResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryLatestValuesResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValuesResponse.results":
-		if x.Results == nil {
-			x.Results = []*OracleResult{}
+	case "guru.oracle.v1.QueryLatestValuesResponse.values":
+		if x.Values == nil {
+			x.Values = []*OracleValue{}
 		}
-		value := &_QueryOracleValuesResponse_1_list{list: &x.Results}
+		value := &_QueryLatestValuesResponse_1_list{list: &x.Values}
 		return protoreflect.ValueOfList(value)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryOracleValuesResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryLatestValuesResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.QueryOracleValuesResponse.results":
-		list := []*OracleResult{}
-		return protoreflect.ValueOfList(&_QueryOracleValuesResponse_1_list{list: &list})
+	case "guru.oracle.v1.QueryLatestValuesResponse.values":
+		list := []*OracleValue{}
+		return protoreflect.ValueOfList(&_QueryLatestValuesResponse_1_list{list: &list})
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryOracleValuesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryLatestValuesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.QueryOracleValuesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.QueryLatestValuesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryOracleValuesResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryLatestValuesResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryOracleValuesResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryLatestValuesResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -3144,7 +3999,7 @@ func (x *fastReflection_QueryOracleValuesResponse) WhichOneof(d protoreflect.One
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryOracleValuesResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryLatestValuesResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -3155,7 +4010,7 @@ func (x *fastReflection_QueryOracleValuesResponse) GetUnknown() protoreflect.Raw
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryOracleValuesResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryLatestValuesResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -3167,7 +4022,7 @@ func (x *fastReflection_QueryOracleValuesResponse) SetUnknown(fields protoreflec
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryOracleValuesResponse) IsValid() bool {
+func (x *fastReflection_QueryLatestValuesResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -3177,9 +4032,9 @@ func (x *fastReflection_QueryOracleValuesResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryOracleValuesResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryLatestValuesResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryOracleValuesResponse)
+		x := input.Message.Interface().(*QueryLatestValuesResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3191,8 +4046,8 @@ func (x *fastReflection_QueryOracleValuesResponse) ProtoMethods() *protoiface.Me
 		var n int
 		var l int
 		_ = l
-		if len(x.Results) > 0 {
-			for _, e := range x.Results {
+		if len(x.Values) > 0 {
+			for _, e := range x.Values {
 				l = options.Size(e)
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
@@ -3207,7 +4062,7 @@ func (x *fastReflection_QueryOracleValuesResponse) ProtoMethods() *protoiface.Me
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryOracleValuesResponse)
+		x := input.Message.Interface().(*QueryLatestValuesResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3226,9 +4081,9 @@ func (x *fastReflection_QueryOracleValuesResponse) ProtoMethods() *protoiface.Me
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.Results) > 0 {
-			for iNdEx := len(x.Results) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.Results[iNdEx])
+		if len(x.Values) > 0 {
+			for iNdEx := len(x.Values) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.Values[iNdEx])
 				if err != nil {
 					return protoiface.MarshalOutput{
 						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3253,7 +4108,7 @@ func (x *fastReflection_QueryOracleValuesResponse) ProtoMethods() *protoiface.Me
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryOracleValuesResponse)
+		x := input.Message.Interface().(*QueryLatestValuesResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3285,15 +4140,15 @@ func (x *fastReflection_QueryOracleValuesResponse) ProtoMethods() *protoiface.Me
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryOracleValuesResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryLatestValuesResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryOracleValuesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryLatestValuesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Results", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Values", wireType)
 				}
 				var msglen int
 				for shift := uint(0); ; shift += 7 {
@@ -3320,8 +4175,863 @@ func (x *fastReflection_QueryOracleValuesResponse) ProtoMethods() *protoiface.Me
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Results = append(x.Results, &OracleResult{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Results[len(x.Results)-1]); err != nil {
+				x.Values = append(x.Values, &OracleValue{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Values[len(x.Values)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_QueryHistoryRequest        protoreflect.MessageDescriptor
+	fd_QueryHistoryRequest_symbol protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_guru_oracle_v1_query_proto_init()
+	md_QueryHistoryRequest = File_guru_oracle_v1_query_proto.Messages().ByName("QueryHistoryRequest")
+	fd_QueryHistoryRequest_symbol = md_QueryHistoryRequest.Fields().ByName("symbol")
+}
+
+var _ protoreflect.Message = (*fastReflection_QueryHistoryRequest)(nil)
+
+type fastReflection_QueryHistoryRequest QueryHistoryRequest
+
+func (x *QueryHistoryRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryHistoryRequest)(x)
+}
+
+func (x *QueryHistoryRequest) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_oracle_v1_query_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_QueryHistoryRequest_messageType fastReflection_QueryHistoryRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryHistoryRequest_messageType{}
+
+type fastReflection_QueryHistoryRequest_messageType struct{}
+
+func (x fastReflection_QueryHistoryRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryHistoryRequest)(nil)
+}
+func (x fastReflection_QueryHistoryRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryHistoryRequest)
+}
+func (x fastReflection_QueryHistoryRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryHistoryRequest
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_QueryHistoryRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryHistoryRequest
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_QueryHistoryRequest) Type() protoreflect.MessageType {
+	return _fastReflection_QueryHistoryRequest_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_QueryHistoryRequest) New() protoreflect.Message {
+	return new(fastReflection_QueryHistoryRequest)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_QueryHistoryRequest) Interface() protoreflect.ProtoMessage {
+	return (*QueryHistoryRequest)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_QueryHistoryRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Symbol != "" {
+		value := protoreflect.ValueOfString(x.Symbol)
+		if !f(fd_QueryHistoryRequest_symbol, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_QueryHistoryRequest) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryRequest.symbol":
+		return x.Symbol != ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryHistoryRequest) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryRequest.symbol":
+		x.Symbol = ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_QueryHistoryRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "guru.oracle.v1.QueryHistoryRequest.symbol":
+		value := x.Symbol
+		return protoreflect.ValueOfString(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryRequest does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryHistoryRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryRequest.symbol":
+		x.Symbol = value.Interface().(string)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryHistoryRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryRequest.symbol":
+		panic(fmt.Errorf("field symbol of message guru.oracle.v1.QueryHistoryRequest is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_QueryHistoryRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryRequest.symbol":
+		return protoreflect.ValueOfString("")
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryRequest"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryRequest does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_QueryHistoryRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryHistoryRequest", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_QueryHistoryRequest) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryHistoryRequest) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_QueryHistoryRequest) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_QueryHistoryRequest) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*QueryHistoryRequest)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		l = len(x.Symbol)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*QueryHistoryRequest)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.Symbol) > 0 {
+			i -= len(x.Symbol)
+			copy(dAtA[i:], x.Symbol)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Symbol)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*QueryHistoryRequest)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryHistoryRequest: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryHistoryRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Symbol = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_QueryHistoryResponse         protoreflect.MessageDescriptor
+	fd_QueryHistoryResponse_history protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_guru_oracle_v1_query_proto_init()
+	md_QueryHistoryResponse = File_guru_oracle_v1_query_proto.Messages().ByName("QueryHistoryResponse")
+	fd_QueryHistoryResponse_history = md_QueryHistoryResponse.Fields().ByName("history")
+}
+
+var _ protoreflect.Message = (*fastReflection_QueryHistoryResponse)(nil)
+
+type fastReflection_QueryHistoryResponse QueryHistoryResponse
+
+func (x *QueryHistoryResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryHistoryResponse)(x)
+}
+
+func (x *QueryHistoryResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_oracle_v1_query_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_QueryHistoryResponse_messageType fastReflection_QueryHistoryResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryHistoryResponse_messageType{}
+
+type fastReflection_QueryHistoryResponse_messageType struct{}
+
+func (x fastReflection_QueryHistoryResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryHistoryResponse)(nil)
+}
+func (x fastReflection_QueryHistoryResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryHistoryResponse)
+}
+func (x fastReflection_QueryHistoryResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryHistoryResponse
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_QueryHistoryResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryHistoryResponse
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_QueryHistoryResponse) Type() protoreflect.MessageType {
+	return _fastReflection_QueryHistoryResponse_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_QueryHistoryResponse) New() protoreflect.Message {
+	return new(fastReflection_QueryHistoryResponse)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_QueryHistoryResponse) Interface() protoreflect.ProtoMessage {
+	return (*QueryHistoryResponse)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_QueryHistoryResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.History != nil {
+		value := protoreflect.ValueOfMessage(x.History.ProtoReflect())
+		if !f(fd_QueryHistoryResponse_history, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_QueryHistoryResponse) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryResponse.history":
+		return x.History != nil
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryHistoryResponse) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryResponse.history":
+		x.History = nil
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_QueryHistoryResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "guru.oracle.v1.QueryHistoryResponse.history":
+		value := x.History
+		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryResponse does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryHistoryResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryResponse.history":
+		x.History = value.Message().Interface().(*OracleHistory)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryHistoryResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryResponse.history":
+		if x.History == nil {
+			x.History = new(OracleHistory)
+		}
+		return protoreflect.ValueOfMessage(x.History.ProtoReflect())
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_QueryHistoryResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.oracle.v1.QueryHistoryResponse.history":
+		m := new(OracleHistory)
+		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.QueryHistoryResponse"))
+		}
+		panic(fmt.Errorf("message guru.oracle.v1.QueryHistoryResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_QueryHistoryResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.QueryHistoryResponse", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_QueryHistoryResponse) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_QueryHistoryResponse) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_QueryHistoryResponse) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_QueryHistoryResponse) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*QueryHistoryResponse)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.History != nil {
+			l = options.Size(x.History)
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*QueryHistoryResponse)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.History != nil {
+			encoded, err := options.Marshal(x.History)
+			if err != nil {
+				return protoiface.MarshalOutput{
+					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+					Buf:               input.Buf,
+				}, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*QueryHistoryResponse)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryHistoryResponse: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryHistoryResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field History", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if x.History == nil {
+					x.History = &OracleHistory{}
+				}
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.History); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -3495,7 +5205,7 @@ func (x *QueryActiveTasksResponse) GetTasks() []*OracleTask {
 	return nil
 }
 
-type QueryOracleValueRequest struct {
+type QueryTaskRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -3503,8 +5213,8 @@ type QueryOracleValueRequest struct {
 	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
 }
 
-func (x *QueryOracleValueRequest) Reset() {
-	*x = QueryOracleValueRequest{}
+func (x *QueryTaskRequest) Reset() {
+	*x = QueryTaskRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_query_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3512,34 +5222,34 @@ func (x *QueryOracleValueRequest) Reset() {
 	}
 }
 
-func (x *QueryOracleValueRequest) String() string {
+func (x *QueryTaskRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryOracleValueRequest) ProtoMessage() {}
+func (*QueryTaskRequest) ProtoMessage() {}
 
-// Deprecated: Use QueryOracleValueRequest.ProtoReflect.Descriptor instead.
-func (*QueryOracleValueRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryTaskRequest.ProtoReflect.Descriptor instead.
+func (*QueryTaskRequest) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_query_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *QueryOracleValueRequest) GetSymbol() string {
+func (x *QueryTaskRequest) GetSymbol() string {
 	if x != nil {
 		return x.Symbol
 	}
 	return ""
 }
 
-type QueryOracleValueResponse struct {
+type QueryTaskResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Result *OracleResult `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
+	Task *OracleTask `protobuf:"bytes,1,opt,name=task,proto3" json:"task,omitempty"`
 }
 
-func (x *QueryOracleValueResponse) Reset() {
-	*x = QueryOracleValueResponse{}
+func (x *QueryTaskResponse) Reset() {
+	*x = QueryTaskResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_query_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3547,32 +5257,34 @@ func (x *QueryOracleValueResponse) Reset() {
 	}
 }
 
-func (x *QueryOracleValueResponse) String() string {
+func (x *QueryTaskResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryOracleValueResponse) ProtoMessage() {}
+func (*QueryTaskResponse) ProtoMessage() {}
 
-// Deprecated: Use QueryOracleValueResponse.ProtoReflect.Descriptor instead.
-func (*QueryOracleValueResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryTaskResponse.ProtoReflect.Descriptor instead.
+func (*QueryTaskResponse) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_query_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *QueryOracleValueResponse) GetResult() *OracleResult {
+func (x *QueryTaskResponse) GetTask() *OracleTask {
 	if x != nil {
-		return x.Result
+		return x.Task
 	}
 	return nil
 }
 
-type QueryOracleValuesRequest struct {
+type QueryLatestValueRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
 }
 
-func (x *QueryOracleValuesRequest) Reset() {
-	*x = QueryOracleValuesRequest{}
+func (x *QueryLatestValueRequest) Reset() {
+	*x = QueryLatestValueRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_query_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3580,27 +5292,34 @@ func (x *QueryOracleValuesRequest) Reset() {
 	}
 }
 
-func (x *QueryOracleValuesRequest) String() string {
+func (x *QueryLatestValueRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryOracleValuesRequest) ProtoMessage() {}
+func (*QueryLatestValueRequest) ProtoMessage() {}
 
-// Deprecated: Use QueryOracleValuesRequest.ProtoReflect.Descriptor instead.
-func (*QueryOracleValuesRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryLatestValueRequest.ProtoReflect.Descriptor instead.
+func (*QueryLatestValueRequest) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_query_proto_rawDescGZIP(), []int{6}
 }
 
-type QueryOracleValuesResponse struct {
+func (x *QueryLatestValueRequest) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+type QueryLatestValueResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Results []*OracleResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	Value *OracleValue `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 }
 
-func (x *QueryOracleValuesResponse) Reset() {
-	*x = QueryOracleValuesResponse{}
+func (x *QueryLatestValueResponse) Reset() {
+	*x = QueryLatestValueResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_query_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3608,20 +5327,151 @@ func (x *QueryOracleValuesResponse) Reset() {
 	}
 }
 
-func (x *QueryOracleValuesResponse) String() string {
+func (x *QueryLatestValueResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryOracleValuesResponse) ProtoMessage() {}
+func (*QueryLatestValueResponse) ProtoMessage() {}
 
-// Deprecated: Use QueryOracleValuesResponse.ProtoReflect.Descriptor instead.
-func (*QueryOracleValuesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryLatestValueResponse.ProtoReflect.Descriptor instead.
+func (*QueryLatestValueResponse) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_query_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *QueryOracleValuesResponse) GetResults() []*OracleResult {
+func (x *QueryLatestValueResponse) GetValue() *OracleValue {
 	if x != nil {
-		return x.Results
+		return x.Value
+	}
+	return nil
+}
+
+type QueryLatestValuesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *QueryLatestValuesRequest) Reset() {
+	*x = QueryLatestValuesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_oracle_v1_query_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *QueryLatestValuesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryLatestValuesRequest) ProtoMessage() {}
+
+// Deprecated: Use QueryLatestValuesRequest.ProtoReflect.Descriptor instead.
+func (*QueryLatestValuesRequest) Descriptor() ([]byte, []int) {
+	return file_guru_oracle_v1_query_proto_rawDescGZIP(), []int{8}
+}
+
+type QueryLatestValuesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Values []*OracleValue `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
+}
+
+func (x *QueryLatestValuesResponse) Reset() {
+	*x = QueryLatestValuesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_oracle_v1_query_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *QueryLatestValuesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryLatestValuesResponse) ProtoMessage() {}
+
+// Deprecated: Use QueryLatestValuesResponse.ProtoReflect.Descriptor instead.
+func (*QueryLatestValuesResponse) Descriptor() ([]byte, []int) {
+	return file_guru_oracle_v1_query_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *QueryLatestValuesResponse) GetValues() []*OracleValue {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+type QueryHistoryRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+}
+
+func (x *QueryHistoryRequest) Reset() {
+	*x = QueryHistoryRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_oracle_v1_query_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *QueryHistoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryHistoryRequest) ProtoMessage() {}
+
+// Deprecated: Use QueryHistoryRequest.ProtoReflect.Descriptor instead.
+func (*QueryHistoryRequest) Descriptor() ([]byte, []int) {
+	return file_guru_oracle_v1_query_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *QueryHistoryRequest) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+type QueryHistoryResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	History *OracleHistory `protobuf:"bytes,1,opt,name=history,proto3" json:"history,omitempty"`
+}
+
+func (x *QueryHistoryResponse) Reset() {
+	*x = QueryHistoryResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_oracle_v1_query_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *QueryHistoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryHistoryResponse) ProtoMessage() {}
+
+// Deprecated: Use QueryHistoryResponse.ProtoReflect.Descriptor instead.
+func (*QueryHistoryResponse) Descriptor() ([]byte, []int) {
+	return file_guru_oracle_v1_query_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *QueryHistoryResponse) GetHistory() *OracleHistory {
+	if x != nil {
+		return x.History
 	}
 	return nil
 }
@@ -3651,70 +5501,99 @@ var file_guru_oracle_v1_query_proto_rawDesc = []byte{
 	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x05, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x18, 0x01,
 	0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63,
 	0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x54, 0x61, 0x73, 0x6b,
-	0x52, 0x05, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x22, 0x31, 0x0a, 0x17, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x22, 0x50, 0x0a, 0x18, 0x51, 0x75,
-	0x65, 0x72, 0x79, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x34, 0x0a, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72,
-	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x52, 0x65,
-	0x73, 0x75, 0x6c, 0x74, 0x52, 0x06, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x22, 0x1a, 0x0a, 0x18,
-	0x51, 0x75, 0x65, 0x72, 0x79, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x53, 0x0a, 0x19, 0x51, 0x75, 0x65, 0x72,
-	0x79, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x36, 0x0a, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73,
-	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72,
-	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x52, 0x65,
-	0x73, 0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x32, 0xb0, 0x04,
-	0x0a, 0x05, 0x51, 0x75, 0x65, 0x72, 0x79, 0x12, 0x76, 0x0a, 0x06, 0x50, 0x61, 0x72, 0x61, 0x6d,
-	0x73, 0x12, 0x22, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e,
-	0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61,
-	0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x61, 0x72, 0x61,
-	0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x23, 0x88, 0xe7, 0xb0, 0x2a,
-	0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x18, 0x12, 0x16, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f,
-	0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12,
-	0x84, 0x01, 0x0a, 0x0b, 0x41, 0x63, 0x74, 0x69, 0x76, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x73, 0x12,
-	0x27, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31,
-	0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x41, 0x63, 0x74, 0x69, 0x76, 0x65, 0x54, 0x61, 0x73, 0x6b,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
-	0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x41,
-	0x63, 0x74, 0x69, 0x76, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x22, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x17, 0x12,
-	0x15, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31,
-	0x2f, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x12, 0x95, 0x01, 0x0a, 0x0b, 0x4f, 0x72, 0x61, 0x63, 0x6c,
-	0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x27, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72,
-	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4f, 0x72, 0x61,
-	0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x28, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31,
-	0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75,
-	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x33, 0x88, 0xe7, 0xb0, 0x2a, 0x01,
-	0x82, 0xd3, 0xe4, 0x93, 0x02, 0x28, 0x12, 0x26, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72,
-	0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5f, 0x76,
-	0x61, 0x6c, 0x75, 0x65, 0x73, 0x2f, 0x7b, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x7d, 0x12, 0x8f,
-	0x01, 0x0a, 0x0c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x12,
-	0x28, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31,
-	0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75,
-	0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29, 0x2e, 0x67, 0x75, 0x72, 0x75,
+	0x52, 0x05, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x22, 0x2a, 0x0a, 0x10, 0x51, 0x75, 0x65, 0x72, 0x79,
+	0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73,
+	0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x6d,
+	0x62, 0x6f, 0x6c, 0x22, 0x43, 0x0a, 0x11, 0x51, 0x75, 0x65, 0x72, 0x79, 0x54, 0x61, 0x73, 0x6b,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x04, 0x74, 0x61, 0x73, 0x6b,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x54, 0x61,
+	0x73, 0x6b, 0x52, 0x04, 0x74, 0x61, 0x73, 0x6b, 0x22, 0x31, 0x0a, 0x17, 0x51, 0x75, 0x65, 0x72,
+	0x79, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x22, 0x4d, 0x0a, 0x18, 0x51,
+	0x75, 0x65, 0x72, 0x79, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x31, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61,
+	0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x1a, 0x0a, 0x18, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x50, 0x0a, 0x19, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4c,
+	0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65,
+	0x52, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x22, 0x2d, 0x0a, 0x13, 0x51, 0x75, 0x65, 0x72,
+	0x79, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x16, 0x0a, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x22, 0x4f, 0x0a, 0x14, 0x51, 0x75, 0x65, 0x72, 0x79,
+	0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x37, 0x0a, 0x07, 0x68, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x52,
+	0x07, 0x68, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x32, 0xa2, 0x06, 0x0a, 0x05, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x12, 0x76, 0x0a, 0x06, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x22, 0x2e, 0x67,
+	0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x23, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x23, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93,
+	0x02, 0x18, 0x12, 0x16, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65,
+	0x2f, 0x76, 0x31, 0x2f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x84, 0x01, 0x0a, 0x0b, 0x41,
+	0x63, 0x74, 0x69, 0x76, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x73, 0x12, 0x27, 0x2e, 0x67, 0x75, 0x72,
+	0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72,
+	0x79, 0x41, 0x63, 0x74, 0x69, 0x76, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x41, 0x63, 0x74, 0x69, 0x76, 0x65,
+	0x54, 0x61, 0x73, 0x6b, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x22, 0x88,
+	0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x17, 0x12, 0x15, 0x2f, 0x67, 0x75, 0x72,
+	0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x74, 0x61, 0x73, 0x6b,
+	0x73, 0x12, 0x78, 0x0a, 0x04, 0x54, 0x61, 0x73, 0x6b, 0x12, 0x20, 0x2e, 0x67, 0x75, 0x72, 0x75,
 	0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2a, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02,
-	0x1f, 0x12, 0x1d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f,
-	0x76, 0x31, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5f, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73,
-	0x42, 0xb8, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72,
-	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0a, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x72,
-	0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f,
-	0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75,
-	0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c,
-	0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75,
-	0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72,
-	0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75,
-	0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42,
-	0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a,
-	0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x67, 0x75,
+	0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2b,
+	0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x20, 0x12, 0x1e, 0x2f, 0x67, 0x75,
+	0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x74, 0x61, 0x73,
+	0x6b, 0x73, 0x2f, 0x7b, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x7d, 0x12, 0x8e, 0x01, 0x0a, 0x0b,
+	0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x27, 0x2e, 0x67, 0x75,
+	0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63,
+	0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4c, 0x61, 0x74, 0x65, 0x73,
+	0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2c,
+	0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x21, 0x12, 0x1f, 0x2f, 0x67, 0x75,
+	0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x73, 0x2f, 0x7b, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x7d, 0x12, 0x88, 0x01, 0x0a,
+	0x0c, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x12, 0x28, 0x2e,
+	0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51,
+	0x75, 0x65, 0x72, 0x79, 0x4c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f,
+	0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x4c, 0x61,
+	0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x23, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x18, 0x12,
+	0x16, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31,
+	0x2f, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x12, 0x83, 0x01, 0x0a, 0x07, 0x48, 0x69, 0x73, 0x74,
+	0x6f, 0x72, 0x79, 0x12, 0x23, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72,
+	0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
+	0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x48,
+	0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2d,
+	0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x22, 0x12, 0x20, 0x2f, 0x67, 0x75,
+	0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x68, 0x69, 0x73,
+	0x74, 0x6f, 0x72, 0x79, 0x2f, 0x7b, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x7d, 0x42, 0xb8, 0x01,
+	0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x2e, 0x76, 0x31, 0x42, 0x0a, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x72, 0x6f, 0x74, 0x6f,
+	0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67,
+	0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72,
+	0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31,
+	0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f,
+	0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c,
+	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74,
+	0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3729,38 +5608,49 @@ func file_guru_oracle_v1_query_proto_rawDescGZIP() []byte {
 	return file_guru_oracle_v1_query_proto_rawDescData
 }
 
-var file_guru_oracle_v1_query_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_guru_oracle_v1_query_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_guru_oracle_v1_query_proto_goTypes = []interface{}{
 	(*QueryParamsRequest)(nil),        // 0: guru.oracle.v1.QueryParamsRequest
 	(*QueryParamsResponse)(nil),       // 1: guru.oracle.v1.QueryParamsResponse
 	(*QueryActiveTasksRequest)(nil),   // 2: guru.oracle.v1.QueryActiveTasksRequest
 	(*QueryActiveTasksResponse)(nil),  // 3: guru.oracle.v1.QueryActiveTasksResponse
-	(*QueryOracleValueRequest)(nil),   // 4: guru.oracle.v1.QueryOracleValueRequest
-	(*QueryOracleValueResponse)(nil),  // 5: guru.oracle.v1.QueryOracleValueResponse
-	(*QueryOracleValuesRequest)(nil),  // 6: guru.oracle.v1.QueryOracleValuesRequest
-	(*QueryOracleValuesResponse)(nil), // 7: guru.oracle.v1.QueryOracleValuesResponse
-	(*Params)(nil),                    // 8: guru.oracle.v1.Params
-	(*OracleTask)(nil),                // 9: guru.oracle.v1.OracleTask
-	(*OracleResult)(nil),              // 10: guru.oracle.v1.OracleResult
+	(*QueryTaskRequest)(nil),          // 4: guru.oracle.v1.QueryTaskRequest
+	(*QueryTaskResponse)(nil),         // 5: guru.oracle.v1.QueryTaskResponse
+	(*QueryLatestValueRequest)(nil),   // 6: guru.oracle.v1.QueryLatestValueRequest
+	(*QueryLatestValueResponse)(nil),  // 7: guru.oracle.v1.QueryLatestValueResponse
+	(*QueryLatestValuesRequest)(nil),  // 8: guru.oracle.v1.QueryLatestValuesRequest
+	(*QueryLatestValuesResponse)(nil), // 9: guru.oracle.v1.QueryLatestValuesResponse
+	(*QueryHistoryRequest)(nil),       // 10: guru.oracle.v1.QueryHistoryRequest
+	(*QueryHistoryResponse)(nil),      // 11: guru.oracle.v1.QueryHistoryResponse
+	(*Params)(nil),                    // 12: guru.oracle.v1.Params
+	(*OracleTask)(nil),                // 13: guru.oracle.v1.OracleTask
+	(*OracleValue)(nil),               // 14: guru.oracle.v1.OracleValue
+	(*OracleHistory)(nil),             // 15: guru.oracle.v1.OracleHistory
 }
 var file_guru_oracle_v1_query_proto_depIdxs = []int32{
-	8,  // 0: guru.oracle.v1.QueryParamsResponse.params:type_name -> guru.oracle.v1.Params
-	9,  // 1: guru.oracle.v1.QueryActiveTasksResponse.tasks:type_name -> guru.oracle.v1.OracleTask
-	10, // 2: guru.oracle.v1.QueryOracleValueResponse.result:type_name -> guru.oracle.v1.OracleResult
-	10, // 3: guru.oracle.v1.QueryOracleValuesResponse.results:type_name -> guru.oracle.v1.OracleResult
-	0,  // 4: guru.oracle.v1.Query.Params:input_type -> guru.oracle.v1.QueryParamsRequest
-	2,  // 5: guru.oracle.v1.Query.ActiveTasks:input_type -> guru.oracle.v1.QueryActiveTasksRequest
-	4,  // 6: guru.oracle.v1.Query.OracleValue:input_type -> guru.oracle.v1.QueryOracleValueRequest
-	6,  // 7: guru.oracle.v1.Query.OracleValues:input_type -> guru.oracle.v1.QueryOracleValuesRequest
-	1,  // 8: guru.oracle.v1.Query.Params:output_type -> guru.oracle.v1.QueryParamsResponse
-	3,  // 9: guru.oracle.v1.Query.ActiveTasks:output_type -> guru.oracle.v1.QueryActiveTasksResponse
-	5,  // 10: guru.oracle.v1.Query.OracleValue:output_type -> guru.oracle.v1.QueryOracleValueResponse
-	7,  // 11: guru.oracle.v1.Query.OracleValues:output_type -> guru.oracle.v1.QueryOracleValuesResponse
-	8,  // [8:12] is the sub-list for method output_type
-	4,  // [4:8] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	12, // 0: guru.oracle.v1.QueryParamsResponse.params:type_name -> guru.oracle.v1.Params
+	13, // 1: guru.oracle.v1.QueryActiveTasksResponse.tasks:type_name -> guru.oracle.v1.OracleTask
+	13, // 2: guru.oracle.v1.QueryTaskResponse.task:type_name -> guru.oracle.v1.OracleTask
+	14, // 3: guru.oracle.v1.QueryLatestValueResponse.value:type_name -> guru.oracle.v1.OracleValue
+	14, // 4: guru.oracle.v1.QueryLatestValuesResponse.values:type_name -> guru.oracle.v1.OracleValue
+	15, // 5: guru.oracle.v1.QueryHistoryResponse.history:type_name -> guru.oracle.v1.OracleHistory
+	0,  // 6: guru.oracle.v1.Query.Params:input_type -> guru.oracle.v1.QueryParamsRequest
+	2,  // 7: guru.oracle.v1.Query.ActiveTasks:input_type -> guru.oracle.v1.QueryActiveTasksRequest
+	4,  // 8: guru.oracle.v1.Query.Task:input_type -> guru.oracle.v1.QueryTaskRequest
+	6,  // 9: guru.oracle.v1.Query.LatestValue:input_type -> guru.oracle.v1.QueryLatestValueRequest
+	8,  // 10: guru.oracle.v1.Query.LatestValues:input_type -> guru.oracle.v1.QueryLatestValuesRequest
+	10, // 11: guru.oracle.v1.Query.History:input_type -> guru.oracle.v1.QueryHistoryRequest
+	1,  // 12: guru.oracle.v1.Query.Params:output_type -> guru.oracle.v1.QueryParamsResponse
+	3,  // 13: guru.oracle.v1.Query.ActiveTasks:output_type -> guru.oracle.v1.QueryActiveTasksResponse
+	5,  // 14: guru.oracle.v1.Query.Task:output_type -> guru.oracle.v1.QueryTaskResponse
+	7,  // 15: guru.oracle.v1.Query.LatestValue:output_type -> guru.oracle.v1.QueryLatestValueResponse
+	9,  // 16: guru.oracle.v1.Query.LatestValues:output_type -> guru.oracle.v1.QueryLatestValuesResponse
+	11, // 17: guru.oracle.v1.Query.History:output_type -> guru.oracle.v1.QueryHistoryResponse
+	12, // [12:18] is the sub-list for method output_type
+	6,  // [6:12] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_guru_oracle_v1_query_proto_init() }
@@ -3820,7 +5710,7 @@ func file_guru_oracle_v1_query_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_query_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryOracleValueRequest); i {
+			switch v := v.(*QueryTaskRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3832,7 +5722,7 @@ func file_guru_oracle_v1_query_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_query_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryOracleValueResponse); i {
+			switch v := v.(*QueryTaskResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3844,7 +5734,7 @@ func file_guru_oracle_v1_query_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_query_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryOracleValuesRequest); i {
+			switch v := v.(*QueryLatestValueRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3856,7 +5746,55 @@ func file_guru_oracle_v1_query_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_query_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryOracleValuesResponse); i {
+			switch v := v.(*QueryLatestValueResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_guru_oracle_v1_query_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QueryLatestValuesRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_guru_oracle_v1_query_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QueryLatestValuesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_guru_oracle_v1_query_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QueryHistoryRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_guru_oracle_v1_query_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QueryHistoryResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3874,7 +5812,7 @@ func file_guru_oracle_v1_query_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_guru_oracle_v1_query_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

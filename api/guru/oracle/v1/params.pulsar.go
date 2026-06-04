@@ -13,14 +13,20 @@ import (
 )
 
 var (
-	md_Params         protoreflect.MessageDescriptor
-	fd_Params_enabled protoreflect.FieldDescriptor
+	md_Params                protoreflect.MessageDescriptor
+	fd_Params_enabled        protoreflect.FieldDescriptor
+	fd_Params_min_validators protoreflect.FieldDescriptor
+	fd_Params_min_sources    protoreflect.FieldDescriptor
+	fd_Params_history_limit  protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_params_proto_init()
 	md_Params = File_guru_oracle_v1_params_proto.Messages().ByName("Params")
 	fd_Params_enabled = md_Params.Fields().ByName("enabled")
+	fd_Params_min_validators = md_Params.Fields().ByName("min_validators")
+	fd_Params_min_sources = md_Params.Fields().ByName("min_sources")
+	fd_Params_history_limit = md_Params.Fields().ByName("history_limit")
 }
 
 var _ protoreflect.Message = (*fastReflection_Params)(nil)
@@ -94,6 +100,24 @@ func (x *fastReflection_Params) Range(f func(protoreflect.FieldDescriptor, proto
 			return
 		}
 	}
+	if x.MinValidators != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.MinValidators)
+		if !f(fd_Params_min_validators, value) {
+			return
+		}
+	}
+	if x.MinSources != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.MinSources)
+		if !f(fd_Params_min_sources, value) {
+			return
+		}
+	}
+	if x.HistoryLimit != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.HistoryLimit)
+		if !f(fd_Params_history_limit, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -111,6 +135,12 @@ func (x *fastReflection_Params) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
 	case "guru.oracle.v1.Params.enabled":
 		return x.Enabled != false
+	case "guru.oracle.v1.Params.min_validators":
+		return x.MinValidators != uint32(0)
+	case "guru.oracle.v1.Params.min_sources":
+		return x.MinSources != uint32(0)
+	case "guru.oracle.v1.Params.history_limit":
+		return x.HistoryLimit != uint32(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.Params"))
@@ -129,6 +159,12 @@ func (x *fastReflection_Params) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
 	case "guru.oracle.v1.Params.enabled":
 		x.Enabled = false
+	case "guru.oracle.v1.Params.min_validators":
+		x.MinValidators = uint32(0)
+	case "guru.oracle.v1.Params.min_sources":
+		x.MinSources = uint32(0)
+	case "guru.oracle.v1.Params.history_limit":
+		x.HistoryLimit = uint32(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.Params"))
@@ -148,6 +184,15 @@ func (x *fastReflection_Params) Get(descriptor protoreflect.FieldDescriptor) pro
 	case "guru.oracle.v1.Params.enabled":
 		value := x.Enabled
 		return protoreflect.ValueOfBool(value)
+	case "guru.oracle.v1.Params.min_validators":
+		value := x.MinValidators
+		return protoreflect.ValueOfUint32(value)
+	case "guru.oracle.v1.Params.min_sources":
+		value := x.MinSources
+		return protoreflect.ValueOfUint32(value)
+	case "guru.oracle.v1.Params.history_limit":
+		value := x.HistoryLimit
+		return protoreflect.ValueOfUint32(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.Params"))
@@ -170,6 +215,12 @@ func (x *fastReflection_Params) Set(fd protoreflect.FieldDescriptor, value proto
 	switch fd.FullName() {
 	case "guru.oracle.v1.Params.enabled":
 		x.Enabled = value.Bool()
+	case "guru.oracle.v1.Params.min_validators":
+		x.MinValidators = uint32(value.Uint())
+	case "guru.oracle.v1.Params.min_sources":
+		x.MinSources = uint32(value.Uint())
+	case "guru.oracle.v1.Params.history_limit":
+		x.HistoryLimit = uint32(value.Uint())
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.Params"))
@@ -192,6 +243,12 @@ func (x *fastReflection_Params) Mutable(fd protoreflect.FieldDescriptor) protore
 	switch fd.FullName() {
 	case "guru.oracle.v1.Params.enabled":
 		panic(fmt.Errorf("field enabled of message guru.oracle.v1.Params is not mutable"))
+	case "guru.oracle.v1.Params.min_validators":
+		panic(fmt.Errorf("field min_validators of message guru.oracle.v1.Params is not mutable"))
+	case "guru.oracle.v1.Params.min_sources":
+		panic(fmt.Errorf("field min_sources of message guru.oracle.v1.Params is not mutable"))
+	case "guru.oracle.v1.Params.history_limit":
+		panic(fmt.Errorf("field history_limit of message guru.oracle.v1.Params is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.Params"))
@@ -207,6 +264,12 @@ func (x *fastReflection_Params) NewField(fd protoreflect.FieldDescriptor) protor
 	switch fd.FullName() {
 	case "guru.oracle.v1.Params.enabled":
 		return protoreflect.ValueOfBool(false)
+	case "guru.oracle.v1.Params.min_validators":
+		return protoreflect.ValueOfUint32(uint32(0))
+	case "guru.oracle.v1.Params.min_sources":
+		return protoreflect.ValueOfUint32(uint32(0))
+	case "guru.oracle.v1.Params.history_limit":
+		return protoreflect.ValueOfUint32(uint32(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.Params"))
@@ -279,6 +342,15 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 		if x.Enabled {
 			n += 2
 		}
+		if x.MinValidators != 0 {
+			n += 1 + runtime.Sov(uint64(x.MinValidators))
+		}
+		if x.MinSources != 0 {
+			n += 1 + runtime.Sov(uint64(x.MinSources))
+		}
+		if x.HistoryLimit != 0 {
+			n += 1 + runtime.Sov(uint64(x.HistoryLimit))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -307,6 +379,21 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.HistoryLimit != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.HistoryLimit))
+			i--
+			dAtA[i] = 0x20
+		}
+		if x.MinSources != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.MinSources))
+			i--
+			dAtA[i] = 0x18
+		}
+		if x.MinValidators != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.MinValidators))
+			i--
+			dAtA[i] = 0x10
 		}
 		if x.Enabled {
 			i--
@@ -387,6 +474,63 @@ func (x *fastReflection_Params) ProtoMethods() *protoiface.Methods {
 					}
 				}
 				x.Enabled = bool(v != 0)
+			case 2:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MinValidators", wireType)
+				}
+				x.MinValidators = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.MinValidators |= uint32(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 3:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MinSources", wireType)
+				}
+				x.MinSources = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.MinSources |= uint32(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 4:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field HistoryLimit", wireType)
+				}
+				x.HistoryLimit = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.HistoryLimit |= uint32(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -440,7 +584,10 @@ type Params struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Enabled       bool   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	MinValidators uint32 `protobuf:"varint,2,opt,name=min_validators,json=minValidators,proto3" json:"min_validators,omitempty"`
+	MinSources    uint32 `protobuf:"varint,3,opt,name=min_sources,json=minSources,proto3" json:"min_sources,omitempty"`
+	HistoryLimit  uint32 `protobuf:"varint,4,opt,name=history_limit,json=historyLimit,proto3" json:"history_limit,omitempty"`
 }
 
 func (x *Params) Reset() {
@@ -470,27 +617,55 @@ func (x *Params) GetEnabled() bool {
 	return false
 }
 
+func (x *Params) GetMinValidators() uint32 {
+	if x != nil {
+		return x.MinValidators
+	}
+	return 0
+}
+
+func (x *Params) GetMinSources() uint32 {
+	if x != nil {
+		return x.MinSources
+	}
+	return 0
+}
+
+func (x *Params) GetHistoryLimit() uint32 {
+	if x != nil {
+		return x.HistoryLimit
+	}
+	return 0
+}
+
 var File_guru_oracle_v1_params_proto protoreflect.FileDescriptor
 
 var file_guru_oracle_v1_params_proto_rawDesc = []byte{
 	0x0a, 0x1b, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31,
 	0x2f, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0e, 0x67,
-	0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x22, 0x22, 0x0a,
-	0x06, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c,
-	0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65,
-	0x64, 0x42, 0xb9, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f,
-	0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73,
-	0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
-	0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61,
-	0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75,
-	0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61,
-	0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75,
-	0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47,
-	0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a,
-	0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47,
-	0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72,
-	0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x22, 0x8f, 0x01,
+	0x0a, 0x06, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x65, 0x6e, 0x61, 0x62,
+	0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c,
+	0x65, 0x64, 0x12, 0x25, 0x0a, 0x0e, 0x6d, 0x69, 0x6e, 0x5f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x74, 0x6f, 0x72, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0d, 0x6d, 0x69, 0x6e, 0x56,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x6d, 0x69, 0x6e,
+	0x5f, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a,
+	0x6d, 0x69, 0x6e, 0x53, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x12, 0x23, 0x0a, 0x0d, 0x68, 0x69,
+	0x73, 0x74, 0x6f, 0x72, 0x79, 0x5f, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x0d, 0x52, 0x0c, 0x68, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x4c, 0x69, 0x6d, 0x69, 0x74, 0x42,
+	0xb9, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61,
+	0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x50, 0x72,
+	0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f,
+	0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75,
+	0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75,
+	0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72,
+	0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75,
+	0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42,
+	0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a,
+	0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (

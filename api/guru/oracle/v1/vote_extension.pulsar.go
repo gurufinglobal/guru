@@ -15,7 +15,7 @@ import (
 var _ protoreflect.List = (*_OracleVoteExtension_1_list)(nil)
 
 type _OracleVoteExtension_1_list struct {
-	list *[]*OracleResult
+	list *[]*OracleValidatorResult
 }
 
 func (x *_OracleVoteExtension_1_list) Len() int {
@@ -31,18 +31,18 @@ func (x *_OracleVoteExtension_1_list) Get(i int) protoreflect.Value {
 
 func (x *_OracleVoteExtension_1_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleResult)
+	concreteValue := valueUnwrapped.Interface().(*OracleValidatorResult)
 	(*x.list)[i] = concreteValue
 }
 
 func (x *_OracleVoteExtension_1_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleResult)
+	concreteValue := valueUnwrapped.Interface().(*OracleValidatorResult)
 	*x.list = append(*x.list, concreteValue)
 }
 
 func (x *_OracleVoteExtension_1_list) AppendMutable() protoreflect.Value {
-	v := new(OracleResult)
+	v := new(OracleValidatorResult)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
@@ -55,7 +55,7 @@ func (x *_OracleVoteExtension_1_list) Truncate(n int) {
 }
 
 func (x *_OracleVoteExtension_1_list) NewElement() protoreflect.Value {
-	v := new(OracleResult)
+	v := new(OracleValidatorResult)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
@@ -64,14 +64,14 @@ func (x *_OracleVoteExtension_1_list) IsValid() bool {
 }
 
 var (
-	md_OracleVoteExtension        protoreflect.MessageDescriptor
-	fd_OracleVoteExtension_prices protoreflect.FieldDescriptor
+	md_OracleVoteExtension         protoreflect.MessageDescriptor
+	fd_OracleVoteExtension_results protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_vote_extension_proto_init()
 	md_OracleVoteExtension = File_guru_oracle_v1_vote_extension_proto.Messages().ByName("OracleVoteExtension")
-	fd_OracleVoteExtension_prices = md_OracleVoteExtension.Fields().ByName("prices")
+	fd_OracleVoteExtension_results = md_OracleVoteExtension.Fields().ByName("results")
 }
 
 var _ protoreflect.Message = (*fastReflection_OracleVoteExtension)(nil)
@@ -139,9 +139,9 @@ func (x *fastReflection_OracleVoteExtension) Interface() protoreflect.ProtoMessa
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_OracleVoteExtension) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if len(x.Prices) != 0 {
-		value := protoreflect.ValueOfList(&_OracleVoteExtension_1_list{list: &x.Prices})
-		if !f(fd_OracleVoteExtension_prices, value) {
+	if len(x.Results) != 0 {
+		value := protoreflect.ValueOfList(&_OracleVoteExtension_1_list{list: &x.Results})
+		if !f(fd_OracleVoteExtension_results, value) {
 			return
 		}
 	}
@@ -160,8 +160,8 @@ func (x *fastReflection_OracleVoteExtension) Range(f func(protoreflect.FieldDesc
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_OracleVoteExtension) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleVoteExtension.prices":
-		return len(x.Prices) != 0
+	case "guru.oracle.v1.OracleVoteExtension.results":
+		return len(x.Results) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleVoteExtension"))
@@ -178,8 +178,8 @@ func (x *fastReflection_OracleVoteExtension) Has(fd protoreflect.FieldDescriptor
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_OracleVoteExtension) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleVoteExtension.prices":
-		x.Prices = nil
+	case "guru.oracle.v1.OracleVoteExtension.results":
+		x.Results = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleVoteExtension"))
@@ -196,11 +196,11 @@ func (x *fastReflection_OracleVoteExtension) Clear(fd protoreflect.FieldDescript
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_OracleVoteExtension) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.OracleVoteExtension.prices":
-		if len(x.Prices) == 0 {
+	case "guru.oracle.v1.OracleVoteExtension.results":
+		if len(x.Results) == 0 {
 			return protoreflect.ValueOfList(&_OracleVoteExtension_1_list{})
 		}
-		listValue := &_OracleVoteExtension_1_list{list: &x.Prices}
+		listValue := &_OracleVoteExtension_1_list{list: &x.Results}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
@@ -222,10 +222,10 @@ func (x *fastReflection_OracleVoteExtension) Get(descriptor protoreflect.FieldDe
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_OracleVoteExtension) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleVoteExtension.prices":
+	case "guru.oracle.v1.OracleVoteExtension.results":
 		lv := value.List()
 		clv := lv.(*_OracleVoteExtension_1_list)
-		x.Prices = *clv.list
+		x.Results = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleVoteExtension"))
@@ -246,11 +246,11 @@ func (x *fastReflection_OracleVoteExtension) Set(fd protoreflect.FieldDescriptor
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_OracleVoteExtension) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleVoteExtension.prices":
-		if x.Prices == nil {
-			x.Prices = []*OracleResult{}
+	case "guru.oracle.v1.OracleVoteExtension.results":
+		if x.Results == nil {
+			x.Results = []*OracleValidatorResult{}
 		}
-		value := &_OracleVoteExtension_1_list{list: &x.Prices}
+		value := &_OracleVoteExtension_1_list{list: &x.Results}
 		return protoreflect.ValueOfList(value)
 	default:
 		if fd.IsExtension() {
@@ -265,8 +265,8 @@ func (x *fastReflection_OracleVoteExtension) Mutable(fd protoreflect.FieldDescri
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_OracleVoteExtension) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleVoteExtension.prices":
-		list := []*OracleResult{}
+	case "guru.oracle.v1.OracleVoteExtension.results":
+		list := []*OracleValidatorResult{}
 		return protoreflect.ValueOfList(&_OracleVoteExtension_1_list{list: &list})
 	default:
 		if fd.IsExtension() {
@@ -337,8 +337,8 @@ func (x *fastReflection_OracleVoteExtension) ProtoMethods() *protoiface.Methods 
 		var n int
 		var l int
 		_ = l
-		if len(x.Prices) > 0 {
-			for _, e := range x.Prices {
+		if len(x.Results) > 0 {
+			for _, e := range x.Results {
 				l = options.Size(e)
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
@@ -372,9 +372,9 @@ func (x *fastReflection_OracleVoteExtension) ProtoMethods() *protoiface.Methods 
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.Prices) > 0 {
-			for iNdEx := len(x.Prices) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.Prices[iNdEx])
+		if len(x.Results) > 0 {
+			for iNdEx := len(x.Results) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.Results[iNdEx])
 				if err != nil {
 					return protoiface.MarshalOutput{
 						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -439,7 +439,7 @@ func (x *fastReflection_OracleVoteExtension) ProtoMethods() *protoiface.Methods 
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Prices", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Results", wireType)
 				}
 				var msglen int
 				for shift := uint(0); ; shift += 7 {
@@ -466,8 +466,8 @@ func (x *fastReflection_OracleVoteExtension) ProtoMethods() *protoiface.Methods 
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Prices = append(x.Prices, &OracleResult{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Prices[len(x.Prices)-1]); err != nil {
+				x.Results = append(x.Results, &OracleValidatorResult{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Results[len(x.Results)-1]); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -524,7 +524,7 @@ type OracleVoteExtension struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Prices []*OracleResult `protobuf:"bytes,1,rep,name=prices,proto3" json:"prices,omitempty"`
+	Results []*OracleValidatorResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
 }
 
 func (x *OracleVoteExtension) Reset() {
@@ -547,9 +547,9 @@ func (*OracleVoteExtension) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_vote_extension_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *OracleVoteExtension) GetPrices() []*OracleResult {
+func (x *OracleVoteExtension) GetResults() []*OracleValidatorResult {
 	if x != nil {
-		return x.Prices
+		return x.Results
 	}
 	return nil
 }
@@ -562,24 +562,25 @@ var file_guru_oracle_v1_vote_extension_proto_rawDesc = []byte{
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63,
 	0x6c, 0x65, 0x2e, 0x76, 0x31, 0x1a, 0x1b, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63,
 	0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x22, 0x4b, 0x0a, 0x13, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x6f, 0x74, 0x65,
-	0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x34, 0x0a, 0x06, 0x70, 0x72, 0x69,
-	0x63, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c,
-	0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x06, 0x70, 0x72, 0x69, 0x63, 0x65, 0x73, 0x42,
-	0xc0, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61,
-	0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x12, 0x56, 0x6f, 0x74, 0x65, 0x45, 0x78, 0x74, 0x65,
-	0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69,
-	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e,
-	0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61,
-	0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76,
-	0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58,
-	0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56,
-	0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c,
-	0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65,
-	0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea,
-	0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a,
-	0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x74, 0x6f, 0x22, 0x56, 0x0a, 0x13, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x6f, 0x74, 0x65,
+	0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x3f, 0x0a, 0x07, 0x72, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x67, 0x75, 0x72,
+	0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63,
+	0x6c, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x75, 0x6c,
+	0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x42, 0xc0, 0x01, 0x0a, 0x12, 0x63,
+	0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76,
+	0x31, 0x42, 0x12, 0x56, 0x6f, 0x74, 0x65, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e,
+	0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
+	0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61,
+	0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75,
+	0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61,
+	0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75,
+	0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47,
+	0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a,
+	0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47,
+	0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72,
+	0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -596,11 +597,11 @@ func file_guru_oracle_v1_vote_extension_proto_rawDescGZIP() []byte {
 
 var file_guru_oracle_v1_vote_extension_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_guru_oracle_v1_vote_extension_proto_goTypes = []interface{}{
-	(*OracleVoteExtension)(nil), // 0: guru.oracle.v1.OracleVoteExtension
-	(*OracleResult)(nil),        // 1: guru.oracle.v1.OracleResult
+	(*OracleVoteExtension)(nil),   // 0: guru.oracle.v1.OracleVoteExtension
+	(*OracleValidatorResult)(nil), // 1: guru.oracle.v1.OracleValidatorResult
 }
 var file_guru_oracle_v1_vote_extension_proto_depIdxs = []int32{
-	1, // 0: guru.oracle.v1.OracleVoteExtension.prices:type_name -> guru.oracle.v1.OracleResult
+	1, // 0: guru.oracle.v1.OracleVoteExtension.results:type_name -> guru.oracle.v1.OracleValidatorResult
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

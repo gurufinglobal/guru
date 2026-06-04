@@ -19,14 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OracleSidecar_GetLatestValues_FullMethodName = "/guru.oracle.v1.OracleSidecar/GetLatestValues"
+	OracleSidecar_GetSamples_FullMethodName = "/guru.oracle.v1.OracleSidecar/GetSamples"
 )
 
 // OracleSidecarClient is the client API for OracleSidecar service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// OracleSidecar exposes off-chain oracle samples to validator nodes.
 type OracleSidecarClient interface {
-	GetLatestValues(ctx context.Context, in *GetLatestValuesRequest, opts ...grpc.CallOption) (*GetLatestValuesResponse, error)
+	// GetSamples returns source-level samples grouped by oracle symbol.
+	GetSamples(ctx context.Context, in *GetSamplesRequest, opts ...grpc.CallOption) (*GetSamplesResponse, error)
 }
 
 type oracleSidecarClient struct {
@@ -37,10 +40,10 @@ func NewOracleSidecarClient(cc grpc.ClientConnInterface) OracleSidecarClient {
 	return &oracleSidecarClient{cc}
 }
 
-func (c *oracleSidecarClient) GetLatestValues(ctx context.Context, in *GetLatestValuesRequest, opts ...grpc.CallOption) (*GetLatestValuesResponse, error) {
+func (c *oracleSidecarClient) GetSamples(ctx context.Context, in *GetSamplesRequest, opts ...grpc.CallOption) (*GetSamplesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetLatestValuesResponse)
-	err := c.cc.Invoke(ctx, OracleSidecar_GetLatestValues_FullMethodName, in, out, cOpts...)
+	out := new(GetSamplesResponse)
+	err := c.cc.Invoke(ctx, OracleSidecar_GetSamples_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,8 +53,11 @@ func (c *oracleSidecarClient) GetLatestValues(ctx context.Context, in *GetLatest
 // OracleSidecarServer is the server API for OracleSidecar service.
 // All implementations must embed UnimplementedOracleSidecarServer
 // for forward compatibility.
+//
+// OracleSidecar exposes off-chain oracle samples to validator nodes.
 type OracleSidecarServer interface {
-	GetLatestValues(context.Context, *GetLatestValuesRequest) (*GetLatestValuesResponse, error)
+	// GetSamples returns source-level samples grouped by oracle symbol.
+	GetSamples(context.Context, *GetSamplesRequest) (*GetSamplesResponse, error)
 	mustEmbedUnimplementedOracleSidecarServer()
 }
 
@@ -62,8 +68,8 @@ type OracleSidecarServer interface {
 // pointer dereference when methods are called.
 type UnimplementedOracleSidecarServer struct{}
 
-func (UnimplementedOracleSidecarServer) GetLatestValues(context.Context, *GetLatestValuesRequest) (*GetLatestValuesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetLatestValues not implemented")
+func (UnimplementedOracleSidecarServer) GetSamples(context.Context, *GetSamplesRequest) (*GetSamplesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSamples not implemented")
 }
 func (UnimplementedOracleSidecarServer) mustEmbedUnimplementedOracleSidecarServer() {}
 func (UnimplementedOracleSidecarServer) testEmbeddedByValue()                       {}
@@ -86,20 +92,20 @@ func RegisterOracleSidecarServer(s grpc.ServiceRegistrar, srv OracleSidecarServe
 	s.RegisterService(&OracleSidecar_ServiceDesc, srv)
 }
 
-func _OracleSidecar_GetLatestValues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetLatestValuesRequest)
+func _OracleSidecar_GetSamples_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSamplesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OracleSidecarServer).GetLatestValues(ctx, in)
+		return srv.(OracleSidecarServer).GetSamples(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OracleSidecar_GetLatestValues_FullMethodName,
+		FullMethod: OracleSidecar_GetSamples_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OracleSidecarServer).GetLatestValues(ctx, req.(*GetLatestValuesRequest))
+		return srv.(OracleSidecarServer).GetSamples(ctx, req.(*GetSamplesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -112,8 +118,8 @@ var OracleSidecar_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OracleSidecarServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetLatestValues",
-			Handler:    _OracleSidecar_GetLatestValues_Handler,
+			MethodName: "GetSamples",
+			Handler:    _OracleSidecar_GetSamples_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

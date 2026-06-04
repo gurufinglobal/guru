@@ -47,6 +47,8 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	constitution "github.com/gurufinglobal/guru/v3/x/constitution"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	oracle "github.com/gurufinglobal/guru/v3/x/oracle"
+	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	customstaking "github.com/gurufinglobal/guru/v3/x/staking"
 )
 
@@ -117,6 +119,7 @@ var (
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		constitutiontypes.ModuleName,
+		oracletypes.ModuleName,
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -157,6 +160,7 @@ func appModules(
 			feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 			gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
 			constitution.NewAppModule(app.ConstitutionKeeper),
+			oracle.NewAppModule(app.OracleKeeper),
 			mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 			slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 			distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),

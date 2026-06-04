@@ -66,7 +66,7 @@ func (x *_GenesisState_2_list) IsValid() bool {
 var _ protoreflect.List = (*_GenesisState_3_list)(nil)
 
 type _GenesisState_3_list struct {
-	list *[]*OracleResult
+	list *[]*OracleValue
 }
 
 func (x *_GenesisState_3_list) Len() int {
@@ -82,18 +82,18 @@ func (x *_GenesisState_3_list) Get(i int) protoreflect.Value {
 
 func (x *_GenesisState_3_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleResult)
+	concreteValue := valueUnwrapped.Interface().(*OracleValue)
 	(*x.list)[i] = concreteValue
 }
 
 func (x *_GenesisState_3_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleResult)
+	concreteValue := valueUnwrapped.Interface().(*OracleValue)
 	*x.list = append(*x.list, concreteValue)
 }
 
 func (x *_GenesisState_3_list) AppendMutable() protoreflect.Value {
-	v := new(OracleResult)
+	v := new(OracleValue)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
@@ -106,7 +106,7 @@ func (x *_GenesisState_3_list) Truncate(n int) {
 }
 
 func (x *_GenesisState_3_list) NewElement() protoreflect.Value {
-	v := new(OracleResult)
+	v := new(OracleValue)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
@@ -114,19 +114,72 @@ func (x *_GenesisState_3_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_GenesisState_4_list)(nil)
+
+type _GenesisState_4_list struct {
+	list *[]*OracleHistory
+}
+
+func (x *_GenesisState_4_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_4_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_4_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*OracleHistory)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_4_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*OracleHistory)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_4_list) AppendMutable() protoreflect.Value {
+	v := new(OracleHistory)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_4_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_4_list) NewElement() protoreflect.Value {
+	v := new(OracleHistory)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_4_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
-	md_GenesisState                protoreflect.MessageDescriptor
-	fd_GenesisState_params         protoreflect.FieldDescriptor
-	fd_GenesisState_active_tasks   protoreflect.FieldDescriptor
-	fd_GenesisState_oracle_results protoreflect.FieldDescriptor
+	md_GenesisState               protoreflect.MessageDescriptor
+	fd_GenesisState_params        protoreflect.FieldDescriptor
+	fd_GenesisState_tasks         protoreflect.FieldDescriptor
+	fd_GenesisState_latest_values protoreflect.FieldDescriptor
+	fd_GenesisState_history       protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_genesis_proto_init()
 	md_GenesisState = File_guru_oracle_v1_genesis_proto.Messages().ByName("GenesisState")
 	fd_GenesisState_params = md_GenesisState.Fields().ByName("params")
-	fd_GenesisState_active_tasks = md_GenesisState.Fields().ByName("active_tasks")
-	fd_GenesisState_oracle_results = md_GenesisState.Fields().ByName("oracle_results")
+	fd_GenesisState_tasks = md_GenesisState.Fields().ByName("tasks")
+	fd_GenesisState_latest_values = md_GenesisState.Fields().ByName("latest_values")
+	fd_GenesisState_history = md_GenesisState.Fields().ByName("history")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -200,15 +253,21 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
-	if len(x.ActiveTasks) != 0 {
-		value := protoreflect.ValueOfList(&_GenesisState_2_list{list: &x.ActiveTasks})
-		if !f(fd_GenesisState_active_tasks, value) {
+	if len(x.Tasks) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_2_list{list: &x.Tasks})
+		if !f(fd_GenesisState_tasks, value) {
 			return
 		}
 	}
-	if len(x.OracleResults) != 0 {
-		value := protoreflect.ValueOfList(&_GenesisState_3_list{list: &x.OracleResults})
-		if !f(fd_GenesisState_oracle_results, value) {
+	if len(x.LatestValues) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_3_list{list: &x.LatestValues})
+		if !f(fd_GenesisState_latest_values, value) {
+			return
+		}
+	}
+	if len(x.History) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_4_list{list: &x.History})
+		if !f(fd_GenesisState_history, value) {
 			return
 		}
 	}
@@ -229,10 +288,12 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 	switch fd.FullName() {
 	case "guru.oracle.v1.GenesisState.params":
 		return x.Params != nil
-	case "guru.oracle.v1.GenesisState.active_tasks":
-		return len(x.ActiveTasks) != 0
-	case "guru.oracle.v1.GenesisState.oracle_results":
-		return len(x.OracleResults) != 0
+	case "guru.oracle.v1.GenesisState.tasks":
+		return len(x.Tasks) != 0
+	case "guru.oracle.v1.GenesisState.latest_values":
+		return len(x.LatestValues) != 0
+	case "guru.oracle.v1.GenesisState.history":
+		return len(x.History) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GenesisState"))
@@ -251,10 +312,12 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
 	case "guru.oracle.v1.GenesisState.params":
 		x.Params = nil
-	case "guru.oracle.v1.GenesisState.active_tasks":
-		x.ActiveTasks = nil
-	case "guru.oracle.v1.GenesisState.oracle_results":
-		x.OracleResults = nil
+	case "guru.oracle.v1.GenesisState.tasks":
+		x.Tasks = nil
+	case "guru.oracle.v1.GenesisState.latest_values":
+		x.LatestValues = nil
+	case "guru.oracle.v1.GenesisState.history":
+		x.History = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GenesisState"))
@@ -274,17 +337,23 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 	case "guru.oracle.v1.GenesisState.params":
 		value := x.Params
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
-	case "guru.oracle.v1.GenesisState.active_tasks":
-		if len(x.ActiveTasks) == 0 {
+	case "guru.oracle.v1.GenesisState.tasks":
+		if len(x.Tasks) == 0 {
 			return protoreflect.ValueOfList(&_GenesisState_2_list{})
 		}
-		listValue := &_GenesisState_2_list{list: &x.ActiveTasks}
+		listValue := &_GenesisState_2_list{list: &x.Tasks}
 		return protoreflect.ValueOfList(listValue)
-	case "guru.oracle.v1.GenesisState.oracle_results":
-		if len(x.OracleResults) == 0 {
+	case "guru.oracle.v1.GenesisState.latest_values":
+		if len(x.LatestValues) == 0 {
 			return protoreflect.ValueOfList(&_GenesisState_3_list{})
 		}
-		listValue := &_GenesisState_3_list{list: &x.OracleResults}
+		listValue := &_GenesisState_3_list{list: &x.LatestValues}
+		return protoreflect.ValueOfList(listValue)
+	case "guru.oracle.v1.GenesisState.history":
+		if len(x.History) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_4_list{})
+		}
+		listValue := &_GenesisState_4_list{list: &x.History}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
@@ -308,14 +377,18 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 	switch fd.FullName() {
 	case "guru.oracle.v1.GenesisState.params":
 		x.Params = value.Message().Interface().(*Params)
-	case "guru.oracle.v1.GenesisState.active_tasks":
+	case "guru.oracle.v1.GenesisState.tasks":
 		lv := value.List()
 		clv := lv.(*_GenesisState_2_list)
-		x.ActiveTasks = *clv.list
-	case "guru.oracle.v1.GenesisState.oracle_results":
+		x.Tasks = *clv.list
+	case "guru.oracle.v1.GenesisState.latest_values":
 		lv := value.List()
 		clv := lv.(*_GenesisState_3_list)
-		x.OracleResults = *clv.list
+		x.LatestValues = *clv.list
+	case "guru.oracle.v1.GenesisState.history":
+		lv := value.List()
+		clv := lv.(*_GenesisState_4_list)
+		x.History = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GenesisState"))
@@ -341,17 +414,23 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 			x.Params = new(Params)
 		}
 		return protoreflect.ValueOfMessage(x.Params.ProtoReflect())
-	case "guru.oracle.v1.GenesisState.active_tasks":
-		if x.ActiveTasks == nil {
-			x.ActiveTasks = []*OracleTask{}
+	case "guru.oracle.v1.GenesisState.tasks":
+		if x.Tasks == nil {
+			x.Tasks = []*OracleTask{}
 		}
-		value := &_GenesisState_2_list{list: &x.ActiveTasks}
+		value := &_GenesisState_2_list{list: &x.Tasks}
 		return protoreflect.ValueOfList(value)
-	case "guru.oracle.v1.GenesisState.oracle_results":
-		if x.OracleResults == nil {
-			x.OracleResults = []*OracleResult{}
+	case "guru.oracle.v1.GenesisState.latest_values":
+		if x.LatestValues == nil {
+			x.LatestValues = []*OracleValue{}
 		}
-		value := &_GenesisState_3_list{list: &x.OracleResults}
+		value := &_GenesisState_3_list{list: &x.LatestValues}
+		return protoreflect.ValueOfList(value)
+	case "guru.oracle.v1.GenesisState.history":
+		if x.History == nil {
+			x.History = []*OracleHistory{}
+		}
+		value := &_GenesisState_4_list{list: &x.History}
 		return protoreflect.ValueOfList(value)
 	default:
 		if fd.IsExtension() {
@@ -369,12 +448,15 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 	case "guru.oracle.v1.GenesisState.params":
 		m := new(Params)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
-	case "guru.oracle.v1.GenesisState.active_tasks":
+	case "guru.oracle.v1.GenesisState.tasks":
 		list := []*OracleTask{}
 		return protoreflect.ValueOfList(&_GenesisState_2_list{list: &list})
-	case "guru.oracle.v1.GenesisState.oracle_results":
-		list := []*OracleResult{}
+	case "guru.oracle.v1.GenesisState.latest_values":
+		list := []*OracleValue{}
 		return protoreflect.ValueOfList(&_GenesisState_3_list{list: &list})
+	case "guru.oracle.v1.GenesisState.history":
+		list := []*OracleHistory{}
+		return protoreflect.ValueOfList(&_GenesisState_4_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GenesisState"))
@@ -448,14 +530,20 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 			l = options.Size(x.Params)
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		if len(x.ActiveTasks) > 0 {
-			for _, e := range x.ActiveTasks {
+		if len(x.Tasks) > 0 {
+			for _, e := range x.Tasks {
 				l = options.Size(e)
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
 		}
-		if len(x.OracleResults) > 0 {
-			for _, e := range x.OracleResults {
+		if len(x.LatestValues) > 0 {
+			for _, e := range x.LatestValues {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
+		if len(x.History) > 0 {
+			for _, e := range x.History {
 				l = options.Size(e)
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
@@ -489,9 +577,25 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.OracleResults) > 0 {
-			for iNdEx := len(x.OracleResults) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.OracleResults[iNdEx])
+		if len(x.History) > 0 {
+			for iNdEx := len(x.History) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.History[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x22
+			}
+		}
+		if len(x.LatestValues) > 0 {
+			for iNdEx := len(x.LatestValues) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.LatestValues[iNdEx])
 				if err != nil {
 					return protoiface.MarshalOutput{
 						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -505,9 +609,9 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				dAtA[i] = 0x1a
 			}
 		}
-		if len(x.ActiveTasks) > 0 {
-			for iNdEx := len(x.ActiveTasks) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.ActiveTasks[iNdEx])
+		if len(x.Tasks) > 0 {
+			for iNdEx := len(x.Tasks) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.Tasks[iNdEx])
 				if err != nil {
 					return protoiface.MarshalOutput{
 						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -622,7 +726,7 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				iNdEx = postIndex
 			case 2:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ActiveTasks", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Tasks", wireType)
 				}
 				var msglen int
 				for shift := uint(0); ; shift += 7 {
@@ -649,14 +753,14 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.ActiveTasks = append(x.ActiveTasks, &OracleTask{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.ActiveTasks[len(x.ActiveTasks)-1]); err != nil {
+				x.Tasks = append(x.Tasks, &OracleTask{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Tasks[len(x.Tasks)-1]); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
 			case 3:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field OracleResults", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field LatestValues", wireType)
 				}
 				var msglen int
 				for shift := uint(0); ; shift += 7 {
@@ -683,8 +787,42 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.OracleResults = append(x.OracleResults, &OracleResult{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.OracleResults[len(x.OracleResults)-1]); err != nil {
+				x.LatestValues = append(x.LatestValues, &OracleValue{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.LatestValues[len(x.LatestValues)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			case 4:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field History", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.History = append(x.History, &OracleHistory{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.History[len(x.History)-1]); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -741,9 +879,10 @@ type GenesisState struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Params        *Params         `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
-	ActiveTasks   []*OracleTask   `protobuf:"bytes,2,rep,name=active_tasks,json=activeTasks,proto3" json:"active_tasks,omitempty"`
-	OracleResults []*OracleResult `protobuf:"bytes,3,rep,name=oracle_results,json=oracleResults,proto3" json:"oracle_results,omitempty"`
+	Params       *Params          `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	Tasks        []*OracleTask    `protobuf:"bytes,2,rep,name=tasks,proto3" json:"tasks,omitempty"`
+	LatestValues []*OracleValue   `protobuf:"bytes,3,rep,name=latest_values,json=latestValues,proto3" json:"latest_values,omitempty"`
+	History      []*OracleHistory `protobuf:"bytes,4,rep,name=history,proto3" json:"history,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -773,16 +912,23 @@ func (x *GenesisState) GetParams() *Params {
 	return nil
 }
 
-func (x *GenesisState) GetActiveTasks() []*OracleTask {
+func (x *GenesisState) GetTasks() []*OracleTask {
 	if x != nil {
-		return x.ActiveTasks
+		return x.Tasks
 	}
 	return nil
 }
 
-func (x *GenesisState) GetOracleResults() []*OracleResult {
+func (x *GenesisState) GetLatestValues() []*OracleValue {
 	if x != nil {
-		return x.OracleResults
+		return x.LatestValues
+	}
+	return nil
+}
+
+func (x *GenesisState) GetHistory() []*OracleHistory {
+	if x != nil {
+		return x.History
 	}
 	return nil
 }
@@ -796,32 +942,34 @@ var file_guru_oracle_v1_genesis_proto_rawDesc = []byte{
 	0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x6f,
 	0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1b, 0x67, 0x75, 0x72,
 	0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x61, 0x72, 0x61,
-	0x6d, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xc2, 0x01, 0x0a, 0x0c, 0x47, 0x65, 0x6e,
+	0x6d, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xeb, 0x01, 0x0a, 0x0c, 0x47, 0x65, 0x6e,
 	0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x2e, 0x0a, 0x06, 0x70, 0x61, 0x72,
 	0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67, 0x75, 0x72, 0x75,
 	0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x6d,
-	0x73, 0x52, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x3d, 0x0a, 0x0c, 0x61, 0x63, 0x74,
-	0x69, 0x76, 0x65, 0x5f, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31,
-	0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x0b, 0x61, 0x63, 0x74,
-	0x69, 0x76, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x73, 0x12, 0x43, 0x0a, 0x0e, 0x6f, 0x72, 0x61, 0x63,
-	0x6c, 0x65, 0x5f, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b,
-	0x32, 0x1c, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76,
-	0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x0d,
-	0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x42, 0xba, 0x01,
-	0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c,
-	0x65, 0x2e, 0x76, 0x31, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f,
-	0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67,
-	0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f,
-	0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65,
-	0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e,
-	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75,
-	0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72,
-	0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d,
-	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a,
-	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x73, 0x52, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x30, 0x0a, 0x05, 0x74, 0x61, 0x73,
+	0x6b, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
+	0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65,
+	0x54, 0x61, 0x73, 0x6b, 0x52, 0x05, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x12, 0x40, 0x0a, 0x0d, 0x6c,
+	0x61, 0x74, 0x65, 0x73, 0x74, 0x5f, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65,
+	0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52,
+	0x0c, 0x6c, 0x61, 0x74, 0x65, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x12, 0x37, 0x0a,
+	0x07, 0x68, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d,
+	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e,
+	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x07, 0x68,
+	0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x42, 0xba, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67,
+	0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0c, 0x47,
+	0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69,
+	0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f,
+	0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f,
+	0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f,
+	0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e,
+	0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65,
+	0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
+	0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a,
+	0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -838,20 +986,22 @@ func file_guru_oracle_v1_genesis_proto_rawDescGZIP() []byte {
 
 var file_guru_oracle_v1_genesis_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_guru_oracle_v1_genesis_proto_goTypes = []interface{}{
-	(*GenesisState)(nil), // 0: guru.oracle.v1.GenesisState
-	(*Params)(nil),       // 1: guru.oracle.v1.Params
-	(*OracleTask)(nil),   // 2: guru.oracle.v1.OracleTask
-	(*OracleResult)(nil), // 3: guru.oracle.v1.OracleResult
+	(*GenesisState)(nil),  // 0: guru.oracle.v1.GenesisState
+	(*Params)(nil),        // 1: guru.oracle.v1.Params
+	(*OracleTask)(nil),    // 2: guru.oracle.v1.OracleTask
+	(*OracleValue)(nil),   // 3: guru.oracle.v1.OracleValue
+	(*OracleHistory)(nil), // 4: guru.oracle.v1.OracleHistory
 }
 var file_guru_oracle_v1_genesis_proto_depIdxs = []int32{
 	1, // 0: guru.oracle.v1.GenesisState.params:type_name -> guru.oracle.v1.Params
-	2, // 1: guru.oracle.v1.GenesisState.active_tasks:type_name -> guru.oracle.v1.OracleTask
-	3, // 2: guru.oracle.v1.GenesisState.oracle_results:type_name -> guru.oracle.v1.OracleResult
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	2, // 1: guru.oracle.v1.GenesisState.tasks:type_name -> guru.oracle.v1.OracleTask
+	3, // 2: guru.oracle.v1.GenesisState.latest_values:type_name -> guru.oracle.v1.OracleValue
+	4, // 3: guru.oracle.v1.GenesisState.history:type_name -> guru.oracle.v1.OracleHistory
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_guru_oracle_v1_genesis_proto_init() }

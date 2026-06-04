@@ -47,6 +47,8 @@ import (
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
+	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	customstakingkeeper "github.com/gurufinglobal/guru/v3/x/staking/keeper"
 )
 
@@ -82,6 +84,7 @@ type AppKeepers struct {
 
 	// guru keepers
 	ConstitutionKeeper constitutionkeeper.Keeper
+	OracleKeeper       oraclekeeper.Keeper
 }
 
 func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
@@ -179,6 +182,11 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		runtime.NewKVStoreService(appKeepers.kvKeys[constitutiontypes.StoreKey]),
 		appKeepers.AccountKeeper.AddressCodec(),
 		appKeepers.BankKeeper,
+	)
+	appKeepers.OracleKeeper = oraclekeeper.NewKeeper(
+		runtime.NewKVStoreService(appKeepers.kvKeys[oracletypes.StoreKey]),
+		appKeepers.AccountKeeper.AddressCodec(),
+		&appKeepers.ConstitutionKeeper,
 	)
 	appKeepers.CustomStakingKeeper = customstakingkeeper.NewKeeper(
 		appKeepers.StakingKeeper,

@@ -16,14 +16,14 @@ import (
 
 var (
 	md_MsgUpdateParams           protoreflect.MessageDescriptor
-	fd_MsgUpdateParams_authority protoreflect.FieldDescriptor
+	fd_MsgUpdateParams_moderator protoreflect.FieldDescriptor
 	fd_MsgUpdateParams_params    protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_tx_proto_init()
 	md_MsgUpdateParams = File_guru_oracle_v1_tx_proto.Messages().ByName("MsgUpdateParams")
-	fd_MsgUpdateParams_authority = md_MsgUpdateParams.Fields().ByName("authority")
+	fd_MsgUpdateParams_moderator = md_MsgUpdateParams.Fields().ByName("moderator")
 	fd_MsgUpdateParams_params = md_MsgUpdateParams.Fields().ByName("params")
 }
 
@@ -92,9 +92,9 @@ func (x *fastReflection_MsgUpdateParams) Interface() protoreflect.ProtoMessage {
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_MsgUpdateParams) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.Authority != "" {
-		value := protoreflect.ValueOfString(x.Authority)
-		if !f(fd_MsgUpdateParams_authority, value) {
+	if x.Moderator != "" {
+		value := protoreflect.ValueOfString(x.Moderator)
+		if !f(fd_MsgUpdateParams_moderator, value) {
 			return
 		}
 	}
@@ -119,8 +119,8 @@ func (x *fastReflection_MsgUpdateParams) Range(f func(protoreflect.FieldDescript
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_MsgUpdateParams) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdateParams.authority":
-		return x.Authority != ""
+	case "guru.oracle.v1.MsgUpdateParams.moderator":
+		return x.Moderator != ""
 	case "guru.oracle.v1.MsgUpdateParams.params":
 		return x.Params != nil
 	default:
@@ -139,8 +139,8 @@ func (x *fastReflection_MsgUpdateParams) Has(fd protoreflect.FieldDescriptor) bo
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgUpdateParams) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdateParams.authority":
-		x.Authority = ""
+	case "guru.oracle.v1.MsgUpdateParams.moderator":
+		x.Moderator = ""
 	case "guru.oracle.v1.MsgUpdateParams.params":
 		x.Params = nil
 	default:
@@ -159,8 +159,8 @@ func (x *fastReflection_MsgUpdateParams) Clear(fd protoreflect.FieldDescriptor) 
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_MsgUpdateParams) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.MsgUpdateParams.authority":
-		value := x.Authority
+	case "guru.oracle.v1.MsgUpdateParams.moderator":
+		value := x.Moderator
 		return protoreflect.ValueOfString(value)
 	case "guru.oracle.v1.MsgUpdateParams.params":
 		value := x.Params
@@ -185,8 +185,8 @@ func (x *fastReflection_MsgUpdateParams) Get(descriptor protoreflect.FieldDescri
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgUpdateParams) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdateParams.authority":
-		x.Authority = value.Interface().(string)
+	case "guru.oracle.v1.MsgUpdateParams.moderator":
+		x.Moderator = value.Interface().(string)
 	case "guru.oracle.v1.MsgUpdateParams.params":
 		x.Params = value.Message().Interface().(*Params)
 	default:
@@ -214,8 +214,8 @@ func (x *fastReflection_MsgUpdateParams) Mutable(fd protoreflect.FieldDescriptor
 			x.Params = new(Params)
 		}
 		return protoreflect.ValueOfMessage(x.Params.ProtoReflect())
-	case "guru.oracle.v1.MsgUpdateParams.authority":
-		panic(fmt.Errorf("field authority of message guru.oracle.v1.MsgUpdateParams is not mutable"))
+	case "guru.oracle.v1.MsgUpdateParams.moderator":
+		panic(fmt.Errorf("field moderator of message guru.oracle.v1.MsgUpdateParams is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateParams"))
@@ -229,7 +229,7 @@ func (x *fastReflection_MsgUpdateParams) Mutable(fd protoreflect.FieldDescriptor
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_MsgUpdateParams) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdateParams.authority":
+	case "guru.oracle.v1.MsgUpdateParams.moderator":
 		return protoreflect.ValueOfString("")
 	case "guru.oracle.v1.MsgUpdateParams.params":
 		m := new(Params)
@@ -303,7 +303,7 @@ func (x *fastReflection_MsgUpdateParams) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		l = len(x.Authority)
+		l = len(x.Moderator)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -354,10 +354,10 @@ func (x *fastReflection_MsgUpdateParams) ProtoMethods() *protoiface.Methods {
 			i--
 			dAtA[i] = 0x12
 		}
-		if len(x.Authority) > 0 {
-			i -= len(x.Authority)
-			copy(dAtA[i:], x.Authority)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Authority)))
+		if len(x.Moderator) > 0 {
+			i -= len(x.Moderator)
+			copy(dAtA[i:], x.Moderator)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Moderator)))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -412,7 +412,7 @@ func (x *fastReflection_MsgUpdateParams) ProtoMethods() *protoiface.Methods {
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Moderator", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -440,7 +440,7 @@ func (x *fastReflection_MsgUpdateParams) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Authority = string(dAtA[iNdEx:postIndex])
+				x.Moderator = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 2:
 				if wireType != 2 {
@@ -870,29 +870,27 @@ func (x *fastReflection_MsgUpdateParamsResponse) ProtoMethods() *protoiface.Meth
 }
 
 var (
-	md_MsgUpdateOracleTask           protoreflect.MessageDescriptor
-	fd_MsgUpdateOracleTask_authority protoreflect.FieldDescriptor
-	fd_MsgUpdateOracleTask_task      protoreflect.FieldDescriptor
-	fd_MsgUpdateOracleTask_is_remove protoreflect.FieldDescriptor
+	md_MsgUpsertTask           protoreflect.MessageDescriptor
+	fd_MsgUpsertTask_moderator protoreflect.FieldDescriptor
+	fd_MsgUpsertTask_task      protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_tx_proto_init()
-	md_MsgUpdateOracleTask = File_guru_oracle_v1_tx_proto.Messages().ByName("MsgUpdateOracleTask")
-	fd_MsgUpdateOracleTask_authority = md_MsgUpdateOracleTask.Fields().ByName("authority")
-	fd_MsgUpdateOracleTask_task = md_MsgUpdateOracleTask.Fields().ByName("task")
-	fd_MsgUpdateOracleTask_is_remove = md_MsgUpdateOracleTask.Fields().ByName("is_remove")
+	md_MsgUpsertTask = File_guru_oracle_v1_tx_proto.Messages().ByName("MsgUpsertTask")
+	fd_MsgUpsertTask_moderator = md_MsgUpsertTask.Fields().ByName("moderator")
+	fd_MsgUpsertTask_task = md_MsgUpsertTask.Fields().ByName("task")
 }
 
-var _ protoreflect.Message = (*fastReflection_MsgUpdateOracleTask)(nil)
+var _ protoreflect.Message = (*fastReflection_MsgUpsertTask)(nil)
 
-type fastReflection_MsgUpdateOracleTask MsgUpdateOracleTask
+type fastReflection_MsgUpsertTask MsgUpsertTask
 
-func (x *MsgUpdateOracleTask) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_MsgUpdateOracleTask)(x)
+func (x *MsgUpsertTask) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgUpsertTask)(x)
 }
 
-func (x *MsgUpdateOracleTask) slowProtoReflect() protoreflect.Message {
+func (x *MsgUpsertTask) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_tx_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -904,43 +902,43 @@ func (x *MsgUpdateOracleTask) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_MsgUpdateOracleTask_messageType fastReflection_MsgUpdateOracleTask_messageType
-var _ protoreflect.MessageType = fastReflection_MsgUpdateOracleTask_messageType{}
+var _fastReflection_MsgUpsertTask_messageType fastReflection_MsgUpsertTask_messageType
+var _ protoreflect.MessageType = fastReflection_MsgUpsertTask_messageType{}
 
-type fastReflection_MsgUpdateOracleTask_messageType struct{}
+type fastReflection_MsgUpsertTask_messageType struct{}
 
-func (x fastReflection_MsgUpdateOracleTask_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_MsgUpdateOracleTask)(nil)
+func (x fastReflection_MsgUpsertTask_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgUpsertTask)(nil)
 }
-func (x fastReflection_MsgUpdateOracleTask_messageType) New() protoreflect.Message {
-	return new(fastReflection_MsgUpdateOracleTask)
+func (x fastReflection_MsgUpsertTask_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgUpsertTask)
 }
-func (x fastReflection_MsgUpdateOracleTask_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgUpdateOracleTask
+func (x fastReflection_MsgUpsertTask_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgUpsertTask
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_MsgUpdateOracleTask) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgUpdateOracleTask
+func (x *fastReflection_MsgUpsertTask) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgUpsertTask
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_MsgUpdateOracleTask) Type() protoreflect.MessageType {
-	return _fastReflection_MsgUpdateOracleTask_messageType
+func (x *fastReflection_MsgUpsertTask) Type() protoreflect.MessageType {
+	return _fastReflection_MsgUpsertTask_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_MsgUpdateOracleTask) New() protoreflect.Message {
-	return new(fastReflection_MsgUpdateOracleTask)
+func (x *fastReflection_MsgUpsertTask) New() protoreflect.Message {
+	return new(fastReflection_MsgUpsertTask)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_MsgUpdateOracleTask) Interface() protoreflect.ProtoMessage {
-	return (*MsgUpdateOracleTask)(x)
+func (x *fastReflection_MsgUpsertTask) Interface() protoreflect.ProtoMessage {
+	return (*MsgUpsertTask)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -948,22 +946,16 @@ func (x *fastReflection_MsgUpdateOracleTask) Interface() protoreflect.ProtoMessa
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_MsgUpdateOracleTask) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.Authority != "" {
-		value := protoreflect.ValueOfString(x.Authority)
-		if !f(fd_MsgUpdateOracleTask_authority, value) {
+func (x *fastReflection_MsgUpsertTask) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Moderator != "" {
+		value := protoreflect.ValueOfString(x.Moderator)
+		if !f(fd_MsgUpsertTask_moderator, value) {
 			return
 		}
 	}
 	if x.Task != nil {
 		value := protoreflect.ValueOfMessage(x.Task.ProtoReflect())
-		if !f(fd_MsgUpdateOracleTask_task, value) {
-			return
-		}
-	}
-	if x.IsRemove != false {
-		value := protoreflect.ValueOfBool(x.IsRemove)
-		if !f(fd_MsgUpdateOracleTask_is_remove, value) {
+		if !f(fd_MsgUpsertTask_task, value) {
 			return
 		}
 	}
@@ -980,19 +972,17 @@ func (x *fastReflection_MsgUpdateOracleTask) Range(f func(protoreflect.FieldDesc
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_MsgUpdateOracleTask) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_MsgUpsertTask) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdateOracleTask.authority":
-		return x.Authority != ""
-	case "guru.oracle.v1.MsgUpdateOracleTask.task":
+	case "guru.oracle.v1.MsgUpsertTask.moderator":
+		return x.Moderator != ""
+	case "guru.oracle.v1.MsgUpsertTask.task":
 		return x.Task != nil
-	case "guru.oracle.v1.MsgUpdateOracleTask.is_remove":
-		return x.IsRemove != false
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTask"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTask does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTask does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1002,19 +992,17 @@ func (x *fastReflection_MsgUpdateOracleTask) Has(fd protoreflect.FieldDescriptor
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdateOracleTask) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_MsgUpsertTask) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdateOracleTask.authority":
-		x.Authority = ""
-	case "guru.oracle.v1.MsgUpdateOracleTask.task":
+	case "guru.oracle.v1.MsgUpsertTask.moderator":
+		x.Moderator = ""
+	case "guru.oracle.v1.MsgUpsertTask.task":
 		x.Task = nil
-	case "guru.oracle.v1.MsgUpdateOracleTask.is_remove":
-		x.IsRemove = false
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTask"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTask does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTask does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1024,22 +1012,19 @@ func (x *fastReflection_MsgUpdateOracleTask) Clear(fd protoreflect.FieldDescript
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_MsgUpdateOracleTask) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgUpsertTask) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.MsgUpdateOracleTask.authority":
-		value := x.Authority
+	case "guru.oracle.v1.MsgUpsertTask.moderator":
+		value := x.Moderator
 		return protoreflect.ValueOfString(value)
-	case "guru.oracle.v1.MsgUpdateOracleTask.task":
+	case "guru.oracle.v1.MsgUpsertTask.task":
 		value := x.Task
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
-	case "guru.oracle.v1.MsgUpdateOracleTask.is_remove":
-		value := x.IsRemove
-		return protoreflect.ValueOfBool(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTask"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTask does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTask does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -1053,19 +1038,17 @@ func (x *fastReflection_MsgUpdateOracleTask) Get(descriptor protoreflect.FieldDe
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdateOracleTask) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_MsgUpsertTask) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdateOracleTask.authority":
-		x.Authority = value.Interface().(string)
-	case "guru.oracle.v1.MsgUpdateOracleTask.task":
+	case "guru.oracle.v1.MsgUpsertTask.moderator":
+		x.Moderator = value.Interface().(string)
+	case "guru.oracle.v1.MsgUpsertTask.task":
 		x.Task = value.Message().Interface().(*OracleTask)
-	case "guru.oracle.v1.MsgUpdateOracleTask.is_remove":
-		x.IsRemove = value.Bool()
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTask"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTask does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTask does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1079,52 +1062,48 @@ func (x *fastReflection_MsgUpdateOracleTask) Set(fd protoreflect.FieldDescriptor
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdateOracleTask) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgUpsertTask) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdateOracleTask.task":
+	case "guru.oracle.v1.MsgUpsertTask.task":
 		if x.Task == nil {
 			x.Task = new(OracleTask)
 		}
 		return protoreflect.ValueOfMessage(x.Task.ProtoReflect())
-	case "guru.oracle.v1.MsgUpdateOracleTask.authority":
-		panic(fmt.Errorf("field authority of message guru.oracle.v1.MsgUpdateOracleTask is not mutable"))
-	case "guru.oracle.v1.MsgUpdateOracleTask.is_remove":
-		panic(fmt.Errorf("field is_remove of message guru.oracle.v1.MsgUpdateOracleTask is not mutable"))
+	case "guru.oracle.v1.MsgUpsertTask.moderator":
+		panic(fmt.Errorf("field moderator of message guru.oracle.v1.MsgUpsertTask is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTask"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTask does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTask does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_MsgUpdateOracleTask) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgUpsertTask) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdateOracleTask.authority":
+	case "guru.oracle.v1.MsgUpsertTask.moderator":
 		return protoreflect.ValueOfString("")
-	case "guru.oracle.v1.MsgUpdateOracleTask.task":
+	case "guru.oracle.v1.MsgUpsertTask.task":
 		m := new(OracleTask)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
-	case "guru.oracle.v1.MsgUpdateOracleTask.is_remove":
-		return protoreflect.ValueOfBool(false)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTask"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTask does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTask does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_MsgUpdateOracleTask) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_MsgUpsertTask) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.MsgUpdateOracleTask", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.MsgUpsertTask", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -1132,7 +1111,7 @@ func (x *fastReflection_MsgUpdateOracleTask) WhichOneof(d protoreflect.OneofDesc
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_MsgUpdateOracleTask) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_MsgUpsertTask) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -1143,7 +1122,7 @@ func (x *fastReflection_MsgUpdateOracleTask) GetUnknown() protoreflect.RawFields
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdateOracleTask) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_MsgUpsertTask) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -1155,7 +1134,7 @@ func (x *fastReflection_MsgUpdateOracleTask) SetUnknown(fields protoreflect.RawF
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_MsgUpdateOracleTask) IsValid() bool {
+func (x *fastReflection_MsgUpsertTask) IsValid() bool {
 	return x != nil
 }
 
@@ -1165,9 +1144,9 @@ func (x *fastReflection_MsgUpdateOracleTask) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_MsgUpsertTask) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*MsgUpdateOracleTask)
+		x := input.Message.Interface().(*MsgUpsertTask)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1179,16 +1158,13 @@ func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods 
 		var n int
 		var l int
 		_ = l
-		l = len(x.Authority)
+		l = len(x.Moderator)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		if x.Task != nil {
 			l = options.Size(x.Task)
 			n += 1 + l + runtime.Sov(uint64(l))
-		}
-		if x.IsRemove {
-			n += 2
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -1200,7 +1176,7 @@ func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods 
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*MsgUpdateOracleTask)
+		x := input.Message.Interface().(*MsgUpsertTask)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1219,16 +1195,6 @@ func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods 
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if x.IsRemove {
-			i--
-			if x.IsRemove {
-				dAtA[i] = 1
-			} else {
-				dAtA[i] = 0
-			}
-			i--
-			dAtA[i] = 0x18
-		}
 		if x.Task != nil {
 			encoded, err := options.Marshal(x.Task)
 			if err != nil {
@@ -1243,10 +1209,10 @@ func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods 
 			i--
 			dAtA[i] = 0x12
 		}
-		if len(x.Authority) > 0 {
-			i -= len(x.Authority)
-			copy(dAtA[i:], x.Authority)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Authority)))
+		if len(x.Moderator) > 0 {
+			i -= len(x.Moderator)
+			copy(dAtA[i:], x.Moderator)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Moderator)))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -1261,7 +1227,7 @@ func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods 
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*MsgUpdateOracleTask)
+		x := input.Message.Interface().(*MsgUpsertTask)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1293,15 +1259,15 @@ func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods 
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpdateOracleTask: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpsertTask: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpdateOracleTask: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpsertTask: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Moderator", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -1329,7 +1295,7 @@ func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods 
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Authority = string(dAtA[iNdEx:postIndex])
+				x.Moderator = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 2:
 				if wireType != 2 {
@@ -1367,26 +1333,6 @@ func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods 
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
-			case 3:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field IsRemove", wireType)
-				}
-				var v int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= int(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				x.IsRemove = bool(v != 0)
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -1423,23 +1369,23 @@ func (x *fastReflection_MsgUpdateOracleTask) ProtoMethods() *protoiface.Methods 
 }
 
 var (
-	md_MsgUpdateOracleTaskResponse protoreflect.MessageDescriptor
+	md_MsgUpsertTaskResponse protoreflect.MessageDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_tx_proto_init()
-	md_MsgUpdateOracleTaskResponse = File_guru_oracle_v1_tx_proto.Messages().ByName("MsgUpdateOracleTaskResponse")
+	md_MsgUpsertTaskResponse = File_guru_oracle_v1_tx_proto.Messages().ByName("MsgUpsertTaskResponse")
 }
 
-var _ protoreflect.Message = (*fastReflection_MsgUpdateOracleTaskResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_MsgUpsertTaskResponse)(nil)
 
-type fastReflection_MsgUpdateOracleTaskResponse MsgUpdateOracleTaskResponse
+type fastReflection_MsgUpsertTaskResponse MsgUpsertTaskResponse
 
-func (x *MsgUpdateOracleTaskResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_MsgUpdateOracleTaskResponse)(x)
+func (x *MsgUpsertTaskResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgUpsertTaskResponse)(x)
 }
 
-func (x *MsgUpdateOracleTaskResponse) slowProtoReflect() protoreflect.Message {
+func (x *MsgUpsertTaskResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_tx_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1451,43 +1397,43 @@ func (x *MsgUpdateOracleTaskResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_MsgUpdateOracleTaskResponse_messageType fastReflection_MsgUpdateOracleTaskResponse_messageType
-var _ protoreflect.MessageType = fastReflection_MsgUpdateOracleTaskResponse_messageType{}
+var _fastReflection_MsgUpsertTaskResponse_messageType fastReflection_MsgUpsertTaskResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgUpsertTaskResponse_messageType{}
 
-type fastReflection_MsgUpdateOracleTaskResponse_messageType struct{}
+type fastReflection_MsgUpsertTaskResponse_messageType struct{}
 
-func (x fastReflection_MsgUpdateOracleTaskResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_MsgUpdateOracleTaskResponse)(nil)
+func (x fastReflection_MsgUpsertTaskResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgUpsertTaskResponse)(nil)
 }
-func (x fastReflection_MsgUpdateOracleTaskResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_MsgUpdateOracleTaskResponse)
+func (x fastReflection_MsgUpsertTaskResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgUpsertTaskResponse)
 }
-func (x fastReflection_MsgUpdateOracleTaskResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgUpdateOracleTaskResponse
+func (x fastReflection_MsgUpsertTaskResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgUpsertTaskResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgUpdateOracleTaskResponse
+func (x *fastReflection_MsgUpsertTaskResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgUpsertTaskResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) Type() protoreflect.MessageType {
-	return _fastReflection_MsgUpdateOracleTaskResponse_messageType
+func (x *fastReflection_MsgUpsertTaskResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgUpsertTaskResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) New() protoreflect.Message {
-	return new(fastReflection_MsgUpdateOracleTaskResponse)
+func (x *fastReflection_MsgUpsertTaskResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgUpsertTaskResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) Interface() protoreflect.ProtoMessage {
-	return (*MsgUpdateOracleTaskResponse)(x)
+func (x *fastReflection_MsgUpsertTaskResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgUpsertTaskResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -1495,7 +1441,7 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) Interface() protoreflect.Pr
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_MsgUpsertTaskResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 }
 
 // Has reports whether a field is populated.
@@ -1509,13 +1455,13 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) Range(f func(protoreflect.F
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_MsgUpsertTaskResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTaskResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTaskResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1525,13 +1471,13 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) Has(fd protoreflect.FieldDe
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_MsgUpsertTaskResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTaskResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTaskResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1541,13 +1487,13 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) Clear(fd protoreflect.Field
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgUpsertTaskResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTaskResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTaskResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTaskResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -1561,13 +1507,13 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) Get(descriptor protoreflect
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_MsgUpsertTaskResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTaskResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTaskResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1581,36 +1527,36 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) Set(fd protoreflect.FieldDe
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgUpsertTaskResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTaskResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTaskResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgUpsertTaskResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdateOracleTaskResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpsertTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdateOracleTaskResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgUpsertTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_MsgUpsertTaskResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.MsgUpdateOracleTaskResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.MsgUpsertTaskResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -1618,7 +1564,7 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) WhichOneof(d protoreflect.O
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_MsgUpsertTaskResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -1629,7 +1575,7 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) GetUnknown() protoreflect.R
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_MsgUpsertTaskResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -1641,7 +1587,7 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) SetUnknown(fields protorefl
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) IsValid() bool {
+func (x *fastReflection_MsgUpsertTaskResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -1651,9 +1597,9 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_MsgUpdateOracleTaskResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_MsgUpsertTaskResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*MsgUpdateOracleTaskResponse)
+		x := input.Message.Interface().(*MsgUpsertTaskResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1675,7 +1621,7 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) ProtoMethods() *protoiface.
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*MsgUpdateOracleTaskResponse)
+		x := input.Message.Interface().(*MsgUpsertTaskResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1705,7 +1651,7 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) ProtoMethods() *protoiface.
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*MsgUpdateOracleTaskResponse)
+		x := input.Message.Interface().(*MsgUpsertTaskResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -1737,10 +1683,10 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) ProtoMethods() *protoiface.
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpdateOracleTaskResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpsertTaskResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpdateOracleTaskResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpsertTaskResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			default:
@@ -1778,79 +1724,28 @@ func (x *fastReflection_MsgUpdateOracleTaskResponse) ProtoMethods() *protoiface.
 	}
 }
 
-var _ protoreflect.List = (*_MsgUpdatePrices_2_list)(nil)
-
-type _MsgUpdatePrices_2_list struct {
-	list *[]*OracleResult
-}
-
-func (x *_MsgUpdatePrices_2_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_MsgUpdatePrices_2_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
-}
-
-func (x *_MsgUpdatePrices_2_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleResult)
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_MsgUpdatePrices_2_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleResult)
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_MsgUpdatePrices_2_list) AppendMutable() protoreflect.Value {
-	v := new(OracleResult)
-	*x.list = append(*x.list, v)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
-}
-
-func (x *_MsgUpdatePrices_2_list) Truncate(n int) {
-	for i := n; i < len(*x.list); i++ {
-		(*x.list)[i] = nil
-	}
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_MsgUpdatePrices_2_list) NewElement() protoreflect.Value {
-	v := new(OracleResult)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
-}
-
-func (x *_MsgUpdatePrices_2_list) IsValid() bool {
-	return x.list != nil
-}
-
 var (
-	md_MsgUpdatePrices           protoreflect.MessageDescriptor
-	fd_MsgUpdatePrices_authority protoreflect.FieldDescriptor
-	fd_MsgUpdatePrices_rates     protoreflect.FieldDescriptor
+	md_MsgRemoveTask           protoreflect.MessageDescriptor
+	fd_MsgRemoveTask_moderator protoreflect.FieldDescriptor
+	fd_MsgRemoveTask_symbol    protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_tx_proto_init()
-	md_MsgUpdatePrices = File_guru_oracle_v1_tx_proto.Messages().ByName("MsgUpdatePrices")
-	fd_MsgUpdatePrices_authority = md_MsgUpdatePrices.Fields().ByName("authority")
-	fd_MsgUpdatePrices_rates = md_MsgUpdatePrices.Fields().ByName("rates")
+	md_MsgRemoveTask = File_guru_oracle_v1_tx_proto.Messages().ByName("MsgRemoveTask")
+	fd_MsgRemoveTask_moderator = md_MsgRemoveTask.Fields().ByName("moderator")
+	fd_MsgRemoveTask_symbol = md_MsgRemoveTask.Fields().ByName("symbol")
 }
 
-var _ protoreflect.Message = (*fastReflection_MsgUpdatePrices)(nil)
+var _ protoreflect.Message = (*fastReflection_MsgRemoveTask)(nil)
 
-type fastReflection_MsgUpdatePrices MsgUpdatePrices
+type fastReflection_MsgRemoveTask MsgRemoveTask
 
-func (x *MsgUpdatePrices) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_MsgUpdatePrices)(x)
+func (x *MsgRemoveTask) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgRemoveTask)(x)
 }
 
-func (x *MsgUpdatePrices) slowProtoReflect() protoreflect.Message {
+func (x *MsgRemoveTask) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_tx_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1862,43 +1757,43 @@ func (x *MsgUpdatePrices) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_MsgUpdatePrices_messageType fastReflection_MsgUpdatePrices_messageType
-var _ protoreflect.MessageType = fastReflection_MsgUpdatePrices_messageType{}
+var _fastReflection_MsgRemoveTask_messageType fastReflection_MsgRemoveTask_messageType
+var _ protoreflect.MessageType = fastReflection_MsgRemoveTask_messageType{}
 
-type fastReflection_MsgUpdatePrices_messageType struct{}
+type fastReflection_MsgRemoveTask_messageType struct{}
 
-func (x fastReflection_MsgUpdatePrices_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_MsgUpdatePrices)(nil)
+func (x fastReflection_MsgRemoveTask_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgRemoveTask)(nil)
 }
-func (x fastReflection_MsgUpdatePrices_messageType) New() protoreflect.Message {
-	return new(fastReflection_MsgUpdatePrices)
+func (x fastReflection_MsgRemoveTask_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgRemoveTask)
 }
-func (x fastReflection_MsgUpdatePrices_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgUpdatePrices
+func (x fastReflection_MsgRemoveTask_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRemoveTask
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_MsgUpdatePrices) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgUpdatePrices
+func (x *fastReflection_MsgRemoveTask) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRemoveTask
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_MsgUpdatePrices) Type() protoreflect.MessageType {
-	return _fastReflection_MsgUpdatePrices_messageType
+func (x *fastReflection_MsgRemoveTask) Type() protoreflect.MessageType {
+	return _fastReflection_MsgRemoveTask_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_MsgUpdatePrices) New() protoreflect.Message {
-	return new(fastReflection_MsgUpdatePrices)
+func (x *fastReflection_MsgRemoveTask) New() protoreflect.Message {
+	return new(fastReflection_MsgRemoveTask)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_MsgUpdatePrices) Interface() protoreflect.ProtoMessage {
-	return (*MsgUpdatePrices)(x)
+func (x *fastReflection_MsgRemoveTask) Interface() protoreflect.ProtoMessage {
+	return (*MsgRemoveTask)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -1906,16 +1801,16 @@ func (x *fastReflection_MsgUpdatePrices) Interface() protoreflect.ProtoMessage {
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_MsgUpdatePrices) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.Authority != "" {
-		value := protoreflect.ValueOfString(x.Authority)
-		if !f(fd_MsgUpdatePrices_authority, value) {
+func (x *fastReflection_MsgRemoveTask) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Moderator != "" {
+		value := protoreflect.ValueOfString(x.Moderator)
+		if !f(fd_MsgRemoveTask_moderator, value) {
 			return
 		}
 	}
-	if len(x.Rates) != 0 {
-		value := protoreflect.ValueOfList(&_MsgUpdatePrices_2_list{list: &x.Rates})
-		if !f(fd_MsgUpdatePrices_rates, value) {
+	if x.Symbol != "" {
+		value := protoreflect.ValueOfString(x.Symbol)
+		if !f(fd_MsgRemoveTask_symbol, value) {
 			return
 		}
 	}
@@ -1932,17 +1827,17 @@ func (x *fastReflection_MsgUpdatePrices) Range(f func(protoreflect.FieldDescript
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_MsgUpdatePrices) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_MsgRemoveTask) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdatePrices.authority":
-		return x.Authority != ""
-	case "guru.oracle.v1.MsgUpdatePrices.rates":
-		return len(x.Rates) != 0
+	case "guru.oracle.v1.MsgRemoveTask.moderator":
+		return x.Moderator != ""
+	case "guru.oracle.v1.MsgRemoveTask.symbol":
+		return x.Symbol != ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePrices"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePrices does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTask does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1952,17 +1847,17 @@ func (x *fastReflection_MsgUpdatePrices) Has(fd protoreflect.FieldDescriptor) bo
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdatePrices) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_MsgRemoveTask) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdatePrices.authority":
-		x.Authority = ""
-	case "guru.oracle.v1.MsgUpdatePrices.rates":
-		x.Rates = nil
+	case "guru.oracle.v1.MsgRemoveTask.moderator":
+		x.Moderator = ""
+	case "guru.oracle.v1.MsgRemoveTask.symbol":
+		x.Symbol = ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePrices"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePrices does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTask does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1972,22 +1867,19 @@ func (x *fastReflection_MsgUpdatePrices) Clear(fd protoreflect.FieldDescriptor) 
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_MsgUpdatePrices) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgRemoveTask) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.MsgUpdatePrices.authority":
-		value := x.Authority
+	case "guru.oracle.v1.MsgRemoveTask.moderator":
+		value := x.Moderator
 		return protoreflect.ValueOfString(value)
-	case "guru.oracle.v1.MsgUpdatePrices.rates":
-		if len(x.Rates) == 0 {
-			return protoreflect.ValueOfList(&_MsgUpdatePrices_2_list{})
-		}
-		listValue := &_MsgUpdatePrices_2_list{list: &x.Rates}
-		return protoreflect.ValueOfList(listValue)
+	case "guru.oracle.v1.MsgRemoveTask.symbol":
+		value := x.Symbol
+		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePrices"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePrices does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTask does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -2001,19 +1893,17 @@ func (x *fastReflection_MsgUpdatePrices) Get(descriptor protoreflect.FieldDescri
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdatePrices) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_MsgRemoveTask) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdatePrices.authority":
-		x.Authority = value.Interface().(string)
-	case "guru.oracle.v1.MsgUpdatePrices.rates":
-		lv := value.List()
-		clv := lv.(*_MsgUpdatePrices_2_list)
-		x.Rates = *clv.list
+	case "guru.oracle.v1.MsgRemoveTask.moderator":
+		x.Moderator = value.Interface().(string)
+	case "guru.oracle.v1.MsgRemoveTask.symbol":
+		x.Symbol = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePrices"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePrices does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTask does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2027,49 +1917,44 @@ func (x *fastReflection_MsgUpdatePrices) Set(fd protoreflect.FieldDescriptor, va
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdatePrices) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgRemoveTask) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdatePrices.rates":
-		if x.Rates == nil {
-			x.Rates = []*OracleResult{}
-		}
-		value := &_MsgUpdatePrices_2_list{list: &x.Rates}
-		return protoreflect.ValueOfList(value)
-	case "guru.oracle.v1.MsgUpdatePrices.authority":
-		panic(fmt.Errorf("field authority of message guru.oracle.v1.MsgUpdatePrices is not mutable"))
+	case "guru.oracle.v1.MsgRemoveTask.moderator":
+		panic(fmt.Errorf("field moderator of message guru.oracle.v1.MsgRemoveTask is not mutable"))
+	case "guru.oracle.v1.MsgRemoveTask.symbol":
+		panic(fmt.Errorf("field symbol of message guru.oracle.v1.MsgRemoveTask is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePrices"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePrices does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTask does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_MsgUpdatePrices) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgRemoveTask) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.MsgUpdatePrices.authority":
+	case "guru.oracle.v1.MsgRemoveTask.moderator":
 		return protoreflect.ValueOfString("")
-	case "guru.oracle.v1.MsgUpdatePrices.rates":
-		list := []*OracleResult{}
-		return protoreflect.ValueOfList(&_MsgUpdatePrices_2_list{list: &list})
+	case "guru.oracle.v1.MsgRemoveTask.symbol":
+		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePrices"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTask"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePrices does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTask does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_MsgUpdatePrices) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_MsgRemoveTask) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.MsgUpdatePrices", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.MsgRemoveTask", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -2077,7 +1962,7 @@ func (x *fastReflection_MsgUpdatePrices) WhichOneof(d protoreflect.OneofDescript
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_MsgUpdatePrices) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_MsgRemoveTask) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -2088,7 +1973,7 @@ func (x *fastReflection_MsgUpdatePrices) GetUnknown() protoreflect.RawFields {
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdatePrices) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_MsgRemoveTask) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -2100,7 +1985,7 @@ func (x *fastReflection_MsgUpdatePrices) SetUnknown(fields protoreflect.RawField
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_MsgUpdatePrices) IsValid() bool {
+func (x *fastReflection_MsgRemoveTask) IsValid() bool {
 	return x != nil
 }
 
@@ -2110,9 +1995,9 @@ func (x *fastReflection_MsgUpdatePrices) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_MsgUpdatePrices) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_MsgRemoveTask) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*MsgUpdatePrices)
+		x := input.Message.Interface().(*MsgRemoveTask)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2124,15 +2009,13 @@ func (x *fastReflection_MsgUpdatePrices) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		l = len(x.Authority)
+		l = len(x.Moderator)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		if len(x.Rates) > 0 {
-			for _, e := range x.Rates {
-				l = options.Size(e)
-				n += 1 + l + runtime.Sov(uint64(l))
-			}
+		l = len(x.Symbol)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -2144,7 +2027,7 @@ func (x *fastReflection_MsgUpdatePrices) ProtoMethods() *protoiface.Methods {
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*MsgUpdatePrices)
+		x := input.Message.Interface().(*MsgRemoveTask)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2163,26 +2046,17 @@ func (x *fastReflection_MsgUpdatePrices) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.Rates) > 0 {
-			for iNdEx := len(x.Rates) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.Rates[iNdEx])
-				if err != nil {
-					return protoiface.MarshalOutput{
-						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-						Buf:               input.Buf,
-					}, err
-				}
-				i -= len(encoded)
-				copy(dAtA[i:], encoded)
-				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
-				i--
-				dAtA[i] = 0x12
-			}
+		if len(x.Symbol) > 0 {
+			i -= len(x.Symbol)
+			copy(dAtA[i:], x.Symbol)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Symbol)))
+			i--
+			dAtA[i] = 0x12
 		}
-		if len(x.Authority) > 0 {
-			i -= len(x.Authority)
-			copy(dAtA[i:], x.Authority)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Authority)))
+		if len(x.Moderator) > 0 {
+			i -= len(x.Moderator)
+			copy(dAtA[i:], x.Moderator)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Moderator)))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -2197,7 +2071,7 @@ func (x *fastReflection_MsgUpdatePrices) ProtoMethods() *protoiface.Methods {
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*MsgUpdatePrices)
+		x := input.Message.Interface().(*MsgRemoveTask)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2229,15 +2103,15 @@ func (x *fastReflection_MsgUpdatePrices) ProtoMethods() *protoiface.Methods {
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpdatePrices: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRemoveTask: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpdatePrices: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRemoveTask: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Moderator", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -2265,13 +2139,13 @@ func (x *fastReflection_MsgUpdatePrices) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Authority = string(dAtA[iNdEx:postIndex])
+				x.Moderator = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 2:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Rates", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
 				}
-				var msglen int
+				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -2281,25 +2155,23 @@ func (x *fastReflection_MsgUpdatePrices) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					msglen |= int(b&0x7F) << shift
+					stringLen |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				if msglen < 0 {
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
-				postIndex := iNdEx + msglen
+				postIndex := iNdEx + intStringLen
 				if postIndex < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Rates = append(x.Rates, &OracleResult{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Rates[len(x.Rates)-1]); err != nil {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
-				}
+				x.Symbol = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -2337,23 +2209,23 @@ func (x *fastReflection_MsgUpdatePrices) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_MsgUpdatePricesResponse protoreflect.MessageDescriptor
+	md_MsgRemoveTaskResponse protoreflect.MessageDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_tx_proto_init()
-	md_MsgUpdatePricesResponse = File_guru_oracle_v1_tx_proto.Messages().ByName("MsgUpdatePricesResponse")
+	md_MsgRemoveTaskResponse = File_guru_oracle_v1_tx_proto.Messages().ByName("MsgRemoveTaskResponse")
 }
 
-var _ protoreflect.Message = (*fastReflection_MsgUpdatePricesResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_MsgRemoveTaskResponse)(nil)
 
-type fastReflection_MsgUpdatePricesResponse MsgUpdatePricesResponse
+type fastReflection_MsgRemoveTaskResponse MsgRemoveTaskResponse
 
-func (x *MsgUpdatePricesResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_MsgUpdatePricesResponse)(x)
+func (x *MsgRemoveTaskResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgRemoveTaskResponse)(x)
 }
 
-func (x *MsgUpdatePricesResponse) slowProtoReflect() protoreflect.Message {
+func (x *MsgRemoveTaskResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_tx_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2365,43 +2237,43 @@ func (x *MsgUpdatePricesResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_MsgUpdatePricesResponse_messageType fastReflection_MsgUpdatePricesResponse_messageType
-var _ protoreflect.MessageType = fastReflection_MsgUpdatePricesResponse_messageType{}
+var _fastReflection_MsgRemoveTaskResponse_messageType fastReflection_MsgRemoveTaskResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgRemoveTaskResponse_messageType{}
 
-type fastReflection_MsgUpdatePricesResponse_messageType struct{}
+type fastReflection_MsgRemoveTaskResponse_messageType struct{}
 
-func (x fastReflection_MsgUpdatePricesResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_MsgUpdatePricesResponse)(nil)
+func (x fastReflection_MsgRemoveTaskResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgRemoveTaskResponse)(nil)
 }
-func (x fastReflection_MsgUpdatePricesResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_MsgUpdatePricesResponse)
+func (x fastReflection_MsgRemoveTaskResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgRemoveTaskResponse)
 }
-func (x fastReflection_MsgUpdatePricesResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgUpdatePricesResponse
+func (x fastReflection_MsgRemoveTaskResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRemoveTaskResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_MsgUpdatePricesResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_MsgUpdatePricesResponse
+func (x *fastReflection_MsgRemoveTaskResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRemoveTaskResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_MsgUpdatePricesResponse) Type() protoreflect.MessageType {
-	return _fastReflection_MsgUpdatePricesResponse_messageType
+func (x *fastReflection_MsgRemoveTaskResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgRemoveTaskResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_MsgUpdatePricesResponse) New() protoreflect.Message {
-	return new(fastReflection_MsgUpdatePricesResponse)
+func (x *fastReflection_MsgRemoveTaskResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgRemoveTaskResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_MsgUpdatePricesResponse) Interface() protoreflect.ProtoMessage {
-	return (*MsgUpdatePricesResponse)(x)
+func (x *fastReflection_MsgRemoveTaskResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgRemoveTaskResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -2409,7 +2281,7 @@ func (x *fastReflection_MsgUpdatePricesResponse) Interface() protoreflect.ProtoM
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_MsgUpdatePricesResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_MsgRemoveTaskResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 }
 
 // Has reports whether a field is populated.
@@ -2423,13 +2295,13 @@ func (x *fastReflection_MsgUpdatePricesResponse) Range(f func(protoreflect.Field
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_MsgUpdatePricesResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_MsgRemoveTaskResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2439,13 +2311,13 @@ func (x *fastReflection_MsgUpdatePricesResponse) Has(fd protoreflect.FieldDescri
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdatePricesResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_MsgRemoveTaskResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2455,13 +2327,13 @@ func (x *fastReflection_MsgUpdatePricesResponse) Clear(fd protoreflect.FieldDesc
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_MsgUpdatePricesResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgRemoveTaskResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePricesResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTaskResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -2475,13 +2347,13 @@ func (x *fastReflection_MsgUpdatePricesResponse) Get(descriptor protoreflect.Fie
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdatePricesResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_MsgRemoveTaskResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2495,36 +2367,36 @@ func (x *fastReflection_MsgUpdatePricesResponse) Set(fd protoreflect.FieldDescri
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdatePricesResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgRemoveTaskResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_MsgUpdatePricesResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_MsgRemoveTaskResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgUpdatePricesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.MsgRemoveTaskResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.MsgUpdatePricesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.MsgRemoveTaskResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_MsgUpdatePricesResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_MsgRemoveTaskResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.MsgUpdatePricesResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.MsgRemoveTaskResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -2532,7 +2404,7 @@ func (x *fastReflection_MsgUpdatePricesResponse) WhichOneof(d protoreflect.Oneof
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_MsgUpdatePricesResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_MsgRemoveTaskResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -2543,7 +2415,7 @@ func (x *fastReflection_MsgUpdatePricesResponse) GetUnknown() protoreflect.RawFi
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_MsgUpdatePricesResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_MsgRemoveTaskResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -2555,7 +2427,7 @@ func (x *fastReflection_MsgUpdatePricesResponse) SetUnknown(fields protoreflect.
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_MsgUpdatePricesResponse) IsValid() bool {
+func (x *fastReflection_MsgRemoveTaskResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -2565,9 +2437,9 @@ func (x *fastReflection_MsgUpdatePricesResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_MsgUpdatePricesResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_MsgRemoveTaskResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*MsgUpdatePricesResponse)
+		x := input.Message.Interface().(*MsgRemoveTaskResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2589,7 +2461,7 @@ func (x *fastReflection_MsgUpdatePricesResponse) ProtoMethods() *protoiface.Meth
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*MsgUpdatePricesResponse)
+		x := input.Message.Interface().(*MsgRemoveTaskResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2619,7 +2491,7 @@ func (x *fastReflection_MsgUpdatePricesResponse) ProtoMethods() *protoiface.Meth
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*MsgUpdatePricesResponse)
+		x := input.Message.Interface().(*MsgRemoveTaskResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2651,10 +2523,10 @@ func (x *fastReflection_MsgUpdatePricesResponse) ProtoMethods() *protoiface.Meth
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpdatePricesResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRemoveTaskResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgUpdatePricesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRemoveTaskResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			default:
@@ -2710,7 +2582,7 @@ type MsgUpdateParams struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Authority string  `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	Moderator string  `protobuf:"bytes,1,opt,name=moderator,proto3" json:"moderator,omitempty"`
 	Params    *Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
 }
 
@@ -2734,9 +2606,9 @@ func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_tx_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *MsgUpdateParams) GetAuthority() string {
+func (x *MsgUpdateParams) GetModerator() string {
 	if x != nil {
-		return x.Authority
+		return x.Moderator
 	}
 	return ""
 }
@@ -2774,18 +2646,17 @@ func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_tx_proto_rawDescGZIP(), []int{1}
 }
 
-type MsgUpdateOracleTask struct {
+type MsgUpsertTask struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Authority string      `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	Moderator string      `protobuf:"bytes,1,opt,name=moderator,proto3" json:"moderator,omitempty"`
 	Task      *OracleTask `protobuf:"bytes,2,opt,name=task,proto3" json:"task,omitempty"`
-	IsRemove  bool        `protobuf:"varint,3,opt,name=is_remove,json=isRemove,proto3" json:"is_remove,omitempty"`
 }
 
-func (x *MsgUpdateOracleTask) Reset() {
-	*x = MsgUpdateOracleTask{}
+func (x *MsgUpsertTask) Reset() {
+	*x = MsgUpsertTask{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_tx_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2793,46 +2664,39 @@ func (x *MsgUpdateOracleTask) Reset() {
 	}
 }
 
-func (x *MsgUpdateOracleTask) String() string {
+func (x *MsgUpsertTask) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgUpdateOracleTask) ProtoMessage() {}
+func (*MsgUpsertTask) ProtoMessage() {}
 
-// Deprecated: Use MsgUpdateOracleTask.ProtoReflect.Descriptor instead.
-func (*MsgUpdateOracleTask) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgUpsertTask.ProtoReflect.Descriptor instead.
+func (*MsgUpsertTask) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_tx_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *MsgUpdateOracleTask) GetAuthority() string {
+func (x *MsgUpsertTask) GetModerator() string {
 	if x != nil {
-		return x.Authority
+		return x.Moderator
 	}
 	return ""
 }
 
-func (x *MsgUpdateOracleTask) GetTask() *OracleTask {
+func (x *MsgUpsertTask) GetTask() *OracleTask {
 	if x != nil {
 		return x.Task
 	}
 	return nil
 }
 
-func (x *MsgUpdateOracleTask) GetIsRemove() bool {
-	if x != nil {
-		return x.IsRemove
-	}
-	return false
-}
-
-type MsgUpdateOracleTaskResponse struct {
+type MsgUpsertTaskResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *MsgUpdateOracleTaskResponse) Reset() {
-	*x = MsgUpdateOracleTaskResponse{}
+func (x *MsgUpsertTaskResponse) Reset() {
+	*x = MsgUpsertTaskResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_tx_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2840,29 +2704,28 @@ func (x *MsgUpdateOracleTaskResponse) Reset() {
 	}
 }
 
-func (x *MsgUpdateOracleTaskResponse) String() string {
+func (x *MsgUpsertTaskResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgUpdateOracleTaskResponse) ProtoMessage() {}
+func (*MsgUpsertTaskResponse) ProtoMessage() {}
 
-// Deprecated: Use MsgUpdateOracleTaskResponse.ProtoReflect.Descriptor instead.
-func (*MsgUpdateOracleTaskResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgUpsertTaskResponse.ProtoReflect.Descriptor instead.
+func (*MsgUpsertTaskResponse) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_tx_proto_rawDescGZIP(), []int{3}
 }
 
-type MsgUpdatePrices struct {
+type MsgRemoveTask struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// 오라클 모듈 자체의 계정 주소가 서명자로 들어갑니다 (system tx).
-	Authority string          `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
-	Rates     []*OracleResult `protobuf:"bytes,2,rep,name=rates,proto3" json:"rates,omitempty"`
+	Moderator string `protobuf:"bytes,1,opt,name=moderator,proto3" json:"moderator,omitempty"`
+	Symbol    string `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
 }
 
-func (x *MsgUpdatePrices) Reset() {
-	*x = MsgUpdatePrices{}
+func (x *MsgRemoveTask) Reset() {
+	*x = MsgRemoveTask{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_tx_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2870,39 +2733,39 @@ func (x *MsgUpdatePrices) Reset() {
 	}
 }
 
-func (x *MsgUpdatePrices) String() string {
+func (x *MsgRemoveTask) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgUpdatePrices) ProtoMessage() {}
+func (*MsgRemoveTask) ProtoMessage() {}
 
-// Deprecated: Use MsgUpdatePrices.ProtoReflect.Descriptor instead.
-func (*MsgUpdatePrices) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgRemoveTask.ProtoReflect.Descriptor instead.
+func (*MsgRemoveTask) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_tx_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *MsgUpdatePrices) GetAuthority() string {
+func (x *MsgRemoveTask) GetModerator() string {
 	if x != nil {
-		return x.Authority
+		return x.Moderator
 	}
 	return ""
 }
 
-func (x *MsgUpdatePrices) GetRates() []*OracleResult {
+func (x *MsgRemoveTask) GetSymbol() string {
 	if x != nil {
-		return x.Rates
+		return x.Symbol
 	}
-	return nil
+	return ""
 }
 
-type MsgUpdatePricesResponse struct {
+type MsgRemoveTaskResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *MsgUpdatePricesResponse) Reset() {
-	*x = MsgUpdatePricesResponse{}
+func (x *MsgRemoveTaskResponse) Reset() {
+	*x = MsgRemoveTaskResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_tx_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2910,14 +2773,14 @@ func (x *MsgUpdatePricesResponse) Reset() {
 	}
 }
 
-func (x *MsgUpdatePricesResponse) String() string {
+func (x *MsgRemoveTaskResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MsgUpdatePricesResponse) ProtoMessage() {}
+func (*MsgRemoveTaskResponse) ProtoMessage() {}
 
-// Deprecated: Use MsgUpdatePricesResponse.ProtoReflect.Descriptor instead.
-func (*MsgUpdatePricesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use MsgRemoveTaskResponse.ProtoReflect.Descriptor instead.
+func (*MsgRemoveTaskResponse) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_tx_proto_rawDescGZIP(), []int{5}
 }
 
@@ -2934,70 +2797,64 @@ var file_guru_oracle_v1_tx_proto_rawDesc = []byte{
 	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1b, 0x67, 0x75, 0x72, 0x75,
 	0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x61, 0x72, 0x61, 0x6d,
 	0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x89, 0x01, 0x0a, 0x0f, 0x4d, 0x73, 0x67, 0x55,
-	0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x36, 0x0a, 0x09, 0x61,
-	0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x36, 0x0a, 0x09, 0x6d,
+	0x6f, 0x64, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18,
 	0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65,
-	0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72,
-	0x69, 0x74, 0x79, 0x12, 0x2e, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x02, 0x20,
+	0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x6d, 0x6f, 0x64, 0x65, 0x72, 0x61,
+	0x74, 0x6f, 0x72, 0x12, 0x2e, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x02, 0x20,
 	0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c,
 	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x06, 0x70, 0x61, 0x72,
-	0x61, 0x6d, 0x73, 0x3a, 0x0e, 0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72,
-	0x69, 0x74, 0x79, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xaa,
-	0x01, 0x0a, 0x13, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x61, 0x63,
-	0x6c, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x12, 0x36, 0x0a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72,
-	0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63,
-	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72,
-	0x69, 0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x2e,
-	0x0a, 0x04, 0x74, 0x61, 0x73, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67,
-	0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72,
-	0x61, 0x63, 0x6c, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x04, 0x74, 0x61, 0x73, 0x6b, 0x12, 0x1b,
-	0x0a, 0x09, 0x69, 0x73, 0x5f, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x08, 0x52, 0x08, 0x69, 0x73, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x3a, 0x0e, 0x82, 0xe7, 0xb0,
-	0x2a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x22, 0x1d, 0x0a, 0x1b, 0x4d,
-	0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x54, 0x61,
-	0x73, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x8d, 0x01, 0x0a, 0x0f, 0x4d,
-	0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x73, 0x12, 0x36,
-	0x0a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64,
-	0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x61, 0x75, 0x74,
-	0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x32, 0x0a, 0x05, 0x72, 0x61, 0x74, 0x65, 0x73, 0x18,
-	0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61,
-	0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x52, 0x65, 0x73,
-	0x75, 0x6c, 0x74, 0x52, 0x05, 0x72, 0x61, 0x74, 0x65, 0x73, 0x3a, 0x0e, 0x82, 0xe7, 0xb0, 0x2a,
-	0x09, 0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73,
-	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xa6, 0x02, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x58, 0x0a,
-	0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x1f, 0x2e,
-	0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4d,
-	0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x1a, 0x27,
-	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e,
-	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x64, 0x0a, 0x10, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x12, 0x23, 0x2e, 0x67, 0x75,
+	0x61, 0x6d, 0x73, 0x3a, 0x0e, 0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x6d, 0x6f, 0x64, 0x65, 0x72, 0x61,
+	0x74, 0x6f, 0x72, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x87,
+	0x01, 0x0a, 0x0d, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x73, 0x65, 0x72, 0x74, 0x54, 0x61, 0x73, 0x6b,
+	0x12, 0x36, 0x0a, 0x09, 0x6d, 0x6f, 0x64, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
+	0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x6d,
+	0x6f, 0x64, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x2e, 0x0a, 0x04, 0x74, 0x61, 0x73, 0x6b,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x54, 0x61,
+	0x73, 0x6b, 0x52, 0x04, 0x74, 0x61, 0x73, 0x6b, 0x3a, 0x0e, 0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x6d,
+	0x6f, 0x64, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x22, 0x17, 0x0a, 0x15, 0x4d, 0x73, 0x67, 0x55,
+	0x70, 0x73, 0x65, 0x72, 0x74, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x6f, 0x0a, 0x0d, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x61,
+	0x73, 0x6b, 0x12, 0x36, 0x0a, 0x09, 0x6d, 0x6f, 0x64, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
+	0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52,
+	0x09, 0x6d, 0x6f, 0x64, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x79,
+	0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x6d, 0x62,
+	0x6f, 0x6c, 0x3a, 0x0e, 0x82, 0xe7, 0xb0, 0x2a, 0x09, 0x6d, 0x6f, 0x64, 0x65, 0x72, 0x61, 0x74,
+	0x6f, 0x72, 0x22, 0x17, 0x0a, 0x15, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54,
+	0x61, 0x73, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0x8e, 0x02, 0x0a, 0x03,
+	0x4d, 0x73, 0x67, 0x12, 0x58, 0x0a, 0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61, 0x72,
+	0x61, 0x6d, 0x73, 0x12, 0x1f, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x61,
+	0x72, 0x61, 0x6d, 0x73, 0x1a, 0x27, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63,
+	0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50,
+	0x61, 0x72, 0x61, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x52, 0x0a,
+	0x0a, 0x55, 0x70, 0x73, 0x65, 0x72, 0x74, 0x54, 0x61, 0x73, 0x6b, 0x12, 0x1d, 0x2e, 0x67, 0x75,
 	0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x54, 0x61, 0x73, 0x6b,
-	0x1a, 0x2b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76,
-	0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x61, 0x63, 0x6c,
-	0x65, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a,
-	0x0c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x73, 0x12, 0x1f, 0x2e,
-	0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4d,
-	0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x73, 0x1a, 0x27,
+	0x55, 0x70, 0x73, 0x65, 0x72, 0x74, 0x54, 0x61, 0x73, 0x6b, 0x1a, 0x25, 0x2e, 0x67, 0x75, 0x72,
+	0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x55,
+	0x70, 0x73, 0x65, 0x72, 0x74, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x52, 0x0a, 0x0a, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x12,
+	0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x1a, 0x25,
 	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e,
-	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x72, 0x69, 0x63, 0x65, 0x73, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0xb5,
-	0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63,
-	0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
-	0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72,
-	0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f,
-	0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63,
-	0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02,
-	0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63,
-	0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61,
-	0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72,
-	0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64,
-	0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63,
-	0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x4d, 0x73, 0x67, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01, 0x42, 0xb5, 0x01, 0x0a,
+	0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65,
+	0x2e, 0x76, 0x31, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c,
+	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66,
+	0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33,
+	0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65,
+	0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47,
+	0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65,
+	0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63,
+	0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74,
+	0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65,
+	0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3014,31 +2871,29 @@ func file_guru_oracle_v1_tx_proto_rawDescGZIP() []byte {
 
 var file_guru_oracle_v1_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_guru_oracle_v1_tx_proto_goTypes = []interface{}{
-	(*MsgUpdateParams)(nil),             // 0: guru.oracle.v1.MsgUpdateParams
-	(*MsgUpdateParamsResponse)(nil),     // 1: guru.oracle.v1.MsgUpdateParamsResponse
-	(*MsgUpdateOracleTask)(nil),         // 2: guru.oracle.v1.MsgUpdateOracleTask
-	(*MsgUpdateOracleTaskResponse)(nil), // 3: guru.oracle.v1.MsgUpdateOracleTaskResponse
-	(*MsgUpdatePrices)(nil),             // 4: guru.oracle.v1.MsgUpdatePrices
-	(*MsgUpdatePricesResponse)(nil),     // 5: guru.oracle.v1.MsgUpdatePricesResponse
-	(*Params)(nil),                      // 6: guru.oracle.v1.Params
-	(*OracleTask)(nil),                  // 7: guru.oracle.v1.OracleTask
-	(*OracleResult)(nil),                // 8: guru.oracle.v1.OracleResult
+	(*MsgUpdateParams)(nil),         // 0: guru.oracle.v1.MsgUpdateParams
+	(*MsgUpdateParamsResponse)(nil), // 1: guru.oracle.v1.MsgUpdateParamsResponse
+	(*MsgUpsertTask)(nil),           // 2: guru.oracle.v1.MsgUpsertTask
+	(*MsgUpsertTaskResponse)(nil),   // 3: guru.oracle.v1.MsgUpsertTaskResponse
+	(*MsgRemoveTask)(nil),           // 4: guru.oracle.v1.MsgRemoveTask
+	(*MsgRemoveTaskResponse)(nil),   // 5: guru.oracle.v1.MsgRemoveTaskResponse
+	(*Params)(nil),                  // 6: guru.oracle.v1.Params
+	(*OracleTask)(nil),              // 7: guru.oracle.v1.OracleTask
 }
 var file_guru_oracle_v1_tx_proto_depIdxs = []int32{
 	6, // 0: guru.oracle.v1.MsgUpdateParams.params:type_name -> guru.oracle.v1.Params
-	7, // 1: guru.oracle.v1.MsgUpdateOracleTask.task:type_name -> guru.oracle.v1.OracleTask
-	8, // 2: guru.oracle.v1.MsgUpdatePrices.rates:type_name -> guru.oracle.v1.OracleResult
-	0, // 3: guru.oracle.v1.Msg.UpdateParams:input_type -> guru.oracle.v1.MsgUpdateParams
-	2, // 4: guru.oracle.v1.Msg.UpdateOracleTask:input_type -> guru.oracle.v1.MsgUpdateOracleTask
-	4, // 5: guru.oracle.v1.Msg.UpdatePrices:input_type -> guru.oracle.v1.MsgUpdatePrices
-	1, // 6: guru.oracle.v1.Msg.UpdateParams:output_type -> guru.oracle.v1.MsgUpdateParamsResponse
-	3, // 7: guru.oracle.v1.Msg.UpdateOracleTask:output_type -> guru.oracle.v1.MsgUpdateOracleTaskResponse
-	5, // 8: guru.oracle.v1.Msg.UpdatePrices:output_type -> guru.oracle.v1.MsgUpdatePricesResponse
-	6, // [6:9] is the sub-list for method output_type
-	3, // [3:6] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	7, // 1: guru.oracle.v1.MsgUpsertTask.task:type_name -> guru.oracle.v1.OracleTask
+	0, // 2: guru.oracle.v1.Msg.UpdateParams:input_type -> guru.oracle.v1.MsgUpdateParams
+	2, // 3: guru.oracle.v1.Msg.UpsertTask:input_type -> guru.oracle.v1.MsgUpsertTask
+	4, // 4: guru.oracle.v1.Msg.RemoveTask:input_type -> guru.oracle.v1.MsgRemoveTask
+	1, // 5: guru.oracle.v1.Msg.UpdateParams:output_type -> guru.oracle.v1.MsgUpdateParamsResponse
+	3, // 6: guru.oracle.v1.Msg.UpsertTask:output_type -> guru.oracle.v1.MsgUpsertTaskResponse
+	5, // 7: guru.oracle.v1.Msg.RemoveTask:output_type -> guru.oracle.v1.MsgRemoveTaskResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_guru_oracle_v1_tx_proto_init() }
@@ -3074,7 +2929,7 @@ func file_guru_oracle_v1_tx_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_tx_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgUpdateOracleTask); i {
+			switch v := v.(*MsgUpsertTask); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3086,7 +2941,7 @@ func file_guru_oracle_v1_tx_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_tx_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgUpdateOracleTaskResponse); i {
+			switch v := v.(*MsgUpsertTaskResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3098,7 +2953,7 @@ func file_guru_oracle_v1_tx_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_tx_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgUpdatePrices); i {
+			switch v := v.(*MsgRemoveTask); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3110,7 +2965,7 @@ func file_guru_oracle_v1_tx_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_tx_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgUpdatePricesResponse); i {
+			switch v := v.(*MsgRemoveTaskResponse); i {
 			case 0:
 				return &v.state
 			case 1:

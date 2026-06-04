@@ -6,10 +6,17 @@ import "guru/oracle/v1/oracle.proto";
 // 체인 상태(KVStore)와 무관하지만 Go 타입 생성을 위해 동일한 패키지 지정
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
 
+// OracleSidecar exposes off-chain oracle samples to validator nodes.
 service OracleSidecar {
-  rpc GetLatestValues(GetLatestValuesRequest) returns (GetLatestValuesResponse);
+  // GetSamples returns source-level samples grouped by oracle symbol.
+  rpc GetSamples(GetSamplesRequest) returns (GetSamplesResponse);
 }
 
-message GetLatestValuesRequest { repeated string symbols = 1; }
+message GetSamplesRequest {
+  repeated OracleTask tasks = 1;
+  int64 height = 2;
+}
 
-message GetLatestValuesResponse { repeated OracleResult results = 1; }
+message GetSamplesResponse {
+  repeated OracleSymbolSamples symbols = 1;
+}

@@ -60,6 +60,7 @@ import (
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 	appkeepers "github.com/gurufinglobal/guru/v3/app/keepers"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	oracleabci "github.com/gurufinglobal/guru/v3/x/oracle/abci"
 	"github.com/spf13/cast"
 )
 
@@ -86,7 +87,8 @@ type App struct {
 
 	anteHandler sdk.AnteHandler
 
-	EVMMempool sdkmempool.ExtMempool
+	EVMMempool            sdkmempool.ExtMempool
+	OracleProposalHandler *oracleabci.ProposalHandler
 
 	*appkeepers.AppKeepers
 
@@ -175,6 +177,18 @@ func NewApp(
 		interfaceRegistry: encodingConfig.InterfaceRegistry,
 		AppKeepers:        appKeepers,
 	}
+	oracleEnabled := true
+	if value := appOpts.Get("oracle.enabled"); value != nil {
+		oracleEnabled = cast.ToBool(value)
+	}
+	oracleVoteHandler := oracleabci.NewVoteExtensionHandler(
+		app.OracleKeeper,
+		oracleEnabled,
+		cast.ToString(appOpts.Get("oracle.sidecar_socket")),
+		cast.ToDuration(appOpts.Get("oracle.sidecar_timeout")),
+	)
+	app.SetExtendVoteHandler(oracleVoteHandler.ExtendVote)
+	app.SetVerifyVoteExtensionHandler(oracleVoteHandler.VerifyVoteExtension)
 
 	var transferStack porttypes.IBCModule
 
@@ -277,7 +291,7 @@ func NewApp(
 		}))
 	}
 
-	vmrunner.SetRunner(bApp, txnrunner.NewSTMRunner(
+	vmrunner.SetRunner(bApp, oracleabci.NewPayloadSkippingTxRunner(txnrunner.NewSTMRunner(
 		encodingConfig.TxConfig.TxDecoder(),
 		appKeepers.GetNonTransientKeys(),
 		min(goruntime.GOMAXPROCS(0), goruntime.NumCPU()),
@@ -291,7 +305,7 @@ func NewApp(
 			}
 			return denom
 		},
-	))
+	)))
 
 	return app
 }
@@ -337,7 +351,12 @@ func (app *App) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.
 	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
-func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+func (app *App) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+	if app.OracleProposalHandler != nil {
+		if err := app.OracleProposalHandler.ApplyProposalPayload(ctx, req); err != nil {
+			return nil, err
+		}
+	}
 	return app.ModuleManager.PreBlock(ctx)
 }
 
