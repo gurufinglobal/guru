@@ -142,6 +142,86 @@ func TestKeeperExecuteSeparation(t *testing.T) {
 	)
 }
 
+func TestKeeperExecuteSeparationExtremeRatios(t *testing.T) {
+	tests := []struct {
+		name                     string
+		ratio                    *testRatio
+		feeCollectorBalance      sdk.Coins
+		expectedFeeCollector     sdk.Coins
+		expectedBaseAccount      sdk.Coins
+		expectedConstitutionPool sdk.Coins
+	}{
+		{
+			name: "all base",
+			ratio: &testRatio{
+				base:       1_000_000,
+				burn:       0,
+				validators: 0,
+			},
+			feeCollectorBalance: sdk.NewCoins(
+				sdk.NewInt64Coin(appparams.BaseDenom, 13),
+				sdk.NewInt64Coin("ufoo", 8),
+			),
+			expectedFeeCollector: sdk.NewCoins(),
+			expectedBaseAccount: sdk.NewCoins(
+				sdk.NewInt64Coin(appparams.BaseDenom, 13),
+				sdk.NewInt64Coin("ufoo", 8),
+			),
+			expectedConstitutionPool: sdk.NewCoins(),
+		},
+		{
+			name: "all burn",
+			ratio: &testRatio{
+				base:       0,
+				burn:       1_000_000,
+				validators: 0,
+			},
+			feeCollectorBalance: sdk.NewCoins(
+				sdk.NewInt64Coin(appparams.BaseDenom, 13),
+				sdk.NewInt64Coin("ufoo", 8),
+			),
+			expectedFeeCollector:     sdk.NewCoins(),
+			expectedBaseAccount:      sdk.NewCoins(),
+			expectedConstitutionPool: sdk.NewCoins(),
+		},
+		{
+			name: "all validators",
+			ratio: &testRatio{
+				base:       0,
+				burn:       0,
+				validators: 1_000_000,
+			},
+			feeCollectorBalance: sdk.NewCoins(
+				sdk.NewInt64Coin(appparams.BaseDenom, 13),
+				sdk.NewInt64Coin("ufoo", 8),
+			),
+			expectedFeeCollector: sdk.NewCoins(
+				sdk.NewInt64Coin(appparams.BaseDenom, 13),
+				sdk.NewInt64Coin("ufoo", 8),
+			),
+			expectedBaseAccount:      sdk.NewCoins(),
+			expectedConstitutionPool: sdk.NewCoins(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			f := setupKeeperFixture(t)
+			require.NoError(t, f.keeper.SetSeparationRatio(f.ctx, testSeparationRatio(tc.ratio.base, tc.ratio.burn, tc.ratio.validators)))
+			f.bankKeeper.SetModuleBalance(authtypes.FeeCollectorName, tc.feeCollectorBalance)
+
+			require.NoError(t, f.keeper.ExecuteSeparation(f.ctx))
+
+			requireCoinsEqual(t, tc.expectedFeeCollector, f.bankKeeper.GetModuleBalance(authtypes.FeeCollectorName))
+			requireCoinsEqual(t, tc.expectedConstitutionPool, f.bankKeeper.GetModuleBalance(constitutiontypes.ModuleName))
+
+			baseAddressBytes, err := f.keeper.accountCodec.StringToBytes(f.baseAddress)
+			require.NoError(t, err)
+			requireCoinsEqual(t, tc.expectedBaseAccount, f.bankKeeper.GetAccountBalance(sdk.AccAddress(baseAddressBytes)))
+		})
+	}
+}
+
 func TestKeeperExecuteSeparationNoFeeCollectorBalance(t *testing.T) {
 	f := setupKeeperFixture(t)
 
@@ -184,4 +264,15 @@ type testRatio struct {
 	base       uint32
 	burn       uint32
 	validators uint32
+}
+
+func requireCoinsEqual(t *testing.T, expected, actual sdk.Coins) {
+	t.Helper()
+
+	if expected.Empty() {
+		require.True(t, actual.Empty())
+		return
+	}
+
+	require.Equal(t, expected, actual)
 }
