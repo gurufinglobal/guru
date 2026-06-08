@@ -5,7 +5,6 @@
 ###############################################################################
 
 APP_NAME := guru
-BINARY_NAME := gurud
 
 VERSION := $(shell git describe --tags --always 2>/dev/null || echo "dev")
 COMMIT := $(shell git log -1 --format='%H' 2>/dev/null || echo "unknown")
@@ -16,7 +15,9 @@ TMVERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 ###############################################################################
 
 BUILDDIR ?= $(CURDIR)/build
-MAIN_PKG := ./cmd/gurud
+CMD_MAIN_FILES := $(wildcard cmd/*/main.go)
+CMD_BINS := $(notdir $(patsubst %/,%,$(dir $(CMD_MAIN_FILES))))
+CMD_BUILD_TARGETS := $(addprefix $(BUILDDIR)/,$(CMD_BINS))
 
 export GO111MODULE = on
 
@@ -35,37 +36,39 @@ whitespace := $(subst ,, )
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=$(APP_NAME) \
-          -X github.com/cosmos/cosmos-sdk/version.AppName=$(BINARY_NAME) \
-          -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-          -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-          -X github.com/cometbft/cometbft/version.TMCoreSemVer=$(TMVERSION) \
-          -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+ldflags_common = -X github.com/cosmos/cosmos-sdk/version.Name=$(APP_NAME) \
+                 -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+                 -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+                 -X github.com/cometbft/cometbft/version.TMCoreSemVer=$(TMVERSION) \
+                 -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
 ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
-  ldflags += -w -s
+  ldflags_common += -w -s
 endif
-ldflags += $(LDFLAGS)
-ldflags := $(strip $(ldflags))
+ldflags_common += $(LDFLAGS)
+ldflags = $(strip $(ldflags_common) -X github.com/cosmos/cosmos-sdk/version.AppName=$(1))
 
-BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)' -trimpath
+BUILD_FLAGS := -tags "$(build_tags)" -trimpath
 
 ###############################################################################
 ###                                Commands                                 ###
 ###############################################################################
 
-.PHONY: all build install clean format lint test
+.PHONY: all build install clean format lint test FORCE
 
 all: build
 
-build: go.sum
-	@echo "Building $(BINARY_NAME) to $(BUILDDIR) ..."
+build: $(CMD_BUILD_TARGETS)
+	@echo "Built $(CMD_BINS) to $(BUILDDIR)."
+
+$(BUILDDIR)/%: go.sum FORCE
+	@echo "Building $* to $(BUILDDIR) ..."
 	@mkdir -p $(BUILDDIR)
-	@go build $(BUILD_FLAGS) -o $(BUILDDIR)/$(BINARY_NAME) $(MAIN_PKG)
+	@go build $(BUILD_FLAGS) -ldflags '$(call ldflags,$*)' -o $@ ./cmd/$*
 
 install: go.sum
-	@echo "Installing $(BINARY_NAME) to $(GOPATH)/bin ..."
-	@go install $(BUILD_FLAGS) $(MAIN_PKG)
+	@echo "Installing gurud to $(GOPATH)/bin ..."
+	@go install $(BUILD_FLAGS) -ldflags '$(call ldflags,gurud)' ./cmd/gurud
 
 clean:
 	@echo "Cleaning build directory..."
@@ -74,6 +77,8 @@ clean:
 go.sum: go.mod
 	@echo "Ensuring dependencies are completely synced..."
 	@go mod tidy
+
+FORCE:
 
 ###############################################################################
 ###                           Testing & Linting                             ###

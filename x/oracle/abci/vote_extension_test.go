@@ -22,9 +22,10 @@ import (
 func TestValidatorResultsFromSamplesSkipsFewerThanMinSources(t *testing.T) {
 	results := validatorResultsFromSamples(
 		[]*oraclev1.OracleTask{{
-			Symbol:    "BTC/USD",
-			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:   true,
+			Symbol:             "BTC/USD",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
 		}},
 		[]*oraclev1.OracleSymbolSamples{{
 			Symbol: "BTC/USD",
@@ -50,7 +51,7 @@ func TestVerifyVoteExtensionRejectsDuplicateSymbolAndInvalidNumeric(t *testing.T
 			SourceCount: 3,
 		},
 		{
-			Symbol:      " BTC/USD ",
+			Symbol:      " btc/usd ",
 			ValueType:   oraclev1.ValueType_VALUE_TYPE_NUMERIC,
 			Value:       "2.0",
 			SourceCount: 3,
@@ -79,11 +80,12 @@ func TestVerifyVoteExtensionRejectsDuplicateSymbolAndInvalidNumeric(t *testing.T
 
 func TestExtendVoteReturnsEmptyOnSidecarFailures(t *testing.T) {
 	keeper := fakeKeeper{
-		params: &oraclev1.Params{Enabled: true, MinValidators: 1, MinSources: 1, HistoryLimit: 100},
+		params: &oraclev1.Params{MinValidators: 1, MinSources: 1, HistoryLimit: 100},
 		tasks: []*oraclev1.OracleTask{{
-			Symbol:    "BTC/USD",
-			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:   true,
+			Symbol:             "BTC/USD",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
 		}},
 	}
 	ctx := sdk.Context{}.WithContext(context.Background())

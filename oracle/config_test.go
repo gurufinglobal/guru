@@ -22,6 +22,7 @@ value_type = "NUMERIC"
 url = "http://127.0.0.1:8080/btc"
 response_path = "data.price"
 timeout = "100ms"
+interval = "1s"
 `), 0o600))
 
 	cfg, err := LoadConfig(path)
@@ -29,6 +30,7 @@ timeout = "100ms"
 	require.Equal(t, "/tmp/guru-oracle.sock", cfg.Socket)
 	require.Len(t, cfg.Sources, 1)
 	require.Equal(t, "source-a", cfg.Sources[0].Name)
+	require.Equal(t, "1s", cfg.Sources[0].Interval)
 }
 
 func TestConfigValidateRejectsDuplicateSourceNameForSymbol(t *testing.T) {

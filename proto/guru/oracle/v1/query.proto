@@ -1,6 +1,7 @@
 syntax = "proto3";
 package guru.oracle.v1;
 
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/query/v1/query.proto";
 import "google/api/annotations.proto";
 import "guru/oracle/v1/oracle.proto";
@@ -52,9 +53,12 @@ message QueryParamsResponse {
   Params params = 1;
 }
 
-message QueryActiveTasksRequest {}
+message QueryActiveTasksRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
 message QueryActiveTasksResponse {
   repeated OracleTask tasks = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 message QueryTaskRequest {
@@ -71,14 +75,19 @@ message QueryLatestValueResponse {
   OracleValue value = 1;
 }
 
-message QueryLatestValuesRequest {}
+message QueryLatestValuesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
 message QueryLatestValuesResponse {
   repeated OracleValue values = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 message QueryHistoryRequest {
   string symbol = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 message QueryHistoryResponse {
   OracleHistory history = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

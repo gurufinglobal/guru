@@ -8,6 +8,7 @@ import "guru/constitution/v1/types.proto";
 
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
 
+// Msg defines constitution module transaction services.
 service Msg {
   option (cosmos.msg.v1.service) = true;
 

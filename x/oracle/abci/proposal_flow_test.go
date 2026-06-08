@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -34,7 +35,7 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
 	aggregator := Aggregator{
 		keeper: fakeKeeper{
-			params: &oraclev1.Params{Enabled: true, MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
 			tasks:  oracleTestTasks(),
 		},
 		validatorStore: oracleValidatorStoreFor(validator),
@@ -78,13 +79,95 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 	require.Equal(t, "BTC/USD", payload.GetValues()[0].GetSymbol())
 }
 
+func TestPrepareProposalDoesNotIncludeNormalTxWhenPayloadUsesMaxTxBytes(t *testing.T) {
+	validator := newOracleTestValidator()
+	extCommit := signedOracleExtCommit(t, 3, validator, "1.0")
+	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
+	aggregator := Aggregator{
+		keeper: fakeKeeper{
+			params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			tasks:  oracleTestTasks(),
+		},
+		validatorStore: oracleValidatorStoreFor(validator),
+	}
+	payload, err := aggregator.BuildPayload(ctx, 3, extCommit)
+	require.NoError(t, err)
+	payloadTx, err := EncodeProposalTx(payload)
+	require.NoError(t, err)
+	maxTxBytes := proposalTxBytes([][]byte{payloadTx})
+
+	normalTx := []byte("normal")
+	var innerMaxTxBytes int64
+	handler := NewProposalHandler(
+		aggregator,
+		func(_ sdk.Context, req *abcitypes.RequestPrepareProposal) (*abcitypes.ResponsePrepareProposal, error) {
+			innerMaxTxBytes = req.MaxTxBytes
+			return &abcitypes.ResponsePrepareProposal{Txs: [][]byte{normalTx}}, nil
+		},
+		nil,
+	)
+
+	resp, err := handler.PrepareProposal(ctx, &abcitypes.RequestPrepareProposal{
+		Height:          3,
+		MaxTxBytes:      maxTxBytes,
+		LocalLastCommit: extCommit,
+	})
+	require.NoError(t, err)
+	require.Equal(t, int64(0), innerMaxTxBytes)
+	require.Equal(t, [][]byte{payloadTx}, resp.Txs)
+	require.LessOrEqual(t, proposalTxBytes(resp.Txs), maxTxBytes)
+}
+
+func TestPrepareProposalTrimsNormalTxsToRemainingMaxTxBytes(t *testing.T) {
+	validator := newOracleTestValidator()
+	extCommit := signedOracleExtCommit(t, 3, validator, "1.0")
+	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
+	aggregator := Aggregator{
+		keeper: fakeKeeper{
+			params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			tasks:  oracleTestTasks(),
+		},
+		validatorStore: oracleValidatorStoreFor(validator),
+	}
+	payload, err := aggregator.BuildPayload(ctx, 3, extCommit)
+	require.NoError(t, err)
+	payloadTx, err := EncodeProposalTx(payload)
+	require.NoError(t, err)
+
+	normalA := []byte("a")
+	normalB := []byte("normal-b-that-does-not-fit")
+	payloadBytes := proposalTxBytes([][]byte{payloadTx})
+	normalABytes := proposalTxBytes([][]byte{normalA})
+	maxTxBytes := payloadBytes + normalABytes
+
+	var innerMaxTxBytes int64
+	handler := NewProposalHandler(
+		aggregator,
+		func(_ sdk.Context, req *abcitypes.RequestPrepareProposal) (*abcitypes.ResponsePrepareProposal, error) {
+			innerMaxTxBytes = req.MaxTxBytes
+			return &abcitypes.ResponsePrepareProposal{Txs: [][]byte{normalA, normalB}}, nil
+		},
+		nil,
+	)
+
+	resp, err := handler.PrepareProposal(ctx, &abcitypes.RequestPrepareProposal{
+		Height:          3,
+		MaxTxBytes:      maxTxBytes,
+		LocalLastCommit: extCommit,
+	})
+	require.NoError(t, err)
+	require.Equal(t, normalABytes, innerMaxTxBytes)
+	require.Equal(t, [][]byte{payloadTx, normalA}, resp.Txs)
+	require.LessOrEqual(t, proposalTxBytes(resp.Txs), maxTxBytes)
+}
+
 func TestProcessProposalAcceptsRecomputedPayloadAndRejectsMismatch(t *testing.T) {
 	validator := newOracleTestValidator()
 	extCommit := signedOracleExtCommit(t, 3, validator, "1.0")
 	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
 	aggregator := Aggregator{
 		keeper: fakeKeeper{
-			params: &oraclev1.Params{Enabled: true, MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
 			tasks:  oracleTestTasks(),
 		},
 		validatorStore: oracleValidatorStoreFor(validator),
@@ -134,14 +217,67 @@ func TestProcessProposalAcceptsRecomputedPayloadAndRejectsMismatch(t *testing.T)
 	require.Equal(t, abcitypes.ResponseProcessProposal_REJECT, mismatchedResp.Status)
 }
 
+func TestProcessProposalRejectsPayloadWithMutatedBlockIDFlag(t *testing.T) {
+	validators := []oracleTestValidator{
+		newOracleTestValidator(),
+		newOracleTestValidator(),
+		newOracleTestValidator(),
+		newOracleTestValidator(),
+	}
+	extCommit := signedOracleExtCommitForValues(t, 3, validators, []string{"1.0", "2.0", "100.0", "100.0"})
+	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
+	aggregator := Aggregator{
+		keeper: fakeKeeper{
+			params: &oraclev1.Params{MinValidators: 3, MinSources: 3, HistoryLimit: 100},
+			tasks:  oracleTestTasks(),
+		},
+		validatorStore: oracleValidatorStoreFor(validators...),
+	}
+
+	honestPayload, err := aggregator.BuildPayload(ctx, 3, extCommit)
+	require.NoError(t, err)
+	require.Len(t, honestPayload.GetValues(), 1)
+
+	mutatedCommit := cloneExtendedCommit(extCommit)
+	mutatedCommit.Votes[0].BlockIdFlag = cmtproto.BlockIDFlagNil
+	mutatedValues, err := aggregator.aggregateValues(ctx, 3, mutatedCommit)
+	require.NoError(t, err)
+	require.Len(t, mutatedValues, 1)
+	require.NotEqual(t, honestPayload.GetValues()[0].GetValue(), mutatedValues[0].GetValue())
+
+	mutatedPayloadTx, err := EncodeProposalTx(&oraclev1.OracleProposalPayload{
+		Height:         3,
+		VoteExtensions: signedVoteExtensionsFromExtendedCommit(mutatedCommit),
+		Values:         mutatedValues,
+	})
+	require.NoError(t, err)
+
+	processCalled := false
+	handler := NewProposalHandler(
+		aggregator,
+		nil,
+		func(sdk.Context, *abcitypes.RequestProcessProposal) (*abcitypes.ResponseProcessProposal, error) {
+			processCalled = true
+			return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_ACCEPT}, nil
+		},
+	)
+
+	resp, err := handler.ProcessProposal(ctx, &abcitypes.RequestProcessProposal{
+		Txs: [][]byte{mutatedPayloadTx},
+	})
+	require.NoError(t, err)
+	require.False(t, processCalled)
+	require.Equal(t, abcitypes.ResponseProcessProposal_REJECT, resp.Status)
+}
+
 func TestApplyProposalPayloadPersistsLatestValueAndBoundedHistory(t *testing.T) {
 	baseCtx, keeper := setupOracleABCIKeeper(t, &oraclev1.Params{
-		Enabled:       true,
 		MinValidators: 1,
 		MinSources:    3,
 		HistoryLimit:  2,
 	})
 	require.NoError(t, keeper.SetTask(baseCtx, oracleTestTasks()[0]))
+	require.NoError(t, keeper.AdvanceTaskSchedule(baseCtx, 1))
 	require.NoError(t, keeper.ApplyOracleValues(baseCtx, []*oraclev1.OracleValue{oracleValue("BTC/USD", "0.5", 2, 20)}))
 
 	validator := newOracleTestValidator()
@@ -181,12 +317,12 @@ func TestApplyProposalPayloadPersistsLatestValueAndBoundedHistory(t *testing.T) 
 
 func TestQuorumFailureLeavesLatestValueUnchanged(t *testing.T) {
 	baseCtx, keeper := setupOracleABCIKeeper(t, &oraclev1.Params{
-		Enabled:       true,
 		MinValidators: 2,
 		MinSources:    3,
 		HistoryLimit:  10,
 	})
 	require.NoError(t, keeper.SetTask(baseCtx, oracleTestTasks()[0]))
+	require.NoError(t, keeper.AdvanceTaskSchedule(baseCtx, 1))
 	require.NoError(t, keeper.ApplyOracleValues(baseCtx, []*oraclev1.OracleValue{oracleValue("BTC/USD", "10.0", 2, 20)}))
 
 	validator := newOracleTestValidator()
@@ -234,9 +370,10 @@ func (abciConstitutionKeeper) GetModeratorAddress(context.Context) (string, erro
 
 func oracleTestTasks() []*oraclev1.OracleTask {
 	return []*oraclev1.OracleTask{{
-		Symbol:    "BTC/USD",
-		ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-		Enabled:   true,
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 1,
 	}}
 }
 
@@ -261,6 +398,7 @@ func withOracleProposalContext(ctx sdk.Context, height int64, blockTime time.Tim
 				Address: append([]byte(nil), vote.Validator.Address...),
 				Power:   vote.Validator.Power,
 			},
+			BlockIdFlag: vote.BlockIdFlag,
 		}
 	}
 
@@ -296,6 +434,33 @@ func newOracleTestValidator() oracleTestValidator {
 func signedOracleExtCommit(t *testing.T, height int64, validator oracleTestValidator, value string) abcitypes.ExtendedCommitInfo {
 	t.Helper()
 
+	return signedOracleExtCommitForValues(t, height, []oracleTestValidator{validator}, []string{value})
+}
+
+func signedOracleExtCommitForValues(t *testing.T, height int64, validators []oracleTestValidator, values []string) abcitypes.ExtendedCommitInfo {
+	t.Helper()
+
+	require.Len(t, values, len(validators))
+	votes := make([]abcitypes.ExtendedVoteInfo, 0, len(validators))
+	for i, validator := range validators {
+		votes = append(votes, signedOracleVoteInfo(t, height, validator, values[i]))
+	}
+	sort.Slice(votes, func(i, j int) bool {
+		if votes[i].Validator.Power == votes[j].Validator.Power {
+			return bytes.Compare(votes[i].Validator.Address, votes[j].Validator.Address) < 0
+		}
+		return votes[i].Validator.Power > votes[j].Validator.Power
+	})
+
+	return abcitypes.ExtendedCommitInfo{
+		Round: 0,
+		Votes: votes,
+	}
+}
+
+func signedOracleVoteInfo(t *testing.T, height int64, validator oracleTestValidator, value string) abcitypes.ExtendedVoteInfo {
+	t.Helper()
+
 	voteExtension := mustVoteExtensionBz(t, "BTC/USD", value)
 	signBytes := bytes.Buffer{}
 	err := protoio.NewDelimitedWriter(&signBytes).WriteMsg(&cmtproto.CanonicalVoteExtension{
@@ -308,17 +473,34 @@ func signedOracleExtCommit(t *testing.T, height int64, validator oracleTestValid
 	signature, err := validator.privKey.Sign(signBytes.Bytes())
 	require.NoError(t, err)
 
-	return abcitypes.ExtendedCommitInfo{
-		Round: 0,
-		Votes: []abcitypes.ExtendedVoteInfo{{
+	return abcitypes.ExtendedVoteInfo{
+		Validator: abcitypes.Validator{
+			Address: validator.consAddr.Bytes(),
+			Power:   1,
+		},
+		BlockIdFlag:        cmtproto.BlockIDFlagCommit,
+		VoteExtension:      voteExtension,
+		ExtensionSignature: signature,
+	}
+}
+
+func cloneExtendedCommit(extCommit abcitypes.ExtendedCommitInfo) abcitypes.ExtendedCommitInfo {
+	votes := make([]abcitypes.ExtendedVoteInfo, 0, len(extCommit.GetVotes()))
+	for _, vote := range extCommit.GetVotes() {
+		votes = append(votes, abcitypes.ExtendedVoteInfo{
 			Validator: abcitypes.Validator{
-				Address: validator.consAddr.Bytes(),
-				Power:   1,
+				Address: append([]byte(nil), vote.Validator.Address...),
+				Power:   vote.Validator.Power,
 			},
-			BlockIdFlag:        cmtproto.BlockIDFlagCommit,
-			VoteExtension:      voteExtension,
-			ExtensionSignature: signature,
-		}},
+			BlockIdFlag:        vote.BlockIdFlag,
+			VoteExtension:      append([]byte(nil), vote.VoteExtension...),
+			ExtensionSignature: append([]byte(nil), vote.ExtensionSignature...),
+		})
+	}
+
+	return abcitypes.ExtendedCommitInfo{
+		Round: extCommit.Round,
+		Votes: votes,
 	}
 }
 

@@ -28,6 +28,8 @@ const (
 // MsgClient is the client API for Msg service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Msg defines constitution module transaction services.
 type MsgClient interface {
 	// UpdateParams defines a governance operation for updating the parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
@@ -91,6 +93,8 @@ func (c *msgClient) UpdateSeparationRatio(ctx context.Context, in *MsgUpdateSepa
 // MsgServer is the server API for Msg service.
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility.
+//
+// Msg defines constitution module transaction services.
 type MsgServer interface {
 	// UpdateParams defines a governance operation for updating the parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)

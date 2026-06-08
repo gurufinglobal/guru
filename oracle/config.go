@@ -33,6 +33,7 @@ type SourceConfig struct {
 	URL          string            `mapstructure:"url"`
 	ResponsePath string            `mapstructure:"response_path"`
 	Timeout      string            `mapstructure:"timeout"`
+	Interval     string            `mapstructure:"interval"`
 	Headers      map[string]string `mapstructure:"headers"`
 }
 
@@ -151,8 +152,25 @@ func (s SourceConfig) Validate() error {
 			return fmt.Errorf("timeout: %w", err)
 		}
 	}
+	if strings.TrimSpace(s.Interval) != "" {
+		if _, err := parseDuration(s.Interval); err != nil {
+			return fmt.Errorf("interval: %w", err)
+		}
+	}
 
 	return nil
+}
+
+func (s SourceConfig) IntervalDuration() (time.Duration, bool, error) {
+	if strings.TrimSpace(s.Interval) == "" {
+		return 0, false, nil
+	}
+	duration, err := parseDuration(s.Interval)
+	if err != nil {
+		return 0, false, err
+	}
+
+	return duration, true, nil
 }
 
 func (s SourceConfig) ProtoValueType() (oraclev1.ValueType, error) {

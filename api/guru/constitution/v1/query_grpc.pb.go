@@ -28,10 +28,16 @@ const (
 // QueryClient is the client API for Query service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Query exposes read-only constitution module state.
 type QueryClient interface {
+	// Params returns constitution module parameters.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
+	// BaseAddress returns the configured fee separation base address.
 	BaseAddress(ctx context.Context, in *QueryBaseAddressRequest, opts ...grpc.CallOption) (*QueryBaseAddressResponse, error)
+	// ModeratorAddress returns the current constitution moderator address.
 	ModeratorAddress(ctx context.Context, in *QueryModeratorAddressRequest, opts ...grpc.CallOption) (*QueryModeratorAddressResponse, error)
+	// SeparationRatio returns the current fee separation ratio.
 	SeparationRatio(ctx context.Context, in *QuerySeparationRatioRequest, opts ...grpc.CallOption) (*QuerySeparationRatioResponse, error)
 }
 
@@ -86,10 +92,16 @@ func (c *queryClient) SeparationRatio(ctx context.Context, in *QuerySeparationRa
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility.
+//
+// Query exposes read-only constitution module state.
 type QueryServer interface {
+	// Params returns constitution module parameters.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
+	// BaseAddress returns the configured fee separation base address.
 	BaseAddress(context.Context, *QueryBaseAddressRequest) (*QueryBaseAddressResponse, error)
+	// ModeratorAddress returns the current constitution moderator address.
 	ModeratorAddress(context.Context, *QueryModeratorAddressRequest) (*QueryModeratorAddressResponse, error)
+	// SeparationRatio returns the current fee separation ratio.
 	SeparationRatio(context.Context, *QuerySeparationRatioRequest) (*QuerySeparationRatioResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }

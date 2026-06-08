@@ -14,7 +14,7 @@ var _ sdk.Msg = (*oraclev1.MsgUpsertTask)(nil)
 func TestProtoCodecCanMarshalPulsarTypes(t *testing.T) {
 	cdc := sdkcodec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 
-	in := &oraclev1.Params{Enabled: true}
+	in := &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100}
 	bz, err := cdc.Marshal(in)
 	if err != nil {
 		t.Fatalf("marshal pulsar message with ProtoCodec: %v", err)
@@ -27,8 +27,8 @@ func TestProtoCodecCanMarshalPulsarTypes(t *testing.T) {
 	if err := cdc.Unmarshal(bz, &out); err != nil {
 		t.Fatalf("unmarshal pulsar message with ProtoCodec: %v", err)
 	}
-	if out.Enabled != in.Enabled {
-		t.Fatalf("unexpected round-trip value: got=%v want=%v", out.Enabled, in.Enabled)
+	if out.MinValidators != in.MinValidators || out.MinSources != in.MinSources || out.HistoryLimit != in.HistoryLimit {
+		t.Fatalf("unexpected round-trip value: got=%+v want=%+v", out, in)
 	}
 }
 
@@ -36,7 +36,7 @@ func TestCollValueCanUsePulsarTypes(t *testing.T) {
 	cdc := sdkcodec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 	valueCodec := sdkcodec.CollValue[oraclev1.Params](cdc)
 
-	in := oraclev1.Params{Enabled: true}
+	in := oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100}
 	bz, err := valueCodec.Encode(in)
 	if err != nil {
 		t.Fatalf("collections encode failed: %v", err)
@@ -46,7 +46,7 @@ func TestCollValueCanUsePulsarTypes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collections decode failed: %v", err)
 	}
-	if out.Enabled != in.Enabled {
-		t.Fatalf("unexpected round-trip value: got=%v want=%v", out.Enabled, in.Enabled)
+	if out.MinValidators != in.MinValidators || out.MinSources != in.MinSources || out.HistoryLimit != in.HistoryLimit {
+		t.Fatalf("unexpected round-trip value: got=%+v want=%+v", out, in)
 	}
 }

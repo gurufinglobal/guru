@@ -6,10 +6,13 @@ import (
 	"sort"
 	"strings"
 
+	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+const nodeTasksPageLimit uint64 = 100
 
 func EnsureNodeTasksConfigured(ctx context.Context, cfg Config) ([]*oraclev1.OracleTask, error) {
 	cfg.applyDefaults("")
@@ -36,15 +39,15 @@ func EnsureNodeTasksConfigured(ctx context.Context, cfg Config) ([]*oraclev1.Ora
 	if err != nil {
 		return nil, err
 	}
-	if paramsResp.GetParams() == nil || !paramsResp.GetParams().GetEnabled() {
-		return nil, fmt.Errorf("oracle module is disabled on node %s", cfg.NodeGRPC)
+	if paramsResp.GetParams() == nil {
+		return nil, fmt.Errorf("oracle params are not initialized on node %s", cfg.NodeGRPC)
 	}
 
-	tasksResp, err := client.ActiveTasks(queryCtx, &oraclev1.QueryActiveTasksRequest{})
+	tasks, err := queryActiveTasks(queryCtx, client)
 	if err != nil {
 		return nil, err
 	}
-	tasks := normalizedTasks(tasksResp.GetTasks())
+	tasks = normalizedTasks(tasks)
 	if len(tasks) == 0 {
 		return nil, fmt.Errorf("oracle module has no active tasks on node %s", cfg.NodeGRPC)
 	}
@@ -53,6 +56,27 @@ func EnsureNodeTasksConfigured(ctx context.Context, cfg Config) ([]*oraclev1.Ora
 	}
 
 	return tasks, nil
+}
+
+func queryActiveTasks(ctx context.Context, client oraclev1.QueryClient) ([]*oraclev1.OracleTask, error) {
+	var tasks []*oraclev1.OracleTask
+	pagination := &queryv1beta1.PageRequest{Limit: nodeTasksPageLimit}
+	for {
+		tasksResp, err := client.ActiveTasks(ctx, &oraclev1.QueryActiveTasksRequest{Pagination: pagination})
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, tasksResp.GetTasks()...)
+
+		nextKey := tasksResp.GetPagination().GetNextKey()
+		if len(nextKey) == 0 {
+			return tasks, nil
+		}
+		pagination = &queryv1beta1.PageRequest{
+			Key:   nextKey,
+			Limit: nodeTasksPageLimit,
+		}
+	}
 }
 
 func MatchingSourcesForTasks(sources []SourceConfig, tasks []*oraclev1.OracleTask) []SourceConfig {
@@ -99,9 +123,10 @@ func normalizedTasks(tasks []*oraclev1.OracleTask) []*oraclev1.OracleTask {
 			continue
 		}
 		bySymbol[symbol] = &oraclev1.OracleTask{
-			Symbol:    symbol,
-			ValueType: task.GetValueType(),
-			Enabled:   true,
+			Symbol:             symbol,
+			ValueType:          task.GetValueType(),
+			Enabled:            true,
+			SubmissionInterval: task.GetSubmissionInterval(),
 		}
 	}
 

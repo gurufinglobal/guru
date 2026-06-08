@@ -13,14 +13,16 @@ func TestValidateGenesisRejectsDuplicateTaskSymbols(t *testing.T) {
 		Params: oraclekeeper.DefaultParams(),
 		Tasks: []*oraclev1.OracleTask{
 			{
-				Symbol:    "BTC/USD",
-				ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-				Enabled:   true,
+				Symbol:             "BTC/USD",
+				ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+				Enabled:            true,
+				SubmissionInterval: 1,
 			},
 			{
-				Symbol:    " BTC/USD ",
-				ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-				Enabled:   true,
+				Symbol:             " btc/usd ",
+				ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+				Enabled:            true,
+				SubmissionInterval: 1,
 			},
 		},
 	})

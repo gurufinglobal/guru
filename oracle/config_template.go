@@ -24,6 +24,7 @@ node_query_timeout = %q
 #url = "https://example.invalid/prices/btc-usd"
 #response_path = "data.price"
 #timeout = "300ms"
+#interval = "1s"
 #[sources.headers]
 #Authorization = "Bearer token"
 `, cfg.Socket, cfg.RequestTimeout, cfg.SourceTimeout, cfg.NodeGRPC, cfg.NodeQueryTimeout)

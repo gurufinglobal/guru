@@ -58,7 +58,7 @@ type mockGatewayQueryServer struct {
 }
 
 func (mockGatewayQueryServer) Params(context.Context, *oraclev1.QueryParamsRequest) (*oraclev1.QueryParamsResponse, error) {
-	return &oraclev1.QueryParamsResponse{Params: &oraclev1.Params{Enabled: true}}, nil
+	return &oraclev1.QueryParamsResponse{Params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100}}, nil
 }
 
 func (mockGatewayQueryServer) ActiveTasks(context.Context, *oraclev1.QueryActiveTasksRequest) (*oraclev1.QueryActiveTasksResponse, error) {
@@ -68,9 +68,10 @@ func (mockGatewayQueryServer) ActiveTasks(context.Context, *oraclev1.QueryActive
 func (mockGatewayQueryServer) Task(_ context.Context, req *oraclev1.QueryTaskRequest) (*oraclev1.QueryTaskResponse, error) {
 	return &oraclev1.QueryTaskResponse{
 		Task: &oraclev1.OracleTask{
-			Symbol:    req.Symbol,
-			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:   true,
+			Symbol:             req.Symbol,
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
 		},
 	}, nil
 }
@@ -115,13 +116,15 @@ func TestGRPCGatewayHandlesPulsarQueryMessages(t *testing.T) {
 
 	var paramsResp struct {
 		Params struct {
-			Enabled bool `json:"enabled"`
+			MinValidators uint32 `json:"min_validators"`
+			MinSources    uint32 `json:"min_sources"`
+			HistoryLimit  uint32 `json:"history_limit"`
 		} `json:"params"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&paramsResp); err != nil {
 		t.Fatalf("decode /params response: %v", err)
 	}
-	if !paramsResp.Params.Enabled {
+	if paramsResp.Params.MinValidators != 1 || paramsResp.Params.MinSources != 3 || paramsResp.Params.HistoryLimit != 100 {
 		t.Fatalf("unexpected /params response payload: %+v", paramsResp)
 	}
 
@@ -189,9 +192,10 @@ func TestGRPCMsgClientServerWithPulsarMessages(t *testing.T) {
 	_, err = client.UpsertTask(context.Background(), &oraclev1.MsgUpsertTask{
 		Moderator: "guru1moderator",
 		Task: &oraclev1.OracleTask{
-			Symbol:    "BTC/USD",
-			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:   true,
+			Symbol:             "BTC/USD",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
 		},
 	})
 	if err != nil {
@@ -206,9 +210,10 @@ func TestInterfaceRegistryCanUnpackPulsarMsgAndResponse(t *testing.T) {
 	msgIn := &oraclev1.MsgUpsertTask{
 		Moderator: "guru1moderator",
 		Task: &oraclev1.OracleTask{
-			Symbol:    "BTC/USD",
-			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:   true,
+			Symbol:             "BTC/USD",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
 		},
 	}
 

@@ -27,7 +27,6 @@ func TestOracleModuleWiringAndAppBoot(t *testing.T) {
 	genesis := app.BuildChainDefaultGenesis()
 	var oracleGenesis oraclev1.GenesisState
 	require.NoError(t, app.AppCodec().UnmarshalJSON(genesis[oracletypes.ModuleName], &oracleGenesis))
-	require.True(t, oracleGenesis.GetParams().GetEnabled())
 	require.Equal(t, uint32(1), oracleGenesis.GetParams().GetMinValidators())
 	require.Equal(t, uint32(3), oracleGenesis.GetParams().GetMinSources())
 	require.Equal(t, uint32(100), oracleGenesis.GetParams().GetHistoryLimit())

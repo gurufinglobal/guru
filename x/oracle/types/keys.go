@@ -12,4 +12,7 @@ var (
 	TasksKey   = collections.NewPrefix(0x02)
 	LatestKey  = collections.NewPrefix(0x03)
 	HistoryKey = collections.NewPrefix(0x04)
+
+	TaskScheduleKey         = collections.NewPrefix(0x05)
+	TaskScheduleBySymbolKey = collections.NewPrefix(0x06)
 )

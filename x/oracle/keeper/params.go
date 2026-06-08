@@ -15,7 +15,6 @@ const (
 
 func DefaultParams() *oraclev1.Params {
 	return &oraclev1.Params{
-		Enabled:       true,
 		MinValidators: DefaultMinValidators,
 		MinSources:    DefaultMinSources,
 		HistoryLimit:  DefaultHistoryLimit,

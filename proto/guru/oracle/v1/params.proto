@@ -4,7 +4,9 @@ package guru.oracle.v1;
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
 
 message Params {
-  bool enabled = 1;
+  reserved 1;
+  reserved "enabled";
+
   uint32 min_validators = 2;
   uint32 min_sources = 3;
   uint32 history_limit = 4;

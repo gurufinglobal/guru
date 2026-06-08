@@ -39,11 +39,11 @@ func (h VoteExtensionHandler) ExtendVote(ctx sdk.Context, req *abcitypes.Request
 	}
 
 	params, err := h.keeper.GetParams(ctx)
-	if err != nil || !params.GetEnabled() || h.socket == "" {
+	if err != nil || h.socket == "" {
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	tasks, err := h.keeper.ListTasks(ctx, true)
+	tasks, err := h.keeper.DueTasks(ctx, req.Height)
 	if err != nil || len(tasks) == 0 {
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}

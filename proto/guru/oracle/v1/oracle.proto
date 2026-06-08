@@ -19,6 +19,7 @@ message OracleTask {
   string symbol = 1;
   ValueType value_type = 2;
   bool enabled = 3;
+  uint32 submission_interval = 4;
 }
 
 message OracleValue {

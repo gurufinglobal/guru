@@ -17,7 +17,8 @@ import (
 
 type Keeper interface {
 	GetParams(ctx context.Context) (*oraclev1.Params, error)
-	ListTasks(ctx context.Context, enabledOnly bool) ([]*oraclev1.OracleTask, error)
+	DueTasks(ctx context.Context, height int64) ([]*oraclev1.OracleTask, error)
+	AdvanceTaskSchedule(ctx context.Context, height int64) error
 	ApplyOracleValues(ctx context.Context, values []*oraclev1.OracleValue) error
 }
 
@@ -34,14 +35,6 @@ func NewAggregator(keeper Keeper, validatorStore baseapp.ValidatorStore) Aggrega
 }
 
 func (a Aggregator) OraclePayloadExpected(ctx sdk.Context) (bool, error) {
-	params, err := a.keeper.GetParams(ctx)
-	if err != nil {
-		return false, err
-	}
-	if !params.GetEnabled() {
-		return false, nil
-	}
-
 	abciParams := ctx.ConsensusParams().Abci
 	return abciParams != nil &&
 		abciParams.VoteExtensionsEnableHeight != 0 &&
@@ -58,6 +51,9 @@ func (a Aggregator) BuildPayload(ctx sdk.Context, height int64, extCommit abcity
 	}
 
 	if err := baseapp.ValidateVoteExtensions(ctx, a.validatorStore, 0, "", extCommit); err != nil {
+		return nil, err
+	}
+	if err := validateExtendedCommitBlockIDFlags(ctx, extCommit); err != nil {
 		return nil, err
 	}
 
@@ -110,11 +106,16 @@ func (a Aggregator) ApplyPayload(ctx sdk.Context, payload *oraclev1.OraclePropos
 	if err := a.VerifyPayload(ctx, payload); err != nil {
 		return err
 	}
-	if payload == nil || len(payload.GetValues()) == 0 {
+	if payload == nil {
 		return nil
 	}
+	if len(payload.GetValues()) != 0 {
+		if err := a.keeper.ApplyOracleValues(ctx, payload.GetValues()); err != nil {
+			return err
+		}
+	}
 
-	return a.keeper.ApplyOracleValues(ctx, payload.GetValues())
+	return a.keeper.AdvanceTaskSchedule(ctx, voteExtensionHeight(payload.GetHeight()))
 }
 
 func (a Aggregator) aggregateValues(ctx sdk.Context, height int64, extCommit abcitypes.ExtendedCommitInfo) ([]*oraclev1.OracleValue, error) {
@@ -122,7 +123,7 @@ func (a Aggregator) aggregateValues(ctx sdk.Context, height int64, extCommit abc
 	if err != nil {
 		return nil, err
 	}
-	tasks, err := a.keeper.ListTasks(ctx, true)
+	tasks, err := a.keeper.DueTasks(ctx, voteExtensionHeight(height))
 	if err != nil {
 		return nil, err
 	}
@@ -185,6 +186,10 @@ func (a Aggregator) aggregateValues(ctx sdk.Context, height int64, extCommit abc
 	}
 
 	return results, nil
+}
+
+func voteExtensionHeight(proposalHeight int64) int64 {
+	return proposalHeight - 1
 }
 
 func DecodeVoteExtension(bz []byte) (*oraclev1.OracleVoteExtension, error) {
@@ -287,6 +292,38 @@ func extendedCommitFromSignedVoteExtensions(voteExtensions *oraclev1.OracleSigne
 		Round: voteExtensions.GetRound(),
 		Votes: votes,
 	}
+}
+
+func validateExtendedCommitBlockIDFlags(ctx sdk.Context, extCommit abcitypes.ExtendedCommitInfo) error {
+	cometInfo := ctx.CometInfo()
+	if cometInfo == nil {
+		return fmt.Errorf("missing comet info for oracle vote extension validation")
+	}
+	lastCommit := cometInfo.GetLastCommit()
+	if lastCommit == nil {
+		return fmt.Errorf("missing last commit info for oracle vote extension validation")
+	}
+	lastVotes := lastCommit.Votes()
+	if lastVotes == nil {
+		return fmt.Errorf("missing last commit votes for oracle vote extension validation")
+	}
+	if len(extCommit.GetVotes()) != lastVotes.Len() {
+		return fmt.Errorf("oracle vote extension count %d does not match last commit vote count %d", len(extCommit.GetVotes()), lastVotes.Len())
+	}
+
+	for i, vote := range extCommit.GetVotes() {
+		expectedFlag := cmtproto.BlockIDFlag(lastVotes.Get(i).GetBlockIDFlag())
+		if vote.BlockIdFlag != expectedFlag {
+			return fmt.Errorf(
+				"oracle vote extension %d block_id_flag %s does not match last commit block_id_flag %s",
+				i,
+				vote.BlockIdFlag,
+				expectedFlag,
+			)
+		}
+	}
+
+	return nil
 }
 
 func oracleValuesEqual(a, b []*oraclev1.OracleValue) bool {

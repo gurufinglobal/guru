@@ -19,7 +19,6 @@ func TestMsgServerAllowsModeratorToUpdateParamsAndTasks(t *testing.T) {
 	goCtx := sdk.WrapSDKContext(f.ctx)
 
 	params := &oraclev1.Params{
-		Enabled:       false,
 		MinValidators: 2,
 		MinSources:    4,
 		HistoryLimit:  5,
@@ -31,7 +30,6 @@ func TestMsgServerAllowsModeratorToUpdateParamsAndTasks(t *testing.T) {
 	require.NoError(t, err)
 	storedParams, err := f.keeper.GetParams(f.ctx)
 	require.NoError(t, err)
-	require.Equal(t, params.GetEnabled(), storedParams.GetEnabled())
 	require.Equal(t, params.GetMinValidators(), storedParams.GetMinValidators())
 	require.Equal(t, params.GetMinSources(), storedParams.GetMinSources())
 	require.Equal(t, params.GetHistoryLimit(), storedParams.GetHistoryLimit())
@@ -39,9 +37,10 @@ func TestMsgServerAllowsModeratorToUpdateParamsAndTasks(t *testing.T) {
 	_, err = msgServer.UpsertTask(goCtx, &oraclev1.MsgUpsertTask{
 		Moderator: f.moderator,
 		Task: &oraclev1.OracleTask{
-			Symbol:    " BTC/USD ",
-			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:   true,
+			Symbol:             " BTC/USD ",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
 		},
 	})
 	require.NoError(t, err)
@@ -76,9 +75,10 @@ func TestMsgServerRejectsGovAndArbitraryAuthorities(t *testing.T) {
 		_, err = msgServer.UpsertTask(goCtx, &oraclev1.MsgUpsertTask{
 			Moderator: authority,
 			Task: &oraclev1.OracleTask{
-				Symbol:    "BTC/USD",
-				ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-				Enabled:   true,
+				Symbol:             "BTC/USD",
+				ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+				Enabled:            true,
+				SubmissionInterval: 1,
 			},
 		})
 		require.Error(t, err)

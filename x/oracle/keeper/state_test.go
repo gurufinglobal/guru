@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	"fmt"
 	"testing"
 
+	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	"github.com/stretchr/testify/require"
 )
@@ -11,14 +13,16 @@ func TestTaskState(t *testing.T) {
 	f := setupKeeperFixture(t)
 
 	require.NoError(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
-		Symbol:    " BTC/USD ",
-		ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-		Enabled:   true,
+		Symbol:             " btc/usd ",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 1,
 	}))
 	require.NoError(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
-		Symbol:    "ETH/USD",
-		ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-		Enabled:   false,
+		Symbol:             "ETH/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            false,
+		SubmissionInterval: 1,
 	}))
 
 	task, err := f.keeper.GetTask(f.ctx, "BTC/USD")
@@ -31,9 +35,10 @@ func TestTaskState(t *testing.T) {
 	require.Equal(t, "BTC/USD", active[0].GetSymbol())
 
 	require.NoError(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
-		Symbol:    "BTC/USD",
-		ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-		Enabled:   false,
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            false,
+		SubmissionInterval: 1,
 	}))
 	updated, err := f.keeper.GetTask(f.ctx, " BTC/USD ")
 	require.NoError(t, err)
@@ -44,29 +49,86 @@ func TestTaskState(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestTaskScheduleIndexesDueTasksByHeight(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(0)
+
+	require.NoError(t, f.keeper.SetTask(ctx, &oraclev1.OracleTask{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 2,
+	}))
+	require.NoError(t, f.keeper.SetTask(ctx, &oraclev1.OracleTask{
+		Symbol:             "ETH/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 3,
+	}))
+
+	due, err := f.keeper.DueTasks(ctx, 1)
+	require.NoError(t, err)
+	require.Empty(t, due)
+
+	due, err = f.keeper.DueTasks(ctx, 2)
+	require.NoError(t, err)
+	require.Len(t, due, 1)
+	require.Equal(t, "BTC/USD", due[0].GetSymbol())
+
+	due, err = f.keeper.DueTasks(ctx, 3)
+	require.NoError(t, err)
+	require.Len(t, due, 1)
+	require.Equal(t, "ETH/USD", due[0].GetSymbol())
+
+	require.NoError(t, f.keeper.AdvanceTaskSchedule(ctx, 2))
+	due, err = f.keeper.DueTasks(ctx, 2)
+	require.NoError(t, err)
+	require.Empty(t, due)
+	due, err = f.keeper.DueTasks(ctx, 4)
+	require.NoError(t, err)
+	require.Len(t, due, 1)
+	require.Equal(t, "BTC/USD", due[0].GetSymbol())
+
+	require.NoError(t, f.keeper.SetTask(f.ctx.WithBlockHeight(4), &oraclev1.OracleTask{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            false,
+		SubmissionInterval: 2,
+	}))
+	due, err = f.keeper.DueTasks(ctx, 4)
+	require.NoError(t, err)
+	require.Empty(t, due)
+
+	require.NoError(t, f.keeper.RemoveTask(ctx, "ETH/USD"))
+	due, err = f.keeper.DueTasks(ctx, 3)
+	require.NoError(t, err)
+	require.Empty(t, due)
+}
+
 func TestApplyOracleValuesUpdatesLatestAndBoundsHistory(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.SetParams(f.ctx, &oraclev1.Params{
-		Enabled:       true,
 		MinValidators: 1,
 		MinSources:    3,
 		HistoryLimit:  2,
 	}))
 
 	values := []*oraclev1.OracleValue{
-		testValue("BTC/USD", "1.0", 10),
+		testValue(" btc/usd ", "1.0", 10),
 		testValue("BTC/USD", "2.0", 11),
-		testValue("BTC/USD", "3.0", 12),
+		testValue("btc/usd", "3.0", 12),
 	}
 	require.NoError(t, f.keeper.ApplyOracleValues(f.ctx, values))
 
-	latest, err := f.keeper.GetLatestValue(f.ctx, "BTC/USD")
+	latest, err := f.keeper.GetLatestValue(f.ctx, " btc/usd ")
 	require.NoError(t, err)
+	require.Equal(t, "BTC/USD", latest.GetSymbol())
 	require.Equal(t, "3.0", latest.GetValue())
 
-	history, err := f.keeper.GetHistory(f.ctx, "BTC/USD")
+	history, err := f.keeper.GetHistory(f.ctx, "btc/usd")
 	require.NoError(t, err)
 	require.Len(t, history.GetValues(), 2)
+	require.Equal(t, "BTC/USD", history.GetSymbol())
 	require.Equal(t, int64(11), history.GetValues()[0].GetBlockHeight())
 	require.Equal(t, int64(12), history.GetValues()[1].GetBlockHeight())
 }
@@ -76,13 +138,20 @@ func TestTaskStateRejectsInvalidTasks(t *testing.T) {
 
 	require.Error(t, f.keeper.SetTask(f.ctx, nil))
 	require.Error(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
-		Symbol:    " ",
-		ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-		Enabled:   true,
+		Symbol:             " ",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 1,
+	}))
+	require.Error(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED,
+		Enabled:            true,
+		SubmissionInterval: 1,
 	}))
 	require.Error(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
 		Symbol:    "BTC/USD",
-		ValueType: oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED,
+		ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
 		Enabled:   true,
 	}))
 	require.Error(t, f.keeper.RemoveTask(f.ctx, " "))
@@ -93,14 +162,16 @@ func TestQueryServerReturnsOracleState(t *testing.T) {
 	queryServer := NewQueryServer(&f.keeper)
 
 	require.NoError(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
-		Symbol:    "BTC/USD",
-		ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-		Enabled:   true,
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 1,
 	}))
 	require.NoError(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
-		Symbol:    "ETH/USD",
-		ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-		Enabled:   false,
+		Symbol:             "ETH/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            false,
+		SubmissionInterval: 1,
 	}))
 	require.NoError(t, f.keeper.ApplyOracleValues(f.ctx, []*oraclev1.OracleValue{
 		testValue("BTC/USD", "1.0", 10),
@@ -109,7 +180,6 @@ func TestQueryServerReturnsOracleState(t *testing.T) {
 
 	paramsResp, err := queryServer.Params(f.ctx, &oraclev1.QueryParamsRequest{})
 	require.NoError(t, err)
-	require.Equal(t, DefaultParams().GetEnabled(), paramsResp.GetParams().GetEnabled())
 	require.Equal(t, DefaultParams().GetMinValidators(), paramsResp.GetParams().GetMinValidators())
 	require.Equal(t, DefaultParams().GetMinSources(), paramsResp.GetParams().GetMinSources())
 	require.Equal(t, DefaultParams().GetHistoryLimit(), paramsResp.GetParams().GetHistoryLimit())
@@ -137,6 +207,71 @@ func TestQueryServerReturnsOracleState(t *testing.T) {
 	require.Len(t, historyResp.GetHistory().GetValues(), 2)
 	require.Equal(t, int64(10), historyResp.GetHistory().GetValues()[0].GetBlockHeight())
 	require.Equal(t, int64(11), historyResp.GetHistory().GetValues()[1].GetBlockHeight())
+}
+
+func TestQueryServerPaginatesLargeResponses(t *testing.T) {
+	f := setupKeeperFixture(t)
+	queryServer := NewQueryServer(&f.keeper)
+
+	require.NoError(t, f.keeper.SetParams(f.ctx, &oraclev1.Params{
+		MinValidators: 1,
+		MinSources:    3,
+		HistoryLimit:  100,
+	}))
+
+	historyValues := make([]*oraclev1.OracleValue, 0, 35)
+	for i := 0; i < 35; i++ {
+		symbol := fmt.Sprintf("ASSET%02d/USD", i)
+		require.NoError(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
+			Symbol:             symbol,
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
+		}))
+		require.NoError(t, f.keeper.SetLatestValue(f.ctx, testValue(symbol, fmt.Sprintf("%d.0", i), int64(i))))
+		historyValues = append(historyValues, testValue("BTC/USD", fmt.Sprintf("%d.0", i), int64(i)))
+	}
+	require.NoError(t, f.keeper.SetHistory(f.ctx, &oraclev1.OracleHistory{Symbol: "BTC/USD", Values: historyValues}, 100))
+
+	tasksResp, err := queryServer.ActiveTasks(f.ctx, &oraclev1.QueryActiveTasksRequest{})
+	require.NoError(t, err)
+	require.Len(t, tasksResp.GetTasks(), int(DefaultQueryPageLimit))
+	require.Equal(t, uint64(35), tasksResp.GetPagination().GetTotal())
+	require.Equal(t, []byte("30"), tasksResp.GetPagination().GetNextKey())
+
+	nextTasksResp, err := queryServer.ActiveTasks(f.ctx, &oraclev1.QueryActiveTasksRequest{
+		Pagination: &queryv1beta1.PageRequest{
+			Key:   tasksResp.GetPagination().GetNextKey(),
+			Limit: 3,
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, nextTasksResp.GetTasks(), 3)
+	require.Equal(t, "ASSET30/USD", nextTasksResp.GetTasks()[0].GetSymbol())
+	require.Equal(t, []byte("33"), nextTasksResp.GetPagination().GetNextKey())
+
+	latestResp, err := queryServer.LatestValues(f.ctx, &oraclev1.QueryLatestValuesRequest{
+		Pagination: &queryv1beta1.PageRequest{Limit: 10},
+	})
+	require.NoError(t, err)
+	require.Len(t, latestResp.GetValues(), 10)
+	require.Equal(t, uint64(35), latestResp.GetPagination().GetTotal())
+	require.Equal(t, []byte("10"), latestResp.GetPagination().GetNextKey())
+
+	historyResp, err := queryServer.History(f.ctx, &oraclev1.QueryHistoryRequest{Symbol: "BTC/USD"})
+	require.NoError(t, err)
+	require.Len(t, historyResp.GetHistory().GetValues(), int(DefaultQueryPageLimit))
+	require.Equal(t, uint64(35), historyResp.GetPagination().GetTotal())
+	require.Equal(t, []byte("30"), historyResp.GetPagination().GetNextKey())
+
+	historyTailResp, err := queryServer.History(f.ctx, &oraclev1.QueryHistoryRequest{
+		Symbol:     "BTC/USD",
+		Pagination: &queryv1beta1.PageRequest{Offset: 30, Limit: 10},
+	})
+	require.NoError(t, err)
+	require.Len(t, historyTailResp.GetHistory().GetValues(), 5)
+	require.Empty(t, historyTailResp.GetPagination().GetNextKey())
+	require.Equal(t, int64(30), historyTailResp.GetHistory().GetValues()[0].GetBlockHeight())
 }
 
 func testValue(symbol string, value string, height int64) *oraclev1.OracleValue {

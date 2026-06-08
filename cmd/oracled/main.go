@@ -80,11 +80,12 @@ func startCommand() *cobra.Command {
 			runCtx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			if _, err := oracle.EnsureNodeTasksConfigured(runCtx, cfg); err != nil {
+			tasks, err := oracle.EnsureNodeTasksConfigured(runCtx, cfg)
+			if err != nil {
 				return err
 			}
 
-			sidecar, err := oracle.NewSidecar(cfg)
+			sidecar, err := oracle.NewSidecar(cfg, tasks)
 			if err != nil {
 				return err
 			}

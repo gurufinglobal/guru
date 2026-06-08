@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 )
@@ -40,9 +41,7 @@ func (h ProposalHandler) PrepareProposal(ctx sdk.Context, req *abcitypes.Request
 		if err != nil {
 			return nil, err
 		}
-		if innerReq.MaxTxBytes > int64(len(payloadTx)) {
-			innerReq.MaxTxBytes -= int64(len(payloadTx))
-		}
+		innerReq.MaxTxBytes = remainingMaxTxBytes(innerReq.MaxTxBytes, [][]byte{payloadTx})
 	}
 
 	resp, err := h.prepare(ctx, &innerReq)
@@ -55,7 +54,7 @@ func (h ProposalHandler) PrepareProposal(ctx sdk.Context, req *abcitypes.Request
 
 	txs := make([][]byte, 0, len(resp.Txs)+1)
 	txs = append(txs, payloadTx)
-	txs = append(txs, stripPayloadTxs(resp.Txs)...)
+	txs = append(txs, trimTxsToMaxBytes(stripPayloadTxs(resp.Txs), innerReq.MaxTxBytes)...)
 	resp.Txs = txs
 	return resp, nil
 }
@@ -119,4 +118,45 @@ func firstPayload(txs [][]byte) (payload *oraclev1.OracleProposalPayload, hasPay
 
 	payload, _, err = DecodeProposalTx(txs[0])
 	return payload, true, err
+}
+
+func remainingMaxTxBytes(maxTxBytes int64, reservedTxs [][]byte) int64 {
+	if maxTxBytes <= 0 {
+		return 0
+	}
+
+	reservedBytes := proposalTxBytes(reservedTxs)
+	if reservedBytes >= maxTxBytes {
+		return 0
+	}
+
+	return maxTxBytes - reservedBytes
+}
+
+func trimTxsToMaxBytes(txs [][]byte, maxTxBytes int64) [][]byte {
+	if maxTxBytes <= 0 {
+		return nil
+	}
+
+	trimmed := make([][]byte, 0, len(txs))
+	totalBytes := int64(0)
+	for _, tx := range txs {
+		txBytes := proposalTxBytes([][]byte{tx})
+		if totalBytes+txBytes > maxTxBytes {
+			continue
+		}
+		totalBytes += txBytes
+		trimmed = append(trimmed, tx)
+	}
+
+	return trimmed
+}
+
+func proposalTxBytes(txs [][]byte) int64 {
+	totalBytes := int64(0)
+	for _, tx := range txs {
+		totalBytes += cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{tx})
+	}
+
+	return totalBytes
 }

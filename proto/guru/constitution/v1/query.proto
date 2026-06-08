@@ -9,23 +9,28 @@ import "guru/constitution/v1/types.proto";
 
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
 
+// Query exposes read-only constitution module state.
 service Query {
+  // Params returns constitution module parameters.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/guru/constitution/v1/params";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
+  // BaseAddress returns the configured fee separation base address.
   rpc BaseAddress(QueryBaseAddressRequest) returns (QueryBaseAddressResponse) {
     option (google.api.http).get = "/guru/constitution/v1/base_address";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
+  // ModeratorAddress returns the current constitution moderator address.
   rpc ModeratorAddress(QueryModeratorAddressRequest)
       returns (QueryModeratorAddressResponse) {
     option (google.api.http).get = "/guru/constitution/v1/moderator_address";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
+  // SeparationRatio returns the current fee separation ratio.
   rpc SeparationRatio(QuerySeparationRatioRequest)
       returns (QuerySeparationRatioResponse) {
     option (google.api.http).get = "/guru/constitution/v1/separation_ratio";

@@ -16,9 +16,10 @@ import (
 func TestValidatorResultsFromSamplesComputesMedian(t *testing.T) {
 	results := validatorResultsFromSamples(
 		[]*oraclev1.OracleTask{{
-			Symbol:    "BTC/USD",
-			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:   true,
+			Symbol:             "BTC/USD",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
 		}},
 		[]*oraclev1.OracleSymbolSamples{{
 			Symbol: "BTC/USD",
@@ -40,9 +41,10 @@ func TestValidatorResultsFromSamplesComputesMedian(t *testing.T) {
 func TestValidatorResultsFromSamplesAveragesEvenMedian(t *testing.T) {
 	results := validatorResultsFromSamples(
 		[]*oraclev1.OracleTask{{
-			Symbol:    "BTC/USD",
-			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:   true,
+			Symbol:             "BTC/USD",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
 		}},
 		[]*oraclev1.OracleSymbolSamples{{
 			Symbol: "BTC/USD",
@@ -56,6 +58,30 @@ func TestValidatorResultsFromSamplesAveragesEvenMedian(t *testing.T) {
 
 	require.Len(t, results, 1)
 	require.Equal(t, "1.500000000000000000", results[0].GetValue())
+}
+
+func TestValidatorResultsFromSamplesNormalizesMixedCaseSymbols(t *testing.T) {
+	results := validatorResultsFromSamples(
+		[]*oraclev1.OracleTask{{
+			Symbol:             " btc/usd ",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
+		}},
+		[]*oraclev1.OracleSymbolSamples{{
+			Symbol: "BTC/USD",
+			Samples: []*oraclev1.OracleSample{
+				{Source: "a", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "1.0"},
+				{Source: "b", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "2.0"},
+				{Source: "c", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "3.0"},
+			},
+		}},
+		3,
+	)
+
+	require.Len(t, results, 1)
+	require.Equal(t, "BTC/USD", results[0].GetSymbol())
+	require.Equal(t, "2.000000000000000000", results[0].GetValue())
 }
 
 func TestVerifyVoteExtensionAcceptsEmptyAndRejectsMalformed(t *testing.T) {
@@ -95,11 +121,12 @@ func TestAggregateValuesUsesUnweightedMedianOfValidatorMedians(t *testing.T) {
 
 	ctx := sdk.Context{}.WithBlockTime(time.Unix(99, 0))
 	aggregator := Aggregator{keeper: fakeKeeper{
-		params: &oraclev1.Params{Enabled: true, MinValidators: 2, MinSources: 3, HistoryLimit: 100},
+		params: &oraclev1.Params{MinValidators: 2, MinSources: 3, HistoryLimit: 100},
 		tasks: []*oraclev1.OracleTask{{
-			Symbol:    "BTC/USD",
-			ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:   true,
+			Symbol:             "BTC/USD",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
 		}},
 	}}
 
@@ -116,6 +143,38 @@ func TestAggregateValuesUsesUnweightedMedianOfValidatorMedians(t *testing.T) {
 	require.Equal(t, int64(99), values[0].GetBlockTimeUnix())
 }
 
+func TestAggregateValuesUsesOnlyDueTasksForPreviousHeight(t *testing.T) {
+	vote := mustVoteExtensionBz(t, "BTC/USD", "1.0")
+
+	ctx := sdk.Context{}.WithBlockTime(time.Unix(99, 0))
+	aggregator := Aggregator{keeper: fakeKeeper{
+		params:    &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+		tasks:     oracleTestTasks(),
+		dueHeight: 99,
+	}}
+
+	values, err := aggregator.aggregateValues(ctx, 12, abcitypes.ExtendedCommitInfo{
+		Votes: []abcitypes.ExtendedVoteInfo{
+			{BlockIdFlag: cmtproto.BlockIDFlagCommit, VoteExtension: vote},
+		},
+	})
+	require.NoError(t, err)
+	require.Empty(t, values)
+
+	aggregator.keeper = fakeKeeper{
+		params:    &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+		tasks:     oracleTestTasks(),
+		dueHeight: 11,
+	}
+	values, err = aggregator.aggregateValues(ctx, 12, abcitypes.ExtendedCommitInfo{
+		Votes: []abcitypes.ExtendedVoteInfo{
+			{BlockIdFlag: cmtproto.BlockIDFlagCommit, VoteExtension: vote},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, values, 1)
+}
+
 func mustVoteExtensionBz(t *testing.T, symbol string, value string) []byte {
 	t.Helper()
 
@@ -130,16 +189,25 @@ func mustVoteExtensionBz(t *testing.T, symbol string, value string) []byte {
 }
 
 type fakeKeeper struct {
-	params *oraclev1.Params
-	tasks  []*oraclev1.OracleTask
+	params    *oraclev1.Params
+	tasks     []*oraclev1.OracleTask
+	dueHeight int64
 }
 
 func (f fakeKeeper) GetParams(context.Context) (*oraclev1.Params, error) {
 	return f.params, nil
 }
 
-func (f fakeKeeper) ListTasks(context.Context, bool) ([]*oraclev1.OracleTask, error) {
+func (f fakeKeeper) DueTasks(_ context.Context, height int64) ([]*oraclev1.OracleTask, error) {
+	if f.dueHeight != 0 && f.dueHeight != height {
+		return nil, nil
+	}
+
 	return f.tasks, nil
+}
+
+func (f fakeKeeper) AdvanceTaskSchedule(context.Context, int64) error {
+	return nil
 }
 
 func (f fakeKeeper) ApplyOracleValues(context.Context, []*oraclev1.OracleValue) error {
