@@ -17,13 +17,13 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
-  // ActiveTasks returns configured oracle tasks.
+  // ActiveTasks returns configured numeric oracle tasks.
   rpc ActiveTasks(QueryActiveTasksRequest) returns (QueryActiveTasksResponse) {
     option (google.api.http).get = "/guru/oracle/v1/tasks";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
-  // Task returns a configured oracle task by symbol.
+  // Task returns a configured numeric oracle task by symbol.
   rpc Task(QueryTaskRequest) returns (QueryTaskResponse) {
     option (google.api.http).get = "/guru/oracle/v1/tasks/{symbol}";
     option (cosmos.query.v1.module_query_safe) = true;

@@ -48,3 +48,18 @@ func TestConfigValidateRejectsDuplicateSourceNameForSymbol(t *testing.T) {
 
 	require.ErrorContains(t, cfg.Validate(), "duplicate source name")
 }
+
+func TestParseValueTypeRejectsNonNumeric(t *testing.T) {
+	for _, valueType := range []string{"STRING", "BOOL", "VALUE_TYPE_STRING", "VALUE_TYPE_BOOL"} {
+		_, err := ParseValueType(valueType)
+		require.ErrorContains(t, err, "non-numeric value_type")
+	}
+}
+
+func TestSampleValueStringRejectsNonNumeric(t *testing.T) {
+	_, err := sampleValueString(true)
+	require.ErrorContains(t, err, "unsupported non-numeric JSON value type")
+
+	_, err = sampleValueString("not-a-number")
+	require.ErrorContains(t, err, "invalid numeric value")
+}

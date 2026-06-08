@@ -15,7 +15,7 @@ service Msg {
   // UpdateParams defines a moderator operation for updating the parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 
-  // UpsertTask manages one oracle task keyed by symbol.
+  // UpsertTask manages one numeric oracle task keyed by symbol.
   rpc UpsertTask(MsgUpsertTask) returns (MsgUpsertTaskResponse);
 
   // RemoveTask deletes one oracle task by symbol.

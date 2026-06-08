@@ -4,9 +4,9 @@ import (
 	"context"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	cryptoproto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	gogoproto "github.com/cosmos/gogoproto/proto"
 )
 
 // InitGenesis delegates base staking initialization and reapplies validator set
@@ -53,10 +53,14 @@ func mergeValidatorUpdates(base []abci.ValidatorUpdate, overrides []abci.Validat
 }
 
 func validatorUpdateKey(update abci.ValidatorUpdate) string {
-	key, err := gogoproto.Marshal(&update.PubKey)
-	if err != nil {
-		panic(err)
+	switch pubKey := update.PubKey.GetSum().(type) {
+	case *cryptoproto.PublicKey_Ed25519:
+		return "ed25519:" + string(pubKey.Ed25519)
+	case *cryptoproto.PublicKey_Secp256K1:
+		return "secp256k1:" + string(pubKey.Secp256K1)
+	case *cryptoproto.PublicKey_Bls12381:
+		return "bls12381:" + string(pubKey.Bls12381)
+	default:
+		panic("unknown validator update public key type")
 	}
-
-	return string(key)
 }

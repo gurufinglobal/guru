@@ -34,7 +34,12 @@ func (am AppModule) InitGenesis(ctx context.Context, source appmodule.GenesisSou
 		return err
 	}
 	for _, task := range genesis.GetTasks() {
-		if err := am.keeper.SetTask(ctx, task); err != nil {
+		if err := am.keeper.SetTaskDefinition(ctx, task); err != nil {
+			return err
+		}
+	}
+	for _, schedule := range genesis.GetTaskSchedule() {
+		if err := am.keeper.SetTaskSchedule(ctx, schedule); err != nil {
 			return err
 		}
 	}
@@ -61,6 +66,10 @@ func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisT
 	if err != nil {
 		return err
 	}
+	taskSchedule, err := am.keeper.ListTaskSchedule(ctx)
+	if err != nil {
+		return err
+	}
 	latestValues, err := am.keeper.ListLatestValues(ctx)
 	if err != nil {
 		return err
@@ -73,6 +82,7 @@ func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisT
 	return writeGenesisState(target, &oraclev1.GenesisState{
 		Params:       params,
 		Tasks:        tasks,
+		TaskSchedule: taskSchedule,
 		LatestValues: latestValues,
 		History:      history,
 	})
@@ -92,7 +102,9 @@ func (am AppModule) validateGenesisState(data *oraclev1.GenesisState) error {
 		return err
 	}
 
-	seenTasks := map[string]struct{}{}
+	seenTasks := map[string]*oraclev1.OracleTask{}
+	scheduledTaskCounts := map[string]int{}
+	schedulePhase := map[string]int64{}
 	for _, task := range data.GetTasks() {
 		if err := oraclekeeper.ValidateTask(task); err != nil {
 			return err
@@ -101,7 +113,54 @@ func (am AppModule) validateGenesisState(data *oraclev1.GenesisState) error {
 		if _, ok := seenTasks[symbol]; ok {
 			return oracletypes.ErrInvalidTask.Wrapf("duplicate task symbol %q", symbol)
 		}
-		seenTasks[symbol] = struct{}{}
+		seenTasks[symbol] = task
+		if task.GetEnabled() {
+			scheduledTaskCounts[symbol] = 0
+		}
+	}
+
+	type taskScheduleKey struct {
+		height int64
+		symbol string
+	}
+	seenTaskSchedule := map[taskScheduleKey]struct{}{}
+	for _, entry := range data.GetTaskSchedule() {
+		if err := oraclekeeper.ValidateTaskScheduleEntry(entry); err != nil {
+			return err
+		}
+		symbol := oraclekeeper.NormalizeSymbol(entry.GetSymbol())
+		key := taskScheduleKey{height: entry.GetHeight(), symbol: symbol}
+		if _, ok := seenTaskSchedule[key]; ok {
+			return oracletypes.ErrInvalidTask.Wrapf("duplicate task schedule for %q at height %d", symbol, entry.GetHeight())
+		}
+		seenTaskSchedule[key] = struct{}{}
+
+		task, ok := seenTasks[symbol]
+		if !ok {
+			return oracletypes.ErrInvalidTask.Wrapf("task schedule references unknown task %q", symbol)
+		}
+		if !task.GetEnabled() {
+			return oracletypes.ErrInvalidTask.Wrapf("task schedule references disabled task %q", symbol)
+		}
+
+		interval := int64(task.GetSubmissionInterval())
+		if firstHeight, ok := schedulePhase[symbol]; ok {
+			if (entry.GetHeight()-firstHeight)%interval != 0 {
+				return oracletypes.ErrInvalidTask.Wrapf("task schedule for %q is not aligned to submission_interval", symbol)
+			}
+		} else {
+			schedulePhase[symbol] = entry.GetHeight()
+		}
+		scheduledTaskCounts[symbol]++
+	}
+	for _, task := range data.GetTasks() {
+		if !task.GetEnabled() {
+			continue
+		}
+		symbol := oraclekeeper.NormalizeSymbol(task.GetSymbol())
+		if scheduledTaskCounts[symbol] < 2 {
+			return oracletypes.ErrInvalidTask.Wrapf("enabled task %q must have at least two schedule entries", symbol)
+		}
 	}
 
 	seenLatest := map[string]struct{}{}
@@ -135,6 +194,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *oraclev1.Genesis
 	genesis := &oraclev1.GenesisState{
 		Params:       defaults.Params,
 		Tasks:        defaults.Tasks,
+		TaskSchedule: defaults.TaskSchedule,
 		LatestValues: defaults.LatestValues,
 		History:      defaults.History,
 	}
@@ -155,6 +215,15 @@ func readGenesisState(source appmodule.GenesisSource, defaults *oraclev1.Genesis
 	}
 	if found {
 		genesis.Tasks = tasks
+	}
+
+	taskSchedule := []*oraclev1.OracleTaskScheduleEntry{}
+	found, err = readGenesisField(source, "task_schedule", &taskSchedule)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.TaskSchedule = taskSchedule
 	}
 
 	latestValues := []*oraclev1.OracleValue{}
@@ -187,6 +256,9 @@ func writeGenesisState(target appmodule.GenesisTarget, genesis *oraclev1.Genesis
 		return err
 	}
 	if err := writeGenesisField(target, "tasks", genesis.Tasks); err != nil {
+		return err
+	}
+	if err := writeGenesisField(target, "task_schedule", genesis.TaskSchedule); err != nil {
 		return err
 	}
 	if err := writeGenesisField(target, "latest_values", genesis.LatestValues); err != nil {

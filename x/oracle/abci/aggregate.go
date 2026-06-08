@@ -17,7 +17,7 @@ import (
 
 type Keeper interface {
 	GetParams(ctx context.Context) (*oraclev1.Params, error)
-	DueTasks(ctx context.Context, height int64) ([]*oraclev1.OracleTask, error)
+	DueTasksForVoteExtension(ctx context.Context, height int64) ([]*oraclev1.OracleTask, error)
 	AdvanceTaskSchedule(ctx context.Context, height int64) error
 	ApplyOracleValues(ctx context.Context, values []*oraclev1.OracleValue) error
 }
@@ -36,9 +36,18 @@ func NewAggregator(keeper Keeper, validatorStore baseapp.ValidatorStore) Aggrega
 
 func (a Aggregator) OraclePayloadExpected(ctx sdk.Context) (bool, error) {
 	abciParams := ctx.ConsensusParams().Abci
-	return abciParams != nil &&
-		abciParams.VoteExtensionsEnableHeight != 0 &&
-		ctx.BlockHeight() > abciParams.VoteExtensionsEnableHeight, nil
+	if abciParams == nil ||
+		abciParams.VoteExtensionsEnableHeight == 0 ||
+		ctx.BlockHeight() <= abciParams.VoteExtensionsEnableHeight {
+		return false, nil
+	}
+
+	tasks, err := a.keeper.DueTasksForVoteExtension(ctx, voteExtensionHeight(ctx.BlockHeight()))
+	if err != nil {
+		return false, err
+	}
+
+	return len(tasks) != 0, nil
 }
 
 func (a Aggregator) BuildPayload(ctx sdk.Context, height int64, extCommit abcitypes.ExtendedCommitInfo) (*oraclev1.OracleProposalPayload, error) {
@@ -123,7 +132,7 @@ func (a Aggregator) aggregateValues(ctx sdk.Context, height int64, extCommit abc
 	if err != nil {
 		return nil, err
 	}
-	tasks, err := a.keeper.DueTasks(ctx, voteExtensionHeight(height))
+	tasks, err := a.keeper.DueTasksForVoteExtension(ctx, voteExtensionHeight(height))
 	if err != nil {
 		return nil, err
 	}
@@ -150,10 +159,6 @@ func (a Aggregator) aggregateValues(ctx sdk.Context, height int64, extCommit abc
 				continue
 			}
 			if result.GetSourceCount() < params.GetMinSources() {
-				continue
-			}
-			if result.GetValueType() != oraclev1.ValueType_VALUE_TYPE_NUMERIC {
-				// TODO: add non-numeric aggregation once v1 defines deterministic semantics.
 				continue
 			}
 
@@ -223,16 +228,17 @@ func ValidateVoteExtension(extension *oraclev1.OracleVoteExtension) error {
 		if result.GetValueType() == oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED {
 			return fmt.Errorf("oracle vote extension result value_type cannot be unspecified")
 		}
+		if result.GetValueType() != oraclev1.ValueType_VALUE_TYPE_NUMERIC {
+			return fmt.Errorf("oracle vote extension result non-numeric value_type is not supported")
+		}
 		if result.GetValue() == "" {
 			return fmt.Errorf("oracle vote extension result value cannot be empty")
 		}
 		if result.GetSourceCount() == 0 {
 			return fmt.Errorf("oracle vote extension result source_count must be positive")
 		}
-		if result.GetValueType() == oraclev1.ValueType_VALUE_TYPE_NUMERIC {
-			if _, err := sdkmath.LegacyNewDecFromStr(result.GetValue()); err != nil {
-				return fmt.Errorf("invalid oracle vote extension numeric value: %w", err)
-			}
+		if _, err := sdkmath.LegacyNewDecFromStr(result.GetValue()); err != nil {
+			return fmt.Errorf("invalid oracle vote extension numeric value: %w", err)
 		}
 	}
 

@@ -109,6 +109,7 @@ func NewRootCmd() *cobra.Command {
 		appExport,
 		addModuleInitFlags,
 	)
+	patchExportCommand(rootCmd)
 
 	if _, err := srvflags.AddTxFlags(rootCmd); err != nil {
 		panic(err)

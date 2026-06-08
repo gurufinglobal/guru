@@ -32,7 +32,7 @@ const (
 type MsgClient interface {
 	// UpdateParams defines a moderator operation for updating the parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
-	// UpsertTask manages one oracle task keyed by symbol.
+	// UpsertTask manages one numeric oracle task keyed by symbol.
 	UpsertTask(ctx context.Context, in *MsgUpsertTask, opts ...grpc.CallOption) (*MsgUpsertTaskResponse, error)
 	// RemoveTask deletes one oracle task by symbol.
 	RemoveTask(ctx context.Context, in *MsgRemoveTask, opts ...grpc.CallOption) (*MsgRemoveTaskResponse, error)
@@ -84,7 +84,7 @@ func (c *msgClient) RemoveTask(ctx context.Context, in *MsgRemoveTask, opts ...g
 type MsgServer interface {
 	// UpdateParams defines a moderator operation for updating the parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
-	// UpsertTask manages one oracle task keyed by symbol.
+	// UpsertTask manages one numeric oracle task keyed by symbol.
 	UpsertTask(context.Context, *MsgUpsertTask) (*MsgUpsertTaskResponse, error)
 	// RemoveTask deletes one oracle task by symbol.
 	RemoveTask(context.Context, *MsgRemoveTask) (*MsgRemoveTaskResponse, error)

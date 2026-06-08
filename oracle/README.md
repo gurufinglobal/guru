@@ -10,8 +10,9 @@ derived oracle results in CometBFT vote extensions.
 1. `oracled start` loads `oracled.toml`.
 2. Before serving, it queries the connected node gRPC endpoint for oracle params
    and active oracle tasks.
-3. It checks that at least one configured local source matches an active node
-   task by normalized symbol and value type.
+3. It checks that configured local sources match active numeric node tasks by
+   normalized symbol and value type, and that at least one matched task has
+   enough sources to satisfy the chain `min_sources` parameter.
 4. It opens a gRPC server on the configured Unix socket.
 5. When the validator asks for samples for the tasks due at that
    vote-extension height, the daemon fetches every matching HTTP source
@@ -96,8 +97,9 @@ Source fields:
 
 - `name`: unique source name per symbol.
 - `symbol`: oracle symbol. Matching is trim plus uppercase normalized.
-- `value_type`: `NUMERIC`, `STRING`, or `BOOL`; current aggregation accepts
-  numeric values.
+- `value_type`: `NUMERIC` only. `STRING` and `BOOL` are reserved for future
+  non-numeric aggregation and are rejected by the current daemon and module
+  validation.
 - `url`: HTTP GET URL. `{symbol}` is replaced with a URL-escaped task symbol.
 - `response_path`: dot-separated JSON path to extract.
 - `timeout`: optional per-source timeout override.
@@ -123,8 +125,9 @@ On startup, the daemon fails fast when:
 
 - the config is invalid;
 - the node gRPC endpoint cannot return oracle params;
-- the node has no active oracle tasks;
+- the node has no active numeric oracle tasks;
 - none of the configured sources match active oracle tasks;
+- configured sources do not satisfy `min_sources` for any active task;
 - the socket path cannot be created or an existing non-socket file is present.
 
 The daemon removes stale socket files only when the existing path is a Unix

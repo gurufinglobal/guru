@@ -33,16 +33,19 @@ sidecar participation through their node configuration.
   `submission_interval` in block heights.
 - `OracleValue`: latest accepted value per symbol.
 - `OracleHistory`: bounded accepted value history per symbol.
-- task schedule index: internal `Collections.KeySet` entries keyed by
-  `(height, symbol)` and a reverse `(symbol, height)` keyset.
+- `task_schedule`: exported schedule entries keyed by `(height, symbol)`.
+  The reverse `(symbol, height)` keyset is reconstructed during import.
 
 Symbols are normalized with `strings.TrimSpace` and uppercase before storage,
 lookup, aggregation, and daemon matching.
 
-Task scheduling is stored with composite keys. Checking whether the current
-height has oracle work uses a prefixed range over `(height, symbol)`, so it only
-iterates symbols due at that height. Task updates and removals use the reverse
-`(symbol, height)` range to remove stale schedule entries directly.
+Task scheduling is stored with composite keys. Exact due lookups use a prefixed
+range over `(height, symbol)`, and vote-extension due lookups include the exact
+vote-extension height plus missed buckets older than the one-block proposal
+pipeline. The `height - 1` bucket is left alone because it may still be the
+normal stale bucket that will be consumed by the next proposal. Task updates and
+removals use the reverse `(symbol, height)` range to remove schedule entries
+directly.
 
 ## Parameters
 
@@ -79,11 +82,11 @@ previous response `pagination.next_key` as `pagination.key`.
 
 ## Proposal Payload Rules
 
-The oracle payload is expected only after vote extensions are enabled and the
-current height is greater than the configured enable height. The proposer must
-reserve proposal bytes for the oracle payload before selecting normal txs. If the
-payload alone exceeds `MaxTxBytes`, proposal preparation returns the payload and
-no normal txs.
+The oracle payload is expected only after vote extensions are enabled, the
+current height is greater than the configured enable height, and at least one
+task is due for the vote-extension height. The proposer must reserve proposal
+bytes for the oracle payload before selecting normal txs. If the payload alone
+exceeds `MaxTxBytes`, proposal preparation returns the payload and no normal txs.
 
 Proposal verification checks:
 
@@ -93,11 +96,13 @@ Proposal verification checks:
 - the payload values match locally recomputed aggregation output.
 
 Proposal height `H` aggregates vote extensions submitted at height `H-1`, so the
-payload uses the task schedule for `H-1`. When FinalizeBlock accepts the payload,
-the consumed schedule bucket is advanced by each task's `submission_interval`.
-The scheduler keeps the next needed height available before the corresponding
-`ExtendVote` call observes state, accounting for the one-block vote-extension
-pipeline.
+payload uses due tasks for `H-1`. Due tasks are the exact `H-1` bucket plus
+missed buckets at `H-3` or older; the `H-2` bucket is preserved for the normal
+one-block pipeline. When FinalizeBlock accepts the payload, the consumed due
+buckets are removed and each task's schedule window is refilled from the
+symbol's latest consumed due height. If a due task fails quorum or source
+requirements, the empty payload is still accepted and the task waits until its
+next interval instead of retrying every block.
 
 ## Usage Notes
 
@@ -105,3 +110,18 @@ Configure tasks with the moderator account, run `oracled` on validators that
 should participate, and set the validator node oracle socket to the daemon Unix
 socket. A validator with no matching local sources simply emits an empty oracle
 vote extension.
+
+CLI commands are available under `gurud tx oracle` and `gurud query oracle`.
+Task creation uses numeric oracle tasks only:
+
+```sh
+gurud tx oracle update-params 3 3 100 --from <moderator>
+gurud tx oracle upsert-task BTC/USD 5 --from <moderator>
+gurud tx oracle remove-task BTC/USD --from <moderator>
+gurud query oracle params
+gurud query oracle active-tasks
+gurud query oracle task BTC/USD
+gurud query oracle latest-value BTC/USD
+gurud query oracle latest-values
+gurud query oracle history BTC/USD
+```

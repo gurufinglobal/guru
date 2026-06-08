@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 
 	"cosmossdk.io/collections"
@@ -24,7 +25,7 @@ func (k Keeper) SetTask(ctx context.Context, task *oraclev1.OracleTask) error {
 	if err := k.removeScheduledTask(ctx, task.Symbol); err != nil {
 		return err
 	}
-	if err := k.tasks.Set(ctx, task.Symbol, task); err != nil {
+	if err := k.setTaskDefinition(ctx, task); err != nil {
 		return err
 	}
 	if !task.GetEnabled() {
@@ -32,6 +33,21 @@ func (k Keeper) SetTask(ctx context.Context, task *oraclev1.OracleTask) error {
 	}
 
 	return k.seedTaskSchedule(ctx, task, sdk.UnwrapSDKContext(ctx).BlockHeight())
+}
+
+// SetTaskDefinition stores a task without mutating task schedule. It is used
+// when restoring task definitions before importing their exported schedule.
+func (k Keeper) SetTaskDefinition(ctx context.Context, task *oraclev1.OracleTask) error {
+	if err := ValidateTask(task); err != nil {
+		return err
+	}
+
+	task.Symbol = NormalizeSymbol(task.GetSymbol())
+	return k.setTaskDefinition(ctx, task)
+}
+
+func (k Keeper) setTaskDefinition(ctx context.Context, task *oraclev1.OracleTask) error {
+	return k.tasks.Set(ctx, task.GetSymbol(), task)
 }
 
 func (k Keeper) GetTask(ctx context.Context, symbol string) (*oraclev1.OracleTask, error) {
@@ -65,6 +81,42 @@ func (k Keeper) ListTasks(ctx context.Context, enabledOnly bool) ([]*oraclev1.Or
 	return tasks, nil
 }
 
+func (k Keeper) SetTaskSchedule(ctx context.Context, entry *oraclev1.OracleTaskScheduleEntry) error {
+	if err := ValidateTaskScheduleEntry(entry); err != nil {
+		return err
+	}
+
+	symbol := NormalizeSymbol(entry.GetSymbol())
+	task, err := k.GetTask(ctx, symbol)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return types.ErrInvalidTask.Wrapf("task schedule references unknown task %q", symbol)
+		}
+		return err
+	}
+	if !task.GetEnabled() {
+		return types.ErrInvalidTask.Wrapf("task schedule references disabled task %q", symbol)
+	}
+
+	return k.scheduleTaskAt(ctx, symbol, entry.GetHeight())
+}
+
+func (k Keeper) ListTaskSchedule(ctx context.Context) ([]*oraclev1.OracleTaskScheduleEntry, error) {
+	schedule := []*oraclev1.OracleTaskScheduleEntry{}
+	err := k.taskSchedule.Walk(ctx, nil, func(key collections.Pair[int64, string]) (bool, error) {
+		schedule = append(schedule, &oraclev1.OracleTaskScheduleEntry{
+			Symbol: key.K2(),
+			Height: key.K1(),
+		})
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return schedule, nil
+}
+
 func (k Keeper) DueTasks(ctx context.Context, height int64) ([]*oraclev1.OracleTask, error) {
 	if height <= 0 {
 		return nil, nil
@@ -91,16 +143,43 @@ func (k Keeper) DueTasks(ctx context.Context, height int64) ([]*oraclev1.OracleT
 	return tasks, nil
 }
 
+func (k Keeper) DueTasksForVoteExtension(ctx context.Context, height int64) ([]*oraclev1.OracleTask, error) {
+	dueBySymbol, err := k.dueTaskScheduleBySymbol(ctx, height)
+	if err != nil {
+		return nil, err
+	}
+	if len(dueBySymbol) == 0 {
+		return nil, nil
+	}
+
+	symbols := sortedSymbols(dueBySymbol)
+	tasks := make([]*oraclev1.OracleTask, 0, len(symbols))
+	for _, symbol := range symbols {
+		task, err := k.GetTask(ctx, symbol)
+		if err != nil {
+			if errors.Is(err, collections.ErrNotFound) {
+				continue
+			}
+			return nil, err
+		}
+		if task.GetEnabled() {
+			tasks = append(tasks, task)
+		}
+	}
+
+	return tasks, nil
+}
+
 func (k Keeper) AdvanceTaskSchedule(ctx context.Context, height int64) error {
 	if height <= 0 {
 		return nil
 	}
 
-	symbols, err := k.scheduledSymbolsAt(ctx, height)
+	dueBySymbol, err := k.dueTaskScheduleBySymbol(ctx, height)
 	if err != nil {
 		return err
 	}
-	if len(symbols) == 0 {
+	if len(dueBySymbol) == 0 {
 		return nil
 	}
 
@@ -108,8 +187,9 @@ func (k Keeper) AdvanceTaskSchedule(ctx context.Context, height int64) error {
 	if currentHeight < height {
 		currentHeight = height
 	}
+	symbols := sortedSymbols(dueBySymbol)
 	for _, symbol := range symbols {
-		if err := k.removeScheduledTaskAt(ctx, symbol, height); err != nil {
+		if err := k.removeDueTaskSchedule(ctx, symbol, height); err != nil {
 			return err
 		}
 		task, err := k.GetTask(ctx, symbol)
@@ -122,9 +202,23 @@ func (k Keeper) AdvanceTaskSchedule(ctx context.Context, height int64) error {
 		if !task.GetEnabled() {
 			continue
 		}
-		if err := k.scheduleNextTaskHeights(ctx, task, height, currentHeight); err != nil {
+		if err := k.fillTaskScheduleWindow(ctx, task, dueBySymbol[symbol], currentHeight); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func ValidateTaskScheduleEntry(entry *oraclev1.OracleTaskScheduleEntry) error {
+	if entry == nil {
+		return types.ErrInvalidTask.Wrap("task schedule entry cannot be nil")
+	}
+	if NormalizeSymbol(entry.GetSymbol()) == "" {
+		return types.ErrInvalidTask.Wrap("task schedule symbol cannot be empty")
+	}
+	if entry.GetHeight() <= 0 {
+		return types.ErrInvalidTask.Wrap("task schedule height must be positive")
 	}
 
 	return nil
@@ -139,6 +233,9 @@ func ValidateTask(task *oraclev1.OracleTask) error {
 	}
 	if task.GetValueType() == oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED {
 		return types.ErrInvalidTask.Wrap("value_type cannot be unspecified")
+	}
+	if task.GetValueType() != oraclev1.ValueType_VALUE_TYPE_NUMERIC {
+		return types.ErrInvalidTask.Wrap("non-numeric value_type is not supported")
 	}
 	if task.GetSubmissionInterval() == 0 {
 		return types.ErrInvalidTask.Wrap("submission_interval must be positive")
@@ -164,17 +261,34 @@ func (k Keeper) seedTaskSchedule(ctx context.Context, task *oraclev1.OracleTask,
 	return k.scheduleTaskAt(ctx, task.GetSymbol(), height+int64(task.GetSubmissionInterval()))
 }
 
-func (k Keeper) scheduleNextTaskHeights(ctx context.Context, task *oraclev1.OracleTask, lastDueHeight int64, currentHeight int64) error {
+func (k Keeper) fillTaskScheduleWindow(ctx context.Context, task *oraclev1.OracleTask, lastDueHeight int64, currentHeight int64) error {
+	heights, err := k.scheduledHeightsForSymbol(ctx, task.GetSymbol())
+	if err != nil {
+		return err
+	}
+
+	scheduled := make(map[int64]struct{}, len(heights))
+	for _, height := range heights {
+		scheduled[height] = struct{}{}
+	}
+
 	interval := int64(task.GetSubmissionInterval())
 	nextHeight := lastDueHeight + interval
 	for nextHeight <= currentHeight {
 		nextHeight += interval
 	}
-	if err := k.scheduleTaskAt(ctx, task.GetSymbol(), nextHeight); err != nil {
-		return err
+
+	for len(scheduled) < 2 {
+		if _, exists := scheduled[nextHeight]; !exists {
+			if err := k.scheduleTaskAt(ctx, task.GetSymbol(), nextHeight); err != nil {
+				return err
+			}
+			scheduled[nextHeight] = struct{}{}
+		}
+		nextHeight += interval
 	}
 
-	return k.scheduleTaskAt(ctx, task.GetSymbol(), nextHeight+interval)
+	return nil
 }
 
 func (k Keeper) scheduleTaskAt(ctx context.Context, symbol string, height int64) error {
@@ -208,17 +322,70 @@ func (k Keeper) removeScheduledTaskAt(ctx context.Context, symbol string, height
 	return k.taskScheduleBySymbol.Remove(ctx, collections.Join(symbol, height))
 }
 
-func (k Keeper) scheduledSymbolsAt(ctx context.Context, height int64) ([]string, error) {
-	symbols := []string{}
-	err := k.taskSchedule.Walk(ctx, collections.NewPrefixedPairRange[int64, string](height), func(key collections.Pair[int64, string]) (bool, error) {
-		symbols = append(symbols, key.K2())
+func (k Keeper) dueTaskScheduleBySymbol(ctx context.Context, height int64) (map[string]int64, error) {
+	dueBySymbol := map[string]int64{}
+	if height <= 0 {
+		return dueBySymbol, nil
+	}
+
+	err := k.taskSchedule.Walk(ctx, nil, func(key collections.Pair[int64, string]) (bool, error) {
+		scheduledHeight := key.K1()
+		if scheduledHeight >= height-1 {
+			return true, nil
+		}
+		addDueTaskSchedule(dueBySymbol, key.K2(), scheduledHeight)
 		return false, nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return symbols, nil
+	err = k.taskSchedule.Walk(ctx, collections.NewPrefixedPairRange[int64, string](height), func(key collections.Pair[int64, string]) (bool, error) {
+		addDueTaskSchedule(dueBySymbol, key.K2(), key.K1())
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dueBySymbol, nil
+}
+
+func addDueTaskSchedule(dueBySymbol map[string]int64, symbol string, height int64) {
+	if existing, ok := dueBySymbol[symbol]; !ok || height > existing {
+		dueBySymbol[symbol] = height
+	}
+}
+
+func sortedSymbols(bySymbol map[string]int64) []string {
+	symbols := make([]string, 0, len(bySymbol))
+	for symbol := range bySymbol {
+		symbols = append(symbols, symbol)
+	}
+	sort.Strings(symbols)
+	return symbols
+}
+
+func (k Keeper) removeDueTaskSchedule(ctx context.Context, symbol string, height int64) error {
+	heights, err := k.scheduledHeightsForSymbol(ctx, symbol)
+	if err != nil {
+		return err
+	}
+
+	for _, scheduledHeight := range heights {
+		if !isDueTaskScheduleHeight(scheduledHeight, height) {
+			continue
+		}
+		if err := k.removeScheduledTaskAt(ctx, symbol, scheduledHeight); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func isDueTaskScheduleHeight(scheduledHeight int64, height int64) bool {
+	return scheduledHeight == height || scheduledHeight <= height-2
 }
 
 func (k Keeper) scheduledHeightsForSymbol(ctx context.Context, symbol string) ([]int64, error) {

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 )
 
@@ -100,14 +101,22 @@ func sampleValueString(value any) (string, error) {
 		if result == "" {
 			return "", fmt.Errorf("empty string value")
 		}
+		if _, err := sdkmath.LegacyNewDecFromStr(result); err != nil {
+			return "", fmt.Errorf("invalid numeric value: %w", err)
+		}
 		return result, nil
 	case json.Number:
+		if _, err := sdkmath.LegacyNewDecFromStr(typed.String()); err != nil {
+			return "", fmt.Errorf("invalid numeric value: %w", err)
+		}
 		return typed.String(), nil
-	case bool:
-		return strconv.FormatBool(typed), nil
 	case float64:
-		return strconv.FormatFloat(typed, 'f', -1, 64), nil
+		result := strconv.FormatFloat(typed, 'f', -1, 64)
+		if _, err := sdkmath.LegacyNewDecFromStr(result); err != nil {
+			return "", fmt.Errorf("invalid numeric value: %w", err)
+		}
+		return result, nil
 	default:
-		return "", fmt.Errorf("unsupported JSON value type %T", value)
+		return "", fmt.Errorf("unsupported non-numeric JSON value type %T", value)
 	}
 }

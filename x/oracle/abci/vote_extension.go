@@ -37,13 +37,16 @@ func (h VoteExtensionHandler) ExtendVote(ctx sdk.Context, req *abcitypes.Request
 	if !h.enabled {
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
-
-	params, err := h.keeper.GetParams(ctx)
-	if err != nil || h.socket == "" {
+	if h.socket == "" {
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	tasks, err := h.keeper.DueTasks(ctx, req.Height)
+	params, err := h.keeper.GetParams(ctx)
+	if err != nil {
+		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
+	}
+
+	tasks, err := h.keeper.DueTasksForVoteExtension(ctx, req.Height)
 	if err != nil || len(tasks) == 0 {
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
@@ -125,7 +128,6 @@ func validatorResultsFromSamples(
 			continue
 		}
 		if task.GetValueType() != oraclev1.ValueType_VALUE_TYPE_NUMERIC {
-			// TODO: add non-numeric aggregation once v1 defines deterministic semantics.
 			continue
 		}
 

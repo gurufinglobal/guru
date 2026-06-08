@@ -35,9 +35,9 @@ const (
 type QueryClient interface {
 	// Params returns oracle module parameters.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// ActiveTasks returns configured oracle tasks.
+	// ActiveTasks returns configured numeric oracle tasks.
 	ActiveTasks(ctx context.Context, in *QueryActiveTasksRequest, opts ...grpc.CallOption) (*QueryActiveTasksResponse, error)
-	// Task returns a configured oracle task by symbol.
+	// Task returns a configured numeric oracle task by symbol.
 	Task(ctx context.Context, in *QueryTaskRequest, opts ...grpc.CallOption) (*QueryTaskResponse, error)
 	// LatestValue returns the latest accepted oracle value for a symbol.
 	LatestValue(ctx context.Context, in *QueryLatestValueRequest, opts ...grpc.CallOption) (*QueryLatestValueResponse, error)
@@ -123,9 +123,9 @@ func (c *queryClient) History(ctx context.Context, in *QueryHistoryRequest, opts
 type QueryServer interface {
 	// Params returns oracle module parameters.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// ActiveTasks returns configured oracle tasks.
+	// ActiveTasks returns configured numeric oracle tasks.
 	ActiveTasks(context.Context, *QueryActiveTasksRequest) (*QueryActiveTasksResponse, error)
-	// Task returns a configured oracle task by symbol.
+	// Task returns a configured numeric oracle task by symbol.
 	Task(context.Context, *QueryTaskRequest) (*QueryTaskResponse, error)
 	// LatestValue returns the latest accepted oracle value for a symbol.
 	LatestValue(context.Context, *QueryLatestValueRequest) (*QueryLatestValueResponse, error)

@@ -56,3 +56,24 @@ func TestMergeValidatorUpdatesAppliesOverrideByPubKey(t *testing.T) {
 	require.Equal(t, int64(0), merged[0].Power)
 	require.Equal(t, int64(20), merged[1].Power)
 }
+
+func TestMergeValidatorUpdatesKeepsDifferentPubKeyTypes(t *testing.T) {
+	base := []abci.ValidatorUpdate{
+		{
+			PubKey: cryptoproto.PublicKey{Sum: &cryptoproto.PublicKey_Ed25519{Ed25519: []byte{0x01}}},
+			Power:  10,
+		},
+	}
+
+	overrides := []abci.ValidatorUpdate{
+		{
+			PubKey: cryptoproto.PublicKey{Sum: &cryptoproto.PublicKey_Secp256K1{Secp256K1: []byte{0x01}}},
+			Power:  20,
+		},
+	}
+
+	merged := mergeValidatorUpdates(base, overrides)
+	require.Len(t, merged, 2)
+	require.Equal(t, int64(10), merged[0].Power)
+	require.Equal(t, int64(20), merged[1].Power)
+}

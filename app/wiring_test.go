@@ -7,13 +7,17 @@ import (
 
 	"cosmossdk.io/log/v2"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/server"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -85,6 +89,36 @@ func TestValidateChainGenesisRejectsBlockedConstitutionBaseAddress(t *testing.T)
 	require.ErrorContains(t, err, "base_address cannot be a blocked address")
 }
 
+func TestOracleModuleWiringAndAppBoot(t *testing.T) {
+	app := NewApp(log.NewNopLogger(), dbm.NewMemDB(), true, simtestutil.EmptyAppOptions{}, baseapp.SetChainID(appparams.SDKChainID))
+
+	require.Contains(t, app.ModuleManager.Modules, oracletypes.ModuleName)
+	require.NotNil(t, app.OracleProposalHandler)
+
+	genesis := app.BuildChainDefaultGenesis()
+	var oracleGenesis oraclev1.GenesisState
+	require.NoError(t, app.AppCodec().UnmarshalJSON(genesis[oracletypes.ModuleName], &oracleGenesis))
+	require.Equal(t, uint32(1), oracleGenesis.GetParams().GetMinValidators())
+	require.Equal(t, uint32(3), oracleGenesis.GetParams().GetMinSources())
+	require.Equal(t, uint32(100), oracleGenesis.GetParams().GetHistoryLimit())
+
+	setWiringConstitutionGenesisAddresses(t, app, genesis)
+	require.NoError(t, app.ValidateChainGenesis(genesis))
+}
+
+func TestOracleProposalWiringUsesNoOpMempoolFallback(t *testing.T) {
+	app := NewApp(
+		log.NewNopLogger(),
+		dbm.NewMemDB(),
+		true,
+		simtestutil.AppOptionsMap{server.FlagMempoolMaxTxs: -1},
+		baseapp.SetChainID(appparams.SDKChainID),
+	)
+
+	require.NotNil(t, app.OracleProposalHandler)
+	require.Nil(t, app.EVMMempool)
+}
+
 func indexOf(values []string, target string) int {
 	for i, value := range values {
 		if value == target {
@@ -99,16 +133,21 @@ func defaultGenesisWithConstitutionAddresses(t *testing.T, testApp *App) map[str
 	t.Helper()
 
 	genesis := testApp.DefaultGenesis()
-	constitutionGenesis := &constitutionv1.GenesisState{}
-	testApp.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
-	constitutionGenesis.BaseAddress = testGuruAddress(t, 0x21)
-	constitutionGenesis.ModeratorAddress = testGuruAddress(t, 0x22)
-	genesis[constitutiontypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(constitutionGenesis)
-
+	setWiringConstitutionGenesisAddresses(t, testApp, genesis)
 	return genesis
 }
 
-func testGuruAddress(t *testing.T, b byte) string {
+func setWiringConstitutionGenesisAddresses(t *testing.T, app *App, genesis map[string]json.RawMessage) {
+	t.Helper()
+
+	constitutionGenesis := &constitutionv1.GenesisState{}
+	app.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
+	constitutionGenesis.BaseAddress = wiringAddress(t, 0x21)
+	constitutionGenesis.ModeratorAddress = wiringAddress(t, 0x22)
+	genesis[constitutiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(constitutionGenesis)
+}
+
+func wiringAddress(t *testing.T, b byte) string {
 	t.Helper()
 
 	accountCodec := evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr)

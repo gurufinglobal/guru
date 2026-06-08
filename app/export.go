@@ -42,12 +42,32 @@ func (app *App) ExportAppStateAndValidators(forZeroHeight bool, jailAllowedAddrs
 	}
 
 	validators, err := staking.WriteValidators(ctx, app.StakingKeeper)
+	consensusParams := app.GetConsensusParams(ctx)
+	if storedConsensusParams, err := app.ConsensusParamsKeeper.ParamsStore.Get(ctx); err == nil {
+		consensusParams = storedConsensusParams
+	}
+	consensusParams = ensureExportConsensusParams(consensusParams, height)
+
 	return servertypes.ExportedApp{
 		AppState:        appState,
 		Validators:      validators,
 		Height:          height,
-		ConsensusParams: app.GetConsensusParams(ctx),
+		ConsensusParams: consensusParams,
 	}, err
+}
+
+func ensureExportConsensusParams(params tmproto.ConsensusParams, initialHeight int64) tmproto.ConsensusParams {
+	if params.Abci == nil {
+		params.Abci = &tmproto.ABCIParams{}
+	}
+	minEnableHeight := initialHeight
+	if minEnableHeight < 1 {
+		minEnableHeight = 1
+	}
+	if params.Abci.VoteExtensionsEnableHeight == 0 || params.Abci.VoteExtensionsEnableHeight < minEnableHeight {
+		params.Abci.VoteExtensionsEnableHeight = minEnableHeight
+	}
+	return params
 }
 
 // prepare for fresh start at zero height

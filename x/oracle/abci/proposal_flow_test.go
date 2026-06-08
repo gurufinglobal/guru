@@ -11,6 +11,7 @@ import (
 	"cosmossdk.io/core/header"
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cmtsecp256k1 "github.com/cometbft/cometbft/crypto/secp256k1"
+	protoio "github.com/cometbft/cometbft/libs/protoio"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -19,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
-	protoio "github.com/cosmos/gogoproto/io"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
@@ -346,6 +346,50 @@ func TestQuorumFailureLeavesLatestValueUnchanged(t *testing.T) {
 	require.Equal(t, int64(2), latest.GetBlockHeight())
 }
 
+func TestQuorumFailureAdvancesIntervalScheduleWithoutEveryBlockRetry(t *testing.T) {
+	baseCtx, keeper := setupOracleABCIKeeper(t, &oraclev1.Params{
+		MinValidators: 2,
+		MinSources:    3,
+		HistoryLimit:  10,
+	})
+	require.NoError(t, keeper.SetTask(baseCtx.WithBlockHeight(0), &oraclev1.OracleTask{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 5,
+	}))
+	require.NoError(t, keeper.ApplyOracleValues(baseCtx, []*oraclev1.OracleValue{oracleValue("BTC/USD", "10.0", 4, 40)}))
+
+	validator := newOracleTestValidator()
+	extCommit := signedOracleExtCommit(t, 6, validator, "1.0")
+	ctx := withOracleProposalContext(baseCtx, 6, time.Unix(60, 0), extCommit)
+	aggregator := NewAggregator(keeper, oracleValidatorStoreFor(validator))
+	payload, err := aggregator.BuildPayload(ctx, 6, extCommit)
+	require.NoError(t, err)
+	require.Empty(t, payload.GetValues())
+	payloadTx, err := EncodeProposalTx(payload)
+	require.NoError(t, err)
+
+	handler := NewProposalHandler(aggregator, nil, nil)
+	require.NoError(t, handler.ApplyProposalPayload(ctx, &abcitypes.RequestFinalizeBlock{
+		Txs: [][]byte{payloadTx},
+	}))
+
+	latest, err := keeper.GetLatestValue(baseCtx, "BTC/USD")
+	require.NoError(t, err)
+	require.Equal(t, "10.0", latest.GetValue())
+
+	for _, height := range []int64{6, 7, 8, 9} {
+		due, err := keeper.DueTasksForVoteExtension(baseCtx, height)
+		require.NoError(t, err)
+		require.Empty(t, due)
+	}
+	due, err := keeper.DueTasksForVoteExtension(baseCtx, 10)
+	require.NoError(t, err)
+	require.Len(t, due, 1)
+	require.Equal(t, "BTC/USD", due[0].GetSymbol())
+}
+
 func setupOracleABCIKeeper(t *testing.T, params *oraclev1.Params) (sdk.Context, oraclekeeper.Keeper) {
 	t.Helper()
 
@@ -463,7 +507,7 @@ func signedOracleVoteInfo(t *testing.T, height int64, validator oracleTestValida
 
 	voteExtension := mustVoteExtensionBz(t, "BTC/USD", value)
 	signBytes := bytes.Buffer{}
-	err := protoio.NewDelimitedWriter(&signBytes).WriteMsg(&cmtproto.CanonicalVoteExtension{
+	_, err := protoio.NewDelimitedWriter(&signBytes).WriteMsg(&cmtproto.CanonicalVoteExtension{
 		Extension: voteExtension,
 		Height:    height - 1,
 		Round:     0,

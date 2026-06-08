@@ -5313,6 +5313,10 @@ const (
 )
 
 // ValueType classifies the string-encoded oracle value.
+//
+// Guru oracle v1 only supports VALUE_TYPE_NUMERIC for configured tasks,
+// accepted values, samples, and validator results. Non-numeric enum values are
+// reserved for future use and are rejected by current validation.
 type ValueType int32
 
 const (
@@ -5320,9 +5324,9 @@ const (
 	ValueType_VALUE_TYPE_UNSPECIFIED ValueType = 0
 	// VALUE_TYPE_NUMERIC is aggregated as a Cosmos decimal string.
 	ValueType_VALUE_TYPE_NUMERIC ValueType = 1
-	// VALUE_TYPE_STRING is reserved for future non-numeric aggregation.
+	// VALUE_TYPE_STRING is reserved for future non-numeric aggregation and is not supported in v1.
 	ValueType_VALUE_TYPE_STRING ValueType = 2
-	// VALUE_TYPE_BOOL is reserved for future non-numeric aggregation.
+	// VALUE_TYPE_BOOL is reserved for future non-numeric aggregation and is not supported in v1.
 	ValueType_VALUE_TYPE_BOOL ValueType = 3
 )
 
@@ -5374,7 +5378,8 @@ type OracleTask struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Symbol             string    `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
 	ValueType          ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
 	Enabled            bool      `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	SubmissionInterval uint32    `protobuf:"varint,4,opt,name=submission_interval,json=submissionInterval,proto3" json:"submission_interval,omitempty"`
@@ -5433,7 +5438,8 @@ type OracleValue struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Symbol        string    `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
 	ValueType     ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
 	Value         string    `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
 	BlockHeight   int64     `protobuf:"varint,4,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
@@ -5500,7 +5506,8 @@ type OracleSample struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Source         string    `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	Source string `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
 	ValueType      ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
 	Value          string    `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
 	SampleTimeUnix int64     `protobuf:"varint,4,opt,name=sample_time_unix,json=sampleTimeUnix,proto3" json:"sample_time_unix,omitempty"`
@@ -5602,7 +5609,8 @@ type OracleValidatorResult struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Symbol      string    `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
 	ValueType   ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
 	Value       string    `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
 	SourceCount uint32    `protobuf:"varint,4,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`

@@ -49,10 +49,14 @@ func EnsureNodeTasksConfigured(ctx context.Context, cfg Config) ([]*oraclev1.Ora
 	}
 	tasks = normalizedTasks(tasks)
 	if len(tasks) == 0 {
-		return nil, fmt.Errorf("oracle module has no active tasks on node %s", cfg.NodeGRPC)
+		return nil, fmt.Errorf("oracle module has no active numeric tasks on node %s", cfg.NodeGRPC)
 	}
-	if len(MatchingSourcesForTasks(cfg.Sources, tasks)) == 0 {
+	matches := MatchingSourcesForTasks(cfg.Sources, tasks)
+	if len(matches) == 0 {
 		return nil, fmt.Errorf("no configured oracle sources match active node oracle tasks")
+	}
+	if !hasSourceQuorum(matches, paramsResp.GetParams().GetMinSources()) {
+		return nil, fmt.Errorf("configured oracle sources do not satisfy min_sources=%d for any active node oracle task", paramsResp.GetParams().GetMinSources())
 	}
 
 	return tasks, nil
@@ -115,11 +119,28 @@ func MatchingSourcesForTasks(sources []SourceConfig, tasks []*oraclev1.OracleTas
 	return matches
 }
 
+func hasSourceQuorum(sources []SourceConfig, minSources uint32) bool {
+	if minSources == 0 {
+		return true
+	}
+
+	counts := make(map[string]uint32, len(sources))
+	for _, source := range sources {
+		symbol := normalizeSymbol(source.Symbol)
+		counts[symbol]++
+		if counts[symbol] >= minSources {
+			return true
+		}
+	}
+
+	return false
+}
+
 func normalizedTasks(tasks []*oraclev1.OracleTask) []*oraclev1.OracleTask {
 	bySymbol := make(map[string]*oraclev1.OracleTask, len(tasks))
 	for _, task := range tasks {
 		symbol := normalizeSymbol(task.GetSymbol())
-		if symbol == "" || !task.GetEnabled() || task.GetValueType() == oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED {
+		if symbol == "" || !task.GetEnabled() || task.GetValueType() != oraclev1.ValueType_VALUE_TYPE_NUMERIC {
 			continue
 		}
 		bySymbol[symbol] = &oraclev1.OracleTask{

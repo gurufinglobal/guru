@@ -4,19 +4,24 @@ package guru.oracle.v1;
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
 
 // ValueType classifies the string-encoded oracle value.
+//
+// Guru oracle v1 only supports VALUE_TYPE_NUMERIC for configured tasks,
+// accepted values, samples, and validator results. Non-numeric enum values are
+// reserved for future use and are rejected by current validation.
 enum ValueType {
   // VALUE_TYPE_UNSPECIFIED is invalid for configured tasks and results.
   VALUE_TYPE_UNSPECIFIED = 0;
   // VALUE_TYPE_NUMERIC is aggregated as a Cosmos decimal string.
   VALUE_TYPE_NUMERIC = 1;
-  // VALUE_TYPE_STRING is reserved for future non-numeric aggregation.
+  // VALUE_TYPE_STRING is reserved for future non-numeric aggregation and is not supported in v1.
   VALUE_TYPE_STRING = 2;
-  // VALUE_TYPE_BOOL is reserved for future non-numeric aggregation.
+  // VALUE_TYPE_BOOL is reserved for future non-numeric aggregation and is not supported in v1.
   VALUE_TYPE_BOOL = 3;
 }
 
 message OracleTask {
   string symbol = 1;
+  // value_type must be VALUE_TYPE_NUMERIC in oracle v1.
   ValueType value_type = 2;
   bool enabled = 3;
   uint32 submission_interval = 4;
@@ -24,6 +29,7 @@ message OracleTask {
 
 message OracleValue {
   string symbol = 1;
+  // value_type must be VALUE_TYPE_NUMERIC in oracle v1.
   ValueType value_type = 2;
   string value = 3;
   int64 block_height = 4;
@@ -32,6 +38,7 @@ message OracleValue {
 
 message OracleSample {
   string source = 1;
+  // value_type must be VALUE_TYPE_NUMERIC in oracle v1.
   ValueType value_type = 2;
   string value = 3;
   int64 sample_time_unix = 4;
@@ -44,6 +51,7 @@ message OracleSymbolSamples {
 
 message OracleValidatorResult {
   string symbol = 1;
+  // value_type must be VALUE_TYPE_NUMERIC in oracle v1.
   ValueType value_type = 2;
   string value = 3;
   uint32 source_count = 4;

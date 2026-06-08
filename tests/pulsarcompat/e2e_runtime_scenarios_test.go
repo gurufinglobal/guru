@@ -24,6 +24,7 @@ const (
 	e2eChainID                = "guru_631"
 	e2eUpgradeNameV1          = "v1"
 	envEnableUpgradeHandlerV1 = "GURU_ENABLE_UPGRADE_HANDLER_V1"
+	e2eAppDBBackend           = "pebbledb"
 	highFeeAGXN               = "10000000000000000000agxn"
 )
 
@@ -383,7 +384,7 @@ func startNodeWithOptions(
 		"--chain-id", e2eChainID,
 		"--minimum-gas-prices", "0agxn",
 		"--log_level", "error",
-		"--app-db-backend", "goleveldb",
+		"--app-db-backend", e2eAppDBBackend,
 		"--rpc.laddr", fmt.Sprintf("tcp://127.0.0.1:%d", rpcPort),
 		"--p2p.laddr", fmt.Sprintf("tcp://127.0.0.1:%d", p2pPort),
 		"--rpc.pprof_laddr", fmt.Sprintf("127.0.0.1:%d", pprofPort),
@@ -967,12 +968,12 @@ func getNodeStatus(repoRoot, bin, home, rpcAddr string) (nodeStatus, error) {
 		"--output", "json",
 	)
 	if err != nil {
-		return nodeStatus{}, err
+		return nodeStatus{}, fmt.Errorf("%w: %s", err, out)
 	}
 
 	var status nodeStatus
 	if err := json.Unmarshal([]byte(out), &status); err != nil {
-		return nodeStatus{}, err
+		return nodeStatus{}, fmt.Errorf("unmarshal status: %w: %s", err, out)
 	}
 	return status, nil
 }

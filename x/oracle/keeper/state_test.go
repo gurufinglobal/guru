@@ -105,6 +105,51 @@ func TestTaskScheduleIndexesDueTasksByHeight(t *testing.T) {
 	require.Empty(t, due)
 }
 
+func TestDueTasksForVoteExtensionIncludesExactAndMissedButExcludesPipelineHeight(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(0)
+
+	for _, symbol := range []string{"BTC/USD", "ETH/USD", "ATOM/USD"} {
+		require.NoError(t, f.keeper.SetTask(ctx, &oraclev1.OracleTask{
+			Symbol:             symbol,
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 5,
+		}))
+		require.NoError(t, f.keeper.removeScheduledTask(ctx, symbol))
+	}
+	require.NoError(t, f.keeper.scheduleTaskAt(ctx, "BTC/USD", 3))
+	require.NoError(t, f.keeper.scheduleTaskAt(ctx, "BTC/USD", 10))
+	require.NoError(t, f.keeper.scheduleTaskAt(ctx, "ETH/USD", 9))
+	require.NoError(t, f.keeper.scheduleTaskAt(ctx, "ATOM/USD", 10))
+
+	due, err := f.keeper.DueTasksForVoteExtension(ctx, 10)
+	require.NoError(t, err)
+	require.Equal(t, []string{"ATOM/USD", "BTC/USD"}, taskSymbols(due))
+}
+
+func TestAdvanceTaskScheduleDedupeUsesMaxDueHeightAndKeepsScheduleWindow(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(10)
+
+	require.NoError(t, f.keeper.SetTask(ctx, &oraclev1.OracleTask{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 5,
+	}))
+	require.NoError(t, f.keeper.removeScheduledTask(ctx, "BTC/USD"))
+	require.NoError(t, f.keeper.scheduleTaskAt(ctx, "BTC/USD", 3))
+	require.NoError(t, f.keeper.scheduleTaskAt(ctx, "BTC/USD", 9))
+	require.NoError(t, f.keeper.scheduleTaskAt(ctx, "BTC/USD", 10))
+
+	require.NoError(t, f.keeper.AdvanceTaskSchedule(ctx, 10))
+
+	heights, err := f.keeper.scheduledHeightsForSymbol(ctx, "BTC/USD")
+	require.NoError(t, err)
+	require.Equal(t, []int64{9, 15}, heights)
+}
+
 func TestApplyOracleValuesUpdatesLatestAndBoundsHistory(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.SetParams(f.ctx, &oraclev1.Params{
@@ -149,12 +194,30 @@ func TestTaskStateRejectsInvalidTasks(t *testing.T) {
 		Enabled:            true,
 		SubmissionInterval: 1,
 	}))
+	require.ErrorContains(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_STRING,
+		Enabled:            true,
+		SubmissionInterval: 1,
+	}), "non-numeric value_type is not supported")
 	require.Error(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
 		Symbol:    "BTC/USD",
 		ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC,
 		Enabled:   true,
 	}))
 	require.Error(t, f.keeper.RemoveTask(f.ctx, " "))
+}
+
+func TestApplyOracleValuesRejectsNonNumeric(t *testing.T) {
+	f := setupKeeperFixture(t)
+
+	require.ErrorContains(t, f.keeper.ApplyOracleValues(f.ctx, []*oraclev1.OracleValue{{
+		Symbol:        "BTC/USD",
+		ValueType:     oraclev1.ValueType_VALUE_TYPE_BOOL,
+		Value:         "true",
+		BlockHeight:   10,
+		BlockTimeUnix: 100,
+	}}), "non-numeric value_type is not supported")
 }
 
 func TestQueryServerReturnsOracleState(t *testing.T) {
@@ -282,4 +345,12 @@ func testValue(symbol string, value string, height int64) *oraclev1.OracleValue 
 		BlockHeight:   height,
 		BlockTimeUnix: height * 10,
 	}
+}
+
+func taskSymbols(tasks []*oraclev1.OracleTask) []string {
+	symbols := make([]string, 0, len(tasks))
+	for _, task := range tasks {
+		symbols = append(symbols, task.GetSymbol())
+	}
+	return symbols
 }

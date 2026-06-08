@@ -111,16 +111,17 @@ func ValidateOracleValue(value *oraclev1.OracleValue) error {
 	if value.GetValueType() == oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED {
 		return types.ErrInvalidValue.Wrap("value_type cannot be unspecified")
 	}
+	if value.GetValueType() != oraclev1.ValueType_VALUE_TYPE_NUMERIC {
+		return types.ErrInvalidValue.Wrap("non-numeric value_type is not supported")
+	}
 	if value.GetValue() == "" {
 		return types.ErrInvalidValue.Wrap("value cannot be empty")
 	}
 	if value.GetBlockHeight() < 0 {
 		return types.ErrInvalidValue.Wrap("block_height cannot be negative")
 	}
-	if value.GetValueType() == oraclev1.ValueType_VALUE_TYPE_NUMERIC {
-		if _, err := sdkmath.LegacyNewDecFromStr(value.GetValue()); err != nil {
-			return types.ErrInvalidValue.Wrapf("invalid numeric value: %v", err)
-		}
+	if _, err := sdkmath.LegacyNewDecFromStr(value.GetValue()); err != nil {
+		return types.ErrInvalidValue.Wrapf("invalid numeric value: %v", err)
 	}
 
 	return nil

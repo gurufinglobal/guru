@@ -52,6 +52,29 @@ func TestEnsureNodeTasksConfiguredReturnsNodeTasks(t *testing.T) {
 		SourceTimeout:    "1s",
 		NodeGRPC:         address,
 		NodeQueryTimeout: "1s",
+		Sources:          btcSources(),
+	})
+	require.NoError(t, err)
+	require.Len(t, tasks, 1)
+	require.Equal(t, "BTC/USD", tasks[0].GetSymbol())
+	require.Equal(t, uint32(2), tasks[0].GetSubmissionInterval())
+}
+
+func TestEnsureNodeTasksConfiguredRequiresMinSources(t *testing.T) {
+	address, stop := startOracleQueryServer(t, testOracleParams(), []*oraclev1.OracleTask{{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 1,
+	}})
+	defer stop()
+
+	_, err := EnsureNodeTasksConfigured(context.Background(), Config{
+		Socket:           "/tmp/oracle.sock",
+		RequestTimeout:   "1s",
+		SourceTimeout:    "1s",
+		NodeGRPC:         address,
+		NodeQueryTimeout: "1s",
 		Sources: []SourceConfig{{
 			Name:         "btc",
 			Symbol:       "BTC/USD",
@@ -59,10 +82,27 @@ func TestEnsureNodeTasksConfiguredReturnsNodeTasks(t *testing.T) {
 			ResponsePath: "price",
 		}},
 	})
-	require.NoError(t, err)
-	require.Len(t, tasks, 1)
-	require.Equal(t, "BTC/USD", tasks[0].GetSymbol())
-	require.Equal(t, uint32(2), tasks[0].GetSubmissionInterval())
+	require.ErrorContains(t, err, "min_sources=3")
+}
+
+func TestEnsureNodeTasksConfiguredRejectsNonNumericNodeTasks(t *testing.T) {
+	address, stop := startOracleQueryServer(t, testOracleParams(), []*oraclev1.OracleTask{{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_STRING,
+		Enabled:            true,
+		SubmissionInterval: 1,
+	}})
+	defer stop()
+
+	_, err := EnsureNodeTasksConfigured(context.Background(), Config{
+		Socket:           "/tmp/oracle.sock",
+		RequestTimeout:   "1s",
+		SourceTimeout:    "1s",
+		NodeGRPC:         address,
+		NodeQueryTimeout: "1s",
+		Sources:          btcSources(),
+	})
+	require.ErrorContains(t, err, "no active numeric tasks")
 }
 
 func TestEnsureNodeTasksConfiguredRejectsMissingParams(t *testing.T) {
@@ -116,12 +156,7 @@ func TestEnsureNodeTasksConfiguredFollowsNodeTaskPagination(t *testing.T) {
 		SourceTimeout:    "1s",
 		NodeGRPC:         address,
 		NodeQueryTimeout: "1s",
-		Sources: []SourceConfig{{
-			Name:         "btc",
-			Symbol:       "BTC/USD",
-			URL:          "http://example.invalid/btc",
-			ResponsePath: "price",
-		}},
+		Sources:          btcSources(),
 	})
 	require.NoError(t, err)
 	require.Len(t, tasks, 125)
@@ -148,6 +183,14 @@ func TestMatchingSourcesForTasksDeduplicatesAndSorts(t *testing.T) {
 
 func testOracleParams() *oraclev1.Params {
 	return &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100}
+}
+
+func btcSources() []SourceConfig {
+	return []SourceConfig{
+		{Name: "btc-a", Symbol: "BTC/USD", URL: "http://example.invalid/btc-a", ResponsePath: "price"},
+		{Name: "btc-b", Symbol: "BTC/USD", URL: "http://example.invalid/btc-b", ResponsePath: "price"},
+		{Name: "btc-c", Symbol: "BTC/USD", URL: "http://example.invalid/btc-c", ResponsePath: "price"},
+	}
 }
 
 func startOracleQueryServer(t *testing.T, params *oraclev1.Params, tasks []*oraclev1.OracleTask) (string, func()) {

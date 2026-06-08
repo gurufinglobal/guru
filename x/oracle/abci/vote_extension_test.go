@@ -76,6 +76,19 @@ func TestVerifyVoteExtensionRejectsDuplicateSymbolAndInvalidNumeric(t *testing.T
 	})
 	require.NoError(t, err)
 	require.Equal(t, abcitypes.ResponseVerifyVoteExtension_REJECT, invalidNumericResp.Status)
+
+	nonNumericBz, err := proto.Marshal(&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
+		Symbol:      "BTC/USD",
+		ValueType:   oraclev1.ValueType_VALUE_TYPE_STRING,
+		Value:       "up",
+		SourceCount: 3,
+	}}})
+	require.NoError(t, err)
+	nonNumericResp, err := handler.VerifyVoteExtension(sdk.Context{}, &abcitypes.RequestVerifyVoteExtension{
+		VoteExtension: nonNumericBz,
+	})
+	require.NoError(t, err)
+	require.Equal(t, abcitypes.ResponseVerifyVoteExtension_REJECT, nonNumericResp.Status)
 }
 
 func TestExtendVoteReturnsEmptyOnSidecarFailures(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var MagicPrefix = []byte("GURU_ORACLE_V1:")
+const magicPrefix = "GURU_ORACLE_V1:"
 
 func EncodeProposalTx(payload *oraclev1.OracleProposalPayload) ([]byte, error) {
 	if payload == nil {
@@ -20,19 +20,20 @@ func EncodeProposalTx(payload *oraclev1.OracleProposalPayload) ([]byte, error) {
 		return nil, err
 	}
 
-	tx := make([]byte, 0, len(MagicPrefix)+len(bz))
-	tx = append(tx, MagicPrefix...)
+	tx := make([]byte, 0, len(magicPrefix)+len(bz))
+	tx = append(tx, magicPrefix...)
 	tx = append(tx, bz...)
 	return tx, nil
 }
 
 func DecodeProposalTx(tx []byte) (*oraclev1.OracleProposalPayload, bool, error) {
-	if !bytes.HasPrefix(tx, MagicPrefix) {
+	prefix := []byte(magicPrefix)
+	if !bytes.HasPrefix(tx, prefix) {
 		return nil, false, nil
 	}
 
 	payload := &oraclev1.OracleProposalPayload{}
-	if err := proto.Unmarshal(tx[len(MagicPrefix):], payload); err != nil {
+	if err := proto.Unmarshal(tx[len(prefix):], payload); err != nil {
 		return nil, true, err
 	}
 
@@ -40,5 +41,5 @@ func DecodeProposalTx(tx []byte) (*oraclev1.OracleProposalPayload, bool, error) 
 }
 
 func IsProposalTx(tx []byte) bool {
-	return bytes.HasPrefix(tx, MagicPrefix)
+	return bytes.HasPrefix(tx, []byte(magicPrefix))
 }

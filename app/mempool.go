@@ -16,7 +16,8 @@ import (
 
 func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.Logger) error {
 	if evmtypes.GetChainConfig() == nil {
-		logger.Debug("evm chain config is not set, skipping mempool configuration")
+		logger.Debug("evm chain config is not set, using default proposal handler with oracle payload wrapper")
+		app.configureNoOpOracleProposalHandler()
 		return nil
 	}
 
@@ -32,7 +33,8 @@ func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.L
 	mempoolCfg := evmserver.ResolveMempoolConfig(anteHandler, appOpts, logger)
 	cosmosPoolMaxTx := evmserver.GetCosmosPoolMaxTx(appOpts, logger)
 	if cosmosPoolMaxTx < 0 {
-		logger.Debug("evm mempool is disabled, skipping configuration")
+		logger.Debug("evm mempool is disabled, using default proposal handler with oracle payload wrapper")
+		app.configureNoOpOracleProposalHandler()
 		return nil
 	}
 
@@ -57,16 +59,9 @@ func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.L
 			sdkmempool.NewDefaultSignerExtractionAdapter(),
 		),
 	)
-	oracleAggregator := oracleabci.NewAggregator(app.OracleKeeper, app.StakingKeeper)
-	oracleProposalHandler := oracleabci.NewProposalHandler(
-		oracleAggregator,
-		proposalHandler.PrepareProposalHandler(),
-		proposalHandler.ProcessProposalHandler(),
-	)
+	app.configureOracleProposalHandler(proposalHandler)
 
 	txDecoder := app.txConfig.TxDecoder()
-	app.SetPrepareProposal(oracleProposalHandler.PrepareProposal)
-	app.SetProcessProposal(oracleProposalHandler.ProcessProposal)
 	app.SetInsertTxHandler(evmMempool.NewInsertTxHandler(txDecoder))
 	app.SetReapTxsHandler(evmMempool.NewReapTxsHandler())
 	app.SetCheckTxHandler(evmMempool.NewCheckTxHandler(
@@ -75,7 +70,26 @@ func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.L
 	))
 	app.SetMempool(evmMempool)
 	app.EVMMempool = evmMempool
-	app.OracleProposalHandler = &oracleProposalHandler
 
 	return nil
+}
+
+func (app *App) configureNoOpOracleProposalHandler() {
+	app.configureOracleProposalHandler(baseapp.NewDefaultProposalHandler(
+		sdkmempool.NoOpMempool{},
+		NewNoCheckProposalTxVerifier(app.BaseApp),
+	))
+}
+
+func (app *App) configureOracleProposalHandler(proposalHandler *baseapp.DefaultProposalHandler) {
+	oracleAggregator := oracleabci.NewAggregator(app.OracleKeeper, app.StakingKeeper)
+	oracleProposalHandler := oracleabci.NewProposalHandler(
+		oracleAggregator,
+		proposalHandler.PrepareProposalHandler(),
+		proposalHandler.ProcessProposalHandler(),
+	)
+
+	app.SetPrepareProposal(oracleProposalHandler.PrepareProposal)
+	app.SetProcessProposal(oracleProposalHandler.ProcessProposal)
+	app.OracleProposalHandler = &oracleProposalHandler
 }

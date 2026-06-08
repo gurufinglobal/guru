@@ -4,8 +4,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdkregistry "github.com/cosmos/cosmos-sdk/types/registry"
 	"github.com/cosmos/cosmos-sdk/std"
+	sdkregistry "github.com/cosmos/cosmos-sdk/types/registry"
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	txsigning "github.com/cosmos/cosmos-sdk/x/tx/signing"
@@ -51,13 +51,17 @@ func MakeEncodingConfig(accountPrefix, validatorPrefix, consensusPrefix string) 
 
 	signingOptions.FileResolver = interfaceRegistry
 
-	txConfig, err := authtx.NewTxConfigWithOptions(appCodec, authtx.ConfigOptions{
+	baseTxConfig, err := authtx.NewTxConfigWithOptions(appCodec, authtx.ConfigOptions{
 		EnabledSignModes: []signingtypes.SignMode{
 			signingtypes.SignMode_SIGN_MODE_DIRECT,
 			signingtypes.SignMode_SIGN_MODE_DIRECT_AUX,
 		},
 		SigningOptions: signingOptions,
 	})
+	if err != nil {
+		panic(err)
+	}
+	txConfig, err := newPulsarTxConfig(baseTxConfig, appCodec)
 	if err != nil {
 		panic(err)
 	}

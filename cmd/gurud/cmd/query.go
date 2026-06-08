@@ -7,6 +7,7 @@ import (
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	constitutioncli "github.com/gurufinglobal/guru/v3/x/constitution/client/cli"
+	oraclecli "github.com/gurufinglobal/guru/v3/x/oracle/client/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +29,7 @@ func queryCommand() *cobra.Command {
 		sdkserver.QueryBlockCmd(),
 		sdkserver.QueryBlockResultsCmd(),
 		constitutioncli.GetQueryCmd(),
+		oraclecli.GetQueryCmd(),
 	)
 
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")

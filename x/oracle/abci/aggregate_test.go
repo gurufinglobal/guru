@@ -175,6 +175,25 @@ func TestAggregateValuesUsesOnlyDueTasksForPreviousHeight(t *testing.T) {
 	require.Len(t, values, 1)
 }
 
+func TestOraclePayloadExpectedRequiresDueTasks(t *testing.T) {
+	ctx := sdk.Context{}.
+		WithBlockHeight(12).
+		WithConsensusParams(cmtproto.ConsensusParams{Abci: &cmtproto.ABCIParams{VoteExtensionsEnableHeight: 1}})
+
+	aggregator := Aggregator{keeper: fakeKeeper{dueHeight: 99}}
+	expected, err := aggregator.OraclePayloadExpected(ctx)
+	require.NoError(t, err)
+	require.False(t, expected)
+
+	aggregator.keeper = fakeKeeper{
+		tasks:     oracleTestTasks(),
+		dueHeight: 11,
+	}
+	expected, err = aggregator.OraclePayloadExpected(ctx)
+	require.NoError(t, err)
+	require.True(t, expected)
+}
+
 func mustVoteExtensionBz(t *testing.T, symbol string, value string) []byte {
 	t.Helper()
 
@@ -198,7 +217,7 @@ func (f fakeKeeper) GetParams(context.Context) (*oraclev1.Params, error) {
 	return f.params, nil
 }
 
-func (f fakeKeeper) DueTasks(_ context.Context, height int64) ([]*oraclev1.OracleTask, error) {
+func (f fakeKeeper) DueTasksForVoteExtension(_ context.Context, height int64) ([]*oraclev1.OracleTask, error) {
 	if f.dueHeight != 0 && f.dueHeight != height {
 		return nil, nil
 	}

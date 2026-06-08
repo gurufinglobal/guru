@@ -182,9 +182,9 @@ func ParseValueType(value string) (oraclev1.ValueType, error) {
 	case "", "NUMERIC", "VALUE_TYPE_NUMERIC":
 		return oraclev1.ValueType_VALUE_TYPE_NUMERIC, nil
 	case "STRING", "VALUE_TYPE_STRING":
-		return oraclev1.ValueType_VALUE_TYPE_STRING, nil
+		return oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED, fmt.Errorf("non-numeric value_type %q is not supported", value)
 	case "BOOL", "BOOLEAN", "VALUE_TYPE_BOOL":
-		return oraclev1.ValueType_VALUE_TYPE_BOOL, nil
+		return oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED, fmt.Errorf("non-numeric value_type %q is not supported", value)
 	default:
 		return oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED, fmt.Errorf("unsupported value_type %q", value)
 	}

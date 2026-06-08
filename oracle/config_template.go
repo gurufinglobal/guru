@@ -14,8 +14,9 @@ source_timeout = %q
 node_grpc = %q
 node_query_timeout = %q
 
-# Operators add local sources. The daemon only serves samples for chain tasks
-# whose symbol and value_type match configured sources.
+# Operators add local numeric sources. The daemon only serves samples for chain
+# tasks whose symbol and value_type match configured sources. Non-numeric value
+# types are reserved for future use and are rejected in oracle v1.
 #
 #[[sources]]
 #name = "example-btc-usd"
