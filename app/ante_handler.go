@@ -37,6 +37,7 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) er
 		return err
 	}
 	anteHandler = appante.WrapAnteHandlerWithSelfBondCheck(anteHandler, app.CustomStakingKeeper)
+	anteHandler = appante.WrapAnteHandlerWithLegacyGovBlock(anteHandler)
 
 	app.anteHandler = anteHandler
 	app.SetAnteHandler(anteHandler)

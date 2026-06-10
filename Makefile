@@ -20,6 +20,7 @@ CMD_BINS := $(notdir $(patsubst %/,%,$(dir $(CMD_MAIN_FILES))))
 CMD_BUILD_TARGETS := $(addprefix $(BUILDDIR)/,$(CMD_BINS))
 
 export GO111MODULE = on
+export CGO_ENABLED ?= 1
 
 ###############################################################################
 ###                              Build Flags                                ###
@@ -48,7 +49,7 @@ endif
 ldflags_common += $(LDFLAGS)
 ldflags = $(strip $(ldflags_common) -X github.com/cosmos/cosmos-sdk/version.AppName=$(1))
 
-BUILD_FLAGS := -tags "$(build_tags)" -trimpath
+BUILD_FLAGS := -mod=readonly -tags "$(build_tags)" -trimpath
 
 ###############################################################################
 ###                                Commands                                 ###
@@ -61,22 +62,18 @@ all: build
 build: $(CMD_BUILD_TARGETS)
 	@echo "Built $(CMD_BINS) to $(BUILDDIR)."
 
-$(BUILDDIR)/%: go.sum FORCE
+$(BUILDDIR)/%: go.mod go.sum FORCE
 	@echo "Building $* to $(BUILDDIR) ..."
 	@mkdir -p $(BUILDDIR)
 	@go build $(BUILD_FLAGS) -ldflags '$(call ldflags,$*)' -o $@ ./cmd/$*
 
-install: go.sum
+install: go.mod go.sum
 	@echo "Installing gurud to $(GOPATH)/bin ..."
 	@go install $(BUILD_FLAGS) -ldflags '$(call ldflags,gurud)' ./cmd/gurud
 
 clean:
 	@echo "Cleaning build directory..."
 	@rm -rf $(BUILDDIR)
-
-go.sum: go.mod
-	@echo "Ensuring dependencies are completely synced..."
-	@go mod tidy
 
 FORCE:
 

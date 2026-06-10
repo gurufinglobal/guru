@@ -38,3 +38,5 @@ tests/systemtests/binaries
 tests/systemtests/testnet
 .testnets
 AGENTS.md
+
+scripts/localnet/

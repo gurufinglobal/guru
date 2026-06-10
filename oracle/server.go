@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -76,6 +77,12 @@ func (s *Sidecar) Run(ctx context.Context) error {
 
 	server := grpc.NewServer()
 	oraclev1.RegisterOracleSidecarServer(server, s)
+	log.Printf(
+		"oracle sidecar serving socket=%q active_tasks=%d configured_sources=%d",
+		socketPath,
+		len(s.activeTasks),
+		len(s.config.Sources),
+	)
 
 	group, runCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
@@ -103,6 +110,8 @@ func (s *Sidecar) GetSamples(ctx context.Context, req *oraclev1.GetSamplesReques
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
+	tasks := normalizedTasks(req.GetTasks())
+	log.Printf("oracle sidecar received sample request height=%d tasks=%d", req.GetHeight(), len(tasks))
 
 	timeout, err := s.config.RequestTimeoutDuration()
 	if err != nil {
@@ -125,15 +134,29 @@ func (s *Sidecar) GetSamples(ctx context.Context, req *oraclev1.GetSamplesReques
 	var mu sync.Mutex
 	group, groupCtx := errgroup.WithContext(requestCtx)
 
-	for _, task := range normalizedTasks(req.GetTasks()) {
+	for _, task := range tasks {
 		for _, source := range s.matchingSources(task) {
 			task := task
 			source := source
 			group.Go(func() error {
 				sample, err := s.sampleForSource(groupCtx, source, task, sourceTimeout)
 				if err != nil {
+					log.Printf(
+						"oracle sidecar sample fetch failed height=%d symbol=%q source=%q err=%v",
+						req.GetHeight(),
+						normalizeSymbol(task.GetSymbol()),
+						strings.TrimSpace(source.Name),
+						err,
+					)
 					return nil
 				}
+				log.Printf(
+					"oracle sidecar collected sample height=%d symbol=%q source=%q value=%q",
+					req.GetHeight(),
+					normalizeSymbol(task.GetSymbol()),
+					sample.GetSource(),
+					sample.GetValue(),
+				)
 
 				mu.Lock()
 				results = append(results, sampleResult{symbol: normalizeSymbol(task.GetSymbol()), sample: sample})
@@ -160,8 +183,10 @@ func (s *Sidecar) GetSamples(ctx context.Context, req *oraclev1.GetSamplesReques
 	sort.Strings(symbols)
 
 	response := &oraclev1.GetSamplesResponse{Symbols: make([]*oraclev1.OracleSymbolSamples, 0, len(symbols))}
+	sampleCount := 0
 	for _, symbol := range symbols {
 		samples := grouped[symbol]
+		sampleCount += len(samples)
 		sort.Slice(samples, func(i, j int) bool {
 			return samples[i].GetSource() < samples[j].GetSource()
 		})
@@ -170,6 +195,12 @@ func (s *Sidecar) GetSamples(ctx context.Context, req *oraclev1.GetSamplesReques
 			Samples: samples,
 		})
 	}
+	log.Printf(
+		"oracle sidecar served sample request height=%d symbols=%d samples=%d",
+		req.GetHeight(),
+		len(response.GetSymbols()),
+		sampleCount,
+	)
 
 	return response, nil
 }
@@ -185,6 +216,7 @@ func (s *Sidecar) runSourcePollers(ctx context.Context) error {
 	}
 
 	group, pollCtx := errgroup.WithContext(ctx)
+	pollers := 0
 	for _, task := range s.activeTasks {
 		for _, source := range s.matchingSources(task) {
 			if _, ok, err := source.IntervalDuration(); err != nil {
@@ -198,8 +230,10 @@ func (s *Sidecar) runSourcePollers(ctx context.Context) error {
 			group.Go(func() error {
 				return s.pollSource(pollCtx, source, task, sourceTimeout)
 			})
+			pollers++
 		}
 	}
+	log.Printf("oracle sidecar source pollers started count=%d", pollers)
 
 	return group.Wait()
 }
@@ -209,6 +243,12 @@ func (s *Sidecar) pollSource(ctx context.Context, source SourceConfig, task *ora
 	if err != nil || !ok {
 		return err
 	}
+	log.Printf(
+		"oracle sidecar source poller started symbol=%q source=%q interval=%s",
+		normalizeSymbol(task.GetSymbol()),
+		strings.TrimSpace(source.Name),
+		interval,
+	)
 
 	timer := time.NewTimer(0)
 	defer timer.Stop()
@@ -217,7 +257,22 @@ func (s *Sidecar) pollSource(ctx context.Context, source SourceConfig, task *ora
 		case <-ctx.Done():
 			return nil
 		case <-timer.C:
-			_, _ = s.fetchAndCache(ctx, source, task, sourceTimeout)
+			sample, err := s.fetchAndCache(ctx, source, task, sourceTimeout)
+			if err != nil {
+				log.Printf(
+					"oracle sidecar source poll failed symbol=%q source=%q err=%v",
+					normalizeSymbol(task.GetSymbol()),
+					strings.TrimSpace(source.Name),
+					err,
+				)
+			} else {
+				log.Printf(
+					"oracle sidecar source polled symbol=%q source=%q value=%q",
+					normalizeSymbol(task.GetSymbol()),
+					sample.GetSource(),
+					sample.GetValue(),
+				)
+			}
 			timer.Reset(interval)
 		}
 	}

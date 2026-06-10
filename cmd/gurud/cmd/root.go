@@ -122,6 +122,7 @@ func NewRootCmd() *cobra.Command {
 	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
 		panic(err)
 	}
+	patchEVMSendCommand(rootCmd)
 
 	return rootCmd
 }
