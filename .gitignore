@@ -40,3 +40,4 @@ tests/systemtests/testnet
 AGENTS.md
 
 scripts/localnet/
+.agent-work/

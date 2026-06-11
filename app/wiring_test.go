@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/log/v2"
+	sdkmath "cosmossdk.io/math"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -13,6 +14,7 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
@@ -56,6 +58,17 @@ func TestDefaultGenesisSetsDistributionCommunityTaxToZero(t *testing.T) {
 	require.True(t, distrGenesis.Params.CommunityTax.IsZero(), "distribution community_tax default must be zero")
 }
 
+func TestDefaultGenesisDisablesFeeMarketBaseFee(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := testApp.DefaultGenesis()
+
+	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
+	testApp.AppCodec().MustUnmarshalJSON(genesis[feemarkettypes.ModuleName], feeMarketGenesis)
+
+	require.True(t, feeMarketGenesis.Params.NoBaseFee, "feemarket no_base_fee default must be true")
+	require.True(t, feeMarketGenesis.Params.BaseFee.IsZero(), "feemarket base_fee default must be zero")
+}
+
 func TestValidateChainGenesisRejectsInvalidConstitutionSeparationRatio(t *testing.T) {
 	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
 	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
@@ -87,6 +100,36 @@ func TestValidateChainGenesisRejectsBlockedConstitutionBaseAddress(t *testing.T)
 	err := testApp.ValidateChainGenesis(genesis)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "base_address cannot be a blocked address")
+}
+
+func TestValidateChainGenesisRejectsEnabledFeeMarketBaseFee(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
+
+	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
+	testApp.AppCodec().MustUnmarshalJSON(genesis[feemarkettypes.ModuleName], feeMarketGenesis)
+	feeMarketGenesis.Params.NoBaseFee = false
+	genesis[feemarkettypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(feeMarketGenesis)
+
+	err := testApp.ValidateChainGenesis(genesis)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "feemarket no_base_fee must be true")
+}
+
+func TestValidateChainGenesisRejectsNonZeroFeeMarketBaseFee(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
+
+	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
+	testApp.AppCodec().MustUnmarshalJSON(genesis[feemarkettypes.ModuleName], feeMarketGenesis)
+	feeMarketGenesis.Params.BaseFee = sdkmath.LegacyNewDec(1)
+	genesis[feemarkettypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(feeMarketGenesis)
+
+	err := testApp.ValidateChainGenesis(genesis)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "feemarket base_fee must be zero")
 }
 
 func TestOracleModuleWiringAndAppBoot(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 )
@@ -89,6 +90,19 @@ func (app *App) ValidateChainGenesis(genesis map[string]json.RawMessage) error {
 			expeditedDepositAmt.String(),
 			minDepositAmt.String(),
 		)
+	}
+
+	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
+	if bz, ok := genesis[feemarkettypes.ModuleName]; ok {
+		if err := app.appCodec.UnmarshalJSON(bz, feeMarketGenesis); err != nil {
+			return fmt.Errorf("failed to decode feemarket genesis: %w", err)
+		}
+	}
+	if !feeMarketGenesis.Params.NoBaseFee {
+		return fmt.Errorf("feemarket no_base_fee must be true")
+	}
+	if !feeMarketGenesis.Params.BaseFee.IsZero() {
+		return fmt.Errorf("feemarket base_fee must be zero, got %s", feeMarketGenesis.Params.BaseFee.String())
 	}
 
 	evmGenesis := evmtypes.DefaultGenesisState()
@@ -175,7 +189,16 @@ func (app *App) DefaultGenesis() map[string]json.RawMessage {
 	distrGenesis.Params.CommunityTax = sdkmath.LegacyZeroDec()
 	genesis[distrtypes.ModuleName] = app.appCodec.MustMarshalJSON(distrGenesis)
 
-	// 6) EVM denom and extended denom
+	// 6) feemarket base fee policy
+	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
+	if bz, ok := genesis[feemarkettypes.ModuleName]; ok {
+		app.appCodec.MustUnmarshalJSON(bz, feeMarketGenesis)
+	}
+	feeMarketGenesis.Params.NoBaseFee = true
+	feeMarketGenesis.Params.BaseFee = sdkmath.LegacyZeroDec()
+	genesis[feemarkettypes.ModuleName] = app.appCodec.MustMarshalJSON(feeMarketGenesis)
+
+	// 7) EVM denom and extended denom
 	evmGenesis := evmtypes.DefaultGenesisState()
 	if bz, ok := genesis[evmtypes.ModuleName]; ok {
 		app.appCodec.MustUnmarshalJSON(bz, evmGenesis)
