@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"context"
+	"errors"
 	"testing"
 
 	coreaddress "cosmossdk.io/core/address"
@@ -161,6 +162,8 @@ func TestValidateTxSelfBondConstraints(t *testing.T) {
 
 	otherDelegatorAddress, err := f.accountCodec.BytesToString(bytes.Repeat([]byte{0x22}, 20))
 	require.NoError(t, err)
+	otherValidatorAddress, err := f.valCodec.BytesToString(bytes.Repeat([]byte{0x44}, 20))
+	require.NoError(t, err)
 
 	tests := []struct {
 		name      string
@@ -189,7 +192,18 @@ func TestValidateTxSelfBondConstraints(t *testing.T) {
 			shouldErr: false,
 		},
 		{
-			name: "rejects self undelegate below minimum",
+			name: "allows self delegate",
+			tx: testTx{msgs: []sdk.Msg{
+				&stakingtypes.MsgDelegate{
+					DelegatorAddress: f.selfDelegatorAddress,
+					ValidatorAddress: f.validatorAddress,
+					Amount:           sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "1")},
+				},
+			}},
+			shouldErr: false,
+		},
+		{
+			name: "allows self undelegate below minimum",
 			tx: testTx{msgs: []sdk.Msg{
 				&stakingtypes.MsgUndelegate{
 					DelegatorAddress: f.selfDelegatorAddress,
@@ -197,7 +211,31 @@ func TestValidateTxSelfBondConstraints(t *testing.T) {
 					Amount:           sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "30")},
 				},
 			}},
-			shouldErr: true,
+			shouldErr: false,
+		},
+		{
+			name: "allows self begin redelegate below minimum",
+			tx: testTx{msgs: []sdk.Msg{
+				&stakingtypes.MsgBeginRedelegate{
+					DelegatorAddress:    f.selfDelegatorAddress,
+					ValidatorSrcAddress: f.validatorAddress,
+					ValidatorDstAddress: otherValidatorAddress,
+					Amount:              sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "30")},
+				},
+			}},
+			shouldErr: false,
+		},
+		{
+			name: "allows self cancel unbonding delegation below minimum",
+			tx: testTx{msgs: []sdk.Msg{
+				&stakingtypes.MsgCancelUnbondingDelegation{
+					DelegatorAddress: f.selfDelegatorAddress,
+					ValidatorAddress: f.validatorAddress,
+					Amount:           sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "30")},
+					CreationHeight:   1,
+				},
+			}},
+			shouldErr: false,
 		},
 		{
 			name: "allows non-self undelegate",
@@ -211,7 +249,7 @@ func TestValidateTxSelfBondConstraints(t *testing.T) {
 			shouldErr: false,
 		},
 		{
-			name: "rejects nested authz undelegate below minimum",
+			name: "allows nested authz undelegate below minimum",
 			tx: testTx{msgs: []sdk.Msg{
 				&authztypes.MsgExec{
 					Grantee: "grantee",
@@ -220,6 +258,38 @@ func TestValidateTxSelfBondConstraints(t *testing.T) {
 							DelegatorAddress: f.selfDelegatorAddress,
 							ValidatorAddress: f.validatorAddress,
 							Amount:           sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "30")},
+						}),
+					},
+				},
+			}},
+			shouldErr: false,
+		},
+		{
+			name: "allows nested authz begin redelegate below minimum",
+			tx: testTx{msgs: []sdk.Msg{
+				&authztypes.MsgExec{
+					Grantee: "grantee",
+					Msgs: []*codectypes.Any{
+						mustAnyWithValue(t, &stakingtypes.MsgBeginRedelegate{
+							DelegatorAddress:    f.selfDelegatorAddress,
+							ValidatorSrcAddress: f.validatorAddress,
+							ValidatorDstAddress: otherValidatorAddress,
+							Amount:              sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "30")},
+						}),
+					},
+				},
+			}},
+			shouldErr: false,
+		},
+		{
+			name: "rejects nested authz create validator below minimum",
+			tx: testTx{msgs: []sdk.Msg{
+				&authztypes.MsgExec{
+					Grantee: "grantee",
+					Msgs: []*codectypes.Any{
+						mustAnyWithValue(t, &stakingtypes.MsgCreateValidator{
+							ValidatorAddress: f.validatorAddress,
+							Value:            sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "99")},
 						}),
 					},
 				},
@@ -233,6 +303,78 @@ func TestValidateTxSelfBondConstraints(t *testing.T) {
 			err := f.keeper.ValidateTxSelfBondConstraints(f.ctx, tc.tx)
 			if tc.shouldErr {
 				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestValidateTxSelfBondConstraintsLoadsMinBondOnlyForBaseCreateValidator(t *testing.T) {
+	f := setupAnteKeeperFixture(t, "100")
+	f.keeper.minBondSource = mockMinValidatorBondSource{err: errors.New("min bond loaded")}
+
+	tests := []struct {
+		name      string
+		tx        sdk.Tx
+		shouldErr bool
+	}{
+		{
+			name: "self delegate does not load min bond",
+			tx: testTx{msgs: []sdk.Msg{
+				&stakingtypes.MsgDelegate{
+					DelegatorAddress: f.selfDelegatorAddress,
+					ValidatorAddress: f.validatorAddress,
+					Amount:           sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "1")},
+				},
+			}},
+			shouldErr: false,
+		},
+		{
+			name: "non-base create validator does not load min bond",
+			tx: testTx{msgs: []sdk.Msg{
+				&stakingtypes.MsgCreateValidator{
+					ValidatorAddress: f.validatorAddress,
+					Value:            sdk.Coin{Denom: "stake", Amount: mustInt(t, "1")},
+				},
+			}},
+			shouldErr: false,
+		},
+		{
+			name: "nested non-create message does not load min bond",
+			tx: testTx{msgs: []sdk.Msg{
+				&authztypes.MsgExec{
+					Grantee: "grantee",
+					Msgs: []*codectypes.Any{
+						mustAnyWithValue(t, &stakingtypes.MsgUndelegate{
+							DelegatorAddress: f.selfDelegatorAddress,
+							ValidatorAddress: f.validatorAddress,
+							Amount:           sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "1")},
+						}),
+					},
+				},
+			}},
+			shouldErr: false,
+		},
+		{
+			name: "base create validator loads min bond",
+			tx: testTx{msgs: []sdk.Msg{
+				&stakingtypes.MsgCreateValidator{
+					ValidatorAddress: f.validatorAddress,
+					Value:            sdk.Coin{Denom: appparams.BaseDenom, Amount: mustInt(t, "100")},
+				},
+			}},
+			shouldErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := f.keeper.ValidateTxSelfBondConstraints(f.ctx, tc.tx)
+			if tc.shouldErr {
+				require.Error(t, err)
+				require.ErrorContains(t, err, "min bond loaded")
 				return
 			}
 

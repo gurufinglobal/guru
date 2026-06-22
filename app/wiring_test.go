@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"testing"
 
+	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
@@ -102,6 +104,81 @@ func TestValidateChainGenesisRejectsBlockedConstitutionBaseAddress(t *testing.T)
 	require.ErrorContains(t, err, "base_address cannot be a blocked address")
 }
 
+func TestValidateChainGenesisRejectsValidatorSelfBondBelowConstitutionMinimum(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	setWiringMinValidatorBond(t, testApp, genesis, "100")
+	setWiringStakingValidator(t, testApp, genesis, "99")
+
+	err := testApp.ValidateChainGenesis(genesis)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "genesis self-bond 99 below constitution minimum 100")
+}
+
+func TestValidateChainGenesisAllowsValidatorSelfBondAtConstitutionMinimum(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	setWiringMinValidatorBond(t, testApp, genesis, "100")
+	setWiringStakingValidator(t, testApp, genesis, "100")
+
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
+}
+
+func TestValidateChainGenesisUsesDefaultConstitutionParamsWhenOmitted(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	removeWiringConstitutionParams(t, genesis)
+
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
+}
+
+func TestValidateChainGenesisAllowsExportedInactiveValidatorBelowConstitutionMinimum(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	setWiringMinValidatorBond(t, testApp, genesis, "100")
+	setWiringStakingValidator(t, testApp, genesis, "99")
+	setWiringStakingExported(t, testApp, genesis)
+
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
+}
+
+func TestValidateChainGenesisRejectsExportedActiveValidatorBelowConstitutionMinimum(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	setWiringMinValidatorBond(t, testApp, genesis, "100")
+	validatorAddress := setWiringStakingValidator(t, testApp, genesis, "99")
+	setWiringStakingExported(t, testApp, genesis, validatorAddress)
+
+	err := testApp.ValidateChainGenesis(genesis)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "genesis self-bond 99 below constitution minimum 100")
+}
+
+func TestValidateChainGenesisRejectsDuplicateSelfDelegation(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	setWiringMinValidatorBond(t, testApp, genesis, "100")
+	validatorAddress := setWiringStakingValidator(t, testApp, genesis, "120")
+	setWiringStakingExported(t, testApp, genesis, validatorAddress)
+	setWiringDuplicateSelfDelegations(t, testApp, genesis, 60, 60)
+
+	err := testApp.ValidateChainGenesis(genesis)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "duplicate genesis self-delegation")
+}
+
+func TestValidateChainGenesisRejectsInitialDuplicateSelfDelegation(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	setWiringMinValidatorBond(t, testApp, genesis, "100")
+	setWiringStakingValidator(t, testApp, genesis, "120")
+	setWiringDuplicateSelfDelegations(t, testApp, genesis, 60, 60)
+
+	err := testApp.ValidateChainGenesis(genesis)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "duplicate genesis self-delegation")
+}
+
 func TestValidateChainGenesisRejectsEnabledFeeMarketBaseFee(t *testing.T) {
 	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
 	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
@@ -188,6 +265,102 @@ func setWiringConstitutionGenesisAddresses(t *testing.T, app *App, genesis map[s
 	constitutionGenesis.BaseAddress = wiringAddress(t, 0x21)
 	constitutionGenesis.ModeratorAddress = wiringAddress(t, 0x22)
 	genesis[constitutiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(constitutionGenesis)
+}
+
+func removeWiringConstitutionParams(t *testing.T, genesis map[string]json.RawMessage) {
+	t.Helper()
+
+	constitutionGenesisFields := make(map[string]json.RawMessage)
+	require.NoError(t, json.Unmarshal(genesis[constitutiontypes.ModuleName], &constitutionGenesisFields))
+	delete(constitutionGenesisFields, "params")
+	bz, err := json.Marshal(constitutionGenesisFields)
+	require.NoError(t, err)
+	genesis[constitutiontypes.ModuleName] = bz
+}
+
+func setWiringMinValidatorBond(t *testing.T, app *App, genesis map[string]json.RawMessage, amount string) {
+	t.Helper()
+
+	constitutionGenesis := &constitutionv1.GenesisState{}
+	app.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
+	constitutionGenesis.Params.MinValidatorBondAmount = &basev1beta1.Coin{
+		Denom:  appparams.BaseDenom,
+		Amount: amount,
+	}
+	genesis[constitutiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(constitutionGenesis)
+}
+
+func setWiringStakingValidator(t *testing.T, app *App, genesis map[string]json.RawMessage, selfBondAmount string) string {
+	t.Helper()
+
+	selfBond, ok := sdkmath.NewIntFromString(selfBondAmount)
+	require.True(t, ok)
+
+	pubKey := simtestutil.CreateTestPubKeys(1)[0]
+	valAddr := sdk.ValAddress(pubKey.Address().Bytes())
+	validatorAddress, err := app.StakingKeeper.ValidatorAddressCodec().BytesToString(valAddr)
+	require.NoError(t, err)
+	validator, err := stakingtypes.NewValidator(
+		validatorAddress,
+		pubKey,
+		stakingtypes.Description{Moniker: "validator"},
+	)
+	require.NoError(t, err)
+	validator.Tokens = selfBond
+	validator.DelegatorShares = sdkmath.LegacyNewDecFromInt(selfBond)
+
+	delegatorAddress, err := app.AccountKeeper.AddressCodec().BytesToString(sdk.AccAddress(valAddr))
+	require.NoError(t, err)
+
+	stakingGenesis := stakingtypes.DefaultGenesisState()
+	app.AppCodec().MustUnmarshalJSON(genesis[stakingtypes.ModuleName], stakingGenesis)
+	stakingGenesis.Validators = []stakingtypes.Validator{validator}
+	stakingGenesis.Delegations = []stakingtypes.Delegation{
+		stakingtypes.NewDelegation(
+			delegatorAddress,
+			validatorAddress,
+			sdkmath.LegacyNewDecFromInt(selfBond),
+		),
+	}
+	genesis[stakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
+	return validatorAddress
+}
+
+func setWiringStakingExported(t *testing.T, app *App, genesis map[string]json.RawMessage, lastValidatorAddresses ...string) {
+	t.Helper()
+
+	stakingGenesis := stakingtypes.DefaultGenesisState()
+	app.AppCodec().MustUnmarshalJSON(genesis[stakingtypes.ModuleName], stakingGenesis)
+	stakingGenesis.Exported = true
+	stakingGenesis.LastValidatorPowers = make([]stakingtypes.LastValidatorPower, 0, len(lastValidatorAddresses))
+	for _, validatorAddress := range lastValidatorAddresses {
+		stakingGenesis.LastValidatorPowers = append(stakingGenesis.LastValidatorPowers, stakingtypes.LastValidatorPower{
+			Address: validatorAddress,
+			Power:   1,
+		})
+	}
+	genesis[stakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
+}
+
+func setWiringDuplicateSelfDelegations(t *testing.T, app *App, genesis map[string]json.RawMessage, amounts ...int64) {
+	t.Helper()
+
+	stakingGenesis := stakingtypes.DefaultGenesisState()
+	app.AppCodec().MustUnmarshalJSON(genesis[stakingtypes.ModuleName], stakingGenesis)
+	require.Len(t, stakingGenesis.Delegations, 1)
+	selfDelegation := stakingGenesis.Delegations[0]
+	stakingGenesis.Delegations = make([]stakingtypes.Delegation, 0, len(amounts))
+	for _, amount := range amounts {
+		stakingGenesis.Delegations = append(
+			stakingGenesis.Delegations,
+			stakingtypes.NewDelegation(
+				selfDelegation.DelegatorAddress,
+				selfDelegation.ValidatorAddress,
+				sdkmath.LegacyNewDec(amount),
+			),
+		)
+	}
+	genesis[stakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
 }
 
 func wiringAddress(t *testing.T, b byte) string {

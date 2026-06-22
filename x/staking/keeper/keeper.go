@@ -116,14 +116,14 @@ func (k *Keeper) BlockValidatorUpdates(ctx context.Context) ([]abci.ValidatorUpd
 }
 
 func (k *Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) ([]abci.ValidatorUpdate, error) {
-	if err := k.pruneValidatorsBelowMinSelfBond(ctx); err != nil {
+	if err := k.excludeValidatorsBelowMinSelfBondFromPowerIndex(ctx); err != nil {
 		return nil, err
 	}
 
 	return k.Keeper.ApplyAndReturnValidatorSetUpdates(ctx)
 }
 
-func (k *Keeper) pruneValidatorsBelowMinSelfBond(ctx context.Context) error {
+func (k *Keeper) excludeValidatorsBelowMinSelfBondFromPowerIndex(ctx context.Context) error {
 	minBond, err := k.minBondSource.GetMinValidatorBondAmount(ctx)
 	if err != nil {
 		return err
@@ -133,7 +133,12 @@ func (k *Keeper) pruneValidatorsBelowMinSelfBond(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer iterator.Close()
+	iteratorClosed := false
+	defer func() {
+		if !iteratorClosed {
+			iterator.Close()
+		}
+	}()
 
 	validatorsToRemove := make([]stakingtypes.Validator, 0)
 	for ; iterator.Valid(); iterator.Next() {
@@ -151,6 +156,8 @@ func (k *Keeper) pruneValidatorsBelowMinSelfBond(ctx context.Context) error {
 			validatorsToRemove = append(validatorsToRemove, validator)
 		}
 	}
+	iterator.Close()
+	iteratorClosed = true
 
 	for _, validator := range validatorsToRemove {
 		if err := k.DeleteValidatorByPowerIndex(ctx, validator); err != nil {

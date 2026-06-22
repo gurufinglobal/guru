@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -14,7 +15,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 // BuildChainDefaultGenesis centralizes the chain-specific default genesis policy.
@@ -55,6 +58,16 @@ func (app *App) ValidateChainGenesis(genesis map[string]json.RawMessage) error {
 	}
 	if stakingGenesis.Params.BondDenom != appparams.BaseDenom {
 		return fmt.Errorf("staking bond denom must be %q, got %q", appparams.BaseDenom, stakingGenesis.Params.BondDenom)
+	}
+
+	constitutionGenesis := &constitutionv1.GenesisState{}
+	if bz, ok := genesis[constitutiontypes.ModuleName]; ok {
+		if err := app.appCodec.UnmarshalJSON(bz, constitutionGenesis); err != nil {
+			return fmt.Errorf("failed to decode constitution genesis: %w", err)
+		}
+	}
+	if err := app.validateGenesisValidatorSelfBonds(stakingGenesis, constitutionGenesis); err != nil {
+		return err
 	}
 
 	mintGenesis := minttypes.DefaultGenesisState()
@@ -126,6 +139,136 @@ func (app *App) ValidateChainGenesis(genesis map[string]json.RawMessage) error {
 	}
 
 	return nil
+}
+
+func (app *App) validateGenesisValidatorSelfBonds(
+	stakingGenesis *stakingtypes.GenesisState,
+	constitutionGenesis *constitutionv1.GenesisState,
+) error {
+	if stakingGenesis == nil || constitutionGenesis == nil {
+		return nil
+	}
+
+	params := constitutionGenesis.GetParams()
+	if params == nil {
+		defaultConstitutionGenesis, err := app.defaultConstitutionGenesis()
+		if err != nil {
+			return err
+		}
+		params = defaultConstitutionGenesis.GetParams()
+	}
+	minBondCoin := params.GetMinValidatorBondAmount()
+	if minBondCoin == nil {
+		return fmt.Errorf("constitution min_validator_bond_amount cannot be nil")
+	}
+	if minBondCoin.Denom != appparams.BaseDenom {
+		return fmt.Errorf(
+			"constitution min_validator_bond_amount denom must be %q, got %q",
+			appparams.BaseDenom,
+			minBondCoin.Denom,
+		)
+	}
+	minBond, ok := sdkmath.NewIntFromString(minBondCoin.Amount)
+	if !ok {
+		return fmt.Errorf("constitution min_validator_bond_amount amount must be an integer string")
+	}
+
+	activeExportedValidators, err := app.activeExportedGenesisValidators(stakingGenesis)
+	if err != nil {
+		return err
+	}
+	for _, validator := range stakingGenesis.Validators {
+		validatorAddr, err := app.StakingKeeper.ValidatorAddressCodec().StringToBytes(validator.GetOperator())
+		if err != nil {
+			return fmt.Errorf("invalid genesis validator address %s: %w", validator.GetOperator(), err)
+		}
+		if activeExportedValidators != nil {
+			if _, ok := activeExportedValidators[string(validatorAddr)]; !ok {
+				continue
+			}
+		}
+
+		selfBond, err := app.genesisValidatorSelfBond(stakingGenesis.Delegations, validator, validatorAddr)
+		if err != nil {
+			return err
+		}
+		if selfBond.LT(minBond) {
+			return fmt.Errorf(
+				"validator %s genesis self-bond %s below constitution minimum %s",
+				validator.GetOperator(),
+				selfBond.String(),
+				minBond.String(),
+			)
+		}
+	}
+
+	return nil
+}
+
+func (app *App) defaultConstitutionGenesis() (*constitutionv1.GenesisState, error) {
+	defaultGenesis := app.BasicModuleManager.DefaultGenesis(app.appCodec)
+	bz, ok := defaultGenesis[constitutiontypes.ModuleName]
+	if !ok {
+		return nil, fmt.Errorf("constitution default genesis missing")
+	}
+
+	constitutionGenesis := &constitutionv1.GenesisState{}
+	if err := app.appCodec.UnmarshalJSON(bz, constitutionGenesis); err != nil {
+		return nil, fmt.Errorf("failed to decode constitution default genesis: %w", err)
+	}
+
+	return constitutionGenesis, nil
+}
+
+func (app *App) activeExportedGenesisValidators(stakingGenesis *stakingtypes.GenesisState) (map[string]struct{}, error) {
+	if !stakingGenesis.GetExported() {
+		return nil, nil
+	}
+
+	activeValidators := make(map[string]struct{}, len(stakingGenesis.GetLastValidatorPowers()))
+	for _, lastValidatorPower := range stakingGenesis.GetLastValidatorPowers() {
+		validatorAddr, err := app.StakingKeeper.ValidatorAddressCodec().StringToBytes(lastValidatorPower.Address)
+		if err != nil {
+			return nil, fmt.Errorf("invalid exported last validator address %s: %w", lastValidatorPower.Address, err)
+		}
+		activeValidators[string(validatorAddr)] = struct{}{}
+	}
+
+	return activeValidators, nil
+}
+
+func (app *App) genesisValidatorSelfBond(
+	delegations []stakingtypes.Delegation,
+	validator stakingtypes.Validator,
+	validatorAddr []byte,
+) (sdkmath.Int, error) {
+	selfBond := sdkmath.ZeroInt()
+	selfDelegationFound := false
+	for _, delegation := range delegations {
+		delegationValidatorAddr, err := app.StakingKeeper.ValidatorAddressCodec().StringToBytes(delegation.ValidatorAddress)
+		if err != nil {
+			return sdkmath.Int{}, fmt.Errorf("invalid genesis delegation validator address %s: %w", delegation.ValidatorAddress, err)
+		}
+		if !bytes.Equal(delegationValidatorAddr, validatorAddr) {
+			continue
+		}
+
+		delegatorAddr, err := app.AccountKeeper.AddressCodec().StringToBytes(delegation.DelegatorAddress)
+		if err != nil {
+			return sdkmath.Int{}, fmt.Errorf("invalid genesis delegation delegator address %s: %w", delegation.DelegatorAddress, err)
+		}
+		if !bytes.Equal(delegatorAddr, validatorAddr) {
+			continue
+		}
+
+		if selfDelegationFound {
+			return sdkmath.Int{}, fmt.Errorf("duplicate genesis self-delegation for validator %s", validator.GetOperator())
+		}
+		selfDelegationFound = true
+		selfBond = selfBond.Add(validator.TokensFromSharesTruncated(delegation.GetShares()).TruncateInt())
+	}
+
+	return selfBond, nil
 }
 
 func (app *App) DefaultGenesis() map[string]json.RawMessage {
