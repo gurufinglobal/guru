@@ -1,0 +1,44 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "guru/oracle/v1/oracle.proto";
+import "guru/oracle/v1/params.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
+
+// Msg exposes moderator-controlled oracle mutations.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines a moderator operation for updating the parameters.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // UpsertTask manages one numeric oracle task keyed by symbol.
+  rpc UpsertTask(MsgUpsertTask) returns (MsgUpsertTaskResponse);
+
+  // RemoveTask deletes one oracle task by symbol.
+  rpc RemoveTask(MsgRemoveTask) returns (MsgRemoveTaskResponse);
+}
+
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "moderator";
+  string moderator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  Params params = 2;
+}
+message MsgUpdateParamsResponse {}
+
+message MsgUpsertTask {
+  option (cosmos.msg.v1.signer) = "moderator";
+  string moderator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  OracleTask task = 2;
+}
+message MsgUpsertTaskResponse {}
+
+message MsgRemoveTask {
+  option (cosmos.msg.v1.signer) = "moderator";
+  string moderator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string symbol = 2;
+}
+message MsgRemoveTaskResponse {}

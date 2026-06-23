@@ -1,0 +1,20 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "guru/oracle/v1/oracle.proto";
+import "guru/oracle/v1/params.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
+
+message GenesisState {
+  Params params = 1;
+  repeated OracleTask tasks = 2;
+  repeated OracleValue latest_values = 3;
+  repeated OracleHistory history = 4;
+  repeated OracleTaskScheduleEntry task_schedule = 5;
+}
+
+message OracleTaskScheduleEntry {
+  string symbol = 1;
+  int64 height = 2;
+}
