@@ -45,6 +45,8 @@ import (
 	ibc "github.com/cosmos/ibc-go/v11/modules/core"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
+	bex "github.com/gurufinglobal/guru/v3/x/bex"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitution "github.com/gurufinglobal/guru/v3/x/constitution"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	oracle "github.com/gurufinglobal/guru/v3/x/oracle"
@@ -75,6 +77,7 @@ var (
 		constitutiontypes.ModuleName,
 
 		// no-op and legacy blockers
+		bextypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -101,6 +104,7 @@ var (
 		feemarkettypes.ModuleName,
 
 		// no-op and legacy blockers
+		bextypes.ModuleName,
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		distrtypes.ModuleName,
@@ -120,6 +124,7 @@ var (
 		banktypes.ModuleName,
 		constitutiontypes.ModuleName,
 		oracletypes.ModuleName,
+		bextypes.ModuleName,
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -161,6 +166,7 @@ func appModules(
 			gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
 			constitution.NewAppModule(app.ConstitutionKeeper),
 			oracle.NewAppModule(app.OracleKeeper),
+			bex.NewAppModule(app.BexKeeper),
 			mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 			slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 			distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),

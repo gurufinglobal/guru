@@ -1,0 +1,32 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "guru/bex/v1/bex.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/bex/v1;bexv1";
+
+// GenesisState defines BEX genesis state.
+message GenesisState {
+  repeated string admins = 1;
+  repeated Exchange exchanges = 2;
+  repeated FeeGenesis collected_fees = 3;
+  repeated FeeGenesis locked_fees = 4;
+  repeated VolumeWindowGenesis volume_windows = 5;
+  uint64 next_exchange_id = 6;
+}
+
+// FeeGenesis stores one exchange fee ledger at genesis.
+message FeeGenesis {
+  uint64 exchange_id = 1;
+  repeated cosmos.base.v1beta1.Coin coins = 2;
+}
+
+// VolumeWindowGenesis stores one volume window row at genesis.
+message VolumeWindowGenesis {
+  uint64 exchange_id = 1;
+  SwapDirection direction = 2;
+  uint64 epoch_start_unix = 3;
+  uint32 epoch_seconds = 4;
+  string amount = 5;
+}

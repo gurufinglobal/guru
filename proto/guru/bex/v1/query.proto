@@ -1,0 +1,161 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
+import "google/api/annotations.proto";
+import "guru/bex/v1/bex.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/bex/v1;bexv1";
+
+// Query exposes read-only BEX state.
+service Query {
+  // Exchange returns one exchange, including deleted tombstones.
+  rpc Exchange(QueryExchangeRequest) returns (QueryExchangeResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // Exchanges returns non-deleted exchanges by bounded pagination.
+  rpc Exchanges(QueryExchangesRequest) returns (QueryExchangesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // ExchangesByAdmin returns non-deleted exchanges for one admin.
+  rpc ExchangesByAdmin(QueryExchangesByAdminRequest) returns (QueryExchangesByAdminResponse) {
+    option (google.api.http).get = "/guru/bex/v1/admins/{admin_address}/exchanges";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // IsAdmin returns whether an address is a registered admin.
+  rpc IsAdmin(QueryIsAdminRequest) returns (QueryIsAdminResponse) {
+    option (google.api.http).get = "/guru/bex/v1/admins/{admin_address}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // CollectedFees returns collected fees for an exchange.
+  rpc CollectedFees(QueryFeesRequest) returns (QueryFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/fees/collected";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // LockedFees returns locked fees for an exchange.
+  rpc LockedFees(QueryFeesRequest) returns (QueryFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/fees/locked";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // AvailableFees returns collected minus locked fees.
+  rpc AvailableFees(QueryFeesRequest) returns (QueryFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/fees/available";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // VolumeWindow returns current volume window state.
+  rpc VolumeWindow(QueryVolumeWindowRequest) returns (QueryVolumeWindowResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/volume/{direction}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // QuoteSwap returns a deterministic dry-run quote.
+  rpc QuoteSwap(QueryQuoteSwapRequest) returns (QueryQuoteSwapResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/quote/{input_denom}/{amount_in}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // ExchangeReadiness returns readiness and blocking reasons.
+  rpc ExchangeReadiness(QueryExchangeReadinessRequest) returns (QueryExchangeReadinessResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/readiness/{direction}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+}
+
+// QueryExchangeRequest requests one exchange.
+message QueryExchangeRequest {
+  uint64 exchange_id = 1;
+}
+
+// QueryExchangeResponse returns one exchange.
+message QueryExchangeResponse {
+  Exchange exchange = 1;
+}
+
+// QueryExchangesRequest requests exchanges.
+message QueryExchangesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  bool include_deleted = 2;
+}
+
+// QueryExchangesResponse returns exchanges.
+message QueryExchangesResponse {
+  repeated Exchange exchanges = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryExchangesByAdminRequest requests exchanges for one admin.
+message QueryExchangesByAdminRequest {
+  string admin_address = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryExchangesByAdminResponse returns exchanges for one admin.
+message QueryExchangesByAdminResponse {
+  repeated Exchange exchanges = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryIsAdminRequest checks admin status.
+message QueryIsAdminRequest {
+  string admin_address = 1;
+}
+
+// QueryIsAdminResponse returns admin status.
+message QueryIsAdminResponse {
+  bool is_admin = 1;
+}
+
+// QueryFeesRequest requests fee ledger state.
+message QueryFeesRequest {
+  uint64 exchange_id = 1;
+}
+
+// QueryFeesResponse returns fee ledger state.
+message QueryFeesResponse {
+  FeeLedger ledger = 1;
+}
+
+// QueryVolumeWindowRequest requests current volume state.
+message QueryVolumeWindowRequest {
+  uint64 exchange_id = 1;
+  SwapDirection direction = 2;
+}
+
+// QueryVolumeWindowResponse returns current volume state.
+message QueryVolumeWindowResponse {
+  VolumeWindow window = 1;
+  string cap = 2;
+}
+
+// QueryQuoteSwapRequest requests a dry-run quote.
+message QueryQuoteSwapRequest {
+  uint64 exchange_id = 1;
+  string input_denom = 2;
+  string amount_in = 3;
+}
+
+// QueryQuoteSwapResponse returns a dry-run quote.
+message QueryQuoteSwapResponse {
+  QuoteSwapResponse quote = 1;
+}
+
+// QueryExchangeReadinessRequest requests readiness.
+message QueryExchangeReadinessRequest {
+  uint64 exchange_id = 1;
+  SwapDirection direction = 2;
+}
+
+// QueryExchangeReadinessResponse returns readiness.
+message QueryExchangeReadinessResponse {
+  ExchangeReadinessResponse readiness = 1;
+}

@@ -45,6 +45,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	corevm "github.com/ethereum/go-ethereum/core/vm"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
@@ -85,6 +87,7 @@ type AppKeepers struct {
 	// guru keepers
 	ConstitutionKeeper constitutionkeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
+	BexKeeper          bexkeeper.Keeper
 }
 
 func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
@@ -257,6 +260,16 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		appKeepers.UpgradeKeeper,
 		authority,
 	)
+	appKeepers.BexKeeper = bexkeeper.NewKeeper(
+		runtime.NewKVStoreService(appKeepers.kvKeys[bextypes.StoreKey]),
+		appKeepers.AccountKeeper.AddressCodec(),
+		appKeepers.AccountKeeper,
+		appKeepers.BankKeeper,
+		appKeepers.OracleKeeper,
+		&appKeepers.ConstitutionKeeper,
+		appKeepers.IBCKeeper.ChannelKeeper,
+	)
+	appKeepers.BexKeeper.RegisterSendRestriction()
 
 	govKeeper := govkeeper.NewKeeper(
 		cfg.AppCodec,

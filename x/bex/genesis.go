@@ -1,0 +1,257 @@
+package bex
+
+import (
+	"context"
+	"encoding/json"
+
+	"cosmossdk.io/core/appmodule"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
+	"github.com/gurufinglobal/guru/v3/x/bex/types"
+)
+
+func (am AppModule) DefaultGenesis(target appmodule.GenesisTarget) error {
+	return writeGenesisState(target, am.defaultGenesisState())
+}
+
+func (am AppModule) ValidateGenesis(source appmodule.GenesisSource) error {
+	genesis, err := readGenesisState(source, am.defaultGenesisState())
+	if err != nil {
+		return err
+	}
+	return am.validateGenesisState(context.Background(), genesis)
+}
+
+func (am AppModule) InitGenesis(ctx context.Context, source appmodule.GenesisSource) error {
+	genesis, err := readGenesisState(source, am.defaultGenesisState())
+	if err != nil {
+		return err
+	}
+	if err := am.validateGenesisState(ctx, genesis); err != nil {
+		return err
+	}
+	if err := am.keeper.ImportGenesis(ctx, genesis); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisTarget) error {
+	genesis, err := am.keeper.ExportGenesis(ctx)
+	if err != nil {
+		return err
+	}
+	return writeGenesisState(target, genesis)
+}
+
+func (am AppModule) defaultGenesisState() *bexv1.GenesisState {
+	return &bexv1.GenesisState{NextExchangeId: bexkeeper.DefaultNextExchangeID}
+}
+
+func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.GenesisState) error {
+	if genesis == nil {
+		return types.ErrInvalidGenesis.Wrap("genesis state cannot be nil")
+	}
+	seenAdmins := map[string]struct{}{}
+	for _, admin := range genesis.GetAdmins() {
+		canonical, _, err := am.keeper.CanonicalAddressForGenesis(admin)
+		if err != nil {
+			return types.ErrInvalidGenesis.Wrapf("invalid admin %q: %v", admin, err)
+		}
+		if _, ok := seenAdmins[canonical]; ok {
+			return types.ErrInvalidGenesis.Wrapf("duplicate admin %q", canonical)
+		}
+		seenAdmins[canonical] = struct{}{}
+	}
+	maxID := uint64(0)
+	exchangeIDs := map[uint64]*bexv1.Exchange{}
+	for _, exchange := range genesis.GetExchanges() {
+		if exchange.GetId() == 0 {
+			return types.ErrInvalidGenesis.Wrap("exchange id cannot be zero")
+		}
+		if _, ok := exchangeIDs[exchange.GetId()]; ok {
+			return types.ErrInvalidGenesis.Wrapf("duplicate exchange id %d", exchange.GetId())
+		}
+		if exchange.GetId() > maxID {
+			maxID = exchange.GetId()
+		}
+		expectedReserve, err := am.keeper.GetReserveAddressString(ctx, exchange.GetId())
+		if err != nil {
+			return err
+		}
+		if exchange.GetReserveAddress() != expectedReserve {
+			return types.ErrInvalidGenesis.Wrapf("exchange %d reserve address mismatch", exchange.GetId())
+		}
+		if _, _, err := am.keeper.CanonicalAddressForGenesis(exchange.GetAdminAddress()); err != nil {
+			return types.ErrInvalidGenesis.Wrapf("invalid exchange admin: %v", err)
+		}
+		if err := bexkeeper.ValidateExchangeForGenesis(exchange); err != nil {
+			return err
+		}
+		exchangeIDs[exchange.GetId()] = exchange
+	}
+	if genesis.GetNextExchangeId() <= maxID {
+		return types.ErrInvalidGenesis.Wrap("next_exchange_id must be greater than max exchange id")
+	}
+	collectedByID := map[uint64]sdk.Coins{}
+	for _, fee := range genesis.GetCollectedFees() {
+		if _, ok := exchangeIDs[fee.GetExchangeId()]; !ok {
+			return types.ErrInvalidGenesis.Wrapf("collected fees reference unknown exchange %d", fee.GetExchangeId())
+		}
+		coins, err := bexkeeper.ProtoCoinsForGenesis(fee.GetCoins())
+		if err != nil {
+			return err
+		}
+		collectedByID[fee.GetExchangeId()] = coins
+	}
+	for _, fee := range genesis.GetLockedFees() {
+		if _, ok := exchangeIDs[fee.GetExchangeId()]; !ok {
+			return types.ErrInvalidGenesis.Wrapf("locked fees reference unknown exchange %d", fee.GetExchangeId())
+		}
+		locked, err := bexkeeper.ProtoCoinsForGenesis(fee.GetCoins())
+		if err != nil {
+			return err
+		}
+		if !bexkeeper.HasCoinsForGenesis(collectedByID[fee.GetExchangeId()], locked) {
+			return types.ErrInvalidGenesis.Wrapf("locked fees exceed collected fees for exchange %d", fee.GetExchangeId())
+		}
+	}
+	for _, window := range genesis.GetVolumeWindows() {
+		if _, ok := exchangeIDs[window.GetExchangeId()]; !ok {
+			return types.ErrInvalidGenesis.Wrapf("volume window references unknown exchange %d", window.GetExchangeId())
+		}
+		if window.GetDirection() == bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED {
+			return types.ErrInvalidGenesis.Wrap("invalid volume window")
+		}
+		if err := bexkeeper.ValidateVolumeEpochForGenesis("volume_window.epoch_seconds", window.GetEpochSeconds(), false); err != nil {
+			return err
+		}
+		if _, err := bexkeeper.ParseIntForGenesis("volume amount", window.GetAmount()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisState) (*bexv1.GenesisState, error) {
+	genesis := &bexv1.GenesisState{NextExchangeId: defaults.GetNextExchangeId()}
+
+	admins := []string{}
+	found, err := readGenesisField(source, "admins", &admins)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.Admins = admins
+	}
+
+	exchanges := []*bexv1.Exchange{}
+	found, err = readGenesisField(source, "exchanges", &exchanges)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.Exchanges = exchanges
+	}
+
+	collectedFees := []*bexv1.FeeGenesis{}
+	found, err = readGenesisField(source, "collected_fees", &collectedFees)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.CollectedFees = collectedFees
+	}
+
+	lockedFees := []*bexv1.FeeGenesis{}
+	found, err = readGenesisField(source, "locked_fees", &lockedFees)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.LockedFees = lockedFees
+	}
+
+	volumeWindows := []*bexv1.VolumeWindowGenesis{}
+	found, err = readGenesisField(source, "volume_windows", &volumeWindows)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.VolumeWindows = volumeWindows
+	}
+
+	nextExchangeID := genesis.GetNextExchangeId()
+	found, err = readGenesisField(source, "next_exchange_id", &nextExchangeID)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.NextExchangeId = nextExchangeID
+	}
+
+	return genesis, nil
+}
+
+func writeGenesisState(target appmodule.GenesisTarget, genesis *bexv1.GenesisState) error {
+	if genesis == nil {
+		return types.ErrInvalidGenesis.Wrap("genesis state cannot be nil")
+	}
+
+	if err := writeGenesisField(target, "admins", genesis.GetAdmins()); err != nil {
+		return err
+	}
+	if err := writeGenesisField(target, "exchanges", genesis.GetExchanges()); err != nil {
+		return err
+	}
+	if err := writeGenesisField(target, "collected_fees", genesis.GetCollectedFees()); err != nil {
+		return err
+	}
+	if err := writeGenesisField(target, "locked_fees", genesis.GetLockedFees()); err != nil {
+		return err
+	}
+	if err := writeGenesisField(target, "volume_windows", genesis.GetVolumeWindows()); err != nil {
+		return err
+	}
+
+	return writeGenesisField(target, "next_exchange_id", genesis.GetNextExchangeId())
+}
+
+func readGenesisField(source appmodule.GenesisSource, fieldName string, value any) (bool, error) {
+	reader, err := source(fieldName)
+	if err != nil {
+		return false, types.ErrReadGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+	if reader == nil {
+		return false, nil
+	}
+	defer reader.Close()
+
+	if err := json.NewDecoder(reader).Decode(value); err != nil {
+		return false, types.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+
+	return true, nil
+}
+
+func writeGenesisField(target appmodule.GenesisTarget, fieldName string, value any) error {
+	writer, err := target(fieldName)
+	if err != nil {
+		return types.ErrOpenGenesisTargetField.Wrapf("%s: %v", fieldName, err)
+	}
+	if writer == nil {
+		return types.ErrNilGenesisTargetWriter.Wrapf("%s genesis target field writer is nil", fieldName)
+	}
+
+	if err := json.NewEncoder(writer).Encode(value); err != nil {
+		_ = writer.Close()
+		return types.ErrEncodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+
+	if err := writer.Close(); err != nil {
+		return types.ErrCloseGenesisFieldWriter.Wrapf("%s: %v", fieldName, err)
+	}
+
+	return nil
+}

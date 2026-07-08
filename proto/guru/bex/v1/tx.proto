@@ -1,0 +1,156 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "guru/bex/v1/bex.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/bex/v1;bexv1";
+
+// Msg exposes BEX v3 mutations.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // RegisterAdmin adds a BEX admin.
+  rpc RegisterAdmin(MsgRegisterAdmin) returns (MsgRegisterAdminResponse);
+
+  // RemoveAdmin removes a BEX admin.
+  rpc RemoveAdmin(MsgRemoveAdmin) returns (MsgRemoveAdminResponse);
+
+  // RegisterExchange creates one exchange and deterministic reserve.
+  rpc RegisterExchange(MsgRegisterExchange) returns (MsgRegisterExchangeResponse);
+
+  // UpdateExchange applies a typed patch guarded by expected revision.
+  rpc UpdateExchange(MsgUpdateExchange) returns (MsgUpdateExchangeResponse);
+
+  // DeleteExchange logically deletes a settled inactive exchange.
+  rpc DeleteExchange(MsgDeleteExchange) returns (MsgDeleteExchangeResponse);
+
+  // DepositReserve deposits funds into a reserve through scoped allowance.
+  rpc DepositReserve(MsgDepositReserve) returns (MsgDepositReserveResponse);
+
+  // WithdrawReserve withdraws funds from an inactive reserve.
+  rpc WithdrawReserve(MsgWithdrawReserve) returns (MsgWithdrawReserveResponse);
+
+  // WithdrawFees withdraws available collected fees.
+  rpc WithdrawFees(MsgWithdrawFees) returns (MsgWithdrawFeesResponse);
+}
+
+// MsgRegisterAdmin registers a BEX admin.
+message MsgRegisterAdmin {
+  option (cosmos.msg.v1.signer) = "moderator";
+  string moderator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string admin_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgRegisterAdminResponse is the register-admin response.
+message MsgRegisterAdminResponse {}
+
+// MsgRemoveAdmin removes a BEX admin.
+message MsgRemoveAdmin {
+  option (cosmos.msg.v1.signer) = "moderator";
+  string moderator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string admin_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgRemoveAdminResponse is the remove-admin response.
+message MsgRemoveAdminResponse {}
+
+// MsgRegisterExchange registers a BEX exchange.
+message MsgRegisterExchange {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  string denom_a = 2;
+  string port_a = 3;
+  string channel_a = 4;
+  string denom_b = 5;
+  string port_b = 6;
+  string channel_b = 7;
+
+	string oracle_symbol_a_to_b = 8;
+	string oracle_symbol_b_to_a = 9;
+
+	uint32 fee_bps_a_to_b = 10;
+	uint32 fee_bps_b_to_a = 11;
+
+	// Empty or omitted means unlimited.
+	string limit_a_to_b = 12 [(cosmos_proto.scalar) = "cosmos.Int"];
+	// Empty or omitted means unlimited.
+	string limit_b_to_a = 13 [(cosmos_proto.scalar) = "cosmos.Int"];
+	// Empty or omitted means unlimited.
+	string volume_cap_a_to_b = 14 [(cosmos_proto.scalar) = "cosmos.Int"];
+	// Empty or omitted means unlimited.
+	string volume_cap_b_to_a = 15 [(cosmos_proto.scalar) = "cosmos.Int"];
+
+  ExchangeStatus status = 16;
+  map<string, string> metadata = 17;
+  uint32 volume_epoch_seconds = 18;
+  uint32 max_oracle_staleness_seconds = 19;
+}
+
+// MsgRegisterExchangeResponse returns the allocated exchange id and reserve.
+message MsgRegisterExchangeResponse {
+  uint64 exchange_id = 1;
+  string reserve_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgUpdateExchange updates an existing exchange.
+message MsgUpdateExchange {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 exchange_id = 2;
+  ExchangeUpdatePatch patch = 3;
+  uint64 expected_revision = 4;
+}
+
+// MsgUpdateExchangeResponse returns the updated revision.
+message MsgUpdateExchangeResponse {
+  uint64 revision = 1;
+}
+
+// MsgDeleteExchange logically deletes an exchange.
+message MsgDeleteExchange {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 exchange_id = 2;
+}
+
+// MsgDeleteExchangeResponse is the delete response.
+message MsgDeleteExchangeResponse {}
+
+// MsgDepositReserve deposits coins into an exchange reserve.
+message MsgDepositReserve {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 exchange_id = 2;
+  repeated cosmos.base.v1beta1.Coin amount = 3;
+}
+
+// MsgDepositReserveResponse is the deposit response.
+message MsgDepositReserveResponse {}
+
+// MsgWithdrawReserve withdraws coins from an exchange reserve.
+message MsgWithdrawReserve {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 exchange_id = 2;
+  repeated cosmos.base.v1beta1.Coin amount = 3;
+  string recipient = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgWithdrawReserveResponse is the withdraw reserve response.
+message MsgWithdrawReserveResponse {}
+
+// MsgWithdrawFees withdraws available fees.
+message MsgWithdrawFees {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 exchange_id = 2;
+  repeated cosmos.base.v1beta1.Coin amount = 3;
+  string recipient = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgWithdrawFeesResponse is the withdraw fees response.
+message MsgWithdrawFeesResponse {}
