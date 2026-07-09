@@ -106,6 +106,32 @@ func TestTaskScheduleIndexesDueTasksByHeight(t *testing.T) {
 	require.Empty(t, due)
 }
 
+func TestSetTaskDefinitionDoesNotSeedSchedule(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(100)
+
+	require.NoError(t, f.keeper.SetTaskDefinition(ctx, &oraclev1.OracleTask{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 5,
+	}))
+
+	schedule, err := f.keeper.ListTaskSchedule(ctx)
+	require.NoError(t, err)
+	require.Empty(t, schedule)
+
+	require.NoError(t, f.keeper.SetTaskSchedule(ctx, &oraclev1.OracleTaskScheduleEntry{Symbol: "btc/usd", Height: 105}))
+	require.NoError(t, f.keeper.SetTaskSchedule(ctx, &oraclev1.OracleTaskScheduleEntry{Symbol: "BTC/USD", Height: 110}))
+
+	schedule, err = f.keeper.ListTaskSchedule(ctx)
+	require.NoError(t, err)
+	require.Equal(t, []*oraclev1.OracleTaskScheduleEntry{
+		{Symbol: "BTC/USD", Height: 105},
+		{Symbol: "BTC/USD", Height: 110},
+	}, schedule)
+}
+
 func TestDueTasksForVoteExtensionIncludesExactAndMissedButExcludesPipelineHeight(t *testing.T) {
 	f := setupKeeperFixture(t)
 	ctx := f.ctx.WithBlockHeight(0)
@@ -197,6 +223,20 @@ func TestApplyOracleValuesCallsHooksWithTaskSubmissionInterval(t *testing.T) {
 	require.Len(t, hook.values, 1)
 	require.Equal(t, "TRX/USD", hook.values[0].GetSymbol())
 	require.Equal(t, []uint32{7}, hook.sourceSubmissionIntervals)
+}
+
+func TestApplyOracleValuesCallsHooksWithZeroIntervalForUnknownTask(t *testing.T) {
+	f := setupKeeperFixture(t)
+	hook := &recordingOracleHook{}
+	f.keeper.SetHooks(hook)
+
+	require.NoError(t, f.keeper.ApplyOracleValues(f.ctx, []*oraclev1.OracleValue{
+		testValue("TRX/USD", "1.0", 10),
+	}))
+
+	require.Len(t, hook.values, 1)
+	require.Equal(t, "TRX/USD", hook.values[0].GetSymbol())
+	require.Equal(t, []uint32{0}, hook.sourceSubmissionIntervals)
 }
 
 func TestTaskStateRejectsInvalidTasks(t *testing.T) {
