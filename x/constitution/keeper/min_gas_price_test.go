@@ -31,8 +31,7 @@ func TestAfterOracleValueAppliedSchedulesCappedPendingMinGasPrice(t *testing.T) 
 	require.Equal(t, uint32(10), schedule.GetPendingDelayCapBlocks())
 	require.Equal(t, defaultMinGasPriceDec, schedule.GetPreviousMinGasPrice())
 	require.Equal(t, "6089898501691", schedule.GetRawMinGasPrice())
-	require.Equal(t, upperClampedDec, schedule.GetMinGasPrice())
-	require.Equal(t, schedule.GetMinGasPrice(), schedule.GetClampedMinGasPrice())
+	require.Equal(t, upperClampedDec, schedule.GetScheduledMinGasPrice())
 
 	events := ctx.EventManager().Events()
 	require.Len(t, events, 1)
@@ -99,7 +98,7 @@ func TestAfterOracleValueAppliedReplacesSinglePendingSchedule(t *testing.T) {
 	require.Equal(t, int64(23), schedule.GetEffectiveHeight())
 	require.Equal(t, int64(21), schedule.GetSourceOracleHeight())
 	require.Equal(t, uint32(2), schedule.GetPendingDelayBlocks())
-	require.Equal(t, defaultMinGasPriceDec, schedule.GetMinGasPrice())
+	require.Equal(t, defaultMinGasPriceDec, schedule.GetScheduledMinGasPrice())
 
 	events := ctx.EventManager().Events()
 	require.Len(t, events, 1)
@@ -125,17 +124,16 @@ func TestAfterOracleValueAppliedSkipsInvalidTargetPrice(t *testing.T) {
 func TestValidateMinGasPriceScheduleRejectsInconsistentDerivedFields(t *testing.T) {
 	f := setupKeeperFixture(t)
 	valid := &constitutionv1.MinGasPriceSchedule{
-		EffectiveHeight:          25,
-		MinGasPrice:              defaultMinGasPriceDec,
-		SourceSymbol:             appparams.MinGasPriceOracleSymbol,
-		SourceValue:              "1.0",
-		SourceOracleHeight:       20,
-		SourceSubmissionInterval: 5,
-		PendingDelayBlocks:       5,
-		PendingDelayCapBlocks:    10,
-		RawMinGasPrice:           "630000000000",
-		PreviousMinGasPrice:      defaultMinGasPriceDec,
-		ClampedMinGasPrice:       defaultMinGasPriceDec,
+		EffectiveHeight:                25,
+		ScheduledMinGasPrice:           defaultMinGasPriceDec,
+		SourceSymbol:                   appparams.MinGasPriceOracleSymbol,
+		SourceValue:                    "1.0",
+		SourceOracleHeight:             20,
+		SourceSubmissionIntervalBlocks: 5,
+		PendingDelayBlocks:             5,
+		PendingDelayCapBlocks:          10,
+		RawMinGasPrice:                 "630000000000",
+		PreviousMinGasPrice:            defaultMinGasPriceDec,
 	}
 	require.NoError(t, f.keeper.ValidateMinGasPriceSchedule(valid))
 
@@ -149,9 +147,8 @@ func TestValidateMinGasPriceScheduleRejectsInconsistentDerivedFields(t *testing.
 	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(&delayMismatch), "pending_delay_blocks must equal")
 
 	clampMismatch := *valid
-	clampMismatch.ClampedMinGasPrice = "1"
-	clampMismatch.MinGasPrice = "1"
-	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(&clampMismatch), "clamped_min_gas_price does not match")
+	clampMismatch.ScheduledMinGasPrice = "1"
+	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(&clampMismatch), "scheduled_min_gas_price does not match")
 }
 
 func TestQueryServerMinGasPriceReturnsCurrentAndPending(t *testing.T) {

@@ -91,17 +91,16 @@ func (k Keeper) AfterOracleValueApplied(ctx context.Context, value *oraclev1.Ora
 	}
 
 	schedule := &constitutionv1.MinGasPriceSchedule{
-		EffectiveHeight:          value.GetBlockHeight() + int64(delayBlocks),
-		MinGasPrice:              clampedMinGasPrice.String(),
-		SourceSymbol:             normalizeMinGasPriceSymbol(value.GetSymbol()),
-		SourceValue:              value.GetValue(),
-		SourceOracleHeight:       value.GetBlockHeight(),
-		SourceSubmissionInterval: sourceSubmissionInterval,
-		PendingDelayBlocks:       delayBlocks,
-		PendingDelayCapBlocks:    types.MinGasPricePendingDelayCap,
-		RawMinGasPrice:           rawMinGasPrice.String(),
-		PreviousMinGasPrice:      currentMinGasPrice.String(),
-		ClampedMinGasPrice:       clampedMinGasPrice.String(),
+		EffectiveHeight:                value.GetBlockHeight() + int64(delayBlocks),
+		ScheduledMinGasPrice:           clampedMinGasPrice.String(),
+		SourceSymbol:                   normalizeMinGasPriceSymbol(value.GetSymbol()),
+		SourceValue:                    value.GetValue(),
+		SourceOracleHeight:             value.GetBlockHeight(),
+		SourceSubmissionIntervalBlocks: sourceSubmissionInterval,
+		PendingDelayBlocks:             delayBlocks,
+		PendingDelayCapBlocks:          types.MinGasPricePendingDelayCap,
+		RawMinGasPrice:                 rawMinGasPrice.String(),
+		PreviousMinGasPrice:            currentMinGasPrice.String(),
 	}
 	if err := k.SetMinGasPriceSchedule(ctx, schedule); err != nil {
 		return err
@@ -135,7 +134,7 @@ func (k Keeper) ApplyDueMinGasPriceSchedule(ctx context.Context) error {
 		return k.ClearMinGasPriceSchedule(ctx)
 	}
 
-	newMinGasPrice, err := parsePositiveDec(schedule.GetMinGasPrice(), "min_gas_price")
+	newMinGasPrice, err := parsePositiveDec(schedule.GetScheduledMinGasPrice(), "scheduled_min_gas_price")
 	if err != nil {
 		k.emitMinGasPriceSkipped(ctx, "invalid_pending_min_gas_price", oracleValueFromSchedule(schedule), "")
 		return k.ClearMinGasPriceSchedule(ctx)
@@ -178,7 +177,7 @@ func (k Keeper) ValidateMinGasPriceSchedule(schedule *constitutionv1.MinGasPrice
 	if schedule.GetEffectiveHeight() <= 0 {
 		return types.ErrInvalidMinGasPrice.Wrap("effective_height must be positive")
 	}
-	minGasPrice, err := parsePositiveDec(schedule.GetMinGasPrice(), "min_gas_price")
+	scheduledMinGasPrice, err := parsePositiveDec(schedule.GetScheduledMinGasPrice(), "scheduled_min_gas_price")
 	if err != nil {
 		return err
 	}
@@ -192,15 +191,15 @@ func (k Keeper) ValidateMinGasPriceSchedule(schedule *constitutionv1.MinGasPrice
 	if schedule.GetSourceOracleHeight() <= 0 {
 		return types.ErrInvalidMinGasPrice.Wrap("source_oracle_height must be positive")
 	}
-	if schedule.GetSourceSubmissionInterval() == 0 {
-		return types.ErrInvalidMinGasPrice.Wrap("source_submission_interval must be positive")
+	if schedule.GetSourceSubmissionIntervalBlocks() == 0 {
+		return types.ErrInvalidMinGasPrice.Wrap("source_submission_interval_blocks must be positive")
 	}
-	expectedDelayBlocks := pendingDelayBlocksForInterval(schedule.GetSourceSubmissionInterval())
+	expectedDelayBlocks := pendingDelayBlocksForInterval(schedule.GetSourceSubmissionIntervalBlocks())
 	if schedule.GetPendingDelayBlocks() == 0 {
 		return types.ErrInvalidMinGasPrice.Wrap("pending_delay_blocks must be positive")
 	}
 	if schedule.GetPendingDelayBlocks() != expectedDelayBlocks {
-		return types.ErrInvalidMinGasPrice.Wrap("pending_delay_blocks must equal min(source_submission_interval, pending_delay_cap_blocks)")
+		return types.ErrInvalidMinGasPrice.Wrap("pending_delay_blocks must equal min(source_submission_interval_blocks, pending_delay_cap_blocks)")
 	}
 	if schedule.GetPendingDelayBlocks() > types.MinGasPricePendingDelayCap {
 		return types.ErrInvalidMinGasPrice.Wrapf("pending_delay_blocks cannot exceed %d", types.MinGasPricePendingDelayCap)
@@ -223,16 +222,9 @@ func (k Keeper) ValidateMinGasPriceSchedule(schedule *constitutionv1.MinGasPrice
 	if err != nil {
 		return err
 	}
-	clamped, err := parsePositiveDec(schedule.GetClampedMinGasPrice(), "clamped_min_gas_price")
-	if err != nil {
-		return err
-	}
 	expectedClampedMinGasPrice := clampMinGasPrice(rawMinGasPrice, previousMinGasPrice)
-	if !clamped.Equal(expectedClampedMinGasPrice) {
-		return types.ErrInvalidMinGasPrice.Wrap("clamped_min_gas_price does not match raw_min_gas_price and previous_min_gas_price")
-	}
-	if !minGasPrice.Equal(clamped) {
-		return types.ErrInvalidMinGasPrice.Wrap("min_gas_price must equal clamped_min_gas_price")
+	if !scheduledMinGasPrice.Equal(expectedClampedMinGasPrice) {
+		return types.ErrInvalidMinGasPrice.Wrap("scheduled_min_gas_price does not match raw_min_gas_price and previous_min_gas_price")
 	}
 
 	return nil
