@@ -24,6 +24,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryBaseAddress(),
 		CmdQueryModeratorAddress(),
 		CmdQuerySeparationRatio(),
+		CmdQueryMinGasPrice(),
 	)
 
 	return cmd
@@ -117,6 +118,31 @@ func CmdQuerySeparationRatio() *cobra.Command {
 
 			queryClient := constitutionv1.NewQueryClient(clientCtx)
 			resp, err := queryClient.SeparationRatio(cmd.Context(), &constitutionv1.QuerySeparationRatioRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryMinGasPrice() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "min-gas-price",
+		Short: "Query the current and pending minimum gas price",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := constitutionv1.NewQueryClient(clientCtx)
+			resp, err := queryClient.MinGasPrice(cmd.Context(), &constitutionv1.QueryMinGasPriceRequest{})
 			if err != nil {
 				return err
 			}
