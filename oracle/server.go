@@ -202,3 +202,27 @@ func (s *Sidecar) GetSamples(ctx context.Context, req *oraclev1.GetSamplesReques
 func (s *Sidecar) matchingSources(task *oraclev1.OracleTask) []SourceConfig {
 	return MatchingSourcesForTasks(s.config.Sources, []*oraclev1.OracleTask{task})
 }
+
+func SocketPath(socket string) string {
+	socket = strings.TrimSpace(socket)
+	if strings.HasPrefix(socket, "unix://") {
+		return strings.TrimPrefix(socket, "unix://")
+	}
+
+	return socket
+}
+
+func removeStaleSocket(path string) error {
+	info, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if info.Mode()&os.ModeSocket == 0 {
+		return fmt.Errorf("refusing to remove non-socket file at %s", path)
+	}
+
+	return os.Remove(path)
+}
