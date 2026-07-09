@@ -13,4 +13,5 @@ var (
 	BaseAddressKey      = collections.NewPrefix(0x02)
 	ModeratorAddressKey = collections.NewPrefix(0x03)
 	SeparationRatioKey  = collections.NewPrefix(0x04)
+	MinGasPriceKey      = collections.NewPrefix(0x05)
 )

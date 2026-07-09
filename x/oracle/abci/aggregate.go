@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
 	"google.golang.org/protobuf/proto"
 )
@@ -166,6 +167,9 @@ func (a Aggregator) aggregateValues(ctx sdk.Context, height int64, extCommit abc
 			if err != nil {
 				return nil, err
 			}
+			if isMinGasPriceOracleSymbol(symbol) && !value.IsPositive() {
+				continue
+			}
 			valuesBySymbol[symbol] = append(valuesBySymbol[symbol], value)
 		}
 	}
@@ -195,6 +199,10 @@ func (a Aggregator) aggregateValues(ctx sdk.Context, height int64, extCommit abc
 
 func voteExtensionHeight(proposalHeight int64) int64 {
 	return proposalHeight - 1
+}
+
+func isMinGasPriceOracleSymbol(symbol string) bool {
+	return oraclekeeper.NormalizeSymbol(symbol) == oraclekeeper.NormalizeSymbol(appparams.MinGasPriceOracleSymbol)
 }
 
 func DecodeVoteExtension(bz []byte) (*oraclev1.OracleVoteExtension, error) {

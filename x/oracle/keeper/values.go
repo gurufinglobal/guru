@@ -54,6 +54,22 @@ func (k Keeper) ApplyOracleValues(ctx context.Context, values []*oraclev1.Oracle
 			return err
 		}
 	}
+	if k.hooks != nil {
+		for _, value := range values {
+			sourceSubmissionInterval := uint32(0)
+			task, err := k.GetTask(ctx, value.GetSymbol())
+			if err != nil {
+				if !isNotFound(err) {
+					return err
+				}
+			} else {
+				sourceSubmissionInterval = task.GetSubmissionInterval()
+			}
+			if err := k.hooks.AfterOracleValueApplied(ctx, value, sourceSubmissionInterval); err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }

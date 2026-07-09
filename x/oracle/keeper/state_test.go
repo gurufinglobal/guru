@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -178,6 +179,26 @@ func TestApplyOracleValuesUpdatesLatestAndBoundsHistory(t *testing.T) {
 	require.Equal(t, int64(12), history.GetValues()[1].GetBlockHeight())
 }
 
+func TestApplyOracleValuesCallsHooksWithTaskSubmissionInterval(t *testing.T) {
+	f := setupKeeperFixture(t)
+	require.NoError(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
+		Symbol:             "TRX/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 7,
+	}))
+
+	hook := &recordingOracleHook{}
+	f.keeper.SetHooks(hook)
+
+	require.NoError(t, f.keeper.ApplyOracleValues(f.ctx, []*oraclev1.OracleValue{
+		testValue("trx/usd", "1.0", 10),
+	}))
+	require.Len(t, hook.values, 1)
+	require.Equal(t, "TRX/USD", hook.values[0].GetSymbol())
+	require.Equal(t, []uint32{7}, hook.sourceSubmissionIntervals)
+}
+
 func TestTaskStateRejectsInvalidTasks(t *testing.T) {
 	f := setupKeeperFixture(t)
 
@@ -353,4 +374,15 @@ func taskSymbols(tasks []*oraclev1.OracleTask) []string {
 		symbols = append(symbols, task.GetSymbol())
 	}
 	return symbols
+}
+
+type recordingOracleHook struct {
+	values                    []*oraclev1.OracleValue
+	sourceSubmissionIntervals []uint32
+}
+
+func (h *recordingOracleHook) AfterOracleValueApplied(_ context.Context, value *oraclev1.OracleValue, sourceSubmissionInterval uint32) error {
+	h.values = append(h.values, value)
+	h.sourceSubmissionIntervals = append(h.sourceSubmissionIntervals, sourceSubmissionInterval)
+	return nil
 }

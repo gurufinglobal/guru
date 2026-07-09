@@ -9,8 +9,8 @@ option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;c
 
 message GenesisState {
   Params params = 1;
-  string base_address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  string moderator_address = 3
-      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string base_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string moderator_address = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   SeparationRatio separation_ratio = 4;
+  MinGasPriceSchedule pending_min_gas_price = 5;
 }

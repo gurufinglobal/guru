@@ -15,13 +15,14 @@ import (
 )
 
 // ConsensusVersion defines the current x/constitution module consensus version.
-const ConsensusVersion = 1
+const ConsensusVersion = 2
 
 var (
 	_ appmodule.AppModule       = AppModule{}
 	_ appmodule.HasServices     = AppModule{}
 	_ appmodule.HasGenesis      = AppModule{}
 	_ appmodule.HasBeginBlocker = AppModule{}
+	_ appmodule.HasEndBlocker   = AppModule{}
 )
 
 // AppModule implements x/constitution using the core appmodule extension interfaces.
@@ -69,6 +70,11 @@ func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
 // BeginBlock executes constitution separation before other dependent begin blockers.
 func (am AppModule) BeginBlock(ctx context.Context) error {
 	return am.keeper.ExecuteSeparation(ctx)
+}
+
+// EndBlock applies a due oracle-driven minimum gas price schedule for the next block.
+func (am AppModule) EndBlock(ctx context.Context) error {
+	return am.keeper.ApplyDueMinGasPriceSchedule(ctx)
 }
 
 // ConsensusVersion returns the x/constitution consensus version.

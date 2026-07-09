@@ -9,12 +9,14 @@ import (
 
 	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/core/address"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
@@ -25,6 +27,7 @@ type keeperTestFixture struct {
 	ctx              sdk.Context
 	keeper           Keeper
 	bankKeeper       *mockBankKeeper
+	feeMarketKeeper  *mockFeeMarketKeeper
 	authority        string
 	moderatorAddress string
 	baseAddress      string
@@ -43,8 +46,10 @@ func setupKeeperFixture(t *testing.T) keeperTestFixture {
 	moderatorAddress := testAddress(t, accountCodec, 0x02)
 	baseAddress := testAddress(t, accountCodec, 0x03)
 	bankKeeper := newMockBankKeeper()
+	feeMarketKeeper := newMockFeeMarketKeeper()
 
 	keeper := NewKeeper(authorityBytes, runtime.NewKVStoreService(key), accountCodec, bankKeeper)
+	keeper.SetFeeMarketKeeper(feeMarketKeeper)
 	require.NoError(t, keeper.SetParams(testCtx.Ctx, testParams("10")))
 	require.NoError(t, keeper.SetBaseAddress(testCtx.Ctx, baseAddress))
 	require.NoError(t, keeper.SetModeratorAddress(testCtx.Ctx, moderatorAddress))
@@ -54,6 +59,7 @@ func setupKeeperFixture(t *testing.T) keeperTestFixture {
 		ctx:              testCtx.Ctx,
 		keeper:           keeper,
 		bankKeeper:       bankKeeper,
+		feeMarketKeeper:  feeMarketKeeper,
 		authority:        authorityAddress,
 		moderatorAddress: moderatorAddress,
 		baseAddress:      baseAddress,
@@ -73,13 +79,16 @@ func setupKeeperFixtureWithoutParams(t *testing.T) keeperTestFixture {
 	moderatorAddress := testAddress(t, accountCodec, 0x02)
 	baseAddress := testAddress(t, accountCodec, 0x03)
 	bankKeeper := newMockBankKeeper()
+	feeMarketKeeper := newMockFeeMarketKeeper()
 
 	keeper := NewKeeper(authorityBytes, runtime.NewKVStoreService(key), accountCodec, bankKeeper)
+	keeper.SetFeeMarketKeeper(feeMarketKeeper)
 
 	return keeperTestFixture{
 		ctx:              testCtx.Ctx,
 		keeper:           keeper,
 		bankKeeper:       bankKeeper,
+		feeMarketKeeper:  feeMarketKeeper,
 		authority:        authorityAddress,
 		moderatorAddress: moderatorAddress,
 		baseAddress:      baseAddress,
@@ -113,6 +122,43 @@ func testAddress(t *testing.T, accountCodec address.Codec, b byte) string {
 
 func testHexAddress(b byte) string {
 	return "0x" + hex.EncodeToString(bytes.Repeat([]byte{b}, 20))
+}
+
+type mockFeeMarketKeeper struct {
+	params feemarkettypes.Params
+}
+
+func newMockFeeMarketKeeper() *mockFeeMarketKeeper {
+	params := feemarkettypes.DefaultParams()
+	params.NoBaseFee = true
+	params.BaseFee = sdkmath.LegacyZeroDec()
+	params.MinGasPrice = mustTestInt(constitutiontypes.MinGasPriceScaleFactor).ToLegacyDec()
+	return &mockFeeMarketKeeper{params: params}
+}
+
+func (m *mockFeeMarketKeeper) GetParams(_ sdk.Context) feemarkettypes.Params {
+	return m.params
+}
+
+func (m *mockFeeMarketKeeper) SetParams(_ sdk.Context, params feemarkettypes.Params) error {
+	m.params = params
+	return nil
+}
+
+func mustTestInt(value string) sdkmath.Int {
+	parsed, ok := sdkmath.NewIntFromString(value)
+	if !ok {
+		panic(fmt.Sprintf("invalid test integer %q", value))
+	}
+	return parsed
+}
+
+func mustTestDec(value string) sdkmath.LegacyDec {
+	parsed, err := sdkmath.LegacyNewDecFromStr(value)
+	if err != nil {
+		panic(fmt.Sprintf("invalid test decimal %q: %v", value, err))
+	}
+	return parsed
 }
 
 type mockBankKeeper struct {

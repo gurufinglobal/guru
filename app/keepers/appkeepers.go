@@ -286,6 +286,8 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		appKeepers.kvKeys[feemarkettypes.StoreKey],
 	)
+	appKeepers.ConstitutionKeeper.SetFeeMarketKeeper(appKeepers.FeeMarketKeeper)
+	appKeepers.OracleKeeper.SetHooks(oracletypes.NewMultiOracleHooks(&appKeepers.ConstitutionKeeper))
 
 	appKeepers.TransferKeeper = transferkeeper.NewKeeper(
 		cfg.AppCodec,

@@ -14,11 +14,12 @@ import (
 )
 
 var (
-	md_GenesisState                   protoreflect.MessageDescriptor
-	fd_GenesisState_params            protoreflect.FieldDescriptor
-	fd_GenesisState_base_address      protoreflect.FieldDescriptor
-	fd_GenesisState_moderator_address protoreflect.FieldDescriptor
-	fd_GenesisState_separation_ratio  protoreflect.FieldDescriptor
+	md_GenesisState                       protoreflect.MessageDescriptor
+	fd_GenesisState_params                protoreflect.FieldDescriptor
+	fd_GenesisState_base_address          protoreflect.FieldDescriptor
+	fd_GenesisState_moderator_address     protoreflect.FieldDescriptor
+	fd_GenesisState_separation_ratio      protoreflect.FieldDescriptor
+	fd_GenesisState_pending_min_gas_price protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -28,6 +29,7 @@ func init() {
 	fd_GenesisState_base_address = md_GenesisState.Fields().ByName("base_address")
 	fd_GenesisState_moderator_address = md_GenesisState.Fields().ByName("moderator_address")
 	fd_GenesisState_separation_ratio = md_GenesisState.Fields().ByName("separation_ratio")
+	fd_GenesisState_pending_min_gas_price = md_GenesisState.Fields().ByName("pending_min_gas_price")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -119,6 +121,12 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if x.PendingMinGasPrice != nil {
+		value := protoreflect.ValueOfMessage(x.PendingMinGasPrice.ProtoReflect())
+		if !f(fd_GenesisState_pending_min_gas_price, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -142,6 +150,8 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return x.ModeratorAddress != ""
 	case "guru.constitution.v1.GenesisState.separation_ratio":
 		return x.SeparationRatio != nil
+	case "guru.constitution.v1.GenesisState.pending_min_gas_price":
+		return x.PendingMinGasPrice != nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.GenesisState"))
@@ -166,6 +176,8 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.ModeratorAddress = ""
 	case "guru.constitution.v1.GenesisState.separation_ratio":
 		x.SeparationRatio = nil
+	case "guru.constitution.v1.GenesisState.pending_min_gas_price":
+		x.PendingMinGasPrice = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.GenesisState"))
@@ -193,6 +205,9 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 		return protoreflect.ValueOfString(value)
 	case "guru.constitution.v1.GenesisState.separation_ratio":
 		value := x.SeparationRatio
+		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	case "guru.constitution.v1.GenesisState.pending_min_gas_price":
+		value := x.PendingMinGasPrice
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	default:
 		if descriptor.IsExtension() {
@@ -222,6 +237,8 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		x.ModeratorAddress = value.Interface().(string)
 	case "guru.constitution.v1.GenesisState.separation_ratio":
 		x.SeparationRatio = value.Message().Interface().(*SeparationRatio)
+	case "guru.constitution.v1.GenesisState.pending_min_gas_price":
+		x.PendingMinGasPrice = value.Message().Interface().(*MinGasPriceSchedule)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.GenesisState"))
@@ -252,6 +269,11 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 			x.SeparationRatio = new(SeparationRatio)
 		}
 		return protoreflect.ValueOfMessage(x.SeparationRatio.ProtoReflect())
+	case "guru.constitution.v1.GenesisState.pending_min_gas_price":
+		if x.PendingMinGasPrice == nil {
+			x.PendingMinGasPrice = new(MinGasPriceSchedule)
+		}
+		return protoreflect.ValueOfMessage(x.PendingMinGasPrice.ProtoReflect())
 	case "guru.constitution.v1.GenesisState.base_address":
 		panic(fmt.Errorf("field base_address of message guru.constitution.v1.GenesisState is not mutable"))
 	case "guru.constitution.v1.GenesisState.moderator_address":
@@ -278,6 +300,9 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 		return protoreflect.ValueOfString("")
 	case "guru.constitution.v1.GenesisState.separation_ratio":
 		m := new(SeparationRatio)
+		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	case "guru.constitution.v1.GenesisState.pending_min_gas_price":
+		m := new(MinGasPriceSchedule)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	default:
 		if fd.IsExtension() {
@@ -364,6 +389,10 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 			l = options.Size(x.SeparationRatio)
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if x.PendingMinGasPrice != nil {
+			l = options.Size(x.PendingMinGasPrice)
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -392,6 +421,20 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.PendingMinGasPrice != nil {
+			encoded, err := options.Marshal(x.PendingMinGasPrice)
+			if err != nil {
+				return protoiface.MarshalOutput{
+					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+					Buf:               input.Buf,
+				}, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0x2a
 		}
 		if x.SeparationRatio != nil {
 			encoded, err := options.Marshal(x.SeparationRatio)
@@ -620,6 +663,42 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
+			case 5:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field PendingMinGasPrice", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if x.PendingMinGasPrice == nil {
+					x.PendingMinGasPrice = &MinGasPriceSchedule{}
+				}
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.PendingMinGasPrice); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -673,10 +752,11 @@ type GenesisState struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Params           *Params          `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
-	BaseAddress      string           `protobuf:"bytes,2,opt,name=base_address,json=baseAddress,proto3" json:"base_address,omitempty"`
-	ModeratorAddress string           `protobuf:"bytes,3,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	SeparationRatio  *SeparationRatio `protobuf:"bytes,4,opt,name=separation_ratio,json=separationRatio,proto3" json:"separation_ratio,omitempty"`
+	Params             *Params              `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	BaseAddress        string               `protobuf:"bytes,2,opt,name=base_address,json=baseAddress,proto3" json:"base_address,omitempty"`
+	ModeratorAddress   string               `protobuf:"bytes,3,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	SeparationRatio    *SeparationRatio     `protobuf:"bytes,4,opt,name=separation_ratio,json=separationRatio,proto3" json:"separation_ratio,omitempty"`
+	PendingMinGasPrice *MinGasPriceSchedule `protobuf:"bytes,5,opt,name=pending_min_gas_price,json=pendingMinGasPrice,proto3" json:"pending_min_gas_price,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -727,6 +807,13 @@ func (x *GenesisState) GetSeparationRatio() *SeparationRatio {
 	return nil
 }
 
+func (x *GenesisState) GetPendingMinGasPrice() *MinGasPriceSchedule {
+	if x != nil {
+		return x.PendingMinGasPrice
+	}
+	return nil
+}
+
 var File_guru_constitution_v1_genesis_proto protoreflect.FileDescriptor
 
 var file_guru_constitution_v1_genesis_proto_rawDesc = []byte{
@@ -739,7 +826,7 @@ var file_guru_constitution_v1_genesis_proto_rawDesc = []byte{
 	0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x61, 0x72, 0x61,
 	0x6d, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x20, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63,
 	0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x2f, 0x74,
-	0x79, 0x70, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9a, 0x02, 0x0a, 0x0c, 0x47,
+	0x79, 0x70, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xf8, 0x02, 0x0a, 0x0c, 0x47,
 	0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x34, 0x0a, 0x06, 0x70,
 	0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x75,
 	0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e,
@@ -757,22 +844,28 @@ var file_guru_constitution_v1_genesis_proto_rawDesc = []byte{
 	0x25, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74,
 	0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x70, 0x61, 0x72, 0x61, 0x74, 0x69, 0x6f,
 	0x6e, 0x52, 0x61, 0x74, 0x69, 0x6f, 0x52, 0x0f, 0x73, 0x65, 0x70, 0x61, 0x72, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x52, 0x61, 0x74, 0x69, 0x6f, 0x42, 0xe4, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e,
-	0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f,
-	0x6e, 0x2e, 0x76, 0x31, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f,
-	0x74, 0x6f, 0x50, 0x01, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67,
-	0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f,
-	0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x3b,
-	0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x76, 0x31, 0xa2, 0x02,
-	0x03, 0x47, 0x43, 0x58, 0xaa, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x43, 0x6f, 0x6e, 0x73,
-	0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x14, 0x47, 0x75,
-	0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c,
-	0x56, 0x31, 0xe2, 0x02, 0x20, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69,
-	0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74,
-	0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x16, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x43, 0x6f,
-	0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x6e, 0x52, 0x61, 0x74, 0x69, 0x6f, 0x12, 0x5c, 0x0a, 0x15, 0x70, 0x65, 0x6e, 0x64, 0x69,
+	0x6e, 0x67, 0x5f, 0x6d, 0x69, 0x6e, 0x5f, 0x67, 0x61, 0x73, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65,
+	0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f,
+	0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x69,
+	0x6e, 0x47, 0x61, 0x73, 0x50, 0x72, 0x69, 0x63, 0x65, 0x53, 0x63, 0x68, 0x65, 0x64, 0x75, 0x6c,
+	0x65, 0x52, 0x12, 0x70, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x4d, 0x69, 0x6e, 0x47, 0x61, 0x73,
+	0x50, 0x72, 0x69, 0x63, 0x65, 0x42, 0xe4, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75,
+	0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e,
+	0x76, 0x31, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f,
+	0x50, 0x01, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67,
+	0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72,
+	0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63, 0x6f,
+	0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x3b, 0x63, 0x6f,
+	0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47,
+	0x43, 0x58, 0xaa, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69,
+	0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75,
+	0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31,
+	0xe2, 0x02, 0x20, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75,
+	0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64,
+	0x61, 0x74, 0x61, 0xea, 0x02, 0x16, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x43, 0x6f, 0x6e, 0x73,
+	0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -789,18 +882,20 @@ func file_guru_constitution_v1_genesis_proto_rawDescGZIP() []byte {
 
 var file_guru_constitution_v1_genesis_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_guru_constitution_v1_genesis_proto_goTypes = []interface{}{
-	(*GenesisState)(nil),    // 0: guru.constitution.v1.GenesisState
-	(*Params)(nil),          // 1: guru.constitution.v1.Params
-	(*SeparationRatio)(nil), // 2: guru.constitution.v1.SeparationRatio
+	(*GenesisState)(nil),        // 0: guru.constitution.v1.GenesisState
+	(*Params)(nil),              // 1: guru.constitution.v1.Params
+	(*SeparationRatio)(nil),     // 2: guru.constitution.v1.SeparationRatio
+	(*MinGasPriceSchedule)(nil), // 3: guru.constitution.v1.MinGasPriceSchedule
 }
 var file_guru_constitution_v1_genesis_proto_depIdxs = []int32{
 	1, // 0: guru.constitution.v1.GenesisState.params:type_name -> guru.constitution.v1.Params
 	2, // 1: guru.constitution.v1.GenesisState.separation_ratio:type_name -> guru.constitution.v1.SeparationRatio
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 2: guru.constitution.v1.GenesisState.pending_min_gas_price:type_name -> guru.constitution.v1.MinGasPriceSchedule
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_guru_constitution_v1_genesis_proto_init() }

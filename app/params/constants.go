@@ -15,6 +15,10 @@ const (
 )
 
 const (
+	MinGasPriceOracleSymbol = "TRX/USD" // TODO: change to the actual symbol
+)
+
+const (
 	AppName    = "guru"
 	EVMChainID = uint64(631)
 	EnvName    = AppName + "d"

@@ -25,11 +25,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConstitutionModuleHasNoEndBlockerOrderEntry(t *testing.T) {
+func TestConstitutionModuleRunsAfterFeeMarketEndBlocker(t *testing.T) {
 	order := ModuleOrderEndBlockers()
 
 	constitutionIndex := indexOf(order, constitutiontypes.ModuleName)
-	require.Equal(t, -1, constitutionIndex, "constitution module should not be in endblocker order")
+	feeMarketIndex := indexOf(order, feemarkettypes.ModuleName)
+	require.NotEqual(t, -1, constitutionIndex, "constitution module must be in endblocker order")
+	require.NotEqual(t, -1, feeMarketIndex, "feemarket module must be in endblocker order")
+	require.Greater(t, constitutionIndex, feeMarketIndex, "constitution must run after feemarket in endblocker")
 }
 
 func TestConstitutionModuleIsInGenesisOrder(t *testing.T) {
@@ -69,6 +72,47 @@ func TestDefaultGenesisDisablesFeeMarketBaseFee(t *testing.T) {
 
 	require.True(t, feeMarketGenesis.Params.NoBaseFee, "feemarket no_base_fee default must be true")
 	require.True(t, feeMarketGenesis.Params.BaseFee.IsZero(), "feemarket base_fee default must be zero")
+	require.Equal(t, constitutiontypes.MinGasPriceScaleFactor, feeMarketGenesis.Params.MinGasPrice.TruncateInt().String())
+}
+
+func TestValidateChainGenesisRejectsZeroFeeMarketMinGasPrice(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
+
+	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
+	testApp.AppCodec().MustUnmarshalJSON(genesis[feemarkettypes.ModuleName], feeMarketGenesis)
+	feeMarketGenesis.Params.MinGasPrice = sdkmath.LegacyZeroDec()
+	genesis[feemarkettypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(feeMarketGenesis)
+
+	err := testApp.ValidateChainGenesis(genesis)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "feemarket min_gas_price must be positive")
+}
+
+func TestValidateChainGenesisAllowsPendingMinGasPricePreviousMismatch(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
+
+	constitutionGenesis := &constitutionv1.GenesisState{}
+	testApp.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
+	constitutionGenesis.PendingMinGasPrice = &constitutionv1.MinGasPriceSchedule{
+		EffectiveHeight:          15,
+		MinGasPrice:              "1.1",
+		SourceSymbol:             appparams.MinGasPriceOracleSymbol,
+		SourceValue:              "1.0",
+		SourceOracleHeight:       10,
+		SourceSubmissionInterval: 5,
+		PendingDelayBlocks:       5,
+		PendingDelayCapBlocks:    constitutiontypes.MinGasPricePendingDelayCap,
+		RawMinGasPrice:           constitutiontypes.MinGasPriceScaleFactor,
+		PreviousMinGasPrice:      "1",
+		ClampedMinGasPrice:       "1.1",
+	}
+	genesis[constitutiontypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(constitutionGenesis)
+
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
 }
 
 func TestValidateChainGenesisRejectsInvalidConstitutionSeparationRatio(t *testing.T) {

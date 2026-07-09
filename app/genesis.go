@@ -117,6 +117,9 @@ func (app *App) ValidateChainGenesis(genesis map[string]json.RawMessage) error {
 	if !feeMarketGenesis.Params.BaseFee.IsZero() {
 		return fmt.Errorf("feemarket base_fee must be zero, got %s", feeMarketGenesis.Params.BaseFee.String())
 	}
+	if !feeMarketGenesis.Params.MinGasPrice.IsPositive() {
+		return fmt.Errorf("feemarket min_gas_price must be positive, got %s", feeMarketGenesis.Params.MinGasPrice.String())
+	}
 
 	evmGenesis := evmtypes.DefaultGenesisState()
 	if bz, ok := genesis[evmtypes.ModuleName]; ok {
@@ -339,6 +342,11 @@ func (app *App) DefaultGenesis() map[string]json.RawMessage {
 	}
 	feeMarketGenesis.Params.NoBaseFee = true
 	feeMarketGenesis.Params.BaseFee = sdkmath.LegacyZeroDec()
+	initialMinGasPrice, ok := sdkmath.NewIntFromString(constitutiontypes.MinGasPriceScaleFactor)
+	if !ok {
+		panic(fmt.Sprintf("invalid initial min gas price %q", constitutiontypes.MinGasPriceScaleFactor))
+	}
+	feeMarketGenesis.Params.MinGasPrice = initialMinGasPrice.ToLegacyDec()
 	genesis[feemarkettypes.ModuleName] = app.appCodec.MustMarshalJSON(feeMarketGenesis)
 
 	// 7) EVM denom and extended denom

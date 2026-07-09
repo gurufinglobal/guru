@@ -99,6 +99,7 @@ var (
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
+		constitutiontypes.ModuleName,
 
 		// no-op and legacy blockers
 		ibcexported.ModuleName,

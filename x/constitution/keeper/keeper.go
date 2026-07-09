@@ -20,11 +20,13 @@ type Keeper struct {
 	authority    sdk.AccAddress
 	accountCodec address.Codec
 	bankKeeper   BankKeeper
+	feeMarket    FeeMarketKeeper
 
-	params           collections.Item[*constitutionv1.Params]
-	baseAddress      collections.Item[string]
-	moderatorAddress collections.Item[string]
-	separationRatio  collections.Item[*constitutionv1.SeparationRatio]
+	params              collections.Item[*constitutionv1.Params]
+	baseAddress         collections.Item[string]
+	moderatorAddress    collections.Item[string]
+	separationRatio     collections.Item[*constitutionv1.SeparationRatio]
+	minGasPriceSchedule collections.Item[*constitutionv1.MinGasPriceSchedule]
 
 	schema collections.Schema
 }
@@ -47,6 +49,7 @@ func NewKeeper(
 	k.baseAddress = collections.NewItem(sb, types.BaseAddressKey, "base_address", collections.StringValue)
 	k.moderatorAddress = collections.NewItem(sb, types.ModeratorAddressKey, "moderator_address", collections.StringValue)
 	k.separationRatio = collections.NewItem(sb, types.SeparationRatioKey, "separation_ratio", codec.CollValueV2[constitutionv1.SeparationRatio]())
+	k.minGasPriceSchedule = collections.NewItem(sb, types.MinGasPriceKey, "min_gas_price_schedule", codec.CollValueV2[constitutionv1.MinGasPriceSchedule]())
 	schema, err := sb.Build()
 	if err != nil {
 		panic(err)
@@ -54,6 +57,10 @@ func NewKeeper(
 	k.schema = schema
 
 	return k
+}
+
+func (k *Keeper) SetFeeMarketKeeper(feeMarket FeeMarketKeeper) {
+	k.feeMarket = feeMarket
 }
 
 func (k Keeper) Logger(ctx context.Context) log.Logger {

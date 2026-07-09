@@ -16,6 +16,7 @@ import (
 type Keeper struct {
 	accountCodec       address.Codec
 	constitutionKeeper ConstitutionKeeper
+	hooks              types.OracleHooks
 
 	params               collections.Item[*oraclev1.Params]
 	tasks                collections.Map[string, *oraclev1.OracleTask]
@@ -62,6 +63,10 @@ func NewKeeper(
 	k.schema = schema
 
 	return k
+}
+
+func (k *Keeper) SetHooks(hooks types.OracleHooks) {
+	k.hooks = hooks
 }
 
 func (k Keeper) Logger(ctx context.Context) log.Logger {
