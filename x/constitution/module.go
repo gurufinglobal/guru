@@ -67,12 +67,16 @@ func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
 	return nil
 }
 
-// BeginBlock executes constitution separation before other dependent begin blockers.
+// BeginBlock executes fee separation before distribution observes the fee
+// collector. This keeps the chain policy module as the source of truth for
+// base/burn/validator fee routing.
 func (am AppModule) BeginBlock(ctx context.Context) error {
 	return am.keeper.ExecuteSeparation(ctx)
 }
 
-// EndBlock applies a due oracle-driven minimum gas price schedule for the next block.
+// EndBlock applies a due oracle-driven minimum gas price schedule after normal
+// tx execution. The updated feemarket parameter is therefore a next-block
+// admission rule, which avoids changing the fee rule mid-block.
 func (am AppModule) EndBlock(ctx context.Context) error {
 	return am.keeper.ApplyDueMinGasPriceSchedule(ctx)
 }

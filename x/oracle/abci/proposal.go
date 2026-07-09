@@ -33,6 +33,9 @@ func (h ProposalHandler) PrepareProposal(ctx sdk.Context, req *abcitypes.Request
 		return nil, err
 	}
 
+	// Oracle payloads are consensus data, not user transactions. The proposer
+	// owns Txs[0] for this payload and strips any user-injected payload txs
+	// before handing the remaining mempool txs to the normal proposal handler.
 	innerReq := *req
 	innerReq.Txs = stripPayloadTxs(req.Txs)
 	payloadTx := []byte(nil)
@@ -64,6 +67,8 @@ func (h ProposalHandler) ProcessProposal(ctx sdk.Context, req *abcitypes.Request
 		return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_REJECT}, nil
 	}
 
+	// Validators recompute whether a payload is expected and verify its exact
+	// content before normal tx verification runs on the payload-stripped list.
 	payload, hasPayload, err := firstPayload(req.Txs)
 	if err != nil {
 		return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_REJECT}, nil
