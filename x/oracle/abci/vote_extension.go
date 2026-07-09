@@ -53,6 +53,8 @@ func (h VoteExtensionHandler) ExtendVote(ctx sdk.Context, req *abcitypes.Request
 
 	response, err := h.fetchSamples(ctx.Context(), tasks, req.Height)
 	if err != nil {
+		// Local sidecar failure must not stop consensus. Missing validator
+		// samples simply reduce oracle quorum for this height.
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 

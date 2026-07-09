@@ -25,6 +25,7 @@ import (
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 )
 
 const oracleTestChainID = "guru-oracle-test"
@@ -197,7 +198,7 @@ func TestProcessProposalAcceptsRecomputedPayloadAndRejectsMismatch(t *testing.T)
 	require.True(t, processCalled)
 	require.Equal(t, abcitypes.ResponseProcessProposal_ACCEPT, resp.Status)
 
-	mismatchedPayload := *payload
+	mismatchedPayload := proto.Clone(payload).(*oraclev1.OracleProposalPayload)
 	mismatchedPayload.Values = []*oraclev1.OracleValue{{
 		Symbol:        "BTC/USD",
 		ValueType:     oraclev1.ValueType_VALUE_TYPE_NUMERIC,
@@ -205,7 +206,7 @@ func TestProcessProposalAcceptsRecomputedPayloadAndRejectsMismatch(t *testing.T)
 		BlockHeight:   3,
 		BlockTimeUnix: 30,
 	}}
-	mismatchedPayloadTx, err := EncodeProposalTx(&mismatchedPayload)
+	mismatchedPayloadTx, err := EncodeProposalTx(mismatchedPayload)
 	require.NoError(t, err)
 
 	processCalled = false

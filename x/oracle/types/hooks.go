@@ -7,6 +7,9 @@ import (
 )
 
 type OracleHooks interface {
+	// AfterOracleValueApplied runs after an oracle aggregate is written to
+	// oracle state. Hook implementers may derive their own module state from
+	// the value, but oracle remains the owner of aggregation and task cadence.
 	AfterOracleValueApplied(ctx context.Context, value *oraclev1.OracleValue, sourceSubmissionInterval uint32) error
 }
 

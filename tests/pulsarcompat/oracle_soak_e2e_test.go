@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -19,13 +20,14 @@ import (
 )
 
 const (
-	envOracleSoak          = "GURU_E2E_SOAK"
-	envOracleTxSmoke       = "GURU_E2E_ORACLE_TX_SMOKE"
-	oracleSoakHeight       = int64(100)
-	oracleSoakWorkloadStep = int64(5)
-	oracleSoakImportBlocks = int64(20)
-	oracleSoakTimeout      = 25 * time.Minute
-	oracleSoakTxFee        = highFeeAGXN
+	envOracleSoak           = "GURU_E2E_SOAK"
+	envOracleTxSmoke        = "GURU_E2E_ORACLE_TX_SMOKE"
+	oracleSoakHeight        = int64(100)
+	oracleSoakWorkloadStep  = int64(5)
+	oracleSoakImportBlocks  = int64(20)
+	oracleSoakTimeout       = 25 * time.Minute
+	oracleSoakTxFee         = highFeeAGXN
+	oracleSoakInitialMinGas = "630000000000.000000000000000000"
 )
 
 func TestE2EOracleSyncTxSmoke(t *testing.T) {
@@ -92,6 +94,9 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, 15, 2*time.Minute)
 	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", 3, 90*time.Second)
+	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "TRX/USD", 3, 90*time.Second)
+	updatedMinGasPrice := waitForMinGasPriceAbove(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, oracleSoakInitialMinGas, 2*time.Minute)
+	t.Logf("oracle-driven min gas price update observed current_min_gas_price=%s", updatedMinGasPrice)
 
 	runOracleSoakTxMix(t, repoRoot, bin, nodes[0], accounts)
 
@@ -379,12 +384,15 @@ func patchOracleSoakGenesis(t *testing.T, home, moderatorAddress string) {
 	oracleState["tasks"] = []any{
 		map[string]any{"symbol": "BTC/USD", "value_type": 1, "enabled": true, "submission_interval": 5},
 		map[string]any{"symbol": "ETH/USD", "value_type": 1, "enabled": true, "submission_interval": 7},
+		map[string]any{"symbol": "TRX/USD", "value_type": 1, "enabled": true, "submission_interval": 5},
 	}
 	oracleState["task_schedule"] = []any{
 		map[string]any{"symbol": "BTC/USD", "height": 3},
 		map[string]any{"symbol": "BTC/USD", "height": 8},
 		map[string]any{"symbol": "ETH/USD", "height": 4},
 		map[string]any{"symbol": "ETH/USD", "height": 11},
+		map[string]any{"symbol": "TRX/USD", "height": 3},
+		map[string]any{"symbol": "TRX/USD", "height": 8},
 	}
 
 	out, err := json.MarshalIndent(doc, "", "  ")
@@ -565,6 +573,7 @@ func oracleSoakTasks() []*oraclev1.OracleTask {
 	return []*oraclev1.OracleTask{
 		{Symbol: "BTC/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 5},
 		{Symbol: "ETH/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 7},
+		{Symbol: "TRX/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 5},
 	}
 }
 
@@ -578,6 +587,9 @@ func oracleSoakSources(baseURL string) []oracle.SourceConfig {
 		{Name: "eth-b", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=202.0", ResponsePath: "data.price"},
 		{Name: "eth-c", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=203.0", ResponsePath: "data.price"},
 		{Name: "eth-nonnumeric", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&nonnumeric=1", ResponsePath: "data.price"},
+		{Name: "trx-a", Symbol: "TRX/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=0.10345", ResponsePath: "data.price"},
+		{Name: "trx-b", Symbol: "TRX/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=0.10345", ResponsePath: "data.price"},
+		{Name: "trx-c", Symbol: "TRX/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=0.10345", ResponsePath: "data.price"},
 	}
 }
 
@@ -1240,6 +1252,58 @@ func queryOracleLatestE(repoRoot, bin, home, rpcAddr, symbol string) (oracleLate
 		Value:       fmt.Sprint(value["value"]),
 		BlockHeight: height,
 	}, nil
+}
+
+func waitForMinGasPriceAbove(t *testing.T, repoRoot, bin, home, rpcAddr, floor string, timeout time.Duration) string {
+	t.Helper()
+
+	deadline := time.Now().Add(timeout)
+	lastValue := ""
+	var lastErr error
+	for time.Now().Before(deadline) {
+		current, err := queryCurrentMinGasPriceE(repoRoot, bin, home, rpcAddr)
+		if err == nil {
+			lastValue = current
+			if decimalStringGreater(current, floor) {
+				return current
+			}
+		} else {
+			lastErr = err
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	t.Fatalf("min gas price did not rise above %s within %s: last_value=%q last_err=%v", floor, timeout, lastValue, lastErr)
+	return ""
+}
+
+func queryCurrentMinGasPriceE(repoRoot, bin, home, rpcAddr string) (string, error) {
+	out, err := runCmdE(nil, repoRoot, bin, "query", "constitution", "min-gas-price", "--node", rpcAddr, "--home", home, "--chain-id", e2eChainID, "--output", "json")
+	if err != nil {
+		return "", err
+	}
+	var payload map[string]any
+	decoder := json.NewDecoder(strings.NewReader(out))
+	decoder.UseNumber()
+	if err := decoder.Decode(&payload); err != nil {
+		return "", err
+	}
+	current, ok := payload["current_min_gas_price"].(string)
+	if !ok || strings.TrimSpace(current) == "" {
+		return "", fmt.Errorf("missing current_min_gas_price in %s", out)
+	}
+	return current, nil
+}
+
+func decimalStringGreater(value, floor string) bool {
+	valueRat, ok := new(big.Rat).SetString(value)
+	if !ok {
+		return false
+	}
+	floorRat, ok := new(big.Rat).SetString(floor)
+	if !ok {
+		return false
+	}
+	return valueRat.Cmp(floorRat) > 0
 }
 
 func assertOracleHistory(t *testing.T, repoRoot, bin, home, rpcAddr, symbol string) {

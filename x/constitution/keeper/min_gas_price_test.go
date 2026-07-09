@@ -10,6 +10,7 @@ import (
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -31,8 +32,7 @@ func TestAfterOracleValueAppliedSchedulesCappedPendingMinGasPrice(t *testing.T) 
 	require.Equal(t, uint32(10), schedule.GetPendingDelayCapBlocks())
 	require.Equal(t, defaultMinGasPriceDec, schedule.GetPreviousMinGasPrice())
 	require.Equal(t, "6089898501691", schedule.GetRawMinGasPrice())
-	require.Equal(t, upperClampedDec, schedule.GetMinGasPrice())
-	require.Equal(t, schedule.GetMinGasPrice(), schedule.GetClampedMinGasPrice())
+	require.Equal(t, upperClampedDec, schedule.GetScheduledMinGasPrice())
 
 	events := ctx.EventManager().Events()
 	require.Len(t, events, 1)
@@ -99,7 +99,7 @@ func TestAfterOracleValueAppliedReplacesSinglePendingSchedule(t *testing.T) {
 	require.Equal(t, int64(23), schedule.GetEffectiveHeight())
 	require.Equal(t, int64(21), schedule.GetSourceOracleHeight())
 	require.Equal(t, uint32(2), schedule.GetPendingDelayBlocks())
-	require.Equal(t, defaultMinGasPriceDec, schedule.GetMinGasPrice())
+	require.Equal(t, defaultMinGasPriceDec, schedule.GetScheduledMinGasPrice())
 
 	events := ctx.EventManager().Events()
 	require.Len(t, events, 1)
@@ -122,36 +122,87 @@ func TestAfterOracleValueAppliedSkipsInvalidTargetPrice(t *testing.T) {
 	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyReason, "invalid_oracle_price"))
 }
 
+func TestAfterOracleValueAppliedIgnoresNonMinGasPriceSymbol(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
+
+	require.NoError(t, f.keeper.AfterOracleValueApplied(ctx, testOracleValue("BTC/USD", "0.10345", 20), 5))
+
+	_, err := f.keeper.GetMinGasPriceSchedule(ctx)
+	require.ErrorIs(t, err, collections.ErrNotFound)
+	require.Empty(t, ctx.EventManager().Events())
+}
+
+func TestAfterOracleValueAppliedSkipsInvalidSchedulingInputs(t *testing.T) {
+	for _, tc := range []struct {
+		name                     string
+		value                    *oraclev1.OracleValue
+		sourceSubmissionInterval uint32
+		reason                   string
+	}{
+		{
+			name:                     "zero submission interval",
+			value:                    testOracleValue(appparams.MinGasPriceOracleSymbol, "0.10345", 20),
+			sourceSubmissionInterval: 0,
+			reason:                   "invalid_submission_interval",
+		},
+		{
+			name:                     "zero source height",
+			value:                    testOracleValue(appparams.MinGasPriceOracleSymbol, "0.10345", 0),
+			sourceSubmissionInterval: 5,
+			reason:                   "invalid_source_oracle_height",
+		},
+		{
+			name:                     "negative source height",
+			value:                    testOracleValue(appparams.MinGasPriceOracleSymbol, "0.10345", -1),
+			sourceSubmissionInterval: 5,
+			reason:                   "invalid_source_oracle_height",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := setupKeeperFixture(t)
+			ctx := f.ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
+
+			require.NoError(t, f.keeper.AfterOracleValueApplied(ctx, tc.value, tc.sourceSubmissionInterval))
+
+			_, err := f.keeper.GetMinGasPriceSchedule(ctx)
+			require.ErrorIs(t, err, collections.ErrNotFound)
+			events := ctx.EventManager().Events()
+			require.Len(t, events, 1)
+			require.Equal(t, constitutiontypes.EventTypeMinGasPriceUpdateSkipped, events[0].Type)
+			require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyReason, tc.reason))
+		})
+	}
+}
+
 func TestValidateMinGasPriceScheduleRejectsInconsistentDerivedFields(t *testing.T) {
 	f := setupKeeperFixture(t)
 	valid := &constitutionv1.MinGasPriceSchedule{
-		EffectiveHeight:          25,
-		MinGasPrice:              defaultMinGasPriceDec,
-		SourceSymbol:             appparams.MinGasPriceOracleSymbol,
-		SourceValue:              "1.0",
-		SourceOracleHeight:       20,
-		SourceSubmissionInterval: 5,
-		PendingDelayBlocks:       5,
-		PendingDelayCapBlocks:    10,
-		RawMinGasPrice:           "630000000000",
-		PreviousMinGasPrice:      defaultMinGasPriceDec,
-		ClampedMinGasPrice:       defaultMinGasPriceDec,
+		EffectiveHeight:                25,
+		ScheduledMinGasPrice:           defaultMinGasPriceDec,
+		SourceSymbol:                   appparams.MinGasPriceOracleSymbol,
+		SourceValue:                    "1.0",
+		SourceOracleHeight:             20,
+		SourceSubmissionIntervalBlocks: 5,
+		PendingDelayBlocks:             5,
+		PendingDelayCapBlocks:          10,
+		RawMinGasPrice:                 "630000000000",
+		PreviousMinGasPrice:            defaultMinGasPriceDec,
 	}
 	require.NoError(t, f.keeper.ValidateMinGasPriceSchedule(valid))
 
-	rawMismatch := *valid
+	rawMismatch := proto.Clone(valid).(*constitutionv1.MinGasPriceSchedule)
 	rawMismatch.RawMinGasPrice = "1"
-	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(&rawMismatch), "raw_min_gas_price does not match")
+	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(rawMismatch), "raw_min_gas_price does not match")
 
-	delayMismatch := *valid
+	delayMismatch := proto.Clone(valid).(*constitutionv1.MinGasPriceSchedule)
 	delayMismatch.PendingDelayBlocks = 4
 	delayMismatch.EffectiveHeight = 24
-	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(&delayMismatch), "pending_delay_blocks must equal")
+	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(delayMismatch), "pending_delay_blocks must equal")
 
-	clampMismatch := *valid
-	clampMismatch.ClampedMinGasPrice = "1"
-	clampMismatch.MinGasPrice = "1"
-	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(&clampMismatch), "clamped_min_gas_price does not match")
+	clampMismatch := proto.Clone(valid).(*constitutionv1.MinGasPriceSchedule)
+	clampMismatch.ScheduledMinGasPrice = "1"
+	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(clampMismatch), "scheduled_min_gas_price does not match")
 }
 
 func TestQueryServerMinGasPriceReturnsCurrentAndPending(t *testing.T) {

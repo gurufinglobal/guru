@@ -16,14 +16,15 @@ message SeparationRatio {
 // update derived from an accepted oracle value.
 message MinGasPriceSchedule {
   int64 effective_height = 1;
-  string min_gas_price = 2;
+  string scheduled_min_gas_price = 2;
   string source_symbol = 3;
   string source_value = 4;
   int64 source_oracle_height = 5;
-  uint32 source_submission_interval = 6;
+  uint32 source_submission_interval_blocks = 6;
   uint32 pending_delay_blocks = 7;
   uint32 pending_delay_cap_blocks = 8;
   string raw_min_gas_price = 9;
   string previous_min_gas_price = 10;
-  string clamped_min_gas_price = 11;
+  reserved 11;
+  reserved "clamped_min_gas_price";
 }

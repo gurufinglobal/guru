@@ -56,6 +56,9 @@ func (k Keeper) ApplyOracleValues(ctx context.Context, values []*oraclev1.Oracle
 	}
 	if k.hooks != nil {
 		for _, value := range values {
+			// Pass the task cadence with the finalized value so downstream
+			// modules can schedule policy changes without re-walking oracle
+			// schedules or depending on local sidecar timing.
 			sourceSubmissionInterval := uint32(0)
 			task, err := k.GetTask(ctx, value.GetSymbol())
 			if err != nil {

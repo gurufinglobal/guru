@@ -513,34 +513,32 @@ func (x *fastReflection_SeparationRatio) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_MinGasPriceSchedule                            protoreflect.MessageDescriptor
-	fd_MinGasPriceSchedule_effective_height           protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_min_gas_price              protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_source_symbol              protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_source_value               protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_source_oracle_height       protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_source_submission_interval protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_pending_delay_blocks       protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_pending_delay_cap_blocks   protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_raw_min_gas_price          protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_previous_min_gas_price     protoreflect.FieldDescriptor
-	fd_MinGasPriceSchedule_clamped_min_gas_price      protoreflect.FieldDescriptor
+	md_MinGasPriceSchedule                                   protoreflect.MessageDescriptor
+	fd_MinGasPriceSchedule_effective_height                  protoreflect.FieldDescriptor
+	fd_MinGasPriceSchedule_scheduled_min_gas_price           protoreflect.FieldDescriptor
+	fd_MinGasPriceSchedule_source_symbol                     protoreflect.FieldDescriptor
+	fd_MinGasPriceSchedule_source_value                      protoreflect.FieldDescriptor
+	fd_MinGasPriceSchedule_source_oracle_height              protoreflect.FieldDescriptor
+	fd_MinGasPriceSchedule_source_submission_interval_blocks protoreflect.FieldDescriptor
+	fd_MinGasPriceSchedule_pending_delay_blocks              protoreflect.FieldDescriptor
+	fd_MinGasPriceSchedule_pending_delay_cap_blocks          protoreflect.FieldDescriptor
+	fd_MinGasPriceSchedule_raw_min_gas_price                 protoreflect.FieldDescriptor
+	fd_MinGasPriceSchedule_previous_min_gas_price            protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_constitution_v1_types_proto_init()
 	md_MinGasPriceSchedule = File_guru_constitution_v1_types_proto.Messages().ByName("MinGasPriceSchedule")
 	fd_MinGasPriceSchedule_effective_height = md_MinGasPriceSchedule.Fields().ByName("effective_height")
-	fd_MinGasPriceSchedule_min_gas_price = md_MinGasPriceSchedule.Fields().ByName("min_gas_price")
+	fd_MinGasPriceSchedule_scheduled_min_gas_price = md_MinGasPriceSchedule.Fields().ByName("scheduled_min_gas_price")
 	fd_MinGasPriceSchedule_source_symbol = md_MinGasPriceSchedule.Fields().ByName("source_symbol")
 	fd_MinGasPriceSchedule_source_value = md_MinGasPriceSchedule.Fields().ByName("source_value")
 	fd_MinGasPriceSchedule_source_oracle_height = md_MinGasPriceSchedule.Fields().ByName("source_oracle_height")
-	fd_MinGasPriceSchedule_source_submission_interval = md_MinGasPriceSchedule.Fields().ByName("source_submission_interval")
+	fd_MinGasPriceSchedule_source_submission_interval_blocks = md_MinGasPriceSchedule.Fields().ByName("source_submission_interval_blocks")
 	fd_MinGasPriceSchedule_pending_delay_blocks = md_MinGasPriceSchedule.Fields().ByName("pending_delay_blocks")
 	fd_MinGasPriceSchedule_pending_delay_cap_blocks = md_MinGasPriceSchedule.Fields().ByName("pending_delay_cap_blocks")
 	fd_MinGasPriceSchedule_raw_min_gas_price = md_MinGasPriceSchedule.Fields().ByName("raw_min_gas_price")
 	fd_MinGasPriceSchedule_previous_min_gas_price = md_MinGasPriceSchedule.Fields().ByName("previous_min_gas_price")
-	fd_MinGasPriceSchedule_clamped_min_gas_price = md_MinGasPriceSchedule.Fields().ByName("clamped_min_gas_price")
 }
 
 var _ protoreflect.Message = (*fastReflection_MinGasPriceSchedule)(nil)
@@ -614,9 +612,9 @@ func (x *fastReflection_MinGasPriceSchedule) Range(f func(protoreflect.FieldDesc
 			return
 		}
 	}
-	if x.MinGasPrice != "" {
-		value := protoreflect.ValueOfString(x.MinGasPrice)
-		if !f(fd_MinGasPriceSchedule_min_gas_price, value) {
+	if x.ScheduledMinGasPrice != "" {
+		value := protoreflect.ValueOfString(x.ScheduledMinGasPrice)
+		if !f(fd_MinGasPriceSchedule_scheduled_min_gas_price, value) {
 			return
 		}
 	}
@@ -638,9 +636,9 @@ func (x *fastReflection_MinGasPriceSchedule) Range(f func(protoreflect.FieldDesc
 			return
 		}
 	}
-	if x.SourceSubmissionInterval != uint32(0) {
-		value := protoreflect.ValueOfUint32(x.SourceSubmissionInterval)
-		if !f(fd_MinGasPriceSchedule_source_submission_interval, value) {
+	if x.SourceSubmissionIntervalBlocks != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.SourceSubmissionIntervalBlocks)
+		if !f(fd_MinGasPriceSchedule_source_submission_interval_blocks, value) {
 			return
 		}
 	}
@@ -668,12 +666,6 @@ func (x *fastReflection_MinGasPriceSchedule) Range(f func(protoreflect.FieldDesc
 			return
 		}
 	}
-	if x.ClampedMinGasPrice != "" {
-		value := protoreflect.ValueOfString(x.ClampedMinGasPrice)
-		if !f(fd_MinGasPriceSchedule_clamped_min_gas_price, value) {
-			return
-		}
-	}
 }
 
 // Has reports whether a field is populated.
@@ -691,16 +683,16 @@ func (x *fastReflection_MinGasPriceSchedule) Has(fd protoreflect.FieldDescriptor
 	switch fd.FullName() {
 	case "guru.constitution.v1.MinGasPriceSchedule.effective_height":
 		return x.EffectiveHeight != int64(0)
-	case "guru.constitution.v1.MinGasPriceSchedule.min_gas_price":
-		return x.MinGasPrice != ""
+	case "guru.constitution.v1.MinGasPriceSchedule.scheduled_min_gas_price":
+		return x.ScheduledMinGasPrice != ""
 	case "guru.constitution.v1.MinGasPriceSchedule.source_symbol":
 		return x.SourceSymbol != ""
 	case "guru.constitution.v1.MinGasPriceSchedule.source_value":
 		return x.SourceValue != ""
 	case "guru.constitution.v1.MinGasPriceSchedule.source_oracle_height":
 		return x.SourceOracleHeight != int64(0)
-	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval":
-		return x.SourceSubmissionInterval != uint32(0)
+	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval_blocks":
+		return x.SourceSubmissionIntervalBlocks != uint32(0)
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_blocks":
 		return x.PendingDelayBlocks != uint32(0)
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_cap_blocks":
@@ -709,8 +701,6 @@ func (x *fastReflection_MinGasPriceSchedule) Has(fd protoreflect.FieldDescriptor
 		return x.RawMinGasPrice != ""
 	case "guru.constitution.v1.MinGasPriceSchedule.previous_min_gas_price":
 		return x.PreviousMinGasPrice != ""
-	case "guru.constitution.v1.MinGasPriceSchedule.clamped_min_gas_price":
-		return x.ClampedMinGasPrice != ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.MinGasPriceSchedule"))
@@ -729,16 +719,16 @@ func (x *fastReflection_MinGasPriceSchedule) Clear(fd protoreflect.FieldDescript
 	switch fd.FullName() {
 	case "guru.constitution.v1.MinGasPriceSchedule.effective_height":
 		x.EffectiveHeight = int64(0)
-	case "guru.constitution.v1.MinGasPriceSchedule.min_gas_price":
-		x.MinGasPrice = ""
+	case "guru.constitution.v1.MinGasPriceSchedule.scheduled_min_gas_price":
+		x.ScheduledMinGasPrice = ""
 	case "guru.constitution.v1.MinGasPriceSchedule.source_symbol":
 		x.SourceSymbol = ""
 	case "guru.constitution.v1.MinGasPriceSchedule.source_value":
 		x.SourceValue = ""
 	case "guru.constitution.v1.MinGasPriceSchedule.source_oracle_height":
 		x.SourceOracleHeight = int64(0)
-	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval":
-		x.SourceSubmissionInterval = uint32(0)
+	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval_blocks":
+		x.SourceSubmissionIntervalBlocks = uint32(0)
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_blocks":
 		x.PendingDelayBlocks = uint32(0)
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_cap_blocks":
@@ -747,8 +737,6 @@ func (x *fastReflection_MinGasPriceSchedule) Clear(fd protoreflect.FieldDescript
 		x.RawMinGasPrice = ""
 	case "guru.constitution.v1.MinGasPriceSchedule.previous_min_gas_price":
 		x.PreviousMinGasPrice = ""
-	case "guru.constitution.v1.MinGasPriceSchedule.clamped_min_gas_price":
-		x.ClampedMinGasPrice = ""
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.MinGasPriceSchedule"))
@@ -768,8 +756,8 @@ func (x *fastReflection_MinGasPriceSchedule) Get(descriptor protoreflect.FieldDe
 	case "guru.constitution.v1.MinGasPriceSchedule.effective_height":
 		value := x.EffectiveHeight
 		return protoreflect.ValueOfInt64(value)
-	case "guru.constitution.v1.MinGasPriceSchedule.min_gas_price":
-		value := x.MinGasPrice
+	case "guru.constitution.v1.MinGasPriceSchedule.scheduled_min_gas_price":
+		value := x.ScheduledMinGasPrice
 		return protoreflect.ValueOfString(value)
 	case "guru.constitution.v1.MinGasPriceSchedule.source_symbol":
 		value := x.SourceSymbol
@@ -780,8 +768,8 @@ func (x *fastReflection_MinGasPriceSchedule) Get(descriptor protoreflect.FieldDe
 	case "guru.constitution.v1.MinGasPriceSchedule.source_oracle_height":
 		value := x.SourceOracleHeight
 		return protoreflect.ValueOfInt64(value)
-	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval":
-		value := x.SourceSubmissionInterval
+	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval_blocks":
+		value := x.SourceSubmissionIntervalBlocks
 		return protoreflect.ValueOfUint32(value)
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_blocks":
 		value := x.PendingDelayBlocks
@@ -794,9 +782,6 @@ func (x *fastReflection_MinGasPriceSchedule) Get(descriptor protoreflect.FieldDe
 		return protoreflect.ValueOfString(value)
 	case "guru.constitution.v1.MinGasPriceSchedule.previous_min_gas_price":
 		value := x.PreviousMinGasPrice
-		return protoreflect.ValueOfString(value)
-	case "guru.constitution.v1.MinGasPriceSchedule.clamped_min_gas_price":
-		value := x.ClampedMinGasPrice
 		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
@@ -820,16 +805,16 @@ func (x *fastReflection_MinGasPriceSchedule) Set(fd protoreflect.FieldDescriptor
 	switch fd.FullName() {
 	case "guru.constitution.v1.MinGasPriceSchedule.effective_height":
 		x.EffectiveHeight = value.Int()
-	case "guru.constitution.v1.MinGasPriceSchedule.min_gas_price":
-		x.MinGasPrice = value.Interface().(string)
+	case "guru.constitution.v1.MinGasPriceSchedule.scheduled_min_gas_price":
+		x.ScheduledMinGasPrice = value.Interface().(string)
 	case "guru.constitution.v1.MinGasPriceSchedule.source_symbol":
 		x.SourceSymbol = value.Interface().(string)
 	case "guru.constitution.v1.MinGasPriceSchedule.source_value":
 		x.SourceValue = value.Interface().(string)
 	case "guru.constitution.v1.MinGasPriceSchedule.source_oracle_height":
 		x.SourceOracleHeight = value.Int()
-	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval":
-		x.SourceSubmissionInterval = uint32(value.Uint())
+	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval_blocks":
+		x.SourceSubmissionIntervalBlocks = uint32(value.Uint())
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_blocks":
 		x.PendingDelayBlocks = uint32(value.Uint())
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_cap_blocks":
@@ -838,8 +823,6 @@ func (x *fastReflection_MinGasPriceSchedule) Set(fd protoreflect.FieldDescriptor
 		x.RawMinGasPrice = value.Interface().(string)
 	case "guru.constitution.v1.MinGasPriceSchedule.previous_min_gas_price":
 		x.PreviousMinGasPrice = value.Interface().(string)
-	case "guru.constitution.v1.MinGasPriceSchedule.clamped_min_gas_price":
-		x.ClampedMinGasPrice = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.MinGasPriceSchedule"))
@@ -862,16 +845,16 @@ func (x *fastReflection_MinGasPriceSchedule) Mutable(fd protoreflect.FieldDescri
 	switch fd.FullName() {
 	case "guru.constitution.v1.MinGasPriceSchedule.effective_height":
 		panic(fmt.Errorf("field effective_height of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
-	case "guru.constitution.v1.MinGasPriceSchedule.min_gas_price":
-		panic(fmt.Errorf("field min_gas_price of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
+	case "guru.constitution.v1.MinGasPriceSchedule.scheduled_min_gas_price":
+		panic(fmt.Errorf("field scheduled_min_gas_price of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
 	case "guru.constitution.v1.MinGasPriceSchedule.source_symbol":
 		panic(fmt.Errorf("field source_symbol of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
 	case "guru.constitution.v1.MinGasPriceSchedule.source_value":
 		panic(fmt.Errorf("field source_value of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
 	case "guru.constitution.v1.MinGasPriceSchedule.source_oracle_height":
 		panic(fmt.Errorf("field source_oracle_height of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
-	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval":
-		panic(fmt.Errorf("field source_submission_interval of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
+	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval_blocks":
+		panic(fmt.Errorf("field source_submission_interval_blocks of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_blocks":
 		panic(fmt.Errorf("field pending_delay_blocks of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_cap_blocks":
@@ -880,8 +863,6 @@ func (x *fastReflection_MinGasPriceSchedule) Mutable(fd protoreflect.FieldDescri
 		panic(fmt.Errorf("field raw_min_gas_price of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
 	case "guru.constitution.v1.MinGasPriceSchedule.previous_min_gas_price":
 		panic(fmt.Errorf("field previous_min_gas_price of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
-	case "guru.constitution.v1.MinGasPriceSchedule.clamped_min_gas_price":
-		panic(fmt.Errorf("field clamped_min_gas_price of message guru.constitution.v1.MinGasPriceSchedule is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.constitution.v1.MinGasPriceSchedule"))
@@ -897,7 +878,7 @@ func (x *fastReflection_MinGasPriceSchedule) NewField(fd protoreflect.FieldDescr
 	switch fd.FullName() {
 	case "guru.constitution.v1.MinGasPriceSchedule.effective_height":
 		return protoreflect.ValueOfInt64(int64(0))
-	case "guru.constitution.v1.MinGasPriceSchedule.min_gas_price":
+	case "guru.constitution.v1.MinGasPriceSchedule.scheduled_min_gas_price":
 		return protoreflect.ValueOfString("")
 	case "guru.constitution.v1.MinGasPriceSchedule.source_symbol":
 		return protoreflect.ValueOfString("")
@@ -905,7 +886,7 @@ func (x *fastReflection_MinGasPriceSchedule) NewField(fd protoreflect.FieldDescr
 		return protoreflect.ValueOfString("")
 	case "guru.constitution.v1.MinGasPriceSchedule.source_oracle_height":
 		return protoreflect.ValueOfInt64(int64(0))
-	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval":
+	case "guru.constitution.v1.MinGasPriceSchedule.source_submission_interval_blocks":
 		return protoreflect.ValueOfUint32(uint32(0))
 	case "guru.constitution.v1.MinGasPriceSchedule.pending_delay_blocks":
 		return protoreflect.ValueOfUint32(uint32(0))
@@ -914,8 +895,6 @@ func (x *fastReflection_MinGasPriceSchedule) NewField(fd protoreflect.FieldDescr
 	case "guru.constitution.v1.MinGasPriceSchedule.raw_min_gas_price":
 		return protoreflect.ValueOfString("")
 	case "guru.constitution.v1.MinGasPriceSchedule.previous_min_gas_price":
-		return protoreflect.ValueOfString("")
-	case "guru.constitution.v1.MinGasPriceSchedule.clamped_min_gas_price":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
@@ -989,7 +968,7 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 		if x.EffectiveHeight != 0 {
 			n += 1 + runtime.Sov(uint64(x.EffectiveHeight))
 		}
-		l = len(x.MinGasPrice)
+		l = len(x.ScheduledMinGasPrice)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -1004,8 +983,8 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 		if x.SourceOracleHeight != 0 {
 			n += 1 + runtime.Sov(uint64(x.SourceOracleHeight))
 		}
-		if x.SourceSubmissionInterval != 0 {
-			n += 1 + runtime.Sov(uint64(x.SourceSubmissionInterval))
+		if x.SourceSubmissionIntervalBlocks != 0 {
+			n += 1 + runtime.Sov(uint64(x.SourceSubmissionIntervalBlocks))
 		}
 		if x.PendingDelayBlocks != 0 {
 			n += 1 + runtime.Sov(uint64(x.PendingDelayBlocks))
@@ -1018,10 +997,6 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
 		l = len(x.PreviousMinGasPrice)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
-		}
-		l = len(x.ClampedMinGasPrice)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -1054,13 +1029,6 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.ClampedMinGasPrice) > 0 {
-			i -= len(x.ClampedMinGasPrice)
-			copy(dAtA[i:], x.ClampedMinGasPrice)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ClampedMinGasPrice)))
-			i--
-			dAtA[i] = 0x5a
-		}
 		if len(x.PreviousMinGasPrice) > 0 {
 			i -= len(x.PreviousMinGasPrice)
 			copy(dAtA[i:], x.PreviousMinGasPrice)
@@ -1085,8 +1053,8 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 			i--
 			dAtA[i] = 0x38
 		}
-		if x.SourceSubmissionInterval != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.SourceSubmissionInterval))
+		if x.SourceSubmissionIntervalBlocks != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.SourceSubmissionIntervalBlocks))
 			i--
 			dAtA[i] = 0x30
 		}
@@ -1109,10 +1077,10 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 			i--
 			dAtA[i] = 0x1a
 		}
-		if len(x.MinGasPrice) > 0 {
-			i -= len(x.MinGasPrice)
-			copy(dAtA[i:], x.MinGasPrice)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.MinGasPrice)))
+		if len(x.ScheduledMinGasPrice) > 0 {
+			i -= len(x.ScheduledMinGasPrice)
+			copy(dAtA[i:], x.ScheduledMinGasPrice)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ScheduledMinGasPrice)))
 			i--
 			dAtA[i] = 0x12
 		}
@@ -1191,7 +1159,7 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 				}
 			case 2:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field MinGasPrice", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ScheduledMinGasPrice", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -1219,7 +1187,7 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.MinGasPrice = string(dAtA[iNdEx:postIndex])
+				x.ScheduledMinGasPrice = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 3:
 				if wireType != 2 {
@@ -1306,9 +1274,9 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 				}
 			case 6:
 				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SourceSubmissionInterval", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SourceSubmissionIntervalBlocks", wireType)
 				}
-				x.SourceSubmissionInterval = 0
+				x.SourceSubmissionIntervalBlocks = 0
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -1318,7 +1286,7 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					x.SourceSubmissionInterval |= uint32(b&0x7F) << shift
+					x.SourceSubmissionIntervalBlocks |= uint32(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -1424,38 +1392,6 @@ func (x *fastReflection_MinGasPriceSchedule) ProtoMethods() *protoiface.Methods 
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
 				x.PreviousMinGasPrice = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
-			case 11:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ClampedMinGasPrice", wireType)
-				}
-				var stringLen uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.ClampedMinGasPrice = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -1566,17 +1502,16 @@ type MinGasPriceSchedule struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	EffectiveHeight          int64  `protobuf:"varint,1,opt,name=effective_height,json=effectiveHeight,proto3" json:"effective_height,omitempty"`
-	MinGasPrice              string `protobuf:"bytes,2,opt,name=min_gas_price,json=minGasPrice,proto3" json:"min_gas_price,omitempty"`
-	SourceSymbol             string `protobuf:"bytes,3,opt,name=source_symbol,json=sourceSymbol,proto3" json:"source_symbol,omitempty"`
-	SourceValue              string `protobuf:"bytes,4,opt,name=source_value,json=sourceValue,proto3" json:"source_value,omitempty"`
-	SourceOracleHeight       int64  `protobuf:"varint,5,opt,name=source_oracle_height,json=sourceOracleHeight,proto3" json:"source_oracle_height,omitempty"`
-	SourceSubmissionInterval uint32 `protobuf:"varint,6,opt,name=source_submission_interval,json=sourceSubmissionInterval,proto3" json:"source_submission_interval,omitempty"`
-	PendingDelayBlocks       uint32 `protobuf:"varint,7,opt,name=pending_delay_blocks,json=pendingDelayBlocks,proto3" json:"pending_delay_blocks,omitempty"`
-	PendingDelayCapBlocks    uint32 `protobuf:"varint,8,opt,name=pending_delay_cap_blocks,json=pendingDelayCapBlocks,proto3" json:"pending_delay_cap_blocks,omitempty"`
-	RawMinGasPrice           string `protobuf:"bytes,9,opt,name=raw_min_gas_price,json=rawMinGasPrice,proto3" json:"raw_min_gas_price,omitempty"`
-	PreviousMinGasPrice      string `protobuf:"bytes,10,opt,name=previous_min_gas_price,json=previousMinGasPrice,proto3" json:"previous_min_gas_price,omitempty"`
-	ClampedMinGasPrice       string `protobuf:"bytes,11,opt,name=clamped_min_gas_price,json=clampedMinGasPrice,proto3" json:"clamped_min_gas_price,omitempty"`
+	EffectiveHeight                int64  `protobuf:"varint,1,opt,name=effective_height,json=effectiveHeight,proto3" json:"effective_height,omitempty"`
+	ScheduledMinGasPrice           string `protobuf:"bytes,2,opt,name=scheduled_min_gas_price,json=scheduledMinGasPrice,proto3" json:"scheduled_min_gas_price,omitempty"`
+	SourceSymbol                   string `protobuf:"bytes,3,opt,name=source_symbol,json=sourceSymbol,proto3" json:"source_symbol,omitempty"`
+	SourceValue                    string `protobuf:"bytes,4,opt,name=source_value,json=sourceValue,proto3" json:"source_value,omitempty"`
+	SourceOracleHeight             int64  `protobuf:"varint,5,opt,name=source_oracle_height,json=sourceOracleHeight,proto3" json:"source_oracle_height,omitempty"`
+	SourceSubmissionIntervalBlocks uint32 `protobuf:"varint,6,opt,name=source_submission_interval_blocks,json=sourceSubmissionIntervalBlocks,proto3" json:"source_submission_interval_blocks,omitempty"`
+	PendingDelayBlocks             uint32 `protobuf:"varint,7,opt,name=pending_delay_blocks,json=pendingDelayBlocks,proto3" json:"pending_delay_blocks,omitempty"`
+	PendingDelayCapBlocks          uint32 `protobuf:"varint,8,opt,name=pending_delay_cap_blocks,json=pendingDelayCapBlocks,proto3" json:"pending_delay_cap_blocks,omitempty"`
+	RawMinGasPrice                 string `protobuf:"bytes,9,opt,name=raw_min_gas_price,json=rawMinGasPrice,proto3" json:"raw_min_gas_price,omitempty"`
+	PreviousMinGasPrice            string `protobuf:"bytes,10,opt,name=previous_min_gas_price,json=previousMinGasPrice,proto3" json:"previous_min_gas_price,omitempty"`
 }
 
 func (x *MinGasPriceSchedule) Reset() {
@@ -1606,9 +1541,9 @@ func (x *MinGasPriceSchedule) GetEffectiveHeight() int64 {
 	return 0
 }
 
-func (x *MinGasPriceSchedule) GetMinGasPrice() string {
+func (x *MinGasPriceSchedule) GetScheduledMinGasPrice() string {
 	if x != nil {
-		return x.MinGasPrice
+		return x.ScheduledMinGasPrice
 	}
 	return ""
 }
@@ -1634,9 +1569,9 @@ func (x *MinGasPriceSchedule) GetSourceOracleHeight() int64 {
 	return 0
 }
 
-func (x *MinGasPriceSchedule) GetSourceSubmissionInterval() uint32 {
+func (x *MinGasPriceSchedule) GetSourceSubmissionIntervalBlocks() uint32 {
 	if x != nil {
-		return x.SourceSubmissionInterval
+		return x.SourceSubmissionIntervalBlocks
 	}
 	return 0
 }
@@ -1669,13 +1604,6 @@ func (x *MinGasPriceSchedule) GetPreviousMinGasPrice() string {
 	return ""
 }
 
-func (x *MinGasPriceSchedule) GetClampedMinGasPrice() string {
-	if x != nil {
-		return x.ClampedMinGasPrice
-	}
-	return ""
-}
-
 var File_guru_constitution_v1_types_proto protoreflect.FileDescriptor
 
 var file_guru_constitution_v1_types_proto_rawDesc = []byte{
@@ -1689,25 +1617,27 @@ var file_guru_constitution_v1_types_proto_rawDesc = []byte{
 	0x70, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x07, 0x62, 0x75, 0x72, 0x6e, 0x50, 0x70,
 	0x6d, 0x12, 0x25, 0x0a, 0x0e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x73, 0x5f,
 	0x70, 0x70, 0x6d, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0d, 0x76, 0x61, 0x6c, 0x69, 0x64,
-	0x61, 0x74, 0x6f, 0x72, 0x73, 0x50, 0x70, 0x6d, 0x22, 0x9a, 0x04, 0x0a, 0x13, 0x4d, 0x69, 0x6e,
+	0x61, 0x74, 0x6f, 0x72, 0x73, 0x50, 0x70, 0x6d, 0x22, 0xa4, 0x04, 0x0a, 0x13, 0x4d, 0x69, 0x6e,
 	0x47, 0x61, 0x73, 0x50, 0x72, 0x69, 0x63, 0x65, 0x53, 0x63, 0x68, 0x65, 0x64, 0x75, 0x6c, 0x65,
 	0x12, 0x29, 0x0a, 0x10, 0x65, 0x66, 0x66, 0x65, 0x63, 0x74, 0x69, 0x76, 0x65, 0x5f, 0x68, 0x65,
 	0x69, 0x67, 0x68, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0f, 0x65, 0x66, 0x66, 0x65,
-	0x63, 0x74, 0x69, 0x76, 0x65, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x22, 0x0a, 0x0d, 0x6d,
-	0x69, 0x6e, 0x5f, 0x67, 0x61, 0x73, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x0b, 0x6d, 0x69, 0x6e, 0x47, 0x61, 0x73, 0x50, 0x72, 0x69, 0x63, 0x65, 0x12,
-	0x23, 0x0a, 0x0d, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53, 0x79,
-	0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x76,
-	0x61, 0x6c, 0x75, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x30, 0x0a, 0x14, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x5f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5f, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18,
-	0x05, 0x20, 0x01, 0x28, 0x03, 0x52, 0x12, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x4f, 0x72, 0x61,
-	0x63, 0x6c, 0x65, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x3c, 0x0a, 0x1a, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x5f, 0x73, 0x75, 0x62, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x69,
-	0x6e, 0x74, 0x65, 0x72, 0x76, 0x61, 0x6c, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x18, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x53, 0x75, 0x62, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x49,
-	0x6e, 0x74, 0x65, 0x72, 0x76, 0x61, 0x6c, 0x12, 0x30, 0x0a, 0x14, 0x70, 0x65, 0x6e, 0x64, 0x69,
+	0x63, 0x74, 0x69, 0x76, 0x65, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x35, 0x0a, 0x17, 0x73,
+	0x63, 0x68, 0x65, 0x64, 0x75, 0x6c, 0x65, 0x64, 0x5f, 0x6d, 0x69, 0x6e, 0x5f, 0x67, 0x61, 0x73,
+	0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x14, 0x73, 0x63,
+	0x68, 0x65, 0x64, 0x75, 0x6c, 0x65, 0x64, 0x4d, 0x69, 0x6e, 0x47, 0x61, 0x73, 0x50, 0x72, 0x69,
+	0x63, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x73, 0x79, 0x6d,
+	0x62, 0x6f, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x53, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x5f, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x30, 0x0a, 0x14, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x5f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5f, 0x68, 0x65, 0x69, 0x67,
+	0x68, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x03, 0x52, 0x12, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x49, 0x0a, 0x21,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x73, 0x75, 0x62, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f,
+	0x6e, 0x5f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x61, 0x6c, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b,
+	0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x1e, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53,
+	0x75, 0x62, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x76, 0x61,
+	0x6c, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x12, 0x30, 0x0a, 0x14, 0x70, 0x65, 0x6e, 0x64, 0x69,
 	0x6e, 0x67, 0x5f, 0x64, 0x65, 0x6c, 0x61, 0x79, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x18,
 	0x07, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x12, 0x70, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x44, 0x65,
 	0x6c, 0x61, 0x79, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x12, 0x37, 0x0a, 0x18, 0x70, 0x65, 0x6e,
@@ -1720,25 +1650,23 @@ var file_guru_constitution_v1_types_proto_rawDesc = []byte{
 	0x16, 0x70, 0x72, 0x65, 0x76, 0x69, 0x6f, 0x75, 0x73, 0x5f, 0x6d, 0x69, 0x6e, 0x5f, 0x67, 0x61,
 	0x73, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x09, 0x52, 0x13, 0x70,
 	0x72, 0x65, 0x76, 0x69, 0x6f, 0x75, 0x73, 0x4d, 0x69, 0x6e, 0x47, 0x61, 0x73, 0x50, 0x72, 0x69,
-	0x63, 0x65, 0x12, 0x31, 0x0a, 0x15, 0x63, 0x6c, 0x61, 0x6d, 0x70, 0x65, 0x64, 0x5f, 0x6d, 0x69,
-	0x6e, 0x5f, 0x67, 0x61, 0x73, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x18, 0x0b, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x12, 0x63, 0x6c, 0x61, 0x6d, 0x70, 0x65, 0x64, 0x4d, 0x69, 0x6e, 0x47, 0x61, 0x73,
-	0x50, 0x72, 0x69, 0x63, 0x65, 0x42, 0xe2, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75,
-	0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e,
-	0x76, 0x31, 0x42, 0x0a, 0x54, 0x79, 0x70, 0x65, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
-	0x5a, 0x48, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72,
-	0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f,
-	0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63, 0x6f, 0x6e, 0x73,
-	0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x3b, 0x63, 0x6f, 0x6e, 0x73,
-	0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x43, 0x58,
-	0xaa, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75,
-	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43,
-	0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0xe2, 0x02,
-	0x20, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69,
-	0x6f, 0x6e, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74,
-	0x61, 0xea, 0x02, 0x16, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69,
-	0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x63, 0x65, 0x4a, 0x04, 0x08, 0x0b, 0x10, 0x0c, 0x52, 0x15, 0x63, 0x6c, 0x61, 0x6d, 0x70, 0x65,
+	0x64, 0x5f, 0x6d, 0x69, 0x6e, 0x5f, 0x67, 0x61, 0x73, 0x5f, 0x70, 0x72, 0x69, 0x63, 0x65, 0x42,
+	0xe2, 0x01, 0x0a, 0x18, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x63, 0x6f, 0x6e,
+	0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x42, 0x0a, 0x54, 0x79,
+	0x70, 0x65, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c,
+	0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69,
+	0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69,
+	0x6f, 0x6e, 0x2f, 0x76, 0x31, 0x3b, 0x63, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69,
+	0x6f, 0x6e, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x43, 0x58, 0xaa, 0x02, 0x14, 0x47, 0x75, 0x72,
+	0x75, 0x2e, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56,
+	0x31, 0xca, 0x02, 0x14, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74,
+	0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x20, 0x47, 0x75, 0x72, 0x75, 0x5c,
+	0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x56, 0x31, 0x5c,
+	0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x16, 0x47, 0x75,
+	0x72, 0x75, 0x3a, 0x3a, 0x43, 0x6f, 0x6e, 0x73, 0x74, 0x69, 0x74, 0x75, 0x74, 0x69, 0x6f, 0x6e,
+	0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (

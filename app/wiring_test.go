@@ -98,17 +98,16 @@ func TestValidateChainGenesisAllowsPendingMinGasPricePreviousMismatch(t *testing
 	constitutionGenesis := &constitutionv1.GenesisState{}
 	testApp.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
 	constitutionGenesis.PendingMinGasPrice = &constitutionv1.MinGasPriceSchedule{
-		EffectiveHeight:          15,
-		MinGasPrice:              "1.1",
-		SourceSymbol:             appparams.MinGasPriceOracleSymbol,
-		SourceValue:              "1.0",
-		SourceOracleHeight:       10,
-		SourceSubmissionInterval: 5,
-		PendingDelayBlocks:       5,
-		PendingDelayCapBlocks:    constitutiontypes.MinGasPricePendingDelayCap,
-		RawMinGasPrice:           constitutiontypes.MinGasPriceScaleFactor,
-		PreviousMinGasPrice:      "1",
-		ClampedMinGasPrice:       "1.1",
+		EffectiveHeight:                15,
+		ScheduledMinGasPrice:           "1.1",
+		SourceSymbol:                   appparams.MinGasPriceOracleSymbol,
+		SourceValue:                    "1.0",
+		SourceOracleHeight:             10,
+		SourceSubmissionIntervalBlocks: 5,
+		PendingDelayBlocks:             5,
+		PendingDelayCapBlocks:          constitutiontypes.MinGasPricePendingDelayCap,
+		RawMinGasPrice:                 constitutiontypes.MinGasPriceScaleFactor,
+		PreviousMinGasPrice:            "1",
 	}
 	genesis[constitutiontypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(constitutionGenesis)
 

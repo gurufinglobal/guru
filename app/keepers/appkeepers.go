@@ -2,7 +2,6 @@ package keepers
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
@@ -42,8 +41,6 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
-	"github.com/ethereum/go-ethereum/common"
-	corevm "github.com/ethereum/go-ethereum/core/vm"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
@@ -127,35 +124,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		authority,
 	)
 
-	blockedAddrs := make(map[string]bool)
-	modules := make([]string, 0, len(moduleAccountPerms))
-	for module := range moduleAccountPerms {
-		modules = append(modules, module)
-	}
-	sort.Strings(modules)
-
-	for _, module := range modules {
-		moduleAddress := authtypes.NewModuleAddress(module)
-		moduleAddressString, err := addressCodec.BytesToString(moduleAddress)
-		if err != nil {
-			panic(fmt.Errorf("failed to convert module address to string: %v", err))
-		}
-		blockedAddrs[moduleAddressString] = true
-	}
-
-	blockedPrecompilesHex := append([]string{}, evmtypes.AvailableStaticPrecompiles...)
-	for _, addr := range corevm.PrecompiledAddressesPrague {
-		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
-	}
-
-	for _, precompile := range blockedPrecompilesHex {
-		precompileAddress := common.HexToAddress(precompile)
-		precompileAddressString, err := addressCodec.BytesToString(precompileAddress.Bytes())
-		if err != nil {
-			panic(fmt.Errorf("failed to convert precompile address to string: %v", err))
-		}
-		blockedAddrs[precompileAddressString] = true
-	}
+	blockedAddrs := blockedBankAddresses(moduleAccountPerms, addressCodec)
 
 	appKeepers.BankKeeper = bankkeeper.NewBaseKeeper(
 		cfg.AppCodec,
