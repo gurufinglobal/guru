@@ -575,7 +575,7 @@ func bootstrapSingleValidatorGenesis(t *testing.T, repoRoot, bin, home string) {
 	runInitWithConstitutionAddresses(t, repoRoot, bin, "e2e", home)
 	runCmd(t, repoRoot, bin, "keys", "add", "validator", "--keyring-backend", "test", "--home", home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", "validator", "100000000000000000000agxn", "--keyring-backend", "test", "--home", home)
-	runCmd(t, repoRoot, bin, "genesis", "gentx", "validator", "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", home)
+	runCmd(t, repoRoot, bin, "genesis", "gentx", "validator", "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", home, "--fees", highFeeAGXN)
 	runCmd(t, repoRoot, bin, "genesis", "collect-gentxs", "--home", home)
 }
 

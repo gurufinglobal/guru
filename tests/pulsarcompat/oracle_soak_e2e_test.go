@@ -215,7 +215,7 @@ func bootstrapOracleTxSmokeNetwork(t *testing.T, repoRoot, bin, baseDir string) 
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", validatorAddr, "100000000000000000000agxn", "--home", node.home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.moderator, "50000000000000000000agxn", "--home", node.home)
 	patchConstitutionModeratorGenesis(t, node.home, accounts.moderator)
-	runCmd(t, repoRoot, bin, "genesis", "gentx", node.keyName, "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", node.home)
+	runCmd(t, repoRoot, bin, "genesis", "gentx", node.keyName, "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", node.home, "--fees", highFeeAGXN)
 	runCmd(t, repoRoot, bin, "genesis", "collect-gentxs", "--home", node.home)
 	patchConstitutionModeratorGenesis(t, node.home, accounts.moderator)
 	runCmd(t, repoRoot, bin, "genesis", "validate-genesis", "--home", node.home)
@@ -260,7 +260,7 @@ func bootstrapOracleSoakNetwork(t *testing.T, repoRoot, bin, baseDir, sourceURL 
 	}
 
 	for _, node := range nodes {
-		runCmd(t, repoRoot, bin, "genesis", "gentx", node.keyName, "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", node.home)
+		runCmd(t, repoRoot, bin, "genesis", "gentx", node.keyName, "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", node.home, "--fees", highFeeAGXN)
 		if node.index != 0 {
 			copyGentxFiles(t, node.home, nodes[0].home)
 		}
