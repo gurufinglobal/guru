@@ -144,8 +144,6 @@ func appExport(
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
-	var emptyApp *app.App
-
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
@@ -166,16 +164,16 @@ func appExport(
 		return servertypes.ExportedApp{}, err
 	}
 
+	emptyApp := app.NewApp(logger, db, false, appOpts, baseapp.SetChainID(chainID))
 	if height != -1 {
-		emptyApp = app.NewApp(logger, db, false, appOpts, baseapp.SetChainID(chainID))
-
 		if err := emptyApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
+	} else if err := emptyApp.LoadLatestVersion(); err != nil {
+		return servertypes.ExportedApp{}, err
 	}
 
 	return emptyApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
-
 }
 
 func getChainIDFromOpts(appOpts servertypes.AppOptions) (chainID string, err error) {
