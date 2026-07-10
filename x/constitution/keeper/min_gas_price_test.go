@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	evmante "github.com/cosmos/evm/ante/evm"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
@@ -15,6 +16,7 @@ import (
 
 const (
 	defaultMinGasPriceDec = "630000000000.000000000000000000"
+	lowerClampedDec       = "567000000000.000000000000000000"
 	upperClampedDec       = "693000000000.000000000000000000"
 )
 
@@ -41,6 +43,37 @@ func TestAfterOracleValueAppliedSchedulesCappedPendingMinGasPrice(t *testing.T) 
 	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyReplaced, "false"))
 }
 
+func TestAfterOracleValueAppliedClampsBothDirectionsAndPreservesInRangeValue(t *testing.T) {
+	tests := []struct {
+		name      string
+		price     string
+		raw       string
+		scheduled string
+	}{
+		{name: "lower clamp", price: "2.0", raw: "315000000000", scheduled: lowerClampedDec},
+		{name: "within range", price: "1.05", raw: "600000000000", scheduled: "600000000000.000000000000000000"},
+		{name: "upper clamp", price: "0.5", raw: "1260000000000", scheduled: upperClampedDec},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			f := setupKeeperFixture(t)
+			ctx := f.ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
+
+			require.NoError(t, f.keeper.AfterOracleValueApplied(
+				ctx,
+				testOracleValue(appparams.MinGasPriceOracleSymbol, tc.price, 20),
+				1,
+			))
+
+			schedule, err := f.keeper.GetMinGasPriceSchedule(ctx)
+			require.NoError(t, err)
+			require.Equal(t, tc.raw, schedule.GetRawMinGasPrice())
+			require.Equal(t, tc.scheduled, schedule.GetScheduledMinGasPrice())
+		})
+	}
+}
+
 func TestApplyDueMinGasPriceScheduleAppliesForNextBlock(t *testing.T) {
 	f := setupKeeperFixture(t)
 	ctx := f.ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
@@ -61,6 +94,43 @@ func TestApplyDueMinGasPriceScheduleAppliesForNextBlock(t *testing.T) {
 	require.Equal(t, constitutiontypes.EventTypeMinGasPriceUpdateApplied, events[0].Type)
 	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyEffectiveHeight, "30"))
 	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyNewMinGasPrice, upperClampedDec))
+}
+
+func TestApplyDueMinGasPriceScheduleClearsStaleSchedule(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
+	require.NoError(t, f.keeper.AfterOracleValueApplied(ctx, testOracleValue(appparams.MinGasPriceOracleSymbol, "0.5", 20), 2))
+
+	staleCtx := ctx.WithBlockHeight(22).WithEventManager(sdk.NewEventManager())
+	require.NoError(t, f.keeper.ApplyDueMinGasPriceSchedule(staleCtx))
+	require.Equal(t, defaultMinGasPriceDec, f.feeMarketKeeper.GetParams(staleCtx).MinGasPrice.String())
+	_, err := f.keeper.GetMinGasPriceSchedule(staleCtx)
+	require.ErrorIs(t, err, collections.ErrNotFound)
+
+	events := staleCtx.EventManager().Events()
+	require.Len(t, events, 1)
+	require.Equal(t, constitutiontypes.EventTypeMinGasPriceUpdateSkipped, events[0].Type)
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyReason, "stale_pending_schedule"))
+}
+
+func TestAppliedMinGasPriceControlsEVMGlobalFee(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
+	fee := mustTestDec("650000000000")
+	gasLimit := mustTestDec("1")
+
+	before, err := f.keeper.GetCurrentMinGasPrice(ctx)
+	require.NoError(t, err)
+	require.NoError(t, evmante.CheckGlobalFee(fee, before, gasLimit))
+
+	require.NoError(t, f.keeper.AfterOracleValueApplied(ctx, testOracleValue(appparams.MinGasPriceOracleSymbol, "0.5", 20), 2))
+	dueCtx := ctx.WithBlockHeight(21).WithEventManager(sdk.NewEventManager())
+	require.NoError(t, f.keeper.ApplyDueMinGasPriceSchedule(dueCtx))
+
+	after, err := f.keeper.GetCurrentMinGasPrice(dueCtx)
+	require.NoError(t, err)
+	require.Equal(t, upperClampedDec, after.String())
+	require.ErrorContains(t, evmante.CheckGlobalFee(fee, after, gasLimit), "minimum global fee")
 }
 
 func TestApplyDueMinGasPriceScheduleSkipsWhenCurrentMinGasPriceChanged(t *testing.T) {

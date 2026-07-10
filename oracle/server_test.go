@@ -56,7 +56,7 @@ func TestSidecarServesConfiguredSourcesOverUnixSocket(t *testing.T) {
 
 	conn, err := grpc.NewClient("unix://"+socketPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	client := oraclev1.NewOracleSidecarClient(conn)
 	response, err := client.GetSamples(context.Background(), &oraclev1.GetSamplesRequest{

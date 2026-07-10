@@ -20,6 +20,7 @@ import (
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 )
 
 type genesisTestFixture struct {
@@ -79,6 +80,21 @@ func validGenesisState(f genesisTestFixture) *constitutionv1.GenesisState {
 			BurnPpm:       300_000,
 			ValidatorsPpm: 500_000,
 		},
+	}
+}
+
+func validPendingMinGasPriceSchedule() *constitutionv1.MinGasPriceSchedule {
+	return &constitutionv1.MinGasPriceSchedule{
+		EffectiveHeight:                15,
+		ScheduledMinGasPrice:           "630000000000.000000000000000000",
+		SourceSymbol:                   appparams.MinGasPriceOracleSymbol,
+		SourceValue:                    "1.0",
+		SourceOracleHeight:             10,
+		SourceSubmissionIntervalBlocks: 5,
+		PendingDelayBlocks:             5,
+		PendingDelayCapBlocks:          constitutiontypes.MinGasPricePendingDelayCap,
+		RawMinGasPrice:                 constitutiontypes.MinGasPriceScaleFactor,
+		PreviousMinGasPrice:            "630000000000.000000000000000000",
 	}
 }
 
@@ -224,6 +240,17 @@ func TestValidateGenesisRejectsInvalidSeparationRatio(t *testing.T) {
 	require.ErrorContains(t, err, "separation_ratio total must be exactly")
 }
 
+func TestValidateGenesisRejectsInvalidPendingMinGasPrice(t *testing.T) {
+	f := setupGenesisTestFixture(t)
+	state := validGenesisState(f)
+	state.PendingMinGasPrice = validPendingMinGasPriceSchedule()
+	state.PendingMinGasPrice.RawMinGasPrice = "1"
+
+	err := f.module.ValidateGenesis(newGenesisSource(mustGenesisFieldsFromState(t, state)))
+	require.Error(t, err)
+	require.ErrorContains(t, err, "raw_min_gas_price does not match")
+}
+
 func TestInitGenesisAndExportGenesisRoundTrip(t *testing.T) {
 	f := setupGenesisTestFixture(t)
 	state := validGenesisState(f)
@@ -238,6 +265,7 @@ func TestInitGenesisAndExportGenesisRoundTrip(t *testing.T) {
 		BurnPpm:       250_000,
 		ValidatorsPpm: 500_000,
 	}
+	state.PendingMinGasPrice = validPendingMinGasPriceSchedule()
 
 	require.NoError(t, f.module.InitGenesis(f.ctx, newGenesisSource(mustGenesisFieldsFromState(t, state))))
 
@@ -259,6 +287,10 @@ func TestInitGenesisAndExportGenesisRoundTrip(t *testing.T) {
 	require.Equal(t, state.GetSeparationRatio().GetBurnPpm(), separationRatio.GetBurnPpm())
 	require.Equal(t, state.GetSeparationRatio().GetValidatorsPpm(), separationRatio.GetValidatorsPpm())
 
+	pendingMinGasPrice, err := f.keeper.GetMinGasPriceSchedule(f.ctx)
+	require.NoError(t, err)
+	require.True(t, proto.Equal(state.GetPendingMinGasPrice(), pendingMinGasPrice))
+
 	exportedFields := make(map[string]json.RawMessage)
 	require.NoError(t, f.module.ExportGenesis(f.ctx, newGenesisTarget(exportedFields)))
 
@@ -270,6 +302,7 @@ func TestInitGenesisAndExportGenesisRoundTrip(t *testing.T) {
 	require.Equal(t, state.GetSeparationRatio().GetBasePpm(), exportedGenesis.GetSeparationRatio().GetBasePpm())
 	require.Equal(t, state.GetSeparationRatio().GetBurnPpm(), exportedGenesis.GetSeparationRatio().GetBurnPpm())
 	require.Equal(t, state.GetSeparationRatio().GetValidatorsPpm(), exportedGenesis.GetSeparationRatio().GetValidatorsPpm())
+	require.True(t, proto.Equal(state.GetPendingMinGasPrice(), exportedGenesis.GetPendingMinGasPrice()))
 }
 
 func TestExportGenesisFailsWhenBaseOrModeratorAddressMissing(t *testing.T) {

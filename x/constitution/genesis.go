@@ -229,7 +229,7 @@ func readGenesisField(source appmodule.GenesisSource, fieldName string, value an
 	if reader == nil {
 		return false, nil
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	var raw json.RawMessage
 	if err := json.NewDecoder(reader).Decode(&raw); err != nil {

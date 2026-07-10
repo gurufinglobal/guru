@@ -77,8 +77,8 @@ func ValidateGenesisCmd(tempApp *app.App) *cobra.Command {
 				return fmt.Errorf("%s", errStr)
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "File at %s is a valid chain genesis file\n", genesisFile)
-			return nil
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "File at %s is a valid chain genesis file\n", genesisFile)
+			return err
 		},
 	}
 }

@@ -276,7 +276,7 @@ func readGenesisField(source appmodule.GenesisSource, fieldName string, value an
 	if reader == nil {
 		return false, nil
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	if err := json.NewDecoder(reader).Decode(value); err != nil {
 		return false, oracletypes.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)

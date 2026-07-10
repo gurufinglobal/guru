@@ -67,7 +67,7 @@ func (s *Sidecar) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 
 	server := grpc.NewServer()
 	oraclev1.RegisterOracleSidecarServer(server, s)

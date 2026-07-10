@@ -40,6 +40,12 @@ func (tx *pulsarDecodedTx) GetMsgs() []sdk.Msg {
 	return tx.tx.GetMsgs()
 }
 
+// AsAny preserves compatibility with the SDK's legacy RPC tx result builder,
+// which still requires this method for `query tx` responses.
+func (tx *pulsarDecodedTx) AsAny() *codectypes.Any {
+	return codectypes.UnsafePackAny(tx.tx)
+}
+
 func (tx *pulsarDecodedTx) GetMsgsV2() ([]proto.Message, error) {
 	if tx.msgsV2 == nil {
 		if err := tx.initSignersAndMsgsV2(); err != nil {

@@ -55,7 +55,7 @@ func (c *HTTPSourceClient) Fetch(
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return nil, fmt.Errorf("unexpected HTTP status %d", response.StatusCode)

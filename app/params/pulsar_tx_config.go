@@ -43,7 +43,7 @@ func (c pulsarTxConfig) WrapTxBuilder(tx sdk.Tx) (client.TxBuilder, error) {
 		return c.TxConfig.WrapTxBuilder(tx)
 	}
 
-	builder := c.TxConfig.NewTxBuilder()
+	builder := c.NewTxBuilder()
 	if err := builder.SetMsgs(decoded.GetMsgs()...); err != nil {
 		return nil, err
 	}

@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	legacyproto "github.com/golang/protobuf/proto"
+	legacyproto "github.com/golang/protobuf/proto" //nolint:staticcheck // This test intentionally exercises legacy protobuf wire compatibility.
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -116,7 +116,7 @@ func TestGRPCGatewayHandlesPulsarQueryMessages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /params failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected /params status: got=%d", resp.StatusCode)
 	}
@@ -139,7 +139,7 @@ func TestGRPCGatewayHandlesPulsarQueryMessages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /values/{symbol} failed: %v", err)
 	}
-	defer resp2.Body.Close()
+	defer func() { _ = resp2.Body.Close() }()
 	if resp2.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected /values/{symbol} status: got=%d", resp2.StatusCode)
 	}
@@ -182,9 +182,8 @@ func TestGRPCMsgClientServerWithPulsarMessages(t *testing.T) {
 		_ = s.Serve(lis)
 	}()
 
-	conn, err := grpc.DialContext(
-		context.Background(),
-		"bufnet",
+	conn, err := grpc.NewClient(
+		"passthrough:///bufnet",
 		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
 			return lis.Dial()
 		}),
@@ -193,7 +192,7 @@ func TestGRPCMsgClientServerWithPulsarMessages(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial bufconn: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	client := oraclev1.NewMsgClient(conn)
 	_, err = client.UpsertTask(context.Background(), &oraclev1.MsgUpsertTask{
@@ -344,8 +343,13 @@ func TestTxConfigDecodesPulsarMessagesWithNestedFields(t *testing.T) {
 		if len(decodedMsgs) != 1 {
 			t.Fatalf("decode tx %T message count: got=%d", msg, len(decodedMsgs))
 		}
-		if _, ok := decodedMsgs[0].(sdk.Msg); !ok {
-			t.Fatalf("decoded message does not implement sdk.Msg: %T", decodedMsgs[0])
+		intoAny, ok := decodedTx.(interface{ AsAny() *codectypes.Any })
+		if !ok {
+			t.Fatalf("decoded tx %T does not implement the SDK query tx Any bridge", decodedTx)
+		}
+		packedTx := intoAny.AsAny()
+		if packedTx == nil || packedTx.TypeUrl != "/cosmos.tx.v1beta1.Tx" {
+			t.Fatalf("decoded tx %T produced an invalid Any: %+v", decodedTx, packedTx)
 		}
 		sigTx, ok := decodedTx.(authsigning.SigVerifiableTx)
 		if !ok {

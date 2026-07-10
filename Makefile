@@ -91,7 +91,7 @@ format:
 
 lint:
 	@echo "Running golangci-lint..."
-	@golangci-lint run --timeout=15m
+	@golangci-lint run ./... --timeout=15m
 
 ###############################################################################
 ###                                Protobuf                                 ###

@@ -66,7 +66,6 @@ type App struct {
 	appCodec          codec.Codec
 	interfaceRegistry codectypes.InterfaceRegistry
 	txConfig          client.TxConfig
-	clientCtx         client.Context
 
 	pendingTxListeners []evmante.PendingTxListener
 

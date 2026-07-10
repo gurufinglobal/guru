@@ -32,7 +32,7 @@ func EnsureNodeTasksConfigured(ctx context.Context, cfg Config) ([]*oraclev1.Ora
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	client := oraclev1.NewQueryClient(conn)
 	paramsResp, err := client.Params(queryCtx, &oraclev1.QueryParamsRequest{})

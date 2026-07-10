@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
@@ -16,7 +15,7 @@ import (
 func TestMsgServerAllowsModeratorToUpdateParamsAndTasks(t *testing.T) {
 	f := setupKeeperFixture(t)
 	msgServer := NewMsgServer(&f.keeper)
-	goCtx := sdk.WrapSDKContext(f.ctx)
+	goCtx := f.ctx
 
 	params := &oraclev1.Params{
 		MinValidators: 2,
@@ -60,7 +59,7 @@ func TestMsgServerAllowsModeratorToUpdateParamsAndTasks(t *testing.T) {
 func TestMsgServerRejectsGovAndArbitraryAuthorities(t *testing.T) {
 	f := setupKeeperFixture(t)
 	msgServer := NewMsgServer(&f.keeper)
-	goCtx := sdk.WrapSDKContext(f.ctx)
+	goCtx := f.ctx
 
 	for _, authority := range []string{
 		testGovAddress(t),

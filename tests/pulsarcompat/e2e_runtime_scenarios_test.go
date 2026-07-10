@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -48,7 +49,8 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 	waitForBlockHeight(t, repoRoot, bin, home, rpcAddr, 4, 40*time.Second)
 
 	t.Run("ibc transfer query works", func(t *testing.T) {
-		out := runCmd(t, repoRoot, bin,
+		out := runCmd(
+			t, repoRoot, bin,
 			"query", "ibc-transfer", "params",
 			"--node", rpcAddr,
 			"--home", home,
@@ -69,7 +71,8 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 	})
 
 	t.Run("upgrade query works", func(t *testing.T) {
-		out := runCmd(t, repoRoot, bin,
+		out := runCmd(
+			t, repoRoot, bin,
 			"query", "upgrade", "module-versions",
 			"--node", rpcAddr,
 			"--home", home,
@@ -100,7 +103,8 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 			t.Fatalf("expected module versions to include upgrade and ibc; got: %+v", versions.ModuleVersions)
 		}
 
-		authorityOut := runCmd(t, repoRoot, bin,
+		authorityOut := runCmd(
+			t, repoRoot, bin,
 			"query", "upgrade", "authority",
 			"--node", rpcAddr,
 			"--home", home,
@@ -133,7 +137,8 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 		format := matches[0][2]
 		archive := filepath.Join(t.TempDir(), "snapshot.tar.gz")
 
-		runCmd(t, repoRoot, bin,
+		runCmd(
+			t, repoRoot, bin,
 			"snapshots", "dump", height, format,
 			"--home", home,
 			"--output", archive,
@@ -332,7 +337,26 @@ func TestE2ECometStateSyncFromPeerSnapshot(t *testing.T) {
 
 type runningNode struct {
 	cmd    *exec.Cmd
-	logBuf *bytes.Buffer
+	logBuf *synchronizedBuffer
+}
+
+// synchronizedBuffer allows diagnostics to snapshot process output while the
+// os/exec copy goroutines are still writing to it.
+type synchronizedBuffer struct {
+	mu  sync.RWMutex
+	buf bytes.Buffer
+}
+
+func (b *synchronizedBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *synchronizedBuffer) String() string {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.buf.String()
 }
 
 type nodeStatus struct {
@@ -396,7 +420,7 @@ func startNodeWithOptions(
 	}
 	args = append(args, extraArgs...)
 
-	logBuf := &bytes.Buffer{}
+	logBuf := &synchronizedBuffer{}
 	cmd := exec.Command(bin, args...)
 	cmd.Dir = repoRoot
 	cmd.Stdout = logBuf
@@ -1028,6 +1052,6 @@ func pickTCPPort(t *testing.T) int {
 	if err != nil {
 		t.Fatalf("pick tcp port: %v", err)
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port
 }

@@ -95,7 +95,7 @@ func (h VoteExtensionHandler) fetchSamples(ctx context.Context, tasks []*oraclev
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	client := oraclev1.NewOracleSidecarClient(conn)
 	return client.GetSamples(callCtx, &oraclev1.GetSamplesRequest{
