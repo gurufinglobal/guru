@@ -14,10 +14,16 @@ import (
 	"cosmossdk.io/core/address"
 	corestore "cosmossdk.io/core/store"
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -101,7 +107,7 @@ func TestRegisterExchangeDefaultsAndValidation(t *testing.T) {
 		{
 			name: "closed active channel",
 			mutate: func(msg *bexv1.MsgRegisterExchange) {
-				f.channelKeeper.SetChannel("transfer", "channel-4", channeltypes.CLOSED)
+				f.channelKeeper.SetChannel("transwap", "channel-4", channeltypes.CLOSED)
 				msg.ChannelA = "channel-4"
 			},
 			wantErr: types.ErrInvalidRoute,
@@ -214,10 +220,10 @@ func TestUpdateExchangeFullPatchAndErrors(t *testing.T) {
 	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
 		DenomA:                            wrapperspb.String("agxn"),
-		PortA:                             wrapperspb.String("transfer"),
+		PortA:                             wrapperspb.String("transwap"),
 		ChannelA:                          wrapperspb.String("channel-2"),
 		DenomB:                            wrapperspb.String("gxusd"),
-		PortB:                             wrapperspb.String("transfer"),
+		PortB:                             wrapperspb.String("transwap"),
 		ChannelB:                          wrapperspb.String("channel-3"),
 		OracleSymbolAToB:                  wrapperspb.String("OSMO/ETH"),
 		OracleSymbolBToA:                  wrapperspb.String("ETH/OSMO"),
@@ -252,8 +258,8 @@ func TestUpdateExchangeFullPatchAndErrors(t *testing.T) {
 		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
 	})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
-	f.channelKeeper.SetChannel("transfer", "channel-2", channeltypes.OPEN)
-	f.channelKeeper.SetChannel("transfer", "channel-3", channeltypes.OPEN)
+	f.channelKeeper.SetChannel("transwap", "channel-2", channeltypes.OPEN)
+	f.channelKeeper.SetChannel("transwap", "channel-3", channeltypes.OPEN)
 	updated, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
 		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
 	})
@@ -301,6 +307,30 @@ func TestUpdateExchangeFullPatchAndErrors(t *testing.T) {
 		FeeBpsAToB: wrapperspb.UInt32(13),
 	})
 	require.ErrorIs(t, err, types.ErrExchangeDeleted)
+}
+
+func TestUpdateExchangeRejectsActivationWhenRouteChannelCloses(t *testing.T) {
+	f := setupKeeperFixture(t)
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+
+	f.channelKeeper.SetChannel(exchange.GetPortA(), exchange.GetChannelA(), channeltypes.CLOSED)
+	_, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
+	})
+	require.ErrorIs(t, err, types.ErrInvalidRoute)
+
+	unchanged, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
+	require.NoError(t, err)
+	require.Equal(t, exchange.GetRevision(), unchanged.GetRevision())
+	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE, unchanged.GetStatus())
+
+	f.channelKeeper.SetChannel(exchange.GetPortA(), exchange.GetChannelA(), channeltypes.OPEN)
+	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
+	})
+	require.NoError(t, err)
+	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE, updated.GetStatus())
 }
 
 func TestFeesAccountingAndWithdrawals(t *testing.T) {
@@ -782,6 +812,267 @@ func TestMsgServerRoutes(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 	_, err = msgServer.WithdrawFees(f.ctx, &bexv1.MsgWithdrawFees{AdminAddress: f.admin, ExchangeId: regResp.GetExchangeId(), Amount: coin, Recipient: "bad"})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
+}
+
+func TestAuthzDispatchRequiresBexAdminSignerField(t *testing.T) {
+	authzKey := storetypes.NewKVStoreKey(authzkeeper.StoreKey)
+	f := setupKeeperFixtureWithExtraKVStoreKeys(t, map[string]*storetypes.KVStoreKey{authzkeeper.StoreKey: authzKey})
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+
+	grantee, granteeAddr := testAddress(t, f.accountCodec, 0x17)
+	f.accountKeeper.SetAccount(f.ctx, f.accountKeeper.NewAccountWithAddress(f.ctx, granteeAddr))
+
+	authzKeeper := newBexAuthzKeeper(t, f, authzKey)
+	msgType := sdk.MsgTypeURL(&bexv1.MsgRegisterExchange{})
+	adminMsg := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+
+	_, err := authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{adminMsg})
+	require.ErrorIs(t, err, authz.ErrNoAuthorizationFound)
+
+	expiration := f.ctx.BlockTime().Add(time.Hour)
+	require.NoError(t, authzKeeper.SaveGrant(
+		f.ctx,
+		granteeAddr,
+		f.adminAddr,
+		authz.NewGenericAuthorization(msgType),
+		&expiration,
+	))
+
+	granteeMsg := validRegisterExchangeMsg(grantee, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{granteeMsg})
+	require.ErrorIs(t, err, types.ErrAdminNotFound)
+
+	_, err = f.keeper.GetExchange(f.ctx, 1)
+	require.ErrorIs(t, err, types.ErrExchangeNotFound)
+
+	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{adminMsg})
+	require.NoError(t, err)
+
+	exchange, err := f.keeper.GetExchange(f.ctx, 1)
+	require.NoError(t, err)
+	require.Equal(t, f.admin, exchange.GetAdminAddress())
+}
+
+func TestAuthzDispatchRequiresBexAdminSignerFieldForReserveAndFeeMessages(t *testing.T) {
+	authzKey := storetypes.NewKVStoreKey(authzkeeper.StoreKey)
+	f := setupKeeperFixtureWithExtraKVStoreKeys(t, map[string]*storetypes.KVStoreKey{authzkeeper.StoreKey: authzKey})
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+
+	grantee, granteeAddr := testAddress(t, f.accountCodec, 0x18)
+	f.accountKeeper.SetAccount(f.ctx, f.accountKeeper.NewAccountWithAddress(f.ctx, granteeAddr))
+
+	authzKeeper := newBexAuthzKeeper(t, f, authzKey)
+	expiration := f.ctx.BlockTime().Add(time.Hour)
+	grant := func(msg sdk.Msg) {
+		t.Helper()
+		require.NoError(t, authzKeeper.SaveGrant(
+			f.ctx,
+			granteeAddr,
+			f.adminAddr,
+			authz.NewGenericAuthorization(sdk.MsgTypeURL(msg)),
+			&expiration,
+		))
+	}
+
+	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	reserveAddr := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
+	amount := []*basev1beta1.Coin{{Denom: "agxn", Amount: "5"}}
+
+	deposit := &bexv1.MsgDepositReserve{AdminAddress: f.admin, ExchangeId: exchange.GetId(), Amount: amount}
+	grant(deposit)
+	_, err := authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{
+		&bexv1.MsgDepositReserve{AdminAddress: grantee, ExchangeId: exchange.GetId(), Amount: amount},
+	})
+	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).IsZero())
+
+	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{deposit})
+	require.NoError(t, err)
+	require.Equal(t, sdkmath.NewInt(5), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
+
+	inactive, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+	})
+	require.NoError(t, err)
+	recipient, err := f.accountCodec.BytesToString(f.recipient)
+	require.NoError(t, err)
+
+	withdrawReserve := &bexv1.MsgWithdrawReserve{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "2"}}, Recipient: recipient}
+	grant(withdrawReserve)
+	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{
+		&bexv1.MsgWithdrawReserve{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawReserve.GetAmount(), Recipient: recipient},
+	})
+	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, f.recipient).IsZero())
+	require.Equal(t, sdkmath.NewInt(5), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
+
+	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{withdrawReserve})
+	require.NoError(t, err)
+	require.Equal(t, sdkmath.NewInt(2), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
+	require.Equal(t, sdkmath.NewInt(3), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
+
+	require.NoError(t, f.keeper.AddCollectedFee(f.ctx, inactive.GetId(), sdk.NewInt64Coin("agxn", 4)))
+	f.bankKeeper.SetBalance(authtypes.NewModuleAddress(types.ModuleName), sdk.NewCoins(sdk.NewInt64Coin("agxn", 4)))
+	withdrawFees := &bexv1.MsgWithdrawFees{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "3"}}, Recipient: recipient}
+	grant(withdrawFees)
+	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{
+		&bexv1.MsgWithdrawFees{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawFees.GetAmount(), Recipient: recipient},
+	})
+	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.Equal(t, sdkmath.NewInt(2), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
+	collected, err := f.keeper.GetCollectedFees(f.ctx, inactive.GetId())
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 4)), collected)
+
+	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{withdrawFees})
+	require.NoError(t, err)
+	require.Equal(t, sdkmath.NewInt(5), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
+	require.Equal(t, sdkmath.NewInt(1), f.bankKeeper.GetAllBalances(f.ctx, authtypes.NewModuleAddress(types.ModuleName)).AmountOf("agxn"))
+	collected, err = f.keeper.GetCollectedFees(f.ctx, inactive.GetId())
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)), collected)
+}
+
+func TestAuthzMsgExecRequiresBexAdminSignerFieldForRegisterExchange(t *testing.T) {
+	authzKey := storetypes.NewKVStoreKey(authzkeeper.StoreKey)
+	f := setupKeeperFixtureWithExtraKVStoreKeys(t, map[string]*storetypes.KVStoreKey{authzkeeper.StoreKey: authzKey})
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+
+	grantee, granteeAddr := testAddress(t, f.accountCodec, 0x1a)
+	f.accountKeeper.SetAccount(f.ctx, f.accountKeeper.NewAccountWithAddress(f.ctx, granteeAddr))
+
+	authzKeeper := newBexAuthzKeeper(t, f, authzKey)
+	expiration := f.ctx.BlockTime().Add(time.Hour)
+	adminMsg := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	require.NoError(t, authzKeeper.SaveGrant(
+		f.ctx,
+		granteeAddr,
+		f.adminAddr,
+		authz.NewGenericAuthorization(sdk.MsgTypeURL(adminMsg)),
+		&expiration,
+	))
+
+	exec := func(msg sdk.Msg) error {
+		t.Helper()
+		msgExec := authz.NewMsgExec(granteeAddr, []sdk.Msg{msg})
+		// NewMsgExec formats with the SDK global prefix; exercise Guru's app address codec here.
+		msgExec.Grantee = grantee
+		_, err := authzKeeper.Exec(f.ctx, &msgExec)
+		return err
+	}
+
+	granteeMsg := validRegisterExchangeMsg(grantee, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	err := exec(granteeMsg)
+	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	_, err = f.keeper.GetExchange(f.ctx, 1)
+	require.ErrorIs(t, err, types.ErrExchangeNotFound)
+
+	require.NoError(t, exec(adminMsg))
+	exchange, err := f.keeper.GetExchange(f.ctx, 1)
+	require.NoError(t, err)
+	require.Equal(t, f.admin, exchange.GetAdminAddress())
+}
+
+func TestAuthzMsgExecRequiresBexAdminSignerFieldForReserveAndFeeMessages(t *testing.T) {
+	authzKey := storetypes.NewKVStoreKey(authzkeeper.StoreKey)
+	f := setupKeeperFixtureWithExtraKVStoreKeys(t, map[string]*storetypes.KVStoreKey{authzkeeper.StoreKey: authzKey})
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+
+	grantee, granteeAddr := testAddress(t, f.accountCodec, 0x19)
+	f.accountKeeper.SetAccount(f.ctx, f.accountKeeper.NewAccountWithAddress(f.ctx, granteeAddr))
+
+	authzKeeper := newBexAuthzKeeper(t, f, authzKey)
+	expiration := f.ctx.BlockTime().Add(time.Hour)
+	grant := func(msg sdk.Msg) {
+		t.Helper()
+		require.NoError(t, authzKeeper.SaveGrant(
+			f.ctx,
+			granteeAddr,
+			f.adminAddr,
+			authz.NewGenericAuthorization(sdk.MsgTypeURL(msg)),
+			&expiration,
+		))
+	}
+	exec := func(msg sdk.Msg) error {
+		t.Helper()
+		msgExec := authz.NewMsgExec(granteeAddr, []sdk.Msg{msg})
+		// NewMsgExec formats with the SDK global prefix; exercise Guru's app address codec here.
+		msgExec.Grantee = grantee
+		_, err := authzKeeper.Exec(f.ctx, &msgExec)
+		return err
+	}
+
+	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	reserveAddr := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
+	amount := []*basev1beta1.Coin{{Denom: "agxn", Amount: "5"}}
+
+	deposit := &bexv1.MsgDepositReserve{AdminAddress: f.admin, ExchangeId: exchange.GetId(), Amount: amount}
+	grant(deposit)
+	err := exec(&bexv1.MsgDepositReserve{AdminAddress: grantee, ExchangeId: exchange.GetId(), Amount: amount})
+	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).IsZero())
+
+	require.NoError(t, exec(deposit))
+	require.Equal(t, sdkmath.NewInt(5), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
+
+	inactive, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+	})
+	require.NoError(t, err)
+	recipient, err := f.accountCodec.BytesToString(f.recipient)
+	require.NoError(t, err)
+
+	withdrawReserve := &bexv1.MsgWithdrawReserve{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "2"}}, Recipient: recipient}
+	grant(withdrawReserve)
+	err = exec(&bexv1.MsgWithdrawReserve{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawReserve.GetAmount(), Recipient: recipient})
+	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, f.recipient).IsZero())
+	require.Equal(t, sdkmath.NewInt(5), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
+
+	require.NoError(t, exec(withdrawReserve))
+	require.Equal(t, sdkmath.NewInt(2), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
+	require.Equal(t, sdkmath.NewInt(3), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
+
+	require.NoError(t, f.keeper.AddCollectedFee(f.ctx, inactive.GetId(), sdk.NewInt64Coin("agxn", 4)))
+	f.bankKeeper.SetBalance(authtypes.NewModuleAddress(types.ModuleName), sdk.NewCoins(sdk.NewInt64Coin("agxn", 4)))
+	withdrawFees := &bexv1.MsgWithdrawFees{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "3"}}, Recipient: recipient}
+	grant(withdrawFees)
+	err = exec(&bexv1.MsgWithdrawFees{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawFees.GetAmount(), Recipient: recipient})
+	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.Equal(t, sdkmath.NewInt(2), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
+	collected, err := f.keeper.GetCollectedFees(f.ctx, inactive.GetId())
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 4)), collected)
+
+	require.NoError(t, exec(withdrawFees))
+	require.Equal(t, sdkmath.NewInt(5), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
+	require.Equal(t, sdkmath.NewInt(1), f.bankKeeper.GetAllBalances(f.ctx, authtypes.NewModuleAddress(types.ModuleName)).AmountOf("agxn"))
+	collected, err = f.keeper.GetCollectedFees(f.ctx, inactive.GetId())
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)), collected)
+}
+
+func newBexAuthzKeeper(t *testing.T, f keeperTestFixture, authzKey *storetypes.KVStoreKey) authzkeeper.Keeper {
+	t.Helper()
+
+	encoding := appparams.MakeEncodingConfig(
+		appparams.Bech32PrefixAccAddr,
+		appparams.Bech32PrefixValAddr,
+		appparams.Bech32PrefixConsAddr,
+	)
+	types.RegisterInterfaces(encoding.InterfaceRegistry)
+	authz.RegisterInterfaces(encoding.InterfaceRegistry)
+
+	router := baseapp.NewMsgServiceRouter()
+	router.SetInterfaceRegistry(encoding.InterfaceRegistry)
+	bexv1.RegisterMsgServer(router, NewMsgServer(&f.keeper))
+
+	return authzkeeper.NewKeeper(
+		runtime.NewKVStoreService(authzKey),
+		encoding.Codec,
+		router,
+		f.accountKeeper,
+	)
 }
 
 func TestKeeperGenesisExportImportAndInvariants(t *testing.T) {

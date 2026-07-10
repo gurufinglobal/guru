@@ -16,17 +16,18 @@ import (
 )
 
 const (
-	maxUint256String   = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-	maxMetadataEntries = 16
-	maxMetadataKeyLen  = 64
-	maxMetadataValLen  = 256
-	maxIntDigits       = 78
-	defaultPageLimit   = uint64(100)
-	maxPageLimit       = uint64(1000)
-	minVolumeEpochSecs = uint32(86400)
-	maxVolumeEpochSecs = uint32(604800)
-	minOracleStaleSecs = uint32(1)
-	maxOracleStaleSecs = uint32(3600)
+	maxUint256String     = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+	maxMetadataEntries   = 16
+	maxMetadataKeyLen    = 64
+	maxMetadataValLen    = 256
+	maxIntDigits         = 78
+	defaultPageLimit     = uint64(100)
+	maxPageLimit         = uint64(1000)
+	minVolumeEpochSecs   = uint32(86400)
+	maxVolumeEpochSecs   = uint32(604800)
+	minOracleStaleSecs   = uint32(1)
+	maxOracleStaleSecs   = uint32(3600)
+	requiredExchangePort = "transwap"
 )
 
 var maxUint256Int = func() sdkmath.Int {
@@ -223,6 +224,9 @@ func validateExchangeConfig(exchange *bexv1.Exchange) error {
 	if err := validateRoute(exchange.GetDenomB(), exchange.GetPortB(), exchange.GetChannelB()); err != nil {
 		return err
 	}
+	if exchange.GetPortA() != requiredExchangePort || exchange.GetPortB() != requiredExchangePort {
+		return types.ErrInvalidRoute.Wrap("BEX exchange routes must use transwap port")
+	}
 	if strings.TrimSpace(exchange.GetDenomA()) == strings.TrimSpace(exchange.GetDenomB()) {
 		return types.ErrInvalidRoute.Wrap("denom_a and denom_b must be distinct")
 	}
@@ -235,16 +239,16 @@ func validateExchangeConfig(exchange *bexv1.Exchange) error {
 	if err := validateFeeBps(exchange.GetFeeBpsBToA()); err != nil {
 		return err
 	}
-		for name, value := range map[string]string{
-			"limit_a_to_b":      exchange.GetLimitAToB(),
-			"limit_b_to_a":      exchange.GetLimitBToA(),
-			"volume_cap_a_to_b": exchange.GetVolumeCapAToB(),
-			"volume_cap_b_to_a": exchange.GetVolumeCapBToA(),
-		} {
-			if _, err := validateExchangeLimitIntString(name, value); err != nil {
-				return err
-			}
+	for name, value := range map[string]string{
+		"limit_a_to_b":      exchange.GetLimitAToB(),
+		"limit_b_to_a":      exchange.GetLimitBToA(),
+		"volume_cap_a_to_b": exchange.GetVolumeCapAToB(),
+		"volume_cap_b_to_a": exchange.GetVolumeCapBToA(),
+	} {
+		if _, err := validateExchangeLimitIntString(name, value); err != nil {
+			return err
 		}
+	}
 	if err := validateVolumeEpochSeconds("volume_epoch_seconds", exchange.GetVolumeEpochSeconds(), false); err != nil {
 		return err
 	}

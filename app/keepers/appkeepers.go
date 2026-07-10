@@ -49,6 +49,8 @@ import (
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	transwapkeeper "github.com/gurufinglobal/guru/v3/x/ibc/transwap/keeper"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	customstakingkeeper "github.com/gurufinglobal/guru/v3/x/staking/keeper"
@@ -82,6 +84,7 @@ type AppKeepers struct {
 	// IBC keepers
 	IBCKeeper      *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	TransferKeeper *transferkeeper.Keeper
+	TranswapKeeper transwapkeeper.Keeper
 	CallbackKeeper ibccallbackskeeper.ContractKeeper
 
 	// guru keepers
@@ -308,6 +311,19 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		cfg.BaseApp.MsgServiceRouter(),
 		appKeepers.AccountKeeper,
 		appKeepers.BankKeeper,
+		authority,
+	)
+
+	appKeepers.TranswapKeeper = transwapkeeper.NewKeeper(
+		cfg.AppCodec,
+		runtime.NewKVStoreService(appKeepers.kvKeys[transwaptypes.StoreKey]),
+		nil,
+		appKeepers.IBCKeeper.ChannelKeeper,
+		appKeepers.IBCKeeper.ChannelKeeper,
+		cfg.BaseApp.MsgServiceRouter(),
+		appKeepers.AccountKeeper,
+		appKeepers.BankKeeper,
+		appKeepers.BexKeeper,
 		authority,
 	)
 

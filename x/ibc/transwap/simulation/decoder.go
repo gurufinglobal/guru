@@ -1,0 +1,32 @@
+package simulation
+
+import (
+	"bytes"
+	"fmt"
+	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+
+	"github.com/cosmos/cosmos-sdk/types/kv"
+
+	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
+)
+
+// NewDecodeStore returns a decoder function closure that unmarshals the KVPair's
+// Value to the corresponding Denom type.
+func NewDecodeStore() func(kvA, kvB kv.Pair) string {
+	return func(kvA, kvB kv.Pair) string {
+		switch {
+		case bytes.Equal(kvA.Key[:1], types.PortKey):
+			return fmt.Sprintf("Port A: %s\nPort B: %s", string(kvA.Value), string(kvB.Value))
+
+		case bytes.Equal(kvA.Key[:1], types.DenomKey):
+			denomA := &transwapv1.Denom{}
+			denomB := &transwapv1.Denom{}
+			types.ModuleCdc.MustUnmarshal(kvA.Value, denomA)
+			types.ModuleCdc.MustUnmarshal(kvB.Value, denomB)
+			return fmt.Sprintf("Denom A: %s\nDenom B: %s", types.DenomIBCDenom(denomA), types.DenomIBCDenom(denomB))
+
+		default:
+			panic(fmt.Errorf("invalid %s key prefix %X", types.ModuleName, kvA.Key[:1]))
+		}
+	}
+}

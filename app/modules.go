@@ -49,6 +49,8 @@ import (
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitution "github.com/gurufinglobal/guru/v3/x/constitution"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	transwap "github.com/gurufinglobal/guru/v3/x/ibc/transwap"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracle "github.com/gurufinglobal/guru/v3/x/oracle"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	customstaking "github.com/gurufinglobal/guru/v3/x/staking"
@@ -67,6 +69,7 @@ var (
 		// IBC modules
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
+		transwaptypes.ModuleName,
 
 		// Cosmos EVM BeginBlockers
 		erc20types.ModuleName,
@@ -107,6 +110,7 @@ var (
 		bextypes.ModuleName,
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
+		transwaptypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		minttypes.ModuleName,
@@ -131,6 +135,7 @@ var (
 		govtypes.ModuleName,
 		minttypes.ModuleName,
 		ibcexported.ModuleName,
+		transwaptypes.ModuleName,
 
 		// Cosmos EVM modules
 		// NOTE: feemarket module needs to be initialized before genutil module:
@@ -183,6 +188,7 @@ func appModules(
 			ibc.NewAppModule(app.IBCKeeper),
 			ibctm.NewAppModule(tmLightClientModule),
 			transfer.NewAppModule(app.TransferKeeper),
+			transwap.NewAppModule(app.TranswapKeeper),
 			// Cosmos EVM modules
 			vmModule,
 			feemarket.NewAppModule(app.FeeMarketKeeper),
@@ -226,6 +232,7 @@ func newBasicManagerFromManager(app *App) module.BasicManager {
 			stakingtypes.ModuleName:     sdkstaking.AppModuleBasic{},
 			govtypes.ModuleName:         gov.NewAppModuleBasic(nil),
 			ibctransfertypes.ModuleName: transfer.AppModuleBasic{},
+			transwaptypes.ModuleName:    transwap.AppModuleBasic{},
 		},
 	)
 	basicManager.RegisterInterfaces(app.interfaceRegistry)

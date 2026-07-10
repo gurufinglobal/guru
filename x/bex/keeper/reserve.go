@@ -13,6 +13,9 @@ import (
 type reserveAllowanceKey struct{}
 
 func (k Keeper) withReserveReceiveAllowance(ctx context.Context, exchangeID uint64) context.Context {
+	if sdkCtx, ok := ctx.(sdk.Context); ok {
+		return sdkCtx.WithValue(reserveAllowanceKey{}, exchangeID)
+	}
 	return context.WithValue(ctx, reserveAllowanceKey{}, exchangeID)
 }
 

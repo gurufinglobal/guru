@@ -47,19 +47,18 @@ import (
 	srvflags "github.com/cosmos/evm/server/flags"
 	evmutils "github.com/cosmos/evm/utils"
 	"github.com/cosmos/evm/x/erc20"
-	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
 	vmrunner "github.com/cosmos/evm/x/vm/runner"
 	ibccallbacks "github.com/cosmos/ibc-go/v11/modules/apps/callbacks"
 	transfer "github.com/cosmos/ibc-go/v11/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
-	transferv2 "github.com/cosmos/ibc-go/v11/modules/apps/transfer/v2"
 	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
-	ibcapi "github.com/cosmos/ibc-go/v11/modules/core/api"
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 	appkeepers "github.com/gurufinglobal/guru/v3/app/keepers"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	transwap "github.com/gurufinglobal/guru/v3/x/ibc/transwap"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracleabci "github.com/gurufinglobal/guru/v3/x/oracle/abci"
 	"github.com/spf13/cast"
 )
@@ -200,18 +199,14 @@ func NewApp(
 	callbacksMiddleware.SetUnderlyingApplication(transferStack)
 	transferStack = callbacksMiddleware
 
-	var transferStackV2 ibcapi.IBCModule
-	transferStackV2 = transferv2.NewIBCModule(app.TransferKeeper)
-	transferStackV2 = erc20v2.NewIBCMiddleware(transferStackV2, app.Erc20Keeper)
+	transwapStack := transwap.NewIBCModule(app.TranswapKeeper)
 
-	// Create static IBC router, add transfer route, then set and seal it
+	// Create static IBC router, add transfer/transwap routes, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
-	ibcRouterV2 := ibcapi.NewRouter()
-	ibcRouterV2.AddRoute(ibctransfertypes.ModuleName, transferStackV2)
+	ibcRouter.AddRoute(transwaptypes.ModuleName, transwapStack)
 
 	app.IBCKeeper.SetRouter(ibcRouter)
-	app.IBCKeeper.SetRouterV2(ibcRouterV2)
 
 	clientKeeper := app.IBCKeeper.ClientKeeper
 	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()
