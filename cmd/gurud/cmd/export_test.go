@@ -5,9 +5,23 @@ import (
 	"testing"
 
 	cmttypes "github.com/cometbft/cometbft/types"
+	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
+
+func TestPatchExportCommandHidesUnsupportedZeroHeightFlags(t *testing.T) {
+	rootCmd := &cobra.Command{Use: "gurud"}
+	exportCmd := sdkserver.ExportCmd(nil, t.TempDir())
+	rootCmd.AddCommand(exportCmd)
+
+	patchExportCommand(rootCmd)
+
+	require.True(t, exportCmd.Flags().Lookup(sdkserver.FlagForZeroHeight).Hidden)
+	require.True(t, exportCmd.Flags().Lookup(sdkserver.FlagJailAllowedAddrs).Hidden)
+	require.False(t, exportCmd.Flags().Lookup(sdkserver.FlagHeight).Hidden)
+}
 
 func TestPatchExportedGenesisBytesEnablesVoteExtensions(t *testing.T) {
 	genesis := genutiltypes.AppGenesis{
