@@ -2,8 +2,12 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
 type feeOutflowAllowanceKey struct{}
@@ -41,5 +45,39 @@ func executeFeeTransition(ctx context.Context, fn func(sdk.Context) error) error
 		return err
 	}
 	write()
+	return nil
+}
+
+// ValidateEVMSetBalance closes low-level EVM balance writes that bypass x/bank
+// send restrictions. BEX custody balances may only be changed through explicit
+// BEX keeper operations, never through the EVM balance adapter.
+func (k Keeper) ValidateEVMSetBalance(ctx context.Context, addr sdk.AccAddress, amount sdk.Coin) error {
+	if k.bankKeeper == nil {
+		return types.ErrInvariantViolation.Wrap("bank keeper is required for EVM balance validation")
+	}
+	current := k.bankKeeper.GetBalance(ctx, addr, amount.Denom).Amount
+	if addr.Equals(authtypes.NewModuleAddress(types.ModuleName)) {
+		if !amount.Amount.Equal(current) {
+			return types.ErrInvariantViolation.Wrapf(
+				"EVM balance write cannot change BEX module balance for %s",
+				amount.Denom,
+			)
+		}
+		return nil
+	}
+	address, err := k.accountCodec.BytesToString(addr)
+	if err != nil {
+		return err
+	}
+	_, err = k.reserveByAddress.Get(ctx, address)
+	if err != nil {
+		if errors.Is(err, collections.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+	if !amount.Amount.Equal(current) {
+		return types.ErrDirectReserveTransfer.Wrapf("EVM balance write cannot change BEX reserve %s", address)
+	}
 	return nil
 }

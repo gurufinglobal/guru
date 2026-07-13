@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
@@ -116,7 +117,13 @@ func (k Keeper) IsReserveDepositor(ctx context.Context, exchangeID uint64, depos
 	return k.reserveDepositors.Has(ctx, collections.Join(exchangeID, canonical))
 }
 
-func (k Keeper) SendRestrictionFn(ctx context.Context, _ sdk.AccAddress, toAddr sdk.AccAddress, _ sdk.Coins) (sdk.AccAddress, error) {
+func (k Keeper) SendRestrictionFn(ctx context.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amount sdk.Coins) (sdk.AccAddress, error) {
+	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
+	if fromAddr.Equals(moduleAddr) {
+		if !hasFeeOutflowAllowance(ctx, toAddr, amount) {
+			return nil, types.ErrInvariantViolation.Wrap("BEX module account transfers require an exact scoped fee outflow allowance")
+		}
+	}
 	to, err := k.accountCodec.BytesToString(toAddr)
 	if err != nil {
 		return nil, err
