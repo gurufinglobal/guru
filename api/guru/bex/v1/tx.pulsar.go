@@ -5727,6 +5727,1782 @@ func (x *fastReflection_MsgDeleteExchangeResponse) ProtoMethods() *protoiface.Me
 	}
 }
 
+var (
+	md_MsgAddReserveDepositor                   protoreflect.MessageDescriptor
+	fd_MsgAddReserveDepositor_admin_address     protoreflect.FieldDescriptor
+	fd_MsgAddReserveDepositor_exchange_id       protoreflect.FieldDescriptor
+	fd_MsgAddReserveDepositor_depositor_address protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_guru_bex_v1_tx_proto_init()
+	md_MsgAddReserveDepositor = File_guru_bex_v1_tx_proto.Messages().ByName("MsgAddReserveDepositor")
+	fd_MsgAddReserveDepositor_admin_address = md_MsgAddReserveDepositor.Fields().ByName("admin_address")
+	fd_MsgAddReserveDepositor_exchange_id = md_MsgAddReserveDepositor.Fields().ByName("exchange_id")
+	fd_MsgAddReserveDepositor_depositor_address = md_MsgAddReserveDepositor.Fields().ByName("depositor_address")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgAddReserveDepositor)(nil)
+
+type fastReflection_MsgAddReserveDepositor MsgAddReserveDepositor
+
+func (x *MsgAddReserveDepositor) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgAddReserveDepositor)(x)
+}
+
+func (x *MsgAddReserveDepositor) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgAddReserveDepositor_messageType fastReflection_MsgAddReserveDepositor_messageType
+var _ protoreflect.MessageType = fastReflection_MsgAddReserveDepositor_messageType{}
+
+type fastReflection_MsgAddReserveDepositor_messageType struct{}
+
+func (x fastReflection_MsgAddReserveDepositor_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgAddReserveDepositor)(nil)
+}
+func (x fastReflection_MsgAddReserveDepositor_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgAddReserveDepositor)
+}
+func (x fastReflection_MsgAddReserveDepositor_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgAddReserveDepositor
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgAddReserveDepositor) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgAddReserveDepositor
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgAddReserveDepositor) Type() protoreflect.MessageType {
+	return _fastReflection_MsgAddReserveDepositor_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgAddReserveDepositor) New() protoreflect.Message {
+	return new(fastReflection_MsgAddReserveDepositor)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgAddReserveDepositor) Interface() protoreflect.ProtoMessage {
+	return (*MsgAddReserveDepositor)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgAddReserveDepositor) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.AdminAddress != "" {
+		value := protoreflect.ValueOfString(x.AdminAddress)
+		if !f(fd_MsgAddReserveDepositor_admin_address, value) {
+			return
+		}
+	}
+	if x.ExchangeId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.ExchangeId)
+		if !f(fd_MsgAddReserveDepositor_exchange_id, value) {
+			return
+		}
+	}
+	if x.DepositorAddress != "" {
+		value := protoreflect.ValueOfString(x.DepositorAddress)
+		if !f(fd_MsgAddReserveDepositor_depositor_address, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgAddReserveDepositor) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgAddReserveDepositor.admin_address":
+		return x.AdminAddress != ""
+	case "guru.bex.v1.MsgAddReserveDepositor.exchange_id":
+		return x.ExchangeId != uint64(0)
+	case "guru.bex.v1.MsgAddReserveDepositor.depositor_address":
+		return x.DepositorAddress != ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgAddReserveDepositor) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgAddReserveDepositor.admin_address":
+		x.AdminAddress = ""
+	case "guru.bex.v1.MsgAddReserveDepositor.exchange_id":
+		x.ExchangeId = uint64(0)
+	case "guru.bex.v1.MsgAddReserveDepositor.depositor_address":
+		x.DepositorAddress = ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgAddReserveDepositor) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "guru.bex.v1.MsgAddReserveDepositor.admin_address":
+		value := x.AdminAddress
+		return protoreflect.ValueOfString(value)
+	case "guru.bex.v1.MsgAddReserveDepositor.exchange_id":
+		value := x.ExchangeId
+		return protoreflect.ValueOfUint64(value)
+	case "guru.bex.v1.MsgAddReserveDepositor.depositor_address":
+		value := x.DepositorAddress
+		return protoreflect.ValueOfString(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositor does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgAddReserveDepositor) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgAddReserveDepositor.admin_address":
+		x.AdminAddress = value.Interface().(string)
+	case "guru.bex.v1.MsgAddReserveDepositor.exchange_id":
+		x.ExchangeId = value.Uint()
+	case "guru.bex.v1.MsgAddReserveDepositor.depositor_address":
+		x.DepositorAddress = value.Interface().(string)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgAddReserveDepositor) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgAddReserveDepositor.admin_address":
+		panic(fmt.Errorf("field admin_address of message guru.bex.v1.MsgAddReserveDepositor is not mutable"))
+	case "guru.bex.v1.MsgAddReserveDepositor.exchange_id":
+		panic(fmt.Errorf("field exchange_id of message guru.bex.v1.MsgAddReserveDepositor is not mutable"))
+	case "guru.bex.v1.MsgAddReserveDepositor.depositor_address":
+		panic(fmt.Errorf("field depositor_address of message guru.bex.v1.MsgAddReserveDepositor is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgAddReserveDepositor) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgAddReserveDepositor.admin_address":
+		return protoreflect.ValueOfString("")
+	case "guru.bex.v1.MsgAddReserveDepositor.exchange_id":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "guru.bex.v1.MsgAddReserveDepositor.depositor_address":
+		return protoreflect.ValueOfString("")
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgAddReserveDepositor) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.MsgAddReserveDepositor", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgAddReserveDepositor) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgAddReserveDepositor) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgAddReserveDepositor) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgAddReserveDepositor) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgAddReserveDepositor)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		l = len(x.AdminAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.ExchangeId != 0 {
+			n += 1 + runtime.Sov(uint64(x.ExchangeId))
+		}
+		l = len(x.DepositorAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgAddReserveDepositor)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.DepositorAddress) > 0 {
+			i -= len(x.DepositorAddress)
+			copy(dAtA[i:], x.DepositorAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.DepositorAddress)))
+			i--
+			dAtA[i] = 0x1a
+		}
+		if x.ExchangeId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.ExchangeId))
+			i--
+			dAtA[i] = 0x10
+		}
+		if len(x.AdminAddress) > 0 {
+			i -= len(x.AdminAddress)
+			copy(dAtA[i:], x.AdminAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AdminAddress)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgAddReserveDepositor)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgAddReserveDepositor: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgAddReserveDepositor: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AdminAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.AdminAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 2:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ExchangeId", wireType)
+				}
+				x.ExchangeId = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.ExchangeId |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 3:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field DepositorAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.DepositorAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_MsgAddReserveDepositorResponse protoreflect.MessageDescriptor
+)
+
+func init() {
+	file_guru_bex_v1_tx_proto_init()
+	md_MsgAddReserveDepositorResponse = File_guru_bex_v1_tx_proto.Messages().ByName("MsgAddReserveDepositorResponse")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgAddReserveDepositorResponse)(nil)
+
+type fastReflection_MsgAddReserveDepositorResponse MsgAddReserveDepositorResponse
+
+func (x *MsgAddReserveDepositorResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgAddReserveDepositorResponse)(x)
+}
+
+func (x *MsgAddReserveDepositorResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgAddReserveDepositorResponse_messageType fastReflection_MsgAddReserveDepositorResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgAddReserveDepositorResponse_messageType{}
+
+type fastReflection_MsgAddReserveDepositorResponse_messageType struct{}
+
+func (x fastReflection_MsgAddReserveDepositorResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgAddReserveDepositorResponse)(nil)
+}
+func (x fastReflection_MsgAddReserveDepositorResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgAddReserveDepositorResponse)
+}
+func (x fastReflection_MsgAddReserveDepositorResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgAddReserveDepositorResponse
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgAddReserveDepositorResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgAddReserveDepositorResponse
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgAddReserveDepositorResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgAddReserveDepositorResponse_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgAddReserveDepositorResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgAddReserveDepositorResponse)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgAddReserveDepositorResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgAddReserveDepositorResponse)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgAddReserveDepositorResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgAddReserveDepositorResponse) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgAddReserveDepositorResponse) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgAddReserveDepositorResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositorResponse does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgAddReserveDepositorResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgAddReserveDepositorResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgAddReserveDepositorResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgAddReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgAddReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgAddReserveDepositorResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.MsgAddReserveDepositorResponse", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgAddReserveDepositorResponse) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgAddReserveDepositorResponse) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgAddReserveDepositorResponse) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgAddReserveDepositorResponse) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgAddReserveDepositorResponse)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgAddReserveDepositorResponse)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgAddReserveDepositorResponse)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgAddReserveDepositorResponse: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgAddReserveDepositorResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_MsgRemoveReserveDepositor                   protoreflect.MessageDescriptor
+	fd_MsgRemoveReserveDepositor_admin_address     protoreflect.FieldDescriptor
+	fd_MsgRemoveReserveDepositor_exchange_id       protoreflect.FieldDescriptor
+	fd_MsgRemoveReserveDepositor_depositor_address protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_guru_bex_v1_tx_proto_init()
+	md_MsgRemoveReserveDepositor = File_guru_bex_v1_tx_proto.Messages().ByName("MsgRemoveReserveDepositor")
+	fd_MsgRemoveReserveDepositor_admin_address = md_MsgRemoveReserveDepositor.Fields().ByName("admin_address")
+	fd_MsgRemoveReserveDepositor_exchange_id = md_MsgRemoveReserveDepositor.Fields().ByName("exchange_id")
+	fd_MsgRemoveReserveDepositor_depositor_address = md_MsgRemoveReserveDepositor.Fields().ByName("depositor_address")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgRemoveReserveDepositor)(nil)
+
+type fastReflection_MsgRemoveReserveDepositor MsgRemoveReserveDepositor
+
+func (x *MsgRemoveReserveDepositor) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgRemoveReserveDepositor)(x)
+}
+
+func (x *MsgRemoveReserveDepositor) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgRemoveReserveDepositor_messageType fastReflection_MsgRemoveReserveDepositor_messageType
+var _ protoreflect.MessageType = fastReflection_MsgRemoveReserveDepositor_messageType{}
+
+type fastReflection_MsgRemoveReserveDepositor_messageType struct{}
+
+func (x fastReflection_MsgRemoveReserveDepositor_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgRemoveReserveDepositor)(nil)
+}
+func (x fastReflection_MsgRemoveReserveDepositor_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgRemoveReserveDepositor)
+}
+func (x fastReflection_MsgRemoveReserveDepositor_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRemoveReserveDepositor
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgRemoveReserveDepositor) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRemoveReserveDepositor
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgRemoveReserveDepositor) Type() protoreflect.MessageType {
+	return _fastReflection_MsgRemoveReserveDepositor_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgRemoveReserveDepositor) New() protoreflect.Message {
+	return new(fastReflection_MsgRemoveReserveDepositor)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgRemoveReserveDepositor) Interface() protoreflect.ProtoMessage {
+	return (*MsgRemoveReserveDepositor)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgRemoveReserveDepositor) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.AdminAddress != "" {
+		value := protoreflect.ValueOfString(x.AdminAddress)
+		if !f(fd_MsgRemoveReserveDepositor_admin_address, value) {
+			return
+		}
+	}
+	if x.ExchangeId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.ExchangeId)
+		if !f(fd_MsgRemoveReserveDepositor_exchange_id, value) {
+			return
+		}
+	}
+	if x.DepositorAddress != "" {
+		value := protoreflect.ValueOfString(x.DepositorAddress)
+		if !f(fd_MsgRemoveReserveDepositor_depositor_address, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgRemoveReserveDepositor) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgRemoveReserveDepositor.admin_address":
+		return x.AdminAddress != ""
+	case "guru.bex.v1.MsgRemoveReserveDepositor.exchange_id":
+		return x.ExchangeId != uint64(0)
+	case "guru.bex.v1.MsgRemoveReserveDepositor.depositor_address":
+		return x.DepositorAddress != ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRemoveReserveDepositor) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgRemoveReserveDepositor.admin_address":
+		x.AdminAddress = ""
+	case "guru.bex.v1.MsgRemoveReserveDepositor.exchange_id":
+		x.ExchangeId = uint64(0)
+	case "guru.bex.v1.MsgRemoveReserveDepositor.depositor_address":
+		x.DepositorAddress = ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgRemoveReserveDepositor) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "guru.bex.v1.MsgRemoveReserveDepositor.admin_address":
+		value := x.AdminAddress
+		return protoreflect.ValueOfString(value)
+	case "guru.bex.v1.MsgRemoveReserveDepositor.exchange_id":
+		value := x.ExchangeId
+		return protoreflect.ValueOfUint64(value)
+	case "guru.bex.v1.MsgRemoveReserveDepositor.depositor_address":
+		value := x.DepositorAddress
+		return protoreflect.ValueOfString(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositor does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRemoveReserveDepositor) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgRemoveReserveDepositor.admin_address":
+		x.AdminAddress = value.Interface().(string)
+	case "guru.bex.v1.MsgRemoveReserveDepositor.exchange_id":
+		x.ExchangeId = value.Uint()
+	case "guru.bex.v1.MsgRemoveReserveDepositor.depositor_address":
+		x.DepositorAddress = value.Interface().(string)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRemoveReserveDepositor) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgRemoveReserveDepositor.admin_address":
+		panic(fmt.Errorf("field admin_address of message guru.bex.v1.MsgRemoveReserveDepositor is not mutable"))
+	case "guru.bex.v1.MsgRemoveReserveDepositor.exchange_id":
+		panic(fmt.Errorf("field exchange_id of message guru.bex.v1.MsgRemoveReserveDepositor is not mutable"))
+	case "guru.bex.v1.MsgRemoveReserveDepositor.depositor_address":
+		panic(fmt.Errorf("field depositor_address of message guru.bex.v1.MsgRemoveReserveDepositor is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgRemoveReserveDepositor) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.bex.v1.MsgRemoveReserveDepositor.admin_address":
+		return protoreflect.ValueOfString("")
+	case "guru.bex.v1.MsgRemoveReserveDepositor.exchange_id":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "guru.bex.v1.MsgRemoveReserveDepositor.depositor_address":
+		return protoreflect.ValueOfString("")
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositor"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositor does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgRemoveReserveDepositor) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.MsgRemoveReserveDepositor", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgRemoveReserveDepositor) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRemoveReserveDepositor) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgRemoveReserveDepositor) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgRemoveReserveDepositor) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgRemoveReserveDepositor)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		l = len(x.AdminAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.ExchangeId != 0 {
+			n += 1 + runtime.Sov(uint64(x.ExchangeId))
+		}
+		l = len(x.DepositorAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgRemoveReserveDepositor)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.DepositorAddress) > 0 {
+			i -= len(x.DepositorAddress)
+			copy(dAtA[i:], x.DepositorAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.DepositorAddress)))
+			i--
+			dAtA[i] = 0x1a
+		}
+		if x.ExchangeId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.ExchangeId))
+			i--
+			dAtA[i] = 0x10
+		}
+		if len(x.AdminAddress) > 0 {
+			i -= len(x.AdminAddress)
+			copy(dAtA[i:], x.AdminAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AdminAddress)))
+			i--
+			dAtA[i] = 0xa
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgRemoveReserveDepositor)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRemoveReserveDepositor: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRemoveReserveDepositor: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AdminAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.AdminAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 2:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ExchangeId", wireType)
+				}
+				x.ExchangeId = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.ExchangeId |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 3:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field DepositorAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.DepositorAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
+	md_MsgRemoveReserveDepositorResponse protoreflect.MessageDescriptor
+)
+
+func init() {
+	file_guru_bex_v1_tx_proto_init()
+	md_MsgRemoveReserveDepositorResponse = File_guru_bex_v1_tx_proto.Messages().ByName("MsgRemoveReserveDepositorResponse")
+}
+
+var _ protoreflect.Message = (*fastReflection_MsgRemoveReserveDepositorResponse)(nil)
+
+type fastReflection_MsgRemoveReserveDepositorResponse MsgRemoveReserveDepositorResponse
+
+func (x *MsgRemoveReserveDepositorResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_MsgRemoveReserveDepositorResponse)(x)
+}
+
+func (x *MsgRemoveReserveDepositorResponse) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_MsgRemoveReserveDepositorResponse_messageType fastReflection_MsgRemoveReserveDepositorResponse_messageType
+var _ protoreflect.MessageType = fastReflection_MsgRemoveReserveDepositorResponse_messageType{}
+
+type fastReflection_MsgRemoveReserveDepositorResponse_messageType struct{}
+
+func (x fastReflection_MsgRemoveReserveDepositorResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_MsgRemoveReserveDepositorResponse)(nil)
+}
+func (x fastReflection_MsgRemoveReserveDepositorResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_MsgRemoveReserveDepositorResponse)
+}
+func (x fastReflection_MsgRemoveReserveDepositorResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRemoveReserveDepositorResponse
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_MsgRemoveReserveDepositorResponse
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) Type() protoreflect.MessageType {
+	return _fastReflection_MsgRemoveReserveDepositorResponse_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) New() protoreflect.Message {
+	return new(fastReflection_MsgRemoveReserveDepositorResponse)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) Interface() protoreflect.ProtoMessage {
+	return (*MsgRemoveReserveDepositorResponse)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositorResponse does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.MsgRemoveReserveDepositorResponse"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.MsgRemoveReserveDepositorResponse does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.MsgRemoveReserveDepositorResponse", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_MsgRemoveReserveDepositorResponse) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*MsgRemoveReserveDepositorResponse)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*MsgRemoveReserveDepositorResponse)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*MsgRemoveReserveDepositorResponse)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRemoveReserveDepositorResponse: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: MsgRemoveReserveDepositorResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
 var _ protoreflect.List = (*_MsgDepositReserve_3_list)(nil)
 
 type _MsgDepositReserve_3_list struct {
@@ -5779,16 +7555,16 @@ func (x *_MsgDepositReserve_3_list) IsValid() bool {
 }
 
 var (
-	md_MsgDepositReserve               protoreflect.MessageDescriptor
-	fd_MsgDepositReserve_admin_address protoreflect.FieldDescriptor
-	fd_MsgDepositReserve_exchange_id   protoreflect.FieldDescriptor
-	fd_MsgDepositReserve_amount        protoreflect.FieldDescriptor
+	md_MsgDepositReserve             protoreflect.MessageDescriptor
+	fd_MsgDepositReserve_sender      protoreflect.FieldDescriptor
+	fd_MsgDepositReserve_exchange_id protoreflect.FieldDescriptor
+	fd_MsgDepositReserve_amount      protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_bex_v1_tx_proto_init()
 	md_MsgDepositReserve = File_guru_bex_v1_tx_proto.Messages().ByName("MsgDepositReserve")
-	fd_MsgDepositReserve_admin_address = md_MsgDepositReserve.Fields().ByName("admin_address")
+	fd_MsgDepositReserve_sender = md_MsgDepositReserve.Fields().ByName("sender")
 	fd_MsgDepositReserve_exchange_id = md_MsgDepositReserve.Fields().ByName("exchange_id")
 	fd_MsgDepositReserve_amount = md_MsgDepositReserve.Fields().ByName("amount")
 }
@@ -5802,7 +7578,7 @@ func (x *MsgDepositReserve) ProtoReflect() protoreflect.Message {
 }
 
 func (x *MsgDepositReserve) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_bex_v1_tx_proto_msgTypes[10]
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5858,9 +7634,9 @@ func (x *fastReflection_MsgDepositReserve) Interface() protoreflect.ProtoMessage
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_MsgDepositReserve) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.AdminAddress != "" {
-		value := protoreflect.ValueOfString(x.AdminAddress)
-		if !f(fd_MsgDepositReserve_admin_address, value) {
+	if x.Sender != "" {
+		value := protoreflect.ValueOfString(x.Sender)
+		if !f(fd_MsgDepositReserve_sender, value) {
 			return
 		}
 	}
@@ -5891,8 +7667,8 @@ func (x *fastReflection_MsgDepositReserve) Range(f func(protoreflect.FieldDescri
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_MsgDepositReserve) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.bex.v1.MsgDepositReserve.admin_address":
-		return x.AdminAddress != ""
+	case "guru.bex.v1.MsgDepositReserve.sender":
+		return x.Sender != ""
 	case "guru.bex.v1.MsgDepositReserve.exchange_id":
 		return x.ExchangeId != uint64(0)
 	case "guru.bex.v1.MsgDepositReserve.amount":
@@ -5913,8 +7689,8 @@ func (x *fastReflection_MsgDepositReserve) Has(fd protoreflect.FieldDescriptor) 
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgDepositReserve) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.bex.v1.MsgDepositReserve.admin_address":
-		x.AdminAddress = ""
+	case "guru.bex.v1.MsgDepositReserve.sender":
+		x.Sender = ""
 	case "guru.bex.v1.MsgDepositReserve.exchange_id":
 		x.ExchangeId = uint64(0)
 	case "guru.bex.v1.MsgDepositReserve.amount":
@@ -5935,8 +7711,8 @@ func (x *fastReflection_MsgDepositReserve) Clear(fd protoreflect.FieldDescriptor
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_MsgDepositReserve) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.bex.v1.MsgDepositReserve.admin_address":
-		value := x.AdminAddress
+	case "guru.bex.v1.MsgDepositReserve.sender":
+		value := x.Sender
 		return protoreflect.ValueOfString(value)
 	case "guru.bex.v1.MsgDepositReserve.exchange_id":
 		value := x.ExchangeId
@@ -5967,8 +7743,8 @@ func (x *fastReflection_MsgDepositReserve) Get(descriptor protoreflect.FieldDesc
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_MsgDepositReserve) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.bex.v1.MsgDepositReserve.admin_address":
-		x.AdminAddress = value.Interface().(string)
+	case "guru.bex.v1.MsgDepositReserve.sender":
+		x.Sender = value.Interface().(string)
 	case "guru.bex.v1.MsgDepositReserve.exchange_id":
 		x.ExchangeId = value.Uint()
 	case "guru.bex.v1.MsgDepositReserve.amount":
@@ -6001,8 +7777,8 @@ func (x *fastReflection_MsgDepositReserve) Mutable(fd protoreflect.FieldDescript
 		}
 		value := &_MsgDepositReserve_3_list{list: &x.Amount}
 		return protoreflect.ValueOfList(value)
-	case "guru.bex.v1.MsgDepositReserve.admin_address":
-		panic(fmt.Errorf("field admin_address of message guru.bex.v1.MsgDepositReserve is not mutable"))
+	case "guru.bex.v1.MsgDepositReserve.sender":
+		panic(fmt.Errorf("field sender of message guru.bex.v1.MsgDepositReserve is not mutable"))
 	case "guru.bex.v1.MsgDepositReserve.exchange_id":
 		panic(fmt.Errorf("field exchange_id of message guru.bex.v1.MsgDepositReserve is not mutable"))
 	default:
@@ -6018,7 +7794,7 @@ func (x *fastReflection_MsgDepositReserve) Mutable(fd protoreflect.FieldDescript
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_MsgDepositReserve) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.bex.v1.MsgDepositReserve.admin_address":
+	case "guru.bex.v1.MsgDepositReserve.sender":
 		return protoreflect.ValueOfString("")
 	case "guru.bex.v1.MsgDepositReserve.exchange_id":
 		return protoreflect.ValueOfUint64(uint64(0))
@@ -6094,7 +7870,7 @@ func (x *fastReflection_MsgDepositReserve) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		l = len(x.AdminAddress)
+		l = len(x.Sender)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -6157,10 +7933,10 @@ func (x *fastReflection_MsgDepositReserve) ProtoMethods() *protoiface.Methods {
 			i--
 			dAtA[i] = 0x10
 		}
-		if len(x.AdminAddress) > 0 {
-			i -= len(x.AdminAddress)
-			copy(dAtA[i:], x.AdminAddress)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AdminAddress)))
+		if len(x.Sender) > 0 {
+			i -= len(x.Sender)
+			copy(dAtA[i:], x.Sender)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Sender)))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -6215,7 +7991,7 @@ func (x *fastReflection_MsgDepositReserve) ProtoMethods() *protoiface.Methods {
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AdminAddress", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -6243,7 +8019,7 @@ func (x *fastReflection_MsgDepositReserve) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.AdminAddress = string(dAtA[iNdEx:postIndex])
+				x.Sender = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 2:
 				if wireType != 0 {
@@ -6351,7 +8127,7 @@ func (x *MsgDepositReserveResponse) ProtoReflect() protoreflect.Message {
 }
 
 func (x *MsgDepositReserveResponse) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_bex_v1_tx_proto_msgTypes[11]
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6766,7 +8542,7 @@ func (x *MsgWithdrawReserve) ProtoReflect() protoreflect.Message {
 }
 
 func (x *MsgWithdrawReserve) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_bex_v1_tx_proto_msgTypes[12]
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7377,7 +9153,7 @@ func (x *MsgWithdrawReserveResponse) ProtoReflect() protoreflect.Message {
 }
 
 func (x *MsgWithdrawReserveResponse) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_bex_v1_tx_proto_msgTypes[13]
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7792,7 +9568,7 @@ func (x *MsgWithdrawFees) ProtoReflect() protoreflect.Message {
 }
 
 func (x *MsgWithdrawFees) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_bex_v1_tx_proto_msgTypes[14]
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8403,7 +10179,7 @@ func (x *MsgWithdrawFeesResponse) ProtoReflect() protoreflect.Message {
 }
 
 func (x *MsgWithdrawFeesResponse) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_bex_v1_tx_proto_msgTypes[15]
+	mi := &file_guru_bex_v1_tx_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9291,21 +11067,179 @@ func (*MsgDeleteExchangeResponse) Descriptor() ([]byte, []int) {
 	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{9}
 }
 
+// MsgAddReserveDepositor grants reserve deposit permission for one exchange.
+type MsgAddReserveDepositor struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AdminAddress     string `protobuf:"bytes,1,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
+	ExchangeId       uint64 `protobuf:"varint,2,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
+	DepositorAddress string `protobuf:"bytes,3,opt,name=depositor_address,json=depositorAddress,proto3" json:"depositor_address,omitempty"`
+}
+
+func (x *MsgAddReserveDepositor) Reset() {
+	*x = MsgAddReserveDepositor{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgAddReserveDepositor) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgAddReserveDepositor) ProtoMessage() {}
+
+// Deprecated: Use MsgAddReserveDepositor.ProtoReflect.Descriptor instead.
+func (*MsgAddReserveDepositor) Descriptor() ([]byte, []int) {
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *MsgAddReserveDepositor) GetAdminAddress() string {
+	if x != nil {
+		return x.AdminAddress
+	}
+	return ""
+}
+
+func (x *MsgAddReserveDepositor) GetExchangeId() uint64 {
+	if x != nil {
+		return x.ExchangeId
+	}
+	return 0
+}
+
+func (x *MsgAddReserveDepositor) GetDepositorAddress() string {
+	if x != nil {
+		return x.DepositorAddress
+	}
+	return ""
+}
+
+// MsgAddReserveDepositorResponse is the add-reserve-depositor response.
+type MsgAddReserveDepositorResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *MsgAddReserveDepositorResponse) Reset() {
+	*x = MsgAddReserveDepositorResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgAddReserveDepositorResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgAddReserveDepositorResponse) ProtoMessage() {}
+
+// Deprecated: Use MsgAddReserveDepositorResponse.ProtoReflect.Descriptor instead.
+func (*MsgAddReserveDepositorResponse) Descriptor() ([]byte, []int) {
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{11}
+}
+
+// MsgRemoveReserveDepositor revokes reserve deposit permission for one exchange.
+type MsgRemoveReserveDepositor struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AdminAddress     string `protobuf:"bytes,1,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
+	ExchangeId       uint64 `protobuf:"varint,2,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
+	DepositorAddress string `protobuf:"bytes,3,opt,name=depositor_address,json=depositorAddress,proto3" json:"depositor_address,omitempty"`
+}
+
+func (x *MsgRemoveReserveDepositor) Reset() {
+	*x = MsgRemoveReserveDepositor{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgRemoveReserveDepositor) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgRemoveReserveDepositor) ProtoMessage() {}
+
+// Deprecated: Use MsgRemoveReserveDepositor.ProtoReflect.Descriptor instead.
+func (*MsgRemoveReserveDepositor) Descriptor() ([]byte, []int) {
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *MsgRemoveReserveDepositor) GetAdminAddress() string {
+	if x != nil {
+		return x.AdminAddress
+	}
+	return ""
+}
+
+func (x *MsgRemoveReserveDepositor) GetExchangeId() uint64 {
+	if x != nil {
+		return x.ExchangeId
+	}
+	return 0
+}
+
+func (x *MsgRemoveReserveDepositor) GetDepositorAddress() string {
+	if x != nil {
+		return x.DepositorAddress
+	}
+	return ""
+}
+
+// MsgRemoveReserveDepositorResponse is the remove-reserve-depositor response.
+type MsgRemoveReserveDepositorResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *MsgRemoveReserveDepositorResponse) Reset() {
+	*x = MsgRemoveReserveDepositorResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MsgRemoveReserveDepositorResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MsgRemoveReserveDepositorResponse) ProtoMessage() {}
+
+// Deprecated: Use MsgRemoveReserveDepositorResponse.ProtoReflect.Descriptor instead.
+func (*MsgRemoveReserveDepositorResponse) Descriptor() ([]byte, []int) {
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{13}
+}
+
 // MsgDepositReserve deposits coins into an exchange reserve.
 type MsgDepositReserve struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AdminAddress string          `protobuf:"bytes,1,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
-	ExchangeId   uint64          `protobuf:"varint,2,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
-	Amount       []*v1beta1.Coin `protobuf:"bytes,3,rep,name=amount,proto3" json:"amount,omitempty"`
+	Sender     string          `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
+	ExchangeId uint64          `protobuf:"varint,2,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
+	Amount     []*v1beta1.Coin `protobuf:"bytes,3,rep,name=amount,proto3" json:"amount,omitempty"`
 }
 
 func (x *MsgDepositReserve) Reset() {
 	*x = MsgDepositReserve{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_bex_v1_tx_proto_msgTypes[10]
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -9319,12 +11253,12 @@ func (*MsgDepositReserve) ProtoMessage() {}
 
 // Deprecated: Use MsgDepositReserve.ProtoReflect.Descriptor instead.
 func (*MsgDepositReserve) Descriptor() ([]byte, []int) {
-	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{10}
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *MsgDepositReserve) GetAdminAddress() string {
+func (x *MsgDepositReserve) GetSender() string {
 	if x != nil {
-		return x.AdminAddress
+		return x.Sender
 	}
 	return ""
 }
@@ -9353,7 +11287,7 @@ type MsgDepositReserveResponse struct {
 func (x *MsgDepositReserveResponse) Reset() {
 	*x = MsgDepositReserveResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_bex_v1_tx_proto_msgTypes[11]
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -9367,7 +11301,7 @@ func (*MsgDepositReserveResponse) ProtoMessage() {}
 
 // Deprecated: Use MsgDepositReserveResponse.ProtoReflect.Descriptor instead.
 func (*MsgDepositReserveResponse) Descriptor() ([]byte, []int) {
-	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{11}
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{15}
 }
 
 // MsgWithdrawReserve withdraws coins from an exchange reserve.
@@ -9385,7 +11319,7 @@ type MsgWithdrawReserve struct {
 func (x *MsgWithdrawReserve) Reset() {
 	*x = MsgWithdrawReserve{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_bex_v1_tx_proto_msgTypes[12]
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -9399,7 +11333,7 @@ func (*MsgWithdrawReserve) ProtoMessage() {}
 
 // Deprecated: Use MsgWithdrawReserve.ProtoReflect.Descriptor instead.
 func (*MsgWithdrawReserve) Descriptor() ([]byte, []int) {
-	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{12}
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *MsgWithdrawReserve) GetAdminAddress() string {
@@ -9440,7 +11374,7 @@ type MsgWithdrawReserveResponse struct {
 func (x *MsgWithdrawReserveResponse) Reset() {
 	*x = MsgWithdrawReserveResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_bex_v1_tx_proto_msgTypes[13]
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -9454,7 +11388,7 @@ func (*MsgWithdrawReserveResponse) ProtoMessage() {}
 
 // Deprecated: Use MsgWithdrawReserveResponse.ProtoReflect.Descriptor instead.
 func (*MsgWithdrawReserveResponse) Descriptor() ([]byte, []int) {
-	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{13}
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{17}
 }
 
 // MsgWithdrawFees withdraws available fees.
@@ -9472,7 +11406,7 @@ type MsgWithdrawFees struct {
 func (x *MsgWithdrawFees) Reset() {
 	*x = MsgWithdrawFees{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_bex_v1_tx_proto_msgTypes[14]
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -9486,7 +11420,7 @@ func (*MsgWithdrawFees) ProtoMessage() {}
 
 // Deprecated: Use MsgWithdrawFees.ProtoReflect.Descriptor instead.
 func (*MsgWithdrawFees) Descriptor() ([]byte, []int) {
-	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{14}
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *MsgWithdrawFees) GetAdminAddress() string {
@@ -9527,7 +11461,7 @@ type MsgWithdrawFeesResponse struct {
 func (x *MsgWithdrawFeesResponse) Reset() {
 	*x = MsgWithdrawFeesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_bex_v1_tx_proto_msgTypes[15]
+		mi := &file_guru_bex_v1_tx_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -9541,7 +11475,7 @@ func (*MsgWithdrawFeesResponse) ProtoMessage() {}
 
 // Deprecated: Use MsgWithdrawFeesResponse.ProtoReflect.Descriptor instead.
 func (*MsgWithdrawFeesResponse) Descriptor() ([]byte, []int) {
-	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{15}
+	return file_guru_bex_v1_tx_proto_rawDescGZIP(), []int{19}
 }
 
 var File_guru_bex_v1_tx_proto protoreflect.FileDescriptor
@@ -9675,110 +11609,154 @@ var file_guru_bex_v1_tx_proto_rawDesc = []byte{
 	0x3a, 0x12, 0x82, 0xe7, 0xb0, 0x2a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64,
 	0x72, 0x65, 0x73, 0x73, 0x22, 0x1b, 0x0a, 0x19, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x74,
 	0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0xba, 0x01, 0x0a, 0x11, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
-	0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x12, 0x3d, 0x0a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e,
+	0x65, 0x22, 0xd3, 0x01, 0x0a, 0x16, 0x4d, 0x73, 0x67, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73, 0x65,
+	0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x12, 0x3d, 0x0a, 0x0d,
+	0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
+	0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x0c, 0x61,
+	0x64, 0x6d, 0x69, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65,
+	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04,
+	0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x45, 0x0a, 0x11,
+	0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
+	0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73,
+	0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e,
+	0x67, 0x52, 0x10, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x41, 0x64, 0x64, 0x72,
+	0x65, 0x73, 0x73, 0x3a, 0x12, 0x82, 0xe7, 0xb0, 0x2a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f,
+	0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22, 0x20, 0x0a, 0x1e, 0x4d, 0x73, 0x67, 0x41, 0x64,
+	0x64, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f,
+	0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xd6, 0x01, 0x0a, 0x19, 0x4d, 0x73,
+	0x67, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65,
+	0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x12, 0x3d, 0x0a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e,
 	0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18,
 	0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65,
 	0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x0c, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x41,
 	0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e,
 	0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63,
-	0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x31, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e,
-	0x74, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
-	0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f,
-	0x69, 0x6e, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x3a, 0x12, 0x82, 0xe7, 0xb0, 0x2a,
-	0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22, 0x1b,
-	0x0a, 0x19, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x52, 0x65, 0x73, 0x65,
-	0x72, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xf3, 0x01, 0x0a, 0x12,
-	0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x52, 0x65, 0x73, 0x65, 0x72,
-	0x76, 0x65, 0x12, 0x3d, 0x0a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72,
-	0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63,
-	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72,
-	0x69, 0x6e, 0x67, 0x52, 0x0c, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73,
-	0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
-	0x49, 0x64, 0x12, 0x31, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x03,
-	0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65,
-	0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e, 0x52, 0x06, 0x61,
-	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x36, 0x0a, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65,
-	0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f,
-	0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69,
-	0x6e, 0x67, 0x52, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x3a, 0x12, 0x82,
-	0xe7, 0xb0, 0x2a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
-	0x73, 0x22, 0x1c, 0x0a, 0x1a, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77,
-	0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
-	0xf0, 0x01, 0x0a, 0x0f, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x46,
-	0x65, 0x65, 0x73, 0x12, 0x3d, 0x0a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64,
-	0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14,
-	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74,
-	0x72, 0x69, 0x6e, 0x67, 0x52, 0x0c, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65,
-	0x73, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69,
-	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x49, 0x64, 0x12, 0x31, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03, 0x20,
-	0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73,
-	0x65, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e, 0x52, 0x06,
-	0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x36, 0x0a, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69,
-	0x65, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63,
-	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72,
-	0x69, 0x6e, 0x67, 0x52, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x3a, 0x12,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x45, 0x0a, 0x11, 0x64, 0x65, 0x70, 0x6f, 0x73,
+	0x69, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41,
+	0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x10, 0x64, 0x65,
+	0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x3a, 0x12,
 	0x82, 0xe7, 0xb0, 0x2a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65,
-	0x73, 0x73, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61,
-	0x77, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xd3, 0x05,
-	0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x55, 0x0a, 0x0d, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
-	0x72, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x12, 0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
-	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72,
-	0x41, 0x64, 0x6d, 0x69, 0x6e, 0x1a, 0x25, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78,
-	0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x41,
-	0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4f, 0x0a, 0x0b,
-	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x12, 0x1b, 0x2e, 0x67, 0x75,
-	0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x6d,
-	0x6f, 0x76, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x1a, 0x23, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
-	0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65,
-	0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5e, 0x0a,
-	0x10, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x12, 0x20, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e,
-	0x4d, 0x73, 0x67, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x45, 0x78, 0x63, 0x68, 0x61,
-	0x6e, 0x67, 0x65, 0x1a, 0x28, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76,
+	0x73, 0x73, 0x22, 0x23, 0x0a, 0x21, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52,
+	0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xa6, 0x01, 0x0a, 0x11, 0x4d, 0x73, 0x67, 0x44,
+	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x12, 0x30, 0x0a,
+	0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2,
+	0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73,
+	0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x12,
+	0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64,
+	0x12, 0x31, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x76,
+	0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e, 0x52, 0x06, 0x61, 0x6d, 0x6f,
+	0x75, 0x6e, 0x74, 0x3a, 0x0b, 0x82, 0xe7, 0xb0, 0x2a, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72,
+	0x22, 0x1b, 0x0a, 0x19, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x52, 0x65,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xf3, 0x01,
+	0x0a, 0x12, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x52, 0x65, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x12, 0x3d, 0x0a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64,
+	0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d,
+	0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53,
+	0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x0c, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x64, 0x64, 0x72,
+	0x65, 0x73, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f,
+	0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e,
+	0x67, 0x65, 0x49, 0x64, 0x12, 0x31, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61,
+	0x73, 0x65, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e, 0x52,
+	0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x36, 0x0a, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70,
+	0x69, 0x65, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14,
+	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74,
+	0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x3a,
+	0x12, 0x82, 0xe7, 0xb0, 0x2a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72,
+	0x65, 0x73, 0x73, 0x22, 0x1c, 0x0a, 0x1a, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72,
+	0x61, 0x77, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0xf0, 0x01, 0x0a, 0x0f, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61,
+	0x77, 0x46, 0x65, 0x65, 0x73, 0x12, 0x3d, 0x0a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61,
+	0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4,
+	0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
+	0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x0c, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x64, 0x64,
+	0x72, 0x65, 0x73, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x31, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18,
+	0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62,
+	0x61, 0x73, 0x65, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e,
+	0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x36, 0x0a, 0x09, 0x72, 0x65, 0x63, 0x69,
+	0x70, 0x69, 0x65, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d,
+	0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53,
+	0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74,
+	0x3a, 0x12, 0x82, 0xe7, 0xb0, 0x2a, 0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64,
+	0x72, 0x65, 0x73, 0x73, 0x22, 0x19, 0x0a, 0x17, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64,
+	0x72, 0x61, 0x77, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32,
+	0xae, 0x07, 0x0a, 0x03, 0x4d, 0x73, 0x67, 0x12, 0x55, 0x0a, 0x0d, 0x52, 0x65, 0x67, 0x69, 0x73,
+	0x74, 0x65, 0x72, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x12, 0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
+	0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74,
+	0x65, 0x72, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x1a, 0x25, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62,
+	0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
+	0x72, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4f,
+	0x0a, 0x0b, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x12, 0x1b, 0x2e,
+	0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52,
+	0x65, 0x6d, 0x6f, 0x76, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x1a, 0x23, 0x2e, 0x67, 0x75, 0x72,
+	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x6d, 0x6f,
+	0x76, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x5e, 0x0a, 0x10, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x45, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x12, 0x20, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76,
 	0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x45, 0x78, 0x63,
-	0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a,
-	0x0e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12,
-	0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73,
-	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x1a,
-	0x26, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73,
-	0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a, 0x0e, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x1a, 0x26, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c, 0x65, 0x74,
-	0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x58, 0x0a, 0x0e, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x52, 0x65, 0x73, 0x65,
-	0x72, 0x76, 0x65, 0x12, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76,
-	0x31, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x52, 0x65, 0x73, 0x65,
-	0x72, 0x76, 0x65, 0x1a, 0x26, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76,
-	0x31, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x52, 0x65, 0x73, 0x65,
-	0x72, 0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5b, 0x0a, 0x0f, 0x57,
-	0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x12, 0x1f,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x1a, 0x28, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78,
+	0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x45,
+	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x58, 0x0a, 0x0e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
+	0x65, 0x12, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e,
+	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
+	0x65, 0x1a, 0x26, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e,
+	0x4d, 0x73, 0x67, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a, 0x0e, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x1e, 0x2e, 0x67, 0x75,
+	0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x1a, 0x26, 0x2e, 0x67, 0x75,
+	0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x67, 0x0a, 0x13, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76,
+	0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x12, 0x23, 0x2e, 0x67, 0x75, 0x72,
+	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x41, 0x64, 0x64, 0x52,
+	0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x1a,
+	0x2b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73,
+	0x67, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73,
+	0x69, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x70, 0x0a, 0x16,
+	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x12, 0x26, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
+	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x1a, 0x2e,
 	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67,
-	0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x1a,
-	0x27, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73,
-	0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x52, 0x0a, 0x0c, 0x57, 0x69, 0x74, 0x68,
-	0x64, 0x72, 0x61, 0x77, 0x46, 0x65, 0x65, 0x73, 0x12, 0x1c, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
-	0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72,
-	0x61, 0x77, 0x46, 0x65, 0x65, 0x73, 0x1a, 0x24, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
-	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77,
-	0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7,
-	0xb0, 0x2a, 0x01, 0x42, 0xa0, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f,
-	0x50, 0x01, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67,
-	0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72,
-	0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65,
-	0x78, 0x2f, 0x76, 0x31, 0x3b, 0x62, 0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x42, 0x58,
-	0xaa, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31, 0xca, 0x02,
-	0x0b, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17, 0x47,
-	0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
-	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42,
-	0x65, 0x78, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58,
+	0x0a, 0x0e, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x12, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d,
+	0x73, 0x67, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x1a, 0x26, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d,
+	0x73, 0x67, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5b, 0x0a, 0x0f, 0x57, 0x69, 0x74, 0x68,
+	0x64, 0x72, 0x61, 0x77, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x12, 0x1f, 0x2e, 0x67, 0x75,
+	0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74,
+	0x68, 0x64, 0x72, 0x61, 0x77, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x1a, 0x27, 0x2e, 0x67,
+	0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x57, 0x69,
+	0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x52, 0x0a, 0x0c, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61,
+	0x77, 0x46, 0x65, 0x65, 0x73, 0x12, 0x1c, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78,
+	0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x46,
+	0x65, 0x65, 0x73, 0x1a, 0x24, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76,
+	0x31, 0x2e, 0x4d, 0x73, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x46, 0x65, 0x65,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x1a, 0x05, 0x80, 0xe7, 0xb0, 0x2a, 0x01,
+	0x42, 0xa0, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
+	0x78, 0x2e, 0x76, 0x31, 0x42, 0x07, 0x54, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a,
+	0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75,
+	0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76,
+	0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76,
+	0x31, 0x3b, 0x62, 0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x42, 0x58, 0xaa, 0x02, 0x0b,
+	0x47, 0x75, 0x72, 0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0b, 0x47, 0x75,
+	0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17, 0x47, 0x75, 0x72, 0x75,
+	0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64,
+	0x61, 0x74, 0x61, 0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42, 0x65, 0x78, 0x3a,
+	0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -9793,54 +11771,62 @@ func file_guru_bex_v1_tx_proto_rawDescGZIP() []byte {
 	return file_guru_bex_v1_tx_proto_rawDescData
 }
 
-var file_guru_bex_v1_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_guru_bex_v1_tx_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_guru_bex_v1_tx_proto_goTypes = []interface{}{
-	(*MsgRegisterAdmin)(nil),            // 0: guru.bex.v1.MsgRegisterAdmin
-	(*MsgRegisterAdminResponse)(nil),    // 1: guru.bex.v1.MsgRegisterAdminResponse
-	(*MsgRemoveAdmin)(nil),              // 2: guru.bex.v1.MsgRemoveAdmin
-	(*MsgRemoveAdminResponse)(nil),      // 3: guru.bex.v1.MsgRemoveAdminResponse
-	(*MsgRegisterExchange)(nil),         // 4: guru.bex.v1.MsgRegisterExchange
-	(*MsgRegisterExchangeResponse)(nil), // 5: guru.bex.v1.MsgRegisterExchangeResponse
-	(*MsgUpdateExchange)(nil),           // 6: guru.bex.v1.MsgUpdateExchange
-	(*MsgUpdateExchangeResponse)(nil),   // 7: guru.bex.v1.MsgUpdateExchangeResponse
-	(*MsgDeleteExchange)(nil),           // 8: guru.bex.v1.MsgDeleteExchange
-	(*MsgDeleteExchangeResponse)(nil),   // 9: guru.bex.v1.MsgDeleteExchangeResponse
-	(*MsgDepositReserve)(nil),           // 10: guru.bex.v1.MsgDepositReserve
-	(*MsgDepositReserveResponse)(nil),   // 11: guru.bex.v1.MsgDepositReserveResponse
-	(*MsgWithdrawReserve)(nil),          // 12: guru.bex.v1.MsgWithdrawReserve
-	(*MsgWithdrawReserveResponse)(nil),  // 13: guru.bex.v1.MsgWithdrawReserveResponse
-	(*MsgWithdrawFees)(nil),             // 14: guru.bex.v1.MsgWithdrawFees
-	(*MsgWithdrawFeesResponse)(nil),     // 15: guru.bex.v1.MsgWithdrawFeesResponse
-	nil,                                 // 16: guru.bex.v1.MsgRegisterExchange.MetadataEntry
-	(ExchangeStatus)(0),                 // 17: guru.bex.v1.ExchangeStatus
-	(*ExchangeUpdatePatch)(nil),         // 18: guru.bex.v1.ExchangeUpdatePatch
-	(*v1beta1.Coin)(nil),                // 19: cosmos.base.v1beta1.Coin
+	(*MsgRegisterAdmin)(nil),                  // 0: guru.bex.v1.MsgRegisterAdmin
+	(*MsgRegisterAdminResponse)(nil),          // 1: guru.bex.v1.MsgRegisterAdminResponse
+	(*MsgRemoveAdmin)(nil),                    // 2: guru.bex.v1.MsgRemoveAdmin
+	(*MsgRemoveAdminResponse)(nil),            // 3: guru.bex.v1.MsgRemoveAdminResponse
+	(*MsgRegisterExchange)(nil),               // 4: guru.bex.v1.MsgRegisterExchange
+	(*MsgRegisterExchangeResponse)(nil),       // 5: guru.bex.v1.MsgRegisterExchangeResponse
+	(*MsgUpdateExchange)(nil),                 // 6: guru.bex.v1.MsgUpdateExchange
+	(*MsgUpdateExchangeResponse)(nil),         // 7: guru.bex.v1.MsgUpdateExchangeResponse
+	(*MsgDeleteExchange)(nil),                 // 8: guru.bex.v1.MsgDeleteExchange
+	(*MsgDeleteExchangeResponse)(nil),         // 9: guru.bex.v1.MsgDeleteExchangeResponse
+	(*MsgAddReserveDepositor)(nil),            // 10: guru.bex.v1.MsgAddReserveDepositor
+	(*MsgAddReserveDepositorResponse)(nil),    // 11: guru.bex.v1.MsgAddReserveDepositorResponse
+	(*MsgRemoveReserveDepositor)(nil),         // 12: guru.bex.v1.MsgRemoveReserveDepositor
+	(*MsgRemoveReserveDepositorResponse)(nil), // 13: guru.bex.v1.MsgRemoveReserveDepositorResponse
+	(*MsgDepositReserve)(nil),                 // 14: guru.bex.v1.MsgDepositReserve
+	(*MsgDepositReserveResponse)(nil),         // 15: guru.bex.v1.MsgDepositReserveResponse
+	(*MsgWithdrawReserve)(nil),                // 16: guru.bex.v1.MsgWithdrawReserve
+	(*MsgWithdrawReserveResponse)(nil),        // 17: guru.bex.v1.MsgWithdrawReserveResponse
+	(*MsgWithdrawFees)(nil),                   // 18: guru.bex.v1.MsgWithdrawFees
+	(*MsgWithdrawFeesResponse)(nil),           // 19: guru.bex.v1.MsgWithdrawFeesResponse
+	nil,                                       // 20: guru.bex.v1.MsgRegisterExchange.MetadataEntry
+	(ExchangeStatus)(0),                       // 21: guru.bex.v1.ExchangeStatus
+	(*ExchangeUpdatePatch)(nil),               // 22: guru.bex.v1.ExchangeUpdatePatch
+	(*v1beta1.Coin)(nil),                      // 23: cosmos.base.v1beta1.Coin
 }
 var file_guru_bex_v1_tx_proto_depIdxs = []int32{
-	17, // 0: guru.bex.v1.MsgRegisterExchange.status:type_name -> guru.bex.v1.ExchangeStatus
-	16, // 1: guru.bex.v1.MsgRegisterExchange.metadata:type_name -> guru.bex.v1.MsgRegisterExchange.MetadataEntry
-	18, // 2: guru.bex.v1.MsgUpdateExchange.patch:type_name -> guru.bex.v1.ExchangeUpdatePatch
-	19, // 3: guru.bex.v1.MsgDepositReserve.amount:type_name -> cosmos.base.v1beta1.Coin
-	19, // 4: guru.bex.v1.MsgWithdrawReserve.amount:type_name -> cosmos.base.v1beta1.Coin
-	19, // 5: guru.bex.v1.MsgWithdrawFees.amount:type_name -> cosmos.base.v1beta1.Coin
+	21, // 0: guru.bex.v1.MsgRegisterExchange.status:type_name -> guru.bex.v1.ExchangeStatus
+	20, // 1: guru.bex.v1.MsgRegisterExchange.metadata:type_name -> guru.bex.v1.MsgRegisterExchange.MetadataEntry
+	22, // 2: guru.bex.v1.MsgUpdateExchange.patch:type_name -> guru.bex.v1.ExchangeUpdatePatch
+	23, // 3: guru.bex.v1.MsgDepositReserve.amount:type_name -> cosmos.base.v1beta1.Coin
+	23, // 4: guru.bex.v1.MsgWithdrawReserve.amount:type_name -> cosmos.base.v1beta1.Coin
+	23, // 5: guru.bex.v1.MsgWithdrawFees.amount:type_name -> cosmos.base.v1beta1.Coin
 	0,  // 6: guru.bex.v1.Msg.RegisterAdmin:input_type -> guru.bex.v1.MsgRegisterAdmin
 	2,  // 7: guru.bex.v1.Msg.RemoveAdmin:input_type -> guru.bex.v1.MsgRemoveAdmin
 	4,  // 8: guru.bex.v1.Msg.RegisterExchange:input_type -> guru.bex.v1.MsgRegisterExchange
 	6,  // 9: guru.bex.v1.Msg.UpdateExchange:input_type -> guru.bex.v1.MsgUpdateExchange
 	8,  // 10: guru.bex.v1.Msg.DeleteExchange:input_type -> guru.bex.v1.MsgDeleteExchange
-	10, // 11: guru.bex.v1.Msg.DepositReserve:input_type -> guru.bex.v1.MsgDepositReserve
-	12, // 12: guru.bex.v1.Msg.WithdrawReserve:input_type -> guru.bex.v1.MsgWithdrawReserve
-	14, // 13: guru.bex.v1.Msg.WithdrawFees:input_type -> guru.bex.v1.MsgWithdrawFees
-	1,  // 14: guru.bex.v1.Msg.RegisterAdmin:output_type -> guru.bex.v1.MsgRegisterAdminResponse
-	3,  // 15: guru.bex.v1.Msg.RemoveAdmin:output_type -> guru.bex.v1.MsgRemoveAdminResponse
-	5,  // 16: guru.bex.v1.Msg.RegisterExchange:output_type -> guru.bex.v1.MsgRegisterExchangeResponse
-	7,  // 17: guru.bex.v1.Msg.UpdateExchange:output_type -> guru.bex.v1.MsgUpdateExchangeResponse
-	9,  // 18: guru.bex.v1.Msg.DeleteExchange:output_type -> guru.bex.v1.MsgDeleteExchangeResponse
-	11, // 19: guru.bex.v1.Msg.DepositReserve:output_type -> guru.bex.v1.MsgDepositReserveResponse
-	13, // 20: guru.bex.v1.Msg.WithdrawReserve:output_type -> guru.bex.v1.MsgWithdrawReserveResponse
-	15, // 21: guru.bex.v1.Msg.WithdrawFees:output_type -> guru.bex.v1.MsgWithdrawFeesResponse
-	14, // [14:22] is the sub-list for method output_type
-	6,  // [6:14] is the sub-list for method input_type
+	10, // 11: guru.bex.v1.Msg.AddReserveDepositor:input_type -> guru.bex.v1.MsgAddReserveDepositor
+	12, // 12: guru.bex.v1.Msg.RemoveReserveDepositor:input_type -> guru.bex.v1.MsgRemoveReserveDepositor
+	14, // 13: guru.bex.v1.Msg.DepositReserve:input_type -> guru.bex.v1.MsgDepositReserve
+	16, // 14: guru.bex.v1.Msg.WithdrawReserve:input_type -> guru.bex.v1.MsgWithdrawReserve
+	18, // 15: guru.bex.v1.Msg.WithdrawFees:input_type -> guru.bex.v1.MsgWithdrawFees
+	1,  // 16: guru.bex.v1.Msg.RegisterAdmin:output_type -> guru.bex.v1.MsgRegisterAdminResponse
+	3,  // 17: guru.bex.v1.Msg.RemoveAdmin:output_type -> guru.bex.v1.MsgRemoveAdminResponse
+	5,  // 18: guru.bex.v1.Msg.RegisterExchange:output_type -> guru.bex.v1.MsgRegisterExchangeResponse
+	7,  // 19: guru.bex.v1.Msg.UpdateExchange:output_type -> guru.bex.v1.MsgUpdateExchangeResponse
+	9,  // 20: guru.bex.v1.Msg.DeleteExchange:output_type -> guru.bex.v1.MsgDeleteExchangeResponse
+	11, // 21: guru.bex.v1.Msg.AddReserveDepositor:output_type -> guru.bex.v1.MsgAddReserveDepositorResponse
+	13, // 22: guru.bex.v1.Msg.RemoveReserveDepositor:output_type -> guru.bex.v1.MsgRemoveReserveDepositorResponse
+	15, // 23: guru.bex.v1.Msg.DepositReserve:output_type -> guru.bex.v1.MsgDepositReserveResponse
+	17, // 24: guru.bex.v1.Msg.WithdrawReserve:output_type -> guru.bex.v1.MsgWithdrawReserveResponse
+	19, // 25: guru.bex.v1.Msg.WithdrawFees:output_type -> guru.bex.v1.MsgWithdrawFeesResponse
+	16, // [16:26] is the sub-list for method output_type
+	6,  // [6:16] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name
 	6,  // [6:6] is the sub-list for extension extendee
 	0,  // [0:6] is the sub-list for field type_name
@@ -9974,7 +11960,7 @@ func file_guru_bex_v1_tx_proto_init() {
 			}
 		}
 		file_guru_bex_v1_tx_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgDepositReserve); i {
+			switch v := v.(*MsgAddReserveDepositor); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9986,7 +11972,7 @@ func file_guru_bex_v1_tx_proto_init() {
 			}
 		}
 		file_guru_bex_v1_tx_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgDepositReserveResponse); i {
+			switch v := v.(*MsgAddReserveDepositorResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9998,7 +11984,7 @@ func file_guru_bex_v1_tx_proto_init() {
 			}
 		}
 		file_guru_bex_v1_tx_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgWithdrawReserve); i {
+			switch v := v.(*MsgRemoveReserveDepositor); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -10010,7 +11996,7 @@ func file_guru_bex_v1_tx_proto_init() {
 			}
 		}
 		file_guru_bex_v1_tx_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgWithdrawReserveResponse); i {
+			switch v := v.(*MsgRemoveReserveDepositorResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -10022,7 +12008,7 @@ func file_guru_bex_v1_tx_proto_init() {
 			}
 		}
 		file_guru_bex_v1_tx_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MsgWithdrawFees); i {
+			switch v := v.(*MsgDepositReserve); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -10034,6 +12020,54 @@ func file_guru_bex_v1_tx_proto_init() {
 			}
 		}
 		file_guru_bex_v1_tx_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgDepositReserveResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_guru_bex_v1_tx_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgWithdrawReserve); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_guru_bex_v1_tx_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgWithdrawReserveResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_guru_bex_v1_tx_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MsgWithdrawFees); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_guru_bex_v1_tx_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MsgWithdrawFeesResponse); i {
 			case 0:
 				return &v.state
@@ -10052,7 +12086,7 @@ func file_guru_bex_v1_tx_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_guru_bex_v1_tx_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

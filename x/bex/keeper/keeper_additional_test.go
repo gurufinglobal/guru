@@ -537,7 +537,6 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 		"fees":               func() error { _, err := q.CollectedFees(f.ctx, nil); return err },
 		"volume":             func() error { _, err := q.VolumeWindow(f.ctx, nil); return err },
 		"quote":              func() error { _, err := q.QuoteSwap(f.ctx, nil); return err },
-		"readiness":          func() error { _, err := q.ExchangeReadiness(f.ctx, nil); return err },
 	} {
 		t.Run(name, func(t *testing.T) {
 			require.ErrorIs(t, call(), types.ErrInvalidRequest)
@@ -555,13 +554,20 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 	require.Len(t, listResp.GetExchanges(), 1)
 	require.NotEmpty(t, listResp.GetPagination().GetNextKey())
 	listResp, err = q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
-		IncludeDeleted: true,
-		Pagination:     &queryv1beta1.PageRequest{Key: listResp.GetPagination().GetNextKey(), Limit: 10000},
+		Pagination: &queryv1beta1.PageRequest{Key: listResp.GetPagination().GetNextKey(), Limit: 10000},
 	})
 	require.NoError(t, err)
-	require.Len(t, listResp.GetExchanges(), 2)
-	_, err = q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{Pagination: &queryv1beta1.PageRequest{Key: []byte("bad")}})
-	require.ErrorIs(t, err, types.ErrInvalidRequest)
+	require.Len(t, listResp.GetExchanges(), 1)
+	require.Equal(t, ex2.GetId(), listResp.GetExchanges()[0].GetId())
+	listResp, err = q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
+		IncludeDeleted: true,
+		Pagination:     &queryv1beta1.PageRequest{Limit: 10000},
+	})
+	require.NoError(t, err)
+	require.Len(t, listResp.GetExchanges(), 3)
+	invalidKeyPage, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{Pagination: &queryv1beta1.PageRequest{Key: []byte("bad")}})
+	require.NoError(t, err)
+	require.Empty(t, invalidKeyPage.GetExchanges())
 
 	byAdmin, err := q.ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{
 		AdminAddress: f.admin,
@@ -612,14 +618,55 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 	quote, err := q.QuoteSwap(f.ctx, &bexv1.QueryQuoteSwapRequest{ExchangeId: ex1.GetId(), InputDenom: ex1.GetDenomA(), AmountIn: "2"})
 	require.NoError(t, err)
 	require.Equal(t, "2", quote.GetQuote().GetAmountOut())
+}
 
-	readiness, err := q.ExchangeReadiness(f.ctx, &bexv1.QueryExchangeReadinessRequest{ExchangeId: ex2.GetId(), Direction: bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED})
+func TestExchangeQueryFiltersTombstonesFromPrimaryState(t *testing.T) {
+	f := setupKeeperFixture(t)
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+	first := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	deleted := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	last := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, deleted.GetId()))
+
+	q := NewQueryServer(&f.keeper)
+	firstPage, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
+		Pagination: &queryv1beta1.PageRequest{Limit: 1},
+	})
 	require.NoError(t, err)
-	require.False(t, readiness.GetReadiness().GetReady())
-	require.NotEmpty(t, readiness.GetReadiness().GetBlockingReasons())
-	readiness, err = q.ExchangeReadiness(f.ctx, &bexv1.QueryExchangeReadinessRequest{ExchangeId: 999, Direction: bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B})
+	require.Len(t, firstPage.GetExchanges(), 1)
+	require.Equal(t, first.GetId(), firstPage.GetExchanges()[0].GetId())
+	require.NotEmpty(t, firstPage.GetPagination().GetNextKey())
+
+	secondPage, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
+		Pagination: &queryv1beta1.PageRequest{Key: firstPage.GetPagination().GetNextKey(), Limit: 1},
+	})
 	require.NoError(t, err)
-	require.False(t, readiness.GetReadiness().GetReady())
+	require.Len(t, secondPage.GetExchanges(), 1)
+	require.Equal(t, last.GetId(), secondPage.GetExchanges()[0].GetId())
+
+	reverse, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
+		Pagination: &queryv1beta1.PageRequest{Limit: 2, Reverse: true},
+	})
+	require.NoError(t, err)
+	require.Len(t, reverse.GetExchanges(), 2)
+	require.Equal(t, []uint64{last.GetId(), first.GetId()}, []uint64{
+		reverse.GetExchanges()[0].GetId(),
+		reverse.GetExchanges()[1].GetId(),
+	})
+
+	all, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
+		IncludeDeleted: true,
+		Pagination:     &queryv1beta1.PageRequest{Limit: 3},
+	})
+	require.NoError(t, err)
+	require.Len(t, all.GetExchanges(), 3)
+	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED, all.GetExchanges()[1].GetStatus())
+
+	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, first.GetId()))
+	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, last.GetId()))
+	empty, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{})
+	require.NoError(t, err)
+	require.Empty(t, empty.GetExchanges())
 }
 
 func TestVolumePendingEpochActivationAndPrune(t *testing.T) {
@@ -760,7 +807,7 @@ func TestMsgServerRoutes(t *testing.T) {
 		Patch:            &bexv1.ExchangeUpdatePatch{FeeBpsAToB: wrapperspb.UInt32(7)},
 	})
 	require.NoError(t, err)
-	_, err = msgServer.DepositReserve(f.ctx, &bexv1.MsgDepositReserve{AdminAddress: f.admin, ExchangeId: regResp.GetExchangeId(), Amount: coin})
+	_, err = msgServer.DepositReserve(f.ctx, &bexv1.MsgDepositReserve{Sender: f.admin, ExchangeId: regResp.GetExchangeId(), Amount: coin})
 	require.NoError(t, err)
 	recipient, err := f.accountCodec.BytesToString(f.recipient)
 	require.NoError(t, err)
@@ -776,7 +823,7 @@ func TestMsgServerRoutes(t *testing.T) {
 	_, err = msgServer.RemoveAdmin(f.ctx, &bexv1.MsgRemoveAdmin{Moderator: f.moderator, AdminAddress: f.admin})
 	require.NoError(t, err)
 
-	_, err = msgServer.DepositReserve(f.ctx, &bexv1.MsgDepositReserve{AdminAddress: f.admin, ExchangeId: regResp.GetExchangeId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "bad"}}})
+	_, err = msgServer.DepositReserve(f.ctx, &bexv1.MsgDepositReserve{Sender: f.admin, ExchangeId: regResp.GetExchangeId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "bad"}}})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 	_, err = msgServer.WithdrawReserve(f.ctx, &bexv1.MsgWithdrawReserve{AdminAddress: f.admin, ExchangeId: regResp.GetExchangeId(), Amount: coin, Recipient: "bad"})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
@@ -887,7 +934,7 @@ func TestAdditionalErrorBranches(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 	_, _, err = f.keeper.requireExchangeAdmin(f.ctx, active, other)
 	require.ErrorIs(t, err, types.ErrAdminNotFound)
-	require.ErrorIs(t, f.keeper.DepositReserve(f.ctx, other, inactive.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrAdminNotFound)
+	require.ErrorIs(t, f.keeper.DepositReserve(f.ctx, other, inactive.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrUnauthorizedReserveDepositor)
 	require.ErrorIs(t, f.keeper.DepositReserve(f.ctx, f.admin, 999, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrExchangeNotFound)
 	require.ErrorIs(t, f.keeper.WithdrawReserve(f.ctx, f.admin, 999, f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrExchangeNotFound)
 	require.ErrorIs(t, f.keeper.WithdrawReserve(f.ctx, other, inactive.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrAdminNotFound)
@@ -1035,12 +1082,6 @@ func TestAdditionalErrorBranches(t *testing.T) {
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", 1)
 	_, err = f.keeper.QuoteSwap(zeroCtx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "2"})
 	require.ErrorIs(t, err, types.ErrStaleOracleRate)
-	readiness, err := NewQueryServer(&f.keeper).ExchangeReadiness(zeroCtx, &bexv1.QueryExchangeReadinessRequest{
-		ExchangeId: active.GetId(),
-		Direction:  bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
-	})
-	require.NoError(t, err)
-	require.True(t, readiness.GetReadiness().GetReady())
 
 	q := NewQueryServer(&f.keeper)
 	deletedForList := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
@@ -1051,11 +1092,12 @@ func TestAdditionalErrorBranches(t *testing.T) {
 	for _, exchange := range list.GetExchanges() {
 		require.NotEqual(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED, exchange.GetStatus())
 	}
-	_, err = q.ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{
+	invalidAdminKeyPage, err := q.ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{
 		AdminAddress: f.admin,
 		Pagination:   &queryv1beta1.PageRequest{Key: []byte("bad")},
 	})
-	require.ErrorIs(t, err, types.ErrInvalidRequest)
+	require.NoError(t, err)
+	require.Empty(t, invalidAdminKeyPage.GetExchanges())
 	limited, err := q.ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{
 		AdminAddress: f.admin,
 		Pagination:   &queryv1beta1.PageRequest{Limit: 1},

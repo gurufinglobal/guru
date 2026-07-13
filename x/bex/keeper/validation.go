@@ -21,8 +21,6 @@ const (
 	maxMetadataKeyLen  = 64
 	maxMetadataValLen  = 256
 	maxIntDigits       = 78
-	defaultPageLimit   = uint64(100)
-	maxPageLimit       = uint64(1000)
 	minVolumeEpochSecs = uint32(86400)
 	maxVolumeEpochSecs = uint32(604800)
 	minOracleStaleSecs = uint32(1)

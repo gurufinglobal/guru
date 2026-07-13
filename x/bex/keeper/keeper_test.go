@@ -203,47 +203,6 @@ func TestQuoteSwapUsesDirectionOracleCeilFeeAndVolumeCap(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrVolumeCapExceeded)
 }
 
-func TestExchangeReadinessValidatesOracleValue(t *testing.T) {
-	f := setupKeeperFixture(t)
-	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	queryServer := NewQueryServer(&f.keeper)
-	req := &bexv1.QueryExchangeReadinessRequest{
-		ExchangeId: exchange.GetId(),
-		Direction:  bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
-	}
-
-	resp, err := queryServer.ExchangeReadiness(f.ctx, req)
-	require.NoError(t, err)
-	require.False(t, resp.GetReadiness().GetReady())
-	require.Contains(t, resp.GetReadiness().GetBlockingReasons(), "oracle value unavailable")
-
-	f.oracleKeeper.SetValue("AGXN/GXUSD", "0", f.ctx.BlockTime().Unix())
-	resp, err = queryServer.ExchangeReadiness(f.ctx, req)
-	require.NoError(t, err)
-	require.False(t, resp.GetReadiness().GetReady())
-	require.Contains(t, resp.GetReadiness().GetBlockingReasons(), "oracle value is not a positive decimal")
-
-	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", f.ctx.BlockTime().Add(-time.Hour).Unix())
-	resp, err = queryServer.ExchangeReadiness(f.ctx, req)
-	require.NoError(t, err)
-	require.False(t, resp.GetReadiness().GetReady())
-	require.Contains(t, resp.GetReadiness().GetBlockingReasons(), "oracle value is stale")
-
-	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", f.ctx.BlockTime().Unix())
-	resp, err = queryServer.ExchangeReadiness(f.ctx, req)
-	require.NoError(t, err)
-	require.True(t, resp.GetReadiness().GetReady())
-	require.Empty(t, resp.GetReadiness().GetBlockingReasons())
-
-	f.channelKeeper.SetChannel("transfer", "channel-0", channeltypes.CLOSED)
-	resp, err = queryServer.ExchangeReadiness(f.ctx, req)
-	require.NoError(t, err)
-	require.False(t, resp.GetReadiness().GetReady())
-	require.Len(t, resp.GetReadiness().GetBlockingReasons(), 1)
-	require.Contains(t, resp.GetReadiness().GetBlockingReasons()[0], "not open")
-}
-
 func TestDeleteExchangeRequiresInactiveZeroReserveAndZeroFees(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))

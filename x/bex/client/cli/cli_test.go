@@ -28,6 +28,8 @@ func TestGetTxCmdIncludesBexCommands(t *testing.T) {
 		"register-exchange",
 		"update-exchange",
 		"delete-exchange",
+		"add-reserve-depositor",
+		"remove-reserve-depositor",
 		"deposit-reserve",
 		"withdraw-reserve",
 		"withdraw-fees",
@@ -45,12 +47,13 @@ func TestGetQueryCmdIncludesBexCommands(t *testing.T) {
 		"exchanges",
 		"exchanges-by-admin",
 		"is-admin",
+		"reserve-depositors",
+		"is-reserve-depositor",
 		"collected-fees",
 		"locked-fees",
 		"available-fees",
 		"volume-window",
 		"quote",
-		"readiness",
 	} {
 		_, _, err := cmd.Find([]string{name})
 		require.NoError(t, err)
@@ -161,12 +164,13 @@ func TestQueryRunEBranches(t *testing.T) {
 		{name: "exchanges", cmd: CmdQueryExchanges, args: nil},
 		{name: "exchanges by admin", cmd: CmdQueryExchangesByAdmin, args: []string{"admin"}},
 		{name: "is admin", cmd: CmdQueryIsAdmin, args: []string{"admin"}},
+		{name: "reserve depositors", cmd: CmdQueryReserveDepositors, args: []string{"7"}},
+		{name: "is reserve depositor", cmd: CmdQueryIsReserveDepositor, args: []string{"7", "depositor"}},
 		{name: "collected fees", cmd: CmdQueryCollectedFees, args: []string{"7"}},
 		{name: "locked fees", cmd: CmdQueryLockedFees, args: []string{"7"}},
 		{name: "available fees", cmd: CmdQueryAvailableFees, args: []string{"7"}},
 		{name: "volume window", cmd: CmdQueryVolumeWindow, args: []string{"7", "a-to-b"}},
 		{name: "quote", cmd: CmdQueryQuote, args: []string{"7", "agxn", "10"}},
-		{name: "readiness", cmd: CmdQueryReadiness, args: []string{"7", "b-to-a"}},
 	}
 
 	for _, tc := range queryCommands {
@@ -192,9 +196,10 @@ func TestQueryRunEBranches(t *testing.T) {
 	installQueryMocks(t, nil, nil)
 	require.Error(t, CmdQueryExchange().RunE(CmdQueryExchange(), []string{"bad"}))
 	require.Error(t, CmdQueryCollectedFees().RunE(CmdQueryCollectedFees(), []string{"bad"}))
+	require.Error(t, CmdQueryReserveDepositors().RunE(CmdQueryReserveDepositors(), []string{"bad"}))
+	require.Error(t, CmdQueryIsReserveDepositor().RunE(CmdQueryIsReserveDepositor(), []string{"bad", "depositor"}))
 	require.Error(t, CmdQueryVolumeWindow().RunE(CmdQueryVolumeWindow(), []string{"7", "sideways"}))
 	require.Error(t, CmdQueryQuote().RunE(CmdQueryQuote(), []string{"bad", "agxn", "10"}))
-	require.Error(t, CmdQueryReadiness().RunE(CmdQueryReadiness(), []string{"7", "sideways"}))
 
 	badPageKey := CmdQueryExchanges()
 	require.NoError(t, badPageKey.Flags().Set(flags.FlagPageKey, "not-base64"))
@@ -268,12 +273,34 @@ func TestTxRunEBranches(t *testing.T) {
 			},
 		},
 		{
+			name: "add reserve depositor",
+			cmd:  CmdAddReserveDepositor,
+			args: []string{"7", "depositor"},
+			assertMsg: func(t *testing.T, msg sdk.Msg) {
+				typed := msg.(*bexv1.MsgAddReserveDepositor)
+				require.Equal(t, from.String(), typed.GetAdminAddress())
+				require.Equal(t, uint64(7), typed.GetExchangeId())
+				require.Equal(t, "depositor", typed.GetDepositorAddress())
+			},
+		},
+		{
+			name: "remove reserve depositor",
+			cmd:  CmdRemoveReserveDepositor,
+			args: []string{"7", "depositor"},
+			assertMsg: func(t *testing.T, msg sdk.Msg) {
+				typed := msg.(*bexv1.MsgRemoveReserveDepositor)
+				require.Equal(t, from.String(), typed.GetAdminAddress())
+				require.Equal(t, uint64(7), typed.GetExchangeId())
+				require.Equal(t, "depositor", typed.GetDepositorAddress())
+			},
+		},
+		{
 			name: "deposit reserve",
 			cmd:  CmdDepositReserve,
 			args: []string{"7", "1agxn"},
 			assertMsg: func(t *testing.T, msg sdk.Msg) {
 				typed := msg.(*bexv1.MsgDepositReserve)
-				require.Equal(t, from.String(), typed.GetAdminAddress())
+				require.Equal(t, from.String(), typed.GetSender())
 				require.Equal(t, uint64(7), typed.GetExchangeId())
 				require.Len(t, typed.GetAmount(), 1)
 			},
@@ -323,6 +350,8 @@ func TestTxRunEBranches(t *testing.T) {
 	require.Error(t, CmdUpdateExchange().RunE(CmdUpdateExchange(), []string{"7", `{}`, "bad"}))
 	require.Error(t, CmdUpdateExchange().RunE(CmdUpdateExchange(), []string{"7", `{`, "3"}))
 	require.Error(t, CmdDeleteExchange().RunE(CmdDeleteExchange(), []string{"bad"}))
+	require.Error(t, CmdAddReserveDepositor().RunE(CmdAddReserveDepositor(), []string{"bad", "depositor"}))
+	require.Error(t, CmdRemoveReserveDepositor().RunE(CmdRemoveReserveDepositor(), []string{"bad", "depositor"}))
 	require.Error(t, CmdDepositReserve().RunE(CmdDepositReserve(), []string{"bad", "1agxn"}))
 	require.Error(t, CmdWithdrawReserve().RunE(CmdWithdrawReserve(), []string{"7", "bad", "recipient"}))
 	require.Error(t, CmdWithdrawFees().RunE(CmdWithdrawFees(), []string{"7", "recipient", "bad"}))
@@ -407,6 +436,16 @@ func (m *mockQueryClient) IsAdmin(context.Context, *bexv1.QueryIsAdminRequest, .
 	return &bexv1.QueryIsAdminResponse{}, m.err
 }
 
+func (m *mockQueryClient) ReserveDepositors(context.Context, *bexv1.QueryReserveDepositorsRequest, ...grpc.CallOption) (*bexv1.QueryReserveDepositorsResponse, error) {
+	m.method = "reserve-depositors"
+	return &bexv1.QueryReserveDepositorsResponse{}, m.err
+}
+
+func (m *mockQueryClient) IsReserveDepositor(context.Context, *bexv1.QueryIsReserveDepositorRequest, ...grpc.CallOption) (*bexv1.QueryIsReserveDepositorResponse, error) {
+	m.method = "is-reserve-depositor"
+	return &bexv1.QueryIsReserveDepositorResponse{}, m.err
+}
+
 func (m *mockQueryClient) CollectedFees(context.Context, *bexv1.QueryFeesRequest, ...grpc.CallOption) (*bexv1.QueryFeesResponse, error) {
 	m.method = "collected-fees"
 	return &bexv1.QueryFeesResponse{}, m.err
@@ -430,9 +469,4 @@ func (m *mockQueryClient) VolumeWindow(context.Context, *bexv1.QueryVolumeWindow
 func (m *mockQueryClient) QuoteSwap(context.Context, *bexv1.QueryQuoteSwapRequest, ...grpc.CallOption) (*bexv1.QueryQuoteSwapResponse, error) {
 	m.method = "quote"
 	return &bexv1.QueryQuoteSwapResponse{}, m.err
-}
-
-func (m *mockQueryClient) ExchangeReadiness(context.Context, *bexv1.QueryExchangeReadinessRequest, ...grpc.CallOption) (*bexv1.QueryExchangeReadinessResponse, error) {
-	m.method = "readiness"
-	return &bexv1.QueryExchangeReadinessResponse{}, m.err
 }

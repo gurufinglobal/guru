@@ -60,9 +60,8 @@ func (k Keeper) ImportGenesis(ctx context.Context, genesis *bexv1.GenesisState) 
 		if err := k.reserveByAddress.Set(ctx, copied.GetReserveAddress(), copied.GetId()); err != nil {
 			return err
 		}
-		reserve := k.GetReserveAddress(ctx, copied.GetId())
-		if k.accountKeeper.GetAccount(ctx, reserve) == nil {
-			k.accountKeeper.SetAccount(ctx, k.accountKeeper.NewAccountWithAddress(ctx, reserve))
+		if err := k.ensureReserveAccount(ctx, copied.GetId()); err != nil {
+			return err
 		}
 	}
 	for _, fee := range genesis.GetCollectedFees() {
@@ -90,6 +89,15 @@ func (k Keeper) ImportGenesis(ctx context.Context, genesis *bexv1.GenesisState) 
 		}
 		key := collections.Join4(window.GetExchangeId(), uint32(window.GetDirection()), window.GetEpochStartUnix(), window.GetEpochSeconds())
 		if err := k.volumeWindow.Set(ctx, key, amount.String()); err != nil {
+			return err
+		}
+	}
+	for _, depositor := range genesis.GetReserveDepositors() {
+		canonical, _, err := k.canonicalAddress(depositor.GetDepositorAddress())
+		if err != nil {
+			return err
+		}
+		if err := k.reserveDepositors.Set(ctx, collections.Join(depositor.GetExchangeId(), canonical)); err != nil {
 			return err
 		}
 	}
@@ -129,6 +137,15 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*bexv1.GenesisState, error) 
 			EpochStartUnix: key.K3(),
 			EpochSeconds:   key.K4(),
 			Amount:         amount,
+		})
+		return false, nil
+	}); err != nil {
+		return nil, err
+	}
+	if err := k.reserveDepositors.Walk(ctx, nil, func(key collections.Pair[uint64, string]) (bool, error) {
+		genesis.ReserveDepositors = append(genesis.ReserveDepositors, &bexv1.ReserveDepositorGenesis{
+			ExchangeId:       key.K1(),
+			DepositorAddress: key.K2(),
 		})
 		return false, nil
 	}); err != nil {

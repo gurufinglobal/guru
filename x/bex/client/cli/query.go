@@ -41,13 +41,75 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryExchanges(),
 		CmdQueryExchangesByAdmin(),
 		CmdQueryIsAdmin(),
+		CmdQueryReserveDepositors(),
+		CmdQueryIsReserveDepositor(),
 		CmdQueryCollectedFees(),
 		CmdQueryLockedFees(),
 		CmdQueryAvailableFees(),
 		CmdQueryVolumeWindow(),
 		CmdQueryQuote(),
-		CmdQueryReadiness(),
 	)
+	return cmd
+}
+
+func CmdQueryReserveDepositors() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "reserve-depositors [exchange-id]",
+		Short: "Query BEX reserve depositors",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := getClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			exchangeID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			pageReq, err := readPulsarPageRequest(cmd)
+			if err != nil {
+				return err
+			}
+			resp, err := newQueryClient(clientCtx).ReserveDepositors(cmd.Context(), &bexv1.QueryReserveDepositorsRequest{
+				ExchangeId: exchangeID,
+				Pagination: pageReq,
+			})
+			if err != nil {
+				return err
+			}
+			return printProto(clientCtx, resp)
+		},
+	}
+	flags.AddPaginationFlagsToCmd(cmd, "bex reserve depositors")
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryIsReserveDepositor() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "is-reserve-depositor [exchange-id] [depositor]",
+		Short: "Query BEX reserve deposit permission",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := getClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			exchangeID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			resp, err := newQueryClient(clientCtx).IsReserveDepositor(cmd.Context(), &bexv1.QueryIsReserveDepositorRequest{
+				ExchangeId:       exchangeID,
+				DepositorAddress: args[1],
+			})
+			if err != nil {
+				return err
+			}
+			return printProto(clientCtx, resp)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -238,34 +300,6 @@ func CmdQueryQuote() *cobra.Command {
 				ExchangeId: exchangeID,
 				InputDenom: args[1],
 				AmountIn:   args[2],
-			})
-			if err != nil {
-				return err
-			}
-			return printProto(clientCtx, resp)
-		},
-	}
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
-}
-
-func CmdQueryReadiness() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "readiness [exchange-id] [direction]",
-		Short: "Query BEX exchange readiness",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := getClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			exchangeID, direction, err := parseExchangeIDAndDirection(args[0], args[1])
-			if err != nil {
-				return err
-			}
-			resp, err := newQueryClient(clientCtx).ExchangeReadiness(cmd.Context(), &bexv1.QueryExchangeReadinessRequest{
-				ExchangeId: exchangeID,
-				Direction:  direction,
 			})
 			if err != nil {
 				return err

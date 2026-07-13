@@ -3,6 +3,7 @@ package bex
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"cosmossdk.io/core/appmodule"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -131,6 +132,24 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 			return err
 		}
 	}
+	depositorKeys := map[string]struct{}{}
+	for _, depositor := range genesis.GetReserveDepositors() {
+		if _, ok := exchangeIDs[depositor.GetExchangeId()]; !ok {
+			return types.ErrInvalidGenesis.Wrapf("reserve depositor references unknown exchange %d", depositor.GetExchangeId())
+		}
+		canonical, _, err := am.keeper.CanonicalAddressForGenesis(depositor.GetDepositorAddress())
+		if err != nil {
+			return types.ErrInvalidGenesis.Wrapf("invalid reserve depositor: %v", err)
+		}
+		if depositor.GetDepositorAddress() != canonical {
+			return types.ErrInvalidGenesis.Wrapf("reserve depositor %q is not canonical", depositor.GetDepositorAddress())
+		}
+		key := fmt.Sprintf("%d/%s", depositor.GetExchangeId(), canonical)
+		if _, exists := depositorKeys[key]; exists {
+			return types.ErrInvalidGenesis.Wrapf("duplicate reserve depositor %s", key)
+		}
+		depositorKeys[key] = struct{}{}
+	}
 	return nil
 }
 
@@ -182,6 +201,15 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 		genesis.VolumeWindows = volumeWindows
 	}
 
+	reserveDepositors := []*bexv1.ReserveDepositorGenesis{}
+	found, err = readGenesisField(source, "reserve_depositors", &reserveDepositors)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.ReserveDepositors = reserveDepositors
+	}
+
 	nextExchangeID := genesis.GetNextExchangeId()
 	found, err = readGenesisField(source, "next_exchange_id", &nextExchangeID)
 	if err != nil {
@@ -212,6 +240,9 @@ func writeGenesisState(target appmodule.GenesisTarget, genesis *bexv1.GenesisSta
 		return err
 	}
 	if err := writeGenesisField(target, "volume_windows", genesis.GetVolumeWindows()); err != nil {
+		return err
+	}
+	if err := writeGenesisField(target, "reserve_depositors", genesis.GetReserveDepositors()); err != nil {
 		return err
 	}
 

@@ -181,8 +181,8 @@ func (k Keeper) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterExch
 	if err := k.validateActiveRoutes(ctx, exchange); err != nil {
 		return nil, err
 	}
-	if k.accountKeeper.GetAccount(ctx, reserveAddr) == nil {
-		k.accountKeeper.SetAccount(ctx, k.accountKeeper.NewAccountWithAddress(ctx, reserveAddr))
+	if err := k.ensureReserveAccount(ctx, id); err != nil {
+		return nil, err
 	}
 	if err := k.exchanges.Set(ctx, id, exchange); err != nil {
 		return nil, err

@@ -9,16 +9,23 @@ option go_package = "github.com/gurufinglobal/guru/v3/api/guru/bex/v1;bexv1";
 
 // ExchangeStatus is the lifecycle state of a BEX exchange.
 enum ExchangeStatus {
+  // EXCHANGE_STATUS_UNSPECIFIED defaults to inactive on registration.
   EXCHANGE_STATUS_UNSPECIFIED = 0;
+  // EXCHANGE_STATUS_ACTIVE allows quote and swap flows.
   EXCHANGE_STATUS_ACTIVE = 1;
+  // EXCHANGE_STATUS_INACTIVE retains configuration while blocking swaps.
   EXCHANGE_STATUS_INACTIVE = 2;
+  // EXCHANGE_STATUS_DELETED is a permanent logical-delete tombstone.
   EXCHANGE_STATUS_DELETED = 3;
 }
 
 // SwapDirection identifies the configured quote direction.
 enum SwapDirection {
+  // SWAP_DIRECTION_UNSPECIFIED is not a valid quote direction.
   SWAP_DIRECTION_UNSPECIFIED = 0;
+  // SWAP_DIRECTION_A_TO_B converts denom A into denom B.
   SWAP_DIRECTION_A_TO_B = 1;
+  // SWAP_DIRECTION_B_TO_A converts denom B into denom A.
   SWAP_DIRECTION_B_TO_A = 2;
 }
 
@@ -38,20 +45,20 @@ message Exchange {
   string channel_b = 10;
   string ibc_denom_b = 11;
 
-	string oracle_symbol_a_to_b = 12;
-	string oracle_symbol_b_to_a = 13;
+  string oracle_symbol_a_to_b = 12;
+  string oracle_symbol_b_to_a = 13;
 
-	uint32 fee_bps_a_to_b = 14;
-	uint32 fee_bps_b_to_a = 15;
+  uint32 fee_bps_a_to_b = 14;
+  uint32 fee_bps_b_to_a = 15;
 
-	// Empty or omitted means unlimited.
-	string limit_a_to_b = 16 [(cosmos_proto.scalar) = "cosmos.Int"];
-	// Empty or omitted means unlimited.
-	string limit_b_to_a = 17 [(cosmos_proto.scalar) = "cosmos.Int"];
-	// Empty or omitted means unlimited.
-	string volume_cap_a_to_b = 18 [(cosmos_proto.scalar) = "cosmos.Int"];
-	// Empty or omitted means unlimited.
-	string volume_cap_b_to_a = 19 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string limit_a_to_b = 16 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string limit_b_to_a = 17 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string volume_cap_a_to_b = 18 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string volume_cap_b_to_a = 19 [(cosmos_proto.scalar) = "cosmos.Int"];
 
   uint64 revision = 20;
   ExchangeStatus status = 21;
@@ -130,12 +137,4 @@ message QuoteSwapResponse {
   string volume_cap = 12 [(cosmos_proto.scalar) = "cosmos.Int"];
   string volume_used = 13 [(cosmos_proto.scalar) = "cosmos.Int"];
   string min_amount_in = 14 [(cosmos_proto.scalar) = "cosmos.Int"];
-}
-
-// ExchangeReadinessResponse reports whether an exchange can quote/swap.
-message ExchangeReadinessResponse {
-  uint64 exchange_id = 1;
-  SwapDirection direction = 2;
-  bool ready = 3;
-  repeated string blocking_reasons = 4;
 }
