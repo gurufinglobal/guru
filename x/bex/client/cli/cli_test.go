@@ -355,6 +355,8 @@ func TestTxRunEBranches(t *testing.T) {
 	require.Error(t, CmdDepositReserve().RunE(CmdDepositReserve(), []string{"bad", "1agxn"}))
 	require.Error(t, CmdWithdrawReserve().RunE(CmdWithdrawReserve(), []string{"7", "bad", "recipient"}))
 	require.Error(t, CmdWithdrawFees().RunE(CmdWithdrawFees(), []string{"7", "recipient", "bad"}))
+	require.Error(t, CmdRegisterExchange().RunE(CmdRegisterExchange(), []string{`{"denom_a":"agxn","denom_typo":"gxusd"}`}))
+	require.Error(t, CmdRegisterExchange().RunE(CmdRegisterExchange(), []string{`{} {}`}))
 }
 
 func installQueryMocks(t *testing.T, queryErr, printErr error) *mockQueryClient {

@@ -1185,7 +1185,7 @@ func TestStoreFaultBranches(t *testing.T) {
 	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 3))
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)))
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)))
-	reserveAddr := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
+	reserveAddr := feeReserveAddress(t, f, exchange)
 	f.bankKeeper.SetBalance(reserveAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 10)))
 
 	faultErr := errors.New("store fault")
