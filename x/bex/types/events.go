@@ -14,7 +14,6 @@ const (
 	EventTypeFeesCollected           = "fees_collected"
 	EventTypeFeesLocked              = "fees_locked"
 	EventTypeFeesReleased            = "fees_released"
-	EventTypeFeesDeducted            = "fees_deducted"
 	EventTypeFeesRefunded            = "fees_refunded"
 	EventTypeFeesWithdrawn           = "fees_withdrawn"
 	EventTypeVolumeRecorded          = "volume_recorded"

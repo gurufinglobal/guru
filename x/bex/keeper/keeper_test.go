@@ -164,6 +164,54 @@ func TestUpdateExchangeRequiresRevisionAndBlocksActiveRouteChanges(t *testing.T)
 	require.Equal(t, "900", updated.GetLimitAToB())
 }
 
+func TestUpdateExchangeRequiresFeeSettlementBeforeRouteChange(t *testing.T) {
+	f := setupKeeperFixture(t)
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 3))
+	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)))
+
+	inactive, err := f.keeper.UpdateExchange(
+		f.ctx,
+		f.admin,
+		exchange.GetId(),
+		exchange.GetRevision(),
+		&bexv1.ExchangeUpdatePatch{Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE}},
+	)
+	require.NoError(t, err)
+	_, err = f.keeper.UpdateExchange(
+		f.ctx,
+		f.admin,
+		inactive.GetId(),
+		inactive.GetRevision(),
+		&bexv1.ExchangeUpdatePatch{DenomA: wrapperspb.String("uatom")},
+	)
+	require.ErrorIs(t, err, types.ErrInvalidRoute)
+	unchanged, err := f.keeper.GetExchange(f.ctx, inactive.GetId())
+	require.NoError(t, err)
+	require.Equal(t, inactive.GetRevision(), unchanged.GetRevision())
+	require.Equal(t, inactive.GetDenomA(), unchanged.GetDenomA())
+
+	require.NoError(t, f.keeper.RefundLockedFee(f.ctx, inactive.GetId(), sdk.NewInt64Coin("agxn", 1)))
+	require.NoError(t, f.keeper.WithdrawFees(
+		f.ctx,
+		f.admin,
+		inactive.GetId(),
+		f.recipient,
+		sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)),
+	))
+	updated, err := f.keeper.UpdateExchange(
+		f.ctx,
+		f.admin,
+		inactive.GetId(),
+		inactive.GetRevision(),
+		&bexv1.ExchangeUpdatePatch{DenomA: wrapperspb.String("uatom")},
+	)
+	require.NoError(t, err)
+	require.Equal(t, "uatom", updated.GetDenomA())
+	require.NotEqual(t, inactive.GetIbcDenomA(), updated.GetIbcDenomA())
+}
+
 func TestQuoteSwapUsesDirectionOracleCeilFeeAndVolumeCap(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
@@ -206,7 +254,12 @@ func TestQuoteSwapUsesDirectionOracleCeilFeeAndVolumeCap(t *testing.T) {
 func TestDeleteExchangeRequiresInactiveZeroReserveAndZeroFees(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 1))
+	exchange, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+	})
+	require.NoError(t, err)
 	reserveBytes, err := f.accountCodec.StringToBytes(exchange.GetReserveAddress())
 	require.NoError(t, err)
 	reserveAddr := sdk.AccAddress(reserveBytes)
@@ -215,15 +268,26 @@ func TestDeleteExchangeRequiresInactiveZeroReserveAndZeroFees(t *testing.T) {
 	require.ErrorIs(t, f.keeper.DeleteExchange(f.ctx, f.admin, exchange.GetId()), types.ErrInsufficientReserve)
 
 	f.bankKeeper.SetBalance(reserveAddr, sdk.Coins{})
-	require.NoError(t, f.keeper.AddCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)))
 	require.ErrorIs(t, f.keeper.DeleteExchange(f.ctx, f.admin, exchange.GetId()), types.ErrInsufficientAvailableFees)
 
-	require.NoError(t, f.keeper.DeductCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)))
+	require.NoError(t, f.keeper.WithdrawFees(
+		f.ctx,
+		f.admin,
+		exchange.GetId(),
+		f.recipient,
+		sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)),
+	))
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, exchange.GetId()))
 
 	deleted, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
 	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED, deleted.GetStatus())
+	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+		ExchangeId: exchange.GetId(),
+		InputDenom: exchange.GetDenomA(),
+		AmountIn:   "1",
+	})
+	require.ErrorIs(t, err, types.ErrExchangeDeleted)
 	owner, err := f.keeper.reserveByAddress.Get(f.ctx, exchange.GetReserveAddress())
 	require.NoError(t, err)
 	require.Equal(t, exchange.GetId(), owner)
@@ -235,6 +299,18 @@ func registerExchange(t *testing.T, f keeperTestFixture, status bexv1.ExchangeSt
 	exchange, err := f.keeper.RegisterExchange(f.ctx, validRegisterExchangeMsg(f.admin, status))
 	require.NoError(t, err)
 	return exchange
+}
+
+func collectFee(t *testing.T, f keeperTestFixture, exchangeID uint64, fee sdk.Coin) {
+	t.Helper()
+
+	exchange, err := f.keeper.GetExchange(f.ctx, exchangeID)
+	require.NoError(t, err)
+	reserveBytes, err := f.accountCodec.StringToBytes(exchange.GetReserveAddress())
+	require.NoError(t, err)
+	reserveAddr := sdk.AccAddress(reserveBytes)
+	f.bankKeeper.SetBalance(reserveAddr, f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).Add(fee))
+	require.NoError(t, f.keeper.CollectFee(f.ctx, exchangeID, fee))
 }
 
 func validRegisterExchangeMsg(admin string, status bexv1.ExchangeStatus) *bexv1.MsgRegisterExchange {
@@ -349,13 +425,7 @@ func (m *mockBankKeeper) SendCoinsFromAccountToModule(ctx context.Context, sende
 }
 
 func (m *mockBankKeeper) SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
-	moduleAddr := authtypes.NewModuleAddress(senderModule)
-	if !hasCoins(m.GetAllBalances(ctx, moduleAddr), amt) {
-		return fmt.Errorf("insufficient module funds")
-	}
-	m.balances[string(moduleAddr)] = m.GetAllBalances(ctx, moduleAddr).Sub(amt...)
-	m.balances[string(recipientAddr)] = m.GetAllBalances(ctx, recipientAddr).Add(amt...)
-	return nil
+	return m.SendCoins(ctx, authtypes.NewModuleAddress(senderModule), recipientAddr, amt)
 }
 
 type mockOracleKeeper struct {

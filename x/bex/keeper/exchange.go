@@ -285,6 +285,25 @@ func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, e
 	if current.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE && routeChanged {
 		return nil, types.ErrInvalidRoute.Wrap("route fields cannot change while active")
 	}
+	routeValuesChanged := current.GetDenomA() != updated.GetDenomA() ||
+		current.GetPortA() != updated.GetPortA() ||
+		current.GetChannelA() != updated.GetChannelA() ||
+		current.GetDenomB() != updated.GetDenomB() ||
+		current.GetPortB() != updated.GetPortB() ||
+		current.GetChannelB() != updated.GetChannelB()
+	if routeValuesChanged {
+		collected, err := k.GetCollectedFees(ctx, exchangeID)
+		if err != nil {
+			return nil, err
+		}
+		locked, err := k.GetLockedFees(ctx, exchangeID)
+		if err != nil {
+			return nil, err
+		}
+		if !collected.IsZero() || !locked.IsZero() {
+			return nil, types.ErrInvalidRoute.Wrap("fee ledgers must be zero before route fields change")
+		}
+	}
 	if routeChanged {
 		updated.IbcDenomA, err = buildIBCDenom(updated.GetDenomA(), updated.GetPortA(), updated.GetChannelA())
 		if err != nil {

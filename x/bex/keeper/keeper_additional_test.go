@@ -315,22 +315,22 @@ func TestFeesAccountingAndWithdrawals(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, locked.IsZero())
 
-	require.ErrorIs(t, f.keeper.AddCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 0)), types.ErrInvalidRequest)
+	require.ErrorIs(t, f.keeper.CollectFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 0)), types.ErrInvalidRequest)
 	require.ErrorIs(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 0)), types.ErrInvalidRequest)
 	require.ErrorIs(t, f.keeper.ReleaseExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 0)), types.ErrInvalidRequest)
-	require.ErrorIs(t, f.keeper.DeductCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 0)), types.ErrInvalidRequest)
+	require.ErrorIs(t, f.keeper.RefundLockedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 0)), types.ErrInvalidRequest)
 
-	require.NoError(t, f.keeper.AddCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 100)))
-	require.ErrorIs(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 101)), types.ErrInvariantViolation)
+	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 100))
+	require.ErrorIs(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 101)), types.ErrInsufficientAvailableFees)
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 40)))
 	available, err := f.keeper.GetAvailableFees(f.ctx, exchange.GetId())
 	require.NoError(t, err)
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 60)), available)
 
-	require.ErrorIs(t, f.keeper.ReleaseExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 41)), types.ErrInvariantViolation)
+	require.ErrorIs(t, f.keeper.ReleaseExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 41)), types.ErrInsufficientLockedFees)
 	require.NoError(t, f.keeper.ReleaseExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 10)))
-	require.ErrorIs(t, f.keeper.DeductCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 80)), types.ErrInsufficientAvailableFees)
-	require.NoError(t, f.keeper.DeductCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 20)))
+	require.ErrorIs(t, f.keeper.RefundLockedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 31)), types.ErrInsufficientLockedFees)
+	require.NoError(t, f.keeper.RefundLockedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 20)))
 
 	require.NoError(t, f.keeper.collectedFees.Set(f.ctx, 77, coinsToLedger(sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)))))
 	require.NoError(t, f.keeper.lockedFees.Set(f.ctx, 77, coinsToLedger(sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)))))
@@ -344,6 +344,7 @@ func TestFeesAccountingAndWithdrawals(t *testing.T) {
 	require.ErrorIs(t, f.keeper.WithdrawFees(f.ctx, other, exchange.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrWrongExchangeAdmin)
 
 	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
+	f.bankKeeper.SetBalance(moduleAddr, sdk.Coins{})
 	require.Error(t, f.keeper.WithdrawFees(f.ctx, f.admin, exchange.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))))
 	f.bankKeeper.SetBalance(moduleAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 100)))
 	require.NoError(t, f.keeper.WithdrawFees(f.ctx, f.admin, exchange.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))))
@@ -360,19 +361,16 @@ func TestKeeperEmitsRequiredEvents(t *testing.T) {
 		FeeBpsAToB: wrapperspb.UInt32(30),
 	})
 	require.NoError(t, err)
+	require.NoError(t, f.keeper.DepositReserve(f.ctx, f.admin, updated.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 25))))
+	require.NoError(t, f.keeper.CollectFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 10)))
+	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 3)))
 	updated, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
 		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
 	})
 	require.NoError(t, err)
-
-	require.NoError(t, f.keeper.DepositReserve(f.ctx, f.admin, updated.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 25))))
 	require.NoError(t, f.keeper.WithdrawReserve(f.ctx, f.admin, updated.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 5))))
-
-	require.NoError(t, f.keeper.AddCollectedFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 10)))
-	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 3)))
 	require.NoError(t, f.keeper.ReleaseExchangeFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 1)))
-	require.NoError(t, f.keeper.DeductCollectedFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 2)))
-	f.bankKeeper.SetBalance(authtypes.NewModuleAddress(types.ModuleName), sdk.NewCoins(sdk.NewInt64Coin("agxn", 20)))
+	require.NoError(t, f.keeper.RefundLockedFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 2)))
 	require.NoError(t, f.keeper.WithdrawFees(f.ctx, f.admin, updated.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))))
 
 	updated, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
@@ -400,7 +398,7 @@ func TestKeeperEmitsRequiredEvents(t *testing.T) {
 		types.EventTypeFeesCollected,
 		types.EventTypeFeesLocked,
 		types.EventTypeFeesReleased,
-		types.EventTypeFeesDeducted,
+		types.EventTypeFeesRefunded,
 		types.EventTypeFeesWithdrawn,
 		types.EventTypeVolumeRecorded,
 		types.EventTypeVolumeCapExceeded,
@@ -520,7 +518,7 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 	ex2 := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	ex3 := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, ex3.GetId()))
-	require.NoError(t, f.keeper.AddCollectedFee(f.ctx, ex1.GetId(), sdk.NewInt64Coin("agxn", 10)))
+	collectFee(t, f, ex1.GetId(), sdk.NewInt64Coin("agxn", 10))
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, ex1.GetId(), sdk.NewInt64Coin("agxn", 3)))
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, ex1.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(7)))
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", f.ctx.BlockTime().Unix())
@@ -814,8 +812,18 @@ func TestMsgServerRoutes(t *testing.T) {
 	_, err = msgServer.WithdrawReserve(f.ctx, &bexv1.MsgWithdrawReserve{AdminAddress: f.admin, ExchangeId: regResp.GetExchangeId(), Amount: coin, Recipient: recipient})
 	require.NoError(t, err)
 
-	require.NoError(t, f.keeper.AddCollectedFee(f.ctx, regResp.GetExchangeId(), sdk.NewInt64Coin("agxn", 5)))
-	f.bankKeeper.SetBalance(authtypes.NewModuleAddress(types.ModuleName), sdk.NewCoins(sdk.NewInt64Coin("agxn", 5)))
+	current, err := f.keeper.GetExchange(f.ctx, regResp.GetExchangeId())
+	require.NoError(t, err)
+	current, err = f.keeper.UpdateExchange(f.ctx, f.admin, current.GetId(), current.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
+	})
+	require.NoError(t, err)
+	require.NoError(t, f.keeper.DepositReserve(f.ctx, f.admin, current.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 5))))
+	require.NoError(t, f.keeper.CollectFee(f.ctx, current.GetId(), sdk.NewInt64Coin("agxn", 5)))
+	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, current.GetId(), current.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+	})
+	require.NoError(t, err)
 	_, err = msgServer.WithdrawFees(f.ctx, &bexv1.MsgWithdrawFees{AdminAddress: f.admin, ExchangeId: regResp.GetExchangeId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "5"}}, Recipient: recipient})
 	require.NoError(t, err)
 	_, err = msgServer.DeleteExchange(f.ctx, &bexv1.MsgDeleteExchange{AdminAddress: f.admin, ExchangeId: regResp.GetExchangeId()})
@@ -838,7 +846,7 @@ func TestKeeperGenesisExportImportAndInvariants(t *testing.T) {
 	active := registerExchange(t, source, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	deleted := registerExchange(t, source, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, source.keeper.DeleteExchange(source.ctx, source.admin, deleted.GetId()))
-	require.NoError(t, source.keeper.AddCollectedFee(source.ctx, active.GetId(), sdk.NewInt64Coin("agxn", 10)))
+	collectFee(t, source, active.GetId(), sdk.NewInt64Coin("agxn", 10))
 	require.NoError(t, source.keeper.LockExchangeFee(source.ctx, active.GetId(), sdk.NewInt64Coin("agxn", 2)))
 	require.NoError(t, source.keeper.RecordVolumeWindow(source.ctx, active.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(5)))
 
@@ -941,8 +949,9 @@ func TestAdditionalErrorBranches(t *testing.T) {
 	require.ErrorIs(t, f.keeper.DeleteExchange(f.ctx, f.admin, 999), types.ErrExchangeNotFound)
 	require.ErrorIs(t, f.keeper.DeleteExchange(f.ctx, other, inactive.GetId()), types.ErrAdminNotFound)
 	require.ErrorIs(t, f.keeper.DeleteExchange(f.ctx, f.admin, active.GetId()), types.ErrInvalidRequest)
-	require.ErrorIs(t, f.keeper.AddCollectedFee(f.ctx, 999, sdk.NewInt64Coin("agxn", 1)), types.ErrExchangeNotFound)
+	require.ErrorIs(t, f.keeper.CollectFee(f.ctx, 999, sdk.NewInt64Coin("agxn", 1)), types.ErrExchangeNotFound)
 	require.ErrorIs(t, f.keeper.LockExchangeFee(f.ctx, 999, sdk.NewInt64Coin("agxn", 1)), types.ErrExchangeNotFound)
+	require.ErrorIs(t, f.keeper.RefundLockedFee(f.ctx, 999, sdk.NewInt64Coin("agxn", 1)), types.ErrExchangeNotFound)
 	require.ErrorIs(t, f.keeper.WithdrawFees(f.ctx, f.admin, 999, f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrExchangeNotFound)
 	msgB := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	msgB.DenomB = "bad denom"
@@ -1059,8 +1068,7 @@ func TestAdditionalErrorBranches(t *testing.T) {
 	require.NoError(t, err)
 	f.bankKeeper.SetBalance(sdk.AccAddress(inactiveReserveBytes), sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)))
 	require.Error(t, recipientFailKeeper.WithdrawReserve(f.ctx, f.admin, inactive.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))))
-	require.NoError(t, f.keeper.AddCollectedFee(f.ctx, active.GetId(), sdk.NewInt64Coin("agxn", 2)))
-	f.bankKeeper.SetBalance(authtypes.NewModuleAddress(types.ModuleName), sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)))
+	collectFee(t, f, active.GetId(), sdk.NewInt64Coin("agxn", 2))
 	require.Error(t, recipientFailKeeper.WithdrawFees(f.ctx, f.admin, active.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))))
 
 	moduleCodecKeeper := f.keeper
@@ -1177,11 +1185,13 @@ func TestAdditionalErrorBranches(t *testing.T) {
 func TestStoreFaultBranches(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	deleteExchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
-	require.NoError(t, f.keeper.AddCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 3)))
+	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 3))
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)))
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)))
+	reserveAddr := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
+	f.bankKeeper.SetBalance(reserveAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 10)))
 
 	faultErr := errors.New("store fault")
 	faulty := func(op string, prefix byte) Keeper {
@@ -1222,12 +1232,12 @@ func TestStoreFaultBranches(t *testing.T) {
 	require.ErrorIs(t, err, faultErr)
 	_, err = faulty("get", 0x07).GetAvailableFees(f.ctx, exchange.GetId())
 	require.ErrorIs(t, err, faultErr)
-	require.ErrorIs(t, faulty("get", 0x06).AddCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
+	require.ErrorIs(t, faulty("get", 0x06).CollectFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
 	require.ErrorIs(t, faulty("get", 0x06).LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
 	require.ErrorIs(t, faulty("get", 0x07).LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
 	require.ErrorIs(t, faulty("get", 0x07).ReleaseExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
-	require.ErrorIs(t, faulty("get", 0x06).DeductCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
-	require.ErrorIs(t, faultySkip("get", 0x06, 1).DeductCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
+	require.ErrorIs(t, faulty("get", 0x06).RefundLockedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
+	require.ErrorIs(t, faulty("get", 0x07).RefundLockedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
 	require.ErrorIs(t, faulty("get", 0x06).WithdrawFees(f.ctx, f.admin, exchange.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), faultErr)
 	require.ErrorIs(t, faultySkip("get", 0x06, 1).WithdrawFees(f.ctx, f.admin, exchange.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), faultErr)
 	require.ErrorIs(t, faulty("has", 0x01).DepositReserve(f.ctx, f.admin, exchange.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), faultErr)
@@ -1265,10 +1275,11 @@ func TestStoreFaultBranches(t *testing.T) {
 	require.ErrorIs(t, faulty("set", 0x02).DeleteExchange(f.ctx, f.admin, deleteExchange.GetId()), faultErr)
 	require.ErrorIs(t, faulty("get", 0x06).DeleteExchange(f.ctx, f.admin, deleteExchange.GetId()), faultErr)
 	require.ErrorIs(t, faulty("get", 0x07).DeleteExchange(f.ctx, f.admin, deleteExchange.GetId()), faultErr)
-	require.ErrorIs(t, faulty("set", 0x06).AddCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
+	require.ErrorIs(t, faulty("set", 0x06).CollectFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
 	require.ErrorIs(t, faulty("set", 0x07).LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
 	require.ErrorIs(t, faulty("set", 0x07).ReleaseExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
-	require.ErrorIs(t, faulty("set", 0x06).DeductCollectedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
+	require.ErrorIs(t, faulty("set", 0x06).RefundLockedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
+	require.ErrorIs(t, faulty("set", 0x07).RefundLockedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
 	f.bankKeeper.SetBalance(authtypes.NewModuleAddress(types.ModuleName), sdk.NewCoins(sdk.NewInt64Coin("agxn", 3)))
 	require.ErrorIs(t, faulty("set", 0x06).WithdrawFees(f.ctx, f.admin, exchange.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), faultErr)
 	require.ErrorIs(t, faulty("set", 0x08).RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)), faultErr)

@@ -13,11 +13,18 @@ import (
 type reserveAllowanceKey struct{}
 
 func (k Keeper) withReserveReceiveAllowance(ctx context.Context, exchangeID uint64) context.Context {
-	return context.WithValue(ctx, reserveAllowanceKey{}, exchangeID)
+	if sdkCtx, ok := ctx.(sdk.Context); ok {
+		return sdkCtx.WithValue(reserveAllowanceKey{}, exchangeID)
+	}
+	// Bank keepers unwrap arbitrary context wrappers back to sdk.Context before
+	// executing send restrictions. Store the allowance in that SDK context while
+	// retaining outer values/deadlines so it survives the unwrap boundary.
+	return sdk.UnwrapSDKContext(ctx).WithContext(ctx).WithValue(reserveAllowanceKey{}, exchangeID)
 }
 
-// WithReserveReceiveAllowance marks a context as allowed to receive funds into
-// the deterministic reserve for exchangeID through the bank send restriction.
+// WithReserveReceiveAllowance grants a context-scoped receive capability for a
+// trusted module integration. It is keeper-only and must not be exposed through
+// a user-facing Msg or query endpoint; wallet deposits use DepositReserve.
 func (k Keeper) WithReserveReceiveAllowance(ctx context.Context, exchangeID uint64) context.Context {
 	return k.withReserveReceiveAllowance(ctx, exchangeID)
 }
