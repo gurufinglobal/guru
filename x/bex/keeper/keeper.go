@@ -126,7 +126,17 @@ func (k Keeper) nextID(ctx context.Context) (uint64, error) {
 	if err := k.ensureNextExchangeID(ctx); err != nil {
 		return 0, err
 	}
-	return k.nextExchangeID.Next(ctx)
+	next, err := k.nextExchangeID.Peek(ctx)
+	if err != nil {
+		return 0, err
+	}
+	if next == ^uint64(0) {
+		return 0, types.ErrInvalidRequest.Wrap("exchange id space is exhausted")
+	}
+	if err := k.nextExchangeID.Set(ctx, next+1); err != nil {
+		return 0, err
+	}
+	return next, nil
 }
 
 func (k Keeper) setNextExchangeID(ctx context.Context, next uint64) error {

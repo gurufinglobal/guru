@@ -235,16 +235,16 @@ func validateExchangeConfig(exchange *bexv1.Exchange) error {
 	if err := validateFeeBps(exchange.GetFeeBpsBToA()); err != nil {
 		return err
 	}
-		for name, value := range map[string]string{
-			"limit_a_to_b":      exchange.GetLimitAToB(),
-			"limit_b_to_a":      exchange.GetLimitBToA(),
-			"volume_cap_a_to_b": exchange.GetVolumeCapAToB(),
-			"volume_cap_b_to_a": exchange.GetVolumeCapBToA(),
-		} {
-			if _, err := validateExchangeLimitIntString(name, value); err != nil {
-				return err
-			}
+	for name, value := range map[string]string{
+		"limit_a_to_b":      exchange.GetLimitAToB(),
+		"limit_b_to_a":      exchange.GetLimitBToA(),
+		"volume_cap_a_to_b": exchange.GetVolumeCapAToB(),
+		"volume_cap_b_to_a": exchange.GetVolumeCapBToA(),
+	} {
+		if _, err := validateExchangeLimitIntString(name, value); err != nil {
+			return err
 		}
+	}
 	if err := validateVolumeEpochSeconds("volume_epoch_seconds", exchange.GetVolumeEpochSeconds(), false); err != nil {
 		return err
 	}
@@ -302,7 +302,11 @@ func protoCoinsToSDK(coins []*basev1beta1.Coin) (sdk.Coins, error) {
 		if !ok {
 			return nil, types.ErrInvalidRequest.Wrapf("invalid coin amount %q", coin.GetAmount())
 		}
-		out = append(out, sdk.NewCoin(coin.GetDenom(), amount))
+		sdkCoin := sdk.Coin{Denom: coin.GetDenom(), Amount: amount}
+		if err := sdkCoin.Validate(); err != nil {
+			return nil, types.ErrInvalidRequest.Wrapf("invalid coin: %v", err)
+		}
+		out = append(out, sdkCoin)
 	}
 	out = out.Sort()
 	if !out.IsValid() || !out.IsAllPositive() {

@@ -1034,7 +1034,7 @@ func TestAdditionalErrorBranches(t *testing.T) {
 	zeroCtx := f.ctx.WithBlockTime(time.Time{})
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", 1)
 	_, err = f.keeper.QuoteSwap(zeroCtx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "2"})
-	require.NoError(t, err)
+	require.ErrorIs(t, err, types.ErrStaleOracleRate)
 	readiness, err := NewQueryServer(&f.keeper).ExchangeReadiness(zeroCtx, &bexv1.QueryExchangeReadinessRequest{
 		ExchangeId: active.GetId(),
 		Direction:  bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
