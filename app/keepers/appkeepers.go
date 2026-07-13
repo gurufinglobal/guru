@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -142,11 +143,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 
 	for _, module := range modules {
 		moduleAddress := authtypes.NewModuleAddress(module)
-		moduleAddressString, err := addressCodec.BytesToString(moduleAddress)
-		if err != nil {
-			panic(fmt.Errorf("failed to convert module address to string: %v", err))
-		}
-		blockedAddrs[moduleAddressString] = true
+		blockedAddrs[moduleAddress.String()] = true
 	}
 
 	blockedPrecompilesHex := append([]string{}, evmtypes.AvailableStaticPrecompiles...)
@@ -156,11 +153,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 
 	for _, precompile := range blockedPrecompilesHex {
 		precompileAddress := common.HexToAddress(precompile)
-		precompileAddressString, err := addressCodec.BytesToString(precompileAddress.Bytes())
-		if err != nil {
-			panic(fmt.Errorf("failed to convert precompile address to string: %v", err))
-		}
-		blockedAddrs[precompileAddressString] = true
+		blockedAddrs[sdk.AccAddress(precompileAddress.Bytes()).String()] = true
 	}
 
 	appKeepers.BankKeeper = bankkeeper.NewBaseKeeper(
@@ -335,7 +328,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		nonTransientKeys,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		appKeepers.AccountKeeper,
-		appKeepers.BankKeeper,
+		newBEXRestrictedEVMBankKeeper(appKeepers.BankKeeper, appKeepers.BexKeeper),
 		appKeepers.StakingKeeper,
 		appKeepers.FeeMarketKeeper,
 		&appKeepers.ConsensusParamsKeeper,

@@ -4,6 +4,7 @@ package bexv1
 import (
 	v1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-proto"
 	runtime "github.com/cosmos/cosmos-proto/runtime"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoiface "google.golang.org/protobuf/runtime/protoiface"
@@ -263,14 +264,66 @@ func (x *_GenesisState_5_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_GenesisState_7_list)(nil)
+
+type _GenesisState_7_list struct {
+	list *[]*ReserveDepositorGenesis
+}
+
+func (x *_GenesisState_7_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_7_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_7_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*ReserveDepositorGenesis)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_7_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*ReserveDepositorGenesis)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_7_list) AppendMutable() protoreflect.Value {
+	v := new(ReserveDepositorGenesis)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_7_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_7_list) NewElement() protoreflect.Value {
+	v := new(ReserveDepositorGenesis)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_7_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
-	md_GenesisState                  protoreflect.MessageDescriptor
-	fd_GenesisState_admins           protoreflect.FieldDescriptor
-	fd_GenesisState_exchanges        protoreflect.FieldDescriptor
-	fd_GenesisState_collected_fees   protoreflect.FieldDescriptor
-	fd_GenesisState_locked_fees      protoreflect.FieldDescriptor
-	fd_GenesisState_volume_windows   protoreflect.FieldDescriptor
-	fd_GenesisState_next_exchange_id protoreflect.FieldDescriptor
+	md_GenesisState                    protoreflect.MessageDescriptor
+	fd_GenesisState_admins             protoreflect.FieldDescriptor
+	fd_GenesisState_exchanges          protoreflect.FieldDescriptor
+	fd_GenesisState_collected_fees     protoreflect.FieldDescriptor
+	fd_GenesisState_locked_fees        protoreflect.FieldDescriptor
+	fd_GenesisState_volume_windows     protoreflect.FieldDescriptor
+	fd_GenesisState_next_exchange_id   protoreflect.FieldDescriptor
+	fd_GenesisState_reserve_depositors protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -282,6 +335,7 @@ func init() {
 	fd_GenesisState_locked_fees = md_GenesisState.Fields().ByName("locked_fees")
 	fd_GenesisState_volume_windows = md_GenesisState.Fields().ByName("volume_windows")
 	fd_GenesisState_next_exchange_id = md_GenesisState.Fields().ByName("next_exchange_id")
+	fd_GenesisState_reserve_depositors = md_GenesisState.Fields().ByName("reserve_depositors")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -385,6 +439,12 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if len(x.ReserveDepositors) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_7_list{list: &x.ReserveDepositors})
+		if !f(fd_GenesisState_reserve_depositors, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -412,6 +472,8 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return len(x.VolumeWindows) != 0
 	case "guru.bex.v1.GenesisState.next_exchange_id":
 		return x.NextExchangeId != uint64(0)
+	case "guru.bex.v1.GenesisState.reserve_depositors":
+		return len(x.ReserveDepositors) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -440,6 +502,8 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.VolumeWindows = nil
 	case "guru.bex.v1.GenesisState.next_exchange_id":
 		x.NextExchangeId = uint64(0)
+	case "guru.bex.v1.GenesisState.reserve_depositors":
+		x.ReserveDepositors = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -489,6 +553,12 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 	case "guru.bex.v1.GenesisState.next_exchange_id":
 		value := x.NextExchangeId
 		return protoreflect.ValueOfUint64(value)
+	case "guru.bex.v1.GenesisState.reserve_depositors":
+		if len(x.ReserveDepositors) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_7_list{})
+		}
+		listValue := &_GenesisState_7_list{list: &x.ReserveDepositors}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -531,6 +601,10 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		x.VolumeWindows = *clv.list
 	case "guru.bex.v1.GenesisState.next_exchange_id":
 		x.NextExchangeId = value.Uint()
+	case "guru.bex.v1.GenesisState.reserve_depositors":
+		lv := value.List()
+		clv := lv.(*_GenesisState_7_list)
+		x.ReserveDepositors = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -581,6 +655,12 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 		}
 		value := &_GenesisState_5_list{list: &x.VolumeWindows}
 		return protoreflect.ValueOfList(value)
+	case "guru.bex.v1.GenesisState.reserve_depositors":
+		if x.ReserveDepositors == nil {
+			x.ReserveDepositors = []*ReserveDepositorGenesis{}
+		}
+		value := &_GenesisState_7_list{list: &x.ReserveDepositors}
+		return protoreflect.ValueOfList(value)
 	case "guru.bex.v1.GenesisState.next_exchange_id":
 		panic(fmt.Errorf("field next_exchange_id of message guru.bex.v1.GenesisState is not mutable"))
 	default:
@@ -613,6 +693,9 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 		return protoreflect.ValueOfList(&_GenesisState_5_list{list: &list})
 	case "guru.bex.v1.GenesisState.next_exchange_id":
 		return protoreflect.ValueOfUint64(uint64(0))
+	case "guru.bex.v1.GenesisState.reserve_depositors":
+		list := []*ReserveDepositorGenesis{}
+		return protoreflect.ValueOfList(&_GenesisState_7_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -715,6 +798,12 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.NextExchangeId != 0 {
 			n += 1 + runtime.Sov(uint64(x.NextExchangeId))
 		}
+		if len(x.ReserveDepositors) > 0 {
+			for _, e := range x.ReserveDepositors {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -743,6 +832,22 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.ReserveDepositors) > 0 {
+			for iNdEx := len(x.ReserveDepositors) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.ReserveDepositors[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x3a
+			}
 		}
 		if x.NextExchangeId != 0 {
 			i = runtime.EncodeVarint(dAtA, i, uint64(x.NextExchangeId))
@@ -1058,6 +1163,40 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 						break
 					}
 				}
+			case 7:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ReserveDepositors", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.ReserveDepositors = append(x.ReserveDepositors, &ReserveDepositorGenesis{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.ReserveDepositors[len(x.ReserveDepositors)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -2247,6 +2386,474 @@ func (x *fastReflection_VolumeWindowGenesis) ProtoMethods() *protoiface.Methods 
 	}
 }
 
+var (
+	md_ReserveDepositorGenesis                   protoreflect.MessageDescriptor
+	fd_ReserveDepositorGenesis_exchange_id       protoreflect.FieldDescriptor
+	fd_ReserveDepositorGenesis_depositor_address protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_guru_bex_v1_genesis_proto_init()
+	md_ReserveDepositorGenesis = File_guru_bex_v1_genesis_proto.Messages().ByName("ReserveDepositorGenesis")
+	fd_ReserveDepositorGenesis_exchange_id = md_ReserveDepositorGenesis.Fields().ByName("exchange_id")
+	fd_ReserveDepositorGenesis_depositor_address = md_ReserveDepositorGenesis.Fields().ByName("depositor_address")
+}
+
+var _ protoreflect.Message = (*fastReflection_ReserveDepositorGenesis)(nil)
+
+type fastReflection_ReserveDepositorGenesis ReserveDepositorGenesis
+
+func (x *ReserveDepositorGenesis) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_ReserveDepositorGenesis)(x)
+}
+
+func (x *ReserveDepositorGenesis) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_bex_v1_genesis_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_ReserveDepositorGenesis_messageType fastReflection_ReserveDepositorGenesis_messageType
+var _ protoreflect.MessageType = fastReflection_ReserveDepositorGenesis_messageType{}
+
+type fastReflection_ReserveDepositorGenesis_messageType struct{}
+
+func (x fastReflection_ReserveDepositorGenesis_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_ReserveDepositorGenesis)(nil)
+}
+func (x fastReflection_ReserveDepositorGenesis_messageType) New() protoreflect.Message {
+	return new(fastReflection_ReserveDepositorGenesis)
+}
+func (x fastReflection_ReserveDepositorGenesis_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_ReserveDepositorGenesis
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_ReserveDepositorGenesis) Descriptor() protoreflect.MessageDescriptor {
+	return md_ReserveDepositorGenesis
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_ReserveDepositorGenesis) Type() protoreflect.MessageType {
+	return _fastReflection_ReserveDepositorGenesis_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_ReserveDepositorGenesis) New() protoreflect.Message {
+	return new(fastReflection_ReserveDepositorGenesis)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_ReserveDepositorGenesis) Interface() protoreflect.ProtoMessage {
+	return (*ReserveDepositorGenesis)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_ReserveDepositorGenesis) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.ExchangeId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.ExchangeId)
+		if !f(fd_ReserveDepositorGenesis_exchange_id, value) {
+			return
+		}
+	}
+	if x.DepositorAddress != "" {
+		value := protoreflect.ValueOfString(x.DepositorAddress)
+		if !f(fd_ReserveDepositorGenesis_depositor_address, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_ReserveDepositorGenesis) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "guru.bex.v1.ReserveDepositorGenesis.exchange_id":
+		return x.ExchangeId != uint64(0)
+	case "guru.bex.v1.ReserveDepositorGenesis.depositor_address":
+		return x.DepositorAddress != ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ReserveDepositorGenesis"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.ReserveDepositorGenesis does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_ReserveDepositorGenesis) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "guru.bex.v1.ReserveDepositorGenesis.exchange_id":
+		x.ExchangeId = uint64(0)
+	case "guru.bex.v1.ReserveDepositorGenesis.depositor_address":
+		x.DepositorAddress = ""
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ReserveDepositorGenesis"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.ReserveDepositorGenesis does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_ReserveDepositorGenesis) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "guru.bex.v1.ReserveDepositorGenesis.exchange_id":
+		value := x.ExchangeId
+		return protoreflect.ValueOfUint64(value)
+	case "guru.bex.v1.ReserveDepositorGenesis.depositor_address":
+		value := x.DepositorAddress
+		return protoreflect.ValueOfString(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ReserveDepositorGenesis"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.ReserveDepositorGenesis does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_ReserveDepositorGenesis) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "guru.bex.v1.ReserveDepositorGenesis.exchange_id":
+		x.ExchangeId = value.Uint()
+	case "guru.bex.v1.ReserveDepositorGenesis.depositor_address":
+		x.DepositorAddress = value.Interface().(string)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ReserveDepositorGenesis"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.ReserveDepositorGenesis does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_ReserveDepositorGenesis) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.bex.v1.ReserveDepositorGenesis.exchange_id":
+		panic(fmt.Errorf("field exchange_id of message guru.bex.v1.ReserveDepositorGenesis is not mutable"))
+	case "guru.bex.v1.ReserveDepositorGenesis.depositor_address":
+		panic(fmt.Errorf("field depositor_address of message guru.bex.v1.ReserveDepositorGenesis is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ReserveDepositorGenesis"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.ReserveDepositorGenesis does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_ReserveDepositorGenesis) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.bex.v1.ReserveDepositorGenesis.exchange_id":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "guru.bex.v1.ReserveDepositorGenesis.depositor_address":
+		return protoreflect.ValueOfString("")
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ReserveDepositorGenesis"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.ReserveDepositorGenesis does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_ReserveDepositorGenesis) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.ReserveDepositorGenesis", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_ReserveDepositorGenesis) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_ReserveDepositorGenesis) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_ReserveDepositorGenesis) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_ReserveDepositorGenesis) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*ReserveDepositorGenesis)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.ExchangeId != 0 {
+			n += 1 + runtime.Sov(uint64(x.ExchangeId))
+		}
+		l = len(x.DepositorAddress)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*ReserveDepositorGenesis)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.DepositorAddress) > 0 {
+			i -= len(x.DepositorAddress)
+			copy(dAtA[i:], x.DepositorAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.DepositorAddress)))
+			i--
+			dAtA[i] = 0x12
+		}
+		if x.ExchangeId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.ExchangeId))
+			i--
+			dAtA[i] = 0x8
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*ReserveDepositorGenesis)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: ReserveDepositorGenesis: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: ReserveDepositorGenesis: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ExchangeId", wireType)
+				}
+				x.ExchangeId = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.ExchangeId |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 2:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field DepositorAddress", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.DepositorAddress = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
 // Code generated by protoc-gen-go. DO NOT EDIT.
 // versions:
 // 	protoc-gen-go v1.27.0
@@ -2266,12 +2873,13 @@ type GenesisState struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Admins         []string               `protobuf:"bytes,1,rep,name=admins,proto3" json:"admins,omitempty"`
-	Exchanges      []*Exchange            `protobuf:"bytes,2,rep,name=exchanges,proto3" json:"exchanges,omitempty"`
-	CollectedFees  []*FeeGenesis          `protobuf:"bytes,3,rep,name=collected_fees,json=collectedFees,proto3" json:"collected_fees,omitempty"`
-	LockedFees     []*FeeGenesis          `protobuf:"bytes,4,rep,name=locked_fees,json=lockedFees,proto3" json:"locked_fees,omitempty"`
-	VolumeWindows  []*VolumeWindowGenesis `protobuf:"bytes,5,rep,name=volume_windows,json=volumeWindows,proto3" json:"volume_windows,omitempty"`
-	NextExchangeId uint64                 `protobuf:"varint,6,opt,name=next_exchange_id,json=nextExchangeId,proto3" json:"next_exchange_id,omitempty"`
+	Admins            []string                   `protobuf:"bytes,1,rep,name=admins,proto3" json:"admins,omitempty"`
+	Exchanges         []*Exchange                `protobuf:"bytes,2,rep,name=exchanges,proto3" json:"exchanges,omitempty"`
+	CollectedFees     []*FeeGenesis              `protobuf:"bytes,3,rep,name=collected_fees,json=collectedFees,proto3" json:"collected_fees,omitempty"`
+	LockedFees        []*FeeGenesis              `protobuf:"bytes,4,rep,name=locked_fees,json=lockedFees,proto3" json:"locked_fees,omitempty"`
+	VolumeWindows     []*VolumeWindowGenesis     `protobuf:"bytes,5,rep,name=volume_windows,json=volumeWindows,proto3" json:"volume_windows,omitempty"`
+	NextExchangeId    uint64                     `protobuf:"varint,6,opt,name=next_exchange_id,json=nextExchangeId,proto3" json:"next_exchange_id,omitempty"`
+	ReserveDepositors []*ReserveDepositorGenesis `protobuf:"bytes,7,rep,name=reserve_depositors,json=reserveDepositors,proto3" json:"reserve_depositors,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -2334,6 +2942,13 @@ func (x *GenesisState) GetNextExchangeId() uint64 {
 		return x.NextExchangeId
 	}
 	return 0
+}
+
+func (x *GenesisState) GetReserveDepositors() []*ReserveDepositorGenesis {
+	if x != nil {
+		return x.ReserveDepositors
+	}
+	return nil
 }
 
 // FeeGenesis stores one exchange fee ledger at genesis.
@@ -2448,6 +3063,50 @@ func (x *VolumeWindowGenesis) GetAmount() string {
 	return ""
 }
 
+// ReserveDepositorGenesis stores one exchange-scoped reserve depositor.
+type ReserveDepositorGenesis struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ExchangeId       uint64 `protobuf:"varint,1,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
+	DepositorAddress string `protobuf:"bytes,2,opt,name=depositor_address,json=depositorAddress,proto3" json:"depositor_address,omitempty"`
+}
+
+func (x *ReserveDepositorGenesis) Reset() {
+	*x = ReserveDepositorGenesis{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_bex_v1_genesis_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ReserveDepositorGenesis) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReserveDepositorGenesis) ProtoMessage() {}
+
+// Deprecated: Use ReserveDepositorGenesis.ProtoReflect.Descriptor instead.
+func (*ReserveDepositorGenesis) Descriptor() ([]byte, []int) {
+	return file_guru_bex_v1_genesis_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ReserveDepositorGenesis) GetExchangeId() uint64 {
+	if x != nil {
+		return x.ExchangeId
+	}
+	return 0
+}
+
+func (x *ReserveDepositorGenesis) GetDepositorAddress() string {
+	if x != nil {
+		return x.DepositorAddress
+	}
+	return ""
+}
+
 var File_guru_bex_v1_genesis_proto protoreflect.FileDescriptor
 
 var file_guru_bex_v1_genesis_proto_rawDesc = []byte{
@@ -2455,29 +3114,36 @@ var file_guru_bex_v1_genesis_proto_rawDesc = []byte{
 	0x6e, 0x65, 0x73, 0x69, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0b, 0x67, 0x75, 0x72,
 	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x1a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
 	0x2f, 0x62, 0x61, 0x73, 0x65, 0x2f, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2f, 0x63, 0x6f,
-	0x69, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x15, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62,
-	0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x62, 0x65, 0x78, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22,
-	0xc8, 0x02, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65,
-	0x12, 0x16, 0x0a, 0x06, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09,
-	0x52, 0x06, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x73, 0x12, 0x33, 0x0a, 0x09, 0x65, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x67, 0x75,
-	0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e,
-	0x67, 0x65, 0x52, 0x09, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x3e, 0x0a,
-	0x0e, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x65, 0x64, 0x5f, 0x66, 0x65, 0x65, 0x73, 0x18,
-	0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78,
-	0x2e, 0x76, 0x31, 0x2e, 0x46, 0x65, 0x65, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x52, 0x0d,
-	0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x65, 0x64, 0x46, 0x65, 0x65, 0x73, 0x12, 0x38, 0x0a,
-	0x0b, 0x6c, 0x6f, 0x63, 0x6b, 0x65, 0x64, 0x5f, 0x66, 0x65, 0x65, 0x73, 0x18, 0x04, 0x20, 0x03,
-	0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31,
-	0x2e, 0x46, 0x65, 0x65, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x52, 0x0a, 0x6c, 0x6f, 0x63,
-	0x6b, 0x65, 0x64, 0x46, 0x65, 0x65, 0x73, 0x12, 0x47, 0x0a, 0x0e, 0x76, 0x6f, 0x6c, 0x75, 0x6d,
-	0x65, 0x5f, 0x77, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x20, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x6f,
-	0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69,
-	0x73, 0x52, 0x0d, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x73,
-	0x12, 0x28, 0x0a, 0x10, 0x6e, 0x65, 0x78, 0x74, 0x5f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x5f, 0x69, 0x64, 0x18, 0x06, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0e, 0x6e, 0x65, 0x78, 0x74,
-	0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x22, 0x5e, 0x0a, 0x0a, 0x46, 0x65,
+	0x69, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x19, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
+	0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x1a, 0x15, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31,
+	0x2f, 0x62, 0x65, 0x78, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9d, 0x03, 0x0a, 0x0c, 0x47,
+	0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x61,
+	0x64, 0x6d, 0x69, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x61, 0x64, 0x6d,
+	0x69, 0x6e, 0x73, 0x12, 0x33, 0x0a, 0x09, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73,
+	0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
+	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x09, 0x65,
+	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x3e, 0x0a, 0x0e, 0x63, 0x6f, 0x6c, 0x6c,
+	0x65, 0x63, 0x74, 0x65, 0x64, 0x5f, 0x66, 0x65, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x17, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x46,
+	0x65, 0x65, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x52, 0x0d, 0x63, 0x6f, 0x6c, 0x6c, 0x65,
+	0x63, 0x74, 0x65, 0x64, 0x46, 0x65, 0x65, 0x73, 0x12, 0x38, 0x0a, 0x0b, 0x6c, 0x6f, 0x63, 0x6b,
+	0x65, 0x64, 0x5f, 0x66, 0x65, 0x65, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x17, 0x2e,
+	0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x46, 0x65, 0x65, 0x47,
+	0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x52, 0x0a, 0x6c, 0x6f, 0x63, 0x6b, 0x65, 0x64, 0x46, 0x65,
+	0x65, 0x73, 0x12, 0x47, 0x0a, 0x0e, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x77, 0x69, 0x6e,
+	0x64, 0x6f, 0x77, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x67, 0x75, 0x72,
+	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57,
+	0x69, 0x6e, 0x64, 0x6f, 0x77, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x52, 0x0d, 0x76, 0x6f,
+	0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x73, 0x12, 0x28, 0x0a, 0x10, 0x6e,
+	0x65, 0x78, 0x74, 0x5f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18,
+	0x06, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0e, 0x6e, 0x65, 0x78, 0x74, 0x45, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x53, 0x0a, 0x12, 0x72, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x5f, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x18, 0x07, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x24, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e,
+	0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
+	0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x52, 0x11, 0x72, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x22, 0x5e, 0x0a, 0x0a, 0x46, 0x65,
 	0x65, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68,
 	0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65,
 	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x2f, 0x0a, 0x05, 0x63, 0x6f, 0x69,
@@ -2497,18 +3163,26 @@ var file_guru_bex_v1_genesis_proto_rawDesc = []byte{
 	0x5f, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0c,
 	0x65, 0x70, 0x6f, 0x63, 0x68, 0x53, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x12, 0x16, 0x0a, 0x06,
 	0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x61, 0x6d,
-	0x6f, 0x75, 0x6e, 0x74, 0x42, 0xa5, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72,
-	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69,
-	0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
-	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62,
-	0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67,
-	0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x3b, 0x62, 0x65, 0x78, 0x76, 0x31,
-	0xa2, 0x02, 0x03, 0x47, 0x42, 0x58, 0xaa, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x42, 0x65,
-	0x78, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c,
-	0x56, 0x31, 0xe2, 0x02, 0x17, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31,
-	0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0d, 0x47,
-	0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42, 0x65, 0x78, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x75, 0x6e, 0x74, 0x22, 0x81, 0x01, 0x0a, 0x17, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73,
+	0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49,
+	0x64, 0x12, 0x45, 0x0a, 0x11, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x5f, 0x61,
+	0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4,
+	0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
+	0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x10, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f,
+	0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x42, 0xa5, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d,
+	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x42, 0x0c, 0x47, 0x65,
+	0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x36, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e,
+	0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61,
+	0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x3b, 0x62,
+	0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x42, 0x58, 0xaa, 0x02, 0x0b, 0x47, 0x75, 0x72,
+	0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x5c,
+	0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65,
+	0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
+	0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42, 0x65, 0x78, 0x3a, 0x3a, 0x56, 0x31,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2523,27 +3197,29 @@ func file_guru_bex_v1_genesis_proto_rawDescGZIP() []byte {
 	return file_guru_bex_v1_genesis_proto_rawDescData
 }
 
-var file_guru_bex_v1_genesis_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_guru_bex_v1_genesis_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_guru_bex_v1_genesis_proto_goTypes = []interface{}{
-	(*GenesisState)(nil),        // 0: guru.bex.v1.GenesisState
-	(*FeeGenesis)(nil),          // 1: guru.bex.v1.FeeGenesis
-	(*VolumeWindowGenesis)(nil), // 2: guru.bex.v1.VolumeWindowGenesis
-	(*Exchange)(nil),            // 3: guru.bex.v1.Exchange
-	(*v1beta1.Coin)(nil),        // 4: cosmos.base.v1beta1.Coin
-	(SwapDirection)(0),          // 5: guru.bex.v1.SwapDirection
+	(*GenesisState)(nil),            // 0: guru.bex.v1.GenesisState
+	(*FeeGenesis)(nil),              // 1: guru.bex.v1.FeeGenesis
+	(*VolumeWindowGenesis)(nil),     // 2: guru.bex.v1.VolumeWindowGenesis
+	(*ReserveDepositorGenesis)(nil), // 3: guru.bex.v1.ReserveDepositorGenesis
+	(*Exchange)(nil),                // 4: guru.bex.v1.Exchange
+	(*v1beta1.Coin)(nil),            // 5: cosmos.base.v1beta1.Coin
+	(SwapDirection)(0),              // 6: guru.bex.v1.SwapDirection
 }
 var file_guru_bex_v1_genesis_proto_depIdxs = []int32{
-	3, // 0: guru.bex.v1.GenesisState.exchanges:type_name -> guru.bex.v1.Exchange
+	4, // 0: guru.bex.v1.GenesisState.exchanges:type_name -> guru.bex.v1.Exchange
 	1, // 1: guru.bex.v1.GenesisState.collected_fees:type_name -> guru.bex.v1.FeeGenesis
 	1, // 2: guru.bex.v1.GenesisState.locked_fees:type_name -> guru.bex.v1.FeeGenesis
 	2, // 3: guru.bex.v1.GenesisState.volume_windows:type_name -> guru.bex.v1.VolumeWindowGenesis
-	4, // 4: guru.bex.v1.FeeGenesis.coins:type_name -> cosmos.base.v1beta1.Coin
-	5, // 5: guru.bex.v1.VolumeWindowGenesis.direction:type_name -> guru.bex.v1.SwapDirection
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	3, // 4: guru.bex.v1.GenesisState.reserve_depositors:type_name -> guru.bex.v1.ReserveDepositorGenesis
+	5, // 5: guru.bex.v1.FeeGenesis.coins:type_name -> cosmos.base.v1beta1.Coin
+	6, // 6: guru.bex.v1.VolumeWindowGenesis.direction:type_name -> guru.bex.v1.SwapDirection
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_guru_bex_v1_genesis_proto_init() }
@@ -2589,6 +3265,18 @@ func file_guru_bex_v1_genesis_proto_init() {
 				return nil
 			}
 		}
+		file_guru_bex_v1_genesis_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ReserveDepositorGenesis); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2596,7 +3284,7 @@ func file_guru_bex_v1_genesis_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_guru_bex_v1_genesis_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

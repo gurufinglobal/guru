@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
@@ -16,11 +17,15 @@ func (k Keeper) withReserveReceiveAllowance(ctx context.Context, exchangeID uint
 	if sdkCtx, ok := ctx.(sdk.Context); ok {
 		return sdkCtx.WithValue(reserveAllowanceKey{}, exchangeID)
 	}
-	return context.WithValue(ctx, reserveAllowanceKey{}, exchangeID)
+	// Bank keepers unwrap arbitrary context wrappers back to sdk.Context before
+	// executing send restrictions. Store the allowance in that SDK context while
+	// retaining outer values/deadlines so it survives the unwrap boundary.
+	return sdk.UnwrapSDKContext(ctx).WithContext(ctx).WithValue(reserveAllowanceKey{}, exchangeID)
 }
 
-// WithReserveReceiveAllowance marks a context as allowed to receive funds into
-// the deterministic reserve for exchangeID through the bank send restriction.
+// WithReserveReceiveAllowance grants a context-scoped receive capability for a
+// trusted module integration. It is keeper-only and must not be exposed through
+// a user-facing Msg or query endpoint; wallet deposits use DepositReserve.
 func (k Keeper) WithReserveReceiveAllowance(ctx context.Context, exchangeID uint64) context.Context {
 	return k.withReserveReceiveAllowance(ctx, exchangeID)
 }
@@ -36,7 +41,89 @@ func (k Keeper) RegisterSendRestriction() {
 	}
 }
 
-func (k Keeper) SendRestrictionFn(ctx context.Context, _ sdk.AccAddress, toAddr sdk.AccAddress, _ sdk.Coins) (sdk.AccAddress, error) {
+func (k Keeper) AddReserveDepositor(ctx context.Context, signer string, exchangeID uint64, depositor string) error {
+	exchange, err := k.GetActiveExchange(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	admin, _, err := k.requireExchangeAdmin(ctx, exchange, signer)
+	if err != nil {
+		return err
+	}
+	canonical, _, err := k.canonicalAddress(depositor)
+	if err != nil {
+		return types.ErrInvalidRequest.Wrapf("invalid depositor address: %v", err)
+	}
+	key := collections.Join(exchangeID, canonical)
+	has, err := k.reserveDepositors.Has(ctx, key)
+	if err != nil {
+		return err
+	}
+	if has {
+		return types.ErrInvalidRequest.Wrap("reserve depositor already registered")
+	}
+	if err := k.reserveDepositors.Set(ctx, key); err != nil {
+		return err
+	}
+	emitEvent(
+		ctx,
+		types.EventTypeReserveDepositorAdded,
+		exchangeIDAttr(exchangeID),
+		sdk.NewAttribute(types.AttributeKeyAdmin, admin),
+		sdk.NewAttribute(types.AttributeKeyDepositor, canonical),
+	)
+	return nil
+}
+
+func (k Keeper) RemoveReserveDepositor(ctx context.Context, signer string, exchangeID uint64, depositor string) error {
+	exchange, err := k.GetActiveExchange(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	admin, _, err := k.requireExchangeAdmin(ctx, exchange, signer)
+	if err != nil {
+		return err
+	}
+	canonical, _, err := k.canonicalAddress(depositor)
+	if err != nil {
+		return types.ErrInvalidRequest.Wrapf("invalid depositor address: %v", err)
+	}
+	key := collections.Join(exchangeID, canonical)
+	has, err := k.reserveDepositors.Has(ctx, key)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return types.ErrUnauthorizedReserveDepositor.Wrap("reserve depositor is not registered")
+	}
+	if err := k.reserveDepositors.Remove(ctx, key); err != nil {
+		return err
+	}
+	emitEvent(
+		ctx,
+		types.EventTypeReserveDepositorRemoved,
+		exchangeIDAttr(exchangeID),
+		sdk.NewAttribute(types.AttributeKeyAdmin, admin),
+		sdk.NewAttribute(types.AttributeKeyDepositor, canonical),
+	)
+	return nil
+}
+
+func (k Keeper) IsReserveDepositor(ctx context.Context, exchangeID uint64, depositor string) (bool, error) {
+	canonical, _, err := k.canonicalAddress(depositor)
+	if err != nil {
+		return false, types.ErrInvalidRequest.Wrapf("invalid depositor address: %v", err)
+	}
+	return k.reserveDepositors.Has(ctx, collections.Join(exchangeID, canonical))
+}
+
+func (k Keeper) SendRestrictionFn(ctx context.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amount sdk.Coins) (sdk.AccAddress, error) {
+	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
+	if fromAddr.Equals(moduleAddr) {
+		if !hasFeeOutflowAllowance(ctx, toAddr, amount) {
+			return nil, types.ErrInvariantViolation.Wrap("BEX module account transfers require an exact scoped fee outflow allowance")
+		}
+	}
 	to, err := k.accountCodec.BytesToString(toAddr)
 	if err != nil {
 		return nil, err
@@ -60,9 +147,25 @@ func (k Keeper) DepositReserve(ctx context.Context, signer string, exchangeID ui
 	if err != nil {
 		return err
 	}
-	_, signerAddr, err := k.requireExchangeAdmin(ctx, exchange, signer)
+	canonical, signerAddr, err := k.canonicalAddress(signer)
 	if err != nil {
-		return err
+		return types.ErrUnauthorizedReserveDepositor.Wrapf("invalid depositor address: %v", err)
+	}
+	authorized := false
+	if canonical == exchange.GetAdminAddress() {
+		authorized, err = k.admins.Has(ctx, canonical)
+		if err != nil {
+			return err
+		}
+	}
+	if !authorized {
+		authorized, err = k.reserveDepositors.Has(ctx, collections.Join(exchangeID, canonical))
+		if err != nil {
+			return err
+		}
+	}
+	if !authorized {
+		return types.ErrUnauthorizedReserveDepositor.Wrap("signer is not exchange admin or reserve depositor")
 	}
 	if !amount.IsValid() || !amount.IsAllPositive() {
 		return types.ErrInvalidRequest.Wrap("amount must be positive coins")
@@ -79,7 +182,7 @@ func (k Keeper) DepositReserve(ctx context.Context, signer string, exchangeID ui
 		ctx,
 		types.EventTypeReserveDeposited,
 		exchangeIDAttr(exchangeID),
-		sdk.NewAttribute(types.AttributeKeyAdmin, exchange.GetAdminAddress()),
+		sdk.NewAttribute(types.AttributeKeyDepositor, canonical),
 		sdk.NewAttribute(types.AttributeKeyReserveAddress, exchange.GetReserveAddress()),
 		sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 	)

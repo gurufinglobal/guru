@@ -2,7 +2,9 @@ package cli
 
 import (
 	"encoding/json"
+	"io"
 	"strconv"
+	"strings"
 
 	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -33,10 +35,65 @@ func GetTxCmd() *cobra.Command {
 		CmdRegisterExchange(),
 		CmdUpdateExchange(),
 		CmdDeleteExchange(),
+		CmdAddReserveDepositor(),
+		CmdRemoveReserveDepositor(),
 		CmdDepositReserve(),
 		CmdWithdrawReserve(),
 		CmdWithdrawFees(),
 	)
+	return cmd
+}
+
+func CmdAddReserveDepositor() *cobra.Command {
+	return reserveDepositorCmd(
+		"add-reserve-depositor [exchange-id] [depositor]",
+		"Allow an address to deposit into a BEX reserve",
+		func(admin string, exchangeID uint64, depositor string) sdk.Msg {
+			return &bexv1.MsgAddReserveDepositor{
+				AdminAddress:     admin,
+				ExchangeId:       exchangeID,
+				DepositorAddress: depositor,
+			}
+		},
+	)
+}
+
+func CmdRemoveReserveDepositor() *cobra.Command {
+	return reserveDepositorCmd(
+		"remove-reserve-depositor [exchange-id] [depositor]",
+		"Revoke an address's BEX reserve deposit permission",
+		func(admin string, exchangeID uint64, depositor string) sdk.Msg {
+			return &bexv1.MsgRemoveReserveDepositor{
+				AdminAddress:     admin,
+				ExchangeId:       exchangeID,
+				DepositorAddress: depositor,
+			}
+		},
+	)
+}
+
+func reserveDepositorCmd(use, short string, build func(string, uint64, string) sdk.Msg) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   use,
+		Short: short,
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := getClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			exchangeID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			return generateOrBroadcastTxCLI(
+				clientCtx,
+				cmd.Flags(),
+				build(clientCtx.GetFromAddress().String(), exchangeID, args[1]),
+			)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -91,7 +148,7 @@ func CmdRegisterExchange() *cobra.Command {
 				return err
 			}
 			msg := &bexv1.MsgRegisterExchange{}
-			if err := json.Unmarshal([]byte(args[0]), msg); err != nil {
+			if err := decodeStrictJSON(args[0], msg); err != nil {
 				return err
 			}
 			msg.AdminAddress = clientCtx.GetFromAddress().String()
@@ -121,7 +178,7 @@ func CmdUpdateExchange() *cobra.Command {
 				return err
 			}
 			patch := &bexv1.ExchangeUpdatePatch{}
-			if err := json.Unmarshal([]byte(args[1]), patch); err != nil {
+			if err := decodeStrictJSON(args[1], patch); err != nil {
 				return err
 			}
 			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgUpdateExchange{
@@ -175,9 +232,9 @@ func CmdDepositReserve() *cobra.Command {
 				return err
 			}
 			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgDepositReserve{
-				AdminAddress: clientCtx.GetFromAddress().String(),
-				ExchangeId:   exchangeID,
-				Amount:       amount,
+				Sender:     clientCtx.GetFromAddress().String(),
+				ExchangeId: exchangeID,
+				Amount:     amount,
 			})
 		},
 	}
@@ -251,4 +308,20 @@ func parseExchangeIDAndCoins(idRaw, coinsRaw string) (uint64, []*basev1beta1.Coi
 		out = append(out, &basev1beta1.Coin{Denom: coin.Denom, Amount: coin.Amount.String()})
 	}
 	return exchangeID, out, nil
+}
+
+func decodeStrictJSON(raw string, target any) error {
+	decoder := json.NewDecoder(strings.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return types.ErrInvalidRequest.Wrap("unexpected trailing JSON value")
+		}
+		return err
+	}
+	return nil
 }

@@ -21,8 +21,6 @@ const (
 	maxMetadataKeyLen    = 64
 	maxMetadataValLen    = 256
 	maxIntDigits         = 78
-	defaultPageLimit     = uint64(100)
-	maxPageLimit         = uint64(1000)
 	minVolumeEpochSecs   = uint32(86400)
 	maxVolumeEpochSecs   = uint32(604800)
 	minOracleStaleSecs   = uint32(1)
@@ -306,7 +304,11 @@ func protoCoinsToSDK(coins []*basev1beta1.Coin) (sdk.Coins, error) {
 		if !ok {
 			return nil, types.ErrInvalidRequest.Wrapf("invalid coin amount %q", coin.GetAmount())
 		}
-		out = append(out, sdk.NewCoin(coin.GetDenom(), amount))
+		sdkCoin := sdk.Coin{Denom: coin.GetDenom(), Amount: amount}
+		if err := sdkCoin.Validate(); err != nil {
+			return nil, types.ErrInvalidRequest.Wrapf("invalid coin: %v", err)
+		}
+		out = append(out, sdkCoin)
 	}
 	out = out.Sort()
 	if !out.IsValid() || !out.IsAllPositive() {

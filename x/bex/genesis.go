@@ -3,8 +3,12 @@ package bex
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"strings"
 
 	"cosmossdk.io/core/appmodule"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
@@ -34,7 +38,7 @@ func (am AppModule) InitGenesis(ctx context.Context, source appmodule.GenesisSou
 	if err := am.keeper.ImportGenesis(ctx, genesis); err != nil {
 		return err
 	}
-	return nil
+	return am.keeper.AssertInvariants(ctx)
 }
 
 func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisTarget) error {
@@ -62,6 +66,9 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		if _, ok := seenAdmins[canonical]; ok {
 			return types.ErrInvalidGenesis.Wrapf("duplicate admin %q", canonical)
 		}
+		if admin != canonical {
+			return types.ErrInvalidGenesis.Wrapf("admin %q is not canonical", admin)
+		}
 		seenAdmins[canonical] = struct{}{}
 	}
 	maxID := uint64(0)
@@ -76,6 +83,26 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		if exchange.GetId() > maxID {
 			maxID = exchange.GetId()
 		}
+		if exchange.GetRevision() == 0 {
+			return types.ErrInvalidGenesis.Wrapf("exchange %d revision must be non-zero", exchange.GetId())
+		}
+		for _, field := range []struct {
+			name  string
+			value string
+		}{
+			{name: "denom_a", value: exchange.GetDenomA()},
+			{name: "port_a", value: exchange.GetPortA()},
+			{name: "channel_a", value: exchange.GetChannelA()},
+			{name: "denom_b", value: exchange.GetDenomB()},
+			{name: "port_b", value: exchange.GetPortB()},
+			{name: "channel_b", value: exchange.GetChannelB()},
+			{name: "oracle_symbol_a_to_b", value: exchange.GetOracleSymbolAToB()},
+			{name: "oracle_symbol_b_to_a", value: exchange.GetOracleSymbolBToA()},
+		} {
+			if field.value != strings.TrimSpace(field.value) {
+				return types.ErrInvalidGenesis.Wrapf("exchange %d %s is not canonical", exchange.GetId(), field.name)
+			}
+		}
 		expectedReserve, err := am.keeper.GetReserveAddressString(ctx, exchange.GetId())
 		if err != nil {
 			return err
@@ -83,8 +110,23 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		if exchange.GetReserveAddress() != expectedReserve {
 			return types.ErrInvalidGenesis.Wrapf("exchange %d reserve address mismatch", exchange.GetId())
 		}
-		if _, _, err := am.keeper.CanonicalAddressForGenesis(exchange.GetAdminAddress()); err != nil {
+		canonicalAdmin, _, err := am.keeper.CanonicalAddressForGenesis(exchange.GetAdminAddress())
+		if err != nil {
 			return types.ErrInvalidGenesis.Wrapf("invalid exchange admin: %v", err)
+		}
+		if exchange.GetAdminAddress() != canonicalAdmin {
+			return types.ErrInvalidGenesis.Wrapf("exchange %d admin address is not canonical", exchange.GetId())
+		}
+		expectedDenomA, err := bexkeeper.ExpectedIBCDenomForGenesis(exchange.GetDenomA(), exchange.GetPortA(), exchange.GetChannelA())
+		if err != nil {
+			return err
+		}
+		expectedDenomB, err := bexkeeper.ExpectedIBCDenomForGenesis(exchange.GetDenomB(), exchange.GetPortB(), exchange.GetChannelB())
+		if err != nil {
+			return err
+		}
+		if exchange.GetIbcDenomA() != expectedDenomA || exchange.GetIbcDenomB() != expectedDenomB {
+			return types.ErrInvalidGenesis.Wrapf("exchange %d IBC denom does not match configured route", exchange.GetId())
 		}
 		if err := bexkeeper.ValidateExchangeForGenesis(exchange); err != nil {
 			return err
@@ -95,41 +137,104 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		return types.ErrInvalidGenesis.Wrap("next_exchange_id must be greater than max exchange id")
 	}
 	collectedByID := map[uint64]sdk.Coins{}
+	totalCollected := map[string]sdkmath.Int{}
 	for _, fee := range genesis.GetCollectedFees() {
-		if _, ok := exchangeIDs[fee.GetExchangeId()]; !ok {
+		exchange, ok := exchangeIDs[fee.GetExchangeId()]
+		if !ok {
 			return types.ErrInvalidGenesis.Wrapf("collected fees reference unknown exchange %d", fee.GetExchangeId())
+		}
+		if _, exists := collectedByID[fee.GetExchangeId()]; exists {
+			return types.ErrInvalidGenesis.Wrapf("duplicate collected fee ledger for exchange %d", fee.GetExchangeId())
 		}
 		coins, err := bexkeeper.ProtoCoinsForGenesis(fee.GetCoins())
 		if err != nil {
 			return err
 		}
+		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !coins.IsZero() {
+			return types.ErrInvalidGenesis.Wrapf("deleted exchange %d has collected fees", fee.GetExchangeId())
+		}
+		for _, coin := range coins {
+			if err := bexkeeper.ValidateFeeDenomForGenesis(exchange, coin.Denom); err != nil {
+				return types.ErrInvalidGenesis.Wrapf("exchange %d collected fees: %v", fee.GetExchangeId(), err)
+			}
+		}
 		collectedByID[fee.GetExchangeId()] = coins
+		for _, coin := range coins {
+			current, ok := totalCollected[coin.Denom]
+			if !ok {
+				current = sdkmath.ZeroInt()
+			}
+			next, err := current.SafeAdd(coin.Amount)
+			if err != nil {
+				return types.ErrInvalidGenesis.Wrapf("total collected fees for %s exceed uint256 max", coin.Denom)
+			}
+			totalCollected[coin.Denom] = next
+		}
 	}
+	lockedIDs := map[uint64]struct{}{}
 	for _, fee := range genesis.GetLockedFees() {
-		if _, ok := exchangeIDs[fee.GetExchangeId()]; !ok {
+		exchange, ok := exchangeIDs[fee.GetExchangeId()]
+		if !ok {
 			return types.ErrInvalidGenesis.Wrapf("locked fees reference unknown exchange %d", fee.GetExchangeId())
 		}
+		if _, exists := lockedIDs[fee.GetExchangeId()]; exists {
+			return types.ErrInvalidGenesis.Wrapf("duplicate locked fee ledger for exchange %d", fee.GetExchangeId())
+		}
+		lockedIDs[fee.GetExchangeId()] = struct{}{}
 		locked, err := bexkeeper.ProtoCoinsForGenesis(fee.GetCoins())
 		if err != nil {
 			return err
+		}
+		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !locked.IsZero() {
+			return types.ErrInvalidGenesis.Wrapf("deleted exchange %d has locked fees", fee.GetExchangeId())
+		}
+		for _, coin := range locked {
+			if err := bexkeeper.ValidateFeeDenomForGenesis(exchange, coin.Denom); err != nil {
+				return types.ErrInvalidGenesis.Wrapf("exchange %d locked fees: %v", fee.GetExchangeId(), err)
+			}
 		}
 		if !bexkeeper.HasCoinsForGenesis(collectedByID[fee.GetExchangeId()], locked) {
 			return types.ErrInvalidGenesis.Wrapf("locked fees exceed collected fees for exchange %d", fee.GetExchangeId())
 		}
 	}
+	volumeKeys := map[string]struct{}{}
 	for _, window := range genesis.GetVolumeWindows() {
 		if _, ok := exchangeIDs[window.GetExchangeId()]; !ok {
 			return types.ErrInvalidGenesis.Wrapf("volume window references unknown exchange %d", window.GetExchangeId())
 		}
-		if window.GetDirection() == bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED {
+		if window.GetDirection() != bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B &&
+			window.GetDirection() != bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A {
 			return types.ErrInvalidGenesis.Wrap("invalid volume window")
 		}
+		key := fmt.Sprintf("%d/%d/%d/%d", window.GetExchangeId(), window.GetDirection(), window.GetEpochStartUnix(), window.GetEpochSeconds())
+		if _, exists := volumeKeys[key]; exists {
+			return types.ErrInvalidGenesis.Wrapf("duplicate volume window %s", key)
+		}
+		volumeKeys[key] = struct{}{}
 		if err := bexkeeper.ValidateVolumeEpochForGenesis("volume_window.epoch_seconds", window.GetEpochSeconds(), false); err != nil {
 			return err
 		}
 		if _, err := bexkeeper.ParseIntForGenesis("volume amount", window.GetAmount()); err != nil {
 			return err
 		}
+	}
+	depositorKeys := map[string]struct{}{}
+	for _, depositor := range genesis.GetReserveDepositors() {
+		if _, ok := exchangeIDs[depositor.GetExchangeId()]; !ok {
+			return types.ErrInvalidGenesis.Wrapf("reserve depositor references unknown exchange %d", depositor.GetExchangeId())
+		}
+		canonical, _, err := am.keeper.CanonicalAddressForGenesis(depositor.GetDepositorAddress())
+		if err != nil {
+			return types.ErrInvalidGenesis.Wrapf("invalid reserve depositor: %v", err)
+		}
+		if depositor.GetDepositorAddress() != canonical {
+			return types.ErrInvalidGenesis.Wrapf("reserve depositor %q is not canonical", depositor.GetDepositorAddress())
+		}
+		key := fmt.Sprintf("%d/%s", depositor.GetExchangeId(), canonical)
+		if _, exists := depositorKeys[key]; exists {
+			return types.ErrInvalidGenesis.Wrapf("duplicate reserve depositor %s", key)
+		}
+		depositorKeys[key] = struct{}{}
 	}
 	return nil
 }
@@ -182,6 +287,15 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 		genesis.VolumeWindows = volumeWindows
 	}
 
+	reserveDepositors := []*bexv1.ReserveDepositorGenesis{}
+	found, err = readGenesisField(source, "reserve_depositors", &reserveDepositors)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.ReserveDepositors = reserveDepositors
+	}
+
 	nextExchangeID := genesis.GetNextExchangeId()
 	found, err = readGenesisField(source, "next_exchange_id", &nextExchangeID)
 	if err != nil {
@@ -214,6 +328,9 @@ func writeGenesisState(target appmodule.GenesisTarget, genesis *bexv1.GenesisSta
 	if err := writeGenesisField(target, "volume_windows", genesis.GetVolumeWindows()); err != nil {
 		return err
 	}
+	if err := writeGenesisField(target, "reserve_depositors", genesis.GetReserveDepositors()); err != nil {
+		return err
+	}
 
 	return writeGenesisField(target, "next_exchange_id", genesis.GetNextExchangeId())
 }
@@ -226,10 +343,23 @@ func readGenesisField(source appmodule.GenesisSource, fieldName string, value an
 	if reader == nil {
 		return false, nil
 	}
-	defer reader.Close()
 
-	if err := json.NewDecoder(reader).Decode(value); err != nil {
+	decoder := json.NewDecoder(reader)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(value); err != nil {
+		_ = reader.Close()
 		return false, types.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		_ = reader.Close()
+		if err == nil {
+			return false, types.ErrDecodeGenesisField.Wrapf("%s: unexpected trailing JSON value", fieldName)
+		}
+		return false, types.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+	if err := reader.Close(); err != nil {
+		return false, types.ErrReadGenesisField.Wrapf("%s: close reader: %v", fieldName, err)
 	}
 
 	return true, nil

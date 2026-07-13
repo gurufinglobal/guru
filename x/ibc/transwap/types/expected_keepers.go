@@ -50,10 +50,10 @@ type BexKeeper interface {
 	QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*bexv1.QuoteSwapResponse, error)
 	WithReserveReceiveAllowance(ctx context.Context, exchangeID uint64) context.Context
 	RecordVolumeWindow(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, amountOut math.Int) error
-	AddCollectedFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
+	CollectFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	LockExchangeFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	ReleaseExchangeFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
-	DeductCollectedFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
+	RefundLockedFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	GetReserveAddress(ctx context.Context, exchangeID uint64) sdk.AccAddress
 }
 

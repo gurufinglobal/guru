@@ -17,4 +17,6 @@ var (
 	LockedFeesKey        = collections.NewPrefix(0x07)
 	VolumeWindowKey      = collections.NewPrefix(0x08)
 	VolumePruneCursorKey = collections.NewPrefix(0x09)
+	ReserveDepositorsKey = collections.NewPrefix(0x0a)
+	// Prefixes 0x0b and 0x0c are intentionally reserved and must not be reused.
 )

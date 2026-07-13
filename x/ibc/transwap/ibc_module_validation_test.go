@@ -288,7 +288,7 @@ func (ibcValidationBexKeeper) WithReserveReceiveAllowance(ctx context.Context, _
 func (ibcValidationBexKeeper) RecordVolumeWindow(context.Context, uint64, bexv1.SwapDirection, sdkmath.Int) error {
 	return nil
 }
-func (ibcValidationBexKeeper) AddCollectedFee(context.Context, uint64, sdk.Coin) error {
+func (ibcValidationBexKeeper) CollectFee(context.Context, uint64, sdk.Coin) error {
 	return nil
 }
 func (ibcValidationBexKeeper) LockExchangeFee(context.Context, uint64, sdk.Coin) error {
@@ -297,7 +297,7 @@ func (ibcValidationBexKeeper) LockExchangeFee(context.Context, uint64, sdk.Coin)
 func (ibcValidationBexKeeper) ReleaseExchangeFee(context.Context, uint64, sdk.Coin) error {
 	return nil
 }
-func (ibcValidationBexKeeper) DeductCollectedFee(context.Context, uint64, sdk.Coin) error {
+func (ibcValidationBexKeeper) RefundLockedFee(context.Context, uint64, sdk.Coin) error {
 	return nil
 }
 func (ibcValidationBexKeeper) GetReserveAddress(context.Context, uint64) sdk.AccAddress {

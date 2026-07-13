@@ -3,6 +3,7 @@ package guru.bex.v1;
 
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/query/v1/query.proto";
+import "cosmos_proto/cosmos.proto";
 import "google/api/annotations.proto";
 import "guru/bex/v1/bex.proto";
 
@@ -16,7 +17,7 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
-  // Exchanges returns non-deleted exchanges by bounded pagination.
+  // Exchanges returns exchanges by status-filtered pagination.
   rpc Exchanges(QueryExchangesRequest) returns (QueryExchangesResponse) {
     option (google.api.http).get = "/guru/bex/v1/exchanges";
     option (cosmos.query.v1.module_query_safe) = true;
@@ -31,6 +32,18 @@ service Query {
   // IsAdmin returns whether an address is a registered admin.
   rpc IsAdmin(QueryIsAdminRequest) returns (QueryIsAdminResponse) {
     option (google.api.http).get = "/guru/bex/v1/admins/{admin_address}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // ReserveDepositors returns the allowlisted depositors for one exchange.
+  rpc ReserveDepositors(QueryReserveDepositorsRequest) returns (QueryReserveDepositorsResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/reserve-depositors";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // IsReserveDepositor checks one address's reserve deposit permission.
+  rpc IsReserveDepositor(QueryIsReserveDepositorRequest) returns (QueryIsReserveDepositorResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/reserve-depositors/{depositor_address}";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
@@ -61,12 +74,6 @@ service Query {
   // QuoteSwap returns a deterministic dry-run quote.
   rpc QuoteSwap(QueryQuoteSwapRequest) returns (QueryQuoteSwapResponse) {
     option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/quote/{input_denom}/{amount_in}";
-    option (cosmos.query.v1.module_query_safe) = true;
-  }
-
-  // ExchangeReadiness returns readiness and blocking reasons.
-  rpc ExchangeReadiness(QueryExchangeReadinessRequest) returns (QueryExchangeReadinessResponse) {
-    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/readiness/{direction}";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 }
@@ -115,6 +122,29 @@ message QueryIsAdminResponse {
   bool is_admin = 1;
 }
 
+// QueryReserveDepositorsRequest requests an exchange's reserve depositors.
+message QueryReserveDepositorsRequest {
+  uint64 exchange_id = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryReserveDepositorsResponse returns canonical depositor addresses.
+message QueryReserveDepositorsResponse {
+  repeated string depositors = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryIsReserveDepositorRequest checks one depositor address.
+message QueryIsReserveDepositorRequest {
+  uint64 exchange_id = 1;
+  string depositor_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// QueryIsReserveDepositorResponse returns reserve deposit permission.
+message QueryIsReserveDepositorResponse {
+  bool is_reserve_depositor = 1;
+}
+
 // QueryFeesRequest requests fee ledger state.
 message QueryFeesRequest {
   uint64 exchange_id = 1;
@@ -147,15 +177,4 @@ message QueryQuoteSwapRequest {
 // QueryQuoteSwapResponse returns a dry-run quote.
 message QueryQuoteSwapResponse {
   QuoteSwapResponse quote = 1;
-}
-
-// QueryExchangeReadinessRequest requests readiness.
-message QueryExchangeReadinessRequest {
-  uint64 exchange_id = 1;
-  SwapDirection direction = 2;
-}
-
-// QueryExchangeReadinessResponse returns readiness.
-message QueryExchangeReadinessResponse {
-  ExchangeReadinessResponse readiness = 1;
 }

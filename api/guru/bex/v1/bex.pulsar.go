@@ -7668,636 +7668,6 @@ func (x *fastReflection_QuoteSwapResponse) ProtoMethods() *protoiface.Methods {
 	}
 }
 
-var _ protoreflect.List = (*_ExchangeReadinessResponse_4_list)(nil)
-
-type _ExchangeReadinessResponse_4_list struct {
-	list *[]string
-}
-
-func (x *_ExchangeReadinessResponse_4_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_ExchangeReadinessResponse_4_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfString((*x.list)[i])
-}
-
-func (x *_ExchangeReadinessResponse_4_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.String()
-	concreteValue := valueUnwrapped
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_ExchangeReadinessResponse_4_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.String()
-	concreteValue := valueUnwrapped
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_ExchangeReadinessResponse_4_list) AppendMutable() protoreflect.Value {
-	panic(fmt.Errorf("AppendMutable can not be called on message ExchangeReadinessResponse at list field BlockingReasons as it is not of Message kind"))
-}
-
-func (x *_ExchangeReadinessResponse_4_list) Truncate(n int) {
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_ExchangeReadinessResponse_4_list) NewElement() protoreflect.Value {
-	v := ""
-	return protoreflect.ValueOfString(v)
-}
-
-func (x *_ExchangeReadinessResponse_4_list) IsValid() bool {
-	return x.list != nil
-}
-
-var (
-	md_ExchangeReadinessResponse                  protoreflect.MessageDescriptor
-	fd_ExchangeReadinessResponse_exchange_id      protoreflect.FieldDescriptor
-	fd_ExchangeReadinessResponse_direction        protoreflect.FieldDescriptor
-	fd_ExchangeReadinessResponse_ready            protoreflect.FieldDescriptor
-	fd_ExchangeReadinessResponse_blocking_reasons protoreflect.FieldDescriptor
-)
-
-func init() {
-	file_guru_bex_v1_bex_proto_init()
-	md_ExchangeReadinessResponse = File_guru_bex_v1_bex_proto.Messages().ByName("ExchangeReadinessResponse")
-	fd_ExchangeReadinessResponse_exchange_id = md_ExchangeReadinessResponse.Fields().ByName("exchange_id")
-	fd_ExchangeReadinessResponse_direction = md_ExchangeReadinessResponse.Fields().ByName("direction")
-	fd_ExchangeReadinessResponse_ready = md_ExchangeReadinessResponse.Fields().ByName("ready")
-	fd_ExchangeReadinessResponse_blocking_reasons = md_ExchangeReadinessResponse.Fields().ByName("blocking_reasons")
-}
-
-var _ protoreflect.Message = (*fastReflection_ExchangeReadinessResponse)(nil)
-
-type fastReflection_ExchangeReadinessResponse ExchangeReadinessResponse
-
-func (x *ExchangeReadinessResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_ExchangeReadinessResponse)(x)
-}
-
-func (x *ExchangeReadinessResponse) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_bex_v1_bex_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-var _fastReflection_ExchangeReadinessResponse_messageType fastReflection_ExchangeReadinessResponse_messageType
-var _ protoreflect.MessageType = fastReflection_ExchangeReadinessResponse_messageType{}
-
-type fastReflection_ExchangeReadinessResponse_messageType struct{}
-
-func (x fastReflection_ExchangeReadinessResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_ExchangeReadinessResponse)(nil)
-}
-func (x fastReflection_ExchangeReadinessResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_ExchangeReadinessResponse)
-}
-func (x fastReflection_ExchangeReadinessResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_ExchangeReadinessResponse
-}
-
-// Descriptor returns message descriptor, which contains only the protobuf
-// type information for the message.
-func (x *fastReflection_ExchangeReadinessResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_ExchangeReadinessResponse
-}
-
-// Type returns the message type, which encapsulates both Go and protobuf
-// type information. If the Go type information is not needed,
-// it is recommended that the message descriptor be used instead.
-func (x *fastReflection_ExchangeReadinessResponse) Type() protoreflect.MessageType {
-	return _fastReflection_ExchangeReadinessResponse_messageType
-}
-
-// New returns a newly allocated and mutable empty message.
-func (x *fastReflection_ExchangeReadinessResponse) New() protoreflect.Message {
-	return new(fastReflection_ExchangeReadinessResponse)
-}
-
-// Interface unwraps the message reflection interface and
-// returns the underlying ProtoMessage interface.
-func (x *fastReflection_ExchangeReadinessResponse) Interface() protoreflect.ProtoMessage {
-	return (*ExchangeReadinessResponse)(x)
-}
-
-// Range iterates over every populated field in an undefined order,
-// calling f for each field descriptor and value encountered.
-// Range returns immediately if f returns false.
-// While iterating, mutating operations may only be performed
-// on the current field descriptor.
-func (x *fastReflection_ExchangeReadinessResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.ExchangeId != uint64(0) {
-		value := protoreflect.ValueOfUint64(x.ExchangeId)
-		if !f(fd_ExchangeReadinessResponse_exchange_id, value) {
-			return
-		}
-	}
-	if x.Direction != 0 {
-		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.Direction))
-		if !f(fd_ExchangeReadinessResponse_direction, value) {
-			return
-		}
-	}
-	if x.Ready != false {
-		value := protoreflect.ValueOfBool(x.Ready)
-		if !f(fd_ExchangeReadinessResponse_ready, value) {
-			return
-		}
-	}
-	if len(x.BlockingReasons) != 0 {
-		value := protoreflect.ValueOfList(&_ExchangeReadinessResponse_4_list{list: &x.BlockingReasons})
-		if !f(fd_ExchangeReadinessResponse_blocking_reasons, value) {
-			return
-		}
-	}
-}
-
-// Has reports whether a field is populated.
-//
-// Some fields have the property of nullability where it is possible to
-// distinguish between the default value of a field and whether the field
-// was explicitly populated with the default value. Singular message fields,
-// member fields of a oneof, and proto2 scalar fields are nullable. Such
-// fields are populated only if explicitly set.
-//
-// In other cases (aside from the nullable cases above),
-// a proto3 scalar field is populated if it contains a non-zero value, and
-// a repeated field is populated if it is non-empty.
-func (x *fastReflection_ExchangeReadinessResponse) Has(fd protoreflect.FieldDescriptor) bool {
-	switch fd.FullName() {
-	case "guru.bex.v1.ExchangeReadinessResponse.exchange_id":
-		return x.ExchangeId != uint64(0)
-	case "guru.bex.v1.ExchangeReadinessResponse.direction":
-		return x.Direction != 0
-	case "guru.bex.v1.ExchangeReadinessResponse.ready":
-		return x.Ready != false
-	case "guru.bex.v1.ExchangeReadinessResponse.blocking_reasons":
-		return len(x.BlockingReasons) != 0
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ExchangeReadinessResponse"))
-		}
-		panic(fmt.Errorf("message guru.bex.v1.ExchangeReadinessResponse does not contain field %s", fd.FullName()))
-	}
-}
-
-// Clear clears the field such that a subsequent Has call reports false.
-//
-// Clearing an extension field clears both the extension type and value
-// associated with the given field number.
-//
-// Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_ExchangeReadinessResponse) Clear(fd protoreflect.FieldDescriptor) {
-	switch fd.FullName() {
-	case "guru.bex.v1.ExchangeReadinessResponse.exchange_id":
-		x.ExchangeId = uint64(0)
-	case "guru.bex.v1.ExchangeReadinessResponse.direction":
-		x.Direction = 0
-	case "guru.bex.v1.ExchangeReadinessResponse.ready":
-		x.Ready = false
-	case "guru.bex.v1.ExchangeReadinessResponse.blocking_reasons":
-		x.BlockingReasons = nil
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ExchangeReadinessResponse"))
-		}
-		panic(fmt.Errorf("message guru.bex.v1.ExchangeReadinessResponse does not contain field %s", fd.FullName()))
-	}
-}
-
-// Get retrieves the value for a field.
-//
-// For unpopulated scalars, it returns the default value, where
-// the default value of a bytes scalar is guaranteed to be a copy.
-// For unpopulated composite types, it returns an empty, read-only view
-// of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_ExchangeReadinessResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
-	switch descriptor.FullName() {
-	case "guru.bex.v1.ExchangeReadinessResponse.exchange_id":
-		value := x.ExchangeId
-		return protoreflect.ValueOfUint64(value)
-	case "guru.bex.v1.ExchangeReadinessResponse.direction":
-		value := x.Direction
-		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
-	case "guru.bex.v1.ExchangeReadinessResponse.ready":
-		value := x.Ready
-		return protoreflect.ValueOfBool(value)
-	case "guru.bex.v1.ExchangeReadinessResponse.blocking_reasons":
-		if len(x.BlockingReasons) == 0 {
-			return protoreflect.ValueOfList(&_ExchangeReadinessResponse_4_list{})
-		}
-		listValue := &_ExchangeReadinessResponse_4_list{list: &x.BlockingReasons}
-		return protoreflect.ValueOfList(listValue)
-	default:
-		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ExchangeReadinessResponse"))
-		}
-		panic(fmt.Errorf("message guru.bex.v1.ExchangeReadinessResponse does not contain field %s", descriptor.FullName()))
-	}
-}
-
-// Set stores the value for a field.
-//
-// For a field belonging to a oneof, it implicitly clears any other field
-// that may be currently set within the same oneof.
-// For extension fields, it implicitly stores the provided ExtensionType.
-// When setting a composite type, it is unspecified whether the stored value
-// aliases the source's memory in any way. If the composite value is an
-// empty, read-only value, then it panics.
-//
-// Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_ExchangeReadinessResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
-	switch fd.FullName() {
-	case "guru.bex.v1.ExchangeReadinessResponse.exchange_id":
-		x.ExchangeId = value.Uint()
-	case "guru.bex.v1.ExchangeReadinessResponse.direction":
-		x.Direction = (SwapDirection)(value.Enum())
-	case "guru.bex.v1.ExchangeReadinessResponse.ready":
-		x.Ready = value.Bool()
-	case "guru.bex.v1.ExchangeReadinessResponse.blocking_reasons":
-		lv := value.List()
-		clv := lv.(*_ExchangeReadinessResponse_4_list)
-		x.BlockingReasons = *clv.list
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ExchangeReadinessResponse"))
-		}
-		panic(fmt.Errorf("message guru.bex.v1.ExchangeReadinessResponse does not contain field %s", fd.FullName()))
-	}
-}
-
-// Mutable returns a mutable reference to a composite type.
-//
-// If the field is unpopulated, it may allocate a composite value.
-// For a field belonging to a oneof, it implicitly clears any other field
-// that may be currently set within the same oneof.
-// For extension fields, it implicitly stores the provided ExtensionType
-// if not already stored.
-// It panics if the field does not contain a composite type.
-//
-// Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_ExchangeReadinessResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
-	switch fd.FullName() {
-	case "guru.bex.v1.ExchangeReadinessResponse.blocking_reasons":
-		if x.BlockingReasons == nil {
-			x.BlockingReasons = []string{}
-		}
-		value := &_ExchangeReadinessResponse_4_list{list: &x.BlockingReasons}
-		return protoreflect.ValueOfList(value)
-	case "guru.bex.v1.ExchangeReadinessResponse.exchange_id":
-		panic(fmt.Errorf("field exchange_id of message guru.bex.v1.ExchangeReadinessResponse is not mutable"))
-	case "guru.bex.v1.ExchangeReadinessResponse.direction":
-		panic(fmt.Errorf("field direction of message guru.bex.v1.ExchangeReadinessResponse is not mutable"))
-	case "guru.bex.v1.ExchangeReadinessResponse.ready":
-		panic(fmt.Errorf("field ready of message guru.bex.v1.ExchangeReadinessResponse is not mutable"))
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ExchangeReadinessResponse"))
-		}
-		panic(fmt.Errorf("message guru.bex.v1.ExchangeReadinessResponse does not contain field %s", fd.FullName()))
-	}
-}
-
-// NewField returns a new value that is assignable to the field
-// for the given descriptor. For scalars, this returns the default value.
-// For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_ExchangeReadinessResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
-	switch fd.FullName() {
-	case "guru.bex.v1.ExchangeReadinessResponse.exchange_id":
-		return protoreflect.ValueOfUint64(uint64(0))
-	case "guru.bex.v1.ExchangeReadinessResponse.direction":
-		return protoreflect.ValueOfEnum(0)
-	case "guru.bex.v1.ExchangeReadinessResponse.ready":
-		return protoreflect.ValueOfBool(false)
-	case "guru.bex.v1.ExchangeReadinessResponse.blocking_reasons":
-		list := []string{}
-		return protoreflect.ValueOfList(&_ExchangeReadinessResponse_4_list{list: &list})
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.ExchangeReadinessResponse"))
-		}
-		panic(fmt.Errorf("message guru.bex.v1.ExchangeReadinessResponse does not contain field %s", fd.FullName()))
-	}
-}
-
-// WhichOneof reports which field within the oneof is populated,
-// returning nil if none are populated.
-// It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_ExchangeReadinessResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
-	switch d.FullName() {
-	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.ExchangeReadinessResponse", d.FullName()))
-	}
-	panic("unreachable")
-}
-
-// GetUnknown retrieves the entire list of unknown fields.
-// The caller may only mutate the contents of the RawFields
-// if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_ExchangeReadinessResponse) GetUnknown() protoreflect.RawFields {
-	return x.unknownFields
-}
-
-// SetUnknown stores an entire list of unknown fields.
-// The raw fields must be syntactically valid according to the wire format.
-// An implementation may panic if this is not the case.
-// Once stored, the caller must not mutate the content of the RawFields.
-// An empty RawFields may be passed to clear the fields.
-//
-// SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_ExchangeReadinessResponse) SetUnknown(fields protoreflect.RawFields) {
-	x.unknownFields = fields
-}
-
-// IsValid reports whether the message is valid.
-//
-// An invalid message is an empty, read-only value.
-//
-// An invalid message often corresponds to a nil pointer of the concrete
-// message type, but the details are implementation dependent.
-// Validity is not part of the protobuf data model, and may not
-// be preserved in marshaling or other operations.
-func (x *fastReflection_ExchangeReadinessResponse) IsValid() bool {
-	return x != nil
-}
-
-// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
-// This method may return nil.
-//
-// The returned methods type is identical to
-// "google.golang.org/protobuf/runtime/protoiface".Methods.
-// Consult the protoiface package documentation for details.
-func (x *fastReflection_ExchangeReadinessResponse) ProtoMethods() *protoiface.Methods {
-	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*ExchangeReadinessResponse)
-		if x == nil {
-			return protoiface.SizeOutput{
-				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-				Size:              0,
-			}
-		}
-		options := runtime.SizeInputToOptions(input)
-		_ = options
-		var n int
-		var l int
-		_ = l
-		if x.ExchangeId != 0 {
-			n += 1 + runtime.Sov(uint64(x.ExchangeId))
-		}
-		if x.Direction != 0 {
-			n += 1 + runtime.Sov(uint64(x.Direction))
-		}
-		if x.Ready {
-			n += 2
-		}
-		if len(x.BlockingReasons) > 0 {
-			for _, s := range x.BlockingReasons {
-				l = len(s)
-				n += 1 + l + runtime.Sov(uint64(l))
-			}
-		}
-		if x.unknownFields != nil {
-			n += len(x.unknownFields)
-		}
-		return protoiface.SizeOutput{
-			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-			Size:              n,
-		}
-	}
-
-	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*ExchangeReadinessResponse)
-		if x == nil {
-			return protoiface.MarshalOutput{
-				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-				Buf:               input.Buf,
-			}, nil
-		}
-		options := runtime.MarshalInputToOptions(input)
-		_ = options
-		size := options.Size(x)
-		dAtA := make([]byte, size)
-		i := len(dAtA)
-		_ = i
-		var l int
-		_ = l
-		if x.unknownFields != nil {
-			i -= len(x.unknownFields)
-			copy(dAtA[i:], x.unknownFields)
-		}
-		if len(x.BlockingReasons) > 0 {
-			for iNdEx := len(x.BlockingReasons) - 1; iNdEx >= 0; iNdEx-- {
-				i -= len(x.BlockingReasons[iNdEx])
-				copy(dAtA[i:], x.BlockingReasons[iNdEx])
-				i = runtime.EncodeVarint(dAtA, i, uint64(len(x.BlockingReasons[iNdEx])))
-				i--
-				dAtA[i] = 0x22
-			}
-		}
-		if x.Ready {
-			i--
-			if x.Ready {
-				dAtA[i] = 1
-			} else {
-				dAtA[i] = 0
-			}
-			i--
-			dAtA[i] = 0x18
-		}
-		if x.Direction != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.Direction))
-			i--
-			dAtA[i] = 0x10
-		}
-		if x.ExchangeId != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.ExchangeId))
-			i--
-			dAtA[i] = 0x8
-		}
-		if input.Buf != nil {
-			input.Buf = append(input.Buf, dAtA...)
-		} else {
-			input.Buf = dAtA
-		}
-		return protoiface.MarshalOutput{
-			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-			Buf:               input.Buf,
-		}, nil
-	}
-	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*ExchangeReadinessResponse)
-		if x == nil {
-			return protoiface.UnmarshalOutput{
-				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-				Flags:             input.Flags,
-			}, nil
-		}
-		options := runtime.UnmarshalInputToOptions(input)
-		_ = options
-		dAtA := input.Buf
-		l := len(dAtA)
-		iNdEx := 0
-		for iNdEx < l {
-			preIndex := iNdEx
-			var wire uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				wire |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			fieldNum := int32(wire >> 3)
-			wireType := int(wire & 0x7)
-			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: ExchangeReadinessResponse: wiretype end group for non-group")
-			}
-			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: ExchangeReadinessResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-			}
-			switch fieldNum {
-			case 1:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ExchangeId", wireType)
-				}
-				x.ExchangeId = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.ExchangeId |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-			case 2:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Direction", wireType)
-				}
-				x.Direction = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.Direction |= SwapDirection(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-			case 3:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Ready", wireType)
-				}
-				var v int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= int(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				x.Ready = bool(v != 0)
-			case 4:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BlockingReasons", wireType)
-				}
-				var stringLen uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.BlockingReasons = append(x.BlockingReasons, string(dAtA[iNdEx:postIndex]))
-				iNdEx = postIndex
-			default:
-				iNdEx = preIndex
-				skippy, err := runtime.Skip(dAtA[iNdEx:])
-				if err != nil {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
-				}
-				if (skippy < 0) || (iNdEx+skippy) < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if (iNdEx + skippy) > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				if !options.DiscardUnknown {
-					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-				}
-				iNdEx += skippy
-			}
-		}
-
-		if iNdEx > l {
-			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-		}
-		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
-	}
-	return &protoiface.Methods{
-		NoUnkeyedLiterals: struct{}{},
-		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
-		Size:              size,
-		Marshal:           marshal,
-		Unmarshal:         unmarshal,
-		Merge:             nil,
-		CheckInitialized:  nil,
-	}
-}
-
 // Code generated by protoc-gen-go. DO NOT EDIT.
 // versions:
 // 	protoc-gen-go v1.27.0
@@ -8315,10 +7685,14 @@ const (
 type ExchangeStatus int32
 
 const (
+	// EXCHANGE_STATUS_UNSPECIFIED defaults to inactive on registration.
 	ExchangeStatus_EXCHANGE_STATUS_UNSPECIFIED ExchangeStatus = 0
-	ExchangeStatus_EXCHANGE_STATUS_ACTIVE      ExchangeStatus = 1
-	ExchangeStatus_EXCHANGE_STATUS_INACTIVE    ExchangeStatus = 2
-	ExchangeStatus_EXCHANGE_STATUS_DELETED     ExchangeStatus = 3
+	// EXCHANGE_STATUS_ACTIVE allows quote and swap flows.
+	ExchangeStatus_EXCHANGE_STATUS_ACTIVE ExchangeStatus = 1
+	// EXCHANGE_STATUS_INACTIVE retains configuration while blocking swaps.
+	ExchangeStatus_EXCHANGE_STATUS_INACTIVE ExchangeStatus = 2
+	// EXCHANGE_STATUS_DELETED is a permanent logical-delete tombstone.
+	ExchangeStatus_EXCHANGE_STATUS_DELETED ExchangeStatus = 3
 )
 
 // Enum value maps for ExchangeStatus.
@@ -8368,9 +7742,12 @@ func (ExchangeStatus) EnumDescriptor() ([]byte, []int) {
 type SwapDirection int32
 
 const (
+	// SWAP_DIRECTION_UNSPECIFIED is not a valid quote direction.
 	SwapDirection_SWAP_DIRECTION_UNSPECIFIED SwapDirection = 0
-	SwapDirection_SWAP_DIRECTION_A_TO_B      SwapDirection = 1
-	SwapDirection_SWAP_DIRECTION_B_TO_A      SwapDirection = 2
+	// SWAP_DIRECTION_A_TO_B converts denom A into denom B.
+	SwapDirection_SWAP_DIRECTION_A_TO_B SwapDirection = 1
+	// SWAP_DIRECTION_B_TO_A converts denom B into denom A.
+	SwapDirection_SWAP_DIRECTION_B_TO_A SwapDirection = 2
 )
 
 // Enum value maps for SwapDirection.
@@ -9182,66 +8559,6 @@ func (x *QuoteSwapResponse) GetMinAmountIn() string {
 	return ""
 }
 
-// ExchangeReadinessResponse reports whether an exchange can quote/swap.
-type ExchangeReadinessResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ExchangeId      uint64        `protobuf:"varint,1,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
-	Direction       SwapDirection `protobuf:"varint,2,opt,name=direction,proto3,enum=guru.bex.v1.SwapDirection" json:"direction,omitempty"`
-	Ready           bool          `protobuf:"varint,3,opt,name=ready,proto3" json:"ready,omitempty"`
-	BlockingReasons []string      `protobuf:"bytes,4,rep,name=blocking_reasons,json=blockingReasons,proto3" json:"blocking_reasons,omitempty"`
-}
-
-func (x *ExchangeReadinessResponse) Reset() {
-	*x = ExchangeReadinessResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_bex_v1_bex_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ExchangeReadinessResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExchangeReadinessResponse) ProtoMessage() {}
-
-// Deprecated: Use ExchangeReadinessResponse.ProtoReflect.Descriptor instead.
-func (*ExchangeReadinessResponse) Descriptor() ([]byte, []int) {
-	return file_guru_bex_v1_bex_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *ExchangeReadinessResponse) GetExchangeId() uint64 {
-	if x != nil {
-		return x.ExchangeId
-	}
-	return 0
-}
-
-func (x *ExchangeReadinessResponse) GetDirection() SwapDirection {
-	if x != nil {
-		return x.Direction
-	}
-	return SwapDirection_SWAP_DIRECTION_UNSPECIFIED
-}
-
-func (x *ExchangeReadinessResponse) GetReady() bool {
-	if x != nil {
-		return x.Ready
-	}
-	return false
-}
-
-func (x *ExchangeReadinessResponse) GetBlockingReasons() []string {
-	if x != nil {
-		return x.BlockingReasons
-	}
-	return nil
-}
-
 var File_guru_bex_v1_bex_proto protoreflect.FileDescriptor
 
 var file_guru_bex_v1_bex_proto_rawDesc = []byte{
@@ -9502,44 +8819,33 @@ var file_guru_bex_v1_bex_proto_rawDesc = []byte{
 	0x73, 0x65, 0x64, 0x12, 0x32, 0x0a, 0x0d, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x6d, 0x6f, 0x75, 0x6e,
 	0x74, 0x5f, 0x69, 0x6e, 0x18, 0x0e, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a,
 	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x0b, 0x6d, 0x69, 0x6e, 0x41,
-	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x22, 0xb7, 0x01, 0x0a, 0x19, 0x45, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x61, 0x64, 0x69, 0x6e, 0x65, 0x73, 0x73, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x38, 0x0a, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74,
-	0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x77, 0x61, 0x70, 0x44, 0x69, 0x72, 0x65,
-	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e,
-	0x12, 0x14, 0x0a, 0x05, 0x72, 0x65, 0x61, 0x64, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52,
-	0x05, 0x72, 0x65, 0x61, 0x64, 0x79, 0x12, 0x29, 0x0a, 0x10, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x69,
-	0x6e, 0x67, 0x5f, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09,
-	0x52, 0x0f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e,
-	0x73, 0x2a, 0x88, 0x01, 0x0a, 0x0e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x53, 0x74,
-	0x61, 0x74, 0x75, 0x73, 0x12, 0x1f, 0x0a, 0x1b, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45,
-	0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46,
-	0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1a, 0x0a, 0x16, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47,
-	0x45, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x41, 0x43, 0x54, 0x49, 0x56, 0x45, 0x10,
-	0x01, 0x12, 0x1c, 0x0a, 0x18, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54,
-	0x41, 0x54, 0x55, 0x53, 0x5f, 0x49, 0x4e, 0x41, 0x43, 0x54, 0x49, 0x56, 0x45, 0x10, 0x02, 0x12,
-	0x1b, 0x0a, 0x17, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54, 0x41, 0x54,
-	0x55, 0x53, 0x5f, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x44, 0x10, 0x03, 0x2a, 0x65, 0x0a, 0x0d,
-	0x53, 0x77, 0x61, 0x70, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x0a,
-	0x1a, 0x53, 0x57, 0x41, 0x50, 0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f,
-	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x19, 0x0a,
-	0x15, 0x53, 0x57, 0x41, 0x50, 0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f,
-	0x41, 0x5f, 0x54, 0x4f, 0x5f, 0x42, 0x10, 0x01, 0x12, 0x19, 0x0a, 0x15, 0x53, 0x57, 0x41, 0x50,
-	0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x42, 0x5f, 0x54, 0x4f, 0x5f,
-	0x41, 0x10, 0x02, 0x42, 0xa1, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x42, 0x08, 0x42, 0x65, 0x78, 0x50, 0x72, 0x6f, 0x74,
-	0x6f, 0x50, 0x01, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
-	0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75,
-	0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62,
-	0x65, 0x78, 0x2f, 0x76, 0x31, 0x3b, 0x62, 0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x42,
-	0x58, 0xaa, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31, 0xca,
-	0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17,
-	0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d,
-	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a,
-	0x42, 0x65, 0x78, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x2a, 0x88, 0x01, 0x0a, 0x0e, 0x45, 0x78, 0x63, 0x68,
+	0x61, 0x6e, 0x67, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x1f, 0x0a, 0x1b, 0x45, 0x58,
+	0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e,
+	0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1a, 0x0a, 0x16, 0x45,
+	0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x41,
+	0x43, 0x54, 0x49, 0x56, 0x45, 0x10, 0x01, 0x12, 0x1c, 0x0a, 0x18, 0x45, 0x58, 0x43, 0x48, 0x41,
+	0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x49, 0x4e, 0x41, 0x43, 0x54,
+	0x49, 0x56, 0x45, 0x10, 0x02, 0x12, 0x1b, 0x0a, 0x17, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47,
+	0x45, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x44,
+	0x10, 0x03, 0x2a, 0x65, 0x0a, 0x0d, 0x53, 0x77, 0x61, 0x70, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74,
+	0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x0a, 0x1a, 0x53, 0x57, 0x41, 0x50, 0x5f, 0x44, 0x49, 0x52, 0x45,
+	0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45,
+	0x44, 0x10, 0x00, 0x12, 0x19, 0x0a, 0x15, 0x53, 0x57, 0x41, 0x50, 0x5f, 0x44, 0x49, 0x52, 0x45,
+	0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x41, 0x5f, 0x54, 0x4f, 0x5f, 0x42, 0x10, 0x01, 0x12, 0x19,
+	0x0a, 0x15, 0x53, 0x57, 0x41, 0x50, 0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e,
+	0x5f, 0x42, 0x5f, 0x54, 0x4f, 0x5f, 0x41, 0x10, 0x02, 0x42, 0xa1, 0x01, 0x0a, 0x0f, 0x63, 0x6f,
+	0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x42, 0x08, 0x42,
+	0x65, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f,
+	0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f,
+	0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x3b, 0x62, 0x65, 0x78, 0x76,
+	0x31, 0xa2, 0x02, 0x03, 0x47, 0x42, 0x58, 0xaa, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x42,
+	0x65, 0x78, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78,
+	0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56,
+	0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0d,
+	0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42, 0x65, 0x78, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -9555,60 +8861,58 @@ func file_guru_bex_v1_bex_proto_rawDescGZIP() []byte {
 }
 
 var file_guru_bex_v1_bex_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_guru_bex_v1_bex_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_guru_bex_v1_bex_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_guru_bex_v1_bex_proto_goTypes = []interface{}{
-	(ExchangeStatus)(0),               // 0: guru.bex.v1.ExchangeStatus
-	(SwapDirection)(0),                // 1: guru.bex.v1.SwapDirection
-	(*Exchange)(nil),                  // 2: guru.bex.v1.Exchange
-	(*ExchangeUpdatePatch)(nil),       // 3: guru.bex.v1.ExchangeUpdatePatch
-	(*ExchangeStatusPatch)(nil),       // 4: guru.bex.v1.ExchangeStatusPatch
-	(*FeeLedger)(nil),                 // 5: guru.bex.v1.FeeLedger
-	(*VolumeWindow)(nil),              // 6: guru.bex.v1.VolumeWindow
-	(*QuoteSwapRequest)(nil),          // 7: guru.bex.v1.QuoteSwapRequest
-	(*QuoteSwapResponse)(nil),         // 8: guru.bex.v1.QuoteSwapResponse
-	(*ExchangeReadinessResponse)(nil), // 9: guru.bex.v1.ExchangeReadinessResponse
-	nil,                               // 10: guru.bex.v1.Exchange.MetadataEntry
-	nil,                               // 11: guru.bex.v1.ExchangeUpdatePatch.MetadataEntry
-	(*wrapperspb.StringValue)(nil),    // 12: google.protobuf.StringValue
-	(*wrapperspb.UInt32Value)(nil),    // 13: google.protobuf.UInt32Value
-	(*wrapperspb.BoolValue)(nil),      // 14: google.protobuf.BoolValue
-	(*wrapperspb.UInt64Value)(nil),    // 15: google.protobuf.UInt64Value
-	(*v1beta1.Coin)(nil),              // 16: cosmos.base.v1beta1.Coin
+	(ExchangeStatus)(0),            // 0: guru.bex.v1.ExchangeStatus
+	(SwapDirection)(0),             // 1: guru.bex.v1.SwapDirection
+	(*Exchange)(nil),               // 2: guru.bex.v1.Exchange
+	(*ExchangeUpdatePatch)(nil),    // 3: guru.bex.v1.ExchangeUpdatePatch
+	(*ExchangeStatusPatch)(nil),    // 4: guru.bex.v1.ExchangeStatusPatch
+	(*FeeLedger)(nil),              // 5: guru.bex.v1.FeeLedger
+	(*VolumeWindow)(nil),           // 6: guru.bex.v1.VolumeWindow
+	(*QuoteSwapRequest)(nil),       // 7: guru.bex.v1.QuoteSwapRequest
+	(*QuoteSwapResponse)(nil),      // 8: guru.bex.v1.QuoteSwapResponse
+	nil,                            // 9: guru.bex.v1.Exchange.MetadataEntry
+	nil,                            // 10: guru.bex.v1.ExchangeUpdatePatch.MetadataEntry
+	(*wrapperspb.StringValue)(nil), // 11: google.protobuf.StringValue
+	(*wrapperspb.UInt32Value)(nil), // 12: google.protobuf.UInt32Value
+	(*wrapperspb.BoolValue)(nil),   // 13: google.protobuf.BoolValue
+	(*wrapperspb.UInt64Value)(nil), // 14: google.protobuf.UInt64Value
+	(*v1beta1.Coin)(nil),           // 15: cosmos.base.v1beta1.Coin
 }
 var file_guru_bex_v1_bex_proto_depIdxs = []int32{
 	0,  // 0: guru.bex.v1.Exchange.status:type_name -> guru.bex.v1.ExchangeStatus
-	10, // 1: guru.bex.v1.Exchange.metadata:type_name -> guru.bex.v1.Exchange.MetadataEntry
-	12, // 2: guru.bex.v1.ExchangeUpdatePatch.denom_a:type_name -> google.protobuf.StringValue
-	12, // 3: guru.bex.v1.ExchangeUpdatePatch.port_a:type_name -> google.protobuf.StringValue
-	12, // 4: guru.bex.v1.ExchangeUpdatePatch.channel_a:type_name -> google.protobuf.StringValue
-	12, // 5: guru.bex.v1.ExchangeUpdatePatch.denom_b:type_name -> google.protobuf.StringValue
-	12, // 6: guru.bex.v1.ExchangeUpdatePatch.port_b:type_name -> google.protobuf.StringValue
-	12, // 7: guru.bex.v1.ExchangeUpdatePatch.channel_b:type_name -> google.protobuf.StringValue
-	12, // 8: guru.bex.v1.ExchangeUpdatePatch.oracle_symbol_a_to_b:type_name -> google.protobuf.StringValue
-	12, // 9: guru.bex.v1.ExchangeUpdatePatch.oracle_symbol_b_to_a:type_name -> google.protobuf.StringValue
-	13, // 10: guru.bex.v1.ExchangeUpdatePatch.fee_bps_a_to_b:type_name -> google.protobuf.UInt32Value
-	13, // 11: guru.bex.v1.ExchangeUpdatePatch.fee_bps_b_to_a:type_name -> google.protobuf.UInt32Value
-	12, // 12: guru.bex.v1.ExchangeUpdatePatch.limit_a_to_b:type_name -> google.protobuf.StringValue
-	12, // 13: guru.bex.v1.ExchangeUpdatePatch.limit_b_to_a:type_name -> google.protobuf.StringValue
-	12, // 14: guru.bex.v1.ExchangeUpdatePatch.volume_cap_a_to_b:type_name -> google.protobuf.StringValue
-	12, // 15: guru.bex.v1.ExchangeUpdatePatch.volume_cap_b_to_a:type_name -> google.protobuf.StringValue
+	9,  // 1: guru.bex.v1.Exchange.metadata:type_name -> guru.bex.v1.Exchange.MetadataEntry
+	11, // 2: guru.bex.v1.ExchangeUpdatePatch.denom_a:type_name -> google.protobuf.StringValue
+	11, // 3: guru.bex.v1.ExchangeUpdatePatch.port_a:type_name -> google.protobuf.StringValue
+	11, // 4: guru.bex.v1.ExchangeUpdatePatch.channel_a:type_name -> google.protobuf.StringValue
+	11, // 5: guru.bex.v1.ExchangeUpdatePatch.denom_b:type_name -> google.protobuf.StringValue
+	11, // 6: guru.bex.v1.ExchangeUpdatePatch.port_b:type_name -> google.protobuf.StringValue
+	11, // 7: guru.bex.v1.ExchangeUpdatePatch.channel_b:type_name -> google.protobuf.StringValue
+	11, // 8: guru.bex.v1.ExchangeUpdatePatch.oracle_symbol_a_to_b:type_name -> google.protobuf.StringValue
+	11, // 9: guru.bex.v1.ExchangeUpdatePatch.oracle_symbol_b_to_a:type_name -> google.protobuf.StringValue
+	12, // 10: guru.bex.v1.ExchangeUpdatePatch.fee_bps_a_to_b:type_name -> google.protobuf.UInt32Value
+	12, // 11: guru.bex.v1.ExchangeUpdatePatch.fee_bps_b_to_a:type_name -> google.protobuf.UInt32Value
+	11, // 12: guru.bex.v1.ExchangeUpdatePatch.limit_a_to_b:type_name -> google.protobuf.StringValue
+	11, // 13: guru.bex.v1.ExchangeUpdatePatch.limit_b_to_a:type_name -> google.protobuf.StringValue
+	11, // 14: guru.bex.v1.ExchangeUpdatePatch.volume_cap_a_to_b:type_name -> google.protobuf.StringValue
+	11, // 15: guru.bex.v1.ExchangeUpdatePatch.volume_cap_b_to_a:type_name -> google.protobuf.StringValue
 	4,  // 16: guru.bex.v1.ExchangeUpdatePatch.status:type_name -> guru.bex.v1.ExchangeStatusPatch
-	11, // 17: guru.bex.v1.ExchangeUpdatePatch.metadata:type_name -> guru.bex.v1.ExchangeUpdatePatch.MetadataEntry
-	14, // 18: guru.bex.v1.ExchangeUpdatePatch.clear_metadata:type_name -> google.protobuf.BoolValue
-	13, // 19: guru.bex.v1.ExchangeUpdatePatch.volume_epoch_seconds:type_name -> google.protobuf.UInt32Value
-	13, // 20: guru.bex.v1.ExchangeUpdatePatch.pending_volume_epoch_seconds:type_name -> google.protobuf.UInt32Value
-	15, // 21: guru.bex.v1.ExchangeUpdatePatch.pending_volume_epoch_effective_at_unix:type_name -> google.protobuf.UInt64Value
-	13, // 22: guru.bex.v1.ExchangeUpdatePatch.max_oracle_staleness_seconds:type_name -> google.protobuf.UInt32Value
+	10, // 17: guru.bex.v1.ExchangeUpdatePatch.metadata:type_name -> guru.bex.v1.ExchangeUpdatePatch.MetadataEntry
+	13, // 18: guru.bex.v1.ExchangeUpdatePatch.clear_metadata:type_name -> google.protobuf.BoolValue
+	12, // 19: guru.bex.v1.ExchangeUpdatePatch.volume_epoch_seconds:type_name -> google.protobuf.UInt32Value
+	12, // 20: guru.bex.v1.ExchangeUpdatePatch.pending_volume_epoch_seconds:type_name -> google.protobuf.UInt32Value
+	14, // 21: guru.bex.v1.ExchangeUpdatePatch.pending_volume_epoch_effective_at_unix:type_name -> google.protobuf.UInt64Value
+	12, // 22: guru.bex.v1.ExchangeUpdatePatch.max_oracle_staleness_seconds:type_name -> google.protobuf.UInt32Value
 	0,  // 23: guru.bex.v1.ExchangeStatusPatch.status:type_name -> guru.bex.v1.ExchangeStatus
-	16, // 24: guru.bex.v1.FeeLedger.coins:type_name -> cosmos.base.v1beta1.Coin
+	15, // 24: guru.bex.v1.FeeLedger.coins:type_name -> cosmos.base.v1beta1.Coin
 	1,  // 25: guru.bex.v1.VolumeWindow.direction:type_name -> guru.bex.v1.SwapDirection
 	1,  // 26: guru.bex.v1.QuoteSwapResponse.direction:type_name -> guru.bex.v1.SwapDirection
-	1,  // 27: guru.bex.v1.ExchangeReadinessResponse.direction:type_name -> guru.bex.v1.SwapDirection
-	28, // [28:28] is the sub-list for method output_type
-	28, // [28:28] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	27, // [27:27] is the sub-list for method output_type
+	27, // [27:27] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_guru_bex_v1_bex_proto_init() }
@@ -9701,18 +9005,6 @@ func file_guru_bex_v1_bex_proto_init() {
 				return nil
 			}
 		}
-		file_guru_bex_v1_bex_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExchangeReadinessResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -9720,7 +9012,7 @@ func file_guru_bex_v1_bex_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_guru_bex_v1_bex_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   10,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

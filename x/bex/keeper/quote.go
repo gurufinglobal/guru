@@ -18,6 +18,28 @@ const maxVolumePruneRowsPerRecord = 32
 
 var legacyDecPrecision = new(big.Int).Exp(big.NewInt(10), big.NewInt(sdkmath.LegacyPrecision), nil)
 
+func validateOracleFreshness(blockTime time.Time, updatedAt int64, maxStalenessSeconds uint32) error {
+	if blockTime.IsZero() {
+		blockTime = time.Unix(0, 0)
+	}
+	now := blockTime.Unix()
+	if updatedAt <= 0 || updatedAt > now {
+		return types.ErrStaleOracleRate.Wrap("oracle rate timestamp is outside the valid block-time range")
+	}
+	if maxStalenessSeconds > 0 && now-updatedAt > int64(maxStalenessSeconds) {
+		return types.ErrStaleOracleRate.Wrap("oracle rate is stale")
+	}
+	return nil
+}
+
+func checkedVolumeAdd(used, amount sdkmath.Int) (sdkmath.Int, error) {
+	next, err := used.SafeAdd(amount)
+	if err != nil {
+		return sdkmath.Int{}, types.ErrVolumeCapExceeded.Wrap("volume usage exceeds uint256 max")
+	}
+	return next, nil
+}
+
 func (k Keeper) ResolveSwapDirection(ctx context.Context, exchangeID uint64, inputDenom string) (bexv1.SwapDirection, error) {
 	exchange, err := k.GetActiveExchange(ctx, exchangeID)
 	if err != nil {
@@ -70,14 +92,12 @@ func (k Keeper) QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*be
 	if err != nil || !rate.IsPositive() {
 		return nil, types.ErrInvalidOracleRate.Wrapf("invalid oracle rate %q", rateValue.GetValue())
 	}
-	if exchange.GetMaxOracleStalenessSeconds() > 0 {
-		blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
-		if blockTime.IsZero() {
-			blockTime = time.Unix(0, 0)
-		}
-		if rateValue.GetBlockTimeUnix() <= 0 || blockTime.Unix()-rateValue.GetBlockTimeUnix() > int64(exchange.GetMaxOracleStalenessSeconds()) {
-			return nil, types.ErrStaleOracleRate.Wrap("oracle rate is stale")
-		}
+	if err := validateOracleFreshness(
+		sdk.UnwrapSDKContext(ctx).BlockTime(),
+		rateValue.GetBlockTimeUnix(),
+		exchange.GetMaxOracleStalenessSeconds(),
+	); err != nil {
+		return nil, err
 	}
 	fee := ceilFee(amountIn, feeBps)
 	netIn := amountIn.Sub(fee)
@@ -98,7 +118,11 @@ func (k Keeper) QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*be
 	if err != nil {
 		return nil, err
 	}
-	if !volumeCap.IsZero() && used.Add(amountOut).GT(volumeCap) {
+	nextVolume, err := checkedVolumeAdd(used, amountOut)
+	if err != nil {
+		return nil, err
+	}
+	if !volumeCap.IsZero() && nextVolume.GT(volumeCap) {
 		return nil, types.ErrVolumeCapExceeded.Wrap("quote output exceeds volume cap")
 	}
 	return &bexv1.QuoteSwapResponse{
@@ -203,7 +227,7 @@ func (k Keeper) RecordVolumeWindow(ctx context.Context, exchangeID uint64, direc
 	if err != nil {
 		return err
 	}
-	if !amountOut.IsPositive() {
+	if amountOut.IsNil() || !amountOut.IsPositive() {
 		return types.ErrInvalidRequest.Wrap("amount_out must be positive")
 	}
 	exchange, err = k.activatePendingVolumeEpoch(ctx, exchange)
@@ -224,7 +248,10 @@ func (k Keeper) RecordVolumeWindow(ctx context.Context, exchangeID uint64, direc
 			return err
 		}
 	}
-	next := used.Add(amountOut)
+	next, err := checkedVolumeAdd(used, amountOut)
+	if err != nil {
+		return err
+	}
 	if !cap.IsZero() && next.GT(cap) {
 		emitEvent(
 			ctx,
@@ -291,7 +318,11 @@ func (k Keeper) activatePendingVolumeEpoch(ctx context.Context, exchange *bexv1.
 	updated.VolumeEpochSeconds = effectiveEpoch
 	updated.PendingVolumeEpochSeconds = 0
 	updated.PendingVolumeEpochEffectiveAtUnix = 0
-	updated.Revision++
+	nextRevision, err := incrementRevision(updated.GetRevision())
+	if err != nil {
+		return nil, err
+	}
+	updated.Revision = nextRevision
 	if err := k.exchanges.Set(ctx, updated.GetId(), updated); err != nil {
 		return nil, err
 	}

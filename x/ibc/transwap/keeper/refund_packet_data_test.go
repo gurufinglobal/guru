@@ -53,7 +53,7 @@ func (refundBexKeeperMock) RecordVolumeWindow(context.Context, uint64, bexv1.Swa
 	return nil
 }
 
-func (refundBexKeeperMock) AddCollectedFee(context.Context, uint64, sdk.Coin) error {
+func (refundBexKeeperMock) CollectFee(context.Context, uint64, sdk.Coin) error {
 	return nil
 }
 
@@ -65,7 +65,7 @@ func (refundBexKeeperMock) ReleaseExchangeFee(context.Context, uint64, sdk.Coin)
 	return nil
 }
 
-func (refundBexKeeperMock) DeductCollectedFee(context.Context, uint64, sdk.Coin) error {
+func (refundBexKeeperMock) RefundLockedFee(context.Context, uint64, sdk.Coin) error {
 	return nil
 }
 
@@ -196,7 +196,7 @@ func TestAcknowledgementSuccessReleasesExchangeRefundFee(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, []sdk.Coin{sdk.NewInt64Coin("agxn", 3)}, bexKeeper.released)
-	require.Empty(t, bexKeeper.deducted)
+	require.Empty(t, bexKeeper.refunded)
 	require.False(t, k.HasRefundPacketData(ctx, key))
 }
 
@@ -234,7 +234,7 @@ func TestAcknowledgementSuccessIsIdempotentAfterMetadataDeleted(t *testing.T) {
 	}
 
 	require.Equal(t, []sdk.Coin{sdk.NewInt64Coin("agxn", 3)}, bexKeeper.released)
-	require.Empty(t, bexKeeper.deducted)
+	require.Empty(t, bexKeeper.refunded)
 	require.False(t, k.HasRefundPacketData(ctx, key))
 }
 
@@ -284,7 +284,7 @@ func TestInvalidAcknowledgementDoesNotMutateRefundState(t *testing.T) {
 	require.Error(t, err)
 
 	require.Empty(t, state.bexKeeper.released)
-	require.Empty(t, state.bexKeeper.deducted)
+	require.Empty(t, state.bexKeeper.refunded)
 	require.True(t, state.bankKeeper.GetAllBalances(state.ctx, state.reserve).IsZero())
 	require.Equal(t, sdk.NewCoins(state.fee), state.bankKeeper.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)))
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1000)), state.bankKeeper.GetAllBalances(state.ctx, transtypes.GetEscrowAddress(transtypes.PortID, "channel-7")))
@@ -367,8 +367,8 @@ func TestAcknowledgementSuccessForRetryPacketClearsFeeFreeMetadata(t *testing.T)
 		successAck,
 	))
 
-	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.released)
-	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.deducted)
+	require.Empty(t, state.bexKeeper.released)
+	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.refunded)
 	require.Equal(t, sdk.NewCoins(state.fee), state.bankKeeper.GetAllBalances(state.ctx, state.reserve))
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1000)), state.bankKeeper.GetAllBalances(state.ctx, transtypes.GetEscrowAddress(transtypes.PortID, "channel-7")))
 	require.Equal(t, sdk.NewInt64Coin("agxn", 1000), state.k.GetTotalEscrowForDenom(state.ctx, "agxn"))
@@ -400,8 +400,8 @@ func TestTimeoutForRetryPacketCreatesNextFeeFreeRetryWithoutDoubleFee(t *testing
 		retryData,
 	))
 
-	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.released)
-	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.deducted)
+	require.Empty(t, state.bexKeeper.released)
+	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.refunded)
 	require.Equal(t, sdk.NewCoins(state.fee), state.bankKeeper.GetAllBalances(state.ctx, state.reserve))
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1000)), state.bankKeeper.GetAllBalances(state.ctx, transtypes.GetEscrowAddress(transtypes.PortID, "channel-7")))
 	require.Equal(t, sdk.NewInt64Coin("agxn", 1000), state.k.GetTotalEscrowForDenom(state.ctx, "agxn"))
@@ -456,8 +456,8 @@ func TestTimeoutAfterRetrySuccessAckIsNoop(t *testing.T) {
 		retryData,
 	))
 
-	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.released)
-	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.deducted)
+	require.Empty(t, state.bexKeeper.released)
+	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.refunded)
 	require.Equal(t, sdk.NewCoins(state.fee), state.bankKeeper.GetAllBalances(state.ctx, state.reserve))
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1000)), state.bankKeeper.GetAllBalances(state.ctx, transtypes.GetEscrowAddress(transtypes.PortID, "channel-7")))
 	require.Equal(t, sdk.NewInt64Coin("agxn", 1000), state.k.GetTotalEscrowForDenom(state.ctx, "agxn"))
@@ -475,7 +475,7 @@ func TestPerformExchangeRefundReturnsFeeAndCreatesRetryPacket(t *testing.T) {
 	bankKeeper.SetBalance(reserve, sdk.NewCoins(sdk.NewInt64Coin("agxn", 997)))
 	bankKeeper.SetBalance(authtypes.NewModuleAddress(bextypes.ModuleName), sdk.NewCoins(fee))
 	ics4 := &refundAccountingICS4Wrapper{sequence: 88}
-	bexKeeper := &refundAccountingBexKeeper{reserve: reserve}
+	bexKeeper := &refundAccountingBexKeeper{reserve: reserve, bankKeeper: bankKeeper}
 
 	k.BankKeeper = bankKeeper
 	k.BexKeeper = bexKeeper
@@ -499,8 +499,8 @@ func TestPerformExchangeRefundReturnsFeeAndCreatesRetryPacket(t *testing.T) {
 
 	require.NoError(t, k.performExchangeRefund(ctx, originalKey))
 
-	require.Equal(t, []sdk.Coin{fee}, bexKeeper.released)
-	require.Equal(t, []sdk.Coin{fee}, bexKeeper.deducted)
+	require.Empty(t, bexKeeper.released)
+	require.Equal(t, []sdk.Coin{fee}, bexKeeper.refunded)
 	require.True(t, bankKeeper.GetAllBalances(ctx, reserve).IsZero())
 	require.True(t, bankKeeper.GetAllBalances(ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
@@ -558,7 +558,7 @@ func setupExchangeRefundCallback(t *testing.T) exchangeRefundCallbackState {
 	bankKeeper.SetBalance(escrow, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1000)))
 	bankKeeper.SetBalance(authtypes.NewModuleAddress(bextypes.ModuleName), sdk.NewCoins(fee))
 	ics4 := &refundAccountingICS4Wrapper{sequence: 88}
-	bexKeeper := &refundAccountingBexKeeper{reserve: reserve}
+	bexKeeper := &refundAccountingBexKeeper{reserve: reserve, bankKeeper: bankKeeper}
 
 	k.BankKeeper = bankKeeper
 	k.BexKeeper = bexKeeper
@@ -598,8 +598,8 @@ func setupExchangeRefundCallback(t *testing.T) exchangeRefundCallbackState {
 func requireExchangeRefundCallbackState(t *testing.T, state exchangeRefundCallbackState) {
 	t.Helper()
 
-	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.released)
-	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.deducted)
+	require.Empty(t, state.bexKeeper.released)
+	require.Equal(t, []sdk.Coin{state.fee}, state.bexKeeper.refunded)
 	require.Equal(t, sdk.NewCoins(state.fee), state.bankKeeper.GetAllBalances(state.ctx, state.reserve))
 	require.True(t, state.bankKeeper.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
@@ -637,9 +637,10 @@ func retryInternalTransferDataFromSentPacket(t *testing.T, packet sentRefundPack
 }
 
 type refundAccountingBexKeeper struct {
-	reserve  sdk.AccAddress
-	released []sdk.Coin
-	deducted []sdk.Coin
+	reserve    sdk.AccAddress
+	bankKeeper *refundAccountingBankKeeper
+	released   []sdk.Coin
+	refunded   []sdk.Coin
 }
 
 func (m *refundAccountingBexKeeper) ResolveSwapDirection(context.Context, uint64, string) (bexv1.SwapDirection, error) {
@@ -658,7 +659,7 @@ func (m *refundAccountingBexKeeper) RecordVolumeWindow(context.Context, uint64, 
 	return nil
 }
 
-func (m *refundAccountingBexKeeper) AddCollectedFee(context.Context, uint64, sdk.Coin) error {
+func (m *refundAccountingBexKeeper) CollectFee(context.Context, uint64, sdk.Coin) error {
 	return nil
 }
 
@@ -671,8 +672,11 @@ func (m *refundAccountingBexKeeper) ReleaseExchangeFee(_ context.Context, _ uint
 	return nil
 }
 
-func (m *refundAccountingBexKeeper) DeductCollectedFee(_ context.Context, _ uint64, fee sdk.Coin) error {
-	m.deducted = append(m.deducted, fee)
+func (m *refundAccountingBexKeeper) RefundLockedFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
+	if err := m.bankKeeper.SendCoinsFromModuleToAccount(ctx, bextypes.ModuleName, m.reserve, sdk.NewCoins(fee)); err != nil {
+		return err
+	}
+	m.refunded = append(m.refunded, fee)
 	return nil
 }
 

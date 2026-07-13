@@ -194,8 +194,26 @@ func TestBexAllMsgSignersIncludeAuthorityWithDistinctFeePayerAndGranter(t *testi
 			authority: adminBytes,
 		},
 		{
+			name: "add reserve depositor",
+			msg: &bexv1.MsgAddReserveDepositor{
+				AdminAddress:     admin,
+				ExchangeId:       7,
+				DepositorAddress: recipient,
+			},
+			authority: adminBytes,
+		},
+		{
+			name: "remove reserve depositor",
+			msg: &bexv1.MsgRemoveReserveDepositor{
+				AdminAddress:     admin,
+				ExchangeId:       7,
+				DepositorAddress: recipient,
+			},
+			authority: adminBytes,
+		},
+		{
 			name:      "deposit reserve",
-			msg:       &bexv1.MsgDepositReserve{AdminAddress: admin, ExchangeId: 7, Amount: amount},
+			msg:       &bexv1.MsgDepositReserve{Sender: admin, ExchangeId: 7, Amount: amount},
 			authority: adminBytes,
 		},
 		{

@@ -183,11 +183,8 @@ func (k Keeper) onRecvExchangePacket(
 	}
 
 	if feeCoin.IsPositive() {
-		if err := k.BankKeeper.SendCoinsFromAccountToModule(ctx, reserveAddr, bextypes.ModuleName, sdk.NewCoins(feeCoin)); err != nil {
-			return errorsmod.Wrapf(err, "unable to move exchange fee to BEX module account: %s", feeCoin.String())
-		}
-		if err := k.BexKeeper.AddCollectedFee(ctx, exchangeID, feeCoin); err != nil {
-			return errorsmod.Wrapf(err, "unable to add collected fee: %s", feeCoin.String())
+		if err := k.BexKeeper.CollectFee(ctx, exchangeID, feeCoin); err != nil {
+			return errorsmod.Wrapf(err, "unable to collect fee: %s", feeCoin.String())
 		}
 		if err := k.BexKeeper.LockExchangeFee(ctx, exchangeID, feeCoin); err != nil {
 			return errorsmod.Wrapf(err, "unable to lock exchange fee: %s", feeCoin.String())
@@ -296,8 +293,7 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, refundKey string) error {
 		return err
 	}
 
-	reserveAcc, err := sdk.AccAddressFromBech32(refundPacket.Sender)
-	if err != nil {
+	if _, err := sdk.AccAddressFromBech32(refundPacket.Sender); err != nil {
 		return errorsmod.Wrapf(err, "invalid reserve address: %s", refundPacket.Sender)
 	}
 
@@ -306,14 +302,8 @@ func (k Keeper) performExchangeRefund(ctx sdk.Context, refundKey string) error {
 		return err
 	}
 	if feeCoin.IsPositive() {
-		if err := k.BexKeeper.ReleaseExchangeFee(ctx, exchangeID, feeCoin); err != nil {
-			return errorsmod.Wrapf(err, "unable to release exchange fee: %s", feeCoin.String())
-		}
-		if err := k.BexKeeper.DeductCollectedFee(ctx, exchangeID, feeCoin); err != nil {
-			return errorsmod.Wrapf(err, "unable to deduct collected fee: %s", feeCoin.String())
-		}
-		if err := k.BankKeeper.SendCoinsFromModuleToAccount(ctx, bextypes.ModuleName, reserveAcc, sdk.NewCoins(feeCoin)); err != nil {
-			return errorsmod.Wrapf(err, "unable to return exchange fee to reserve: %s", feeCoin.String())
+		if err := k.BexKeeper.RefundLockedFee(ctx, exchangeID, feeCoin); err != nil {
+			return errorsmod.Wrapf(err, "unable to refund locked exchange fee: %s", feeCoin.String())
 		}
 	}
 

@@ -34,6 +34,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsSuccessAckAndCommitsAccounting(t *t
 
 	recvBex := &moduleRecvExchangeBexKeeper{
 		reserve:        reserve,
+		bank:           bank,
 		outputDenom:    outputIBCDenom,
 		amountOut:      "100",
 		feeAmount:      "3",
@@ -145,7 +146,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsErrorAckForNonNumericExchangeID(t *
 	require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 	require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 	require.Empty(t, bex.ledger("released"))
-	require.Empty(t, bex.ledger("deducted"))
+	require.Empty(t, bex.ledger("refunded"))
 	require.Empty(t, ics4.sent)
 	require.False(t, k.HasDenom(ctx, types.DenomHash(types.NewDenom("atgxusd", types.NewHop(types.PortID, "channel-0")))))
 }
@@ -279,7 +280,7 @@ func TestIBCModuleOnRecvPacketReturnsErrorAckForMalformedSemanticFields(t *testi
 			require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 			require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 			require.Empty(t, bex.ledger("released"))
-			require.Empty(t, bex.ledger("deducted"))
+			require.Empty(t, bex.ledger("refunded"))
 			require.Empty(t, ics4.sent)
 			require.False(t, k.HasDenom(ctx, types.DenomHash(types.NewDenom("atgxusd", types.NewHop(types.PortID, "channel-0")))))
 		})
@@ -333,7 +334,7 @@ func TestIBCModuleOnRecvExchangePacketRejectsExpiredInheritedTimeoutWithoutMutat
 	require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 	require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 	require.Empty(t, bex.ledger("released"))
-	require.Empty(t, bex.ledger("deducted"))
+	require.Empty(t, bex.ledger("refunded"))
 	require.Empty(t, ics4.sent)
 	require.False(t, k.HasDenom(ctx, types.DenomHash(types.NewDenom("atgxusd", types.NewHop(types.PortID, "channel-0")))))
 }
@@ -435,6 +436,7 @@ func TestIBCModuleOnRecvTransferPacketReturnsSuccessAckAndMintsVoucher(t *testin
 
 type moduleRecvExchangeBexKeeper struct {
 	reserve        sdk.AccAddress
+	bank           *moduleAckRefundBankKeeper
 	outputDenom    string
 	amountOut      string
 	feeAmount      string
@@ -483,7 +485,10 @@ func (m *moduleRecvExchangeBexKeeper) RecordVolumeWindow(_ context.Context, _ ui
 	return nil
 }
 
-func (m *moduleRecvExchangeBexKeeper) AddCollectedFee(_ context.Context, _ uint64, fee sdk.Coin) error {
+func (m *moduleRecvExchangeBexKeeper) CollectFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
+	if err := m.bank.SendCoinsFromAccountToModule(ctx, m.reserve, bextypes.ModuleName, sdk.NewCoins(fee)); err != nil {
+		return err
+	}
 	m.addLedger("collected", fee)
 	return nil
 }
@@ -498,8 +503,11 @@ func (m *moduleRecvExchangeBexKeeper) ReleaseExchangeFee(_ context.Context, _ ui
 	return nil
 }
 
-func (m *moduleRecvExchangeBexKeeper) DeductCollectedFee(_ context.Context, _ uint64, fee sdk.Coin) error {
-	m.addLedger("deducted", fee)
+func (m *moduleRecvExchangeBexKeeper) RefundLockedFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
+	if err := m.bank.SendCoinsFromModuleToAccount(ctx, bextypes.ModuleName, m.reserve, sdk.NewCoins(fee)); err != nil {
+		return err
+	}
+	m.addLedger("refunded", fee)
 	return nil
 }
 

@@ -107,7 +107,6 @@ var (
 		feemarkettypes.ModuleName,
 
 		// no-op and legacy blockers
-		bextypes.ModuleName,
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		transwaptypes.ModuleName,

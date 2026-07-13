@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
@@ -36,6 +37,7 @@ type Keeper struct {
 	lockedFees        collections.Map[uint64, *bexv1.FeeLedger]
 	volumeWindow      collections.Map[volumeWindowKey, string]
 	volumePruneCursor collections.Map[collections.Pair[uint64, uint32], uint64]
+	reserveDepositors collections.KeySet[collections.Pair[uint64, string]]
 
 	schema collections.Schema
 }
@@ -85,7 +87,12 @@ func NewKeeper(
 		collections.PairKeyCodec(collections.Uint64Key, collections.Uint32Key),
 		collections.Uint64Value,
 	)
-
+	k.reserveDepositors = collections.NewKeySet(
+		sb,
+		types.ReserveDepositorsKey,
+		"reserve_depositors",
+		collections.PairKeyCodec(collections.Uint64Key, collections.StringKey),
+	)
 	schema, err := sb.Build()
 	if err != nil {
 		panic(err)
@@ -111,6 +118,56 @@ func (k Keeper) GetReserveAddressString(ctx context.Context, exchangeID uint64) 
 	return k.accountCodec.BytesToString(k.GetReserveAddress(ctx, exchangeID))
 }
 
+func (k Keeper) ensureReserveAccount(ctx context.Context, exchangeID uint64) error {
+	reserve := k.GetReserveAddress(ctx, exchangeID)
+	account := k.accountKeeper.GetAccount(ctx, reserve)
+	if account == nil {
+		account = k.accountKeeper.NewAccountWithAddress(ctx, reserve)
+		k.accountKeeper.SetAccount(ctx, account)
+	}
+	validationErr := validateReserveAccount(account, reserve)
+	if validationErr == nil {
+		return nil
+	}
+
+	// A vesting message can create an arbitrary recipient account before its
+	// deterministic address becomes a registered reserve. Future deterministic
+	// reserve addresses are a protocol-reserved namespace: reclaim only a
+	// keyless, undelegated vesting account, intentionally retire its vesting
+	// lock, and absorb its unchanged bank balance into reserve custody. Auth
+	// replay metadata is preserved. This prevents permanent registration DoS.
+	vestingAccount, ok := account.(vestingexported.VestingAccount)
+	if !ok {
+		return validationErr
+	}
+	if !account.GetAddress().Equals(reserve) {
+		return types.ErrInvariantViolation.Wrap("reserve account address mismatch")
+	}
+	if account.GetPubKey() != nil {
+		return types.ErrInvariantViolation.Wrap("reserve account must not have a public key")
+	}
+	if !vestingAccount.GetDelegatedFree().IsZero() || !vestingAccount.GetDelegatedVesting().IsZero() {
+		return types.ErrInvariantViolation.Wrap("pre-existing reserve vesting account has delegated funds")
+	}
+	recovered := authtypes.NewBaseAccount(reserve, nil, account.GetAccountNumber(), account.GetSequence())
+	k.accountKeeper.SetAccount(ctx, recovered)
+	return validateReserveAccount(recovered, reserve)
+}
+
+func validateReserveAccount(account sdk.AccountI, expected sdk.AccAddress) error {
+	baseAccount, ok := account.(*authtypes.BaseAccount)
+	if !ok || baseAccount == nil {
+		return types.ErrInvariantViolation.Wrap("reserve must be a base account")
+	}
+	if !baseAccount.GetAddress().Equals(expected) {
+		return types.ErrInvariantViolation.Wrap("reserve account address mismatch")
+	}
+	if baseAccount.PubKey != nil {
+		return types.ErrInvariantViolation.Wrap("reserve account must not have a public key")
+	}
+	return nil
+}
+
 func (k Keeper) ensureNextExchangeID(ctx context.Context) error {
 	next, err := k.nextExchangeID.Peek(ctx)
 	if err != nil {
@@ -126,7 +183,17 @@ func (k Keeper) nextID(ctx context.Context) (uint64, error) {
 	if err := k.ensureNextExchangeID(ctx); err != nil {
 		return 0, err
 	}
-	return k.nextExchangeID.Next(ctx)
+	next, err := k.nextExchangeID.Peek(ctx)
+	if err != nil {
+		return 0, err
+	}
+	if next == ^uint64(0) {
+		return 0, types.ErrInvalidRequest.Wrap("exchange id space is exhausted")
+	}
+	if err := k.nextExchangeID.Set(ctx, next+1); err != nil {
+		return 0, err
+	}
+	return next, nil
 }
 
 func (k Keeper) setNextExchangeID(ctx context.Context, next uint64) error {

@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Msg_RegisterAdmin_FullMethodName    = "/guru.bex.v1.Msg/RegisterAdmin"
-	Msg_RemoveAdmin_FullMethodName      = "/guru.bex.v1.Msg/RemoveAdmin"
-	Msg_RegisterExchange_FullMethodName = "/guru.bex.v1.Msg/RegisterExchange"
-	Msg_UpdateExchange_FullMethodName   = "/guru.bex.v1.Msg/UpdateExchange"
-	Msg_DeleteExchange_FullMethodName   = "/guru.bex.v1.Msg/DeleteExchange"
-	Msg_DepositReserve_FullMethodName   = "/guru.bex.v1.Msg/DepositReserve"
-	Msg_WithdrawReserve_FullMethodName  = "/guru.bex.v1.Msg/WithdrawReserve"
-	Msg_WithdrawFees_FullMethodName     = "/guru.bex.v1.Msg/WithdrawFees"
+	Msg_RegisterAdmin_FullMethodName          = "/guru.bex.v1.Msg/RegisterAdmin"
+	Msg_RemoveAdmin_FullMethodName            = "/guru.bex.v1.Msg/RemoveAdmin"
+	Msg_RegisterExchange_FullMethodName       = "/guru.bex.v1.Msg/RegisterExchange"
+	Msg_UpdateExchange_FullMethodName         = "/guru.bex.v1.Msg/UpdateExchange"
+	Msg_DeleteExchange_FullMethodName         = "/guru.bex.v1.Msg/DeleteExchange"
+	Msg_AddReserveDepositor_FullMethodName    = "/guru.bex.v1.Msg/AddReserveDepositor"
+	Msg_RemoveReserveDepositor_FullMethodName = "/guru.bex.v1.Msg/RemoveReserveDepositor"
+	Msg_DepositReserve_FullMethodName         = "/guru.bex.v1.Msg/DepositReserve"
+	Msg_WithdrawReserve_FullMethodName        = "/guru.bex.v1.Msg/WithdrawReserve"
+	Msg_WithdrawFees_FullMethodName           = "/guru.bex.v1.Msg/WithdrawFees"
 )
 
 // MsgClient is the client API for Msg service.
@@ -45,6 +47,10 @@ type MsgClient interface {
 	UpdateExchange(ctx context.Context, in *MsgUpdateExchange, opts ...grpc.CallOption) (*MsgUpdateExchangeResponse, error)
 	// DeleteExchange logically deletes a settled inactive exchange.
 	DeleteExchange(ctx context.Context, in *MsgDeleteExchange, opts ...grpc.CallOption) (*MsgDeleteExchangeResponse, error)
+	// AddReserveDepositor allows an address to deposit into one exchange reserve.
+	AddReserveDepositor(ctx context.Context, in *MsgAddReserveDepositor, opts ...grpc.CallOption) (*MsgAddReserveDepositorResponse, error)
+	// RemoveReserveDepositor revokes an address's reserve deposit permission.
+	RemoveReserveDepositor(ctx context.Context, in *MsgRemoveReserveDepositor, opts ...grpc.CallOption) (*MsgRemoveReserveDepositorResponse, error)
 	// DepositReserve deposits funds into a reserve through scoped allowance.
 	DepositReserve(ctx context.Context, in *MsgDepositReserve, opts ...grpc.CallOption) (*MsgDepositReserveResponse, error)
 	// WithdrawReserve withdraws funds from an inactive reserve.
@@ -111,6 +117,26 @@ func (c *msgClient) DeleteExchange(ctx context.Context, in *MsgDeleteExchange, o
 	return out, nil
 }
 
+func (c *msgClient) AddReserveDepositor(ctx context.Context, in *MsgAddReserveDepositor, opts ...grpc.CallOption) (*MsgAddReserveDepositorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgAddReserveDepositorResponse)
+	err := c.cc.Invoke(ctx, Msg_AddReserveDepositor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RemoveReserveDepositor(ctx context.Context, in *MsgRemoveReserveDepositor, opts ...grpc.CallOption) (*MsgRemoveReserveDepositorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgRemoveReserveDepositorResponse)
+	err := c.cc.Invoke(ctx, Msg_RemoveReserveDepositor_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *msgClient) DepositReserve(ctx context.Context, in *MsgDepositReserve, opts ...grpc.CallOption) (*MsgDepositReserveResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MsgDepositReserveResponse)
@@ -157,6 +183,10 @@ type MsgServer interface {
 	UpdateExchange(context.Context, *MsgUpdateExchange) (*MsgUpdateExchangeResponse, error)
 	// DeleteExchange logically deletes a settled inactive exchange.
 	DeleteExchange(context.Context, *MsgDeleteExchange) (*MsgDeleteExchangeResponse, error)
+	// AddReserveDepositor allows an address to deposit into one exchange reserve.
+	AddReserveDepositor(context.Context, *MsgAddReserveDepositor) (*MsgAddReserveDepositorResponse, error)
+	// RemoveReserveDepositor revokes an address's reserve deposit permission.
+	RemoveReserveDepositor(context.Context, *MsgRemoveReserveDepositor) (*MsgRemoveReserveDepositorResponse, error)
 	// DepositReserve deposits funds into a reserve through scoped allowance.
 	DepositReserve(context.Context, *MsgDepositReserve) (*MsgDepositReserveResponse, error)
 	// WithdrawReserve withdraws funds from an inactive reserve.
@@ -187,6 +217,12 @@ func (UnimplementedMsgServer) UpdateExchange(context.Context, *MsgUpdateExchange
 }
 func (UnimplementedMsgServer) DeleteExchange(context.Context, *MsgDeleteExchange) (*MsgDeleteExchangeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteExchange not implemented")
+}
+func (UnimplementedMsgServer) AddReserveDepositor(context.Context, *MsgAddReserveDepositor) (*MsgAddReserveDepositorResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddReserveDepositor not implemented")
+}
+func (UnimplementedMsgServer) RemoveReserveDepositor(context.Context, *MsgRemoveReserveDepositor) (*MsgRemoveReserveDepositorResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveReserveDepositor not implemented")
 }
 func (UnimplementedMsgServer) DepositReserve(context.Context, *MsgDepositReserve) (*MsgDepositReserveResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DepositReserve not implemented")
@@ -308,6 +344,42 @@ func _Msg_DeleteExchange_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_AddReserveDepositor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddReserveDepositor)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AddReserveDepositor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_AddReserveDepositor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AddReserveDepositor(ctx, req.(*MsgAddReserveDepositor))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RemoveReserveDepositor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveReserveDepositor)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RemoveReserveDepositor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_RemoveReserveDepositor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RemoveReserveDepositor(ctx, req.(*MsgRemoveReserveDepositor))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Msg_DepositReserve_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgDepositReserve)
 	if err := dec(in); err != nil {
@@ -388,6 +460,14 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteExchange",
 			Handler:    _Msg_DeleteExchange_Handler,
+		},
+		{
+			MethodName: "AddReserveDepositor",
+			Handler:    _Msg_AddReserveDepositor_Handler,
+		},
+		{
+			MethodName: "RemoveReserveDepositor",
+			Handler:    _Msg_RemoveReserveDepositor_Handler,
 		},
 		{
 			MethodName: "DepositReserve",

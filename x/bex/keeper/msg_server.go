@@ -64,6 +64,26 @@ func (m MsgServer) DeleteExchange(ctx context.Context, req *bexv1.MsgDeleteExcha
 	return &bexv1.MsgDeleteExchangeResponse{}, m.keeper.DeleteExchange(ctx, req.GetAdminAddress(), req.GetExchangeId())
 }
 
+func (m MsgServer) AddReserveDepositor(ctx context.Context, req *bexv1.MsgAddReserveDepositor) (*bexv1.MsgAddReserveDepositorResponse, error) {
+	if req == nil {
+		return nil, types.ErrInvalidRequest.Wrap("empty request")
+	}
+	if err := m.keeper.AddReserveDepositor(ctx, req.GetAdminAddress(), req.GetExchangeId(), req.GetDepositorAddress()); err != nil {
+		return nil, err
+	}
+	return &bexv1.MsgAddReserveDepositorResponse{}, nil
+}
+
+func (m MsgServer) RemoveReserveDepositor(ctx context.Context, req *bexv1.MsgRemoveReserveDepositor) (*bexv1.MsgRemoveReserveDepositorResponse, error) {
+	if req == nil {
+		return nil, types.ErrInvalidRequest.Wrap("empty request")
+	}
+	if err := m.keeper.RemoveReserveDepositor(ctx, req.GetAdminAddress(), req.GetExchangeId(), req.GetDepositorAddress()); err != nil {
+		return nil, err
+	}
+	return &bexv1.MsgRemoveReserveDepositorResponse{}, nil
+}
+
 func (m MsgServer) DepositReserve(ctx context.Context, req *bexv1.MsgDepositReserve) (*bexv1.MsgDepositReserveResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
@@ -72,7 +92,7 @@ func (m MsgServer) DepositReserve(ctx context.Context, req *bexv1.MsgDepositRese
 	if err != nil {
 		return nil, err
 	}
-	return &bexv1.MsgDepositReserveResponse{}, m.keeper.DepositReserve(ctx, req.GetAdminAddress(), req.GetExchangeId(), amount)
+	return &bexv1.MsgDepositReserveResponse{}, m.keeper.DepositReserve(ctx, req.GetSender(), req.GetExchangeId(), amount)
 }
 
 func (m MsgServer) WithdrawReserve(ctx context.Context, req *bexv1.MsgWithdrawReserve) (*bexv1.MsgWithdrawReserveResponse, error) {

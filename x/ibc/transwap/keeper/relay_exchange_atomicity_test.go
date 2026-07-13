@@ -35,7 +35,7 @@ var (
 	errExchangeAtomicSendPacket   = errors.New("test send packet failure")
 	errExchangeAtomicQuote        = errors.New("test quote failure")
 	errExchangeAtomicBankSend     = errors.New("test bank send failure")
-	errExchangeAtomicAddFee       = errors.New("test add collected fee failure")
+	errExchangeAtomicCollectFee   = errors.New("test collect fee failure")
 	errExchangeAtomicLockFee      = errors.New("test lock exchange fee failure")
 )
 
@@ -644,8 +644,8 @@ func TestExchangeTargetBlockedReceiverErrorAckRefundsAndCreatesRetry(t *testing.
 
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "collected"))
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "locked"))
-	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "released"))
-	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "deducted"))
+	require.Empty(t, state.bex.ledger(state.ctx, "released"))
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "refunded"))
 
 	require.False(t, state.keeper.HasRefundPacketData(state.ctx, GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)))
 	retryKey := GetRefundPacketDataKey(types.PortID, "channel-0", exchangeAtomicSequence+1)
@@ -780,9 +780,9 @@ func TestOnRecvExchangePacketRollsBackStateWhenFeeTransferFailsAfterOutboundPack
 	require.False(t, state.keeper.HasDenom(state.ctx, types.DenomHash(state.inputTokenDenom)))
 }
 
-func TestOnRecvExchangePacketRollsBackStateWhenAddCollectedFeeFailsAfterWrite(t *testing.T) {
+func TestOnRecvExchangePacketRollsBackStateWhenCollectFeeFailsAfterWrite(t *testing.T) {
 	state := setupExchangeReceiveAtomicity(t, false)
-	state.bex.failAddCollectedFee = true
+	state.bex.failCollectFee = true
 
 	err := state.keeper.OnRecvExchangePacket(
 		state.ctx,
@@ -793,7 +793,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenAddCollectedFeeFailsAfterWrite(t 
 		"channel-0",
 		uint64(state.ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
 	)
-	require.ErrorIs(t, err, errExchangeAtomicAddFee)
+	require.ErrorIs(t, err, errExchangeAtomicCollectFee)
 
 	require.Equal(t, sdkmath.NewInt(1000), state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(state.outputIBCDenom))
 	require.True(t, state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(state.inputIBCDenom).IsZero())
@@ -876,6 +876,7 @@ func setupExchangeReceiveAtomicity(t *testing.T, failRecordVolume bool) exchange
 	bex := &exchangeAtomicBexKeeper{
 		storeService:       k.storeService,
 		reserve:            reserve,
+		bank:               bank,
 		outputDenom:        outputIBCDenom,
 		feeAmount:          "3",
 		amountOut:          "100",
@@ -917,13 +918,14 @@ func setupExchangeReceiveAtomicity(t *testing.T, failRecordVolume bool) exchange
 type exchangeAtomicBexKeeper struct {
 	storeService        corestore.KVStoreService
 	reserve             sdk.AccAddress
+	bank                *exchangeAtomicBankKeeper
 	outputDenom         string
 	feeAmount           string
 	amountOut           string
 	routes              map[string]exchangeAtomicSwapRoute
 	quoteByAmount       map[string]exchangeAtomicSwapRoute
 	failRecordVolume    bool
-	failAddCollectedFee bool
+	failCollectFee      bool
 	failLockExchangeFee bool
 	quoteErr            error
 	expectedExchangeID  uint64
@@ -1004,12 +1006,15 @@ func (m *exchangeAtomicBexKeeper) RecordVolumeWindow(ctx context.Context, _ uint
 	return nil
 }
 
-func (m *exchangeAtomicBexKeeper) AddCollectedFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
+func (m *exchangeAtomicBexKeeper) CollectFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
 	if err := m.addLedgerCoin(ctx, "collected", fee); err != nil {
 		return err
 	}
-	if m.failAddCollectedFee {
-		return errExchangeAtomicAddFee
+	if err := m.bank.SendCoinsFromAccountToModule(ctx, m.reserve, bextypes.ModuleName, sdk.NewCoins(fee)); err != nil {
+		return err
+	}
+	if m.failCollectFee {
+		return errExchangeAtomicCollectFee
 	}
 	return nil
 }
@@ -1028,8 +1033,11 @@ func (m *exchangeAtomicBexKeeper) ReleaseExchangeFee(ctx context.Context, _ uint
 	return m.addLedgerCoin(ctx, "released", fee)
 }
 
-func (m *exchangeAtomicBexKeeper) DeductCollectedFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
-	return m.addLedgerCoin(ctx, "deducted", fee)
+func (m *exchangeAtomicBexKeeper) RefundLockedFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
+	if err := m.addLedgerCoin(ctx, "refunded", fee); err != nil {
+		return err
+	}
+	return m.bank.SendCoinsFromModuleToAccount(ctx, bextypes.ModuleName, m.reserve, sdk.NewCoins(fee))
 }
 
 func (m *exchangeAtomicBexKeeper) GetReserveAddress(context.Context, uint64) sdk.AccAddress {

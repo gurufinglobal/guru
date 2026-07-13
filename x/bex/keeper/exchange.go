@@ -3,13 +3,13 @@ package keeper
 import (
 	"context"
 	"errors"
-	"reflect"
 	"strings"
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
+	"google.golang.org/protobuf/proto"
 )
 
 func (k Keeper) RegisterAdmin(ctx context.Context, moderator, admin string) error {
@@ -181,8 +181,8 @@ func (k Keeper) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterExch
 	if err := k.validateActiveRoutes(ctx, exchange); err != nil {
 		return nil, err
 	}
-	if k.accountKeeper.GetAccount(ctx, reserveAddr) == nil {
-		k.accountKeeper.SetAccount(ctx, k.accountKeeper.NewAccountWithAddress(ctx, reserveAddr))
+	if err := k.ensureReserveAccount(ctx, id); err != nil {
+		return nil, err
 	}
 	if err := k.exchanges.Set(ctx, id, exchange); err != nil {
 		return nil, err
@@ -285,6 +285,25 @@ func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, e
 	if current.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE && routeChanged {
 		return nil, types.ErrInvalidRoute.Wrap("route fields cannot change while active")
 	}
+	routeValuesChanged := current.GetDenomA() != updated.GetDenomA() ||
+		current.GetPortA() != updated.GetPortA() ||
+		current.GetChannelA() != updated.GetChannelA() ||
+		current.GetDenomB() != updated.GetDenomB() ||
+		current.GetPortB() != updated.GetPortB() ||
+		current.GetChannelB() != updated.GetChannelB()
+	if routeValuesChanged {
+		collected, err := k.GetCollectedFees(ctx, exchangeID)
+		if err != nil {
+			return nil, err
+		}
+		locked, err := k.GetLockedFees(ctx, exchangeID)
+		if err != nil {
+			return nil, err
+		}
+		if !collected.IsZero() || !locked.IsZero() {
+			return nil, types.ErrInvalidRoute.Wrap("fee ledgers must be zero before route fields change")
+		}
+	}
 	if routeChanged {
 		updated.IbcDenomA, err = buildIBCDenom(updated.GetDenomA(), updated.GetPortA(), updated.GetChannelA())
 		if err != nil {
@@ -346,7 +365,7 @@ func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, e
 	if v := patch.GetMaxOracleStalenessSeconds(); v != nil {
 		updated.MaxOracleStalenessSeconds = v.GetValue()
 	}
-	if reflect.DeepEqual(current, updated) {
+	if proto.Equal(current, updated) {
 		return nil, types.ErrNoOpUpdate.Wrap("patch does not change exchange")
 	}
 	if err := validateMutableExchangeConfig(updated); err != nil {
@@ -358,7 +377,11 @@ func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, e
 			return nil, err
 		}
 	}
-	updated.Revision++
+	nextRevision, err := incrementRevision(updated.GetRevision())
+	if err != nil {
+		return nil, err
+	}
+	updated.Revision = nextRevision
 	if err := k.exchanges.Set(ctx, exchangeID, updated); err != nil {
 		return nil, err
 	}
@@ -408,9 +431,22 @@ func patchIsEmpty(patch *bexv1.ExchangeUpdatePatch) bool {
 }
 
 func cloneExchange(exchange *bexv1.Exchange) *bexv1.Exchange {
-	copied := *exchange
-	copied.Metadata = sortedMetadataCopy(exchange.GetMetadata())
-	return &copied
+	if exchange == nil {
+		return nil
+	}
+	copied := proto.Clone(exchange).(*bexv1.Exchange)
+	copied.Metadata = sortedMetadataCopy(copied.GetMetadata())
+	return copied
+}
+
+func incrementRevision(revision uint64) (uint64, error) {
+	if revision == 0 {
+		return 0, types.ErrRevisionConflict.Wrap("exchange revision must be non-zero")
+	}
+	if revision == ^uint64(0) {
+		return 0, types.ErrRevisionConflict.Wrap("exchange revision is exhausted")
+	}
+	return revision + 1, nil
 }
 
 func (k Keeper) DeleteExchange(ctx context.Context, signer string, exchangeID uint64) error {
@@ -444,7 +480,11 @@ func (k Keeper) DeleteExchange(ctx context.Context, signer string, exchangeID ui
 	}
 	deleted := cloneExchange(exchange)
 	deleted.Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
-	deleted.Revision++
+	nextRevision, err := incrementRevision(deleted.GetRevision())
+	if err != nil {
+		return err
+	}
+	deleted.Revision = nextRevision
 	if err := k.exchanges.Set(ctx, exchangeID, deleted); err != nil {
 		return err
 	}

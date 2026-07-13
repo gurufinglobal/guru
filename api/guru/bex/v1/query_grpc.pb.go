@@ -19,16 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Query_Exchange_FullMethodName          = "/guru.bex.v1.Query/Exchange"
-	Query_Exchanges_FullMethodName         = "/guru.bex.v1.Query/Exchanges"
-	Query_ExchangesByAdmin_FullMethodName  = "/guru.bex.v1.Query/ExchangesByAdmin"
-	Query_IsAdmin_FullMethodName           = "/guru.bex.v1.Query/IsAdmin"
-	Query_CollectedFees_FullMethodName     = "/guru.bex.v1.Query/CollectedFees"
-	Query_LockedFees_FullMethodName        = "/guru.bex.v1.Query/LockedFees"
-	Query_AvailableFees_FullMethodName     = "/guru.bex.v1.Query/AvailableFees"
-	Query_VolumeWindow_FullMethodName      = "/guru.bex.v1.Query/VolumeWindow"
-	Query_QuoteSwap_FullMethodName         = "/guru.bex.v1.Query/QuoteSwap"
-	Query_ExchangeReadiness_FullMethodName = "/guru.bex.v1.Query/ExchangeReadiness"
+	Query_Exchange_FullMethodName           = "/guru.bex.v1.Query/Exchange"
+	Query_Exchanges_FullMethodName          = "/guru.bex.v1.Query/Exchanges"
+	Query_ExchangesByAdmin_FullMethodName   = "/guru.bex.v1.Query/ExchangesByAdmin"
+	Query_IsAdmin_FullMethodName            = "/guru.bex.v1.Query/IsAdmin"
+	Query_ReserveDepositors_FullMethodName  = "/guru.bex.v1.Query/ReserveDepositors"
+	Query_IsReserveDepositor_FullMethodName = "/guru.bex.v1.Query/IsReserveDepositor"
+	Query_CollectedFees_FullMethodName      = "/guru.bex.v1.Query/CollectedFees"
+	Query_LockedFees_FullMethodName         = "/guru.bex.v1.Query/LockedFees"
+	Query_AvailableFees_FullMethodName      = "/guru.bex.v1.Query/AvailableFees"
+	Query_VolumeWindow_FullMethodName       = "/guru.bex.v1.Query/VolumeWindow"
+	Query_QuoteSwap_FullMethodName          = "/guru.bex.v1.Query/QuoteSwap"
 )
 
 // QueryClient is the client API for Query service.
@@ -39,12 +40,16 @@ const (
 type QueryClient interface {
 	// Exchange returns one exchange, including deleted tombstones.
 	Exchange(ctx context.Context, in *QueryExchangeRequest, opts ...grpc.CallOption) (*QueryExchangeResponse, error)
-	// Exchanges returns non-deleted exchanges by bounded pagination.
+	// Exchanges returns exchanges by status-filtered pagination.
 	Exchanges(ctx context.Context, in *QueryExchangesRequest, opts ...grpc.CallOption) (*QueryExchangesResponse, error)
 	// ExchangesByAdmin returns non-deleted exchanges for one admin.
 	ExchangesByAdmin(ctx context.Context, in *QueryExchangesByAdminRequest, opts ...grpc.CallOption) (*QueryExchangesByAdminResponse, error)
 	// IsAdmin returns whether an address is a registered admin.
 	IsAdmin(ctx context.Context, in *QueryIsAdminRequest, opts ...grpc.CallOption) (*QueryIsAdminResponse, error)
+	// ReserveDepositors returns the allowlisted depositors for one exchange.
+	ReserveDepositors(ctx context.Context, in *QueryReserveDepositorsRequest, opts ...grpc.CallOption) (*QueryReserveDepositorsResponse, error)
+	// IsReserveDepositor checks one address's reserve deposit permission.
+	IsReserveDepositor(ctx context.Context, in *QueryIsReserveDepositorRequest, opts ...grpc.CallOption) (*QueryIsReserveDepositorResponse, error)
 	// CollectedFees returns collected fees for an exchange.
 	CollectedFees(ctx context.Context, in *QueryFeesRequest, opts ...grpc.CallOption) (*QueryFeesResponse, error)
 	// LockedFees returns locked fees for an exchange.
@@ -55,8 +60,6 @@ type QueryClient interface {
 	VolumeWindow(ctx context.Context, in *QueryVolumeWindowRequest, opts ...grpc.CallOption) (*QueryVolumeWindowResponse, error)
 	// QuoteSwap returns a deterministic dry-run quote.
 	QuoteSwap(ctx context.Context, in *QueryQuoteSwapRequest, opts ...grpc.CallOption) (*QueryQuoteSwapResponse, error)
-	// ExchangeReadiness returns readiness and blocking reasons.
-	ExchangeReadiness(ctx context.Context, in *QueryExchangeReadinessRequest, opts ...grpc.CallOption) (*QueryExchangeReadinessResponse, error)
 }
 
 type queryClient struct {
@@ -101,6 +104,26 @@ func (c *queryClient) IsAdmin(ctx context.Context, in *QueryIsAdminRequest, opts
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(QueryIsAdminResponse)
 	err := c.cc.Invoke(ctx, Query_IsAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) ReserveDepositors(ctx context.Context, in *QueryReserveDepositorsRequest, opts ...grpc.CallOption) (*QueryReserveDepositorsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryReserveDepositorsResponse)
+	err := c.cc.Invoke(ctx, Query_ReserveDepositors_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) IsReserveDepositor(ctx context.Context, in *QueryIsReserveDepositorRequest, opts ...grpc.CallOption) (*QueryIsReserveDepositorResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryIsReserveDepositorResponse)
+	err := c.cc.Invoke(ctx, Query_IsReserveDepositor_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -157,16 +180,6 @@ func (c *queryClient) QuoteSwap(ctx context.Context, in *QueryQuoteSwapRequest, 
 	return out, nil
 }
 
-func (c *queryClient) ExchangeReadiness(ctx context.Context, in *QueryExchangeReadinessRequest, opts ...grpc.CallOption) (*QueryExchangeReadinessResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(QueryExchangeReadinessResponse)
-	err := c.cc.Invoke(ctx, Query_ExchangeReadiness_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility.
@@ -175,12 +188,16 @@ func (c *queryClient) ExchangeReadiness(ctx context.Context, in *QueryExchangeRe
 type QueryServer interface {
 	// Exchange returns one exchange, including deleted tombstones.
 	Exchange(context.Context, *QueryExchangeRequest) (*QueryExchangeResponse, error)
-	// Exchanges returns non-deleted exchanges by bounded pagination.
+	// Exchanges returns exchanges by status-filtered pagination.
 	Exchanges(context.Context, *QueryExchangesRequest) (*QueryExchangesResponse, error)
 	// ExchangesByAdmin returns non-deleted exchanges for one admin.
 	ExchangesByAdmin(context.Context, *QueryExchangesByAdminRequest) (*QueryExchangesByAdminResponse, error)
 	// IsAdmin returns whether an address is a registered admin.
 	IsAdmin(context.Context, *QueryIsAdminRequest) (*QueryIsAdminResponse, error)
+	// ReserveDepositors returns the allowlisted depositors for one exchange.
+	ReserveDepositors(context.Context, *QueryReserveDepositorsRequest) (*QueryReserveDepositorsResponse, error)
+	// IsReserveDepositor checks one address's reserve deposit permission.
+	IsReserveDepositor(context.Context, *QueryIsReserveDepositorRequest) (*QueryIsReserveDepositorResponse, error)
 	// CollectedFees returns collected fees for an exchange.
 	CollectedFees(context.Context, *QueryFeesRequest) (*QueryFeesResponse, error)
 	// LockedFees returns locked fees for an exchange.
@@ -191,8 +208,6 @@ type QueryServer interface {
 	VolumeWindow(context.Context, *QueryVolumeWindowRequest) (*QueryVolumeWindowResponse, error)
 	// QuoteSwap returns a deterministic dry-run quote.
 	QuoteSwap(context.Context, *QueryQuoteSwapRequest) (*QueryQuoteSwapResponse, error)
-	// ExchangeReadiness returns readiness and blocking reasons.
-	ExchangeReadiness(context.Context, *QueryExchangeReadinessRequest) (*QueryExchangeReadinessResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -215,6 +230,12 @@ func (UnimplementedQueryServer) ExchangesByAdmin(context.Context, *QueryExchange
 func (UnimplementedQueryServer) IsAdmin(context.Context, *QueryIsAdminRequest) (*QueryIsAdminResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method IsAdmin not implemented")
 }
+func (UnimplementedQueryServer) ReserveDepositors(context.Context, *QueryReserveDepositorsRequest) (*QueryReserveDepositorsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReserveDepositors not implemented")
+}
+func (UnimplementedQueryServer) IsReserveDepositor(context.Context, *QueryIsReserveDepositorRequest) (*QueryIsReserveDepositorResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method IsReserveDepositor not implemented")
+}
 func (UnimplementedQueryServer) CollectedFees(context.Context, *QueryFeesRequest) (*QueryFeesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CollectedFees not implemented")
 }
@@ -229,9 +250,6 @@ func (UnimplementedQueryServer) VolumeWindow(context.Context, *QueryVolumeWindow
 }
 func (UnimplementedQueryServer) QuoteSwap(context.Context, *QueryQuoteSwapRequest) (*QueryQuoteSwapResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method QuoteSwap not implemented")
-}
-func (UnimplementedQueryServer) ExchangeReadiness(context.Context, *QueryExchangeReadinessRequest) (*QueryExchangeReadinessResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ExchangeReadiness not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 func (UnimplementedQueryServer) testEmbeddedByValue()               {}
@@ -326,6 +344,42 @@ func _Query_IsAdmin_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ReserveDepositors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryReserveDepositorsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ReserveDepositors(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_ReserveDepositors_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ReserveDepositors(ctx, req.(*QueryReserveDepositorsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_IsReserveDepositor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryIsReserveDepositorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).IsReserveDepositor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_IsReserveDepositor_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).IsReserveDepositor(ctx, req.(*QueryIsReserveDepositorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_CollectedFees_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryFeesRequest)
 	if err := dec(in); err != nil {
@@ -416,24 +470,6 @@ func _Query_QuoteSwap_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_ExchangeReadiness_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryExchangeReadinessRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).ExchangeReadiness(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Query_ExchangeReadiness_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ExchangeReadiness(ctx, req.(*QueryExchangeReadinessRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -458,6 +494,14 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Query_IsAdmin_Handler,
 		},
 		{
+			MethodName: "ReserveDepositors",
+			Handler:    _Query_ReserveDepositors_Handler,
+		},
+		{
+			MethodName: "IsReserveDepositor",
+			Handler:    _Query_IsReserveDepositor_Handler,
+		},
+		{
 			MethodName: "CollectedFees",
 			Handler:    _Query_CollectedFees_Handler,
 		},
@@ -476,10 +520,6 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QuoteSwap",
 			Handler:    _Query_QuoteSwap_Handler,
-		},
-		{
-			MethodName: "ExchangeReadiness",
-			Handler:    _Query_ExchangeReadiness_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

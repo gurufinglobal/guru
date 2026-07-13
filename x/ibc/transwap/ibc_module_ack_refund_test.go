@@ -93,8 +93,8 @@ func TestIBCModuleErrorAcknowledgementRefundsExchangeAndCreatesRetry(t *testing.
 	require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 	require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
-	require.Equal(t, sdk.NewCoins(sdk.NewCoin(inputIBCDenom, sdkmath.NewInt(3))), bex.ledger("released"))
-	require.Equal(t, sdk.NewCoins(sdk.NewCoin(inputIBCDenom, sdkmath.NewInt(3))), bex.ledger("deducted"))
+	require.Empty(t, bex.ledger("released"))
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(inputIBCDenom, sdkmath.NewInt(3))), bex.ledger("refunded"))
 
 	require.False(t, k.HasRefundPacketData(ctx, originalKey))
 	retryKey := keeperpkg.GetRefundPacketDataKey(types.PortID, "channel-0", ics4.sequence)
@@ -180,8 +180,8 @@ func TestIBCModuleTimeoutRefundsExchangeAndCreatesRetry(t *testing.T) {
 	require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 	require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
-	require.Equal(t, sdk.NewCoins(sdk.NewCoin(inputIBCDenom, sdkmath.NewInt(3))), bex.ledger("released"))
-	require.Equal(t, sdk.NewCoins(sdk.NewCoin(inputIBCDenom, sdkmath.NewInt(3))), bex.ledger("deducted"))
+	require.Empty(t, bex.ledger("released"))
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(inputIBCDenom, sdkmath.NewInt(3))), bex.ledger("refunded"))
 
 	require.False(t, k.HasRefundPacketData(ctx, originalKey))
 	retryKey := keeperpkg.GetRefundPacketDataKey(types.PortID, "channel-0", ics4.sequence)
@@ -717,8 +717,8 @@ func (s moduleAckRefundScenario) requirePostOriginalRefundState(t *testing.T) {
 	require.True(t, reserveBalances.AmountOf(s.inputIBCDenom).IsZero())
 	require.True(t, s.bank.GetAllBalances(s.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 	require.True(t, s.bank.GetAllBalances(s.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
-	require.Equal(t, sdk.NewCoins(sdk.NewCoin(s.inputIBCDenom, sdkmath.NewInt(3))), s.bex.ledger("released"))
-	require.Equal(t, sdk.NewCoins(sdk.NewCoin(s.inputIBCDenom, sdkmath.NewInt(3))), s.bex.ledger("deducted"))
+	require.Empty(t, s.bex.ledger("released"))
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(s.inputIBCDenom, sdkmath.NewInt(3))), s.bex.ledger("refunded"))
 }
 
 func (s moduleAckRefundScenario) requireInitialRefundState(t *testing.T) {
@@ -730,7 +730,7 @@ func (s moduleAckRefundScenario) requireInitialRefundState(t *testing.T) {
 	require.True(t, s.bank.GetAllBalances(s.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 	require.Equal(t, sdkmath.NewInt(3), s.bank.GetAllBalances(s.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).AmountOf(s.inputIBCDenom))
 	require.Empty(t, s.bex.ledger("released"))
-	require.Empty(t, s.bex.ledger("deducted"))
+	require.Empty(t, s.bex.ledger("refunded"))
 	require.True(t, s.k.HasRefundPacketData(s.ctx, s.originalKey))
 	require.Empty(t, s.ics4.sent)
 }
@@ -742,7 +742,7 @@ func (s moduleExchangePacketRefundScenario) requireEscrowLocked(t *testing.T) {
 	require.True(t, s.bank.GetAllBalances(s.ctx, s.sender).IsZero())
 	require.Equal(t, s.totalEscrow, s.k.GetTotalEscrowForDenom(s.ctx, s.denom))
 	require.Empty(t, s.bex.ledger("released"))
-	require.Empty(t, s.bex.ledger("deducted"))
+	require.Empty(t, s.bex.ledger("refunded"))
 	require.Empty(t, s.ics4.sent)
 }
 
@@ -753,7 +753,7 @@ func (s moduleExchangePacketRefundScenario) requireEscrowRefunded(t *testing.T) 
 	require.Equal(t, s.amount, s.bank.GetAllBalances(s.ctx, s.sender).AmountOf(s.denom))
 	require.True(t, s.k.GetTotalEscrowForDenom(s.ctx, s.denom).Amount.IsZero())
 	require.Empty(t, s.bex.ledger("released"))
-	require.Empty(t, s.bex.ledger("deducted"))
+	require.Empty(t, s.bex.ledger("refunded"))
 	require.Empty(t, s.ics4.sent)
 }
 
@@ -775,6 +775,7 @@ func setupIBCModuleAckRefund(t *testing.T) (keeperpkg.Keeper, sdk.Context, *modu
 	bank := &moduleAckRefundBankKeeper{balances: make(map[string]sdk.Coins)}
 	bex := &moduleAckRefundBexKeeper{
 		reserve: sdk.AccAddress(bytes.Repeat([]byte{0x11}, 20)),
+		bank:    bank,
 		ledgers: make(map[string]sdk.Coins),
 	}
 	ics4 := &moduleAckRefundICS4Wrapper{sequence: 88}
@@ -869,6 +870,7 @@ func (m *moduleAckRefundBankKeeper) SpendableCoin(ctx context.Context, addr sdk.
 
 type moduleAckRefundBexKeeper struct {
 	reserve sdk.AccAddress
+	bank    *moduleAckRefundBankKeeper
 	ledgers map[string]sdk.Coins
 }
 
@@ -888,7 +890,7 @@ func (*moduleAckRefundBexKeeper) RecordVolumeWindow(context.Context, uint64, bex
 	return nil
 }
 
-func (*moduleAckRefundBexKeeper) AddCollectedFee(context.Context, uint64, sdk.Coin) error {
+func (*moduleAckRefundBexKeeper) CollectFee(context.Context, uint64, sdk.Coin) error {
 	return nil
 }
 
@@ -901,8 +903,11 @@ func (m *moduleAckRefundBexKeeper) ReleaseExchangeFee(_ context.Context, _ uint6
 	return nil
 }
 
-func (m *moduleAckRefundBexKeeper) DeductCollectedFee(_ context.Context, _ uint64, fee sdk.Coin) error {
-	m.addLedger("deducted", fee)
+func (m *moduleAckRefundBexKeeper) RefundLockedFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
+	if err := m.bank.SendCoinsFromModuleToAccount(ctx, bextypes.ModuleName, m.reserve, sdk.NewCoins(fee)); err != nil {
+		return err
+	}
+	m.addLedger("refunded", fee)
 	return nil
 }
 

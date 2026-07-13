@@ -27,6 +27,12 @@ service Msg {
   // DeleteExchange logically deletes a settled inactive exchange.
   rpc DeleteExchange(MsgDeleteExchange) returns (MsgDeleteExchangeResponse);
 
+  // AddReserveDepositor allows an address to deposit into one exchange reserve.
+  rpc AddReserveDepositor(MsgAddReserveDepositor) returns (MsgAddReserveDepositorResponse);
+
+  // RemoveReserveDepositor revokes an address's reserve deposit permission.
+  rpc RemoveReserveDepositor(MsgRemoveReserveDepositor) returns (MsgRemoveReserveDepositorResponse);
+
   // DepositReserve deposits funds into a reserve through scoped allowance.
   rpc DepositReserve(MsgDepositReserve) returns (MsgDepositReserveResponse);
 
@@ -69,20 +75,20 @@ message MsgRegisterExchange {
   string port_b = 6;
   string channel_b = 7;
 
-	string oracle_symbol_a_to_b = 8;
-	string oracle_symbol_b_to_a = 9;
+  string oracle_symbol_a_to_b = 8;
+  string oracle_symbol_b_to_a = 9;
 
-	uint32 fee_bps_a_to_b = 10;
-	uint32 fee_bps_b_to_a = 11;
+  uint32 fee_bps_a_to_b = 10;
+  uint32 fee_bps_b_to_a = 11;
 
-	// Empty or omitted means unlimited.
-	string limit_a_to_b = 12 [(cosmos_proto.scalar) = "cosmos.Int"];
-	// Empty or omitted means unlimited.
-	string limit_b_to_a = 13 [(cosmos_proto.scalar) = "cosmos.Int"];
-	// Empty or omitted means unlimited.
-	string volume_cap_a_to_b = 14 [(cosmos_proto.scalar) = "cosmos.Int"];
-	// Empty or omitted means unlimited.
-	string volume_cap_b_to_a = 15 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string limit_a_to_b = 12 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string limit_b_to_a = 13 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string volume_cap_a_to_b = 14 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string volume_cap_b_to_a = 15 [(cosmos_proto.scalar) = "cosmos.Int"];
 
   ExchangeStatus status = 16;
   map<string, string> metadata = 17;
@@ -120,10 +126,32 @@ message MsgDeleteExchange {
 // MsgDeleteExchangeResponse is the delete response.
 message MsgDeleteExchangeResponse {}
 
-// MsgDepositReserve deposits coins into an exchange reserve.
-message MsgDepositReserve {
+// MsgAddReserveDepositor grants reserve deposit permission for one exchange.
+message MsgAddReserveDepositor {
   option (cosmos.msg.v1.signer) = "admin_address";
   string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 exchange_id = 2;
+  string depositor_address = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgAddReserveDepositorResponse is the add-reserve-depositor response.
+message MsgAddReserveDepositorResponse {}
+
+// MsgRemoveReserveDepositor revokes reserve deposit permission for one exchange.
+message MsgRemoveReserveDepositor {
+  option (cosmos.msg.v1.signer) = "admin_address";
+  string admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 exchange_id = 2;
+  string depositor_address = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgRemoveReserveDepositorResponse is the remove-reserve-depositor response.
+message MsgRemoveReserveDepositorResponse {}
+
+// MsgDepositReserve deposits coins into an exchange reserve.
+message MsgDepositReserve {
+  option (cosmos.msg.v1.signer) = "sender";
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   uint64 exchange_id = 2;
   repeated cosmos.base.v1beta1.Coin amount = 3;
 }
