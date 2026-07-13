@@ -858,26 +858,20 @@ func TestKeeperGenesisExportImportAndInvariants(t *testing.T) {
 
 	target := setupKeeperFixture(t)
 	require.NoError(t, target.keeper.ImportGenesis(target.ctx, genesis))
+	target.bankKeeper.SetBalance(authtypes.NewModuleAddress(types.ModuleName), sdk.NewCoins(sdk.NewInt64Coin("agxn", 10)))
 	exported, err := target.keeper.ExportGenesis(target.ctx)
 	require.NoError(t, err)
 	require.Len(t, exported.GetExchanges(), 2)
 	require.Len(t, exported.GetVolumeWindows(), 1)
-
+	target.bankKeeper.SetBalance(authtypes.NewModuleAddress(types.ModuleName), sdk.Coins{})
 	require.ErrorIs(t, target.keeper.AssertInvariants(target.ctx), types.ErrInvariantViolation)
 	target.bankKeeper.SetBalance(authtypes.NewModuleAddress(types.ModuleName), sdk.NewCoins(sdk.NewInt64Coin("agxn", 10)))
 	require.NoError(t, target.keeper.AssertInvariants(target.ctx))
-	registry := &keeperInvariantRegistry{}
-	RegisterInvariants(registry, target.keeper)
-	require.Len(t, registry.routes, 1)
-	msg, broken := AllInvariants(target.keeper)(target.ctx)
-	require.False(t, broken)
-	require.Contains(t, msg, "all invariants hold")
+	require.NoError(t, target.keeper.AssertFeeSolvency(target.ctx))
 	reserveAddr := target.keeper.GetReserveAddress(target.ctx, active.GetId())
 	delete(target.accountKeeper.accounts, string(reserveAddr))
 	require.ErrorIs(t, target.keeper.AssertInvariants(target.ctx), types.ErrInvariantViolation)
-	msg, broken = AllInvariants(target.keeper)(target.ctx)
-	require.True(t, broken)
-	require.Contains(t, msg, "reserve account missing")
+	require.NoError(t, target.keeper.AssertFeeSolvency(target.ctx))
 	target.accountKeeper.SetAccount(target.ctx, target.accountKeeper.NewAccountWithAddress(target.ctx, reserveAddr))
 	nilAccountKeeper := target.keeper
 	nilAccountKeeper.accountKeeper = nil
@@ -1187,6 +1181,7 @@ func TestStoreFaultBranches(t *testing.T) {
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	deleteExchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	require.NoError(t, f.keeper.AddReserveDepositor(f.ctx, f.admin, exchange.GetId(), f.admin))
 	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 3))
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)))
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)))
@@ -1289,7 +1284,7 @@ func TestStoreFaultBranches(t *testing.T) {
 	require.NoError(t, err)
 	_, err = faulty("get", 0x04).SendRestrictionFn(f.ctx, nil, sdk.AccAddress(reserveBytes), sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)))
 	require.ErrorIs(t, err, faultErr)
-	for _, prefix := range []byte{0x01, 0x02, 0x03, 0x04, 0x06, 0x07, 0x08, 0x05} {
+	for _, prefix := range []byte{0x01, 0x02, 0x03, 0x04, 0x06, 0x07, 0x08, 0x0a, 0x05} {
 		require.ErrorIs(t, faulty("set", prefix).ImportGenesis(f.ctx, genesis), faultErr)
 	}
 
@@ -1299,7 +1294,7 @@ func TestStoreFaultBranches(t *testing.T) {
 	require.ErrorIs(t, err, faultErr)
 	_, err = faulty("iterator", 0x01).ExportGenesis(f.ctx)
 	require.ErrorIs(t, err, faultErr)
-	for _, prefix := range []byte{0x02, 0x06, 0x07, 0x08} {
+	for _, prefix := range []byte{0x02, 0x06, 0x07, 0x08, 0x0a} {
 		_, err = faulty("iterator", prefix).ExportGenesis(f.ctx)
 		require.ErrorIs(t, err, faultErr)
 	}
@@ -1307,6 +1302,7 @@ func TestStoreFaultBranches(t *testing.T) {
 	require.ErrorIs(t, err, faultErr)
 	require.ErrorIs(t, faulty("iterator", 0x06).AssertInvariants(f.ctx), faultErr)
 	require.ErrorIs(t, faulty("get", 0x07).AssertInvariants(f.ctx), faultErr)
+	require.ErrorIs(t, faulty("iterator", 0x06).AssertFeeSolvency(f.ctx), faultErr)
 }
 
 func bytesOf(b byte) []byte {
@@ -1396,20 +1392,6 @@ func (s faultKVStore) ReverseIterator(start, end []byte) (corestore.Iterator, er
 		return nil, err
 	}
 	return s.KVStore.ReverseIterator(start, end)
-}
-
-type keeperInvariantRegistry struct {
-	routes []keeperInvariantRoute
-}
-
-type keeperInvariantRoute struct {
-	moduleName string
-	route      string
-	invariant  sdk.Invariant
-}
-
-func (r *keeperInvariantRegistry) RegisterRoute(moduleName, route string, invariant sdk.Invariant) {
-	r.routes = append(r.routes, keeperInvariantRoute{moduleName: moduleName, route: route, invariant: invariant})
 }
 
 type failingAddressCodec struct {
