@@ -18,7 +18,7 @@ import (
 )
 
 func TestV1UpgradeWiringAddsBEXStore(t *testing.T) {
-	t.Setenv(envEnableUpgradeHandlerV1, "1")
+	t.Setenv(envEnableUpgradeHandlerV1, "")
 	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.AppOptionsMap{
 		flags.FlagHome: t.TempDir(),
 	})
@@ -30,7 +30,7 @@ func TestV1UpgradeWiringAddsBEXStore(t *testing.T) {
 }
 
 func TestV1UpgradeHandlerRemainsDisabledForOldBinaryMode(t *testing.T) {
-	t.Setenv(envEnableUpgradeHandlerV1, "")
+	t.Setenv(envEnableUpgradeHandlerV1, "0")
 	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.AppOptionsMap{
 		flags.FlagHome: t.TempDir(),
 	})

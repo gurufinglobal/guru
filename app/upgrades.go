@@ -16,7 +16,9 @@ const envEnableUpgradeHandlerV1 = "GURU_ENABLE_UPGRADE_HANDLER_V1"
 
 // RegisterUpgradeHandlers is used for registering on-chain upgrades.
 func (app *App) RegisterUpgradeHandlers() {
-	if os.Getenv(envEnableUpgradeHandlerV1) != "1" {
+	// Only the same-binary upgrade rehearsal disables this handler explicitly.
+	// Production binaries must retain completed handlers across every restart.
+	if os.Getenv(envEnableUpgradeHandlerV1) == "0" {
 		return
 	}
 

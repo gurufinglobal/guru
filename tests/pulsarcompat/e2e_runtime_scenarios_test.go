@@ -169,7 +169,20 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	oldJSONWSRPCPort := pickTCPPort(t)
 	oldRPCAddr := fmt.Sprintf("tcp://127.0.0.1:%d", oldRPCPort)
 
-	oldNode := startNode(t, repoRoot, bin, home, oldRPCPort, oldP2PPort, oldPProfPort, oldGRPCPort, oldJSONRPCPort, oldJSONWSRPCPort)
+	oldNode := startNodeWithOptions(
+		t,
+		repoRoot,
+		bin,
+		home,
+		oldRPCPort,
+		oldP2PPort,
+		oldPProfPort,
+		oldGRPCPort,
+		oldJSONRPCPort,
+		oldJSONWSRPCPort,
+		nil,
+		map[string]string{envEnableUpgradeHandlerV1: "0"},
+	)
 	defer stopNode(t, oldNode)
 	waitForBlockHeight(t, repoRoot, bin, home, oldRPCAddr, 6, 45*time.Second)
 
