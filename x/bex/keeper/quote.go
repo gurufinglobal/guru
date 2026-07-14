@@ -223,9 +223,18 @@ func (k Keeper) GetCurrentVolumeAmount(ctx context.Context, exchange *bexv1.Exch
 }
 
 func (k Keeper) RecordVolumeWindow(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, amountOut sdkmath.Int) error {
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
+		return k.recordVolumeWindow(cacheCtx, exchangeID, direction, amountOut)
+	})
+}
+
+func (k Keeper) recordVolumeWindow(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, amountOut sdkmath.Int) error {
 	exchange, err := k.GetActiveExchange(ctx, exchangeID)
 	if err != nil {
 		return err
+	}
+	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+		return types.ErrInvalidRoute.Wrap("volume recording requires an active exchange")
 	}
 	if amountOut.IsNil() || !amountOut.IsPositive() {
 		return types.ErrInvalidRequest.Wrap("amount_out must be positive")
@@ -296,26 +305,29 @@ func (k Keeper) getVolumeWindowAmount(ctx context.Context, key volumeWindowKey) 
 }
 
 func effectiveVolumeEpochSeconds(exchange *bexv1.Exchange, blockTime time.Time) uint32 {
-	if exchange.GetPendingVolumeEpochSeconds() == 0 || exchange.GetPendingVolumeEpochEffectiveAtUnix() == 0 {
-		return exchange.GetVolumeEpochSeconds()
-	}
-	if blockTime.IsZero() || blockTime.Unix() < 0 {
-		return exchange.GetVolumeEpochSeconds()
-	}
-	if uint64(blockTime.Unix()) < exchange.GetPendingVolumeEpochEffectiveAtUnix() {
+	if !pendingVolumeEpochDue(exchange, blockTime) {
 		return exchange.GetVolumeEpochSeconds()
 	}
 	return exchange.GetPendingVolumeEpochSeconds()
 }
 
+func pendingVolumeEpochDue(exchange *bexv1.Exchange, blockTime time.Time) bool {
+	if exchange.GetPendingVolumeEpochSeconds() == 0 || exchange.GetPendingVolumeEpochEffectiveAtUnix() == 0 {
+		return false
+	}
+	if blockTime.IsZero() || blockTime.Unix() < 0 {
+		return false
+	}
+	return uint64(blockTime.Unix()) >= exchange.GetPendingVolumeEpochEffectiveAtUnix()
+}
+
 func (k Keeper) activatePendingVolumeEpoch(ctx context.Context, exchange *bexv1.Exchange) (*bexv1.Exchange, error) {
 	blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
-	effectiveEpoch := effectiveVolumeEpochSeconds(exchange, blockTime)
-	if effectiveEpoch == exchange.GetVolumeEpochSeconds() || exchange.GetPendingVolumeEpochSeconds() == 0 {
+	if !pendingVolumeEpochDue(exchange, blockTime) {
 		return exchange, nil
 	}
 	updated := cloneExchange(exchange)
-	updated.VolumeEpochSeconds = effectiveEpoch
+	updated.VolumeEpochSeconds = updated.GetPendingVolumeEpochSeconds()
 	updated.PendingVolumeEpochSeconds = 0
 	updated.PendingVolumeEpochEffectiveAtUnix = 0
 	nextRevision, err := incrementRevision(updated.GetRevision())

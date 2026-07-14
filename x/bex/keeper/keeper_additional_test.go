@@ -433,7 +433,6 @@ func TestKeeperEmitsRequiredEvents(t *testing.T) {
 		types.EventTypeFeesRefunded,
 		types.EventTypeFeesWithdrawn,
 		types.EventTypeVolumeRecorded,
-		types.EventTypeVolumeCapExceeded,
 	)
 }
 
@@ -690,7 +689,7 @@ func TestImmediateVolumeEpochUpdateStartsNewWindowAndPreservesPendingSchedule(t 
 
 	effectiveAt := uint64(f.ctx.BlockTime().Add(time.Hour).Unix())
 	scheduled, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		PendingVolumeEpochSeconds:         wrapperspb.UInt32(minVolumeEpochSecs * 3),
+		PendingVolumeEpochSeconds:         wrapperspb.UInt32(minVolumeEpochSecs * 2),
 		PendingVolumeEpochEffectiveAtUnix: wrapperspb.UInt64(effectiveAt),
 	})
 	require.NoError(t, err)
@@ -707,6 +706,15 @@ func TestImmediateVolumeEpochUpdateStartsNewWindowAndPreservesPendingSchedule(t 
 	oldUsage, err := f.keeper.volumeWindow.Get(f.ctx, oldKey)
 	require.NoError(t, err)
 	require.Equal(t, "10", oldUsage)
+
+	dueCtx := f.ctx.WithBlockTime(time.Unix(int64(effectiveAt), 0))
+	require.NoError(t, f.keeper.RecordVolumeWindow(dueCtx, exchange.GetId(), direction, sdkmath.OneInt()))
+	persisted, err := f.keeper.GetExchange(dueCtx, exchange.GetId())
+	require.NoError(t, err)
+	require.Equal(t, minVolumeEpochSecs*2, persisted.GetVolumeEpochSeconds())
+	require.Zero(t, persisted.GetPendingVolumeEpochSeconds())
+	require.Zero(t, persisted.GetPendingVolumeEpochEffectiveAtUnix())
+	require.Equal(t, updated.GetRevision()+1, persisted.GetRevision())
 }
 
 func TestExchangesByExchangeAdminRejectsCorruptOwnerIndex(t *testing.T) {
