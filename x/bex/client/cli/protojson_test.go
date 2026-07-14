@@ -41,7 +41,7 @@ func TestDecodeStrictJSONRejectsUnknownAndTrailingJSON(t *testing.T) {
 
 func TestCmdUpdateExchangeAcceptsStandardProtoJSONWrappers(t *testing.T) {
 	from := sdk.AccAddress(bytes.Repeat([]byte{0x45}, 20))
-	captured := installTxMocks(t, from, nil)
+	captured := installTxMocks(t, from, nil, nil)
 
 	err := CmdUpdateExchange().RunE(
 		CmdUpdateExchange(),

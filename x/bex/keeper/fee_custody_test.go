@@ -27,7 +27,9 @@ func TestFeeCustodyLifecycleAndSolvency(t *testing.T) {
 		sdk.NewInt64Coin("gxusd", 3),
 	), f.bankKeeper.GetAllBalances(f.ctx, moduleAddr))
 
+	require.ErrorIs(t, f.keeper.LockExchangeFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 8)), types.ErrInsufficientAvailableFees)
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 2)))
+	require.ErrorIs(t, f.keeper.ReleaseExchangeFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 3)), types.ErrInsufficientLockedFees)
 	require.NoError(t, f.keeper.ReleaseExchangeFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 1)))
 	require.NoError(t, f.keeper.RefundLockedFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 1)))
 	require.Equal(t, int64(1), f.bankKeeper.GetBalance(f.ctx, feeReserveAddress(t, f, first), "agxn").Amount.Int64())
