@@ -216,6 +216,10 @@ func normalizeIntString(value string) string {
 	if value == "" {
 		return "0"
 	}
+	amount, err := validateIntString("integer value", value)
+	if err == nil {
+		return amount.String()
+	}
 	return value
 }
 

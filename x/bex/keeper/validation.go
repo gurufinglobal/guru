@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"math/big"
 	"sort"
 	"strings"
 
@@ -76,8 +77,11 @@ func validateIntString(name, value string) (sdkmath.Int, error) {
 	if len(normalizedDigits) == maxIntDigits && normalizedDigits > maxUint256String {
 		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s exceeds uint256 max", name)
 	}
-	amount, _ := sdkmath.NewIntFromString(value)
-	return amount, nil
+	amount, ok := new(big.Int).SetString(normalizedDigits, 10)
+	if !ok {
+		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s must be a decimal integer string", name)
+	}
+	return sdkmath.NewIntFromBigInt(amount), nil
 }
 
 // validateRequiredIntString validates a decimal integer string for fields where empty value is invalid.
@@ -296,9 +300,9 @@ func protoCoinsToSDK(coins []*basev1beta1.Coin) (sdk.Coins, error) {
 		if coin == nil {
 			return nil, types.ErrInvalidRequest.Wrap("coin cannot be nil")
 		}
-		amount, ok := sdkmath.NewIntFromString(coin.GetAmount())
-		if !ok {
-			return nil, types.ErrInvalidRequest.Wrapf("invalid coin amount %q", coin.GetAmount())
+		amount, err := validateRequiredIntString("coin amount", coin.GetAmount())
+		if err != nil {
+			return nil, types.ErrInvalidRequest.Wrapf("invalid coin amount %q: %v", coin.GetAmount(), err)
 		}
 		sdkCoin := sdk.Coin{Denom: coin.GetDenom(), Amount: amount}
 		if err := sdkCoin.Validate(); err != nil {
