@@ -211,6 +211,15 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	}
 	stopNode(t, oldNode)
 
+	// Both phases use the current test binary, so BEX has existed in this fresh
+	// database since genesis. The missing-store loader path is covered by
+	// TestV1StoreLoaderAddsBEXToLegacyDatabase; this E2E isolates the on-chain
+	// halt, handler, migration, and resume path without adding BEX twice.
+	upgradeInfoPath := filepath.Join(home, "data", "upgrade-info.json")
+	if err := os.Remove(upgradeInfoPath); err != nil {
+		t.Fatalf("remove same-binary upgrade info %s: %v", upgradeInfoPath, err)
+	}
+
 	// new binary enables handler and resumes from upgrade height
 	newRPCPort := pickTCPPort(t)
 	newP2PPort := pickTCPPort(t)
@@ -235,6 +244,11 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 		map[string]string{envEnableUpgradeHandlerV1: "1"},
 	)
 	defer stopNode(t, newNode)
+	defer func() {
+		if t.Failed() {
+			t.Logf("new node logs:\n%s", newNode.logBuf.String())
+		}
+	}()
 
 	waitForBlockHeight(t, repoRoot, bin, home, newRPCAddr, upgradeHeight+2, 90*time.Second)
 	appliedHeight := queryAppliedUpgradeHeight(t, repoRoot, bin, home, newRPCAddr, e2eUpgradeNameV1)
