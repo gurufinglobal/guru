@@ -320,6 +320,9 @@ func (k Keeper) WithdrawFees(ctx context.Context, signer string, exchangeID uint
 		if k.bankKeeper == nil {
 			return types.ErrInvariantViolation.Wrap("bank keeper is required for fee withdrawal")
 		}
+		if err := k.bankKeeper.IsSendEnabledCoins(cacheCtx, amount...); err != nil {
+			return err
+		}
 		available, err := k.GetAvailableFees(cacheCtx, exchangeID)
 		if err != nil {
 			return err
