@@ -28,9 +28,11 @@ message FeeGenesis {
 message VolumeWindowGenesis {
   uint64 exchange_id = 1;
   SwapDirection direction = 2;
+  // Start of the window, aligned to epoch_seconds from the Unix epoch.
   uint64 epoch_start_unix = 3;
   uint32 epoch_seconds = 4;
   string amount = 5;
+  uint64 volume_window_generation = 6;
 }
 
 // ReserveDepositorGenesis stores one exchange-scoped reserve depositor.

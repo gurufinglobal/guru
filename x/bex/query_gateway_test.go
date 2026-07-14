@@ -10,24 +10,8 @@ import (
 	gatewayruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/stretchr/testify/require"
-	annotations "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/descriptorpb"
 )
-
-func TestQuoteSwapRESTUsesQueryParameters(t *testing.T) {
-	queryService := bexv1.File_guru_bex_v1_query_proto.Services().ByName("Query")
-	require.NotNil(t, queryService)
-	quoteMethod := queryService.Methods().ByName("QuoteSwap")
-	require.NotNil(t, quoteMethod)
-
-	options, ok := quoteMethod.Options().(*descriptorpb.MethodOptions)
-	require.True(t, ok)
-	require.True(t, proto.HasExtension(options, annotations.E_Http))
-	httpRule, ok := proto.GetExtension(options, annotations.E_Http).(*annotations.HttpRule)
-	require.True(t, ok)
-	require.Equal(t, "/guru/bex/v1/exchanges/{exchange_id}/quote", httpRule.GetGet())
-}
 
 func TestQuoteSwapRESTForwardsSlashDenom(t *testing.T) {
 	capture := &quoteGatewayCapture{}

@@ -28,9 +28,21 @@ func TestRecordVolumeWindowIsAtomic(t *testing.T) {
 
 	futureCtx := f.ctx.WithBlockTime(f.ctx.BlockTime().Add(2 * time.Second))
 	expiredStart := uint64(futureCtx.BlockTime().Unix()) - 2*uint64(minVolumeEpochSecs)
-	expiredKey := collections.Join4(exchange.GetId(), uint32(direction), expiredStart, minVolumeEpochSecs)
+	expiredKey := volumeWindowKeyFromStart(
+		exchange.GetId(),
+		direction,
+		expiredStart,
+		minVolumeEpochSecs,
+		pending.GetVolumeWindowGeneration(),
+	)
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, expiredKey, "7"))
-	newKey := currentVolumeKey(futureCtx.BlockTime(), exchange.GetId(), direction, minVolumeEpochSecs*2)
+	newKey := currentVolumeKey(
+		futureCtx.BlockTime(),
+		exchange.GetId(),
+		direction,
+		minVolumeEpochSecs*2,
+		pending.GetVolumeWindowGeneration()+1,
+	)
 	eventCount := len(f.ctx.EventManager().Events())
 
 	err = f.keeper.RecordVolumeWindow(futureCtx, exchange.GetId(), direction, sdkmath.NewInt(1001))
@@ -45,8 +57,6 @@ func TestRecordVolumeWindowIsAtomic(t *testing.T) {
 	require.Equal(t, "7", value)
 	_, err = f.keeper.volumeWindow.Get(f.ctx, newKey)
 	require.ErrorIs(t, err, collections.ErrNotFound)
-	_, err = f.keeper.volumePruneCursor.Get(f.ctx, collections.Join(exchange.GetId(), uint32(direction)))
-	require.ErrorIs(t, err, collections.ErrNotFound)
 
 	require.NoError(t, f.keeper.RecordVolumeWindow(futureCtx, exchange.GetId(), direction, sdkmath.NewInt(5)))
 	afterSuccess, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
@@ -55,6 +65,7 @@ func TestRecordVolumeWindowIsAtomic(t *testing.T) {
 	require.Zero(t, afterSuccess.GetPendingVolumeEpochSeconds())
 	require.Zero(t, afterSuccess.GetPendingVolumeEpochEffectiveAtUnix())
 	require.Equal(t, pending.GetRevision()+1, afterSuccess.GetRevision())
+	require.Equal(t, pending.GetVolumeWindowGeneration()+1, afterSuccess.GetVolumeWindowGeneration())
 	_, err = f.keeper.volumeWindow.Get(f.ctx, expiredKey)
 	require.ErrorIs(t, err, collections.ErrNotFound)
 	value, err = f.keeper.volumeWindow.Get(f.ctx, newKey)
@@ -92,6 +103,7 @@ func TestRecordVolumeWindowRejectsInactiveExchangeWithoutMutation(t *testing.T) 
 		exchange.GetId(),
 		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		pending.GetPendingVolumeEpochSeconds(),
+		pending.GetVolumeWindowGeneration()+1,
 	)
 	_, err = f.keeper.volumeWindow.Get(f.ctx, key)
 	require.ErrorIs(t, err, collections.ErrNotFound)

@@ -235,6 +235,7 @@ func (k Keeper) registerExchange(ctx context.Context, req *bexv1.MsgRegisterExch
 		VolumeCapAToB:             normalizeIntString(req.GetVolumeCapAToB()),
 		VolumeCapBToA:             normalizeIntString(req.GetVolumeCapBToA()),
 		Revision:                  1,
+		VolumeWindowGeneration:    1,
 		Status:                    status,
 		Metadata:                  sortedMetadataCopy(req.GetMetadata()),
 		VolumeEpochSeconds:        req.GetVolumeEpochSeconds(),
@@ -372,15 +373,15 @@ func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, e
 		updated.ChannelB = strings.TrimSpace(v.GetValue())
 		routeChanged = true
 	}
-	if current.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE && routeChanged {
-		return nil, types.ErrInvalidRoute.Wrap("route fields cannot change while active")
-	}
 	routeValuesChanged := current.GetDenomA() != updated.GetDenomA() ||
 		current.GetPortA() != updated.GetPortA() ||
 		current.GetChannelA() != updated.GetChannelA() ||
 		current.GetDenomB() != updated.GetDenomB() ||
 		current.GetPortB() != updated.GetPortB() ||
 		current.GetChannelB() != updated.GetChannelB()
+	if current.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE && routeChanged {
+		return nil, types.ErrInvalidRoute.Wrap("route fields cannot change while active")
+	}
 	if routeValuesChanged {
 		collected, err := k.GetCollectedFees(ctx, exchangeID)
 		if err != nil {
@@ -458,6 +459,16 @@ func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, e
 	if proto.Equal(current, updated) {
 		return nil, types.ErrNoOpUpdate.Wrap("patch does not change exchange")
 	}
+	if routeValuesChanged || current.GetVolumeEpochSeconds() != updated.GetVolumeEpochSeconds() {
+		nextGeneration, err := incrementVolumeWindowGeneration(updated.GetVolumeWindowGeneration())
+		if err != nil {
+			return nil, err
+		}
+		updated.VolumeWindowGeneration = nextGeneration
+	}
+	// Validate after applying keeper-managed accounting identity changes so the
+	// persisted state itself, rather than only the user-supplied patch, satisfies
+	// the pending-activation invariants.
 	if err := validateMutableExchangeConfig(updated); err != nil {
 		return nil, err
 	}
@@ -470,6 +481,9 @@ func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, e
 	nextRevision, err := incrementRevision(updated.GetRevision())
 	if err != nil {
 		return nil, err
+	}
+	if updated.GetPendingVolumeEpochSeconds() != 0 && nextRevision == ^uint64(0) {
+		return nil, types.ErrRevisionConflict.Wrap("pending volume epoch requires a future revision")
 	}
 	updated.Revision = nextRevision
 	adminChanged := current.GetAdminAddress() != updated.GetAdminAddress()
@@ -567,6 +581,16 @@ func incrementRevision(revision uint64) (uint64, error) {
 		return 0, types.ErrRevisionConflict.Wrap("exchange revision is exhausted")
 	}
 	return revision + 1, nil
+}
+
+func incrementVolumeWindowGeneration(generation uint64) (uint64, error) {
+	if generation == 0 {
+		return 0, types.ErrInvariantViolation.Wrap("volume window generation must be non-zero")
+	}
+	if generation == ^uint64(0) {
+		return 0, types.ErrInvariantViolation.Wrap("volume window generation is exhausted")
+	}
+	return generation + 1, nil
 }
 
 func (k Keeper) DeleteExchange(ctx context.Context, signer string, exchangeID uint64) error {

@@ -18,11 +18,27 @@ func (k Keeper) CanonicalAddressForGenesis(address string) (string, sdk.AccAddre
 }
 
 func ValidateExchangeForGenesis(exchange *bexv1.Exchange) error {
-	return validateExchangeConfig(exchange)
+	if err := validateExchangeConfig(exchange); err != nil {
+		return types.ErrInvalidGenesis.Wrapf("invalid exchange: %v", err)
+	}
+	return nil
 }
 
 func ProtoCoinsForGenesis(coins []*basev1beta1.Coin) (sdk.Coins, error) {
-	return ledgerToCoins(&bexv1.FeeLedger{Coins: coins})
+	parsed, err := ledgerToCoins(&bexv1.FeeLedger{Coins: coins})
+	if err != nil {
+		return nil, types.ErrInvalidGenesis.Wrapf("invalid coin list: %v", err)
+	}
+	canonical := sdkCoinsToProto(parsed)
+	if len(coins) != len(canonical) {
+		return nil, types.ErrInvalidGenesis.Wrap("coin list must be canonical and sorted")
+	}
+	for i, coin := range coins {
+		if coin == nil || coin.GetDenom() != canonical[i].GetDenom() || coin.GetAmount() != canonical[i].GetAmount() {
+			return nil, types.ErrInvalidGenesis.Wrap("coin list must be canonical and sorted")
+		}
+	}
+	return parsed, nil
 }
 
 func HasCoinsForGenesis(balance sdk.Coins, needed sdk.Coins) bool {
@@ -30,19 +46,52 @@ func HasCoinsForGenesis(balance sdk.Coins, needed sdk.Coins) bool {
 }
 
 func ParseIntForGenesis(name, value string) (sdkmath.Int, error) {
-	return validateRequiredIntString(name, value)
+	amount, err := validateRequiredIntString(name, value)
+	if err != nil {
+		return sdkmath.Int{}, types.ErrInvalidGenesis.Wrapf("invalid %s: %v", name, err)
+	}
+	if value != amount.String() {
+		return sdkmath.Int{}, types.ErrInvalidGenesis.Wrapf("%s is not a canonical decimal", name)
+	}
+	return amount, nil
 }
 
 func ValidateVolumeEpochForGenesis(name string, seconds uint32, allowZero bool) error {
-	return validateVolumeEpochSeconds(name, seconds, allowZero)
+	if err := validateVolumeEpochSeconds(name, seconds, allowZero); err != nil {
+		return types.ErrInvalidGenesis.Wrapf("invalid %s: %v", name, err)
+	}
+	return nil
+}
+
+func ValidateVolumeWindowForGenesis(epochStart uint64, epochSeconds uint32, generation uint64) error {
+	if err := validateVolumeEpochSeconds("volume_window.epoch_seconds", epochSeconds, false); err != nil {
+		return types.ErrInvalidGenesis.Wrapf("invalid volume window epoch: %v", err)
+	}
+	if generation == 0 {
+		return types.ErrInvalidGenesis.Wrap("volume_window.volume_window_generation must be non-zero")
+	}
+	if epochStart%uint64(epochSeconds) != 0 {
+		return types.ErrInvalidGenesis.Wrap("volume_window.epoch_start_unix must align to epoch_seconds")
+	}
+	if epochStart > ^uint64(0)-uint64(epochSeconds) {
+		return types.ErrInvalidGenesis.Wrap("volume_window expiry overflows uint64")
+	}
+	return nil
 }
 
 func ExpectedIBCDenomForGenesis(denom, portID, channelID string) (string, error) {
-	return buildIBCDenom(denom, portID, channelID)
+	ibcDenom, err := buildIBCDenom(denom, portID, channelID)
+	if err != nil {
+		return "", types.ErrInvalidGenesis.Wrapf("invalid IBC route: %v", err)
+	}
+	return ibcDenom, nil
 }
 
 func ValidateFeeDenomForGenesis(exchange *bexv1.Exchange, denom string) error {
-	return validateExchangeFeeDenom(exchange, denom)
+	if err := validateExchangeFeeDenom(exchange, denom); err != nil {
+		return types.ErrInvalidGenesis.Wrapf("invalid fee denom: %v", err)
+	}
+	return nil
 }
 
 func (k Keeper) ImportGenesis(ctx context.Context, genesis *bexv1.GenesisState) error {
@@ -91,11 +140,20 @@ func (k Keeper) ImportGenesis(ctx context.Context, genesis *bexv1.GenesisState) 
 		}
 	}
 	for _, window := range genesis.GetVolumeWindows() {
+		if err := ValidateVolumeWindowForGenesis(window.GetEpochStartUnix(), window.GetEpochSeconds(), window.GetVolumeWindowGeneration()); err != nil {
+			return err
+		}
 		amount, err := ParseIntForGenesis("volume amount", window.GetAmount())
 		if err != nil {
 			return err
 		}
-		key := collections.Join4(window.GetExchangeId(), uint32(window.GetDirection()), window.GetEpochStartUnix(), window.GetEpochSeconds())
+		key := volumeWindowKeyFromStart(
+			window.GetExchangeId(),
+			window.GetDirection(),
+			window.GetEpochStartUnix(),
+			window.GetEpochSeconds(),
+			window.GetVolumeWindowGeneration(),
+		)
 		if err := k.volumeWindow.Set(ctx, key, amount.String()); err != nil {
 			return err
 		}
@@ -139,12 +197,17 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*bexv1.GenesisState, error) 
 		return nil, err
 	}
 	if err := k.volumeWindow.Walk(ctx, nil, func(key volumeWindowKey, amount string) (bool, error) {
+		epochStart, ok := volumeWindowEpochStart(key)
+		if !ok {
+			return true, types.ErrInvariantViolation.Wrap("volume window key has an invalid expiry")
+		}
 		genesis.VolumeWindows = append(genesis.VolumeWindows, &bexv1.VolumeWindowGenesis{
-			ExchangeId:     key.K1(),
-			Direction:      bexv1.SwapDirection(key.K2()),
-			EpochStartUnix: key.K3(),
-			EpochSeconds:   key.K4(),
-			Amount:         amount,
+			ExchangeId:             key.K2(),
+			Direction:              bexv1.SwapDirection(key.K3()),
+			EpochStartUnix:         epochStart,
+			EpochSeconds:           volumeWindowEpochSeconds(key),
+			Amount:                 amount,
+			VolumeWindowGeneration: volumeWindowGeneration(key),
 		})
 		return false, nil
 	}); err != nil {
@@ -188,6 +251,9 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		}
 		collected, err := ledgerToCoins(ledger)
 		if err != nil {
+			return false, types.ErrInvariantViolation.Wrapf("exchange %d collected fee ledger is invalid: %v", exchangeID, err)
+		}
+		if err := assertCanonicalFeeLedger("collected", exchangeID, ledger, collected); err != nil {
 			return false, err
 		}
 		if err := validateExchangeFeeCoins(exchange, collected); err != nil {
@@ -195,7 +261,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		}
 		locked, err := k.GetLockedFees(ctx, exchangeID)
 		if err != nil {
-			return false, err
+			return false, feeLedgerInvariantError("locked", exchangeID, err)
 		}
 		if !hasCoins(collected, locked) {
 			return false, types.ErrInvariantViolation.Wrapf("locked exceeds collected for exchange %d", exchangeID)
@@ -218,6 +284,9 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		}
 		locked, err := ledgerToCoins(ledger)
 		if err != nil {
+			return false, types.ErrInvariantViolation.Wrapf("exchange %d locked fee ledger is invalid: %v", exchangeID, err)
+		}
+		if err := assertCanonicalFeeLedger("locked", exchangeID, ledger, locked); err != nil {
 			return false, err
 		}
 		if err := validateExchangeFeeCoins(exchange, locked); err != nil {
@@ -225,7 +294,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		}
 		collected, err := k.GetCollectedFees(ctx, exchangeID)
 		if err != nil {
-			return false, err
+			return false, feeLedgerInvariantError("collected", exchangeID, err)
 		}
 		if !hasCoins(collected, locked) {
 			return false, types.ErrInvariantViolation.Wrapf("locked exceeds collected for exchange %d", exchangeID)
@@ -255,17 +324,39 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		if err := validateExchangeConfig(exchange); err != nil {
 			return false, types.ErrInvariantViolation.Wrapf("exchange %d config is invalid: %v", exchangeID, err)
 		}
+		for _, field := range []struct {
+			name  string
+			value string
+		}{
+			{name: "limit_a_to_b", value: exchange.GetLimitAToB()},
+			{name: "limit_b_to_a", value: exchange.GetLimitBToA()},
+			{name: "volume_cap_a_to_b", value: exchange.GetVolumeCapAToB()},
+			{name: "volume_cap_b_to_a", value: exchange.GetVolumeCapBToA()},
+		} {
+			amount, err := validateExchangeLimitIntString(field.name, field.value)
+			if err != nil || field.value != amount.String() {
+				return false, types.ErrInvariantViolation.Wrapf("exchange %d %s is not canonical", exchangeID, field.name)
+			}
+		}
 		canonicalAdmin, _, err := k.canonicalAddress(exchange.GetAdminAddress())
 		if err != nil || canonicalAdmin != exchange.GetAdminAddress() {
 			return false, types.ErrInvariantViolation.Wrapf("exchange %d admin address is not canonical", exchangeID)
 		}
-		for name, value := range map[string]string{
-			"denom_a": exchange.GetDenomA(), "port_a": exchange.GetPortA(), "channel_a": exchange.GetChannelA(),
-			"denom_b": exchange.GetDenomB(), "port_b": exchange.GetPortB(), "channel_b": exchange.GetChannelB(),
-			"oracle_symbol_a_to_b": exchange.GetOracleSymbolAToB(), "oracle_symbol_b_to_a": exchange.GetOracleSymbolBToA(),
+		for _, field := range []struct {
+			name  string
+			value string
+		}{
+			{name: "denom_a", value: exchange.GetDenomA()},
+			{name: "port_a", value: exchange.GetPortA()},
+			{name: "channel_a", value: exchange.GetChannelA()},
+			{name: "denom_b", value: exchange.GetDenomB()},
+			{name: "port_b", value: exchange.GetPortB()},
+			{name: "channel_b", value: exchange.GetChannelB()},
+			{name: "oracle_symbol_a_to_b", value: exchange.GetOracleSymbolAToB()},
+			{name: "oracle_symbol_b_to_a", value: exchange.GetOracleSymbolBToA()},
 		} {
-			if value != strings.TrimSpace(value) {
-				return false, types.ErrInvariantViolation.Wrapf("exchange %d %s is not canonical", exchangeID, name)
+			if field.value != strings.TrimSpace(field.value) {
+				return false, types.ErrInvariantViolation.Wrapf("exchange %d %s is not canonical", exchangeID, field.name)
 			}
 		}
 		expectedIBCDenomA, err := buildIBCDenom(exchange.GetDenomA(), exchange.GetPortA(), exchange.GetChannelA())
@@ -312,11 +403,11 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 			}
 			collected, err := k.GetCollectedFees(ctx, exchangeID)
 			if err != nil {
-				return false, err
+				return false, feeLedgerInvariantError("collected", exchangeID, err)
 			}
 			locked, err := k.GetLockedFees(ctx, exchangeID)
 			if err != nil {
-				return false, err
+				return false, feeLedgerInvariantError("locked", exchangeID, err)
 			}
 			if !collected.IsZero() || !locked.IsZero() {
 				return false, types.ErrInvariantViolation.Wrapf("deleted exchange %d has non-zero fee ledgers", exchangeID)
@@ -382,32 +473,34 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		return err
 	}
 	err = k.volumeWindow.Walk(ctx, nil, func(key volumeWindowKey, amount string) (bool, error) {
-		if _, err := k.GetExchange(ctx, key.K1()); err != nil {
-			return false, types.ErrInvariantViolation.Wrapf("volume window references unknown exchange %d", key.K1())
+		exchangeID := key.K2()
+		exchange, err := k.GetExchange(ctx, exchangeID)
+		if err != nil {
+			return false, types.ErrInvariantViolation.Wrapf("volume window references unknown exchange %d", exchangeID)
 		}
-		direction := bexv1.SwapDirection(key.K2())
+		direction := bexv1.SwapDirection(key.K3())
 		if direction != bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B && direction != bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A {
-			return false, types.ErrInvariantViolation.Wrapf("volume window has invalid direction %d", key.K2())
+			return false, types.ErrInvariantViolation.Wrapf("volume window has invalid direction %d", key.K3())
 		}
-		if err := validateVolumeEpochSeconds("volume_window.epoch_seconds", key.K4(), false); err != nil {
+		epochStart, ok := volumeWindowEpochStart(key)
+		if !ok {
+			return false, types.ErrInvariantViolation.Wrap("volume window key has an invalid expiry")
+		}
+		generation := volumeWindowGeneration(key)
+		if err := ValidateVolumeWindowForGenesis(epochStart, volumeWindowEpochSeconds(key), generation); err != nil {
 			return false, types.ErrInvariantViolation.Wrapf("volume window has invalid epoch: %v", err)
 		}
+		if generation > exchange.GetVolumeWindowGeneration() {
+			return false, types.ErrInvariantViolation.Wrapf(
+				"volume window generation %d exceeds exchange %d generation %d",
+				generation,
+				exchangeID,
+				exchange.GetVolumeWindowGeneration(),
+			)
+		}
 		parsed, err := validateRequiredIntString("volume_window.amount", amount)
-		if err != nil || parsed.IsNil() || parsed.IsNegative() {
+		if err != nil || parsed.IsNil() || parsed.IsNegative() || amount != parsed.String() {
 			return false, types.ErrInvariantViolation.Wrapf("volume window has invalid amount %q", amount)
-		}
-		return false, nil
-	})
-	if err != nil {
-		return err
-	}
-	err = k.volumePruneCursor.Walk(ctx, nil, func(key collections.Pair[uint64, uint32], _ uint64) (bool, error) {
-		if _, err := k.GetExchange(ctx, key.K1()); err != nil {
-			return false, types.ErrInvariantViolation.Wrapf("volume prune cursor references unknown exchange %d", key.K1())
-		}
-		direction := bexv1.SwapDirection(key.K2())
-		if direction != bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B && direction != bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A {
-			return false, types.ErrInvariantViolation.Wrapf("volume prune cursor has invalid direction %d", key.K2())
 		}
 		return false, nil
 	})
@@ -428,4 +521,31 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func assertCanonicalFeeLedger(name string, exchangeID uint64, ledger *bexv1.FeeLedger, canonical sdk.Coins) error {
+	if ledger == nil {
+		return types.ErrInvariantViolation.Wrapf("exchange %d %s fee ledger is nil", exchangeID, name)
+	}
+	expected := sdkCoinsToProto(canonical)
+	if len(ledger.GetCoins()) != len(expected) {
+		return types.ErrInvariantViolation.Wrapf("exchange %d %s fee ledger is not canonical and sorted", exchangeID, name)
+	}
+	for i, coin := range ledger.GetCoins() {
+		if coin == nil || coin.GetDenom() != expected[i].GetDenom() || coin.GetAmount() != expected[i].GetAmount() {
+			return types.ErrInvariantViolation.Wrapf(
+				"exchange %d %s fee ledger is not canonical and sorted",
+				exchangeID,
+				name,
+			)
+		}
+	}
+	return nil
+}
+
+func feeLedgerInvariantError(name string, exchangeID uint64, err error) error {
+	if errors.Is(err, types.ErrInvalidRequest) {
+		return types.ErrInvariantViolation.Wrapf("exchange %d %s fee ledger is invalid: %v", exchangeID, name, err)
+	}
+	return err
 }

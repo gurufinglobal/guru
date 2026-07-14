@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"math"
 	"math/big"
 	"sort"
 	"strings"
@@ -123,7 +124,13 @@ func validateMetadata(metadata map[string]string) error {
 	if len(metadata) > maxMetadataEntries {
 		return types.ErrInvalidRequest.Wrap("metadata has too many entries")
 	}
-	for key, value := range metadata {
+	keys := make([]string, 0, len(metadata))
+	for key := range metadata {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		value := metadata[key]
 		if key == "" {
 			return types.ErrInvalidRequest.Wrap("metadata key cannot be empty")
 		}
@@ -213,11 +220,11 @@ func validateExchangeConfig(exchange *bexv1.Exchange) error {
 	if exchange.GetId() == 0 {
 		return types.ErrInvalidRequest.Wrap("exchange id cannot be zero")
 	}
+	if exchange.GetVolumeWindowGeneration() == 0 {
+		return types.ErrInvalidRequest.Wrap("volume_window_generation must be non-zero")
+	}
 	if err := validateStatus(exchange.GetStatus()); err != nil {
 		return err
-	}
-	if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED {
-		return nil
 	}
 	if err := validateRoute(exchange.GetDenomA(), exchange.GetPortA(), exchange.GetChannelA()); err != nil {
 		return err
@@ -225,8 +232,28 @@ func validateExchangeConfig(exchange *bexv1.Exchange) error {
 	if err := validateRoute(exchange.GetDenomB(), exchange.GetPortB(), exchange.GetChannelB()); err != nil {
 		return err
 	}
-	if strings.TrimSpace(exchange.GetDenomA()) == strings.TrimSpace(exchange.GetDenomB()) {
-		return types.ErrInvalidRoute.Wrap("denom_a and denom_b must be distinct")
+	ibcDenomA, err := buildIBCDenom(exchange.GetDenomA(), exchange.GetPortA(), exchange.GetChannelA())
+	if err != nil {
+		return err
+	}
+	ibcDenomB, err := buildIBCDenom(exchange.GetDenomB(), exchange.GetPortB(), exchange.GetChannelB())
+	if err != nil {
+		return err
+	}
+	seenDenoms := make(map[string]string, 4)
+	for _, candidate := range []struct {
+		name  string
+		denom string
+	}{
+		{name: "denom_a", denom: strings.TrimSpace(exchange.GetDenomA())},
+		{name: "denom_b", denom: strings.TrimSpace(exchange.GetDenomB())},
+		{name: "ibc_denom_a", denom: ibcDenomA},
+		{name: "ibc_denom_b", denom: ibcDenomB},
+	} {
+		if previous, found := seenDenoms[candidate.denom]; found {
+			return types.ErrInvalidRoute.Wrapf("%s and %s must resolve to distinct denoms", previous, candidate.name)
+		}
+		seenDenoms[candidate.denom] = candidate.name
 	}
 	if strings.TrimSpace(exchange.GetOracleSymbolAToB()) == "" || strings.TrimSpace(exchange.GetOracleSymbolBToA()) == "" {
 		return types.ErrInvalidOracleRate.Wrap("oracle symbols cannot be empty")
@@ -237,13 +264,16 @@ func validateExchangeConfig(exchange *bexv1.Exchange) error {
 	if err := validateFeeBps(exchange.GetFeeBpsBToA()); err != nil {
 		return err
 	}
-	for name, value := range map[string]string{
-		"limit_a_to_b":      exchange.GetLimitAToB(),
-		"limit_b_to_a":      exchange.GetLimitBToA(),
-		"volume_cap_a_to_b": exchange.GetVolumeCapAToB(),
-		"volume_cap_b_to_a": exchange.GetVolumeCapBToA(),
+	for _, field := range []struct {
+		name  string
+		value string
+	}{
+		{name: "limit_a_to_b", value: exchange.GetLimitAToB()},
+		{name: "limit_b_to_a", value: exchange.GetLimitBToA()},
+		{name: "volume_cap_a_to_b", value: exchange.GetVolumeCapAToB()},
+		{name: "volume_cap_b_to_a", value: exchange.GetVolumeCapBToA()},
 	} {
-		if _, err := validateExchangeLimitIntString(name, value); err != nil {
+		if _, err := validateExchangeLimitIntString(field.name, field.value); err != nil {
 			return err
 		}
 	}
@@ -258,6 +288,15 @@ func validateExchangeConfig(exchange *bexv1.Exchange) error {
 	}
 	if exchange.GetPendingVolumeEpochSeconds() != 0 && exchange.GetPendingVolumeEpochEffectiveAtUnix() == 0 {
 		return types.ErrInvalidRequest.Wrap("pending_volume_epoch_seconds requires pending_volume_epoch_effective_at_unix")
+	}
+	if exchange.GetPendingVolumeEpochSeconds() != 0 && exchange.GetRevision() == ^uint64(0) {
+		return types.ErrInvalidRequest.Wrap("pending volume epoch requires an available revision")
+	}
+	if exchange.GetPendingVolumeEpochSeconds() != 0 && exchange.GetVolumeWindowGeneration() == ^uint64(0) {
+		return types.ErrInvalidRequest.Wrap("pending volume epoch requires an available volume window generation")
+	}
+	if exchange.GetPendingVolumeEpochEffectiveAtUnix() > uint64(math.MaxInt64) {
+		return types.ErrInvalidRequest.Wrap("pending_volume_epoch_effective_at_unix exceeds supported Unix time")
 	}
 	if err := validateOracleStalenessSeconds(exchange.GetMaxOracleStalenessSeconds()); err != nil {
 		return err

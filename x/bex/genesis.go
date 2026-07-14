@@ -86,6 +86,9 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		if exchange.GetRevision() == 0 {
 			return types.ErrInvalidGenesis.Wrapf("exchange %d revision must be non-zero", exchange.GetId())
 		}
+		if exchange.GetVolumeWindowGeneration() == 0 {
+			return types.ErrInvalidGenesis.Wrapf("exchange %d volume_window_generation must be non-zero", exchange.GetId())
+		}
 		for _, field := range []struct {
 			name  string
 			value string
@@ -116,6 +119,19 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		}
 		if exchange.GetAdminAddress() != canonicalAdmin {
 			return types.ErrInvalidGenesis.Wrapf("exchange %d admin address is not canonical", exchange.GetId())
+		}
+		for _, field := range []struct {
+			name  string
+			value string
+		}{
+			{name: "limit_a_to_b", value: exchange.GetLimitAToB()},
+			{name: "limit_b_to_a", value: exchange.GetLimitBToA()},
+			{name: "volume_cap_a_to_b", value: exchange.GetVolumeCapAToB()},
+			{name: "volume_cap_b_to_a", value: exchange.GetVolumeCapBToA()},
+		} {
+			if _, err := bexkeeper.ParseIntForGenesis(field.name, field.value); err != nil {
+				return err
+			}
 		}
 		expectedDenomA, err := bexkeeper.ExpectedIBCDenomForGenesis(exchange.GetDenomA(), exchange.GetPortA(), exchange.GetChannelA())
 		if err != nil {
@@ -199,20 +215,40 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 	}
 	volumeKeys := map[string]struct{}{}
 	for _, window := range genesis.GetVolumeWindows() {
-		if _, ok := exchangeIDs[window.GetExchangeId()]; !ok {
+		exchange, ok := exchangeIDs[window.GetExchangeId()]
+		if !ok {
 			return types.ErrInvalidGenesis.Wrapf("volume window references unknown exchange %d", window.GetExchangeId())
 		}
 		if window.GetDirection() != bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B &&
 			window.GetDirection() != bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A {
 			return types.ErrInvalidGenesis.Wrap("invalid volume window")
 		}
-		key := fmt.Sprintf("%d/%d/%d/%d", window.GetExchangeId(), window.GetDirection(), window.GetEpochStartUnix(), window.GetEpochSeconds())
+		key := fmt.Sprintf(
+			"%d/%d/%d/%d/%d",
+			window.GetExchangeId(),
+			window.GetDirection(),
+			window.GetEpochStartUnix(),
+			window.GetEpochSeconds(),
+			window.GetVolumeWindowGeneration(),
+		)
 		if _, exists := volumeKeys[key]; exists {
 			return types.ErrInvalidGenesis.Wrapf("duplicate volume window %s", key)
 		}
 		volumeKeys[key] = struct{}{}
-		if err := bexkeeper.ValidateVolumeEpochForGenesis("volume_window.epoch_seconds", window.GetEpochSeconds(), false); err != nil {
+		if err := bexkeeper.ValidateVolumeWindowForGenesis(
+			window.GetEpochStartUnix(),
+			window.GetEpochSeconds(),
+			window.GetVolumeWindowGeneration(),
+		); err != nil {
 			return err
+		}
+		if window.GetVolumeWindowGeneration() > exchange.GetVolumeWindowGeneration() {
+			return types.ErrInvalidGenesis.Wrapf(
+				"volume window generation %d exceeds exchange %d generation %d",
+				window.GetVolumeWindowGeneration(),
+				window.GetExchangeId(),
+				exchange.GetVolumeWindowGeneration(),
+			)
 		}
 		if _, err := bexkeeper.ParseIntForGenesis("volume amount", window.GetAmount()); err != nil {
 			return err

@@ -15,7 +15,8 @@ enum ExchangeStatus {
   EXCHANGE_STATUS_ACTIVE = 1;
   // EXCHANGE_STATUS_INACTIVE retains configuration while blocking swaps.
   EXCHANGE_STATUS_INACTIVE = 2;
-  // EXCHANGE_STATUS_DELETED is a permanent logical-delete tombstone.
+  // EXCHANGE_STATUS_DELETED is a permanent logical-delete tombstone that
+  // retains the exchange's fully validated configuration.
   EXCHANGE_STATUS_DELETED = 3;
 }
 
@@ -75,6 +76,10 @@ message Exchange {
   // Unix time at which pending_volume_epoch_seconds becomes current.
   uint64 pending_volume_epoch_effective_at_unix = 25;
   uint32 max_oracle_staleness_seconds = 26;
+  // Keeper-managed identity for the current volume-accounting configuration.
+  // It changes only when a new logical accounting window must not inherit
+  // usage from an earlier configuration.
+  uint64 volume_window_generation = 27;
 }
 
 // ExchangeUpdatePatch is a typed atomic update patch for an exchange.
@@ -126,6 +131,7 @@ message VolumeWindow {
   uint64 epoch_start_unix = 3;
   uint32 epoch_seconds = 4;
   string amount = 5 [(cosmos_proto.scalar) = "cosmos.Int"];
+  uint64 volume_window_generation = 6;
 }
 
 // QuoteSwapRequest is the keeper-level quote request.

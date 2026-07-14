@@ -18,7 +18,12 @@ import (
 
 const DefaultNextExchangeID uint64 = 1
 
-type volumeWindowKey = collections.Quad[uint64, uint32, uint64, uint32]
+// volumeWindowKey is ordered by (expiry, exchange, direction,
+// (epoch seconds, generation)), so bounded global pruning always encounters
+// the earliest-expiring window first while every logical accounting
+// configuration retains a distinct key.
+type volumeWindowIdentity = collections.Pair[uint32, uint64]
+type volumeWindowKey = collections.Quad[uint64, uint64, uint32, volumeWindowIdentity]
 
 type Keeper struct {
 	accountCodec       address.Codec
@@ -36,7 +41,6 @@ type Keeper struct {
 	collectedFees     collections.Map[uint64, *bexv1.FeeLedger]
 	lockedFees        collections.Map[uint64, *bexv1.FeeLedger]
 	volumeWindow      collections.Map[volumeWindowKey, string]
-	volumePruneCursor collections.Map[collections.Pair[uint64, uint32], uint64]
 	reserveDepositors collections.KeySet[collections.Pair[uint64, string]]
 
 	schema collections.Schema
@@ -77,15 +81,13 @@ func NewKeeper(
 		sb,
 		types.VolumeWindowKey,
 		"volume_window",
-		collections.QuadKeyCodec(collections.Uint64Key, collections.Uint32Key, collections.Uint64Key, collections.Uint32Key),
+		collections.QuadKeyCodec(
+			collections.Uint64Key,
+			collections.Uint64Key,
+			collections.Uint32Key,
+			collections.PairKeyCodec(collections.Uint32Key, collections.Uint64Key),
+		),
 		collections.StringValue,
-	)
-	k.volumePruneCursor = collections.NewMap(
-		sb,
-		types.VolumePruneCursorKey,
-		"volume_prune_cursor",
-		collections.PairKeyCodec(collections.Uint64Key, collections.Uint32Key),
-		collections.Uint64Value,
 	)
 	k.reserveDepositors = collections.NewKeySet(
 		sb,

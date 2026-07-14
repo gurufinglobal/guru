@@ -617,7 +617,13 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 	require.Equal(t, ex1.GetVolumeCapAToB(), window.GetCap())
 	_, err = q.VolumeWindow(f.ctx, &bexv1.QueryVolumeWindowRequest{ExchangeId: ex1.GetId(), Direction: bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
-	badVolumeKey := currentVolumeKey(f.ctx.BlockTime(), ex1.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, ex1.GetVolumeEpochSeconds())
+	badVolumeKey := currentVolumeKey(
+		f.ctx.BlockTime(),
+		ex1.GetId(),
+		bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED,
+		ex1.GetVolumeEpochSeconds(),
+		ex1.GetVolumeWindowGeneration(),
+	)
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, badVolumeKey, "bad"))
 	_, err = f.keeper.GetCurrentVolumeAmount(f.ctx, ex1, bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED)
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
@@ -684,7 +690,13 @@ func TestImmediateVolumeEpochUpdateStartsNewWindowAndPreservesPendingSchedule(t 
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
-	oldKey := currentVolumeKey(f.ctx.BlockTime(), exchange.GetId(), direction, exchange.GetVolumeEpochSeconds())
+	oldKey := currentVolumeKey(
+		f.ctx.BlockTime(),
+		exchange.GetId(),
+		direction,
+		exchange.GetVolumeEpochSeconds(),
+		exchange.GetVolumeWindowGeneration(),
+	)
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), direction, sdkmath.NewInt(10)))
 
 	effectiveAt := uint64(f.ctx.BlockTime().Add(time.Hour).Unix())
@@ -780,25 +792,40 @@ func TestVolumePendingEpochActivationAndPrune(t *testing.T) {
 	require.Zero(t, persisted.GetPendingVolumeEpochEffectiveAtUnix())
 	require.Equal(t, updated.GetRevision()+1, persisted.GetRevision())
 
-	newKey := currentVolumeKey(futureCtx.BlockTime(), exchange.GetId(), direction, minVolumeEpochSecs*2)
+	newKey := currentVolumeKey(
+		futureCtx.BlockTime(),
+		exchange.GetId(),
+		direction,
+		minVolumeEpochSecs*2,
+		persisted.GetVolumeWindowGeneration(),
+	)
 	value, err := f.keeper.volumeWindow.Get(futureCtx, newKey)
 	require.NoError(t, err)
 	require.Equal(t, "5", value)
 
 	pruneExchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	expiredStart := uint64(f.ctx.BlockTime().Unix()) - 2*uint64(minVolumeEpochSecs)
-	expiredKey := collections.Join4(pruneExchange.GetId(), uint32(direction), expiredStart, minVolumeEpochSecs)
+	expiredKey := volumeWindowKeyFromStart(
+		pruneExchange.GetId(),
+		direction,
+		expiredStart,
+		minVolumeEpochSecs,
+		pruneExchange.GetVolumeWindowGeneration(),
+	)
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, expiredKey, "1"))
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, pruneExchange.GetId(), direction, sdkmath.NewInt(1)))
 	_, err = f.keeper.volumeWindow.Get(f.ctx, expiredKey)
 	require.ErrorIs(t, err, collections.ErrNotFound)
-	cursor, err := f.keeper.volumePruneCursor.Get(f.ctx, collections.Join(pruneExchange.GetId(), uint32(direction)))
-	require.NoError(t, err)
-	require.NotZero(t, cursor)
 
 	steadyExchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, steadyExchange.GetId(), direction, sdkmath.NewInt(1)))
-	steadyExpiredKey := collections.Join4(steadyExchange.GetId(), uint32(direction), uint64(1), uint32(1))
+	steadyExpiredKey := volumeWindowKeyFromStart(
+		steadyExchange.GetId(),
+		direction,
+		uint64(1),
+		uint32(1),
+		steadyExchange.GetVolumeWindowGeneration(),
+	)
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, steadyExpiredKey, "1"))
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, steadyExchange.GetId(), direction, sdkmath.NewInt(1)))
 	value, err = f.keeper.volumeWindow.Get(f.ctx, steadyExpiredKey)
@@ -814,36 +841,53 @@ func TestVolumePendingEpochActivationAndPrune(t *testing.T) {
 func TestVolumeWindowPruneAndEpochEdgeCases(t *testing.T) {
 	f := setupKeeperFixture(t)
 	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
-	now := uint64(f.ctx.BlockTime().Unix())
-
 	exchange := &bexv1.Exchange{
 		VolumeEpochSeconds:                minVolumeEpochSecs,
 		PendingVolumeEpochSeconds:         minVolumeEpochSecs * 2,
 		PendingVolumeEpochEffectiveAtUnix: 1,
+		VolumeWindowGeneration:            1,
 	}
-	require.Equal(t, minVolumeEpochSecs, effectiveVolumeEpochSeconds(exchange, time.Time{}))
-	require.Equal(t, minVolumeEpochSecs, effectiveVolumeEpochSeconds(exchange, time.Unix(-1, 0)))
-	require.Equal(t, minVolumeEpochSecs*2, effectiveVolumeEpochSeconds(exchange, time.Unix(1, 0)))
-	require.False(t, volumeWindowExpired(collections.Join4(uint64(1), uint32(direction), now+1, minVolumeEpochSecs), now))
-	require.False(t, volumeWindowExpired(collections.Join4(uint64(1), uint32(direction), uint64(1), uint32(0)), now))
+	epochSeconds, generation, err := effectiveVolumeWindowIdentity(exchange, time.Time{})
+	require.NoError(t, err)
+	require.Equal(t, minVolumeEpochSecs, epochSeconds)
+	require.Equal(t, uint64(1), generation)
+	epochSeconds, generation, err = effectiveVolumeWindowIdentity(exchange, time.Unix(-1, 0))
+	require.NoError(t, err)
+	require.Equal(t, minVolumeEpochSecs, epochSeconds)
+	require.Equal(t, uint64(1), generation)
+	epochSeconds, generation, err = effectiveVolumeWindowIdentity(exchange, time.Unix(1, 0))
+	require.NoError(t, err)
+	require.Equal(t, minVolumeEpochSecs*2, epochSeconds)
+	require.Equal(t, uint64(2), generation)
+	key := volumeWindowKeyFromStart(1, direction, 7, minVolumeEpochSecs, 1)
+	epochStart, ok := volumeWindowEpochStart(key)
+	require.True(t, ok)
+	require.Equal(t, uint64(7), epochStart)
+	_, ok = volumeWindowEpochStart(collections.Join4(
+		uint64(1),
+		uint64(1),
+		uint32(direction),
+		collections.Join(uint32(2), uint64(1)),
+	))
+	require.False(t, ok)
 
-	require.NoError(t, f.keeper.pruneExpiredVolumeWindows(f.ctx, 700, direction, 0))
-	require.NoError(t, f.keeper.pruneExpiredVolumeWindows(f.ctx.WithBlockTime(time.Time{}), 700, direction, maxVolumePruneRowsPerRecord))
+	require.NoError(t, f.keeper.pruneExpiredVolumeWindows(f.ctx, 0))
+	require.NoError(t, f.keeper.pruneExpiredVolumeWindows(f.ctx.WithBlockTime(time.Time{}), maxVolumePruneRowsPerPass))
 
-	skipID := uint64(701)
-	skipKey := collections.Join4(skipID, uint32(direction), uint64(1), uint32(1))
-	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, skipKey, "1"))
-	require.NoError(t, f.keeper.volumePruneCursor.Set(f.ctx, collections.Join(skipID, uint32(direction)), 2))
-	require.NoError(t, f.keeper.pruneExpiredVolumeWindows(f.ctx, skipID, direction, maxVolumePruneRowsPerRecord))
-	_, err := f.keeper.volumeWindow.Get(f.ctx, skipKey)
+	liveID := uint64(701)
+	liveStart := uint64(f.ctx.BlockTime().Unix())
+	liveKey := volumeWindowKeyFromStart(liveID, direction, liveStart, minVolumeEpochSecs, 1)
+	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, liveKey, "1"))
+	require.NoError(t, f.keeper.pruneExpiredVolumeWindows(f.ctx, maxVolumePruneRowsPerPass))
+	_, err = f.keeper.volumeWindow.Get(f.ctx, liveKey)
 	require.NoError(t, err)
 
 	limitedID := uint64(702)
-	firstKey := collections.Join4(limitedID, uint32(direction), uint64(1), uint32(1))
-	secondKey := collections.Join4(limitedID, uint32(direction), uint64(2), uint32(1))
+	firstKey := volumeWindowKeyFromStart(limitedID, direction, uint64(1), uint32(1), 1)
+	secondKey := volumeWindowKeyFromStart(limitedID, direction, uint64(2), uint32(1), 1)
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, firstKey, "1"))
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, secondKey, "1"))
-	require.NoError(t, f.keeper.pruneExpiredVolumeWindows(f.ctx, limitedID, direction, 1))
+	require.NoError(t, f.keeper.pruneExpiredVolumeWindows(f.ctx, 1))
 	_, err = f.keeper.volumeWindow.Get(f.ctx, firstKey)
 	require.ErrorIs(t, err, collections.ErrNotFound)
 	_, err = f.keeper.volumeWindow.Get(f.ctx, secondKey)
@@ -967,7 +1011,11 @@ func TestKeeperGenesisExportImportAndInvariants(t *testing.T) {
 	require.NotEmpty(t, canonical)
 	require.NotEmpty(t, addr)
 	require.NoError(t, ValidateExchangeForGenesis(active))
-	require.NoError(t, ValidateExchangeForGenesis(&bexv1.Exchange{Id: 99, Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED}))
+	validatedTombstone := cloneExchange(active)
+	validatedTombstone.Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
+	require.NoError(t, ValidateExchangeForGenesis(validatedTombstone))
+	validatedTombstone.VolumeEpochSeconds = 0
+	require.ErrorIs(t, ValidateExchangeForGenesis(validatedTombstone), types.ErrInvalidGenesis)
 	coins, err := ProtoCoinsForGenesis([]*basev1beta1.Coin{{Denom: "agxn", Amount: "1"}})
 	require.NoError(t, err)
 	require.True(t, HasCoinsForGenesis(coins, coins))
@@ -1049,7 +1097,13 @@ func TestAdditionalErrorBranches(t *testing.T) {
 	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: badStored.GetId(), InputDenom: badStored.GetDenomA(), AmountIn: "1"})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 	require.NoError(t, f.keeper.exchanges.Set(f.ctx, active.GetId(), active))
-	badVolumeKey := currentVolumeKey(f.ctx.BlockTime(), active.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, active.GetVolumeEpochSeconds())
+	badVolumeKey := currentVolumeKey(
+		f.ctx.BlockTime(),
+		active.GetId(),
+		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		active.GetVolumeEpochSeconds(),
+		active.GetVolumeWindowGeneration(),
+	)
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, badVolumeKey, "bad"))
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", f.ctx.BlockTime().Unix())
 	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "2"})
@@ -1071,7 +1125,10 @@ func TestAdditionalErrorBranches(t *testing.T) {
 		require.ErrorIs(t, err, types.ErrInvalidRequest)
 	}
 
-	require.Equal(t, uint64(0), currentVolumeKey(time.Time{}, 1, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, 0).K3())
+	zeroKey := currentVolumeKey(time.Time{}, 1, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, 0, 1)
+	epochStart, ok := volumeWindowEpochStart(zeroKey)
+	require.True(t, ok)
+	require.Zero(t, epochStart)
 	_, err = validateIntString("value", "")
 	require.NoError(t, err)
 	amount, err := validateIntString("value", maxUint256String)
@@ -1229,14 +1286,20 @@ func TestAdditionalErrorBranches(t *testing.T) {
 		LockedFees: []*bexv1.FeeGenesis{{ExchangeId: active.GetId(), Coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "bad"}}}},
 	}))
 	require.ErrorIs(t, f.keeper.ImportGenesis(f.ctx, &bexv1.GenesisState{
-		VolumeWindows: []*bexv1.VolumeWindowGenesis{{ExchangeId: active.GetId(), Direction: bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, EpochSeconds: minVolumeEpochSecs, Amount: "bad"}},
-	}), types.ErrInvalidRequest)
+		VolumeWindows: []*bexv1.VolumeWindowGenesis{{
+			ExchangeId:             active.GetId(),
+			Direction:              bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			EpochSeconds:           minVolumeEpochSecs,
+			Amount:                 "bad",
+			VolumeWindowGeneration: active.GetVolumeWindowGeneration(),
+		}},
+	}), types.ErrInvalidGenesis)
 	fresh := setupKeeperFixture(t)
 	exported, err := fresh.keeper.ExportGenesis(fresh.ctx)
 	require.NoError(t, err)
 	require.Equal(t, DefaultNextExchangeID, exported.GetNextExchangeId())
 	require.NoError(t, f.keeper.collectedFees.Set(f.ctx, active.GetId(), &bexv1.FeeLedger{Coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "bad"}}}))
-	require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvalidRequest)
+	require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
 	require.NoError(t, f.keeper.collectedFees.Set(f.ctx, active.GetId(), coinsToLedger(sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)))))
 	require.NoError(t, f.keeper.lockedFees.Set(f.ctx, active.GetId(), coinsToLedger(sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)))))
 	require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
@@ -1315,12 +1378,16 @@ func TestStoreFaultBranches(t *testing.T) {
 	require.ErrorIs(t, faulty("set", 0x02).RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)), faultErr)
 	require.NoError(t, f.keeper.exchanges.Set(f.ctx, exchange.GetId(), exchange))
 	rolloverCtx := f.ctx.WithBlockTime(f.ctx.BlockTime().Add(time.Duration(minVolumeEpochSecs) * time.Second))
-	require.ErrorIs(t, faulty("get", 0x09).RecordVolumeWindow(rolloverCtx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)), faultErr)
 	require.ErrorIs(t, faulty("iterator", 0x08).RecordVolumeWindow(rolloverCtx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)), faultErr)
-	expiredKey := collections.Join4(exchange.GetId(), uint32(bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B), uint64(1), uint32(1))
+	expiredKey := volumeWindowKeyFromStart(
+		exchange.GetId(),
+		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		uint64(1),
+		uint32(1),
+		exchange.GetVolumeWindowGeneration(),
+	)
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, expiredKey, "1"))
 	require.ErrorIs(t, faulty("delete", 0x08).RecordVolumeWindow(rolloverCtx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)), faultErr)
-	require.ErrorIs(t, faulty("set", 0x09).RecordVolumeWindow(rolloverCtx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)), faultErr)
 	require.ErrorIs(t, faulty("get", 0x08).RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)), faultErr)
 	_, err = faulty("get", 0x05).RegisterExchange(f.ctx, validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE))
 	require.ErrorIs(t, err, faultErr)

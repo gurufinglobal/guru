@@ -96,9 +96,9 @@ func setupKeeperFixture(t *testing.T) keeperTestFixture {
 }
 
 func TestNewKeeperPanicsOnDuplicateSchemaPrefix(t *testing.T) {
-	old := types.VolumePruneCursorKey
-	types.VolumePruneCursorKey = types.VolumeWindowKey
-	defer func() { types.VolumePruneCursorKey = old }()
+	old := types.ReserveDepositorsKey
+	types.ReserveDepositorsKey = types.VolumeWindowKey
+	defer func() { types.ReserveDepositorsKey = old }()
 
 	key := storetypes.NewKVStoreKey(types.StoreKey)
 	accountCodec := evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr)

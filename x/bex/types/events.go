@@ -17,8 +17,8 @@ const (
 	EventTypeFeesReleased            = "fees_released"
 	EventTypeFeesRefunded            = "fees_refunded"
 	EventTypeFeesWithdrawn           = "fees_withdrawn"
+	EventTypeVolumeEpochActivated    = "volume_epoch_activated"
 	EventTypeVolumeRecorded          = "volume_recorded"
-	EventTypeVolumeCapExceeded       = "volume_cap_exceeded"
 )
 
 const (
@@ -36,6 +36,8 @@ const (
 	AttributeKeyStatus         = "status"
 	AttributeKeyPreviousStatus = "previous_status"
 	AttributeKeyCurrentAmount  = "current_amount"
-	AttributeKeyNextAmount     = "next_amount"
-	AttributeKeyCap            = "cap"
+	AttributeKeyEpochSeconds   = "epoch_seconds"
+	AttributeKeyPreviousEpoch  = "previous_epoch_seconds"
+	AttributeKeyEffectiveAt    = "effective_at_unix"
+	AttributeKeyGeneration     = "volume_window_generation"
 )

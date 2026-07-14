@@ -186,19 +186,27 @@ func (q QueryServer) VolumeWindow(ctx context.Context, req *bexv1.QueryVolumeWin
 	if err != nil {
 		return nil, err
 	}
+	blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
+	epochSeconds, generation, err := effectiveVolumeWindowIdentity(exchange, blockTime)
+	if err != nil {
+		return nil, err
+	}
 	key := currentVolumeKey(
-		sdk.UnwrapSDKContext(ctx).BlockTime(),
+		blockTime,
 		exchange.GetId(),
 		req.GetDirection(),
-		effectiveVolumeEpochSeconds(exchange, sdk.UnwrapSDKContext(ctx).BlockTime()),
+		epochSeconds,
+		generation,
 	)
+	epochStart, _ := volumeWindowEpochStart(key)
 	return &bexv1.QueryVolumeWindowResponse{
 		Window: &bexv1.VolumeWindow{
-			ExchangeId:     exchange.GetId(),
-			Direction:      req.GetDirection(),
-			EpochStartUnix: key.K3(),
-			EpochSeconds:   key.K4(),
-			Amount:         amount.String(),
+			ExchangeId:             exchange.GetId(),
+			Direction:              req.GetDirection(),
+			EpochStartUnix:         epochStart,
+			EpochSeconds:           volumeWindowEpochSeconds(key),
+			Amount:                 amount.String(),
+			VolumeWindowGeneration: volumeWindowGeneration(key),
 		},
 		Cap: cap.String(),
 	}, nil

@@ -151,6 +151,18 @@ func TestGenesisErrors(t *testing.T) {
 	requireGenesisInvalid(t, am, ctx, &bexv1.GenesisState{Admins: []string{" " + admin}, NextExchangeId: 1})
 
 	valid := validGenesisState(t, am, ctx)
+	validTombstone := mutateGenesis(valid, func(g *bexv1.GenesisState) {
+		g.Exchanges[0].Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
+		g.CollectedFees = nil
+		g.LockedFees = nil
+	})
+	require.NoError(t, am.validateGenesisState(ctx, validTombstone))
+	require.Error(t, am.validateGenesisState(ctx, mutateGenesis(validTombstone, func(g *bexv1.GenesisState) {
+		g.Exchanges[0].VolumeEpochSeconds = 0
+	})))
+	requireGenesisInvalid(t, am, ctx, mutateGenesis(validTombstone, func(g *bexv1.GenesisState) {
+		g.Exchanges[0].LimitAToB = "010000"
+	}))
 	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].Id = 0 }))
 	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].Revision = 0 }))
 	require.NoError(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
@@ -194,6 +206,11 @@ func TestGenesisErrors(t *testing.T) {
 		g.VolumeWindows[0].Direction = bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED
 	}))
 	require.Error(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.VolumeWindows[0].EpochSeconds = 1 })))
+	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.VolumeWindows[0].EpochStartUnix++ }))
+	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
+		seconds := uint64(g.VolumeWindows[0].GetEpochSeconds())
+		g.VolumeWindows[0].EpochStartUnix = ^uint64(0) / seconds * seconds
+	}))
 	require.Error(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.VolumeWindows[0].Amount = "bad" })))
 	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
 		g.VolumeWindows[0].Direction = bexv1.SwapDirection(99)
@@ -302,6 +319,7 @@ func validGenesisState(t *testing.T, am AppModule, ctx sdk.Context) *bexv1.Genes
 			VolumeCapAToB:             "1000",
 			VolumeCapBToA:             "1000",
 			Revision:                  1,
+			VolumeWindowGeneration:    1,
 			Status:                    bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
 			Metadata:                  map[string]string{"venue": "bex-test"},
 			VolumeEpochSeconds:        86400,
@@ -316,11 +334,12 @@ func validGenesisState(t *testing.T, am AppModule, ctx sdk.Context) *bexv1.Genes
 			Coins:      []*basev1beta1.Coin{{Denom: "agxn", Amount: "2"}},
 		}},
 		VolumeWindows: []*bexv1.VolumeWindowGenesis{{
-			ExchangeId:     1,
-			Direction:      bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
-			EpochStartUnix: 1700000000,
-			EpochSeconds:   86400,
-			Amount:         "5",
+			ExchangeId:             1,
+			Direction:              bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			EpochStartUnix:         1699920000,
+			EpochSeconds:           86400,
+			Amount:                 "5",
+			VolumeWindowGeneration: 1,
 		}},
 		ReserveDepositors: []*bexv1.ReserveDepositorGenesis{{
 			ExchangeId:       1,

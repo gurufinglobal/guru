@@ -14,7 +14,7 @@ import (
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
-const maxVolumePruneRowsPerRecord = 32
+const maxVolumePruneRowsPerPass = 32
 
 var legacyDecPrecision = new(big.Int).Exp(big.NewInt(10), big.NewInt(sdkmath.LegacyPrecision), nil)
 
@@ -217,7 +217,12 @@ func quoteAmountOut(rate sdkmath.LegacyDec, netIn sdkmath.Int) (sdkmath.Int, err
 }
 
 func (k Keeper) GetCurrentVolumeAmount(ctx context.Context, exchange *bexv1.Exchange, direction bexv1.SwapDirection) (sdkmath.Int, error) {
-	key := currentVolumeKey(sdk.UnwrapSDKContext(ctx).BlockTime(), exchange.GetId(), direction, effectiveVolumeEpochSeconds(exchange, sdk.UnwrapSDKContext(ctx).BlockTime()))
+	blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
+	epochSeconds, generation, err := effectiveVolumeWindowIdentity(exchange, blockTime)
+	if err != nil {
+		return sdkmath.Int{}, err
+	}
+	key := currentVolumeKey(blockTime, exchange.GetId(), direction, epochSeconds, generation)
 	amount, _, err := k.getVolumeWindowAmount(ctx, key)
 	return amount, err
 }
@@ -247,13 +252,18 @@ func (k Keeper) recordVolumeWindow(ctx context.Context, exchangeID uint64, direc
 	if err != nil {
 		return err
 	}
-	key := currentVolumeKey(sdk.UnwrapSDKContext(ctx).BlockTime(), exchangeID, direction, effectiveVolumeEpochSeconds(exchange, sdk.UnwrapSDKContext(ctx).BlockTime()))
+	blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
+	epochSeconds, generation, err := effectiveVolumeWindowIdentity(exchange, blockTime)
+	if err != nil {
+		return err
+	}
+	key := currentVolumeKey(blockTime, exchangeID, direction, epochSeconds, generation)
 	used, found, err := k.getVolumeWindowAmount(ctx, key)
 	if err != nil {
 		return err
 	}
 	if !found {
-		if err := k.pruneExpiredVolumeWindows(ctx, exchangeID, direction, maxVolumePruneRowsPerRecord); err != nil {
+		if err := k.pruneExpiredVolumeWindows(ctx, maxVolumePruneRowsPerPass); err != nil {
 			return err
 		}
 	}
@@ -262,27 +272,20 @@ func (k Keeper) recordVolumeWindow(ctx context.Context, exchangeID uint64, direc
 		return err
 	}
 	if !cap.IsZero() && next.GT(cap) {
-		emitEvent(
-			ctx,
-			types.EventTypeVolumeCapExceeded,
-			exchangeIDAttr(exchangeID),
-			directionAttr(direction),
-			intAttr(types.AttributeKeyCurrentAmount, used),
-			intAttr(types.AttributeKeyNextAmount, next),
-			intAttr(types.AttributeKeyCap, cap),
-		)
 		return types.ErrVolumeCapExceeded.Wrap("recording would exceed volume cap")
 	}
 	if err := k.volumeWindow.Set(ctx, key, next.String()); err != nil {
 		return err
 	}
+	epochStart, _ := volumeWindowEpochStart(key)
 	emitEvent(
 		ctx,
 		types.EventTypeVolumeRecorded,
 		exchangeIDAttr(exchangeID),
 		directionAttr(direction),
-		uint64Attr("epoch_start_unix", key.K3()),
-		sdk.NewAttribute("epoch_seconds", strconv.FormatUint(uint64(key.K4()), 10)),
+		uint64Attr("epoch_start_unix", epochStart),
+		sdk.NewAttribute(types.AttributeKeyEpochSeconds, strconv.FormatUint(uint64(volumeWindowEpochSeconds(key)), 10)),
+		uint64Attr(types.AttributeKeyGeneration, volumeWindowGeneration(key)),
 		intAttr(types.AttributeKeyAmount, amountOut),
 		intAttr(types.AttributeKeyCurrentAmount, next),
 	)
@@ -304,11 +307,18 @@ func (k Keeper) getVolumeWindowAmount(ctx context.Context, key volumeWindowKey) 
 	return amount, true, nil
 }
 
-func effectiveVolumeEpochSeconds(exchange *bexv1.Exchange, blockTime time.Time) uint32 {
-	if !pendingVolumeEpochDue(exchange, blockTime) {
-		return exchange.GetVolumeEpochSeconds()
+func effectiveVolumeWindowIdentity(exchange *bexv1.Exchange, blockTime time.Time) (uint32, uint64, error) {
+	if exchange == nil || exchange.GetVolumeWindowGeneration() == 0 {
+		return 0, 0, types.ErrInvariantViolation.Wrap("volume window generation must be non-zero")
 	}
-	return exchange.GetPendingVolumeEpochSeconds()
+	if !pendingVolumeEpochDue(exchange, blockTime) {
+		return exchange.GetVolumeEpochSeconds(), exchange.GetVolumeWindowGeneration(), nil
+	}
+	nextGeneration, err := incrementVolumeWindowGeneration(exchange.GetVolumeWindowGeneration())
+	if err != nil {
+		return 0, 0, err
+	}
+	return exchange.GetPendingVolumeEpochSeconds(), nextGeneration, nil
 }
 
 func pendingVolumeEpochDue(exchange *bexv1.Exchange, blockTime time.Time) bool {
@@ -327,9 +337,16 @@ func (k Keeper) activatePendingVolumeEpoch(ctx context.Context, exchange *bexv1.
 		return exchange, nil
 	}
 	updated := cloneExchange(exchange)
+	previousEpochSeconds := updated.GetVolumeEpochSeconds()
+	effectiveAt := updated.GetPendingVolumeEpochEffectiveAtUnix()
 	updated.VolumeEpochSeconds = updated.GetPendingVolumeEpochSeconds()
 	updated.PendingVolumeEpochSeconds = 0
 	updated.PendingVolumeEpochEffectiveAtUnix = 0
+	nextGeneration, err := incrementVolumeWindowGeneration(updated.GetVolumeWindowGeneration())
+	if err != nil {
+		return nil, err
+	}
+	updated.VolumeWindowGeneration = nextGeneration
 	nextRevision, err := incrementRevision(updated.GetRevision())
 	if err != nil {
 		return nil, err
@@ -338,10 +355,20 @@ func (k Keeper) activatePendingVolumeEpoch(ctx context.Context, exchange *bexv1.
 	if err := k.exchanges.Set(ctx, updated.GetId(), updated); err != nil {
 		return nil, err
 	}
+	emitEvent(
+		ctx,
+		types.EventTypeVolumeEpochActivated,
+		exchangeIDAttr(updated.GetId()),
+		sdk.NewAttribute(types.AttributeKeyPreviousEpoch, strconv.FormatUint(uint64(previousEpochSeconds), 10)),
+		sdk.NewAttribute(types.AttributeKeyEpochSeconds, strconv.FormatUint(uint64(updated.GetVolumeEpochSeconds()), 10)),
+		uint64Attr(types.AttributeKeyEffectiveAt, effectiveAt),
+		uint64Attr(types.AttributeKeyGeneration, updated.GetVolumeWindowGeneration()),
+		uint64Attr(types.AttributeKeyRevision, updated.GetRevision()),
+	)
 	return updated, nil
 }
 
-func (k Keeper) pruneExpiredVolumeWindows(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, limit int) error {
+func (k Keeper) pruneExpiredVolumeWindows(ctx context.Context, limit int) error {
 	if limit <= 0 {
 		return nil
 	}
@@ -350,33 +377,13 @@ func (k Keeper) pruneExpiredVolumeWindows(ctx context.Context, exchangeID uint64
 		return nil
 	}
 	now := uint64(blockTime.Unix())
-	cursorKey := collections.Join(exchangeID, uint32(direction))
-	cursor, err := k.volumePruneCursor.Get(ctx, cursorKey)
-	if err != nil {
-		if !errors.Is(err, collections.ErrNotFound) {
-			return err
-		}
-		cursor = 0
-	}
-
-	scanned := 0
-	nextCursor := cursor
 	keysToDelete := make([]volumeWindowKey, 0, limit)
-	rng := collections.NewSuperPrefixedQuadRange[uint64, uint32, uint64, uint32](exchangeID, uint32(direction))
-	err = k.volumeWindow.Walk(ctx, rng, func(key volumeWindowKey, _ string) (bool, error) {
-		if key.K3() < cursor {
-			return false, nil
-		}
-		if scanned >= limit {
+	err := k.volumeWindow.Walk(ctx, nil, func(key volumeWindowKey, _ string) (bool, error) {
+		if key.K1() > now {
 			return true, nil
 		}
-		scanned++
-		nextCursor = key.K3()
-		if volumeWindowExpired(key, now) {
-			keysToDelete = append(keysToDelete, key)
-			return false, nil
-		}
-		return true, nil
+		keysToDelete = append(keysToDelete, key)
+		return len(keysToDelete) == limit, nil
 	})
 	if err != nil {
 		return err
@@ -386,20 +393,47 @@ func (k Keeper) pruneExpiredVolumeWindows(ctx context.Context, exchangeID uint64
 			return err
 		}
 	}
-	if scanned == 0 {
-		return nil
-	}
-	return k.volumePruneCursor.Set(ctx, cursorKey, nextCursor)
+	return nil
 }
 
-func volumeWindowExpired(key volumeWindowKey, now uint64) bool {
-	if key.K4() == 0 || key.K3() > now {
-		return false
-	}
-	return uint64(key.K4()) <= now-key.K3()
+func volumeWindowKeyFromStart(
+	exchangeID uint64,
+	direction bexv1.SwapDirection,
+	epochStart uint64,
+	epochSeconds uint32,
+	generation uint64,
+) volumeWindowKey {
+	return collections.Join4(
+		epochStart+uint64(epochSeconds),
+		exchangeID,
+		uint32(direction),
+		collections.Join(epochSeconds, generation),
+	)
 }
 
-func currentVolumeKey(blockTime time.Time, exchangeID uint64, direction bexv1.SwapDirection, epochSeconds uint32) volumeWindowKey {
+func volumeWindowEpochStart(key volumeWindowKey) (uint64, bool) {
+	epochSeconds := uint64(volumeWindowEpochSeconds(key))
+	if epochSeconds == 0 || key.K1() < epochSeconds {
+		return 0, false
+	}
+	return key.K1() - epochSeconds, true
+}
+
+func volumeWindowEpochSeconds(key volumeWindowKey) uint32 {
+	return key.K4().K1()
+}
+
+func volumeWindowGeneration(key volumeWindowKey) uint64 {
+	return key.K4().K2()
+}
+
+func currentVolumeKey(
+	blockTime time.Time,
+	exchangeID uint64,
+	direction bexv1.SwapDirection,
+	epochSeconds uint32,
+	generation uint64,
+) volumeWindowKey {
 	if epochSeconds == 0 {
 		epochSeconds = 1
 	}
@@ -408,5 +442,5 @@ func currentVolumeKey(blockTime time.Time, exchangeID uint64, direction bexv1.Sw
 		unix = uint64(blockTime.Unix())
 	}
 	epoch := unix / uint64(epochSeconds) * uint64(epochSeconds)
-	return collections.Join4(exchangeID, uint32(direction), epoch, epochSeconds)
+	return volumeWindowKeyFromStart(exchangeID, direction, epoch, epochSeconds, generation)
 }
