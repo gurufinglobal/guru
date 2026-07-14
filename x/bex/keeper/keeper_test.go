@@ -381,10 +381,16 @@ func (m *mockAccountKeeper) SetAccount(_ context.Context, account sdk.AccountI) 
 type mockBankKeeper struct {
 	balances     map[string]sdk.Coins
 	restrictions []banktypes.SendRestrictionFn
+	blockedAddrs map[string]bool
+	disabled     map[string]bool
 }
 
 func newMockBankKeeper() *mockBankKeeper {
-	return &mockBankKeeper{balances: map[string]sdk.Coins{}}
+	return &mockBankKeeper{
+		balances:     map[string]sdk.Coins{},
+		blockedAddrs: map[string]bool{},
+		disabled:     map[string]bool{},
+	}
 }
 
 func (m *mockBankKeeper) AppendSendRestriction(restriction banktypes.SendRestrictionFn) {
@@ -393,6 +399,27 @@ func (m *mockBankKeeper) AppendSendRestriction(restriction banktypes.SendRestric
 
 func (m *mockBankKeeper) SetBalance(addr sdk.AccAddress, coins sdk.Coins) {
 	m.balances[string(addr)] = coins.Sort()
+}
+
+func (m *mockBankKeeper) BlockedAddr(addr sdk.AccAddress) bool {
+	return m.blockedAddrs[string(addr)]
+}
+
+func (m *mockBankKeeper) SetBlockedAddr(addr sdk.AccAddress, blocked bool) {
+	m.blockedAddrs[string(addr)] = blocked
+}
+
+func (m *mockBankKeeper) SetSendEnabled(denom string, enabled bool) {
+	m.disabled[denom] = !enabled
+}
+
+func (m *mockBankKeeper) IsSendEnabledCoins(_ context.Context, coins ...sdk.Coin) error {
+	for _, coin := range coins {
+		if m.disabled[coin.Denom] {
+			return banktypes.ErrSendDisabled.Wrapf("%s transfers are currently disabled", coin.Denom)
+		}
+	}
+	return nil
 }
 
 func (m *mockBankKeeper) GetAllBalances(_ context.Context, addr sdk.AccAddress) sdk.Coins {

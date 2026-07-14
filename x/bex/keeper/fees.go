@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
@@ -140,11 +141,18 @@ func (k Keeper) CollectFee(ctx context.Context, exchangeID uint64, fee sdk.Coin)
 		if err := k.collectedFees.Set(cacheCtx, exchangeID, coinsToLedger(collected)); err != nil {
 			return err
 		}
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(
+		coins := sdk.NewCoins(fee)
+		collectCtx := k.withReserveOutflowAllowance(
 			cacheCtx,
+			exchangeID,
+			authtypes.NewModuleAddress(types.ModuleName),
+			coins,
+		)
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(
+			collectCtx,
 			reserveAddr,
 			types.ModuleName,
-			sdk.NewCoins(fee),
+			coins,
 		); err != nil {
 			return err
 		}
