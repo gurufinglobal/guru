@@ -31,7 +31,7 @@ func TestReserveDepositorAdminLifecycleCanonicalStorage(t *testing.T) {
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, otherAdmin))
 
 	err := f.keeper.AddReserveDepositor(f.ctx, depositor, exchange.GetId(), depositorAlias)
-	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	err = f.keeper.AddReserveDepositor(f.ctx, otherAdmin, exchange.GetId(), depositorAlias)
 	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 
@@ -143,12 +143,20 @@ func TestReserveDepositorDepositsActiveAndInactiveWithoutDirectSendBypass(t *tes
 	requireEventTypes(t, f.ctx, types.EventTypeReserveDeposited)
 }
 
-func TestRemovedExchangeOwnerCanDepositOnlyThroughExplicitAllowlist(t *testing.T) {
+func TestPreviousExchangeAdminCanDepositOnlyThroughExplicitAllowlist(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, f.keeper.AddReserveDepositor(f.ctx, f.admin, exchange.GetId(), f.admin))
-	require.NoError(t, f.keeper.RemoveAdmin(f.ctx, f.moderator, f.admin))
+	newAdmin, _ := testAddress(t, f.accountCodec, 0x04)
+	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		NewAdminAddress: wrapperspb.String(newAdmin),
+	})
+	require.NoError(t, err)
+	require.Equal(t, newAdmin, updated.GetAdminAddress())
+	isBEXAdmin, err := f.keeper.IsAdmin(f.ctx, newAdmin)
+	require.NoError(t, err)
+	require.False(t, isBEXAdmin, "exchange ownership must not require BEX admin registration")
 
 	require.NoError(t, f.keeper.DepositReserve(
 		f.ctx,
@@ -157,7 +165,7 @@ func TestRemovedExchangeOwnerCanDepositOnlyThroughExplicitAllowlist(t *testing.T
 		sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)),
 	))
 
-	require.NoError(t, f.keeper.reserveDepositors.Remove(f.ctx, collections.Join(exchange.GetId(), f.admin)))
+	require.NoError(t, f.keeper.RemoveReserveDepositor(f.ctx, newAdmin, exchange.GetId(), f.admin))
 	require.ErrorIs(
 		t,
 		f.keeper.DepositReserve(
@@ -181,15 +189,15 @@ func TestReserveDepositorHasNoAdministrativeOrWithdrawalPrivilegesAndDeletedIsTe
 
 	amount := sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))
 	err := f.keeper.WithdrawReserve(f.ctx, depositor, exchange.GetId(), f.recipient, amount)
-	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	_, err = f.keeper.UpdateExchange(f.ctx, depositor, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
 		FeeBpsAToB: wrapperspb.UInt32(exchange.GetFeeBpsAToB() + 1),
 	})
-	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	err = f.keeper.DeleteExchange(f.ctx, depositor, exchange.GetId())
-	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	err = f.keeper.WithdrawFees(f.ctx, depositor, exchange.GetId(), f.recipient, amount)
-	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, exchange.GetId()))
 	deleted, err := f.keeper.GetExchange(f.ctx, exchange.GetId())

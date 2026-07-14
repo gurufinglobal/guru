@@ -10,6 +10,7 @@ import (
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&bexv1.MsgRegisterAdmin{},
+		&bexv1.MsgUpdateAdmin{},
 		&bexv1.MsgRemoveAdmin{},
 		&bexv1.MsgRegisterExchange{},
 		&bexv1.MsgUpdateExchange{},
@@ -23,6 +24,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 
 	registry.RegisterImplementations((*tx.MsgResponse)(nil),
 		&bexv1.MsgRegisterAdminResponse{},
+		&bexv1.MsgUpdateAdminResponse{},
 		&bexv1.MsgRemoveAdminResponse{},
 		&bexv1.MsgRegisterExchangeResponse{},
 		&bexv1.MsgUpdateExchangeResponse{},

@@ -106,6 +106,21 @@ func (k Keeper) Logger(ctx context.Context) log.Logger {
 	return sdk.UnwrapSDKContext(ctx).Logger().With("module", "x/"+types.ModuleName)
 }
 
+func executeStateTransition(ctx context.Context, fn func(sdk.Context) error) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if _, ok := ctx.(sdk.Context); !ok {
+		// Preserve outer deadlines and context capabilities when a trusted module
+		// wraps sdk.Context before entering the state transition.
+		sdkCtx = sdkCtx.WithContext(ctx)
+	}
+	cacheCtx, write := sdkCtx.CacheContext()
+	if err := fn(cacheCtx); err != nil {
+		return err
+	}
+	write()
+	return nil
+}
+
 func ReserveModuleName(exchangeID uint64) string {
 	return fmt.Sprintf("bex/reserve/%d", exchangeID)
 }

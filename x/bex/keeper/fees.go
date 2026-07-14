@@ -105,7 +105,7 @@ func (k Keeper) CollectFee(ctx context.Context, exchangeID uint64, fee sdk.Coin)
 	if err := validateFeeCoin(fee); err != nil {
 		return err
 	}
-	return executeFeeTransition(ctx, func(cacheCtx sdk.Context) error {
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		exchange, err := k.GetActiveExchange(cacheCtx, exchangeID)
 		if err != nil {
 			return err
@@ -246,7 +246,7 @@ func (k Keeper) RefundLockedFee(ctx context.Context, exchangeID uint64, fee sdk.
 	if err := validateFeeCoin(fee); err != nil {
 		return err
 	}
-	return executeFeeTransition(ctx, func(cacheCtx sdk.Context) error {
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		exchange, err := k.GetActiveExchange(cacheCtx, exchangeID)
 		if err != nil {
 			return err
@@ -306,7 +306,7 @@ func (k Keeper) WithdrawFees(ctx context.Context, signer string, exchangeID uint
 	if !amount.IsValid() || !amount.IsAllPositive() {
 		return types.ErrInvalidRequest.Wrap("amount must be positive coins")
 	}
-	return executeFeeTransition(ctx, func(cacheCtx sdk.Context) error {
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		exchange, err := k.GetActiveExchange(cacheCtx, exchangeID)
 		if err != nil {
 			return err

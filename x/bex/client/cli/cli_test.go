@@ -45,8 +45,8 @@ func TestGetQueryCmdIncludesBexCommands(t *testing.T) {
 	for _, name := range []string{
 		"exchange",
 		"exchanges",
-		"exchanges-by-admin",
-		"is-admin",
+		"exchanges-by-exchange-admin",
+		"is-bex-admin",
 		"reserve-depositors",
 		"is-reserve-depositor",
 		"collected-fees",
@@ -162,8 +162,8 @@ func TestQueryRunEBranches(t *testing.T) {
 	}{
 		{name: "exchange", cmd: CmdQueryExchange, args: []string{"7"}},
 		{name: "exchanges", cmd: CmdQueryExchanges, args: nil},
-		{name: "exchanges by admin", cmd: CmdQueryExchangesByAdmin, args: []string{"admin"}},
-		{name: "is admin", cmd: CmdQueryIsAdmin, args: []string{"admin"}},
+		{name: "exchanges by exchange admin", cmd: CmdQueryExchangesByExchangeAdmin, args: []string{"exchange-admin"}},
+		{name: "is BEX admin", cmd: CmdQueryIsBexAdmin, args: []string{"bex-admin"}},
 		{name: "reserve depositors", cmd: CmdQueryReserveDepositors, args: []string{"7"}},
 		{name: "is reserve depositor", cmd: CmdQueryIsReserveDepositor, args: []string{"7", "depositor"}},
 		{name: "collected fees", cmd: CmdQueryCollectedFees, args: []string{"7"}},
@@ -204,10 +204,37 @@ func TestQueryRunEBranches(t *testing.T) {
 	badPageKey := CmdQueryExchanges()
 	require.NoError(t, badPageKey.Flags().Set(flags.FlagPageKey, "not-base64"))
 	require.Error(t, badPageKey.RunE(badPageKey, nil))
-	badPageOffset := CmdQueryExchangesByAdmin()
+	badPageOffset := CmdQueryExchangesByExchangeAdmin()
 	require.NoError(t, badPageOffset.Flags().Set(flags.FlagPage, "2"))
 	require.NoError(t, badPageOffset.Flags().Set(flags.FlagOffset, "1"))
 	require.Error(t, badPageOffset.RunE(badPageOffset, []string{"admin"}))
+}
+
+func TestExplicitAdminQueryArguments(t *testing.T) {
+	t.Run("exchange admin owner index", func(t *testing.T) {
+		mock := installQueryMocks(t, nil, nil)
+		cmd := CmdQueryExchangesByExchangeAdmin()
+
+		require.NoError(t, cmd.RunE(cmd, []string{"exchange-admin"}))
+		require.Equal(t, "exchange-admin", mock.exchangeAdminAddress)
+	})
+
+	t.Run("BEX registrar registry", func(t *testing.T) {
+		mock := installQueryMocks(t, nil, nil)
+		cmd := CmdQueryIsBexAdmin()
+
+		require.NoError(t, cmd.RunE(cmd, []string{"bex-admin"}))
+		require.Equal(t, "bex-admin", mock.bexAdminAddress)
+	})
+}
+
+func TestQueryExchangesIncludesDeletedWhenRequested(t *testing.T) {
+	mock := installQueryMocks(t, nil, nil)
+	cmd := CmdQueryExchanges()
+	require.NoError(t, cmd.Flags().Set(flagIncludeDeleted, "true"))
+
+	require.NoError(t, cmd.RunE(cmd, nil))
+	require.True(t, mock.includeDeleted)
 }
 
 func TestTxRunEBranches(t *testing.T) {
@@ -244,17 +271,18 @@ func TestTxRunEBranches(t *testing.T) {
 		{
 			name: "register exchange",
 			cmd:  CmdRegisterExchange,
-			args: []string{`{"denom_a":"agxn"}`},
+			args: []string{`{"denom_a":"agxn","exchange_admin_address":"exchange-owner"}`},
 			assertMsg: func(t *testing.T, msg sdk.Msg) {
 				typed := msg.(*bexv1.MsgRegisterExchange)
-				require.Equal(t, from.String(), typed.GetAdminAddress())
+				require.Equal(t, from.String(), typed.GetBexAdminAddress())
+				require.Equal(t, "exchange-owner", typed.GetExchangeAdminAddress())
 				require.Equal(t, "agxn", typed.GetDenomA())
 			},
 		},
 		{
 			name: "update exchange",
 			cmd:  CmdUpdateExchange,
-			args: []string{"7", `{"fee_bps_a_to_b":{"value":9}}`, "3"},
+			args: []string{"7", `{"fee_bps_a_to_b":9}`, "3"},
 			assertMsg: func(t *testing.T, msg sdk.Msg) {
 				typed := msg.(*bexv1.MsgUpdateExchange)
 				require.Equal(t, from.String(), typed.GetAdminAddress())
@@ -414,8 +442,11 @@ func installTxContextError(t *testing.T, err error) {
 }
 
 type mockQueryClient struct {
-	method string
-	err    error
+	method               string
+	exchangeAdminAddress string
+	bexAdminAddress      string
+	includeDeleted       bool
+	err                  error
 }
 
 func (m *mockQueryClient) Exchange(context.Context, *bexv1.QueryExchangeRequest, ...grpc.CallOption) (*bexv1.QueryExchangeResponse, error) {
@@ -423,19 +454,22 @@ func (m *mockQueryClient) Exchange(context.Context, *bexv1.QueryExchangeRequest,
 	return &bexv1.QueryExchangeResponse{}, m.err
 }
 
-func (m *mockQueryClient) Exchanges(context.Context, *bexv1.QueryExchangesRequest, ...grpc.CallOption) (*bexv1.QueryExchangesResponse, error) {
+func (m *mockQueryClient) Exchanges(_ context.Context, req *bexv1.QueryExchangesRequest, _ ...grpc.CallOption) (*bexv1.QueryExchangesResponse, error) {
 	m.method = "exchanges"
+	m.includeDeleted = req.GetIncludeDeleted()
 	return &bexv1.QueryExchangesResponse{}, m.err
 }
 
-func (m *mockQueryClient) ExchangesByAdmin(context.Context, *bexv1.QueryExchangesByAdminRequest, ...grpc.CallOption) (*bexv1.QueryExchangesByAdminResponse, error) {
-	m.method = "exchanges-by-admin"
-	return &bexv1.QueryExchangesByAdminResponse{}, m.err
+func (m *mockQueryClient) ExchangesByExchangeAdmin(_ context.Context, req *bexv1.QueryExchangesByExchangeAdminRequest, _ ...grpc.CallOption) (*bexv1.QueryExchangesByExchangeAdminResponse, error) {
+	m.method = "exchanges-by-exchange-admin"
+	m.exchangeAdminAddress = req.GetExchangeAdminAddress()
+	return &bexv1.QueryExchangesByExchangeAdminResponse{}, m.err
 }
 
-func (m *mockQueryClient) IsAdmin(context.Context, *bexv1.QueryIsAdminRequest, ...grpc.CallOption) (*bexv1.QueryIsAdminResponse, error) {
-	m.method = "is-admin"
-	return &bexv1.QueryIsAdminResponse{}, m.err
+func (m *mockQueryClient) IsBexAdmin(_ context.Context, req *bexv1.QueryIsBexAdminRequest, _ ...grpc.CallOption) (*bexv1.QueryIsBexAdminResponse, error) {
+	m.method = "is-bex-admin"
+	m.bexAdminAddress = req.GetBexAdminAddress()
+	return &bexv1.QueryIsBexAdminResponse{}, m.err
 }
 
 func (m *mockQueryClient) ReserveDepositors(context.Context, *bexv1.QueryReserveDepositorsRequest, ...grpc.CallOption) (*bexv1.QueryReserveDepositorsResponse, error) {

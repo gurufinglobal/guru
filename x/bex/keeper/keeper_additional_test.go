@@ -56,6 +56,37 @@ func TestAdminLifecycleAndKeeperBasics(t *testing.T) {
 	k.RegisterSendRestriction()
 }
 
+func TestAdminQueriesUseDistinctRoles(t *testing.T) {
+	f := setupKeeperFixture(t)
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+	exchangeAdmin, _ := testAddress(t, f.accountCodec, 0x04)
+	msg := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	msg.ExchangeAdminAddress = exchangeAdmin
+	exchange, err := f.keeper.RegisterExchange(f.ctx, msg)
+	require.NoError(t, err)
+
+	q := NewQueryServer(&f.keeper)
+	owned, err := q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+		ExchangeAdminAddress: exchangeAdmin,
+	})
+	require.NoError(t, err)
+	require.Len(t, owned.GetExchanges(), 1)
+	require.Equal(t, exchange.GetId(), owned.GetExchanges()[0].GetId())
+
+	registrarOwned, err := q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+		ExchangeAdminAddress: f.admin,
+	})
+	require.NoError(t, err)
+	require.Empty(t, registrarOwned.GetExchanges())
+
+	registrarStatus, err := q.IsBexAdmin(f.ctx, &bexv1.QueryIsBexAdminRequest{BexAdminAddress: f.admin})
+	require.NoError(t, err)
+	require.True(t, registrarStatus.GetIsBexAdmin())
+	ownerStatus, err := q.IsBexAdmin(f.ctx, &bexv1.QueryIsBexAdminRequest{BexAdminAddress: exchangeAdmin})
+	require.NoError(t, err)
+	require.False(t, ownerStatus.GetIsBexAdmin())
+}
+
 func TestRegisterExchangeDefaultsAndValidation(t *testing.T) {
 	f := setupKeeperFixture(t)
 	_, err := f.keeper.RegisterExchange(f.ctx, validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE))
@@ -382,13 +413,14 @@ func TestKeeperEmitsRequiredEvents(t *testing.T) {
 
 	toDelete := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, toDelete.GetId()))
-	require.NoError(t, f.keeper.RemoveAdmin(f.ctx, f.moderator, f.admin))
+	newAdmin, _ := testAddress(t, f.accountCodec, 0x09)
+	require.NoError(t, f.keeper.UpdateAdmin(f.ctx, f.moderator, f.admin, newAdmin))
 
 	requireEventTypes(
 		t,
 		f.ctx,
 		types.EventTypeAdminRegistered,
-		types.EventTypeAdminRemoved,
+		types.EventTypeAdminUpdated,
 		types.EventTypeExchangeRegistered,
 		types.EventTypeExchangeUpdated,
 		types.EventTypeExchangeStatus,
@@ -515,9 +547,7 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 	ex1 := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	ex2 := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
-	ex3 := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
-	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, ex3.GetId()))
+	registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	collectFee(t, f, ex1.GetId(), sdk.NewInt64Coin("agxn", 10))
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, ex1.GetId(), sdk.NewInt64Coin("agxn", 3)))
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, ex1.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(7)))
@@ -528,13 +558,13 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 
 	q := NewQueryServer(&f.keeper)
 	for name, call := range map[string]func() error{
-		"exchange":           func() error { _, err := q.Exchange(f.ctx, nil); return err },
-		"exchanges":          func() error { _, err := q.Exchanges(f.ctx, nil); return err },
-		"exchanges_by_admin": func() error { _, err := q.ExchangesByAdmin(f.ctx, nil); return err },
-		"is_admin":           func() error { _, err := q.IsAdmin(f.ctx, nil); return err },
-		"fees":               func() error { _, err := q.CollectedFees(f.ctx, nil); return err },
-		"volume":             func() error { _, err := q.VolumeWindow(f.ctx, nil); return err },
-		"quote":              func() error { _, err := q.QuoteSwap(f.ctx, nil); return err },
+		"exchange":                    func() error { _, err := q.Exchange(f.ctx, nil); return err },
+		"exchanges":                   func() error { _, err := q.Exchanges(f.ctx, nil); return err },
+		"exchanges_by_exchange_admin": func() error { _, err := q.ExchangesByExchangeAdmin(f.ctx, nil); return err },
+		"is_bex_admin":                func() error { _, err := q.IsBexAdmin(f.ctx, nil); return err },
+		"fees":                        func() error { _, err := q.CollectedFees(f.ctx, nil); return err },
+		"volume":                      func() error { _, err := q.VolumeWindow(f.ctx, nil); return err },
+		"quote":                       func() error { _, err := q.QuoteSwap(f.ctx, nil); return err },
 	} {
 		t.Run(name, func(t *testing.T) {
 			require.ErrorIs(t, call(), types.ErrInvalidRequest)
@@ -547,39 +577,19 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 	_, err = q.Exchange(f.ctx, &bexv1.QueryExchangeRequest{ExchangeId: 999})
 	require.ErrorIs(t, err, types.ErrExchangeNotFound)
 
-	listResp, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{Pagination: &queryv1beta1.PageRequest{Limit: 1}})
-	require.NoError(t, err)
-	require.Len(t, listResp.GetExchanges(), 1)
-	require.NotEmpty(t, listResp.GetPagination().GetNextKey())
-	listResp, err = q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
-		Pagination: &queryv1beta1.PageRequest{Key: listResp.GetPagination().GetNextKey(), Limit: 10000},
+	byExchangeAdmin, err := q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+		ExchangeAdminAddress: f.admin,
+		Pagination:           &queryv1beta1.PageRequest{Offset: 1, Limit: 1},
 	})
 	require.NoError(t, err)
-	require.Len(t, listResp.GetExchanges(), 1)
-	require.Equal(t, ex2.GetId(), listResp.GetExchanges()[0].GetId())
-	listResp, err = q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
-		IncludeDeleted: true,
-		Pagination:     &queryv1beta1.PageRequest{Limit: 10000},
-	})
-	require.NoError(t, err)
-	require.Len(t, listResp.GetExchanges(), 3)
-	invalidKeyPage, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{Pagination: &queryv1beta1.PageRequest{Key: []byte("bad")}})
-	require.NoError(t, err)
-	require.Empty(t, invalidKeyPage.GetExchanges())
-
-	byAdmin, err := q.ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{
-		AdminAddress: f.admin,
-		Pagination:   &queryv1beta1.PageRequest{Offset: 1, Limit: 1},
-	})
-	require.NoError(t, err)
-	require.Len(t, byAdmin.GetExchanges(), 1)
-	_, err = q.ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{AdminAddress: "bad"})
+	require.Len(t, byExchangeAdmin.GetExchanges(), 1)
+	_, err = q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{ExchangeAdminAddress: "bad"})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 
-	isAdmin, err := q.IsAdmin(f.ctx, &bexv1.QueryIsAdminRequest{AdminAddress: f.admin})
+	isBexAdmin, err := q.IsBexAdmin(f.ctx, &bexv1.QueryIsBexAdminRequest{BexAdminAddress: f.admin})
 	require.NoError(t, err)
-	require.True(t, isAdmin.GetIsAdmin())
-	_, err = q.IsAdmin(f.ctx, &bexv1.QueryIsAdminRequest{AdminAddress: "bad"})
+	require.True(t, isBexAdmin.GetIsBexAdmin())
+	_, err = q.IsBexAdmin(f.ctx, &bexv1.QueryIsBexAdminRequest{BexAdminAddress: "bad"})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 
 	for name, call := range map[string]func() (*bexv1.QueryFeesResponse, error){
@@ -627,6 +637,9 @@ func TestExchangeQueryFiltersTombstonesFromPrimaryState(t *testing.T) {
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, deleted.GetId()))
 
 	q := NewQueryServer(&f.keeper)
+	invalidKeyPage, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{Pagination: &queryv1beta1.PageRequest{Key: []byte("bad")}})
+	require.NoError(t, err)
+	require.Empty(t, invalidKeyPage.GetExchanges())
 	firstPage, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
 		Pagination: &queryv1beta1.PageRequest{Limit: 1},
 	})
@@ -665,6 +678,63 @@ func TestExchangeQueryFiltersTombstonesFromPrimaryState(t *testing.T) {
 	empty, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{})
 	require.NoError(t, err)
 	require.Empty(t, empty.GetExchanges())
+}
+
+func TestImmediateVolumeEpochUpdateStartsNewWindowAndPreservesPendingSchedule(t *testing.T) {
+	f := setupKeeperFixture(t)
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
+	oldKey := currentVolumeKey(f.ctx.BlockTime(), exchange.GetId(), direction, exchange.GetVolumeEpochSeconds())
+	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), direction, sdkmath.NewInt(10)))
+
+	effectiveAt := uint64(f.ctx.BlockTime().Add(time.Hour).Unix())
+	scheduled, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		PendingVolumeEpochSeconds:         wrapperspb.UInt32(minVolumeEpochSecs * 3),
+		PendingVolumeEpochEffectiveAtUnix: wrapperspb.UInt64(effectiveAt),
+	})
+	require.NoError(t, err)
+	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), scheduled.GetRevision(), &bexv1.ExchangeUpdatePatch{
+		VolumeEpochSeconds: wrapperspb.UInt32(minVolumeEpochSecs * 2),
+	})
+	require.NoError(t, err)
+	require.Equal(t, scheduled.GetPendingVolumeEpochSeconds(), updated.GetPendingVolumeEpochSeconds())
+	require.Equal(t, scheduled.GetPendingVolumeEpochEffectiveAtUnix(), updated.GetPendingVolumeEpochEffectiveAtUnix())
+
+	used, err := f.keeper.GetCurrentVolumeAmount(f.ctx, updated, direction)
+	require.NoError(t, err)
+	require.True(t, used.IsZero())
+	oldUsage, err := f.keeper.volumeWindow.Get(f.ctx, oldKey)
+	require.NoError(t, err)
+	require.Equal(t, "10", oldUsage)
+}
+
+func TestExchangesByExchangeAdminRejectsCorruptOwnerIndex(t *testing.T) {
+	t.Run("orphan index", func(t *testing.T) {
+		f := setupKeeperFixture(t)
+		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+		require.NoError(t, f.keeper.exchangesByAdmin.Set(f.ctx, collections.Join(f.admin, uint64(999))))
+
+		_, err := NewQueryServer(&f.keeper).ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+			ExchangeAdminAddress: f.admin,
+		})
+		require.ErrorIs(t, err, types.ErrInvariantViolation)
+	})
+
+	t.Run("owner mismatch", func(t *testing.T) {
+		f := setupKeeperFixture(t)
+		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+		other, _ := testAddress(t, f.accountCodec, 0x29)
+		corrupted := cloneExchange(exchange)
+		corrupted.AdminAddress = other
+		require.NoError(t, f.keeper.exchanges.Set(f.ctx, exchange.GetId(), corrupted))
+
+		_, err := NewQueryServer(&f.keeper).ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+			ExchangeAdminAddress: f.admin,
+		})
+		require.ErrorIs(t, err, types.ErrInvariantViolation)
+	})
 }
 
 func TestVolumePendingEpochActivationAndPrune(t *testing.T) {
@@ -935,13 +1005,13 @@ func TestAdditionalErrorBranches(t *testing.T) {
 	_, _, err := f.keeper.requireRegisteredAdmin(f.ctx, "bad")
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 	_, _, err = f.keeper.requireExchangeAdmin(f.ctx, active, other)
-	require.ErrorIs(t, err, types.ErrAdminNotFound)
+	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	require.ErrorIs(t, f.keeper.DepositReserve(f.ctx, other, inactive.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrUnauthorizedReserveDepositor)
 	require.ErrorIs(t, f.keeper.DepositReserve(f.ctx, f.admin, 999, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrExchangeNotFound)
 	require.ErrorIs(t, f.keeper.WithdrawReserve(f.ctx, f.admin, 999, f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrExchangeNotFound)
-	require.ErrorIs(t, f.keeper.WithdrawReserve(f.ctx, other, inactive.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrAdminNotFound)
+	require.ErrorIs(t, f.keeper.WithdrawReserve(f.ctx, other, inactive.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), types.ErrWrongExchangeAdmin)
 	require.ErrorIs(t, f.keeper.DeleteExchange(f.ctx, f.admin, 999), types.ErrExchangeNotFound)
-	require.ErrorIs(t, f.keeper.DeleteExchange(f.ctx, other, inactive.GetId()), types.ErrAdminNotFound)
+	require.ErrorIs(t, f.keeper.DeleteExchange(f.ctx, other, inactive.GetId()), types.ErrWrongExchangeAdmin)
 	require.ErrorIs(t, f.keeper.DeleteExchange(f.ctx, f.admin, active.GetId()), types.ErrInvalidRequest)
 	require.ErrorIs(t, f.keeper.CollectFee(f.ctx, 999, sdk.NewInt64Coin("agxn", 1)), types.ErrExchangeNotFound)
 	require.ErrorIs(t, f.keeper.LockExchangeFee(f.ctx, 999, sdk.NewInt64Coin("agxn", 1)), types.ErrExchangeNotFound)
@@ -1086,30 +1156,18 @@ func TestAdditionalErrorBranches(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrStaleOracleRate)
 
 	q := NewQueryServer(&f.keeper)
-	deletedForList := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
-	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, deletedForList.GetId()))
-	list, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{})
-	require.NoError(t, err)
-	require.NotEmpty(t, list.GetExchanges())
-	for _, exchange := range list.GetExchanges() {
-		require.NotEqual(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED, exchange.GetStatus())
-	}
-	invalidAdminKeyPage, err := q.ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{
-		AdminAddress: f.admin,
-		Pagination:   &queryv1beta1.PageRequest{Key: []byte("bad")},
+	invalidAdminKeyPage, err := q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+		ExchangeAdminAddress: f.admin,
+		Pagination:           &queryv1beta1.PageRequest{Key: []byte("bad")},
 	})
 	require.NoError(t, err)
 	require.Empty(t, invalidAdminKeyPage.GetExchanges())
-	limited, err := q.ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{
-		AdminAddress: f.admin,
-		Pagination:   &queryv1beta1.PageRequest{Limit: 1},
+	limited, err := q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+		ExchangeAdminAddress: f.admin,
+		Pagination:           &queryv1beta1.PageRequest{Limit: 1},
 	})
 	require.NoError(t, err)
 	require.Len(t, limited.GetExchanges(), 1)
-	require.NoError(t, f.keeper.exchanges.Remove(f.ctx, inactive.GetId()))
-	_, err = q.ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{AdminAddress: f.admin})
-	require.ErrorIs(t, err, types.ErrExchangeNotFound)
-	require.NoError(t, f.keeper.exchanges.Set(f.ctx, inactive.GetId(), inactive))
 	require.NoError(t, f.keeper.collectedFees.Set(f.ctx, active.GetId(), coinsToLedger(sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)))))
 	require.NoError(t, f.keeper.lockedFees.Set(f.ctx, active.GetId(), coinsToLedger(sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)))))
 	_, err = q.AvailableFees(f.ctx, &bexv1.QueryFeesRequest{ExchangeId: active.GetId()})
@@ -1235,7 +1293,11 @@ func TestStoreFaultBranches(t *testing.T) {
 	require.ErrorIs(t, faulty("get", 0x07).RefundLockedFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)), faultErr)
 	require.ErrorIs(t, faulty("get", 0x06).WithdrawFees(f.ctx, f.admin, exchange.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), faultErr)
 	require.ErrorIs(t, faultySkip("get", 0x06, 1).WithdrawFees(f.ctx, f.admin, exchange.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), faultErr)
-	require.ErrorIs(t, faulty("has", 0x01).DepositReserve(f.ctx, f.admin, exchange.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), faultErr)
+	require.NotEqual(t, exchange.GetAdminAddress(), otherAdmin)
+	isDepositor, err := f.keeper.IsReserveDepositor(f.ctx, exchange.GetId(), otherAdmin)
+	require.NoError(t, err)
+	require.False(t, isDepositor)
+	require.ErrorIs(t, faulty("has", 0x0a).DepositReserve(f.ctx, otherAdmin, exchange.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))), faultErr)
 	_, err = faulty("get", 0x08).GetCurrentVolumeAmount(f.ctx, exchange, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B)
 	require.ErrorIs(t, err, faultErr)
 	pendingExchange := cloneExchange(exchange)
@@ -1290,7 +1352,7 @@ func TestStoreFaultBranches(t *testing.T) {
 
 	_, err = NewQueryServer(ptr(faulty("iterator", 0x02))).Exchanges(f.ctx, &bexv1.QueryExchangesRequest{})
 	require.ErrorIs(t, err, faultErr)
-	_, err = NewQueryServer(ptr(faulty("iterator", 0x03))).ExchangesByAdmin(f.ctx, &bexv1.QueryExchangesByAdminRequest{AdminAddress: f.admin})
+	_, err = NewQueryServer(ptr(faulty("iterator", 0x03))).ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{ExchangeAdminAddress: f.admin})
 	require.ErrorIs(t, err, faultErr)
 	_, err = faulty("iterator", 0x01).ExportGenesis(f.ctx)
 	require.ErrorIs(t, err, faultErr)

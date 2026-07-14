@@ -39,6 +39,54 @@ func (k Keeper) RegisterAdmin(ctx context.Context, moderator, admin string) erro
 	return nil
 }
 
+func (k Keeper) UpdateAdmin(ctx context.Context, moderator, oldAdmin, newAdmin string) error {
+	if err := k.validateModerator(ctx, moderator); err != nil {
+		return err
+	}
+	oldCanonical, _, err := k.canonicalAddress(oldAdmin)
+	if err != nil {
+		return types.ErrInvalidRequest.Wrapf("invalid old admin address: %v", err)
+	}
+	newCanonical, _, err := k.canonicalAddress(newAdmin)
+	if err != nil {
+		return types.ErrInvalidRequest.Wrapf("invalid new admin address: %v", err)
+	}
+	if oldCanonical == newCanonical {
+		return types.ErrNoOpUpdate.Wrap("old and new admin addresses are identical")
+	}
+
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
+		oldRegistered, err := k.admins.Has(cacheCtx, oldCanonical)
+		if err != nil {
+			return err
+		}
+		if !oldRegistered {
+			return types.ErrAdminNotFound.Wrap("old admin is not registered")
+		}
+		newRegistered, err := k.admins.Has(cacheCtx, newCanonical)
+		if err != nil {
+			return err
+		}
+		if newRegistered {
+			return types.ErrInvalidRequest.Wrap("new admin is already registered")
+		}
+		if err := k.admins.Remove(cacheCtx, oldCanonical); err != nil {
+			return err
+		}
+		if err := k.admins.Set(cacheCtx, newCanonical); err != nil {
+			return err
+		}
+		emitEvent(
+			cacheCtx,
+			types.EventTypeAdminUpdated,
+			sdk.NewAttribute(types.AttributeKeyModerator, moderator),
+			sdk.NewAttribute(types.AttributeKeyPreviousAdmin, oldCanonical),
+			sdk.NewAttribute(types.AttributeKeyAdmin, newCanonical),
+		)
+		return nil
+	})
+}
+
 func (k Keeper) RemoveAdmin(ctx context.Context, moderator, admin string) error {
 	if err := k.validateModerator(ctx, moderator); err != nil {
 		return err
@@ -112,9 +160,9 @@ func (k Keeper) requireRegisteredAdmin(ctx context.Context, admin string) (strin
 }
 
 func (k Keeper) requireExchangeAdmin(ctx context.Context, exchange *bexv1.Exchange, signer string) (string, sdk.AccAddress, error) {
-	canonical, addr, err := k.requireRegisteredAdmin(ctx, signer)
+	canonical, addr, err := k.canonicalAddress(signer)
 	if err != nil {
-		return "", nil, err
+		return "", nil, types.ErrInvalidRequest.Wrapf("invalid exchange admin address: %v", err)
 	}
 	if canonical != exchange.GetAdminAddress() {
 		return "", nil, types.ErrWrongExchangeAdmin.Wrap("signer is not exchange admin")
@@ -123,9 +171,26 @@ func (k Keeper) requireExchangeAdmin(ctx context.Context, exchange *bexv1.Exchan
 }
 
 func (k Keeper) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterExchange) (*bexv1.Exchange, error) {
-	admin, _, err := k.requireRegisteredAdmin(ctx, req.GetAdminAddress())
+	var exchange *bexv1.Exchange
+	err := executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
+		var err error
+		exchange, err = k.registerExchange(cacheCtx, req)
+		return err
+	})
 	if err != nil {
 		return nil, err
+	}
+	return exchange, nil
+}
+
+func (k Keeper) registerExchange(ctx context.Context, req *bexv1.MsgRegisterExchange) (*bexv1.Exchange, error) {
+	bexAdmin, _, err := k.requireRegisteredAdmin(ctx, req.GetBexAdminAddress())
+	if err != nil {
+		return nil, err
+	}
+	exchangeAdmin, _, err := k.canonicalAddress(req.GetExchangeAdminAddress())
+	if err != nil {
+		return nil, types.ErrInvalidRequest.Wrapf("invalid exchange admin address: %v", err)
 	}
 	id, err := k.nextID(ctx)
 	if err != nil {
@@ -151,7 +216,7 @@ func (k Keeper) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterExch
 	}
 	exchange := &bexv1.Exchange{
 		Id:                        id,
-		AdminAddress:              admin,
+		AdminAddress:              exchangeAdmin,
 		ReserveAddress:            reserveAddress,
 		DenomA:                    strings.TrimSpace(req.GetDenomA()),
 		PortA:                     strings.TrimSpace(req.GetPortA()),
@@ -187,7 +252,7 @@ func (k Keeper) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterExch
 	if err := k.exchanges.Set(ctx, id, exchange); err != nil {
 		return nil, err
 	}
-	if err := k.exchangesByAdmin.Set(ctx, collections.Join(admin, id)); err != nil {
+	if err := k.exchangesByAdmin.Set(ctx, collections.Join(exchangeAdmin, id)); err != nil {
 		return nil, err
 	}
 	if err := k.reserveByAddress.Set(ctx, reserveAddress, id); err != nil {
@@ -203,6 +268,7 @@ func (k Keeper) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterExch
 		ctx,
 		types.EventTypeExchangeRegistered,
 		exchangeIDAttr(id),
+		sdk.NewAttribute(types.AttributeKeyBexAdmin, bexAdmin),
 		sdk.NewAttribute(types.AttributeKeyAdmin, exchange.GetAdminAddress()),
 		sdk.NewAttribute(types.AttributeKeyReserveAddress, exchange.GetReserveAddress()),
 		sdk.NewAttribute(types.AttributeKeyStatus, exchange.GetStatus().String()),
@@ -246,6 +312,19 @@ func (k Keeper) GetActiveExchange(ctx context.Context, exchangeID uint64) (*bexv
 }
 
 func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, expectedRevision uint64, patch *bexv1.ExchangeUpdatePatch) (*bexv1.Exchange, error) {
+	var updated *bexv1.Exchange
+	err := executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
+		var err error
+		updated, err = k.updateExchange(cacheCtx, signer, exchangeID, expectedRevision, patch)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
+}
+
+func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, expectedRevision uint64, patch *bexv1.ExchangeUpdatePatch) (*bexv1.Exchange, error) {
 	if patch == nil || patchIsEmpty(patch) {
 		return nil, types.ErrNoOpUpdate.Wrap("empty patch")
 	}
@@ -260,6 +339,13 @@ func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, e
 		return nil, types.ErrRevisionConflict.Wrapf("expected %d, got %d", expectedRevision, current.GetRevision())
 	}
 	updated := cloneExchange(current)
+	if v := patch.GetNewAdminAddress(); v != nil {
+		newAdmin, _, err := k.canonicalAddress(v.GetValue())
+		if err != nil {
+			return nil, types.ErrInvalidRequest.Wrapf("invalid new exchange admin address: %v", err)
+		}
+		updated.AdminAddress = newAdmin
+	}
 	routeChanged := false
 
 	if v := patch.GetDenomA(); v != nil {
@@ -386,17 +472,46 @@ func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, e
 		return nil, err
 	}
 	updated.Revision = nextRevision
+	adminChanged := current.GetAdminAddress() != updated.GetAdminAddress()
+	if adminChanged {
+		newIndex := collections.Join(updated.GetAdminAddress(), exchangeID)
+		indexed, err := k.exchangesByAdmin.Has(ctx, newIndex)
+		if err != nil {
+			return nil, err
+		}
+		if indexed {
+			return nil, types.ErrInvariantViolation.Wrapf("new exchange admin index already contains exchange %d", exchangeID)
+		}
+	}
 	if err := k.exchanges.Set(ctx, exchangeID, updated); err != nil {
 		return nil, err
 	}
-	emitEvent(
-		ctx,
-		types.EventTypeExchangeUpdated,
-		exchangeIDAttr(exchangeID),
-		sdk.NewAttribute(types.AttributeKeyAdmin, updated.GetAdminAddress()),
-		sdk.NewAttribute(types.AttributeKeyStatus, updated.GetStatus().String()),
-		uint64Attr(types.AttributeKeyRevision, updated.GetRevision()),
-	)
+	if adminChanged {
+		if err := k.exchangesByAdmin.Remove(ctx, collections.Join(current.GetAdminAddress(), exchangeID)); err != nil {
+			return nil, err
+		}
+		if err := k.exchangesByAdmin.Set(ctx, collections.Join(updated.GetAdminAddress(), exchangeID)); err != nil {
+			return nil, err
+		}
+		emitEvent(
+			ctx,
+			types.EventTypeExchangeUpdated,
+			exchangeIDAttr(exchangeID),
+			sdk.NewAttribute(types.AttributeKeyPreviousAdmin, current.GetAdminAddress()),
+			sdk.NewAttribute(types.AttributeKeyAdmin, updated.GetAdminAddress()),
+			sdk.NewAttribute(types.AttributeKeyStatus, updated.GetStatus().String()),
+			uint64Attr(types.AttributeKeyRevision, updated.GetRevision()),
+		)
+	} else {
+		emitEvent(
+			ctx,
+			types.EventTypeExchangeUpdated,
+			exchangeIDAttr(exchangeID),
+			sdk.NewAttribute(types.AttributeKeyAdmin, updated.GetAdminAddress()),
+			sdk.NewAttribute(types.AttributeKeyStatus, updated.GetStatus().String()),
+			uint64Attr(types.AttributeKeyRevision, updated.GetRevision()),
+		)
+	}
 	if current.GetStatus() != updated.GetStatus() {
 		emitEvent(
 			ctx,
@@ -431,7 +546,8 @@ func patchIsEmpty(patch *bexv1.ExchangeUpdatePatch) bool {
 		patch.GetVolumeEpochSeconds() == nil &&
 		patch.GetPendingVolumeEpochSeconds() == nil &&
 		patch.GetPendingVolumeEpochEffectiveAtUnix() == nil &&
-		patch.GetMaxOracleStalenessSeconds() == nil
+		patch.GetMaxOracleStalenessSeconds() == nil &&
+		patch.GetNewAdminAddress() == nil
 }
 
 func cloneExchange(exchange *bexv1.Exchange) *bexv1.Exchange {
@@ -454,6 +570,12 @@ func incrementRevision(revision uint64) (uint64, error) {
 }
 
 func (k Keeper) DeleteExchange(ctx context.Context, signer string, exchangeID uint64) error {
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
+		return k.deleteExchange(cacheCtx, signer, exchangeID)
+	})
+}
+
+func (k Keeper) deleteExchange(ctx context.Context, signer string, exchangeID uint64) error {
 	exchange, err := k.GetActiveExchange(ctx, exchangeID)
 	if err != nil {
 		return err

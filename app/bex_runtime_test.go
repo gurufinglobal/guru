@@ -74,7 +74,8 @@ func TestBexReserveRestrictionIsWiredAcrossBankAndEVM(t *testing.T) {
 	require.NoError(t, testApp.BexKeeper.RegisterAdmin(ctx, moderator, adminString))
 
 	exchange, err := testApp.BexKeeper.RegisterExchange(ctx, &bexv1.MsgRegisterExchange{
-		AdminAddress:              adminString,
+		BexAdminAddress:           adminString,
+		ExchangeAdminAddress:      adminString,
 		DenomA:                    "asset-a",
 		PortA:                     "transwap",
 		ChannelA:                  "channel-0",
@@ -204,7 +205,8 @@ func TestBexRegistrationReclaimsPrecreatedKeylessVestingReserve(t *testing.T) {
 	require.False(t, isBaseBefore)
 
 	exchange, err := testApp.BexKeeper.RegisterExchange(ctx, &bexv1.MsgRegisterExchange{
-		AdminAddress:              adminString,
+		BexAdminAddress:           adminString,
+		ExchangeAdminAddress:      adminString,
 		DenomA:                    "asset-a",
 		PortA:                     "transwap",
 		ChannelA:                  "channel-0",

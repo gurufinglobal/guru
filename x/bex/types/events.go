@@ -2,6 +2,7 @@ package types
 
 const (
 	EventTypeAdminRegistered         = "admin_registered"
+	EventTypeAdminUpdated            = "admin_updated"
 	EventTypeAdminRemoved            = "admin_removed"
 	EventTypeExchangeRegistered      = "exchange_registered"
 	EventTypeExchangeUpdated         = "exchange_updated"
@@ -22,6 +23,8 @@ const (
 
 const (
 	AttributeKeyAdmin          = "admin"
+	AttributeKeyBexAdmin       = "bex_admin"
+	AttributeKeyPreviousAdmin  = "previous_admin"
 	AttributeKeyModerator      = "moderator"
 	AttributeKeyExchangeID     = "exchange_id"
 	AttributeKeyReserveAddress = "reserve_address"

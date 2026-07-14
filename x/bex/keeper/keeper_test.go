@@ -315,7 +315,8 @@ func collectFee(t *testing.T, f keeperTestFixture, exchangeID uint64, fee sdk.Co
 
 func validRegisterExchangeMsg(admin string, status bexv1.ExchangeStatus) *bexv1.MsgRegisterExchange {
 	return &bexv1.MsgRegisterExchange{
-		AdminAddress:              admin,
+		BexAdminAddress:           admin,
+		ExchangeAdminAddress:      admin,
 		DenomA:                    "agxn",
 		PortA:                     "transfer",
 		ChannelA:                  "channel-0",

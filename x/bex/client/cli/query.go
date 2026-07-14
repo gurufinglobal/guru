@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const flagIncludeDeleted = "include-deleted"
+
 var (
 	getClientQueryContext = client.GetClientQueryContext
 	newQueryClient        = bexv1.NewQueryClient
@@ -39,8 +41,8 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdQueryExchange(),
 		CmdQueryExchanges(),
-		CmdQueryExchangesByAdmin(),
-		CmdQueryIsAdmin(),
+		CmdQueryExchangesByExchangeAdmin(),
+		CmdQueryIsBexAdmin(),
 		CmdQueryReserveDepositors(),
 		CmdQueryIsReserveDepositor(),
 		CmdQueryCollectedFees(),
@@ -152,7 +154,14 @@ func CmdQueryExchanges() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).Exchanges(cmd.Context(), &bexv1.QueryExchangesRequest{Pagination: pageReq})
+			includeDeleted, err := cmd.Flags().GetBool(flagIncludeDeleted)
+			if err != nil {
+				return err
+			}
+			resp, err := newQueryClient(clientCtx).Exchanges(cmd.Context(), &bexv1.QueryExchangesRequest{
+				Pagination:     pageReq,
+				IncludeDeleted: includeDeleted,
+			})
 			if err != nil {
 				return err
 			}
@@ -160,14 +169,15 @@ func CmdQueryExchanges() *cobra.Command {
 		},
 	}
 	flags.AddPaginationFlagsToCmd(cmd, "bex exchanges")
+	cmd.Flags().Bool(flagIncludeDeleted, false, "include deleted exchange tombstones")
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
-func CmdQueryExchangesByAdmin() *cobra.Command {
+func CmdQueryExchangesByExchangeAdmin() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exchanges-by-admin [admin]",
-		Short: "Query BEX exchanges by admin",
+		Use:   "exchanges-by-exchange-admin [exchange-admin]",
+		Short: "Query BEX exchanges by exchange admin",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := getClientQueryContext(cmd)
@@ -178,9 +188,9 @@ func CmdQueryExchangesByAdmin() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).ExchangesByAdmin(cmd.Context(), &bexv1.QueryExchangesByAdminRequest{
-				AdminAddress: args[0],
-				Pagination:   pageReq,
+			resp, err := newQueryClient(clientCtx).ExchangesByExchangeAdmin(cmd.Context(), &bexv1.QueryExchangesByExchangeAdminRequest{
+				ExchangeAdminAddress: args[0],
+				Pagination:           pageReq,
 			})
 			if err != nil {
 				return err
@@ -188,22 +198,22 @@ func CmdQueryExchangesByAdmin() *cobra.Command {
 			return printProto(clientCtx, resp)
 		},
 	}
-	flags.AddPaginationFlagsToCmd(cmd, "bex exchanges")
+	flags.AddPaginationFlagsToCmd(cmd, "bex exchanges by exchange admin")
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
-func CmdQueryIsAdmin() *cobra.Command {
+func CmdQueryIsBexAdmin() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "is-admin [admin]",
-		Short: "Query BEX admin status",
+		Use:   "is-bex-admin [bex-admin]",
+		Short: "Query BEX admin registration status",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := getClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).IsAdmin(cmd.Context(), &bexv1.QueryIsAdminRequest{AdminAddress: args[0]})
+			resp, err := newQueryClient(clientCtx).IsBexAdmin(cmd.Context(), &bexv1.QueryIsBexAdminRequest{BexAdminAddress: args[0]})
 			if err != nil {
 				return err
 			}

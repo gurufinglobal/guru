@@ -115,7 +115,7 @@ func TestFeeOperationsRejectUnconfiguredDenoms(t *testing.T) {
 	), types.ErrInvalidRoute)
 }
 
-func TestFeeTransitionPreservesOuterContextValues(t *testing.T) {
+func TestStateTransitionPreservesOuterContextValuesThroughFeeFlow(t *testing.T) {
 	type contextKey struct{}
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))

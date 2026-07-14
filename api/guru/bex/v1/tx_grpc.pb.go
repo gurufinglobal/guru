@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	Msg_RegisterAdmin_FullMethodName          = "/guru.bex.v1.Msg/RegisterAdmin"
+	Msg_UpdateAdmin_FullMethodName            = "/guru.bex.v1.Msg/UpdateAdmin"
 	Msg_RemoveAdmin_FullMethodName            = "/guru.bex.v1.Msg/RemoveAdmin"
 	Msg_RegisterExchange_FullMethodName       = "/guru.bex.v1.Msg/RegisterExchange"
 	Msg_UpdateExchange_FullMethodName         = "/guru.bex.v1.Msg/UpdateExchange"
@@ -39,6 +40,8 @@ const (
 type MsgClient interface {
 	// RegisterAdmin adds a BEX admin.
 	RegisterAdmin(ctx context.Context, in *MsgRegisterAdmin, opts ...grpc.CallOption) (*MsgRegisterAdminResponse, error)
+	// UpdateAdmin replaces one BEX exchange registrar.
+	UpdateAdmin(ctx context.Context, in *MsgUpdateAdmin, opts ...grpc.CallOption) (*MsgUpdateAdminResponse, error)
 	// RemoveAdmin removes a BEX admin.
 	RemoveAdmin(ctx context.Context, in *MsgRemoveAdmin, opts ...grpc.CallOption) (*MsgRemoveAdminResponse, error)
 	// RegisterExchange creates one exchange and deterministic reserve.
@@ -71,6 +74,16 @@ func (c *msgClient) RegisterAdmin(ctx context.Context, in *MsgRegisterAdmin, opt
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MsgRegisterAdminResponse)
 	err := c.cc.Invoke(ctx, Msg_RegisterAdmin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) UpdateAdmin(ctx context.Context, in *MsgUpdateAdmin, opts ...grpc.CallOption) (*MsgUpdateAdminResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MsgUpdateAdminResponse)
+	err := c.cc.Invoke(ctx, Msg_UpdateAdmin_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -175,6 +188,8 @@ func (c *msgClient) WithdrawFees(ctx context.Context, in *MsgWithdrawFees, opts 
 type MsgServer interface {
 	// RegisterAdmin adds a BEX admin.
 	RegisterAdmin(context.Context, *MsgRegisterAdmin) (*MsgRegisterAdminResponse, error)
+	// UpdateAdmin replaces one BEX exchange registrar.
+	UpdateAdmin(context.Context, *MsgUpdateAdmin) (*MsgUpdateAdminResponse, error)
 	// RemoveAdmin removes a BEX admin.
 	RemoveAdmin(context.Context, *MsgRemoveAdmin) (*MsgRemoveAdminResponse, error)
 	// RegisterExchange creates one exchange and deterministic reserve.
@@ -205,6 +220,9 @@ type UnimplementedMsgServer struct{}
 
 func (UnimplementedMsgServer) RegisterAdmin(context.Context, *MsgRegisterAdmin) (*MsgRegisterAdminResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterAdmin not implemented")
+}
+func (UnimplementedMsgServer) UpdateAdmin(context.Context, *MsgUpdateAdmin) (*MsgUpdateAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateAdmin not implemented")
 }
 func (UnimplementedMsgServer) RemoveAdmin(context.Context, *MsgRemoveAdmin) (*MsgRemoveAdminResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveAdmin not implemented")
@@ -268,6 +286,24 @@ func _Msg_RegisterAdmin_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).RegisterAdmin(ctx, req.(*MsgRegisterAdmin))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_UpdateAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateAdmin)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateAdmin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Msg_UpdateAdmin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateAdmin(ctx, req.(*MsgUpdateAdmin))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -444,6 +480,10 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterAdmin",
 			Handler:    _Msg_RegisterAdmin_Handler,
+		},
+		{
+			MethodName: "UpdateAdmin",
+			Handler:    _Msg_UpdateAdmin_Handler,
 		},
 		{
 			MethodName: "RemoveAdmin",

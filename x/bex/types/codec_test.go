@@ -16,6 +16,7 @@ func TestRegisterInterfaces(t *testing.T) {
 
 	msgs := []sdk.Msg{
 		&bexv1.MsgRegisterAdmin{},
+		&bexv1.MsgUpdateAdmin{},
 		&bexv1.MsgRemoveAdmin{},
 		&bexv1.MsgRegisterExchange{},
 		&bexv1.MsgUpdateExchange{},
@@ -32,6 +33,7 @@ func TestRegisterInterfaces(t *testing.T) {
 
 	responses := []tx.MsgResponse{
 		&bexv1.MsgRegisterAdminResponse{},
+		&bexv1.MsgUpdateAdminResponse{},
 		&bexv1.MsgRemoveAdminResponse{},
 		&bexv1.MsgRegisterExchangeResponse{},
 		&bexv1.MsgUpdateExchangeResponse{},

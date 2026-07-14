@@ -23,15 +23,15 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
-  // ExchangesByAdmin returns non-deleted exchanges for one admin.
-  rpc ExchangesByAdmin(QueryExchangesByAdminRequest) returns (QueryExchangesByAdminResponse) {
-    option (google.api.http).get = "/guru/bex/v1/admins/{admin_address}/exchanges";
+  // ExchangesByExchangeAdmin returns non-deleted exchanges owned by one exchange admin.
+  rpc ExchangesByExchangeAdmin(QueryExchangesByExchangeAdminRequest) returns (QueryExchangesByExchangeAdminResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchange-admins/{exchange_admin_address}/exchanges";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
-  // IsAdmin returns whether an address is a registered admin.
-  rpc IsAdmin(QueryIsAdminRequest) returns (QueryIsAdminResponse) {
-    option (google.api.http).get = "/guru/bex/v1/admins/{admin_address}";
+  // IsBexAdmin returns whether an address is a registered BEX admin.
+  rpc IsBexAdmin(QueryIsBexAdminRequest) returns (QueryIsBexAdminResponse) {
+    option (google.api.http).get = "/guru/bex/v1/bex-admins/{bex_admin_address}";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
@@ -73,7 +73,9 @@ service Query {
 
   // QuoteSwap returns a deterministic dry-run quote.
   rpc QuoteSwap(QueryQuoteSwapRequest) returns (QueryQuoteSwapResponse) {
-    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/quote/{input_denom}/{amount_in}";
+    // input_denom and amount_in remain query parameters so slash-bearing
+    // Cosmos denoms such as ibc/... and factory/.../... are representable.
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/quote";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 }
@@ -100,26 +102,26 @@ message QueryExchangesResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryExchangesByAdminRequest requests exchanges for one admin.
-message QueryExchangesByAdminRequest {
-  string admin_address = 1;
+// QueryExchangesByExchangeAdminRequest requests exchanges owned by one exchange admin.
+message QueryExchangesByExchangeAdminRequest {
+  string exchange_admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// QueryExchangesByAdminResponse returns exchanges for one admin.
-message QueryExchangesByAdminResponse {
+// QueryExchangesByExchangeAdminResponse returns exchanges owned by one exchange admin.
+message QueryExchangesByExchangeAdminResponse {
   repeated Exchange exchanges = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryIsAdminRequest checks admin status.
-message QueryIsAdminRequest {
-  string admin_address = 1;
+// QueryIsBexAdminRequest checks BEX admin registration status.
+message QueryIsBexAdminRequest {
+  string bex_admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
-// QueryIsAdminResponse returns admin status.
-message QueryIsAdminResponse {
-  bool is_admin = 1;
+// QueryIsBexAdminResponse returns BEX admin registration status.
+message QueryIsBexAdminResponse {
+  bool is_bex_admin = 1;
 }
 
 // QueryReserveDepositorsRequest requests an exchange's reserve depositors.

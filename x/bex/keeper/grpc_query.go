@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
 	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	"cosmossdk.io/collections"
@@ -55,13 +56,13 @@ func (q QueryServer) Exchanges(ctx context.Context, req *bexv1.QueryExchangesReq
 	return &bexv1.QueryExchangesResponse{Exchanges: exchanges, Pagination: apiPageResponse(page)}, nil
 }
 
-func (q QueryServer) ExchangesByAdmin(ctx context.Context, req *bexv1.QueryExchangesByAdminRequest) (*bexv1.QueryExchangesByAdminResponse, error) {
+func (q QueryServer) ExchangesByExchangeAdmin(ctx context.Context, req *bexv1.QueryExchangesByExchangeAdminRequest) (*bexv1.QueryExchangesByExchangeAdminResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
-	admin, _, err := q.keeper.canonicalAddress(req.GetAdminAddress())
+	exchangeAdmin, _, err := q.keeper.canonicalAddress(req.GetExchangeAdminAddress())
 	if err != nil {
-		return nil, types.ErrInvalidRequest.Wrapf("invalid admin address: %v", err)
+		return nil, types.ErrInvalidRequest.Wrapf("invalid exchange admin address: %v", err)
 	}
 	pageRequest := sdkPageRequest(req.GetPagination())
 	exchanges, page, err := sdkquery.CollectionPaginate(
@@ -71,30 +72,36 @@ func (q QueryServer) ExchangesByAdmin(ctx context.Context, req *bexv1.QueryExcha
 		func(key collections.Pair[string, uint64], _ collections.NoValue) (*bexv1.Exchange, error) {
 			exchange, err := q.keeper.GetExchange(ctx, key.K2())
 			if err != nil {
+				if errors.Is(err, types.ErrExchangeNotFound) {
+					return nil, types.ErrInvariantViolation.Wrapf("admin index %s/%d references an unknown exchange", key.K1(), key.K2())
+				}
 				return nil, err
 			}
 			if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED {
 				return nil, types.ErrInvariantViolation.Wrapf("deleted exchange %d remains in admin index", key.K2())
 			}
+			if exchange.GetAdminAddress() != key.K1() {
+				return nil, types.ErrInvariantViolation.Wrapf("admin index %s/%d does not match exchange owner", key.K1(), key.K2())
+			}
 			return exchange, nil
 		},
-		sdkquery.WithCollectionPaginationPairPrefix[string, uint64](admin),
+		sdkquery.WithCollectionPaginationPairPrefix[string, uint64](exchangeAdmin),
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &bexv1.QueryExchangesByAdminResponse{Exchanges: exchanges, Pagination: apiPageResponse(page)}, nil
+	return &bexv1.QueryExchangesByExchangeAdminResponse{Exchanges: exchanges, Pagination: apiPageResponse(page)}, nil
 }
 
-func (q QueryServer) IsAdmin(ctx context.Context, req *bexv1.QueryIsAdminRequest) (*bexv1.QueryIsAdminResponse, error) {
+func (q QueryServer) IsBexAdmin(ctx context.Context, req *bexv1.QueryIsBexAdminRequest) (*bexv1.QueryIsBexAdminResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
-	isAdmin, err := q.keeper.IsAdmin(ctx, req.GetAdminAddress())
+	isBexAdmin, err := q.keeper.IsAdmin(ctx, req.GetBexAdminAddress())
 	if err != nil {
 		return nil, err
 	}
-	return &bexv1.QueryIsAdminResponse{IsAdmin: isAdmin}, nil
+	return &bexv1.QueryIsBexAdminResponse{IsBexAdmin: isBexAdmin}, nil
 }
 
 func (q QueryServer) ReserveDepositors(ctx context.Context, req *bexv1.QueryReserveDepositorsRequest) (*bexv1.QueryReserveDepositorsResponse, error) {

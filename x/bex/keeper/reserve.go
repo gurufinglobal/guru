@@ -218,13 +218,7 @@ func (k Keeper) DepositReserve(ctx context.Context, signer string, exchangeID ui
 	if err != nil {
 		return types.ErrUnauthorizedReserveDepositor.Wrapf("invalid depositor address: %v", err)
 	}
-	authorized := false
-	if canonical == exchange.GetAdminAddress() {
-		authorized, err = k.admins.Has(ctx, canonical)
-		if err != nil {
-			return err
-		}
-	}
+	authorized := canonical == exchange.GetAdminAddress()
 	if !authorized {
 		authorized, err = k.reserveDepositors.Has(ctx, collections.Join(exchangeID, canonical))
 		if err != nil {

@@ -19,17 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Query_Exchange_FullMethodName           = "/guru.bex.v1.Query/Exchange"
-	Query_Exchanges_FullMethodName          = "/guru.bex.v1.Query/Exchanges"
-	Query_ExchangesByAdmin_FullMethodName   = "/guru.bex.v1.Query/ExchangesByAdmin"
-	Query_IsAdmin_FullMethodName            = "/guru.bex.v1.Query/IsAdmin"
-	Query_ReserveDepositors_FullMethodName  = "/guru.bex.v1.Query/ReserveDepositors"
-	Query_IsReserveDepositor_FullMethodName = "/guru.bex.v1.Query/IsReserveDepositor"
-	Query_CollectedFees_FullMethodName      = "/guru.bex.v1.Query/CollectedFees"
-	Query_LockedFees_FullMethodName         = "/guru.bex.v1.Query/LockedFees"
-	Query_AvailableFees_FullMethodName      = "/guru.bex.v1.Query/AvailableFees"
-	Query_VolumeWindow_FullMethodName       = "/guru.bex.v1.Query/VolumeWindow"
-	Query_QuoteSwap_FullMethodName          = "/guru.bex.v1.Query/QuoteSwap"
+	Query_Exchange_FullMethodName                 = "/guru.bex.v1.Query/Exchange"
+	Query_Exchanges_FullMethodName                = "/guru.bex.v1.Query/Exchanges"
+	Query_ExchangesByExchangeAdmin_FullMethodName = "/guru.bex.v1.Query/ExchangesByExchangeAdmin"
+	Query_IsBexAdmin_FullMethodName               = "/guru.bex.v1.Query/IsBexAdmin"
+	Query_ReserveDepositors_FullMethodName        = "/guru.bex.v1.Query/ReserveDepositors"
+	Query_IsReserveDepositor_FullMethodName       = "/guru.bex.v1.Query/IsReserveDepositor"
+	Query_CollectedFees_FullMethodName            = "/guru.bex.v1.Query/CollectedFees"
+	Query_LockedFees_FullMethodName               = "/guru.bex.v1.Query/LockedFees"
+	Query_AvailableFees_FullMethodName            = "/guru.bex.v1.Query/AvailableFees"
+	Query_VolumeWindow_FullMethodName             = "/guru.bex.v1.Query/VolumeWindow"
+	Query_QuoteSwap_FullMethodName                = "/guru.bex.v1.Query/QuoteSwap"
 )
 
 // QueryClient is the client API for Query service.
@@ -42,10 +42,10 @@ type QueryClient interface {
 	Exchange(ctx context.Context, in *QueryExchangeRequest, opts ...grpc.CallOption) (*QueryExchangeResponse, error)
 	// Exchanges returns exchanges by status-filtered pagination.
 	Exchanges(ctx context.Context, in *QueryExchangesRequest, opts ...grpc.CallOption) (*QueryExchangesResponse, error)
-	// ExchangesByAdmin returns non-deleted exchanges for one admin.
-	ExchangesByAdmin(ctx context.Context, in *QueryExchangesByAdminRequest, opts ...grpc.CallOption) (*QueryExchangesByAdminResponse, error)
-	// IsAdmin returns whether an address is a registered admin.
-	IsAdmin(ctx context.Context, in *QueryIsAdminRequest, opts ...grpc.CallOption) (*QueryIsAdminResponse, error)
+	// ExchangesByExchangeAdmin returns non-deleted exchanges owned by one exchange admin.
+	ExchangesByExchangeAdmin(ctx context.Context, in *QueryExchangesByExchangeAdminRequest, opts ...grpc.CallOption) (*QueryExchangesByExchangeAdminResponse, error)
+	// IsBexAdmin returns whether an address is a registered BEX admin.
+	IsBexAdmin(ctx context.Context, in *QueryIsBexAdminRequest, opts ...grpc.CallOption) (*QueryIsBexAdminResponse, error)
 	// ReserveDepositors returns the allowlisted depositors for one exchange.
 	ReserveDepositors(ctx context.Context, in *QueryReserveDepositorsRequest, opts ...grpc.CallOption) (*QueryReserveDepositorsResponse, error)
 	// IsReserveDepositor checks one address's reserve deposit permission.
@@ -90,20 +90,20 @@ func (c *queryClient) Exchanges(ctx context.Context, in *QueryExchangesRequest, 
 	return out, nil
 }
 
-func (c *queryClient) ExchangesByAdmin(ctx context.Context, in *QueryExchangesByAdminRequest, opts ...grpc.CallOption) (*QueryExchangesByAdminResponse, error) {
+func (c *queryClient) ExchangesByExchangeAdmin(ctx context.Context, in *QueryExchangesByExchangeAdminRequest, opts ...grpc.CallOption) (*QueryExchangesByExchangeAdminResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(QueryExchangesByAdminResponse)
-	err := c.cc.Invoke(ctx, Query_ExchangesByAdmin_FullMethodName, in, out, cOpts...)
+	out := new(QueryExchangesByExchangeAdminResponse)
+	err := c.cc.Invoke(ctx, Query_ExchangesByExchangeAdmin_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) IsAdmin(ctx context.Context, in *QueryIsAdminRequest, opts ...grpc.CallOption) (*QueryIsAdminResponse, error) {
+func (c *queryClient) IsBexAdmin(ctx context.Context, in *QueryIsBexAdminRequest, opts ...grpc.CallOption) (*QueryIsBexAdminResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(QueryIsAdminResponse)
-	err := c.cc.Invoke(ctx, Query_IsAdmin_FullMethodName, in, out, cOpts...)
+	out := new(QueryIsBexAdminResponse)
+	err := c.cc.Invoke(ctx, Query_IsBexAdmin_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -190,10 +190,10 @@ type QueryServer interface {
 	Exchange(context.Context, *QueryExchangeRequest) (*QueryExchangeResponse, error)
 	// Exchanges returns exchanges by status-filtered pagination.
 	Exchanges(context.Context, *QueryExchangesRequest) (*QueryExchangesResponse, error)
-	// ExchangesByAdmin returns non-deleted exchanges for one admin.
-	ExchangesByAdmin(context.Context, *QueryExchangesByAdminRequest) (*QueryExchangesByAdminResponse, error)
-	// IsAdmin returns whether an address is a registered admin.
-	IsAdmin(context.Context, *QueryIsAdminRequest) (*QueryIsAdminResponse, error)
+	// ExchangesByExchangeAdmin returns non-deleted exchanges owned by one exchange admin.
+	ExchangesByExchangeAdmin(context.Context, *QueryExchangesByExchangeAdminRequest) (*QueryExchangesByExchangeAdminResponse, error)
+	// IsBexAdmin returns whether an address is a registered BEX admin.
+	IsBexAdmin(context.Context, *QueryIsBexAdminRequest) (*QueryIsBexAdminResponse, error)
 	// ReserveDepositors returns the allowlisted depositors for one exchange.
 	ReserveDepositors(context.Context, *QueryReserveDepositorsRequest) (*QueryReserveDepositorsResponse, error)
 	// IsReserveDepositor checks one address's reserve deposit permission.
@@ -224,11 +224,11 @@ func (UnimplementedQueryServer) Exchange(context.Context, *QueryExchangeRequest)
 func (UnimplementedQueryServer) Exchanges(context.Context, *QueryExchangesRequest) (*QueryExchangesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Exchanges not implemented")
 }
-func (UnimplementedQueryServer) ExchangesByAdmin(context.Context, *QueryExchangesByAdminRequest) (*QueryExchangesByAdminResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ExchangesByAdmin not implemented")
+func (UnimplementedQueryServer) ExchangesByExchangeAdmin(context.Context, *QueryExchangesByExchangeAdminRequest) (*QueryExchangesByExchangeAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExchangesByExchangeAdmin not implemented")
 }
-func (UnimplementedQueryServer) IsAdmin(context.Context, *QueryIsAdminRequest) (*QueryIsAdminResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method IsAdmin not implemented")
+func (UnimplementedQueryServer) IsBexAdmin(context.Context, *QueryIsBexAdminRequest) (*QueryIsBexAdminResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method IsBexAdmin not implemented")
 }
 func (UnimplementedQueryServer) ReserveDepositors(context.Context, *QueryReserveDepositorsRequest) (*QueryReserveDepositorsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReserveDepositors not implemented")
@@ -308,38 +308,38 @@ func _Query_Exchanges_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_ExchangesByAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryExchangesByAdminRequest)
+func _Query_ExchangesByExchangeAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryExchangesByExchangeAdminRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).ExchangesByAdmin(ctx, in)
+		return srv.(QueryServer).ExchangesByExchangeAdmin(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Query_ExchangesByAdmin_FullMethodName,
+		FullMethod: Query_ExchangesByExchangeAdmin_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ExchangesByAdmin(ctx, req.(*QueryExchangesByAdminRequest))
+		return srv.(QueryServer).ExchangesByExchangeAdmin(ctx, req.(*QueryExchangesByExchangeAdminRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_IsAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryIsAdminRequest)
+func _Query_IsBexAdmin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryIsBexAdminRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).IsAdmin(ctx, in)
+		return srv.(QueryServer).IsBexAdmin(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Query_IsAdmin_FullMethodName,
+		FullMethod: Query_IsBexAdmin_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).IsAdmin(ctx, req.(*QueryIsAdminRequest))
+		return srv.(QueryServer).IsBexAdmin(ctx, req.(*QueryIsBexAdminRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -486,12 +486,12 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Exchanges_Handler,
 		},
 		{
-			MethodName: "ExchangesByAdmin",
-			Handler:    _Query_ExchangesByAdmin_Handler,
+			MethodName: "ExchangesByExchangeAdmin",
+			Handler:    _Query_ExchangesByExchangeAdmin_Handler,
 		},
 		{
-			MethodName: "IsAdmin",
-			Handler:    _Query_IsAdmin_Handler,
+			MethodName: "IsBexAdmin",
+			Handler:    _Query_IsBexAdmin_Handler,
 		},
 		{
 			MethodName: "ReserveDepositors",
