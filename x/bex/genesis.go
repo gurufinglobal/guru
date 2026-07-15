@@ -86,6 +86,9 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		if exchange.GetRevision() == 0 {
 			return types.ErrInvalidGenesis.Wrapf("exchange %d revision must be non-zero", exchange.GetId())
 		}
+		if exchange.GetVolumeWindowGeneration() == 0 {
+			return types.ErrInvalidGenesis.Wrapf("exchange %d volume_window_generation must be non-zero", exchange.GetId())
+		}
 		for _, field := range []struct {
 			name  string
 			value string
@@ -116,6 +119,19 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		}
 		if exchange.GetAdminAddress() != canonicalAdmin {
 			return types.ErrInvalidGenesis.Wrapf("exchange %d admin address is not canonical", exchange.GetId())
+		}
+		for _, field := range []struct {
+			name  string
+			value string
+		}{
+			{name: "limit_a_to_b", value: exchange.GetLimitAToB()},
+			{name: "limit_b_to_a", value: exchange.GetLimitBToA()},
+			{name: "volume_cap_a_to_b", value: exchange.GetVolumeCapAToB()},
+			{name: "volume_cap_b_to_a", value: exchange.GetVolumeCapBToA()},
+		} {
+			if _, err := bexkeeper.ParseIntForGenesis(field.name, field.value); err != nil {
+				return err
+			}
 		}
 		expectedDenomA, err := bexkeeper.ExpectedIBCDenomForGenesis(exchange.GetDenomA(), exchange.GetPortA(), exchange.GetChannelA())
 		if err != nil {
@@ -197,22 +213,65 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 			return types.ErrInvalidGenesis.Wrapf("locked fees exceed collected fees for exchange %d", fee.GetExchangeId())
 		}
 	}
+	pendingIDs := map[uint64]struct{}{}
+	for _, liability := range genesis.GetPendingLiabilities() {
+		exchange, ok := exchangeIDs[liability.GetExchangeId()]
+		if !ok {
+			return types.ErrInvalidGenesis.Wrapf("pending liabilities reference unknown exchange %d", liability.GetExchangeId())
+		}
+		if _, exists := pendingIDs[liability.GetExchangeId()]; exists {
+			return types.ErrInvalidGenesis.Wrapf("duplicate pending liability ledger for exchange %d", liability.GetExchangeId())
+		}
+		pendingIDs[liability.GetExchangeId()] = struct{}{}
+		pending, err := bexkeeper.ProtoCoinsForGenesis(liability.GetCoins())
+		if err != nil {
+			return err
+		}
+		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !pending.IsZero() {
+			return types.ErrInvalidGenesis.Wrapf("deleted exchange %d has pending liabilities", liability.GetExchangeId())
+		}
+		for _, coin := range pending {
+			if err := bexkeeper.ValidateFeeDenomForGenesis(exchange, coin.Denom); err != nil {
+				return types.ErrInvalidGenesis.Wrapf("exchange %d pending liabilities: %v", liability.GetExchangeId(), err)
+			}
+		}
+	}
 	volumeKeys := map[string]struct{}{}
 	for _, window := range genesis.GetVolumeWindows() {
-		if _, ok := exchangeIDs[window.GetExchangeId()]; !ok {
+		exchange, ok := exchangeIDs[window.GetExchangeId()]
+		if !ok {
 			return types.ErrInvalidGenesis.Wrapf("volume window references unknown exchange %d", window.GetExchangeId())
 		}
 		if window.GetDirection() != bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B &&
 			window.GetDirection() != bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A {
 			return types.ErrInvalidGenesis.Wrap("invalid volume window")
 		}
-		key := fmt.Sprintf("%d/%d/%d/%d", window.GetExchangeId(), window.GetDirection(), window.GetEpochStartUnix(), window.GetEpochSeconds())
+		key := fmt.Sprintf(
+			"%d/%d/%d/%d/%d",
+			window.GetExchangeId(),
+			window.GetDirection(),
+			window.GetEpochStartUnix(),
+			window.GetEpochSeconds(),
+			window.GetVolumeWindowGeneration(),
+		)
 		if _, exists := volumeKeys[key]; exists {
 			return types.ErrInvalidGenesis.Wrapf("duplicate volume window %s", key)
 		}
 		volumeKeys[key] = struct{}{}
-		if err := bexkeeper.ValidateVolumeEpochForGenesis("volume_window.epoch_seconds", window.GetEpochSeconds(), false); err != nil {
+		if err := bexkeeper.ValidateVolumeWindowForGenesis(
+			window.GetEpochStartUnix(),
+			window.GetEpochSeconds(),
+			window.GetVolumeWindowGeneration(),
+		); err != nil {
 			return err
+		}
+		if window.GetVolumeWindowGeneration() > exchange.GetVolumeWindowGeneration() {
+			return types.ErrInvalidGenesis.Wrapf(
+				"volume window generation %d exceeds exchange %d generation %d",
+				window.GetVolumeWindowGeneration(),
+				window.GetExchangeId(),
+				exchange.GetVolumeWindowGeneration(),
+			)
 		}
 		if _, err := bexkeeper.ParseIntForGenesis("volume amount", window.GetAmount()); err != nil {
 			return err
@@ -278,6 +337,15 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 		genesis.LockedFees = lockedFees
 	}
 
+	pendingLiabilities := []*bexv1.FeeGenesis{}
+	found, err = readGenesisField(source, "pending_liabilities", &pendingLiabilities)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.PendingLiabilities = pendingLiabilities
+	}
+
 	volumeWindows := []*bexv1.VolumeWindowGenesis{}
 	found, err = readGenesisField(source, "volume_windows", &volumeWindows)
 	if err != nil {
@@ -323,6 +391,9 @@ func writeGenesisState(target appmodule.GenesisTarget, genesis *bexv1.GenesisSta
 		return err
 	}
 	if err := writeGenesisField(target, "locked_fees", genesis.GetLockedFees()); err != nil {
+		return err
+	}
+	if err := writeGenesisField(target, "pending_liabilities", genesis.GetPendingLiabilities()); err != nil {
 		return err
 	}
 	if err := writeGenesisField(target, "volume_windows", genesis.GetVolumeWindows()); err != nil {

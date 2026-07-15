@@ -35,6 +35,21 @@ func TestAppModuleGenesisRoundTrip(t *testing.T) {
 		},
 		sdk.NewCoins(sdk.NewInt64Coin("uatom", 25)),
 	)
+	pendingPacket := types.NewTransferPacketData(
+		types.PortID,
+		"channel-0",
+		&transwapv1.Token{Denom: types.NewDenom("uatom"), Amount: "100"},
+		"reserve",
+		"refund-receiver",
+		"refund",
+		123,
+		sdk.NewInt64Coin("uatom", 1),
+		"7",
+	)
+	state.PendingRefunds = []*transwapv1.PendingRefundPacket{{
+		Key:    keeperRefundKeyForGenesisTest(),
+		Packet: pendingPacket,
+	}}
 	input := newTranswapGenesisFields()
 	require.NoError(t, writeGenesisState(input.target, state))
 	require.NoError(t, am.ValidateGenesis(input.source))
@@ -46,10 +61,15 @@ func TestAppModuleGenesisRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, state.GetPortId(), got.GetPortId())
 	require.Equal(t, state.GetDenoms(), got.GetDenoms())
+	require.Equal(t, state.GetPendingRefunds(), got.GetPendingRefunds())
 
 	gotEscrowed, err := types.ProtoCoinsToSDK(got.GetTotalEscrowed())
 	require.NoError(t, err)
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("uatom", 25)), gotEscrowed)
+}
+
+func keeperRefundKeyForGenesisTest() string {
+	return "refund/transwap/channel-7/12"
 }
 
 func TestAppModuleGenesisValidationRejectsInvalidStateBeforeWrite(t *testing.T) {

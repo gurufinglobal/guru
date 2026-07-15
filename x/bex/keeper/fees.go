@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
@@ -104,7 +105,7 @@ func (k Keeper) CollectFee(ctx context.Context, exchangeID uint64, fee sdk.Coin)
 	if err := validateFeeCoin(fee); err != nil {
 		return err
 	}
-	return executeFeeTransition(ctx, func(cacheCtx sdk.Context) error {
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		exchange, err := k.GetActiveExchange(cacheCtx, exchangeID)
 		if err != nil {
 			return err
@@ -140,11 +141,18 @@ func (k Keeper) CollectFee(ctx context.Context, exchangeID uint64, fee sdk.Coin)
 		if err := k.collectedFees.Set(cacheCtx, exchangeID, coinsToLedger(collected)); err != nil {
 			return err
 		}
-		if err := k.bankKeeper.SendCoinsFromAccountToModule(
+		coins := sdk.NewCoins(fee)
+		collectCtx := k.withReserveOutflowAllowance(
 			cacheCtx,
+			exchangeID,
+			authtypes.NewModuleAddress(types.ModuleName),
+			coins,
+		)
+		if err := k.bankKeeper.SendCoinsFromAccountToModule(
+			collectCtx,
 			reserveAddr,
 			types.ModuleName,
-			sdk.NewCoins(fee),
+			coins,
 		); err != nil {
 			return err
 		}
@@ -238,7 +246,7 @@ func (k Keeper) RefundLockedFee(ctx context.Context, exchangeID uint64, fee sdk.
 	if err := validateFeeCoin(fee); err != nil {
 		return err
 	}
-	return executeFeeTransition(ctx, func(cacheCtx sdk.Context) error {
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		exchange, err := k.GetActiveExchange(cacheCtx, exchangeID)
 		if err != nil {
 			return err
@@ -298,7 +306,7 @@ func (k Keeper) WithdrawFees(ctx context.Context, signer string, exchangeID uint
 	if !amount.IsValid() || !amount.IsAllPositive() {
 		return types.ErrInvalidRequest.Wrap("amount must be positive coins")
 	}
-	return executeFeeTransition(ctx, func(cacheCtx sdk.Context) error {
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		exchange, err := k.GetActiveExchange(cacheCtx, exchangeID)
 		if err != nil {
 			return err
@@ -311,6 +319,9 @@ func (k Keeper) WithdrawFees(ctx context.Context, signer string, exchangeID uint
 		}
 		if k.bankKeeper == nil {
 			return types.ErrInvariantViolation.Wrap("bank keeper is required for fee withdrawal")
+		}
+		if err := k.bankKeeper.IsSendEnabledCoins(cacheCtx, amount...); err != nil {
+			return err
 		}
 		available, err := k.GetAvailableFees(cacheCtx, exchangeID)
 		if err != nil {

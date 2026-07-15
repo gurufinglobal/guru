@@ -1918,27 +1918,27 @@ func (x *fastReflection_QueryExchangesResponse) ProtoMethods() *protoiface.Metho
 }
 
 var (
-	md_QueryExchangesByAdminRequest               protoreflect.MessageDescriptor
-	fd_QueryExchangesByAdminRequest_admin_address protoreflect.FieldDescriptor
-	fd_QueryExchangesByAdminRequest_pagination    protoreflect.FieldDescriptor
+	md_QueryExchangesByExchangeAdminRequest                        protoreflect.MessageDescriptor
+	fd_QueryExchangesByExchangeAdminRequest_exchange_admin_address protoreflect.FieldDescriptor
+	fd_QueryExchangesByExchangeAdminRequest_pagination             protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_bex_v1_query_proto_init()
-	md_QueryExchangesByAdminRequest = File_guru_bex_v1_query_proto.Messages().ByName("QueryExchangesByAdminRequest")
-	fd_QueryExchangesByAdminRequest_admin_address = md_QueryExchangesByAdminRequest.Fields().ByName("admin_address")
-	fd_QueryExchangesByAdminRequest_pagination = md_QueryExchangesByAdminRequest.Fields().ByName("pagination")
+	md_QueryExchangesByExchangeAdminRequest = File_guru_bex_v1_query_proto.Messages().ByName("QueryExchangesByExchangeAdminRequest")
+	fd_QueryExchangesByExchangeAdminRequest_exchange_admin_address = md_QueryExchangesByExchangeAdminRequest.Fields().ByName("exchange_admin_address")
+	fd_QueryExchangesByExchangeAdminRequest_pagination = md_QueryExchangesByExchangeAdminRequest.Fields().ByName("pagination")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryExchangesByAdminRequest)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryExchangesByExchangeAdminRequest)(nil)
 
-type fastReflection_QueryExchangesByAdminRequest QueryExchangesByAdminRequest
+type fastReflection_QueryExchangesByExchangeAdminRequest QueryExchangesByExchangeAdminRequest
 
-func (x *QueryExchangesByAdminRequest) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryExchangesByAdminRequest)(x)
+func (x *QueryExchangesByExchangeAdminRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryExchangesByExchangeAdminRequest)(x)
 }
 
-func (x *QueryExchangesByAdminRequest) slowProtoReflect() protoreflect.Message {
+func (x *QueryExchangesByExchangeAdminRequest) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_bex_v1_query_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1950,43 +1950,43 @@ func (x *QueryExchangesByAdminRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryExchangesByAdminRequest_messageType fastReflection_QueryExchangesByAdminRequest_messageType
-var _ protoreflect.MessageType = fastReflection_QueryExchangesByAdminRequest_messageType{}
+var _fastReflection_QueryExchangesByExchangeAdminRequest_messageType fastReflection_QueryExchangesByExchangeAdminRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryExchangesByExchangeAdminRequest_messageType{}
 
-type fastReflection_QueryExchangesByAdminRequest_messageType struct{}
+type fastReflection_QueryExchangesByExchangeAdminRequest_messageType struct{}
 
-func (x fastReflection_QueryExchangesByAdminRequest_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryExchangesByAdminRequest)(nil)
+func (x fastReflection_QueryExchangesByExchangeAdminRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryExchangesByExchangeAdminRequest)(nil)
 }
-func (x fastReflection_QueryExchangesByAdminRequest_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryExchangesByAdminRequest)
+func (x fastReflection_QueryExchangesByExchangeAdminRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryExchangesByExchangeAdminRequest)
 }
-func (x fastReflection_QueryExchangesByAdminRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryExchangesByAdminRequest
+func (x fastReflection_QueryExchangesByExchangeAdminRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryExchangesByExchangeAdminRequest
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryExchangesByAdminRequest) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryExchangesByAdminRequest
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryExchangesByExchangeAdminRequest
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryExchangesByAdminRequest) Type() protoreflect.MessageType {
-	return _fastReflection_QueryExchangesByAdminRequest_messageType
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) Type() protoreflect.MessageType {
+	return _fastReflection_QueryExchangesByExchangeAdminRequest_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryExchangesByAdminRequest) New() protoreflect.Message {
-	return new(fastReflection_QueryExchangesByAdminRequest)
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) New() protoreflect.Message {
+	return new(fastReflection_QueryExchangesByExchangeAdminRequest)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryExchangesByAdminRequest) Interface() protoreflect.ProtoMessage {
-	return (*QueryExchangesByAdminRequest)(x)
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) Interface() protoreflect.ProtoMessage {
+	return (*QueryExchangesByExchangeAdminRequest)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -1994,16 +1994,16 @@ func (x *fastReflection_QueryExchangesByAdminRequest) Interface() protoreflect.P
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryExchangesByAdminRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.AdminAddress != "" {
-		value := protoreflect.ValueOfString(x.AdminAddress)
-		if !f(fd_QueryExchangesByAdminRequest_admin_address, value) {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.ExchangeAdminAddress != "" {
+		value := protoreflect.ValueOfString(x.ExchangeAdminAddress)
+		if !f(fd_QueryExchangesByExchangeAdminRequest_exchange_admin_address, value) {
 			return
 		}
 	}
 	if x.Pagination != nil {
 		value := protoreflect.ValueOfMessage(x.Pagination.ProtoReflect())
-		if !f(fd_QueryExchangesByAdminRequest_pagination, value) {
+		if !f(fd_QueryExchangesByExchangeAdminRequest_pagination, value) {
 			return
 		}
 	}
@@ -2020,17 +2020,17 @@ func (x *fastReflection_QueryExchangesByAdminRequest) Range(f func(protoreflect.
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryExchangesByAdminRequest) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminRequest.admin_address":
-		return x.AdminAddress != ""
-	case "guru.bex.v1.QueryExchangesByAdminRequest.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.exchange_admin_address":
+		return x.ExchangeAdminAddress != ""
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.pagination":
 		return x.Pagination != nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2040,17 +2040,17 @@ func (x *fastReflection_QueryExchangesByAdminRequest) Has(fd protoreflect.FieldD
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryExchangesByAdminRequest) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminRequest.admin_address":
-		x.AdminAddress = ""
-	case "guru.bex.v1.QueryExchangesByAdminRequest.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.exchange_admin_address":
+		x.ExchangeAdminAddress = ""
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.pagination":
 		x.Pagination = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2060,19 +2060,19 @@ func (x *fastReflection_QueryExchangesByAdminRequest) Clear(fd protoreflect.Fiel
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryExchangesByAdminRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminRequest.admin_address":
-		value := x.AdminAddress
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.exchange_admin_address":
+		value := x.ExchangeAdminAddress
 		return protoreflect.ValueOfString(value)
-	case "guru.bex.v1.QueryExchangesByAdminRequest.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.pagination":
 		value := x.Pagination
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminRequest does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminRequest does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -2086,17 +2086,17 @@ func (x *fastReflection_QueryExchangesByAdminRequest) Get(descriptor protoreflec
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryExchangesByAdminRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminRequest.admin_address":
-		x.AdminAddress = value.Interface().(string)
-	case "guru.bex.v1.QueryExchangesByAdminRequest.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.exchange_admin_address":
+		x.ExchangeAdminAddress = value.Interface().(string)
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.pagination":
 		x.Pagination = value.Message().Interface().(*v1beta1.PageRequest)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2110,48 +2110,48 @@ func (x *fastReflection_QueryExchangesByAdminRequest) Set(fd protoreflect.FieldD
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryExchangesByAdminRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminRequest.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.pagination":
 		if x.Pagination == nil {
 			x.Pagination = new(v1beta1.PageRequest)
 		}
 		return protoreflect.ValueOfMessage(x.Pagination.ProtoReflect())
-	case "guru.bex.v1.QueryExchangesByAdminRequest.admin_address":
-		panic(fmt.Errorf("field admin_address of message guru.bex.v1.QueryExchangesByAdminRequest is not mutable"))
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.exchange_admin_address":
+		panic(fmt.Errorf("field exchange_admin_address of message guru.bex.v1.QueryExchangesByExchangeAdminRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryExchangesByAdminRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminRequest.admin_address":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.exchange_admin_address":
 		return protoreflect.ValueOfString("")
-	case "guru.bex.v1.QueryExchangesByAdminRequest.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminRequest.pagination":
 		m := new(v1beta1.PageRequest)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryExchangesByAdminRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.QueryExchangesByAdminRequest", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.QueryExchangesByExchangeAdminRequest", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -2159,7 +2159,7 @@ func (x *fastReflection_QueryExchangesByAdminRequest) WhichOneof(d protoreflect.
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryExchangesByAdminRequest) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -2170,7 +2170,7 @@ func (x *fastReflection_QueryExchangesByAdminRequest) GetUnknown() protoreflect.
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryExchangesByAdminRequest) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -2182,7 +2182,7 @@ func (x *fastReflection_QueryExchangesByAdminRequest) SetUnknown(fields protoref
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryExchangesByAdminRequest) IsValid() bool {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) IsValid() bool {
 	return x != nil
 }
 
@@ -2192,9 +2192,9 @@ func (x *fastReflection_QueryExchangesByAdminRequest) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryExchangesByAdminRequest) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryExchangesByExchangeAdminRequest) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryExchangesByAdminRequest)
+		x := input.Message.Interface().(*QueryExchangesByExchangeAdminRequest)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2206,7 +2206,7 @@ func (x *fastReflection_QueryExchangesByAdminRequest) ProtoMethods() *protoiface
 		var n int
 		var l int
 		_ = l
-		l = len(x.AdminAddress)
+		l = len(x.ExchangeAdminAddress)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -2224,7 +2224,7 @@ func (x *fastReflection_QueryExchangesByAdminRequest) ProtoMethods() *protoiface
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryExchangesByAdminRequest)
+		x := input.Message.Interface().(*QueryExchangesByExchangeAdminRequest)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2257,10 +2257,10 @@ func (x *fastReflection_QueryExchangesByAdminRequest) ProtoMethods() *protoiface
 			i--
 			dAtA[i] = 0x12
 		}
-		if len(x.AdminAddress) > 0 {
-			i -= len(x.AdminAddress)
-			copy(dAtA[i:], x.AdminAddress)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AdminAddress)))
+		if len(x.ExchangeAdminAddress) > 0 {
+			i -= len(x.ExchangeAdminAddress)
+			copy(dAtA[i:], x.ExchangeAdminAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ExchangeAdminAddress)))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -2275,7 +2275,7 @@ func (x *fastReflection_QueryExchangesByAdminRequest) ProtoMethods() *protoiface
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryExchangesByAdminRequest)
+		x := input.Message.Interface().(*QueryExchangesByExchangeAdminRequest)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2307,15 +2307,15 @@ func (x *fastReflection_QueryExchangesByAdminRequest) ProtoMethods() *protoiface
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryExchangesByAdminRequest: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryExchangesByExchangeAdminRequest: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryExchangesByAdminRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryExchangesByExchangeAdminRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AdminAddress", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ExchangeAdminAddress", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -2343,7 +2343,7 @@ func (x *fastReflection_QueryExchangesByAdminRequest) ProtoMethods() *protoiface
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.AdminAddress = string(dAtA[iNdEx:postIndex])
+				x.ExchangeAdminAddress = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 2:
 				if wireType != 2 {
@@ -2416,79 +2416,79 @@ func (x *fastReflection_QueryExchangesByAdminRequest) ProtoMethods() *protoiface
 	}
 }
 
-var _ protoreflect.List = (*_QueryExchangesByAdminResponse_1_list)(nil)
+var _ protoreflect.List = (*_QueryExchangesByExchangeAdminResponse_1_list)(nil)
 
-type _QueryExchangesByAdminResponse_1_list struct {
+type _QueryExchangesByExchangeAdminResponse_1_list struct {
 	list *[]*Exchange
 }
 
-func (x *_QueryExchangesByAdminResponse_1_list) Len() int {
+func (x *_QueryExchangesByExchangeAdminResponse_1_list) Len() int {
 	if x.list == nil {
 		return 0
 	}
 	return len(*x.list)
 }
 
-func (x *_QueryExchangesByAdminResponse_1_list) Get(i int) protoreflect.Value {
+func (x *_QueryExchangesByExchangeAdminResponse_1_list) Get(i int) protoreflect.Value {
 	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
 }
 
-func (x *_QueryExchangesByAdminResponse_1_list) Set(i int, value protoreflect.Value) {
+func (x *_QueryExchangesByExchangeAdminResponse_1_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
 	concreteValue := valueUnwrapped.Interface().(*Exchange)
 	(*x.list)[i] = concreteValue
 }
 
-func (x *_QueryExchangesByAdminResponse_1_list) Append(value protoreflect.Value) {
+func (x *_QueryExchangesByExchangeAdminResponse_1_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
 	concreteValue := valueUnwrapped.Interface().(*Exchange)
 	*x.list = append(*x.list, concreteValue)
 }
 
-func (x *_QueryExchangesByAdminResponse_1_list) AppendMutable() protoreflect.Value {
+func (x *_QueryExchangesByExchangeAdminResponse_1_list) AppendMutable() protoreflect.Value {
 	v := new(Exchange)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_QueryExchangesByAdminResponse_1_list) Truncate(n int) {
+func (x *_QueryExchangesByExchangeAdminResponse_1_list) Truncate(n int) {
 	for i := n; i < len(*x.list); i++ {
 		(*x.list)[i] = nil
 	}
 	*x.list = (*x.list)[:n]
 }
 
-func (x *_QueryExchangesByAdminResponse_1_list) NewElement() protoreflect.Value {
+func (x *_QueryExchangesByExchangeAdminResponse_1_list) NewElement() protoreflect.Value {
 	v := new(Exchange)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_QueryExchangesByAdminResponse_1_list) IsValid() bool {
+func (x *_QueryExchangesByExchangeAdminResponse_1_list) IsValid() bool {
 	return x.list != nil
 }
 
 var (
-	md_QueryExchangesByAdminResponse            protoreflect.MessageDescriptor
-	fd_QueryExchangesByAdminResponse_exchanges  protoreflect.FieldDescriptor
-	fd_QueryExchangesByAdminResponse_pagination protoreflect.FieldDescriptor
+	md_QueryExchangesByExchangeAdminResponse            protoreflect.MessageDescriptor
+	fd_QueryExchangesByExchangeAdminResponse_exchanges  protoreflect.FieldDescriptor
+	fd_QueryExchangesByExchangeAdminResponse_pagination protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_bex_v1_query_proto_init()
-	md_QueryExchangesByAdminResponse = File_guru_bex_v1_query_proto.Messages().ByName("QueryExchangesByAdminResponse")
-	fd_QueryExchangesByAdminResponse_exchanges = md_QueryExchangesByAdminResponse.Fields().ByName("exchanges")
-	fd_QueryExchangesByAdminResponse_pagination = md_QueryExchangesByAdminResponse.Fields().ByName("pagination")
+	md_QueryExchangesByExchangeAdminResponse = File_guru_bex_v1_query_proto.Messages().ByName("QueryExchangesByExchangeAdminResponse")
+	fd_QueryExchangesByExchangeAdminResponse_exchanges = md_QueryExchangesByExchangeAdminResponse.Fields().ByName("exchanges")
+	fd_QueryExchangesByExchangeAdminResponse_pagination = md_QueryExchangesByExchangeAdminResponse.Fields().ByName("pagination")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryExchangesByAdminResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryExchangesByExchangeAdminResponse)(nil)
 
-type fastReflection_QueryExchangesByAdminResponse QueryExchangesByAdminResponse
+type fastReflection_QueryExchangesByExchangeAdminResponse QueryExchangesByExchangeAdminResponse
 
-func (x *QueryExchangesByAdminResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryExchangesByAdminResponse)(x)
+func (x *QueryExchangesByExchangeAdminResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryExchangesByExchangeAdminResponse)(x)
 }
 
-func (x *QueryExchangesByAdminResponse) slowProtoReflect() protoreflect.Message {
+func (x *QueryExchangesByExchangeAdminResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_bex_v1_query_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2500,43 +2500,43 @@ func (x *QueryExchangesByAdminResponse) slowProtoReflect() protoreflect.Message 
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryExchangesByAdminResponse_messageType fastReflection_QueryExchangesByAdminResponse_messageType
-var _ protoreflect.MessageType = fastReflection_QueryExchangesByAdminResponse_messageType{}
+var _fastReflection_QueryExchangesByExchangeAdminResponse_messageType fastReflection_QueryExchangesByExchangeAdminResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryExchangesByExchangeAdminResponse_messageType{}
 
-type fastReflection_QueryExchangesByAdminResponse_messageType struct{}
+type fastReflection_QueryExchangesByExchangeAdminResponse_messageType struct{}
 
-func (x fastReflection_QueryExchangesByAdminResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryExchangesByAdminResponse)(nil)
+func (x fastReflection_QueryExchangesByExchangeAdminResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryExchangesByExchangeAdminResponse)(nil)
 }
-func (x fastReflection_QueryExchangesByAdminResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryExchangesByAdminResponse)
+func (x fastReflection_QueryExchangesByExchangeAdminResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryExchangesByExchangeAdminResponse)
 }
-func (x fastReflection_QueryExchangesByAdminResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryExchangesByAdminResponse
+func (x fastReflection_QueryExchangesByExchangeAdminResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryExchangesByExchangeAdminResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryExchangesByAdminResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryExchangesByAdminResponse
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryExchangesByExchangeAdminResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryExchangesByAdminResponse) Type() protoreflect.MessageType {
-	return _fastReflection_QueryExchangesByAdminResponse_messageType
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) Type() protoreflect.MessageType {
+	return _fastReflection_QueryExchangesByExchangeAdminResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryExchangesByAdminResponse) New() protoreflect.Message {
-	return new(fastReflection_QueryExchangesByAdminResponse)
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) New() protoreflect.Message {
+	return new(fastReflection_QueryExchangesByExchangeAdminResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryExchangesByAdminResponse) Interface() protoreflect.ProtoMessage {
-	return (*QueryExchangesByAdminResponse)(x)
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) Interface() protoreflect.ProtoMessage {
+	return (*QueryExchangesByExchangeAdminResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -2544,16 +2544,16 @@ func (x *fastReflection_QueryExchangesByAdminResponse) Interface() protoreflect.
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryExchangesByAdminResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
 	if len(x.Exchanges) != 0 {
-		value := protoreflect.ValueOfList(&_QueryExchangesByAdminResponse_1_list{list: &x.Exchanges})
-		if !f(fd_QueryExchangesByAdminResponse_exchanges, value) {
+		value := protoreflect.ValueOfList(&_QueryExchangesByExchangeAdminResponse_1_list{list: &x.Exchanges})
+		if !f(fd_QueryExchangesByExchangeAdminResponse_exchanges, value) {
 			return
 		}
 	}
 	if x.Pagination != nil {
 		value := protoreflect.ValueOfMessage(x.Pagination.ProtoReflect())
-		if !f(fd_QueryExchangesByAdminResponse_pagination, value) {
+		if !f(fd_QueryExchangesByExchangeAdminResponse_pagination, value) {
 			return
 		}
 	}
@@ -2570,17 +2570,17 @@ func (x *fastReflection_QueryExchangesByAdminResponse) Range(f func(protoreflect
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryExchangesByAdminResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminResponse.exchanges":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.exchanges":
 		return len(x.Exchanges) != 0
-	case "guru.bex.v1.QueryExchangesByAdminResponse.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.pagination":
 		return x.Pagination != nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2590,17 +2590,17 @@ func (x *fastReflection_QueryExchangesByAdminResponse) Has(fd protoreflect.Field
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryExchangesByAdminResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminResponse.exchanges":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.exchanges":
 		x.Exchanges = nil
-	case "guru.bex.v1.QueryExchangesByAdminResponse.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.pagination":
 		x.Pagination = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2610,22 +2610,22 @@ func (x *fastReflection_QueryExchangesByAdminResponse) Clear(fd protoreflect.Fie
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryExchangesByAdminResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminResponse.exchanges":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.exchanges":
 		if len(x.Exchanges) == 0 {
-			return protoreflect.ValueOfList(&_QueryExchangesByAdminResponse_1_list{})
+			return protoreflect.ValueOfList(&_QueryExchangesByExchangeAdminResponse_1_list{})
 		}
-		listValue := &_QueryExchangesByAdminResponse_1_list{list: &x.Exchanges}
+		listValue := &_QueryExchangesByExchangeAdminResponse_1_list{list: &x.Exchanges}
 		return protoreflect.ValueOfList(listValue)
-	case "guru.bex.v1.QueryExchangesByAdminResponse.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.pagination":
 		value := x.Pagination
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -2639,19 +2639,19 @@ func (x *fastReflection_QueryExchangesByAdminResponse) Get(descriptor protorefle
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryExchangesByAdminResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminResponse.exchanges":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.exchanges":
 		lv := value.List()
-		clv := lv.(*_QueryExchangesByAdminResponse_1_list)
+		clv := lv.(*_QueryExchangesByExchangeAdminResponse_1_list)
 		x.Exchanges = *clv.list
-	case "guru.bex.v1.QueryExchangesByAdminResponse.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.pagination":
 		x.Pagination = value.Message().Interface().(*v1beta1.PageResponse)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2665,53 +2665,53 @@ func (x *fastReflection_QueryExchangesByAdminResponse) Set(fd protoreflect.Field
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryExchangesByAdminResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminResponse.exchanges":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.exchanges":
 		if x.Exchanges == nil {
 			x.Exchanges = []*Exchange{}
 		}
-		value := &_QueryExchangesByAdminResponse_1_list{list: &x.Exchanges}
+		value := &_QueryExchangesByExchangeAdminResponse_1_list{list: &x.Exchanges}
 		return protoreflect.ValueOfList(value)
-	case "guru.bex.v1.QueryExchangesByAdminResponse.pagination":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.pagination":
 		if x.Pagination == nil {
 			x.Pagination = new(v1beta1.PageResponse)
 		}
 		return protoreflect.ValueOfMessage(x.Pagination.ProtoReflect())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryExchangesByAdminResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryExchangesByAdminResponse.exchanges":
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.exchanges":
 		list := []*Exchange{}
-		return protoreflect.ValueOfList(&_QueryExchangesByAdminResponse_1_list{list: &list})
-	case "guru.bex.v1.QueryExchangesByAdminResponse.pagination":
+		return protoreflect.ValueOfList(&_QueryExchangesByExchangeAdminResponse_1_list{list: &list})
+	case "guru.bex.v1.QueryExchangesByExchangeAdminResponse.pagination":
 		m := new(v1beta1.PageResponse)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryExchangesByExchangeAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryExchangesByExchangeAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryExchangesByAdminResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.QueryExchangesByAdminResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.QueryExchangesByExchangeAdminResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -2719,7 +2719,7 @@ func (x *fastReflection_QueryExchangesByAdminResponse) WhichOneof(d protoreflect
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryExchangesByAdminResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -2730,7 +2730,7 @@ func (x *fastReflection_QueryExchangesByAdminResponse) GetUnknown() protoreflect
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryExchangesByAdminResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -2742,7 +2742,7 @@ func (x *fastReflection_QueryExchangesByAdminResponse) SetUnknown(fields protore
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryExchangesByAdminResponse) IsValid() bool {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -2752,9 +2752,9 @@ func (x *fastReflection_QueryExchangesByAdminResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryExchangesByAdminResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryExchangesByExchangeAdminResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryExchangesByAdminResponse)
+		x := input.Message.Interface().(*QueryExchangesByExchangeAdminResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2786,7 +2786,7 @@ func (x *fastReflection_QueryExchangesByAdminResponse) ProtoMethods() *protoifac
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryExchangesByAdminResponse)
+		x := input.Message.Interface().(*QueryExchangesByExchangeAdminResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2846,7 +2846,7 @@ func (x *fastReflection_QueryExchangesByAdminResponse) ProtoMethods() *protoifac
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryExchangesByAdminResponse)
+		x := input.Message.Interface().(*QueryExchangesByExchangeAdminResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2878,10 +2878,10 @@ func (x *fastReflection_QueryExchangesByAdminResponse) ProtoMethods() *protoifac
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryExchangesByAdminResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryExchangesByExchangeAdminResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryExchangesByAdminResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryExchangesByExchangeAdminResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
@@ -2990,25 +2990,25 @@ func (x *fastReflection_QueryExchangesByAdminResponse) ProtoMethods() *protoifac
 }
 
 var (
-	md_QueryIsAdminRequest               protoreflect.MessageDescriptor
-	fd_QueryIsAdminRequest_admin_address protoreflect.FieldDescriptor
+	md_QueryIsBexAdminRequest                   protoreflect.MessageDescriptor
+	fd_QueryIsBexAdminRequest_bex_admin_address protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_bex_v1_query_proto_init()
-	md_QueryIsAdminRequest = File_guru_bex_v1_query_proto.Messages().ByName("QueryIsAdminRequest")
-	fd_QueryIsAdminRequest_admin_address = md_QueryIsAdminRequest.Fields().ByName("admin_address")
+	md_QueryIsBexAdminRequest = File_guru_bex_v1_query_proto.Messages().ByName("QueryIsBexAdminRequest")
+	fd_QueryIsBexAdminRequest_bex_admin_address = md_QueryIsBexAdminRequest.Fields().ByName("bex_admin_address")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryIsAdminRequest)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryIsBexAdminRequest)(nil)
 
-type fastReflection_QueryIsAdminRequest QueryIsAdminRequest
+type fastReflection_QueryIsBexAdminRequest QueryIsBexAdminRequest
 
-func (x *QueryIsAdminRequest) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryIsAdminRequest)(x)
+func (x *QueryIsBexAdminRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryIsBexAdminRequest)(x)
 }
 
-func (x *QueryIsAdminRequest) slowProtoReflect() protoreflect.Message {
+func (x *QueryIsBexAdminRequest) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_bex_v1_query_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3020,43 +3020,43 @@ func (x *QueryIsAdminRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryIsAdminRequest_messageType fastReflection_QueryIsAdminRequest_messageType
-var _ protoreflect.MessageType = fastReflection_QueryIsAdminRequest_messageType{}
+var _fastReflection_QueryIsBexAdminRequest_messageType fastReflection_QueryIsBexAdminRequest_messageType
+var _ protoreflect.MessageType = fastReflection_QueryIsBexAdminRequest_messageType{}
 
-type fastReflection_QueryIsAdminRequest_messageType struct{}
+type fastReflection_QueryIsBexAdminRequest_messageType struct{}
 
-func (x fastReflection_QueryIsAdminRequest_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryIsAdminRequest)(nil)
+func (x fastReflection_QueryIsBexAdminRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryIsBexAdminRequest)(nil)
 }
-func (x fastReflection_QueryIsAdminRequest_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryIsAdminRequest)
+func (x fastReflection_QueryIsBexAdminRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryIsBexAdminRequest)
 }
-func (x fastReflection_QueryIsAdminRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryIsAdminRequest
+func (x fastReflection_QueryIsBexAdminRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryIsBexAdminRequest
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryIsAdminRequest) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryIsAdminRequest
+func (x *fastReflection_QueryIsBexAdminRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryIsBexAdminRequest
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryIsAdminRequest) Type() protoreflect.MessageType {
-	return _fastReflection_QueryIsAdminRequest_messageType
+func (x *fastReflection_QueryIsBexAdminRequest) Type() protoreflect.MessageType {
+	return _fastReflection_QueryIsBexAdminRequest_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryIsAdminRequest) New() protoreflect.Message {
-	return new(fastReflection_QueryIsAdminRequest)
+func (x *fastReflection_QueryIsBexAdminRequest) New() protoreflect.Message {
+	return new(fastReflection_QueryIsBexAdminRequest)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryIsAdminRequest) Interface() protoreflect.ProtoMessage {
-	return (*QueryIsAdminRequest)(x)
+func (x *fastReflection_QueryIsBexAdminRequest) Interface() protoreflect.ProtoMessage {
+	return (*QueryIsBexAdminRequest)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -3064,10 +3064,10 @@ func (x *fastReflection_QueryIsAdminRequest) Interface() protoreflect.ProtoMessa
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryIsAdminRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.AdminAddress != "" {
-		value := protoreflect.ValueOfString(x.AdminAddress)
-		if !f(fd_QueryIsAdminRequest_admin_address, value) {
+func (x *fastReflection_QueryIsBexAdminRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.BexAdminAddress != "" {
+		value := protoreflect.ValueOfString(x.BexAdminAddress)
+		if !f(fd_QueryIsBexAdminRequest_bex_admin_address, value) {
 			return
 		}
 	}
@@ -3084,15 +3084,15 @@ func (x *fastReflection_QueryIsAdminRequest) Range(f func(protoreflect.FieldDesc
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryIsAdminRequest) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryIsBexAdminRequest) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminRequest.admin_address":
-		return x.AdminAddress != ""
+	case "guru.bex.v1.QueryIsBexAdminRequest.bex_admin_address":
+		return x.BexAdminAddress != ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3102,15 +3102,15 @@ func (x *fastReflection_QueryIsAdminRequest) Has(fd protoreflect.FieldDescriptor
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryIsAdminRequest) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryIsBexAdminRequest) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminRequest.admin_address":
-		x.AdminAddress = ""
+	case "guru.bex.v1.QueryIsBexAdminRequest.bex_admin_address":
+		x.BexAdminAddress = ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3120,16 +3120,16 @@ func (x *fastReflection_QueryIsAdminRequest) Clear(fd protoreflect.FieldDescript
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryIsAdminRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryIsBexAdminRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.bex.v1.QueryIsAdminRequest.admin_address":
-		value := x.AdminAddress
+	case "guru.bex.v1.QueryIsBexAdminRequest.bex_admin_address":
+		value := x.BexAdminAddress
 		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminRequest does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminRequest does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -3143,15 +3143,15 @@ func (x *fastReflection_QueryIsAdminRequest) Get(descriptor protoreflect.FieldDe
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryIsAdminRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryIsBexAdminRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminRequest.admin_address":
-		x.AdminAddress = value.Interface().(string)
+	case "guru.bex.v1.QueryIsBexAdminRequest.bex_admin_address":
+		x.BexAdminAddress = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3165,40 +3165,40 @@ func (x *fastReflection_QueryIsAdminRequest) Set(fd protoreflect.FieldDescriptor
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryIsAdminRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryIsBexAdminRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminRequest.admin_address":
-		panic(fmt.Errorf("field admin_address of message guru.bex.v1.QueryIsAdminRequest is not mutable"))
+	case "guru.bex.v1.QueryIsBexAdminRequest.bex_admin_address":
+		panic(fmt.Errorf("field bex_admin_address of message guru.bex.v1.QueryIsBexAdminRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryIsAdminRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryIsBexAdminRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminRequest.admin_address":
+	case "guru.bex.v1.QueryIsBexAdminRequest.bex_admin_address":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminRequest"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryIsAdminRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryIsBexAdminRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.QueryIsAdminRequest", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.QueryIsBexAdminRequest", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -3206,7 +3206,7 @@ func (x *fastReflection_QueryIsAdminRequest) WhichOneof(d protoreflect.OneofDesc
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryIsAdminRequest) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryIsBexAdminRequest) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -3217,7 +3217,7 @@ func (x *fastReflection_QueryIsAdminRequest) GetUnknown() protoreflect.RawFields
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryIsAdminRequest) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryIsBexAdminRequest) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -3229,7 +3229,7 @@ func (x *fastReflection_QueryIsAdminRequest) SetUnknown(fields protoreflect.RawF
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryIsAdminRequest) IsValid() bool {
+func (x *fastReflection_QueryIsBexAdminRequest) IsValid() bool {
 	return x != nil
 }
 
@@ -3239,9 +3239,9 @@ func (x *fastReflection_QueryIsAdminRequest) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryIsAdminRequest) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryIsBexAdminRequest) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryIsAdminRequest)
+		x := input.Message.Interface().(*QueryIsBexAdminRequest)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3253,7 +3253,7 @@ func (x *fastReflection_QueryIsAdminRequest) ProtoMethods() *protoiface.Methods 
 		var n int
 		var l int
 		_ = l
-		l = len(x.AdminAddress)
+		l = len(x.BexAdminAddress)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -3267,7 +3267,7 @@ func (x *fastReflection_QueryIsAdminRequest) ProtoMethods() *protoiface.Methods 
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryIsAdminRequest)
+		x := input.Message.Interface().(*QueryIsBexAdminRequest)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3286,10 +3286,10 @@ func (x *fastReflection_QueryIsAdminRequest) ProtoMethods() *protoiface.Methods 
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.AdminAddress) > 0 {
-			i -= len(x.AdminAddress)
-			copy(dAtA[i:], x.AdminAddress)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AdminAddress)))
+		if len(x.BexAdminAddress) > 0 {
+			i -= len(x.BexAdminAddress)
+			copy(dAtA[i:], x.BexAdminAddress)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.BexAdminAddress)))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -3304,7 +3304,7 @@ func (x *fastReflection_QueryIsAdminRequest) ProtoMethods() *protoiface.Methods 
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryIsAdminRequest)
+		x := input.Message.Interface().(*QueryIsBexAdminRequest)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3336,15 +3336,15 @@ func (x *fastReflection_QueryIsAdminRequest) ProtoMethods() *protoiface.Methods 
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryIsAdminRequest: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryIsBexAdminRequest: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryIsAdminRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryIsBexAdminRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AdminAddress", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field BexAdminAddress", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -3372,7 +3372,7 @@ func (x *fastReflection_QueryIsAdminRequest) ProtoMethods() *protoiface.Methods 
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.AdminAddress = string(dAtA[iNdEx:postIndex])
+				x.BexAdminAddress = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -3410,25 +3410,25 @@ func (x *fastReflection_QueryIsAdminRequest) ProtoMethods() *protoiface.Methods 
 }
 
 var (
-	md_QueryIsAdminResponse          protoreflect.MessageDescriptor
-	fd_QueryIsAdminResponse_is_admin protoreflect.FieldDescriptor
+	md_QueryIsBexAdminResponse              protoreflect.MessageDescriptor
+	fd_QueryIsBexAdminResponse_is_bex_admin protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_bex_v1_query_proto_init()
-	md_QueryIsAdminResponse = File_guru_bex_v1_query_proto.Messages().ByName("QueryIsAdminResponse")
-	fd_QueryIsAdminResponse_is_admin = md_QueryIsAdminResponse.Fields().ByName("is_admin")
+	md_QueryIsBexAdminResponse = File_guru_bex_v1_query_proto.Messages().ByName("QueryIsBexAdminResponse")
+	fd_QueryIsBexAdminResponse_is_bex_admin = md_QueryIsBexAdminResponse.Fields().ByName("is_bex_admin")
 }
 
-var _ protoreflect.Message = (*fastReflection_QueryIsAdminResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_QueryIsBexAdminResponse)(nil)
 
-type fastReflection_QueryIsAdminResponse QueryIsAdminResponse
+type fastReflection_QueryIsBexAdminResponse QueryIsBexAdminResponse
 
-func (x *QueryIsAdminResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_QueryIsAdminResponse)(x)
+func (x *QueryIsBexAdminResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_QueryIsBexAdminResponse)(x)
 }
 
-func (x *QueryIsAdminResponse) slowProtoReflect() protoreflect.Message {
+func (x *QueryIsBexAdminResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_bex_v1_query_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -3440,43 +3440,43 @@ func (x *QueryIsAdminResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_QueryIsAdminResponse_messageType fastReflection_QueryIsAdminResponse_messageType
-var _ protoreflect.MessageType = fastReflection_QueryIsAdminResponse_messageType{}
+var _fastReflection_QueryIsBexAdminResponse_messageType fastReflection_QueryIsBexAdminResponse_messageType
+var _ protoreflect.MessageType = fastReflection_QueryIsBexAdminResponse_messageType{}
 
-type fastReflection_QueryIsAdminResponse_messageType struct{}
+type fastReflection_QueryIsBexAdminResponse_messageType struct{}
 
-func (x fastReflection_QueryIsAdminResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_QueryIsAdminResponse)(nil)
+func (x fastReflection_QueryIsBexAdminResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_QueryIsBexAdminResponse)(nil)
 }
-func (x fastReflection_QueryIsAdminResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_QueryIsAdminResponse)
+func (x fastReflection_QueryIsBexAdminResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_QueryIsBexAdminResponse)
 }
-func (x fastReflection_QueryIsAdminResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryIsAdminResponse
+func (x fastReflection_QueryIsBexAdminResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryIsBexAdminResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_QueryIsAdminResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_QueryIsAdminResponse
+func (x *fastReflection_QueryIsBexAdminResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_QueryIsBexAdminResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_QueryIsAdminResponse) Type() protoreflect.MessageType {
-	return _fastReflection_QueryIsAdminResponse_messageType
+func (x *fastReflection_QueryIsBexAdminResponse) Type() protoreflect.MessageType {
+	return _fastReflection_QueryIsBexAdminResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_QueryIsAdminResponse) New() protoreflect.Message {
-	return new(fastReflection_QueryIsAdminResponse)
+func (x *fastReflection_QueryIsBexAdminResponse) New() protoreflect.Message {
+	return new(fastReflection_QueryIsBexAdminResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_QueryIsAdminResponse) Interface() protoreflect.ProtoMessage {
-	return (*QueryIsAdminResponse)(x)
+func (x *fastReflection_QueryIsBexAdminResponse) Interface() protoreflect.ProtoMessage {
+	return (*QueryIsBexAdminResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -3484,10 +3484,10 @@ func (x *fastReflection_QueryIsAdminResponse) Interface() protoreflect.ProtoMess
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_QueryIsAdminResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.IsAdmin != false {
-		value := protoreflect.ValueOfBool(x.IsAdmin)
-		if !f(fd_QueryIsAdminResponse_is_admin, value) {
+func (x *fastReflection_QueryIsBexAdminResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.IsBexAdmin != false {
+		value := protoreflect.ValueOfBool(x.IsBexAdmin)
+		if !f(fd_QueryIsBexAdminResponse_is_bex_admin, value) {
 			return
 		}
 	}
@@ -3504,15 +3504,15 @@ func (x *fastReflection_QueryIsAdminResponse) Range(f func(protoreflect.FieldDes
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_QueryIsAdminResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_QueryIsBexAdminResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminResponse.is_admin":
-		return x.IsAdmin != false
+	case "guru.bex.v1.QueryIsBexAdminResponse.is_bex_admin":
+		return x.IsBexAdmin != false
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3522,15 +3522,15 @@ func (x *fastReflection_QueryIsAdminResponse) Has(fd protoreflect.FieldDescripto
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryIsAdminResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_QueryIsBexAdminResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminResponse.is_admin":
-		x.IsAdmin = false
+	case "guru.bex.v1.QueryIsBexAdminResponse.is_bex_admin":
+		x.IsBexAdmin = false
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3540,16 +3540,16 @@ func (x *fastReflection_QueryIsAdminResponse) Clear(fd protoreflect.FieldDescrip
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_QueryIsAdminResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryIsBexAdminResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.bex.v1.QueryIsAdminResponse.is_admin":
-		value := x.IsAdmin
+	case "guru.bex.v1.QueryIsBexAdminResponse.is_bex_admin":
+		value := x.IsBexAdmin
 		return protoreflect.ValueOfBool(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -3563,15 +3563,15 @@ func (x *fastReflection_QueryIsAdminResponse) Get(descriptor protoreflect.FieldD
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryIsAdminResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_QueryIsBexAdminResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminResponse.is_admin":
-		x.IsAdmin = value.Bool()
+	case "guru.bex.v1.QueryIsBexAdminResponse.is_bex_admin":
+		x.IsBexAdmin = value.Bool()
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -3585,40 +3585,40 @@ func (x *fastReflection_QueryIsAdminResponse) Set(fd protoreflect.FieldDescripto
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryIsAdminResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryIsBexAdminResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminResponse.is_admin":
-		panic(fmt.Errorf("field is_admin of message guru.bex.v1.QueryIsAdminResponse is not mutable"))
+	case "guru.bex.v1.QueryIsBexAdminResponse.is_bex_admin":
+		panic(fmt.Errorf("field is_bex_admin of message guru.bex.v1.QueryIsBexAdminResponse is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_QueryIsAdminResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_QueryIsBexAdminResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.bex.v1.QueryIsAdminResponse.is_admin":
+	case "guru.bex.v1.QueryIsBexAdminResponse.is_bex_admin":
 		return protoreflect.ValueOfBool(false)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsAdminResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QueryIsBexAdminResponse"))
 		}
-		panic(fmt.Errorf("message guru.bex.v1.QueryIsAdminResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.bex.v1.QueryIsBexAdminResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_QueryIsAdminResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_QueryIsBexAdminResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.QueryIsAdminResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.QueryIsBexAdminResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -3626,7 +3626,7 @@ func (x *fastReflection_QueryIsAdminResponse) WhichOneof(d protoreflect.OneofDes
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_QueryIsAdminResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_QueryIsBexAdminResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -3637,7 +3637,7 @@ func (x *fastReflection_QueryIsAdminResponse) GetUnknown() protoreflect.RawField
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_QueryIsAdminResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_QueryIsBexAdminResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -3649,7 +3649,7 @@ func (x *fastReflection_QueryIsAdminResponse) SetUnknown(fields protoreflect.Raw
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_QueryIsAdminResponse) IsValid() bool {
+func (x *fastReflection_QueryIsBexAdminResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -3659,9 +3659,9 @@ func (x *fastReflection_QueryIsAdminResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_QueryIsAdminResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_QueryIsBexAdminResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*QueryIsAdminResponse)
+		x := input.Message.Interface().(*QueryIsBexAdminResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3673,7 +3673,7 @@ func (x *fastReflection_QueryIsAdminResponse) ProtoMethods() *protoiface.Methods
 		var n int
 		var l int
 		_ = l
-		if x.IsAdmin {
+		if x.IsBexAdmin {
 			n += 2
 		}
 		if x.unknownFields != nil {
@@ -3686,7 +3686,7 @@ func (x *fastReflection_QueryIsAdminResponse) ProtoMethods() *protoiface.Methods
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*QueryIsAdminResponse)
+		x := input.Message.Interface().(*QueryIsBexAdminResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3705,9 +3705,9 @@ func (x *fastReflection_QueryIsAdminResponse) ProtoMethods() *protoiface.Methods
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if x.IsAdmin {
+		if x.IsBexAdmin {
 			i--
-			if x.IsAdmin {
+			if x.IsBexAdmin {
 				dAtA[i] = 1
 			} else {
 				dAtA[i] = 0
@@ -3726,7 +3726,7 @@ func (x *fastReflection_QueryIsAdminResponse) ProtoMethods() *protoiface.Methods
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*QueryIsAdminResponse)
+		x := input.Message.Interface().(*QueryIsBexAdminResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -3758,15 +3758,15 @@ func (x *fastReflection_QueryIsAdminResponse) ProtoMethods() *protoiface.Methods
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryIsAdminResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryIsBexAdminResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryIsAdminResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: QueryIsBexAdminResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field IsAdmin", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field IsBexAdmin", wireType)
 				}
 				var v int
 				for shift := uint(0); ; shift += 7 {
@@ -3783,7 +3783,7 @@ func (x *fastReflection_QueryIsAdminResponse) ProtoMethods() *protoiface.Methods
 						break
 					}
 				}
-				x.IsAdmin = bool(v != 0)
+				x.IsBexAdmin = bool(v != 0)
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -8669,18 +8669,18 @@ func (x *QueryExchangesResponse) GetPagination() *v1beta1.PageResponse {
 	return nil
 }
 
-// QueryExchangesByAdminRequest requests exchanges for one admin.
-type QueryExchangesByAdminRequest struct {
+// QueryExchangesByExchangeAdminRequest requests exchanges owned by one exchange admin.
+type QueryExchangesByExchangeAdminRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AdminAddress string               `protobuf:"bytes,1,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
-	Pagination   *v1beta1.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	ExchangeAdminAddress string               `protobuf:"bytes,1,opt,name=exchange_admin_address,json=exchangeAdminAddress,proto3" json:"exchange_admin_address,omitempty"`
+	Pagination           *v1beta1.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (x *QueryExchangesByAdminRequest) Reset() {
-	*x = QueryExchangesByAdminRequest{}
+func (x *QueryExchangesByExchangeAdminRequest) Reset() {
+	*x = QueryExchangesByExchangeAdminRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_bex_v1_query_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -8688,33 +8688,33 @@ func (x *QueryExchangesByAdminRequest) Reset() {
 	}
 }
 
-func (x *QueryExchangesByAdminRequest) String() string {
+func (x *QueryExchangesByExchangeAdminRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryExchangesByAdminRequest) ProtoMessage() {}
+func (*QueryExchangesByExchangeAdminRequest) ProtoMessage() {}
 
-// Deprecated: Use QueryExchangesByAdminRequest.ProtoReflect.Descriptor instead.
-func (*QueryExchangesByAdminRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryExchangesByExchangeAdminRequest.ProtoReflect.Descriptor instead.
+func (*QueryExchangesByExchangeAdminRequest) Descriptor() ([]byte, []int) {
 	return file_guru_bex_v1_query_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *QueryExchangesByAdminRequest) GetAdminAddress() string {
+func (x *QueryExchangesByExchangeAdminRequest) GetExchangeAdminAddress() string {
 	if x != nil {
-		return x.AdminAddress
+		return x.ExchangeAdminAddress
 	}
 	return ""
 }
 
-func (x *QueryExchangesByAdminRequest) GetPagination() *v1beta1.PageRequest {
+func (x *QueryExchangesByExchangeAdminRequest) GetPagination() *v1beta1.PageRequest {
 	if x != nil {
 		return x.Pagination
 	}
 	return nil
 }
 
-// QueryExchangesByAdminResponse returns exchanges for one admin.
-type QueryExchangesByAdminResponse struct {
+// QueryExchangesByExchangeAdminResponse returns exchanges owned by one exchange admin.
+type QueryExchangesByExchangeAdminResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -8723,8 +8723,8 @@ type QueryExchangesByAdminResponse struct {
 	Pagination *v1beta1.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (x *QueryExchangesByAdminResponse) Reset() {
-	*x = QueryExchangesByAdminResponse{}
+func (x *QueryExchangesByExchangeAdminResponse) Reset() {
+	*x = QueryExchangesByExchangeAdminResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_bex_v1_query_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -8732,42 +8732,42 @@ func (x *QueryExchangesByAdminResponse) Reset() {
 	}
 }
 
-func (x *QueryExchangesByAdminResponse) String() string {
+func (x *QueryExchangesByExchangeAdminResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryExchangesByAdminResponse) ProtoMessage() {}
+func (*QueryExchangesByExchangeAdminResponse) ProtoMessage() {}
 
-// Deprecated: Use QueryExchangesByAdminResponse.ProtoReflect.Descriptor instead.
-func (*QueryExchangesByAdminResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryExchangesByExchangeAdminResponse.ProtoReflect.Descriptor instead.
+func (*QueryExchangesByExchangeAdminResponse) Descriptor() ([]byte, []int) {
 	return file_guru_bex_v1_query_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *QueryExchangesByAdminResponse) GetExchanges() []*Exchange {
+func (x *QueryExchangesByExchangeAdminResponse) GetExchanges() []*Exchange {
 	if x != nil {
 		return x.Exchanges
 	}
 	return nil
 }
 
-func (x *QueryExchangesByAdminResponse) GetPagination() *v1beta1.PageResponse {
+func (x *QueryExchangesByExchangeAdminResponse) GetPagination() *v1beta1.PageResponse {
 	if x != nil {
 		return x.Pagination
 	}
 	return nil
 }
 
-// QueryIsAdminRequest checks admin status.
-type QueryIsAdminRequest struct {
+// QueryIsBexAdminRequest checks BEX admin registration status.
+type QueryIsBexAdminRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AdminAddress string `protobuf:"bytes,1,opt,name=admin_address,json=adminAddress,proto3" json:"admin_address,omitempty"`
+	BexAdminAddress string `protobuf:"bytes,1,opt,name=bex_admin_address,json=bexAdminAddress,proto3" json:"bex_admin_address,omitempty"`
 }
 
-func (x *QueryIsAdminRequest) Reset() {
-	*x = QueryIsAdminRequest{}
+func (x *QueryIsBexAdminRequest) Reset() {
+	*x = QueryIsBexAdminRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_bex_v1_query_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -8775,35 +8775,35 @@ func (x *QueryIsAdminRequest) Reset() {
 	}
 }
 
-func (x *QueryIsAdminRequest) String() string {
+func (x *QueryIsBexAdminRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryIsAdminRequest) ProtoMessage() {}
+func (*QueryIsBexAdminRequest) ProtoMessage() {}
 
-// Deprecated: Use QueryIsAdminRequest.ProtoReflect.Descriptor instead.
-func (*QueryIsAdminRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryIsBexAdminRequest.ProtoReflect.Descriptor instead.
+func (*QueryIsBexAdminRequest) Descriptor() ([]byte, []int) {
 	return file_guru_bex_v1_query_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *QueryIsAdminRequest) GetAdminAddress() string {
+func (x *QueryIsBexAdminRequest) GetBexAdminAddress() string {
 	if x != nil {
-		return x.AdminAddress
+		return x.BexAdminAddress
 	}
 	return ""
 }
 
-// QueryIsAdminResponse returns admin status.
-type QueryIsAdminResponse struct {
+// QueryIsBexAdminResponse returns BEX admin registration status.
+type QueryIsBexAdminResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	IsAdmin bool `protobuf:"varint,1,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin,omitempty"`
+	IsBexAdmin bool `protobuf:"varint,1,opt,name=is_bex_admin,json=isBexAdmin,proto3" json:"is_bex_admin,omitempty"`
 }
 
-func (x *QueryIsAdminResponse) Reset() {
-	*x = QueryIsAdminResponse{}
+func (x *QueryIsBexAdminResponse) Reset() {
+	*x = QueryIsBexAdminResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_bex_v1_query_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -8811,20 +8811,20 @@ func (x *QueryIsAdminResponse) Reset() {
 	}
 }
 
-func (x *QueryIsAdminResponse) String() string {
+func (x *QueryIsBexAdminResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*QueryIsAdminResponse) ProtoMessage() {}
+func (*QueryIsBexAdminResponse) ProtoMessage() {}
 
-// Deprecated: Use QueryIsAdminResponse.ProtoReflect.Descriptor instead.
-func (*QueryIsAdminResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use QueryIsBexAdminResponse.ProtoReflect.Descriptor instead.
+func (*QueryIsBexAdminResponse) Descriptor() ([]byte, []int) {
 	return file_guru_bex_v1_query_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *QueryIsAdminResponse) GetIsAdmin() bool {
+func (x *QueryIsBexAdminResponse) GetIsBexAdmin() bool {
 	if x != nil {
-		return x.IsAdmin
+		return x.IsBexAdmin
 	}
 	return false
 }
@@ -9286,216 +9286,225 @@ var file_guru_bex_v1_query_proto_rawDesc = []byte{
 	0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73,
 	0x65, 0x2e, 0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e,
 	0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x0a, 0x70, 0x61,
-	0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x8b, 0x01, 0x0a, 0x1c, 0x51, 0x75, 0x65,
-	0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x42, 0x79, 0x41, 0x64, 0x6d,
-	0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x61, 0x64, 0x6d,
-	0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x0c, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x46,
-	0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x26, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65,
-	0x2e, 0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50,
-	0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69,
-	0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x9d, 0x01, 0x0a, 0x1d, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x42, 0x79, 0x41, 0x64, 0x6d, 0x69, 0x6e,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x09, 0x65, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x67, 0x75,
-	0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e,
-	0x67, 0x65, 0x52, 0x09, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x47, 0x0a,
-	0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x27, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e,
-	0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50, 0x61,
-	0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69,
-	0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x3a, 0x0a, 0x13, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49,
-	0x73, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a,
-	0x0d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65,
-	0x73, 0x73, 0x22, 0x31, 0x0a, 0x14, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73, 0x41, 0x64, 0x6d,
-	0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x69, 0x73,
-	0x5f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x69, 0x73,
-	0x41, 0x64, 0x6d, 0x69, 0x6e, 0x22, 0x88, 0x01, 0x0a, 0x1d, 0x51, 0x75, 0x65, 0x72, 0x79, 0x52,
-	0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61,
-	0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78,
-	0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x46, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69,
-	0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x63,
+	0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xbe, 0x01, 0x0a, 0x24, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x42, 0x79, 0x45, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x4e, 0x0a, 0x16, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x61, 0x64,
+	0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64,
+	0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x14, 0x65, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73,
+	0x73, 0x12, 0x46, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62,
+	0x61, 0x73, 0x65, 0x2e, 0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61,
+	0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x0a, 0x70,
+	0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xa5, 0x01, 0x0a, 0x25, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x42, 0x79, 0x45, 0x78,
+	0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x09, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
+	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x09, 0x65,
+	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x47, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69,
+	0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x63,
 	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x71, 0x75, 0x65, 0x72, 0x79,
-	0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x22, 0x89, 0x01, 0x0a, 0x1e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76,
-	0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x1e, 0x0a, 0x0a, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
-	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0a, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
-	0x6f, 0x72, 0x73, 0x12, 0x47, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
-	0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65,
-	0x74, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x88, 0x01, 0x0a,
-	0x1e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44,
-	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64,
-	0x12, 0x45, 0x0a, 0x11, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64,
-	0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d,
-	0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53,
-	0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x10, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
-	0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22, 0x53, 0x0a, 0x1f, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x49, 0x73, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
-	0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x14, 0x69, 0x73,
-	0x5f, 0x72, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x5f, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
-	0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x12, 0x69, 0x73, 0x52, 0x65, 0x73, 0x65,
-	0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x22, 0x33, 0x0a, 0x10,
-	0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x22, 0x5e, 0x0a, 0x16, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73, 0x42, 0x65, 0x78, 0x41,
+	0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x44, 0x0a, 0x11, 0x62,
+	0x65, 0x78, 0x5f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d,
+	0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67,
+	0x52, 0x0f, 0x62, 0x65, 0x78, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73,
+	0x73, 0x22, 0x3b, 0x0a, 0x17, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73, 0x42, 0x65, 0x78, 0x41,
+	0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x20, 0x0a, 0x0c,
+	0x69, 0x73, 0x5f, 0x62, 0x65, 0x78, 0x5f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x0a, 0x69, 0x73, 0x42, 0x65, 0x78, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x22, 0x88,
+	0x01, 0x0a, 0x1d, 0x51, 0x75, 0x65, 0x72, 0x79, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44,
+	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
 	0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18,
 	0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49,
-	0x64, 0x22, 0x43, 0x0a, 0x11, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x06, 0x6c, 0x65, 0x64, 0x67, 0x65, 0x72,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
-	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x46, 0x65, 0x65, 0x4c, 0x65, 0x64, 0x67, 0x65, 0x72, 0x52, 0x06,
-	0x6c, 0x65, 0x64, 0x67, 0x65, 0x72, 0x22, 0x75, 0x0a, 0x18, 0x51, 0x75, 0x65, 0x72, 0x79, 0x56,
-	0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x49, 0x64, 0x12, 0x38, 0x0a, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
-	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x77, 0x61, 0x70, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69,
-	0x6f, 0x6e, 0x52, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x60, 0x0a,
-	0x19, 0x51, 0x75, 0x65, 0x72, 0x79, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64,
-	0x6f, 0x77, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x31, 0x0a, 0x06, 0x77, 0x69,
-	0x6e, 0x64, 0x6f, 0x77, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x67, 0x75, 0x72,
-	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57,
-	0x69, 0x6e, 0x64, 0x6f, 0x77, 0x52, 0x06, 0x77, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x12, 0x10, 0x0a,
-	0x03, 0x63, 0x61, 0x70, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x63, 0x61, 0x70, 0x22,
-	0x76, 0x0a, 0x15, 0x51, 0x75, 0x65, 0x72, 0x79, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61,
-	0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68,
+	0x64, 0x12, 0x46, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62,
+	0x61, 0x73, 0x65, 0x2e, 0x71, 0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61,
+	0x31, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52, 0x0a, 0x70,
+	0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x89, 0x01, 0x0a, 0x1e, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69,
+	0x74, 0x6f, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1e, 0x0a, 0x0a,
+	0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09,
+	0x52, 0x0a, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x12, 0x47, 0x0a, 0x0a,
+	0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x27, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x71,
+	0x75, 0x65, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x50, 0x61, 0x67,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x88, 0x01, 0x0a, 0x1e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49,
+	0x73, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f,
+	0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68,
 	0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65,
-	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x6e, 0x70,
-	0x75, 0x74, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a,
-	0x69, 0x6e, 0x70, 0x75, 0x74, 0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x12, 0x1b, 0x0a, 0x09, 0x61, 0x6d,
-	0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x61,
-	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x22, 0x4e, 0x0a, 0x16, 0x51, 0x75, 0x65, 0x72, 0x79,
-	0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x34, 0x0a, 0x05, 0x71, 0x75, 0x6f, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51,
-	0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x52, 0x05, 0x71, 0x75, 0x6f, 0x74, 0x65, 0x32, 0xb8, 0x0d, 0x0a, 0x05, 0x51, 0x75, 0x65, 0x72,
-	0x79, 0x12, 0x84, 0x01, 0x0a, 0x08, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x21,
-	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65,
-	0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x22, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e,
-	0x51, 0x75, 0x65, 0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x31, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93,
-	0x02, 0x26, 0x12, 0x24, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31,
-	0x2f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x7d, 0x12, 0x79, 0x0a, 0x09, 0x45, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x22, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78,
-	0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x45, 0x78, 0x63,
-	0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x23,
-	0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x18, 0x12, 0x16, 0x2f, 0x67, 0x75,
+	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x45, 0x0a, 0x11, 0x64, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
+	0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x10,
+	0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
+	0x22, 0x53, 0x0a, 0x1f, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73, 0x52, 0x65, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x14, 0x69, 0x73, 0x5f, 0x72, 0x65, 0x73, 0x65, 0x72, 0x76,
+	0x65, 0x5f, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x08, 0x52, 0x12, 0x69, 0x73, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f,
+	0x73, 0x69, 0x74, 0x6f, 0x72, 0x22, 0x33, 0x0a, 0x10, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65,
+	0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a,
+	0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x22, 0x43, 0x0a, 0x11, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x2e, 0x0a, 0x06, 0x6c, 0x65, 0x64, 0x67, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x16, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x46, 0x65,
+	0x65, 0x4c, 0x65, 0x64, 0x67, 0x65, 0x72, 0x52, 0x06, 0x6c, 0x65, 0x64, 0x67, 0x65, 0x72, 0x22,
+	0x75, 0x0a, 0x18, 0x51, 0x75, 0x65, 0x72, 0x79, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69,
+	0x6e, 0x64, 0x6f, 0x77, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a, 0x0b, 0x65,
+	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04,
+	0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x38, 0x0a, 0x09,
+	0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32,
+	0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x77,
+	0x61, 0x70, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x09, 0x64, 0x69, 0x72,
+	0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x60, 0x0a, 0x19, 0x51, 0x75, 0x65, 0x72, 0x79, 0x56,
+	0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x31, 0x0a, 0x06, 0x77, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76,
+	0x31, 0x2e, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x52, 0x06,
+	0x77, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x12, 0x10, 0x0a, 0x03, 0x63, 0x61, 0x70, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x03, 0x63, 0x61, 0x70, 0x22, 0x76, 0x0a, 0x15, 0x51, 0x75, 0x65, 0x72,
+	0x79, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x5f, 0x64, 0x65, 0x6e, 0x6f,
+	0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x44, 0x65,
+	0x6e, 0x6f, 0x6d, 0x12, 0x1b, 0x0a, 0x09, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e,
+	0x22, 0x4e, 0x0a, 0x16, 0x51, 0x75, 0x65, 0x72, 0x79, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77,
+	0x61, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x34, 0x0a, 0x05, 0x71, 0x75,
+	0x6f, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75,
+	0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61,
+	0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x05, 0x71, 0x75, 0x6f, 0x74, 0x65,
+	0x32, 0xd9, 0x0d, 0x0a, 0x05, 0x51, 0x75, 0x65, 0x72, 0x79, 0x12, 0x84, 0x01, 0x0a, 0x08, 0x45,
+	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x21, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62,
+	0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x67, 0x75, 0x72,
+	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x45, 0x78,
+	0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x31,
+	0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x26, 0x12, 0x24, 0x2f, 0x67, 0x75,
 	0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e,
-	0x67, 0x65, 0x73, 0x12, 0xa5, 0x01, 0x0a, 0x10, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
-	0x73, 0x42, 0x79, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x12, 0x29, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
-	0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x45, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x73, 0x42, 0x79, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76,
-	0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73,
-	0x42, 0x79, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
-	0x3a, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x2f, 0x12, 0x2d, 0x2f, 0x67,
-	0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x61, 0x64, 0x6d, 0x69, 0x6e,
-	0x73, 0x2f, 0x7b, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
-	0x7d, 0x2f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x80, 0x01, 0x0a, 0x07,
-	0x49, 0x73, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x12, 0x20, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62,
-	0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73, 0x41, 0x64, 0x6d,
-	0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73, 0x41,
-	0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x30, 0x88, 0xe7,
-	0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x25, 0x12, 0x23, 0x2f, 0x67, 0x75, 0x72, 0x75,
-	0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x73, 0x2f, 0x7b,
-	0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x7d, 0x12, 0xb2,
-	0x01, 0x0a, 0x11, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69,
-	0x74, 0x6f, 0x72, 0x73, 0x12, 0x2a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e,
+	0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64,
+	0x7d, 0x12, 0x79, 0x0a, 0x09, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x22,
+	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x23, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31,
+	0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x23, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3,
+	0xe4, 0x93, 0x02, 0x18, 0x12, 0x16, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f,
+	0x76, 0x31, 0x2f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0xcf, 0x01, 0x0a,
+	0x18, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x42, 0x79, 0x45, 0x78, 0x63, 0x68,
+	0x61, 0x6e, 0x67, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x12, 0x31, 0x2e, 0x67, 0x75, 0x72, 0x75,
+	0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x45, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x42, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x32, 0x2e, 0x67,
+	0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79,
+	0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x42, 0x79, 0x45, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x4c, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x41, 0x12, 0x3f, 0x2f,
+	0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x63, 0x68,
+	0x61, 0x6e, 0x67, 0x65, 0x2d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72,
+	0x65, 0x73, 0x73, 0x7d, 0x2f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x91,
+	0x01, 0x0a, 0x0a, 0x49, 0x73, 0x42, 0x65, 0x78, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x12, 0x23, 0x2e,
+	0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72,
+	0x79, 0x49, 0x73, 0x42, 0x65, 0x78, 0x41, 0x64, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x24, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31,
+	0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73, 0x42, 0x65, 0x78, 0x41, 0x64, 0x6d, 0x69, 0x6e,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x38, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82,
+	0xd3, 0xe4, 0x93, 0x02, 0x2d, 0x12, 0x2b, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78,
+	0x2f, 0x76, 0x31, 0x2f, 0x62, 0x65, 0x78, 0x2d, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x73, 0x2f, 0x7b,
+	0x62, 0x65, 0x78, 0x5f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
+	0x73, 0x7d, 0x12, 0xb2, 0x01, 0x0a, 0x11, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65,
+	0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x12, 0x2a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
+	0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x52, 0x65, 0x73, 0x65,
+	0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x2b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e,
 	0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44,
-	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x2b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51,
-	0x75, 0x65, 0x72, 0x79, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73,
-	0x69, 0x74, 0x6f, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x44, 0x88,
-	0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x39, 0x12, 0x37, 0x2f, 0x67, 0x75, 0x72,
-	0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x7d,
-	0x2f, 0x72, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x2d, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
-	0x6f, 0x72, 0x73, 0x12, 0xc9, 0x01, 0x0a, 0x12, 0x49, 0x73, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76,
-	0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x12, 0x2b, 0x2e, 0x67, 0x75, 0x72,
-	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73,
-	0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62,
-	0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49, 0x73, 0x52, 0x65, 0x73,
-	0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x58, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93,
-	0x02, 0x4d, 0x12, 0x4b, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31,
-	0x2f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x72, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
-	0x2d, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x2f, 0x7b, 0x64, 0x65, 0x70,
-	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x7d, 0x12,
-	0x90, 0x01, 0x0a, 0x0d, 0x43, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x65, 0x64, 0x46, 0x65, 0x65,
-	0x73, 0x12, 0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e,
-	0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51,
-	0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x40, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x35, 0x12, 0x33, 0x2f,
-	0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f,
-	0x69, 0x64, 0x7d, 0x2f, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74,
-	0x65, 0x64, 0x12, 0x8a, 0x01, 0x0a, 0x0a, 0x4c, 0x6f, 0x63, 0x6b, 0x65, 0x64, 0x46, 0x65, 0x65,
-	0x73, 0x12, 0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e,
-	0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51,
-	0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x3d, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x32, 0x12, 0x30, 0x2f,
-	0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f,
-	0x69, 0x64, 0x7d, 0x2f, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x6c, 0x6f, 0x63, 0x6b, 0x65, 0x64, 0x12,
-	0x90, 0x01, 0x0a, 0x0d, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x46, 0x65, 0x65,
-	0x73, 0x12, 0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e,
-	0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51,
-	0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x40, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x35, 0x12, 0x33, 0x2f,
-	0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f,
-	0x69, 0x64, 0x7d, 0x2f, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x61, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62,
-	0x6c, 0x65, 0x12, 0xa3, 0x01, 0x0a, 0x0c, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e,
-	0x64, 0x6f, 0x77, 0x12, 0x25, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76,
-	0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e,
-	0x64, 0x6f, 0x77, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x67, 0x75, 0x72,
-	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x56, 0x6f,
-	0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x44, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x39, 0x12,
-	0x37, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78,
-	0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x2f, 0x7b, 0x64, 0x69,
-	0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x7d, 0x12, 0xa7, 0x01, 0x0a, 0x09, 0x51, 0x75, 0x6f,
-	0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x12, 0x22, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
-	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53,
-	0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x67, 0x75, 0x72,
+	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x44, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x39, 0x12, 0x37,
+	0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x72, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x2d, 0x64, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x12, 0xc9, 0x01, 0x0a, 0x12, 0x49, 0x73, 0x52, 0x65,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x12, 0x2b,
+	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x49, 0x73, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73,
+	0x69, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x67, 0x75,
+	0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x49,
+	0x73, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f,
+	0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x58, 0x88, 0xe7, 0xb0, 0x2a, 0x01,
+	0x82, 0xd3, 0xe4, 0x93, 0x02, 0x4d, 0x12, 0x4b, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65,
+	0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b,
+	0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x72, 0x65, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x2d, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x2f,
+	0x7b, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65,
+	0x73, 0x73, 0x7d, 0x12, 0x90, 0x01, 0x0a, 0x0d, 0x43, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x65,
+	0x64, 0x46, 0x65, 0x65, 0x73, 0x12, 0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78,
+	0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e,
+	0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x40, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02,
+	0x35, 0x12, 0x33, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f,
+	0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x63, 0x6f, 0x6c,
+	0x6c, 0x65, 0x63, 0x74, 0x65, 0x64, 0x12, 0x8a, 0x01, 0x0a, 0x0a, 0x4c, 0x6f, 0x63, 0x6b, 0x65,
+	0x64, 0x46, 0x65, 0x65, 0x73, 0x12, 0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78,
+	0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e,
+	0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x3d, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02,
+	0x32, 0x12, 0x30, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f,
+	0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x6c, 0x6f, 0x63,
+	0x6b, 0x65, 0x64, 0x12, 0x90, 0x01, 0x0a, 0x0d, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c,
+	0x65, 0x46, 0x65, 0x65, 0x73, 0x12, 0x1d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78,
+	0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e,
+	0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x46, 0x65, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x40, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02,
+	0x35, 0x12, 0x33, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f,
+	0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x66, 0x65, 0x65, 0x73, 0x2f, 0x61, 0x76, 0x61,
+	0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x12, 0xa3, 0x01, 0x0a, 0x0c, 0x56, 0x6f, 0x6c, 0x75, 0x6d,
+	0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x12, 0x25, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62,
+	0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x56, 0x6f, 0x6c, 0x75, 0x6d,
+	0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26,
+	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x44, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4,
+	0x93, 0x02, 0x39, 0x12, 0x37, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76,
+	0x31, 0x2f, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65,
+	0x2f, 0x7b, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x7d, 0x12, 0x8d, 0x01, 0x0a,
+	0x09, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x12, 0x22, 0x2e, 0x67, 0x75, 0x72,
 	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x51, 0x75,
-	0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
-	0x51, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x46, 0x12, 0x44, 0x2f, 0x67,
-	0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65, 0x78, 0x63, 0x68, 0x61,
-	0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69,
-	0x64, 0x7d, 0x2f, 0x71, 0x75, 0x6f, 0x74, 0x65, 0x2f, 0x7b, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x5f,
-	0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x7d, 0x2f, 0x7b, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69,
-	0x6e, 0x7d, 0x42, 0xa3, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
-	0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x42, 0x0a, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x72, 0x6f,
-	0x74, 0x6f, 0x50, 0x01, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67,
-	0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f,
-	0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x3b, 0x62, 0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47,
-	0x42, 0x58, 0xaa, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31,
-	0xca, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02,
-	0x17, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42,
-	0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a,
-	0x3a, 0x42, 0x65, 0x78, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23,
+	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65,
+	0x72, 0x79, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x37, 0x88, 0xe7, 0xb0, 0x2a, 0x01, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x2c,
+	0x12, 0x2a, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x2f, 0x65,
+	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x2f, 0x7b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e,
+	0x67, 0x65, 0x5f, 0x69, 0x64, 0x7d, 0x2f, 0x71, 0x75, 0x6f, 0x74, 0x65, 0x42, 0xa3, 0x01, 0x0a,
+	0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31,
+	0x42, 0x0a, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x36,
+	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66,
+	0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33,
+	0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31,
+	0x3b, 0x62, 0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x42, 0x58, 0xaa, 0x02, 0x0b, 0x47,
+	0x75, 0x72, 0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0b, 0x47, 0x75, 0x72,
+	0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17, 0x47, 0x75, 0x72, 0x75, 0x5c,
+	0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
+	0x74, 0x61, 0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42, 0x65, 0x78, 0x3a, 0x3a,
+	0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -9512,40 +9521,40 @@ func file_guru_bex_v1_query_proto_rawDescGZIP() []byte {
 
 var file_guru_bex_v1_query_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_guru_bex_v1_query_proto_goTypes = []interface{}{
-	(*QueryExchangeRequest)(nil),            // 0: guru.bex.v1.QueryExchangeRequest
-	(*QueryExchangeResponse)(nil),           // 1: guru.bex.v1.QueryExchangeResponse
-	(*QueryExchangesRequest)(nil),           // 2: guru.bex.v1.QueryExchangesRequest
-	(*QueryExchangesResponse)(nil),          // 3: guru.bex.v1.QueryExchangesResponse
-	(*QueryExchangesByAdminRequest)(nil),    // 4: guru.bex.v1.QueryExchangesByAdminRequest
-	(*QueryExchangesByAdminResponse)(nil),   // 5: guru.bex.v1.QueryExchangesByAdminResponse
-	(*QueryIsAdminRequest)(nil),             // 6: guru.bex.v1.QueryIsAdminRequest
-	(*QueryIsAdminResponse)(nil),            // 7: guru.bex.v1.QueryIsAdminResponse
-	(*QueryReserveDepositorsRequest)(nil),   // 8: guru.bex.v1.QueryReserveDepositorsRequest
-	(*QueryReserveDepositorsResponse)(nil),  // 9: guru.bex.v1.QueryReserveDepositorsResponse
-	(*QueryIsReserveDepositorRequest)(nil),  // 10: guru.bex.v1.QueryIsReserveDepositorRequest
-	(*QueryIsReserveDepositorResponse)(nil), // 11: guru.bex.v1.QueryIsReserveDepositorResponse
-	(*QueryFeesRequest)(nil),                // 12: guru.bex.v1.QueryFeesRequest
-	(*QueryFeesResponse)(nil),               // 13: guru.bex.v1.QueryFeesResponse
-	(*QueryVolumeWindowRequest)(nil),        // 14: guru.bex.v1.QueryVolumeWindowRequest
-	(*QueryVolumeWindowResponse)(nil),       // 15: guru.bex.v1.QueryVolumeWindowResponse
-	(*QueryQuoteSwapRequest)(nil),           // 16: guru.bex.v1.QueryQuoteSwapRequest
-	(*QueryQuoteSwapResponse)(nil),          // 17: guru.bex.v1.QueryQuoteSwapResponse
-	(*Exchange)(nil),                        // 18: guru.bex.v1.Exchange
-	(*v1beta1.PageRequest)(nil),             // 19: cosmos.base.query.v1beta1.PageRequest
-	(*v1beta1.PageResponse)(nil),            // 20: cosmos.base.query.v1beta1.PageResponse
-	(*FeeLedger)(nil),                       // 21: guru.bex.v1.FeeLedger
-	(SwapDirection)(0),                      // 22: guru.bex.v1.SwapDirection
-	(*VolumeWindow)(nil),                    // 23: guru.bex.v1.VolumeWindow
-	(*QuoteSwapResponse)(nil),               // 24: guru.bex.v1.QuoteSwapResponse
+	(*QueryExchangeRequest)(nil),                  // 0: guru.bex.v1.QueryExchangeRequest
+	(*QueryExchangeResponse)(nil),                 // 1: guru.bex.v1.QueryExchangeResponse
+	(*QueryExchangesRequest)(nil),                 // 2: guru.bex.v1.QueryExchangesRequest
+	(*QueryExchangesResponse)(nil),                // 3: guru.bex.v1.QueryExchangesResponse
+	(*QueryExchangesByExchangeAdminRequest)(nil),  // 4: guru.bex.v1.QueryExchangesByExchangeAdminRequest
+	(*QueryExchangesByExchangeAdminResponse)(nil), // 5: guru.bex.v1.QueryExchangesByExchangeAdminResponse
+	(*QueryIsBexAdminRequest)(nil),                // 6: guru.bex.v1.QueryIsBexAdminRequest
+	(*QueryIsBexAdminResponse)(nil),               // 7: guru.bex.v1.QueryIsBexAdminResponse
+	(*QueryReserveDepositorsRequest)(nil),         // 8: guru.bex.v1.QueryReserveDepositorsRequest
+	(*QueryReserveDepositorsResponse)(nil),        // 9: guru.bex.v1.QueryReserveDepositorsResponse
+	(*QueryIsReserveDepositorRequest)(nil),        // 10: guru.bex.v1.QueryIsReserveDepositorRequest
+	(*QueryIsReserveDepositorResponse)(nil),       // 11: guru.bex.v1.QueryIsReserveDepositorResponse
+	(*QueryFeesRequest)(nil),                      // 12: guru.bex.v1.QueryFeesRequest
+	(*QueryFeesResponse)(nil),                     // 13: guru.bex.v1.QueryFeesResponse
+	(*QueryVolumeWindowRequest)(nil),              // 14: guru.bex.v1.QueryVolumeWindowRequest
+	(*QueryVolumeWindowResponse)(nil),             // 15: guru.bex.v1.QueryVolumeWindowResponse
+	(*QueryQuoteSwapRequest)(nil),                 // 16: guru.bex.v1.QueryQuoteSwapRequest
+	(*QueryQuoteSwapResponse)(nil),                // 17: guru.bex.v1.QueryQuoteSwapResponse
+	(*Exchange)(nil),                              // 18: guru.bex.v1.Exchange
+	(*v1beta1.PageRequest)(nil),                   // 19: cosmos.base.query.v1beta1.PageRequest
+	(*v1beta1.PageResponse)(nil),                  // 20: cosmos.base.query.v1beta1.PageResponse
+	(*FeeLedger)(nil),                             // 21: guru.bex.v1.FeeLedger
+	(SwapDirection)(0),                            // 22: guru.bex.v1.SwapDirection
+	(*VolumeWindow)(nil),                          // 23: guru.bex.v1.VolumeWindow
+	(*QuoteSwapResponse)(nil),                     // 24: guru.bex.v1.QuoteSwapResponse
 }
 var file_guru_bex_v1_query_proto_depIdxs = []int32{
 	18, // 0: guru.bex.v1.QueryExchangeResponse.exchange:type_name -> guru.bex.v1.Exchange
 	19, // 1: guru.bex.v1.QueryExchangesRequest.pagination:type_name -> cosmos.base.query.v1beta1.PageRequest
 	18, // 2: guru.bex.v1.QueryExchangesResponse.exchanges:type_name -> guru.bex.v1.Exchange
 	20, // 3: guru.bex.v1.QueryExchangesResponse.pagination:type_name -> cosmos.base.query.v1beta1.PageResponse
-	19, // 4: guru.bex.v1.QueryExchangesByAdminRequest.pagination:type_name -> cosmos.base.query.v1beta1.PageRequest
-	18, // 5: guru.bex.v1.QueryExchangesByAdminResponse.exchanges:type_name -> guru.bex.v1.Exchange
-	20, // 6: guru.bex.v1.QueryExchangesByAdminResponse.pagination:type_name -> cosmos.base.query.v1beta1.PageResponse
+	19, // 4: guru.bex.v1.QueryExchangesByExchangeAdminRequest.pagination:type_name -> cosmos.base.query.v1beta1.PageRequest
+	18, // 5: guru.bex.v1.QueryExchangesByExchangeAdminResponse.exchanges:type_name -> guru.bex.v1.Exchange
+	20, // 6: guru.bex.v1.QueryExchangesByExchangeAdminResponse.pagination:type_name -> cosmos.base.query.v1beta1.PageResponse
 	19, // 7: guru.bex.v1.QueryReserveDepositorsRequest.pagination:type_name -> cosmos.base.query.v1beta1.PageRequest
 	20, // 8: guru.bex.v1.QueryReserveDepositorsResponse.pagination:type_name -> cosmos.base.query.v1beta1.PageResponse
 	21, // 9: guru.bex.v1.QueryFeesResponse.ledger:type_name -> guru.bex.v1.FeeLedger
@@ -9554,8 +9563,8 @@ var file_guru_bex_v1_query_proto_depIdxs = []int32{
 	24, // 12: guru.bex.v1.QueryQuoteSwapResponse.quote:type_name -> guru.bex.v1.QuoteSwapResponse
 	0,  // 13: guru.bex.v1.Query.Exchange:input_type -> guru.bex.v1.QueryExchangeRequest
 	2,  // 14: guru.bex.v1.Query.Exchanges:input_type -> guru.bex.v1.QueryExchangesRequest
-	4,  // 15: guru.bex.v1.Query.ExchangesByAdmin:input_type -> guru.bex.v1.QueryExchangesByAdminRequest
-	6,  // 16: guru.bex.v1.Query.IsAdmin:input_type -> guru.bex.v1.QueryIsAdminRequest
+	4,  // 15: guru.bex.v1.Query.ExchangesByExchangeAdmin:input_type -> guru.bex.v1.QueryExchangesByExchangeAdminRequest
+	6,  // 16: guru.bex.v1.Query.IsBexAdmin:input_type -> guru.bex.v1.QueryIsBexAdminRequest
 	8,  // 17: guru.bex.v1.Query.ReserveDepositors:input_type -> guru.bex.v1.QueryReserveDepositorsRequest
 	10, // 18: guru.bex.v1.Query.IsReserveDepositor:input_type -> guru.bex.v1.QueryIsReserveDepositorRequest
 	12, // 19: guru.bex.v1.Query.CollectedFees:input_type -> guru.bex.v1.QueryFeesRequest
@@ -9565,8 +9574,8 @@ var file_guru_bex_v1_query_proto_depIdxs = []int32{
 	16, // 23: guru.bex.v1.Query.QuoteSwap:input_type -> guru.bex.v1.QueryQuoteSwapRequest
 	1,  // 24: guru.bex.v1.Query.Exchange:output_type -> guru.bex.v1.QueryExchangeResponse
 	3,  // 25: guru.bex.v1.Query.Exchanges:output_type -> guru.bex.v1.QueryExchangesResponse
-	5,  // 26: guru.bex.v1.Query.ExchangesByAdmin:output_type -> guru.bex.v1.QueryExchangesByAdminResponse
-	7,  // 27: guru.bex.v1.Query.IsAdmin:output_type -> guru.bex.v1.QueryIsAdminResponse
+	5,  // 26: guru.bex.v1.Query.ExchangesByExchangeAdmin:output_type -> guru.bex.v1.QueryExchangesByExchangeAdminResponse
+	7,  // 27: guru.bex.v1.Query.IsBexAdmin:output_type -> guru.bex.v1.QueryIsBexAdminResponse
 	9,  // 28: guru.bex.v1.Query.ReserveDepositors:output_type -> guru.bex.v1.QueryReserveDepositorsResponse
 	11, // 29: guru.bex.v1.Query.IsReserveDepositor:output_type -> guru.bex.v1.QueryIsReserveDepositorResponse
 	13, // 30: guru.bex.v1.Query.CollectedFees:output_type -> guru.bex.v1.QueryFeesResponse
@@ -9637,7 +9646,7 @@ func file_guru_bex_v1_query_proto_init() {
 			}
 		}
 		file_guru_bex_v1_query_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryExchangesByAdminRequest); i {
+			switch v := v.(*QueryExchangesByExchangeAdminRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9649,7 +9658,7 @@ func file_guru_bex_v1_query_proto_init() {
 			}
 		}
 		file_guru_bex_v1_query_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryExchangesByAdminResponse); i {
+			switch v := v.(*QueryExchangesByExchangeAdminResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9661,7 +9670,7 @@ func file_guru_bex_v1_query_proto_init() {
 			}
 		}
 		file_guru_bex_v1_query_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryIsAdminRequest); i {
+			switch v := v.(*QueryIsBexAdminRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9673,7 +9682,7 @@ func file_guru_bex_v1_query_proto_init() {
 			}
 		}
 		file_guru_bex_v1_query_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryIsAdminResponse); i {
+			switch v := v.(*QueryIsBexAdminResponse); i {
 			case 0:
 				return &v.state
 			case 1:

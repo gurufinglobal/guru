@@ -139,7 +139,7 @@ func (am AppModule) InitGenesis(ctx context.Context, source appmodule.GenesisSou
 	if err := types.ValidateGenesisState(genesisState); err != nil {
 		return err
 	}
-	am.keeper.InitGenesis(sdk.UnwrapSDKContext(ctx), *genesisState)
+	am.keeper.InitGenesis(sdk.UnwrapSDKContext(ctx), genesisState)
 	return nil
 }
 
@@ -152,9 +152,10 @@ func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisT
 
 func readGenesisState(source appmodule.GenesisSource, defaults *transwapv1.GenesisState) (*transwapv1.GenesisState, error) {
 	genesis := &transwapv1.GenesisState{
-		PortId:        defaults.GetPortId(),
-		Denoms:        defaults.GetDenoms(),
-		TotalEscrowed: defaults.GetTotalEscrowed(),
+		PortId:         defaults.GetPortId(),
+		Denoms:         defaults.GetDenoms(),
+		TotalEscrowed:  defaults.GetTotalEscrowed(),
+		PendingRefunds: defaults.GetPendingRefunds(),
 	}
 
 	portID := genesis.GetPortId()
@@ -184,6 +185,15 @@ func readGenesisState(source appmodule.GenesisSource, defaults *transwapv1.Genes
 		genesis.TotalEscrowed = totalEscrowed
 	}
 
+	pendingRefunds := genesis.GetPendingRefunds()
+	found, err = readGenesisField(source, "pending_refunds", &pendingRefunds)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.PendingRefunds = pendingRefunds
+	}
+
 	return genesis, nil
 }
 
@@ -198,7 +208,10 @@ func writeGenesisState(target appmodule.GenesisTarget, genesis *transwapv1.Genes
 	if err := writeGenesisField(target, "denoms", genesis.GetDenoms()); err != nil {
 		return err
 	}
-	return writeGenesisField(target, "total_escrowed", genesis.GetTotalEscrowed())
+	if err := writeGenesisField(target, "total_escrowed", genesis.GetTotalEscrowed()); err != nil {
+		return err
+	}
+	return writeGenesisField(target, "pending_refunds", genesis.GetPendingRefunds())
 }
 
 func readGenesisField(source appmodule.GenesisSource, fieldName string, value any) (bool, error) {
@@ -209,7 +222,7 @@ func readGenesisField(source appmodule.GenesisSource, fieldName string, value an
 	if reader == nil {
 		return false, nil
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	if err := json.NewDecoder(reader).Decode(value); err != nil {
 		return false, types.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)

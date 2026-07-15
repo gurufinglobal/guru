@@ -185,7 +185,7 @@ func (im IBCModule) OnRecvPacket(
 	// we are explicitly wrapping this emit event call in an anonymous function so that
 	// the packet data is evaluated after it has been assigned a value.
 	defer func() {
-		events.EmitOnRecvPacketEvent(ctx, data, ack, ackErr)
+		events.EmitOnRecvPacketEvent(ctx, &data, ack, ackErr)
 	}()
 
 	data, ackErr = types.UnmarshalPacketData(packet.GetData(), channelVersion, "")
@@ -265,7 +265,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		return err
 	}
 
-	events.EmitOnAcknowledgementPacketEvent(ctx, data, ack)
+	events.EmitOnAcknowledgementPacketEvent(ctx, &data, ack)
 
 	return nil
 }
@@ -292,7 +292,7 @@ func (im IBCModule) OnTimeoutPacket(
 		return err
 	}
 
-	events.EmitOnTimeoutEvent(ctx, data)
+	events.EmitOnTimeoutEvent(ctx, &data)
 
 	return nil
 }

@@ -60,7 +60,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsSuccessAckAndCommitsAccounting(t *t
 		SourceChannel:      "channel-1",
 		DestinationPort:    types.PortID,
 		DestinationChannel: "channel-0",
-		Data:               types.FungibleTokenPacketDataBytes(packetData),
+		Data:               types.FungibleTokenPacketDataBytes(&packetData),
 		TimeoutTimestamp:   uint64(ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
 	}
 
@@ -123,7 +123,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsErrorAckForNonNumericExchangeID(t *
 		SourceChannel:      "channel-1",
 		DestinationPort:    types.PortID,
 		DestinationChannel: "channel-0",
-		Data:               types.FungibleTokenPacketDataBytes(packetData),
+		Data:               types.FungibleTokenPacketDataBytes(&packetData),
 		TimeoutTimestamp:   uint64(ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
 	}
 
@@ -257,7 +257,7 @@ func TestIBCModuleOnRecvPacketReturnsErrorAckForMalformedSemanticFields(t *testi
 				SourceChannel:      "channel-1",
 				DestinationPort:    types.PortID,
 				DestinationChannel: "channel-0",
-				Data:               types.FungibleTokenPacketDataBytes(packetData),
+				Data:               types.FungibleTokenPacketDataBytes(&packetData),
 				TimeoutTimestamp:   uint64(ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
 			}
 
@@ -310,7 +310,7 @@ func TestIBCModuleOnRecvExchangePacketRejectsExpiredInheritedTimeoutWithoutMutat
 		SourceChannel:      "channel-1",
 		DestinationPort:    types.PortID,
 		DestinationChannel: "channel-0",
-		Data:               types.FungibleTokenPacketDataBytes(packetData),
+		Data:               types.FungibleTokenPacketDataBytes(&packetData),
 		TimeoutTimestamp:   uint64(ctx.BlockTime().Add(-time.Nanosecond).UnixNano()), //nolint:gosec // fixed test time is positive.
 	}
 
@@ -370,7 +370,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsErrorAckWhenRouteResolutionFails(t 
 		SourceChannel:      "channel-1",
 		DestinationPort:    types.PortID,
 		DestinationChannel: "channel-0",
-		Data:               types.FungibleTokenPacketDataBytes(packetData),
+		Data:               types.FungibleTokenPacketDataBytes(&packetData),
 		TimeoutTimestamp:   uint64(ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
 	}
 
@@ -384,7 +384,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsErrorAckWhenRouteResolutionFails(t 
 				continue
 			}
 			foundAckErr = true
-			require.Contains(t, attr.Value, "failed to resolve swap direction")
+			require.Contains(t, attr.Value, "failed to validate swap input")
 			require.Contains(t, attr.Value, "route channel is closed")
 		}
 	}
@@ -399,6 +399,48 @@ func TestIBCModuleOnRecvExchangePacketReturnsErrorAckWhenRouteResolutionFails(t 
 	require.Empty(t, recvBex.ledger("locked"))
 	require.Empty(t, ics4.sent)
 	require.False(t, k.HasDenom(ctx, types.DenomHash(types.NewDenom("atgxusd", types.NewHop(types.PortID, "channel-0")))))
+}
+
+func TestIBCModuleOnRecvExchangePacketRejectsWrongLocalChannelWithZeroFee(t *testing.T) {
+	k, ctx, bank, _, ics4 := setupIBCModuleAckRefund(t)
+	ctx = ctx.WithEventManager(sdk.NewEventManager())
+	reserve := sdk.AccAddress(bytes.Repeat([]byte{0x41}, 20))
+	outputDenom := types.NewDenom("atgxkrw", types.NewHop(types.PortID, "channel-7"))
+	recvBex := &moduleRecvExchangeBexKeeper{
+		reserve:        reserve,
+		bank:           bank,
+		outputDenom:    types.DenomIBCDenom(outputDenom),
+		amountOut:      "100",
+		feeAmount:      "0",
+		ledgers:        make(map[string]sdk.Coins),
+		recordedVolume: sdkmath.ZeroInt(),
+	}
+	k.BexKeeper = recvBex
+	k.SetDenom(ctx, outputDenom)
+	im := NewIBCModule(k)
+
+	packetData := transwapv1.FungibleTokenPacketData{
+		ExchangeId: "7",
+		Denom:      "atgxusd",
+		Amount:     "103",
+		Sender:     sdk.AccAddress(bytes.Repeat([]byte{0x42}, 20)).String(),
+		Receiver:   sdk.AccAddress(bytes.Repeat([]byte{0x43}, 20)).String(),
+	}
+	packet := channeltypes.Packet{
+		Sequence:           40,
+		SourcePort:         "xswap",
+		SourceChannel:      "channel-1",
+		DestinationPort:    types.PortID,
+		DestinationChannel: "channel-9",
+		Data:               types.FungibleTokenPacketDataBytes(&packetData),
+		TimeoutTimestamp:   uint64(ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
+	}
+
+	ack := im.OnRecvPacket(ctx, types.V1, packet, sdk.AccAddress{})
+	require.False(t, ack.Success())
+	require.Zero(t, recvBex.quoteCalls)
+	require.Empty(t, ics4.sent)
+	require.True(t, bank.GetAllBalances(ctx, reserve).IsZero())
 }
 
 func TestIBCModuleOnRecvTransferPacketReturnsSuccessAckAndMintsVoucher(t *testing.T) {
@@ -446,11 +488,12 @@ type moduleRecvExchangeBexKeeper struct {
 	recordedVolume sdkmath.Int
 }
 
-func (m *moduleRecvExchangeBexKeeper) ResolveSwapDirection(_ context.Context, exchangeID uint64, inputDenom string) (bexv1.SwapDirection, error) {
+func (m *moduleRecvExchangeBexKeeper) ValidateSwapInput(_ context.Context, exchangeID uint64, inputDenom, localInputDenom string) (bexv1.SwapDirection, error) {
 	if m.resolveErr != nil {
 		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, m.resolveErr
 	}
-	if exchangeID != 7 || inputDenom != "atgxusd" {
+	expectedLocal := types.DenomIBCDenom(types.NewDenom("atgxusd", types.NewHop(types.PortID, "channel-0")))
+	if exchangeID != 7 || inputDenom != "atgxusd" || localInputDenom != expectedLocal {
 		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, bextypes.ErrInvalidRoute.Wrap("unexpected exchange route")
 	}
 	return bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
@@ -473,8 +516,12 @@ func (m *moduleRecvExchangeBexKeeper) QuoteSwap(_ context.Context, req *bexv1.Qu
 	}, nil
 }
 
-func (*moduleRecvExchangeBexKeeper) WithReserveReceiveAllowance(ctx context.Context, _ uint64) context.Context {
-	return ctx
+func (m *moduleRecvExchangeBexKeeper) ReceiveToReserve(ctx context.Context, _ uint64, from sdk.AccAddress, amount sdk.Coins) error {
+	return m.bank.SendCoins(ctx, from, m.reserve, amount)
+}
+
+func (m *moduleRecvExchangeBexKeeper) SendFromReserve(ctx context.Context, _ uint64, recipient sdk.AccAddress, amount sdk.Coins) error {
+	return m.bank.SendCoins(ctx, m.reserve, recipient, amount)
 }
 
 func (m *moduleRecvExchangeBexKeeper) RecordVolumeWindow(_ context.Context, _ uint64, direction bexv1.SwapDirection, amountOut sdkmath.Int) error {
@@ -508,6 +555,16 @@ func (m *moduleRecvExchangeBexKeeper) RefundLockedFee(ctx context.Context, _ uin
 		return err
 	}
 	m.addLedger("refunded", fee)
+	return nil
+}
+
+func (m *moduleRecvExchangeBexKeeper) AddPendingLiability(_ context.Context, _ uint64, liability sdk.Coin) error {
+	m.addLedger("pending", liability)
+	return nil
+}
+
+func (m *moduleRecvExchangeBexKeeper) ReleasePendingLiability(_ context.Context, _ uint64, liability sdk.Coin) error {
+	m.addLedger("liability_released", liability)
 	return nil
 }
 

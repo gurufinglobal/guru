@@ -119,13 +119,20 @@ func (k Keeper) OnAcknowledgementTransferPacket(
 		if err := k.releaseExchangeRefundFee(ctx, refundKey); err != nil {
 			return err
 		}
+		if err := k.releaseExchangeRefundLiability(ctx, refundKey); err != nil {
+			return err
+		}
 		k.DeleteRefundPacketData(ctx, refundKey)
 		return nil
 	case *channeltypes.Acknowledgement_Error:
 		if !k.HasRefundPacketData(ctx, refundKey) {
 			return nil
 		}
-		if err := k.refundPacketTokens(ctx, sourcePort, sourceChannel, data); err != nil {
+		exchangeID, err := k.exchangeIDForRefund(ctx, refundKey)
+		if err != nil {
+			return err
+		}
+		if err := k.refundPacketTokensToReserve(ctx, exchangeID, sourcePort, sourceChannel, data); err != nil {
 			return err
 		}
 
@@ -155,7 +162,11 @@ func (k Keeper) OnTimeoutTransferPacket(
 	}
 
 	// refund the tokens to the sender
-	if err := k.refundPacketTokens(ctx, sourcePort, sourceChannel, data); err != nil {
+	exchangeID, err := k.exchangeIDForRefund(ctx, refundKey)
+	if err != nil {
+		return err
+	}
+	if err := k.refundPacketTokensToReserve(ctx, exchangeID, sourcePort, sourceChannel, data); err != nil {
 		return err
 	}
 

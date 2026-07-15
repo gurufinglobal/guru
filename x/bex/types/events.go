@@ -2,6 +2,7 @@ package types
 
 const (
 	EventTypeAdminRegistered         = "admin_registered"
+	EventTypeAdminUpdated            = "admin_updated"
 	EventTypeAdminRemoved            = "admin_removed"
 	EventTypeExchangeRegistered      = "exchange_registered"
 	EventTypeExchangeUpdated         = "exchange_updated"
@@ -16,12 +17,14 @@ const (
 	EventTypeFeesReleased            = "fees_released"
 	EventTypeFeesRefunded            = "fees_refunded"
 	EventTypeFeesWithdrawn           = "fees_withdrawn"
+	EventTypeVolumeEpochActivated    = "volume_epoch_activated"
 	EventTypeVolumeRecorded          = "volume_recorded"
-	EventTypeVolumeCapExceeded       = "volume_cap_exceeded"
 )
 
 const (
 	AttributeKeyAdmin          = "admin"
+	AttributeKeyBexAdmin       = "bex_admin"
+	AttributeKeyPreviousAdmin  = "previous_admin"
 	AttributeKeyModerator      = "moderator"
 	AttributeKeyExchangeID     = "exchange_id"
 	AttributeKeyReserveAddress = "reserve_address"
@@ -33,6 +36,8 @@ const (
 	AttributeKeyStatus         = "status"
 	AttributeKeyPreviousStatus = "previous_status"
 	AttributeKeyCurrentAmount  = "current_amount"
-	AttributeKeyNextAmount     = "next_amount"
-	AttributeKeyCap            = "cap"
+	AttributeKeyEpochSeconds   = "epoch_seconds"
+	AttributeKeyPreviousEpoch  = "previous_epoch_seconds"
+	AttributeKeyEffectiveAt    = "effective_at_unix"
+	AttributeKeyGeneration     = "volume_window_generation"
 )

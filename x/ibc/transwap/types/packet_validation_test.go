@@ -15,7 +15,7 @@ import (
 )
 
 func TestValidateTokenRejectsInvalidDenomAndAmounts(t *testing.T) {
-	valid := transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}
+	valid := &transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}
 
 	tests := []struct {
 		name   string
@@ -33,9 +33,8 @@ func TestValidateTokenRejectsInvalidDenomAndAmounts(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			token := valid
-			token.Denom = CloneDenom(valid.Denom)
-			tt.mutate(&token)
+			token := CloneToken(valid)
+			tt.mutate(token)
 
 			require.Error(t, ValidateToken(token))
 			_, err := TokenToCoin(token)
@@ -69,8 +68,8 @@ func TestFungibleTokenPacketValidationRejectsMalformedFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			packet := valid
-			tt.mutate(&packet)
+			packet := proto.Clone(valid).(*transwapv1.FungibleTokenPacketData)
+			tt.mutate(packet)
 
 			require.Error(t, ValidateFungibleTokenPacketData(packet))
 			_, err := PacketDataV1ToInternal(packet)
@@ -143,7 +142,7 @@ func TestABIPacketDataDefaultsExchangeIDToTransfer(t *testing.T) {
 
 func TestUnmarshalPacketDataRejectsProtobufUnknownFields(t *testing.T) {
 	packet := NewFungibleTokenPacketData("ugxusd", "1", "sender", "receiver", "")
-	bz, err := proto.Marshal(&packet)
+	bz, err := proto.Marshal(packet)
 	require.NoError(t, err)
 
 	bz = append(bz, 0x7a, 0x01, 0x00)
@@ -162,7 +161,7 @@ func TestInternalTransferRepresentationDistinguishesExchangePackets(t *testing.T
 	require.NoError(t, err)
 	require.False(t, exchange.IsTransferPacket())
 
-	nonNumeric := NewInternalTransferRepresentation("abc", transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}, "sender", "receiver", "")
+	nonNumeric := NewInternalTransferRepresentation("abc", &transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}, "sender", "receiver", "")
 	require.Error(t, nonNumeric.ValidateBasic())
 }
 
@@ -179,7 +178,7 @@ func TestCloneDenomAndTokenPreventTraceAliasing(t *testing.T) {
 	require.Len(t, original.Trace, 2)
 
 	token := transwapv1.Token{Denom: original, Amount: "9"}
-	tokenClone := CloneToken(token)
+	tokenClone := CloneToken(&token)
 	tokenClone.Denom.Trace[1].ChannelId = "channel-99"
 
 	require.Equal(t, "channel-1", token.Denom.Trace[1].ChannelId)
@@ -214,7 +213,7 @@ func TestFungibleTokenPacketDataCustomPacketData(t *testing.T) {
 }
 
 func TestInternalTransferRepresentationGettersAndValidationBranches(t *testing.T) {
-	transfer := NewInternalTransferRepresentation("0", transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}, "sender", "receiver", `{"k":"v"}`)
+	transfer := NewInternalTransferRepresentation("0", &transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}, "sender", "receiver", `{"k":"v"}`)
 
 	require.Equal(t, "sender", transfer.GetPacketSender("sourcePort"))
 	require.Equal(t, "v", transfer.GetCustomPacketData("k"))
@@ -252,7 +251,7 @@ func TestInternalTransferRepresentationGettersAndValidationBranches(t *testing.T
 
 func TestTokenToCoinSupportsValidToken(t *testing.T) {
 	token := transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "123"}
-	coin, err := TokenToCoin(token)
+	coin, err := TokenToCoin(&token)
 	require.NoError(t, err)
 	require.Equal(t, "ugxusd", coin.Denom)
 	require.Equal(t, sdkmath.NewInt(123), coin.Amount)

@@ -276,14 +276,17 @@ func (ibcValidationBankKeeper) GetAllBalances(context.Context, sdk.AccAddress) s
 
 type ibcValidationBexKeeper struct{}
 
-func (ibcValidationBexKeeper) ResolveSwapDirection(context.Context, uint64, string) (bexv1.SwapDirection, error) {
+func (ibcValidationBexKeeper) ValidateSwapInput(context.Context, uint64, string, string) (bexv1.SwapDirection, error) {
 	return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, nil
 }
 func (ibcValidationBexKeeper) QuoteSwap(context.Context, *bexv1.QuoteSwapRequest) (*bexv1.QuoteSwapResponse, error) {
 	return nil, nil
 }
-func (ibcValidationBexKeeper) WithReserveReceiveAllowance(ctx context.Context, _ uint64) context.Context {
-	return ctx
+func (ibcValidationBexKeeper) ReceiveToReserve(context.Context, uint64, sdk.AccAddress, sdk.Coins) error {
+	return nil
+}
+func (ibcValidationBexKeeper) SendFromReserve(context.Context, uint64, sdk.AccAddress, sdk.Coins) error {
+	return nil
 }
 func (ibcValidationBexKeeper) RecordVolumeWindow(context.Context, uint64, bexv1.SwapDirection, sdkmath.Int) error {
 	return nil
@@ -298,6 +301,12 @@ func (ibcValidationBexKeeper) ReleaseExchangeFee(context.Context, uint64, sdk.Co
 	return nil
 }
 func (ibcValidationBexKeeper) RefundLockedFee(context.Context, uint64, sdk.Coin) error {
+	return nil
+}
+func (ibcValidationBexKeeper) AddPendingLiability(context.Context, uint64, sdk.Coin) error {
+	return nil
+}
+func (ibcValidationBexKeeper) ReleasePendingLiability(context.Context, uint64, sdk.Coin) error {
 	return nil
 }
 func (ibcValidationBexKeeper) GetReserveAddress(context.Context, uint64) sdk.AccAddress {

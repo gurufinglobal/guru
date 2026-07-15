@@ -315,15 +315,67 @@ func (x *_GenesisState_7_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_GenesisState_8_list)(nil)
+
+type _GenesisState_8_list struct {
+	list *[]*FeeGenesis
+}
+
+func (x *_GenesisState_8_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_GenesisState_8_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_GenesisState_8_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*FeeGenesis)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_GenesisState_8_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*FeeGenesis)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_GenesisState_8_list) AppendMutable() protoreflect.Value {
+	v := new(FeeGenesis)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_8_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_GenesisState_8_list) NewElement() protoreflect.Value {
+	v := new(FeeGenesis)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_GenesisState_8_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
-	md_GenesisState                    protoreflect.MessageDescriptor
-	fd_GenesisState_admins             protoreflect.FieldDescriptor
-	fd_GenesisState_exchanges          protoreflect.FieldDescriptor
-	fd_GenesisState_collected_fees     protoreflect.FieldDescriptor
-	fd_GenesisState_locked_fees        protoreflect.FieldDescriptor
-	fd_GenesisState_volume_windows     protoreflect.FieldDescriptor
-	fd_GenesisState_next_exchange_id   protoreflect.FieldDescriptor
-	fd_GenesisState_reserve_depositors protoreflect.FieldDescriptor
+	md_GenesisState                     protoreflect.MessageDescriptor
+	fd_GenesisState_admins              protoreflect.FieldDescriptor
+	fd_GenesisState_exchanges           protoreflect.FieldDescriptor
+	fd_GenesisState_collected_fees      protoreflect.FieldDescriptor
+	fd_GenesisState_locked_fees         protoreflect.FieldDescriptor
+	fd_GenesisState_volume_windows      protoreflect.FieldDescriptor
+	fd_GenesisState_next_exchange_id    protoreflect.FieldDescriptor
+	fd_GenesisState_reserve_depositors  protoreflect.FieldDescriptor
+	fd_GenesisState_pending_liabilities protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -336,6 +388,7 @@ func init() {
 	fd_GenesisState_volume_windows = md_GenesisState.Fields().ByName("volume_windows")
 	fd_GenesisState_next_exchange_id = md_GenesisState.Fields().ByName("next_exchange_id")
 	fd_GenesisState_reserve_depositors = md_GenesisState.Fields().ByName("reserve_depositors")
+	fd_GenesisState_pending_liabilities = md_GenesisState.Fields().ByName("pending_liabilities")
 }
 
 var _ protoreflect.Message = (*fastReflection_GenesisState)(nil)
@@ -445,6 +498,12 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 			return
 		}
 	}
+	if len(x.PendingLiabilities) != 0 {
+		value := protoreflect.ValueOfList(&_GenesisState_8_list{list: &x.PendingLiabilities})
+		if !f(fd_GenesisState_pending_liabilities, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -474,6 +533,8 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 		return x.NextExchangeId != uint64(0)
 	case "guru.bex.v1.GenesisState.reserve_depositors":
 		return len(x.ReserveDepositors) != 0
+	case "guru.bex.v1.GenesisState.pending_liabilities":
+		return len(x.PendingLiabilities) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -504,6 +565,8 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 		x.NextExchangeId = uint64(0)
 	case "guru.bex.v1.GenesisState.reserve_depositors":
 		x.ReserveDepositors = nil
+	case "guru.bex.v1.GenesisState.pending_liabilities":
+		x.PendingLiabilities = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -559,6 +622,12 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 		}
 		listValue := &_GenesisState_7_list{list: &x.ReserveDepositors}
 		return protoreflect.ValueOfList(listValue)
+	case "guru.bex.v1.GenesisState.pending_liabilities":
+		if len(x.PendingLiabilities) == 0 {
+			return protoreflect.ValueOfList(&_GenesisState_8_list{})
+		}
+		listValue := &_GenesisState_8_list{list: &x.PendingLiabilities}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -605,6 +674,10 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 		lv := value.List()
 		clv := lv.(*_GenesisState_7_list)
 		x.ReserveDepositors = *clv.list
+	case "guru.bex.v1.GenesisState.pending_liabilities":
+		lv := value.List()
+		clv := lv.(*_GenesisState_8_list)
+		x.PendingLiabilities = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -661,6 +734,12 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 		}
 		value := &_GenesisState_7_list{list: &x.ReserveDepositors}
 		return protoreflect.ValueOfList(value)
+	case "guru.bex.v1.GenesisState.pending_liabilities":
+		if x.PendingLiabilities == nil {
+			x.PendingLiabilities = []*FeeGenesis{}
+		}
+		value := &_GenesisState_8_list{list: &x.PendingLiabilities}
+		return protoreflect.ValueOfList(value)
 	case "guru.bex.v1.GenesisState.next_exchange_id":
 		panic(fmt.Errorf("field next_exchange_id of message guru.bex.v1.GenesisState is not mutable"))
 	default:
@@ -696,6 +775,9 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 	case "guru.bex.v1.GenesisState.reserve_depositors":
 		list := []*ReserveDepositorGenesis{}
 		return protoreflect.ValueOfList(&_GenesisState_7_list{list: &list})
+	case "guru.bex.v1.GenesisState.pending_liabilities":
+		list := []*FeeGenesis{}
+		return protoreflect.ValueOfList(&_GenesisState_8_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.GenesisState"))
@@ -804,6 +886,12 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
 		}
+		if len(x.PendingLiabilities) > 0 {
+			for _, e := range x.PendingLiabilities {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -832,6 +920,22 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.PendingLiabilities) > 0 {
+			for iNdEx := len(x.PendingLiabilities) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.PendingLiabilities[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x42
+			}
 		}
 		if len(x.ReserveDepositors) > 0 {
 			for iNdEx := len(x.ReserveDepositors) - 1; iNdEx >= 0; iNdEx-- {
@@ -1194,6 +1298,40 @@ func (x *fastReflection_GenesisState) ProtoMethods() *protoiface.Methods {
 				}
 				x.ReserveDepositors = append(x.ReserveDepositors, &ReserveDepositorGenesis{})
 				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.ReserveDepositors[len(x.ReserveDepositors)-1]); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			case 8:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field PendingLiabilities", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.PendingLiabilities = append(x.PendingLiabilities, &FeeGenesis{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.PendingLiabilities[len(x.PendingLiabilities)-1]); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -1775,12 +1913,13 @@ func (x *fastReflection_FeeGenesis) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_VolumeWindowGenesis                  protoreflect.MessageDescriptor
-	fd_VolumeWindowGenesis_exchange_id      protoreflect.FieldDescriptor
-	fd_VolumeWindowGenesis_direction        protoreflect.FieldDescriptor
-	fd_VolumeWindowGenesis_epoch_start_unix protoreflect.FieldDescriptor
-	fd_VolumeWindowGenesis_epoch_seconds    protoreflect.FieldDescriptor
-	fd_VolumeWindowGenesis_amount           protoreflect.FieldDescriptor
+	md_VolumeWindowGenesis                          protoreflect.MessageDescriptor
+	fd_VolumeWindowGenesis_exchange_id              protoreflect.FieldDescriptor
+	fd_VolumeWindowGenesis_direction                protoreflect.FieldDescriptor
+	fd_VolumeWindowGenesis_epoch_start_unix         protoreflect.FieldDescriptor
+	fd_VolumeWindowGenesis_epoch_seconds            protoreflect.FieldDescriptor
+	fd_VolumeWindowGenesis_amount                   protoreflect.FieldDescriptor
+	fd_VolumeWindowGenesis_volume_window_generation protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -1791,6 +1930,7 @@ func init() {
 	fd_VolumeWindowGenesis_epoch_start_unix = md_VolumeWindowGenesis.Fields().ByName("epoch_start_unix")
 	fd_VolumeWindowGenesis_epoch_seconds = md_VolumeWindowGenesis.Fields().ByName("epoch_seconds")
 	fd_VolumeWindowGenesis_amount = md_VolumeWindowGenesis.Fields().ByName("amount")
+	fd_VolumeWindowGenesis_volume_window_generation = md_VolumeWindowGenesis.Fields().ByName("volume_window_generation")
 }
 
 var _ protoreflect.Message = (*fastReflection_VolumeWindowGenesis)(nil)
@@ -1888,6 +2028,12 @@ func (x *fastReflection_VolumeWindowGenesis) Range(f func(protoreflect.FieldDesc
 			return
 		}
 	}
+	if x.VolumeWindowGeneration != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.VolumeWindowGeneration)
+		if !f(fd_VolumeWindowGenesis_volume_window_generation, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -1913,6 +2059,8 @@ func (x *fastReflection_VolumeWindowGenesis) Has(fd protoreflect.FieldDescriptor
 		return x.EpochSeconds != uint32(0)
 	case "guru.bex.v1.VolumeWindowGenesis.amount":
 		return x.Amount != ""
+	case "guru.bex.v1.VolumeWindowGenesis.volume_window_generation":
+		return x.VolumeWindowGeneration != uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeWindowGenesis"))
@@ -1939,6 +2087,8 @@ func (x *fastReflection_VolumeWindowGenesis) Clear(fd protoreflect.FieldDescript
 		x.EpochSeconds = uint32(0)
 	case "guru.bex.v1.VolumeWindowGenesis.amount":
 		x.Amount = ""
+	case "guru.bex.v1.VolumeWindowGenesis.volume_window_generation":
+		x.VolumeWindowGeneration = uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeWindowGenesis"))
@@ -1970,6 +2120,9 @@ func (x *fastReflection_VolumeWindowGenesis) Get(descriptor protoreflect.FieldDe
 	case "guru.bex.v1.VolumeWindowGenesis.amount":
 		value := x.Amount
 		return protoreflect.ValueOfString(value)
+	case "guru.bex.v1.VolumeWindowGenesis.volume_window_generation":
+		value := x.VolumeWindowGeneration
+		return protoreflect.ValueOfUint64(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeWindowGenesis"))
@@ -2000,6 +2153,8 @@ func (x *fastReflection_VolumeWindowGenesis) Set(fd protoreflect.FieldDescriptor
 		x.EpochSeconds = uint32(value.Uint())
 	case "guru.bex.v1.VolumeWindowGenesis.amount":
 		x.Amount = value.Interface().(string)
+	case "guru.bex.v1.VolumeWindowGenesis.volume_window_generation":
+		x.VolumeWindowGeneration = value.Uint()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeWindowGenesis"))
@@ -2030,6 +2185,8 @@ func (x *fastReflection_VolumeWindowGenesis) Mutable(fd protoreflect.FieldDescri
 		panic(fmt.Errorf("field epoch_seconds of message guru.bex.v1.VolumeWindowGenesis is not mutable"))
 	case "guru.bex.v1.VolumeWindowGenesis.amount":
 		panic(fmt.Errorf("field amount of message guru.bex.v1.VolumeWindowGenesis is not mutable"))
+	case "guru.bex.v1.VolumeWindowGenesis.volume_window_generation":
+		panic(fmt.Errorf("field volume_window_generation of message guru.bex.v1.VolumeWindowGenesis is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeWindowGenesis"))
@@ -2053,6 +2210,8 @@ func (x *fastReflection_VolumeWindowGenesis) NewField(fd protoreflect.FieldDescr
 		return protoreflect.ValueOfUint32(uint32(0))
 	case "guru.bex.v1.VolumeWindowGenesis.amount":
 		return protoreflect.ValueOfString("")
+	case "guru.bex.v1.VolumeWindowGenesis.volume_window_generation":
+		return protoreflect.ValueOfUint64(uint64(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeWindowGenesis"))
@@ -2138,6 +2297,9 @@ func (x *fastReflection_VolumeWindowGenesis) ProtoMethods() *protoiface.Methods 
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if x.VolumeWindowGeneration != 0 {
+			n += 1 + runtime.Sov(uint64(x.VolumeWindowGeneration))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -2166,6 +2328,11 @@ func (x *fastReflection_VolumeWindowGenesis) ProtoMethods() *protoiface.Methods 
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.VolumeWindowGeneration != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.VolumeWindowGeneration))
+			i--
+			dAtA[i] = 0x30
 		}
 		if len(x.Amount) > 0 {
 			i -= len(x.Amount)
@@ -2351,6 +2518,25 @@ func (x *fastReflection_VolumeWindowGenesis) ProtoMethods() *protoiface.Methods 
 				}
 				x.Amount = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
+			case 6:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field VolumeWindowGeneration", wireType)
+				}
+				x.VolumeWindowGeneration = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.VolumeWindowGeneration |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -2880,6 +3066,9 @@ type GenesisState struct {
 	VolumeWindows     []*VolumeWindowGenesis     `protobuf:"bytes,5,rep,name=volume_windows,json=volumeWindows,proto3" json:"volume_windows,omitempty"`
 	NextExchangeId    uint64                     `protobuf:"varint,6,opt,name=next_exchange_id,json=nextExchangeId,proto3" json:"next_exchange_id,omitempty"`
 	ReserveDepositors []*ReserveDepositorGenesis `protobuf:"bytes,7,rep,name=reserve_depositors,json=reserveDepositors,proto3" json:"reserve_depositors,omitempty"`
+	// pending_liabilities reserves the net input principal required to honor
+	// in-flight cross-chain refunds for each exchange.
+	PendingLiabilities []*FeeGenesis `protobuf:"bytes,8,rep,name=pending_liabilities,json=pendingLiabilities,proto3" json:"pending_liabilities,omitempty"`
 }
 
 func (x *GenesisState) Reset() {
@@ -2951,6 +3140,13 @@ func (x *GenesisState) GetReserveDepositors() []*ReserveDepositorGenesis {
 	return nil
 }
 
+func (x *GenesisState) GetPendingLiabilities() []*FeeGenesis {
+	if x != nil {
+		return x.PendingLiabilities
+	}
+	return nil
+}
+
 // FeeGenesis stores one exchange fee ledger at genesis.
 type FeeGenesis struct {
 	state         protoimpl.MessageState
@@ -3001,11 +3197,13 @@ type VolumeWindowGenesis struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ExchangeId     uint64        `protobuf:"varint,1,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
-	Direction      SwapDirection `protobuf:"varint,2,opt,name=direction,proto3,enum=guru.bex.v1.SwapDirection" json:"direction,omitempty"`
-	EpochStartUnix uint64        `protobuf:"varint,3,opt,name=epoch_start_unix,json=epochStartUnix,proto3" json:"epoch_start_unix,omitempty"`
-	EpochSeconds   uint32        `protobuf:"varint,4,opt,name=epoch_seconds,json=epochSeconds,proto3" json:"epoch_seconds,omitempty"`
-	Amount         string        `protobuf:"bytes,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	ExchangeId uint64        `protobuf:"varint,1,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
+	Direction  SwapDirection `protobuf:"varint,2,opt,name=direction,proto3,enum=guru.bex.v1.SwapDirection" json:"direction,omitempty"`
+	// Start of the window, aligned to epoch_seconds from the Unix epoch.
+	EpochStartUnix         uint64 `protobuf:"varint,3,opt,name=epoch_start_unix,json=epochStartUnix,proto3" json:"epoch_start_unix,omitempty"`
+	EpochSeconds           uint32 `protobuf:"varint,4,opt,name=epoch_seconds,json=epochSeconds,proto3" json:"epoch_seconds,omitempty"`
+	Amount                 string `protobuf:"bytes,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	VolumeWindowGeneration uint64 `protobuf:"varint,6,opt,name=volume_window_generation,json=volumeWindowGeneration,proto3" json:"volume_window_generation,omitempty"`
 }
 
 func (x *VolumeWindowGenesis) Reset() {
@@ -3063,6 +3261,13 @@ func (x *VolumeWindowGenesis) GetAmount() string {
 	return ""
 }
 
+func (x *VolumeWindowGenesis) GetVolumeWindowGeneration() uint64 {
+	if x != nil {
+		return x.VolumeWindowGeneration
+	}
+	return 0
+}
+
 // ReserveDepositorGenesis stores one exchange-scoped reserve depositor.
 type ReserveDepositorGenesis struct {
 	state         protoimpl.MessageState
@@ -3117,7 +3322,7 @@ var file_guru_bex_v1_genesis_proto_rawDesc = []byte{
 	0x69, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x19, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
 	0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x70, 0x72,
 	0x6f, 0x74, 0x6f, 0x1a, 0x15, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31,
-	0x2f, 0x62, 0x65, 0x78, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9d, 0x03, 0x0a, 0x0c, 0x47,
+	0x2f, 0x62, 0x65, 0x78, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xe7, 0x03, 0x0a, 0x0c, 0x47,
 	0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x61,
 	0x64, 0x6d, 0x69, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x61, 0x64, 0x6d,
 	0x69, 0x6e, 0x73, 0x12, 0x33, 0x0a, 0x09, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73,
@@ -3143,46 +3348,54 @@ var file_guru_bex_v1_genesis_proto_rawDesc = []byte{
 	0x0b, 0x32, 0x24, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e,
 	0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
 	0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x52, 0x11, 0x72, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
-	0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x22, 0x5e, 0x0a, 0x0a, 0x46, 0x65,
-	0x65, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65,
-	0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x2f, 0x0a, 0x05, 0x63, 0x6f, 0x69,
-	0x6e, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
-	0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43,
-	0x6f, 0x69, 0x6e, 0x52, 0x05, 0x63, 0x6f, 0x69, 0x6e, 0x73, 0x22, 0xd7, 0x01, 0x0a, 0x13, 0x56,
-	0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x47, 0x65, 0x6e, 0x65, 0x73,
+	0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x73, 0x12, 0x48, 0x0a, 0x13, 0x70, 0x65,
+	0x6e, 0x64, 0x69, 0x6e, 0x67, 0x5f, 0x6c, 0x69, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x69, 0x65,
+	0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62,
+	0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x46, 0x65, 0x65, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73,
+	0x52, 0x12, 0x70, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x4c, 0x69, 0x61, 0x62, 0x69, 0x6c, 0x69,
+	0x74, 0x69, 0x65, 0x73, 0x22, 0x5e, 0x0a, 0x0a, 0x46, 0x65, 0x65, 0x47, 0x65, 0x6e, 0x65, 0x73,
 	0x69, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69,
 	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x49, 0x64, 0x12, 0x38, 0x0a, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
-	0x78, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x77, 0x61, 0x70, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69,
-	0x6f, 0x6e, 0x52, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x28, 0x0a,
-	0x10, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x5f, 0x73, 0x74, 0x61, 0x72, 0x74, 0x5f, 0x75, 0x6e, 0x69,
-	0x78, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0e, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x53, 0x74,
-	0x61, 0x72, 0x74, 0x55, 0x6e, 0x69, 0x78, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x70, 0x6f, 0x63, 0x68,
-	0x5f, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0c,
-	0x65, 0x70, 0x6f, 0x63, 0x68, 0x53, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x12, 0x16, 0x0a, 0x06,
-	0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x61, 0x6d,
-	0x6f, 0x75, 0x6e, 0x74, 0x22, 0x81, 0x01, 0x0a, 0x17, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x65,
-	0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73,
-	0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49,
-	0x64, 0x12, 0x45, 0x0a, 0x11, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x5f, 0x61,
-	0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4,
-	0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
-	0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x10, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f,
-	0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x42, 0xa5, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d,
-	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x42, 0x0c, 0x47, 0x65,
-	0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x36, 0x67, 0x69,
-	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e,
-	0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61,
-	0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f, 0x76, 0x31, 0x3b, 0x62,
-	0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x42, 0x58, 0xaa, 0x02, 0x0b, 0x47, 0x75, 0x72,
-	0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x5c,
-	0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65,
-	0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
-	0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42, 0x65, 0x78, 0x3a, 0x3a, 0x56, 0x31,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x49, 0x64, 0x12, 0x2f, 0x0a, 0x05, 0x63, 0x6f, 0x69, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65,
+	0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e, 0x52, 0x05, 0x63,
+	0x6f, 0x69, 0x6e, 0x73, 0x22, 0x91, 0x02, 0x0a, 0x13, 0x56, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57,
+	0x69, 0x6e, 0x64, 0x6f, 0x77, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x12, 0x1f, 0x0a, 0x0b,
+	0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x38, 0x0a,
+	0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x53,
+	0x77, 0x61, 0x70, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x09, 0x64, 0x69,
+	0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x28, 0x0a, 0x10, 0x65, 0x70, 0x6f, 0x63, 0x68,
+	0x5f, 0x73, 0x74, 0x61, 0x72, 0x74, 0x5f, 0x75, 0x6e, 0x69, 0x78, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x04, 0x52, 0x0e, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x53, 0x74, 0x61, 0x72, 0x74, 0x55, 0x6e, 0x69,
+	0x78, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x5f, 0x73, 0x65, 0x63, 0x6f, 0x6e,
+	0x64, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0c, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x53,
+	0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74,
+	0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x38,
+	0x0a, 0x18, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x77, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x5f,
+	0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x06, 0x20, 0x01, 0x28, 0x04,
+	0x52, 0x16, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x47, 0x65,
+	0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x81, 0x01, 0x0a, 0x17, 0x52, 0x65, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x47, 0x65, 0x6e,
+	0x65, 0x73, 0x69, 0x73, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x45, 0x0a, 0x11, 0x64, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
+	0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x41, 0x64, 0x64,
+	0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x10, 0x64, 0x65, 0x70, 0x6f,
+	0x73, 0x69, 0x74, 0x6f, 0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x42, 0xa5, 0x01, 0x0a,
+	0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31,
+	0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
+	0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72,
+	0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f,
+	0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f,
+	0x76, 0x31, 0x3b, 0x62, 0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x42, 0x58, 0xaa, 0x02,
+	0x0b, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0b, 0x47,
+	0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17, 0x47, 0x75, 0x72,
+	0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42, 0x65, 0x78,
+	0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3213,13 +3426,14 @@ var file_guru_bex_v1_genesis_proto_depIdxs = []int32{
 	1, // 2: guru.bex.v1.GenesisState.locked_fees:type_name -> guru.bex.v1.FeeGenesis
 	2, // 3: guru.bex.v1.GenesisState.volume_windows:type_name -> guru.bex.v1.VolumeWindowGenesis
 	3, // 4: guru.bex.v1.GenesisState.reserve_depositors:type_name -> guru.bex.v1.ReserveDepositorGenesis
-	5, // 5: guru.bex.v1.FeeGenesis.coins:type_name -> cosmos.base.v1beta1.Coin
-	6, // 6: guru.bex.v1.VolumeWindowGenesis.direction:type_name -> guru.bex.v1.SwapDirection
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	1, // 5: guru.bex.v1.GenesisState.pending_liabilities:type_name -> guru.bex.v1.FeeGenesis
+	5, // 6: guru.bex.v1.FeeGenesis.coins:type_name -> cosmos.base.v1beta1.Coin
+	6, // 7: guru.bex.v1.VolumeWindowGenesis.direction:type_name -> guru.bex.v1.SwapDirection
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_guru_bex_v1_genesis_proto_init() }

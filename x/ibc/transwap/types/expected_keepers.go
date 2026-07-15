@@ -46,14 +46,17 @@ type ChannelKeeper interface {
 }
 
 type BexKeeper interface {
-	ResolveSwapDirection(ctx context.Context, exchangeID uint64, inputDenom string) (bexv1.SwapDirection, error)
+	ValidateSwapInput(ctx context.Context, exchangeID uint64, inputDenom, localInputDenom string) (bexv1.SwapDirection, error)
 	QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*bexv1.QuoteSwapResponse, error)
-	WithReserveReceiveAllowance(ctx context.Context, exchangeID uint64) context.Context
+	ReceiveToReserve(ctx context.Context, exchangeID uint64, fromAddr sdk.AccAddress, amount sdk.Coins) error
+	SendFromReserve(ctx context.Context, exchangeID uint64, recipient sdk.AccAddress, amount sdk.Coins) error
 	RecordVolumeWindow(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, amountOut math.Int) error
 	CollectFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	LockExchangeFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	ReleaseExchangeFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	RefundLockedFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
+	AddPendingLiability(ctx context.Context, exchangeID uint64, liability sdk.Coin) error
+	ReleasePendingLiability(ctx context.Context, exchangeID uint64, liability sdk.Coin) error
 	GetReserveAddress(ctx context.Context, exchangeID uint64) sdk.AccAddress
 }
 

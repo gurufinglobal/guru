@@ -209,9 +209,11 @@ func CloneDenom(denom *transwapv1.Denom) *transwapv1.Denom {
 }
 
 // CloneToken returns a token copy with a deep-copied denom trace.
-func CloneToken(token transwapv1.Token) transwapv1.Token {
-	token.Denom = CloneDenom(token.Denom)
-	return token
+func CloneToken(token *transwapv1.Token) *transwapv1.Token {
+	if token == nil {
+		return nil
+	}
+	return &transwapv1.Token{Denom: CloneDenom(token.Denom), Amount: token.Amount}
 }
 
 // ParseHexHash parses a hex hash in string format to bytes and validates its correctness.

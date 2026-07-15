@@ -56,7 +56,7 @@ func TestIBCModuleErrorAcknowledgementRefundsExchangeAndCreatesRetry(t *testing.
 	refundPacket := types.NewTransferPacketData(
 		types.PortID,
 		"channel-0",
-		transwapv1.Token{Denom: inputDenom, Amount: "103"},
+		&transwapv1.Token{Denom: inputDenom, Amount: "103"},
 		reserve.String(),
 		originalSender.String(),
 		"refund coins through Guru station due to failure on the target chain",
@@ -65,7 +65,7 @@ func TestIBCModuleErrorAcknowledgementRefundsExchangeAndCreatesRetry(t *testing.
 		"7",
 	)
 	originalKey := keeperpkg.GetRefundPacketDataKey(types.PortID, "channel-7", moduleAckRefundSequence)
-	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, &refundPacket))
+	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, refundPacket))
 
 	outboundPacket := types.NewFungibleTokenPacketData(
 		types.DenomPath(outputDenom),
@@ -145,7 +145,7 @@ func TestIBCModuleTimeoutRefundsExchangeAndCreatesRetry(t *testing.T) {
 	refundPacket := types.NewTransferPacketData(
 		types.PortID,
 		"channel-0",
-		transwapv1.Token{Denom: inputDenom, Amount: "103"},
+		&transwapv1.Token{Denom: inputDenom, Amount: "103"},
 		reserve.String(),
 		originalSender.String(),
 		"refund coins through Guru station due to failure on the target chain",
@@ -154,7 +154,7 @@ func TestIBCModuleTimeoutRefundsExchangeAndCreatesRetry(t *testing.T) {
 		"7",
 	)
 	originalKey := keeperpkg.GetRefundPacketDataKey(types.PortID, "channel-7", moduleAckRefundSequence)
-	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, &refundPacket))
+	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, refundPacket))
 
 	outboundPacket := types.NewFungibleTokenPacketData(
 		types.DenomPath(outputDenom),
@@ -598,7 +598,7 @@ func setupModuleAckRefundScenario(t *testing.T) moduleAckRefundScenario {
 	refundPacket := types.NewTransferPacketData(
 		types.PortID,
 		"channel-0",
-		transwapv1.Token{Denom: inputDenom, Amount: "103"},
+		&transwapv1.Token{Denom: inputDenom, Amount: "103"},
 		reserve.String(),
 		originalSender.String(),
 		"refund coins through Guru station due to failure on the target chain",
@@ -607,7 +607,7 @@ func setupModuleAckRefundScenario(t *testing.T) moduleAckRefundScenario {
 		"7",
 	)
 	originalKey := keeperpkg.GetRefundPacketDataKey(types.PortID, "channel-7", moduleAckRefundSequence)
-	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, &refundPacket))
+	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, refundPacket))
 
 	outboundPacketData := types.NewFungibleTokenPacketData(
 		types.DenomPath(outputDenom),
@@ -675,7 +675,7 @@ func setupModuleExchangePacketRefundScenario(t *testing.T) moduleExchangePacketR
 		SourceChannel:      "channel-0",
 		DestinationPort:    "xswap",
 		DestinationChannel: "channel-1",
-		Data:               types.FungibleTokenPacketDataBytes(packetData),
+		Data:               types.FungibleTokenPacketDataBytes(&packetData),
 	}
 
 	return moduleExchangePacketRefundScenario{
@@ -874,7 +874,7 @@ type moduleAckRefundBexKeeper struct {
 	ledgers map[string]sdk.Coins
 }
 
-func (*moduleAckRefundBexKeeper) ResolveSwapDirection(context.Context, uint64, string) (bexv1.SwapDirection, error) {
+func (*moduleAckRefundBexKeeper) ValidateSwapInput(context.Context, uint64, string, string) (bexv1.SwapDirection, error) {
 	return bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
 }
 
@@ -882,8 +882,12 @@ func (*moduleAckRefundBexKeeper) QuoteSwap(context.Context, *bexv1.QuoteSwapRequ
 	return nil, errors.New("unexpected quote")
 }
 
-func (*moduleAckRefundBexKeeper) WithReserveReceiveAllowance(ctx context.Context, _ uint64) context.Context {
-	return ctx
+func (m *moduleAckRefundBexKeeper) ReceiveToReserve(ctx context.Context, _ uint64, from sdk.AccAddress, amount sdk.Coins) error {
+	return m.bank.SendCoins(ctx, from, m.reserve, amount)
+}
+
+func (m *moduleAckRefundBexKeeper) SendFromReserve(ctx context.Context, _ uint64, recipient sdk.AccAddress, amount sdk.Coins) error {
+	return m.bank.SendCoins(ctx, m.reserve, recipient, amount)
 }
 
 func (*moduleAckRefundBexKeeper) RecordVolumeWindow(context.Context, uint64, bexv1.SwapDirection, sdkmath.Int) error {
@@ -908,6 +912,16 @@ func (m *moduleAckRefundBexKeeper) RefundLockedFee(ctx context.Context, _ uint64
 		return err
 	}
 	m.addLedger("refunded", fee)
+	return nil
+}
+
+func (m *moduleAckRefundBexKeeper) AddPendingLiability(_ context.Context, _ uint64, liability sdk.Coin) error {
+	m.addLedger("pending", liability)
+	return nil
+}
+
+func (m *moduleAckRefundBexKeeper) ReleasePendingLiability(_ context.Context, _ uint64, liability sdk.Coin) error {
+	m.addLedger("liability_released", liability)
 	return nil
 }
 

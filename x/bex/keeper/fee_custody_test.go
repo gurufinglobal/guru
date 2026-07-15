@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
@@ -27,7 +28,9 @@ func TestFeeCustodyLifecycleAndSolvency(t *testing.T) {
 		sdk.NewInt64Coin("gxusd", 3),
 	), f.bankKeeper.GetAllBalances(f.ctx, moduleAddr))
 
+	require.ErrorIs(t, f.keeper.LockExchangeFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 8)), types.ErrInsufficientAvailableFees)
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 2)))
+	require.ErrorIs(t, f.keeper.ReleaseExchangeFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 3)), types.ErrInsufficientLockedFees)
 	require.NoError(t, f.keeper.ReleaseExchangeFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 1)))
 	require.NoError(t, f.keeper.RefundLockedFee(f.ctx, first.GetId(), sdk.NewInt64Coin("agxn", 1)))
 	require.Equal(t, int64(1), f.bankKeeper.GetBalance(f.ctx, feeReserveAddress(t, f, first), "agxn").Amount.Int64())
@@ -115,7 +118,27 @@ func TestFeeOperationsRejectUnconfiguredDenoms(t *testing.T) {
 	), types.ErrInvalidRoute)
 }
 
-func TestFeeTransitionPreservesOuterContextValues(t *testing.T) {
+func TestWithdrawFeesRespectsSendEnabledPolicy(t *testing.T) {
+	f := setupKeeperFixture(t)
+	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 3))
+	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
+	amount := sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))
+
+	f.bankKeeper.SetSendEnabled("agxn", false)
+	require.ErrorIs(t, f.keeper.WithdrawFees(f.ctx, f.admin, exchange.GetId(), f.recipient, amount), banktypes.ErrSendDisabled)
+	collected, err := f.keeper.GetCollectedFees(f.ctx, exchange.GetId())
+	require.NoError(t, err)
+	require.Equal(t, int64(3), collected.AmountOf("agxn").Int64())
+	require.Equal(t, int64(3), f.bankKeeper.GetBalance(f.ctx, moduleAddr, "agxn").Amount.Int64())
+	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, f.recipient).IsZero())
+
+	f.bankKeeper.SetSendEnabled("agxn", true)
+	require.NoError(t, f.keeper.WithdrawFees(f.ctx, f.admin, exchange.GetId(), f.recipient, amount))
+}
+
+func TestStateTransitionPreservesOuterContextValuesThroughFeeFlow(t *testing.T) {
 	type contextKey struct{}
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))

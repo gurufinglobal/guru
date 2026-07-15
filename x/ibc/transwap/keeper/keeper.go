@@ -300,7 +300,24 @@ func (k Keeper) IsBlockedAddr(addr sdk.AccAddress) bool {
 
 // GetRefundPacketDataKey builds a deterministic key for refund packet data.
 func GetRefundPacketDataKey(sourcePort, sourceChannel string, sequence uint64) string {
-	return fmt.Sprintf("refund/%s/%s/%d", sourcePort, sourceChannel, sequence)
+	return fmt.Sprintf("%s%s/%s/%d", types.RefundPacketPrefix, sourcePort, sourceChannel, sequence)
+}
+
+func (k Keeper) GetAllRefundPacketData(ctx sdk.Context) []*transwapv1.PendingRefundPacket {
+	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	iterator := storetypes.KVStorePrefixIterator(store, []byte(types.RefundPacketPrefix))
+	defer sdk.LogDeferred(k.Logger(ctx), func() error { return iterator.Close() })
+
+	pending := make([]*transwapv1.PendingRefundPacket, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		packet := &transwapv1.TransferPacketData{}
+		k.cdc.MustUnmarshal(iterator.Value(), packet)
+		pending = append(pending, &transwapv1.PendingRefundPacket{
+			Key:    string(iterator.Key()),
+			Packet: packet,
+		})
+	}
+	return pending
 }
 
 func (k Keeper) SetRefundPacketData(ctx sdk.Context, key string, packet *transwapv1.TransferPacketData) error {

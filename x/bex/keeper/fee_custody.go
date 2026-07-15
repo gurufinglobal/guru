@@ -35,21 +35,6 @@ func hasFeeOutflowAllowance(ctx context.Context, recipient sdk.AccAddress, amoun
 	return ok && allowance.recipient.Equals(recipient) && allowance.amount.Equal(amount)
 }
 
-func executeFeeTransition(ctx context.Context, fn func(sdk.Context) error) error {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if _, ok := ctx.(sdk.Context); !ok {
-		// Preserve outer deadlines and context capabilities when a trusted module
-		// wraps sdk.Context before entering the fee transition.
-		sdkCtx = sdkCtx.WithContext(ctx)
-	}
-	cacheCtx, write := sdkCtx.CacheContext()
-	if err := fn(cacheCtx); err != nil {
-		return err
-	}
-	write()
-	return nil
-}
-
 func (k Keeper) sumCollectedFees(ctx context.Context) (sdk.Coins, error) {
 	totals := map[string]sdkmath.Int{}
 	err := k.collectedFees.Walk(ctx, nil, func(_ uint64, ledger *bexv1.FeeLedger) (bool, error) {

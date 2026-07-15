@@ -181,7 +181,7 @@ func TestSendTransferAndTransferV1Packet(t *testing.T) {
 			Denom:  types.NewDenom("uatom", types.NewHop(types.PortID, "channel-0")),
 			Amount: "2",
 		}
-		require.NoError(t, k.SendTransfer(ctx, types.PortID, "channel-0", token, sender))
+		require.NoError(t, k.SendTransfer(ctx, types.PortID, "channel-0", &token, sender))
 
 		require.Equal(t, math.NewInt(8), bank.GetAllBalances(ctx, sender).AmountOf(prefixedDenom))
 		require.True(t, bank.GetAllBalances(ctx, k.AuthKeeper.GetModuleAddress(types.ModuleName)).IsZero())
@@ -198,7 +198,7 @@ func TestSendTransferAndTransferV1Packet(t *testing.T) {
 			Denom:  types.NewDenom("ubtc"),
 			Amount: "2",
 		}
-		require.NoError(t, k.SendTransfer(ctx, types.PortID, "channel-0", token, sender))
+		require.NoError(t, k.SendTransfer(ctx, types.PortID, "channel-0", &token, sender))
 
 		require.Equal(t, math.NewInt(8), bank.GetAllBalances(ctx, sender).AmountOf("ubtc"))
 		require.Equal(t, math.NewInt(2), bank.GetAllBalances(ctx, escrow).AmountOf("ubtc"))
@@ -213,7 +213,7 @@ func TestSendTransferAndTransferV1Packet(t *testing.T) {
 
 		data := types.NewFungibleTokenPacketData("uexp", "2", sender.String(), receiver.String(), "memo")
 		token := transwapv1.Token{Denom: types.NewDenom("uexp"), Amount: "2"}
-		sequence, err := k.transferV1Packet(ctx, "channel-0", token, 1000, data)
+		sequence, err := k.transferV1Packet(ctx, "channel-0", &token, 1000, data)
 		require.NoError(t, err)
 		require.Equal(t, uint64(88), sequence)
 
@@ -225,7 +225,7 @@ func TestSendTransferAndTransferV1Packet(t *testing.T) {
 		k, ctx, _, _ := setupKeeperStateTester(t)
 		badPacket := types.NewFungibleTokenPacketData("uexp", "2", "bad-sender", "receiver", "")
 		require.Panics(t, func() {
-			_, _ = k.transferV1Packet(ctx, "channel-0", transwapv1.Token{
+			_, _ = k.transferV1Packet(ctx, "channel-0", &transwapv1.Token{
 				Denom:  types.NewDenom("uexp"),
 				Amount: "2",
 			}, 0, badPacket)
@@ -243,7 +243,7 @@ func TestRefundPacketTokensUsesMintOrUnescrowPath(t *testing.T) {
 		Denom:  types.NewDenom("uatom", types.NewHop(types.PortID, "channel-0")),
 		Amount: "5",
 	}
-	mintData := types.NewInternalTransferRepresentation("0", mintPathToken, reserve.String(), "target", "")
+	mintData := types.NewInternalTransferRepresentation("0", &mintPathToken, reserve.String(), "target", "")
 	require.NoError(t, k.refundPacketTokens(ctx, types.PortID, "channel-0", mintData))
 	require.Equal(t, math.NewInt(5), bank.GetAllBalances(ctx, reserve).AmountOf(types.DenomIBCDenom(mintPathToken.Denom)))
 
@@ -257,7 +257,7 @@ func TestRefundPacketTokensUsesMintOrUnescrowPath(t *testing.T) {
 	bank.SetBalance(receiver, sdk.NewCoins(sdk.NewCoin("uatom", math.NewInt(7))))
 	require.NoError(t, k.EscrowCoin(ctx, receiver, escrow, sdk.NewCoin("uatom", math.NewInt(7))))
 
-	unescrowData := types.NewInternalTransferRepresentation("0", unescrowToken, sender.String(), "target", "")
+	unescrowData := types.NewInternalTransferRepresentation("0", &unescrowToken, sender.String(), "target", "")
 	require.NoError(t, k.refundPacketTokens(ctx, types.PortID, "channel-0", unescrowData))
 	require.Equal(t, math.NewInt(7), bank.GetAllBalances(ctx, sender).AmountOf("uatom"))
 	require.True(t, k.GetTotalEscrowForDenom(ctx, unescrowToken.Denom.GetBase()).Amount.IsZero())

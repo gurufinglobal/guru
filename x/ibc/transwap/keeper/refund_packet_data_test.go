@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -37,7 +38,7 @@ import (
 
 type refundBexKeeperMock struct{}
 
-func (refundBexKeeperMock) ResolveSwapDirection(context.Context, uint64, string) (bexv1.SwapDirection, error) {
+func (refundBexKeeperMock) ValidateSwapInput(context.Context, uint64, string, string) (bexv1.SwapDirection, error) {
 	return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, nil
 }
 
@@ -45,8 +46,12 @@ func (refundBexKeeperMock) QuoteSwap(context.Context, *bexv1.QuoteSwapRequest) (
 	return nil, nil
 }
 
-func (refundBexKeeperMock) WithReserveReceiveAllowance(ctx context.Context, _ uint64) context.Context {
-	return ctx
+func (refundBexKeeperMock) ReceiveToReserve(context.Context, uint64, sdk.AccAddress, sdk.Coins) error {
+	return nil
+}
+
+func (refundBexKeeperMock) SendFromReserve(context.Context, uint64, sdk.AccAddress, sdk.Coins) error {
+	return nil
 }
 
 func (refundBexKeeperMock) RecordVolumeWindow(context.Context, uint64, bexv1.SwapDirection, sdkmath.Int) error {
@@ -69,6 +74,14 @@ func (refundBexKeeperMock) RefundLockedFee(context.Context, uint64, sdk.Coin) er
 	return nil
 }
 
+func (refundBexKeeperMock) AddPendingLiability(context.Context, uint64, sdk.Coin) error {
+	return nil
+}
+
+func (refundBexKeeperMock) ReleasePendingLiability(context.Context, uint64, sdk.Coin) error {
+	return nil
+}
+
 func (refundBexKeeperMock) GetReserveAddress(context.Context, uint64) sdk.AccAddress {
 	return sdk.AccAddress("reserve")
 }
@@ -87,7 +100,8 @@ func setupRefundKeeper(t *testing.T) (Keeper, sdk.Context) {
 	cdc := codec.NewProtoCodec(registry)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{ChainID: "test-chain"}, false, log.NewNopLogger()).
-		WithGasMeter(storetypes.NewInfiniteGasMeter())
+		WithGasMeter(storetypes.NewInfiniteGasMeter()).
+		WithBlockTime(time.Unix(1_700_000_000, 0))
 
 	k := Keeper{
 		storeService: runtime.NewKVStoreService(storeKey),
@@ -112,7 +126,7 @@ func TestRefundPacketData_IsolatedBySequenceForSameReceiver(t *testing.T) {
 	packet1 := transtypes.NewTransferPacketData(
 		transtypes.PortID,
 		"channel-0",
-		token,
+		&token,
 		"reserve-address-1",
 		receiver,
 		"memo-1",
@@ -123,7 +137,7 @@ func TestRefundPacketData_IsolatedBySequenceForSameReceiver(t *testing.T) {
 	packet2 := transtypes.NewTransferPacketData(
 		transtypes.PortID,
 		"channel-0",
-		token,
+		&token,
 		"reserve-address-2",
 		receiver,
 		"memo-2",
@@ -135,8 +149,8 @@ func TestRefundPacketData_IsolatedBySequenceForSameReceiver(t *testing.T) {
 	key1 := GetRefundPacketDataKey(transtypes.PortID, "channel-0", 1)
 	key2 := GetRefundPacketDataKey(transtypes.PortID, "channel-0", 2)
 
-	require.NoError(t, k.SetRefundPacketData(ctx, key1, &packet1))
-	require.NoError(t, k.SetRefundPacketData(ctx, key2, &packet2))
+	require.NoError(t, k.SetRefundPacketData(ctx, key1, packet1))
+	require.NoError(t, k.SetRefundPacketData(ctx, key2, packet2))
 
 	got1, err := k.GetRefundPacketData(ctx, key1)
 	require.NoError(t, err)
@@ -174,7 +188,7 @@ func TestAcknowledgementSuccessReleasesExchangeRefundFee(t *testing.T) {
 	packet := transtypes.NewTransferPacketData(
 		transtypes.PortID,
 		"channel-7",
-		token,
+		&token,
 		sdk.AccAddress(bytes.Repeat([]byte{0x11}, 20)).String(),
 		sdk.AccAddress(bytes.Repeat([]byte{0x22}, 20)).String(),
 		"refund",
@@ -183,7 +197,7 @@ func TestAcknowledgementSuccessReleasesExchangeRefundFee(t *testing.T) {
 		"7",
 	)
 	key := GetRefundPacketDataKey(transtypes.PortID, "channel-7", 12)
-	require.NoError(t, k.SetRefundPacketData(ctx, key, &packet))
+	require.NoError(t, k.SetRefundPacketData(ctx, key, packet))
 
 	ack := channeltypes.NewResultAcknowledgement([]byte{1})
 	err := k.OnAcknowledgementTransferPacket(
@@ -191,7 +205,7 @@ func TestAcknowledgementSuccessReleasesExchangeRefundFee(t *testing.T) {
 		transtypes.PortID,
 		"channel-7",
 		12,
-		transtypes.NewInternalTransferRepresentation("0", token, packet.Sender, packet.Receiver, ""),
+		transtypes.NewInternalTransferRepresentation("0", &token, packet.Sender, packet.Receiver, ""),
 		ack,
 	)
 	require.NoError(t, err)
@@ -209,7 +223,7 @@ func TestAcknowledgementSuccessIsIdempotentAfterMetadataDeleted(t *testing.T) {
 	packet := transtypes.NewTransferPacketData(
 		transtypes.PortID,
 		"channel-7",
-		token,
+		&token,
 		sdk.AccAddress(bytes.Repeat([]byte{0x11}, 20)).String(),
 		sdk.AccAddress(bytes.Repeat([]byte{0x22}, 20)).String(),
 		"refund",
@@ -218,7 +232,7 @@ func TestAcknowledgementSuccessIsIdempotentAfterMetadataDeleted(t *testing.T) {
 		"7",
 	)
 	key := GetRefundPacketDataKey(transtypes.PortID, "channel-7", 12)
-	require.NoError(t, k.SetRefundPacketData(ctx, key, &packet))
+	require.NoError(t, k.SetRefundPacketData(ctx, key, packet))
 
 	ack := channeltypes.NewResultAcknowledgement([]byte{1})
 	for range 2 {
@@ -227,7 +241,7 @@ func TestAcknowledgementSuccessIsIdempotentAfterMetadataDeleted(t *testing.T) {
 			transtypes.PortID,
 			"channel-7",
 			12,
-			transtypes.NewInternalTransferRepresentation("0", token, packet.Sender, packet.Receiver, ""),
+			transtypes.NewInternalTransferRepresentation("0", &token, packet.Sender, packet.Receiver, ""),
 			ack,
 		)
 		require.NoError(t, err)
@@ -486,7 +500,7 @@ func TestPerformExchangeRefundReturnsFeeAndCreatesRetryPacket(t *testing.T) {
 	packet := transtypes.NewTransferPacketData(
 		transtypes.PortID,
 		"channel-7",
-		refundToken,
+		&refundToken,
 		reserve.String(),
 		receiver.String(),
 		"refund coins through Guru station due to failure on the target chain",
@@ -495,7 +509,7 @@ func TestPerformExchangeRefundReturnsFeeAndCreatesRetryPacket(t *testing.T) {
 		"7",
 	)
 	originalKey := GetRefundPacketDataKey(transtypes.PortID, "channel-7", 12)
-	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, &packet))
+	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, packet))
 
 	require.NoError(t, k.performExchangeRefund(ctx, originalKey))
 
@@ -511,7 +525,8 @@ func TestPerformExchangeRefundReturnsFeeAndCreatesRetryPacket(t *testing.T) {
 	require.Len(t, ics4.sent, 1)
 	require.Equal(t, transtypes.PortID, ics4.sent[0].sourcePort)
 	require.Equal(t, "channel-7", ics4.sent[0].sourceChannel)
-	require.Equal(t, uint64(123456789), ics4.sent[0].timeoutTimestamp)
+	expectedRetryTimeout := uint64(ctx.BlockTime().Add(refundRetryTimeout).UnixNano()) //nolint:gosec // fixed test block time is positive.
+	require.Equal(t, expectedRetryTimeout, ics4.sent[0].timeoutTimestamp)
 
 	internal, err := transtypes.UnmarshalPacketData(ics4.sent[0].data, transtypes.V1, transtypes.EncodingJSON)
 	require.NoError(t, err)
@@ -570,7 +585,7 @@ func setupExchangeRefundCallback(t *testing.T) exchangeRefundCallbackState {
 	packet := transtypes.NewTransferPacketData(
 		transtypes.PortID,
 		"channel-7",
-		token,
+		&token,
 		reserve.String(),
 		refundReceiver.String(),
 		"refund coins through Guru station due to failure on the target chain",
@@ -579,7 +594,7 @@ func setupExchangeRefundCallback(t *testing.T) exchangeRefundCallbackState {
 		"7",
 	)
 	originalKey := GetRefundPacketDataKey(transtypes.PortID, "channel-7", 12)
-	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, &packet))
+	require.NoError(t, k.SetRefundPacketData(ctx, originalKey, packet))
 
 	return exchangeRefundCallbackState{
 		k:              k,
@@ -591,7 +606,7 @@ func setupExchangeRefundCallback(t *testing.T) exchangeRefundCallbackState {
 		reserve:        reserve,
 		refundReceiver: refundReceiver,
 		fee:            fee,
-		outboundData:   transtypes.NewInternalTransferRepresentation("0", token, reserve.String(), destinationReceiver.String(), ""),
+		outboundData:   transtypes.NewInternalTransferRepresentation("0", &token, reserve.String(), destinationReceiver.String(), ""),
 	}
 }
 
@@ -610,7 +625,8 @@ func requireExchangeRefundCallbackState(t *testing.T, state exchangeRefundCallba
 	require.Len(t, state.ics4.sent, 1)
 	require.Equal(t, transtypes.PortID, state.ics4.sent[0].sourcePort)
 	require.Equal(t, "channel-7", state.ics4.sent[0].sourceChannel)
-	require.Equal(t, uint64(123456789), state.ics4.sent[0].timeoutTimestamp)
+	expectedRetryTimeout := uint64(state.ctx.BlockTime().Add(refundRetryTimeout).UnixNano()) //nolint:gosec // fixed test block time is positive.
+	require.Equal(t, expectedRetryTimeout, state.ics4.sent[0].timeoutTimestamp)
 
 	internal := retryInternalTransferDataFromSentPacket(t, state.ics4.sent[0])
 	require.Equal(t, "1000", internal.Token.Amount)
@@ -621,6 +637,9 @@ func requireExchangeRefundCallbackState(t *testing.T, state exchangeRefundCallba
 	retryKey := GetRefundPacketDataKey(transtypes.PortID, "channel-7", 88)
 	retry, err := state.k.GetRefundPacketData(state.ctx, retryKey)
 	require.NoError(t, err)
+	require.Equal(t, uint64(123456789), retry.GetOriginalTimeoutTimestamp())
+	require.Equal(t, expectedRetryTimeout, retry.GetTimeoutTimestamp())
+	require.Equal(t, uint32(1), retry.GetRetryCount())
 	require.Nil(t, retry.Fee)
 	require.Equal(t, state.reserve.String(), retry.Sender)
 	require.Equal(t, state.refundReceiver.String(), retry.Receiver)
@@ -641,9 +660,10 @@ type refundAccountingBexKeeper struct {
 	bankKeeper *refundAccountingBankKeeper
 	released   []sdk.Coin
 	refunded   []sdk.Coin
+	pending    sdk.Coins
 }
 
-func (m *refundAccountingBexKeeper) ResolveSwapDirection(context.Context, uint64, string) (bexv1.SwapDirection, error) {
+func (m *refundAccountingBexKeeper) ValidateSwapInput(context.Context, uint64, string, string) (bexv1.SwapDirection, error) {
 	return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, nil
 }
 
@@ -651,8 +671,12 @@ func (m *refundAccountingBexKeeper) QuoteSwap(context.Context, *bexv1.QuoteSwapR
 	return nil, nil
 }
 
-func (m *refundAccountingBexKeeper) WithReserveReceiveAllowance(ctx context.Context, _ uint64) context.Context {
-	return ctx
+func (m *refundAccountingBexKeeper) ReceiveToReserve(ctx context.Context, _ uint64, from sdk.AccAddress, amount sdk.Coins) error {
+	return m.bankKeeper.SendCoins(ctx, from, m.reserve, amount)
+}
+
+func (m *refundAccountingBexKeeper) SendFromReserve(ctx context.Context, _ uint64, recipient sdk.AccAddress, amount sdk.Coins) error {
+	return m.bankKeeper.SendCoins(ctx, m.reserve, recipient, amount)
 }
 
 func (m *refundAccountingBexKeeper) RecordVolumeWindow(context.Context, uint64, bexv1.SwapDirection, sdkmath.Int) error {
@@ -677,6 +701,18 @@ func (m *refundAccountingBexKeeper) RefundLockedFee(ctx context.Context, _ uint6
 		return err
 	}
 	m.refunded = append(m.refunded, fee)
+	return nil
+}
+
+func (m *refundAccountingBexKeeper) AddPendingLiability(_ context.Context, _ uint64, liability sdk.Coin) error {
+	m.pending = m.pending.Add(liability)
+	return nil
+}
+
+func (m *refundAccountingBexKeeper) ReleasePendingLiability(_ context.Context, _ uint64, liability sdk.Coin) error {
+	if m.pending.AmountOf(liability.Denom).GTE(liability.Amount) {
+		m.pending = m.pending.Sub(liability)
+	}
 	return nil
 }
 

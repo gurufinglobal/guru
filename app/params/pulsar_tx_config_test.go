@@ -169,7 +169,8 @@ func TestBexAllMsgSignersIncludeAuthorityWithDistinctFeePayerAndGranter(t *testi
 		{
 			name: "register exchange",
 			msg: &bexv1.MsgRegisterExchange{
-				AdminAddress:              admin,
+				BexAdminAddress:           admin,
+				ExchangeAdminAddress:      admin,
 				DenomA:                    "ibc/gxusd",
 				DenomB:                    "ibc/gxkrw",
 				PortA:                     "transwap",

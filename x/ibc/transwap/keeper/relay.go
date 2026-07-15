@@ -50,7 +50,7 @@ func (k Keeper) SendTransfer(
 	ctx sdk.Context,
 	sourcePort,
 	sourceChannel string,
-	token transwapv1.Token,
+	token *transwapv1.Token,
 	sender sdk.AccAddress,
 ) error {
 	if k.IsBlockedAddr(sender) {
@@ -123,7 +123,7 @@ func (k Keeper) refundPacketTokens(
 	escrowAddress := types.GetEscrowAddress(sourcePort, sourceChannel)
 
 	moduleAccountAddr := k.AuthKeeper.GetModuleAddress(types.ModuleName)
-	token := data.Token
+	token := types.CloneToken(data.Token)
 	coin, err := types.TokenToCoin(token)
 	if err != nil {
 		return err
@@ -187,10 +187,10 @@ func (k Keeper) UnescrowCoin(ctx sdk.Context, escrowAddress, receiver sdk.AccAdd
 }
 
 // tokenFromCoin constructs an IBC token given an SDK coin.
-func (k Keeper) TokenFromCoin(ctx sdk.Context, coin sdk.Coin) (transwapv1.Token, error) {
+func (k Keeper) TokenFromCoin(ctx sdk.Context, coin sdk.Coin) (*transwapv1.Token, error) {
 	// if the coin does not have an IBC denom, return as is
 	if !strings.HasPrefix(coin.Denom, "ibc/") {
-		return transwapv1.Token{
+		return &transwapv1.Token{
 			Denom:  types.NewDenom(coin.Denom),
 			Amount: coin.Amount.String(),
 		}, nil
@@ -199,10 +199,10 @@ func (k Keeper) TokenFromCoin(ctx sdk.Context, coin sdk.Coin) (transwapv1.Token,
 	// NOTE: denomination and hex hash correctness checked during msg.ValidateBasic
 	denom, err := k.GetDenomFromIBCDenom(ctx, coin.Denom)
 	if err != nil {
-		return transwapv1.Token{}, err
+		return nil, err
 	}
 
-	return transwapv1.Token{
+	return &transwapv1.Token{
 		Denom:  denom,
 		Amount: coin.Amount.String(),
 	}, nil

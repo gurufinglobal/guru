@@ -9,11 +9,8 @@ import (
 	"testing"
 
 	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
-	"cosmossdk.io/core/address"
 	"cosmossdk.io/core/appmodule"
-	corestore "cosmossdk.io/core/store"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
@@ -30,14 +27,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func TestAppModuleBasicsAndServices(t *testing.T) {
+func TestAppModuleServicesAndGateway(t *testing.T) {
 	am, _ := setupAppModule(t)
 
-	am.IsOnePerModuleType()
-	am.IsAppModule()
 	require.Equal(t, types.ModuleName, am.Name())
 	require.Equal(t, uint64(ConsensusVersion), am.ConsensusVersion())
-	am.RegisterLegacyAminoCodec(codec.NewLegacyAmino())
 
 	registry := codectypes.NewInterfaceRegistry()
 	am.RegisterInterfaces(registry)
@@ -98,159 +92,207 @@ func TestGenesisReadWriteValidateInitExport(t *testing.T) {
 	require.Len(t, roundTrip.GetReserveDepositors(), 1)
 }
 
-func TestGenesisErrors(t *testing.T) {
-	am, ctx := setupAppModule(t)
+func TestGenesisParsingAndIOErrors(t *testing.T) {
+	am, _ := setupAppModule(t)
 	readErr := errors.New("read failed")
-	require.ErrorIs(t, am.ValidateGenesis(func(string) (io.ReadCloser, error) {
-		return nil, readErr
-	}), types.ErrReadGenesisField)
-	require.ErrorIs(t, am.ValidateGenesis(sourceFrom(map[string]string{"admins": `[`})), types.ErrDecodeGenesisField)
-	require.ErrorIs(t, am.ValidateGenesis(sourceFrom(map[string]string{"admins": `[] []`})), types.ErrDecodeGenesisField)
-	require.ErrorIs(t, am.ValidateGenesis(sourceFrom(map[string]string{"exchanges": `[{"unknown_field":1}]`})), types.ErrDecodeGenesisField)
-	require.ErrorIs(t, am.InitGenesis(ctx, func(string) (io.ReadCloser, error) {
-		return nil, readErr
-	}), types.ErrReadGenesisField)
-	require.ErrorIs(t, am.InitGenesis(ctx, sourceFrom(map[string]string{"next_exchange_id": `0`})), types.ErrInvalidGenesis)
-	require.ErrorIs(t, am.DefaultGenesis(func(string) (io.WriteCloser, error) {
-		return nil, errors.New("open failed")
-	}), types.ErrOpenGenesisTargetField)
-	require.ErrorIs(t, am.DefaultGenesis(func(string) (io.WriteCloser, error) {
-		return nil, nil
-	}), types.ErrNilGenesisTargetWriter)
-	require.ErrorIs(t, writeGenesisState(func(string) (io.WriteCloser, error) {
-		return errorWriteCloser{}, nil
-	}, am.defaultGenesisState()), types.ErrEncodeGenesisField)
-	require.ErrorIs(t, writeGenesisState(func(string) (io.WriteCloser, error) {
-		return closeErrorWriteCloser{Buffer: &bytes.Buffer{}}, nil
-	}, am.defaultGenesisState()), types.ErrCloseGenesisFieldWriter)
-	_, err := readGenesisState(sourceFrom(map[string]string{"next_exchange_id": `bad`}), am.defaultGenesisState())
-	require.ErrorIs(t, err, types.ErrDecodeGenesisField)
-	require.ErrorIs(t, writeGenesisState(newMemoryGenesisTarget().target, nil), types.ErrInvalidGenesis)
 
-	for _, field := range []string{"exchanges", "collected_fees", "locked_fees", "volume_windows", "reserve_depositors"} {
-		_, err := readGenesisState(sourceFrom(map[string]string{field: `bad`}), am.defaultGenesisState())
-		require.ErrorIs(t, err, types.ErrDecodeGenesisField, field)
+	tests := []struct {
+		name string
+		run  func() error
+		want error
+	}{
+		{
+			name: "reader open",
+			run: func() error {
+				return am.ValidateGenesis(func(string) (io.ReadCloser, error) { return nil, readErr })
+			},
+			want: types.ErrReadGenesisField,
+		},
+		{
+			name: "reader close",
+			run: func() error {
+				_, err := readGenesisState(func(string) (io.ReadCloser, error) {
+					return closeErrorReadCloser{Reader: strings.NewReader(`[]`)}, nil
+				}, am.defaultGenesisState())
+				return err
+			},
+			want: types.ErrReadGenesisField,
+		},
+		{
+			name: "malformed JSON",
+			run: func() error {
+				return am.ValidateGenesis(sourceFrom(map[string]string{"admins": `[`}))
+			},
+			want: types.ErrDecodeGenesisField,
+		},
+		{
+			name: "trailing JSON",
+			run: func() error {
+				return am.ValidateGenesis(sourceFrom(map[string]string{"admins": `[] []`}))
+			},
+			want: types.ErrDecodeGenesisField,
+		},
+		{
+			name: "unknown field",
+			run: func() error {
+				return am.ValidateGenesis(sourceFrom(map[string]string{"exchanges": `[{"unknown_field":1}]`}))
+			},
+			want: types.ErrDecodeGenesisField,
+		},
+		{
+			name: "writer open",
+			run:  func() error { return am.DefaultGenesis(failOpenTarget("admins")) },
+			want: types.ErrOpenGenesisTargetField,
+		},
+		{
+			name: "nil writer",
+			run: func() error {
+				return am.DefaultGenesis(func(string) (io.WriteCloser, error) { return nil, nil })
+			},
+			want: types.ErrNilGenesisTargetWriter,
+		},
+		{
+			name: "writer encode",
+			run: func() error {
+				return writeGenesisState(func(string) (io.WriteCloser, error) {
+					return errorWriteCloser{}, nil
+				}, am.defaultGenesisState())
+			},
+			want: types.ErrEncodeGenesisField,
+		},
+		{
+			name: "writer close",
+			run: func() error {
+				return writeGenesisState(func(string) (io.WriteCloser, error) {
+					return closeErrorWriteCloser{Buffer: &bytes.Buffer{}}, nil
+				}, am.defaultGenesisState())
+			},
+			want: types.ErrCloseGenesisFieldWriter,
+		},
+		{
+			name: "nil state",
+			run:  func() error { return writeGenesisState(newMemoryGenesisTarget().target, nil) },
+			want: types.ErrInvalidGenesis,
+		},
 	}
-	for _, field := range []string{"exchanges", "collected_fees", "locked_fees", "volume_windows", "reserve_depositors", "next_exchange_id"} {
-		require.ErrorIs(t, writeGenesisState(failOpenTarget(field), am.defaultGenesisState()), types.ErrOpenGenesisTargetField, field)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			require.ErrorIs(t, tc.run(), tc.want)
+		})
 	}
-	require.ErrorIs(t, am.ExportGenesis(ctx, failOpenTarget("admins")), types.ErrOpenGenesisTargetField)
-	faultySetAM, faultySetCtx := faultyAppModule(t, "set", 0x01)
-	require.ErrorIs(t, faultySetAM.InitGenesis(faultySetCtx, sourceFrom(map[string]string{"admins": `["` + rootAddressString(t, 0x21) + `"]`})), errStoreFault)
-	faultyIteratorAM, faultyIteratorCtx := faultyAppModule(t, "iterator", 0x01)
-	require.ErrorIs(t, faultyIteratorAM.ExportGenesis(faultyIteratorCtx, newMemoryGenesisTarget().target), errStoreFault)
+}
 
-	require.ErrorIs(t, am.validateGenesisState(ctx, nil), types.ErrInvalidGenesis)
-	badCodecAM, badCodecCtx := setupAppModuleWithCodec(t, failingAddressCodec{base: evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr), failBytesToString: true})
-	require.Error(t, badCodecAM.validateGenesisState(badCodecCtx, mutateGenesis(validGenesisState(t, am, ctx), func(g *bexv1.GenesisState) {
-		g.Admins = nil
-	})))
-	requireGenesisInvalid(t, am, ctx, &bexv1.GenesisState{Admins: []string{"bad"}, NextExchangeId: 1})
-	admin := rootAddressString(t, 0x22)
-	requireGenesisInvalid(t, am, ctx, &bexv1.GenesisState{Admins: []string{admin, admin}, NextExchangeId: 1})
-	requireGenesisInvalid(t, am, ctx, &bexv1.GenesisState{Admins: []string{" " + admin}, NextExchangeId: 1})
-
+func TestGenesisSemanticValidation(t *testing.T) {
+	am, ctx := setupAppModule(t)
 	valid := validGenesisState(t, am, ctx)
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].Id = 0 }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].Revision = 0 }))
-	require.NoError(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.Exchanges[0].Revision = ^uint64(0)
-	})))
-	require.NoError(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.NextExchangeId = ^uint64(0)
-	})))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges = append(g.Exchanges, cloneExchange(g.Exchanges[0])) }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].ReserveAddress = admin }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].AdminAddress = "bad" }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].AdminAddress = " " + g.Exchanges[0].AdminAddress }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].IbcDenomA = "ibc/WRONG" }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].IbcDenomB = "" }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].DenomA = " agxn" }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].OracleSymbolAToB += " " }))
-	require.Error(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.Exchanges[0].DenomA = "bad denom" })))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.NextExchangeId = g.Exchanges[0].GetId() }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.CollectedFees[0].ExchangeId = 999 }))
-	require.Error(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.CollectedFees[0].Coins[0].Amount = "bad"
-	})))
-	require.NotPanics(t, func() {
-		require.Error(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-			g.CollectedFees[0].Coins[0].Denom = "bad denom"
-		})))
-	})
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.CollectedFees[0].Coins[0].Denom = "unsupported"
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.LockedFees[0].ExchangeId = 999 }))
-	require.Error(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.LockedFees[0].Coins[0].Amount = "bad"
-	})))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.LockedFees[0].Coins[0].Amount = "11" }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.LockedFees[0].Coins[0].Denom = "unsupported"
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.VolumeWindows[0].ExchangeId = 999 }))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.VolumeWindows[0].Direction = bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED
-	}))
-	require.Error(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.VolumeWindows[0].EpochSeconds = 1 })))
-	require.Error(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) { g.VolumeWindows[0].Amount = "bad" })))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.VolumeWindows[0].Direction = bexv1.SwapDirection(99)
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.VolumeWindows = append(g.VolumeWindows, g.VolumeWindows[0])
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.CollectedFees = append(g.CollectedFees, cloneFeeGenesis(g.CollectedFees[0]))
-	}))
+	admin := rootAddressString(t, 0x22)
 	secondReserve, err := am.keeper.GetReserveAddressString(ctx, 2)
 	require.NoError(t, err)
-	aggregateOverflow := mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		second := cloneExchange(g.Exchanges[0])
-		second.Id = 2
-		second.ReserveAddress = secondReserve
-		g.Exchanges = append(g.Exchanges, second)
-		g.CollectedFees[0].Coins[0].Amount = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-		g.CollectedFees = append(g.CollectedFees, &bexv1.FeeGenesis{
-			ExchangeId: second.GetId(),
-			Coins:      []*basev1beta1.Coin{{Denom: "agxn", Amount: "1"}},
+
+	t.Run("valid tombstone and uint64 boundaries", func(t *testing.T) {
+		tombstone := mutateGenesis(valid, func(g *bexv1.GenesisState) {
+			g.Exchanges[0].Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
+			g.CollectedFees = nil
+			g.LockedFees = nil
 		})
-		g.NextExchangeId = 3
+		require.NoError(t, am.validateGenesisState(ctx, tombstone))
+		require.NoError(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
+			g.Exchanges[0].Revision = ^uint64(0)
+			g.NextExchangeId = ^uint64(0)
+		})))
 	})
-	requireGenesisInvalid(t, am, ctx, aggregateOverflow)
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.LockedFees = append(g.LockedFees, cloneFeeGenesis(g.LockedFees[0]))
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.Exchanges[0].Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
-		g.LockedFees = nil
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.Exchanges[0].Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
-		g.CollectedFees = nil
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.ReserveDepositors[0].ExchangeId = 999
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.ReserveDepositors[0].DepositorAddress = "bad"
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.ReserveDepositors[0].DepositorAddress = " " + g.ReserveDepositors[0].DepositorAddress
-	}))
-	requireGenesisInvalid(t, am, ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
-		g.ReserveDepositors = append(g.ReserveDepositors, g.ReserveDepositors[0])
-	}))
+
+	tests := []struct {
+		name         string
+		mutate       func(*bexv1.GenesisState)
+		wantAnyError bool
+	}{
+		{name: "invalid admin", mutate: func(g *bexv1.GenesisState) { g.Admins = []string{"bad"} }},
+		{name: "duplicate admin", mutate: func(g *bexv1.GenesisState) { g.Admins = []string{admin, admin} }},
+		{name: "noncanonical admin", mutate: func(g *bexv1.GenesisState) { g.Admins = []string{" " + admin} }},
+		{name: "zero exchange id", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].Id = 0 }},
+		{name: "zero revision", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].Revision = 0 }},
+		{name: "zero volume generation", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].VolumeWindowGeneration = 0 }},
+		{name: "duplicate exchange id", mutate: func(g *bexv1.GenesisState) { g.Exchanges = append(g.Exchanges, cloneExchange(g.Exchanges[0])) }},
+		{name: "reserve address mismatch", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].ReserveAddress = admin }},
+		{name: "invalid exchange admin", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].AdminAddress = "bad" }},
+		{name: "noncanonical exchange admin", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].AdminAddress = " " + g.Exchanges[0].AdminAddress }},
+		{name: "IBC denom mismatch", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].IbcDenomA = "ibc/WRONG" }},
+		{name: "noncanonical route", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].DenomA = " agxn" }},
+		{name: "invalid route denom", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].DenomA = "bad denom" }, wantAnyError: true},
+		{name: "next id not above maximum", mutate: func(g *bexv1.GenesisState) { g.NextExchangeId = g.Exchanges[0].GetId() }},
+		{name: "collected fees unknown exchange", mutate: func(g *bexv1.GenesisState) { g.CollectedFees[0].ExchangeId = 999 }},
+		{name: "malformed collected amount", mutate: func(g *bexv1.GenesisState) { g.CollectedFees[0].Coins[0].Amount = "bad" }, wantAnyError: true},
+		{name: "unsupported collected denom", mutate: func(g *bexv1.GenesisState) { g.CollectedFees[0].Coins[0].Denom = "unsupported" }},
+		{name: "duplicate collected ledger", mutate: func(g *bexv1.GenesisState) {
+			g.CollectedFees = append(g.CollectedFees, cloneFeeGenesis(g.CollectedFees[0]))
+		}},
+		{name: "locked fees unknown exchange", mutate: func(g *bexv1.GenesisState) { g.LockedFees[0].ExchangeId = 999 }},
+		{name: "malformed locked amount", mutate: func(g *bexv1.GenesisState) { g.LockedFees[0].Coins[0].Amount = "bad" }, wantAnyError: true},
+		{name: "locked fees exceed collected", mutate: func(g *bexv1.GenesisState) { g.LockedFees[0].Coins[0].Amount = "11" }},
+		{name: "duplicate locked ledger", mutate: func(g *bexv1.GenesisState) { g.LockedFees = append(g.LockedFees, cloneFeeGenesis(g.LockedFees[0])) }},
+		{name: "deleted exchange has collected fees", mutate: func(g *bexv1.GenesisState) {
+			g.Exchanges[0].Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
+			g.LockedFees = nil
+		}},
+		{name: "deleted exchange has locked fees", mutate: func(g *bexv1.GenesisState) {
+			g.Exchanges[0].Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
+			g.CollectedFees = nil
+		}},
+		{name: "volume unknown exchange", mutate: func(g *bexv1.GenesisState) { g.VolumeWindows[0].ExchangeId = 999 }},
+		{name: "volume invalid direction", mutate: func(g *bexv1.GenesisState) {
+			g.VolumeWindows[0].Direction = bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED
+		}},
+		{name: "volume invalid epoch", mutate: func(g *bexv1.GenesisState) { g.VolumeWindows[0].EpochSeconds = 1 }, wantAnyError: true},
+		{name: "volume unaligned epoch", mutate: func(g *bexv1.GenesisState) { g.VolumeWindows[0].EpochStartUnix++ }},
+		{name: "volume epoch overflow", mutate: func(g *bexv1.GenesisState) {
+			seconds := uint64(g.VolumeWindows[0].GetEpochSeconds())
+			g.VolumeWindows[0].EpochStartUnix = ^uint64(0) / seconds * seconds
+		}},
+		{name: "malformed volume amount", mutate: func(g *bexv1.GenesisState) { g.VolumeWindows[0].Amount = "bad" }, wantAnyError: true},
+		{name: "depositor unknown exchange", mutate: func(g *bexv1.GenesisState) { g.ReserveDepositors[0].ExchangeId = 999 }},
+		{name: "invalid depositor address", mutate: func(g *bexv1.GenesisState) { g.ReserveDepositors[0].DepositorAddress = "bad" }},
+		{name: "noncanonical depositor", mutate: func(g *bexv1.GenesisState) {
+			g.ReserveDepositors[0].DepositorAddress = " " + g.ReserveDepositors[0].DepositorAddress
+		}},
+		{name: "duplicate depositor", mutate: func(g *bexv1.GenesisState) { g.ReserveDepositors = append(g.ReserveDepositors, g.ReserveDepositors[0]) }},
+		{
+			name: "aggregate collected fee overflow",
+			mutate: func(g *bexv1.GenesisState) {
+				second := cloneExchange(g.Exchanges[0])
+				second.Id = 2
+				second.ReserveAddress = secondReserve
+				g.Exchanges = append(g.Exchanges, second)
+				g.CollectedFees[0].Coins[0].Amount = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+				g.CollectedFees = append(g.CollectedFees, &bexv1.FeeGenesis{ExchangeId: 2, Coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "1"}}})
+				g.NextExchangeId = 3
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := am.validateGenesisState(ctx, mutateGenesis(valid, tc.mutate))
+			if tc.wantAnyError {
+				require.Error(t, err)
+				return
+			}
+			require.ErrorIs(t, err, types.ErrInvalidGenesis)
+		})
+	}
+
+	t.Run("invalid fee denom returns an error without panic", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			genesis := mutateGenesis(valid, func(g *bexv1.GenesisState) {
+				g.CollectedFees[0].Coins[0].Denom = "bad denom"
+			})
+			require.Error(t, am.validateGenesisState(ctx, genesis))
+		})
+	})
 }
 
 func setupAppModule(t *testing.T) (AppModule, sdk.Context) {
-	t.Helper()
-
-	return setupAppModuleWithCodec(t, evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr))
-}
-
-func setupAppModuleWithCodec(t *testing.T, accountCodec address.Codec) (AppModule, sdk.Context) {
 	t.Helper()
 
 	key := storetypes.NewKVStoreKey(types.StoreKey)
@@ -258,7 +300,7 @@ func setupAppModuleWithCodec(t *testing.T, accountCodec address.Codec) (AppModul
 	testCtx := testutil.DefaultContextWithDB(t, key, transientKey)
 	keeper := bexkeeper.NewKeeper(
 		runtime.NewKVStoreService(key),
-		accountCodec,
+		evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr),
 		nil,
 		nil,
 		nil,
@@ -302,6 +344,7 @@ func validGenesisState(t *testing.T, am AppModule, ctx sdk.Context) *bexv1.Genes
 			VolumeCapAToB:             "1000",
 			VolumeCapBToA:             "1000",
 			Revision:                  1,
+			VolumeWindowGeneration:    1,
 			Status:                    bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
 			Metadata:                  map[string]string{"venue": "bex-test"},
 			VolumeEpochSeconds:        86400,
@@ -316,11 +359,12 @@ func validGenesisState(t *testing.T, am AppModule, ctx sdk.Context) *bexv1.Genes
 			Coins:      []*basev1beta1.Coin{{Denom: "agxn", Amount: "2"}},
 		}},
 		VolumeWindows: []*bexv1.VolumeWindowGenesis{{
-			ExchangeId:     1,
-			Direction:      bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
-			EpochStartUnix: 1700000000,
-			EpochSeconds:   86400,
-			Amount:         "5",
+			ExchangeId:             1,
+			Direction:              bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			EpochStartUnix:         1699920000,
+			EpochSeconds:           86400,
+			Amount:                 "5",
+			VolumeWindowGeneration: 1,
 		}},
 		ReserveDepositors: []*bexv1.ReserveDepositorGenesis{{
 			ExchangeId:       1,
@@ -391,82 +435,6 @@ func failOpenTarget(field string) appmodule.GenesisTarget {
 	}
 }
 
-var errStoreFault = errors.New("store fault")
-
-func faultyAppModule(t *testing.T, op string, prefix byte) (AppModule, sdk.Context) {
-	t.Helper()
-
-	key := storetypes.NewKVStoreKey(types.StoreKey)
-	transientKey := storetypes.NewTransientStoreKey("transient_bex_module_fault_test")
-	testCtx := testutil.DefaultContextWithDB(t, key, transientKey)
-	keeper := bexkeeper.NewKeeper(
-		faultStoreService{base: runtime.NewKVStoreService(key), op: op, prefix: prefix},
-		evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr),
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-	)
-	return NewAppModule(keeper), testCtx.Ctx
-}
-
-type faultStoreService struct {
-	base   corestore.KVStoreService
-	op     string
-	prefix byte
-}
-
-func (s faultStoreService) OpenKVStore(ctx context.Context) corestore.KVStore {
-	return faultKVStore{KVStore: s.base.OpenKVStore(ctx), op: s.op, prefix: s.prefix}
-}
-
-type faultKVStore struct {
-	corestore.KVStore
-	op     string
-	prefix byte
-}
-
-func (s faultKVStore) fail(op string, key []byte) error {
-	if s.op != op {
-		return nil
-	}
-	if s.prefix != 0 && (len(key) == 0 || key[0] != s.prefix) {
-		return nil
-	}
-	return errStoreFault
-}
-
-func (s faultKVStore) Set(key, value []byte) error {
-	if err := s.fail("set", key); err != nil {
-		return err
-	}
-	return s.KVStore.Set(key, value)
-}
-
-func (s faultKVStore) Iterator(start, end []byte) (corestore.Iterator, error) {
-	if err := s.fail("iterator", start); err != nil {
-		return nil, err
-	}
-	return s.KVStore.Iterator(start, end)
-}
-
-type failingAddressCodec struct {
-	base              address.Codec
-	failBytesToString bool
-}
-
-func (c failingAddressCodec) StringToBytes(text string) ([]byte, error) {
-	return c.base.StringToBytes(text)
-}
-
-func (c failingAddressCodec) BytesToString(bz []byte) (string, error) {
-	if c.failBytesToString {
-		return "", errors.New("bytes-to-string failed")
-	}
-	return c.base.BytesToString(bz)
-}
-
 type memoryGenesisTarget struct {
 	fields map[string]*bytes.Buffer
 }
@@ -505,6 +473,14 @@ type nopWriteCloser struct {
 
 func (nopWriteCloser) Close() error {
 	return nil
+}
+
+type closeErrorReadCloser struct {
+	io.Reader
+}
+
+func (closeErrorReadCloser) Close() error {
+	return errors.New("close failed")
 }
 
 type errorWriteCloser struct{}

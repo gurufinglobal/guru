@@ -10,41 +10,45 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/telemetry"
-
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
-func ReportTransfer(sourcePort, sourceChannel, destinationPort, destinationChannel string, token transwapv1.Token) {
+func ReportTransfer(sourcePort, sourceChannel, destinationPort, destinationChannel string, token *transwapv1.Token) {
 	labels := []metrics.Label{
-		telemetry.NewLabel(coremetrics.LabelDestinationPort, destinationPort),
-		telemetry.NewLabel(coremetrics.LabelDestinationChannel, destinationChannel),
+		{Name: coremetrics.LabelDestinationPort, Value: destinationPort},
+		{Name: coremetrics.LabelDestinationChannel, Value: destinationChannel},
 	}
 
+	if token == nil {
+		return
+	}
 	amount, ok := sdkmath.NewIntFromString(token.Amount)
 	if ok && amount.IsInt64() {
-		telemetry.SetGaugeWithLabels(
+		metrics.SetGaugeWithLabels(
 			[]string{"tx", "msg", "ibc", "transfer"},
 			float32(amount.Int64()),
-			[]metrics.Label{telemetry.NewLabel(coremetrics.LabelDenom, types.DenomPath(token.Denom))},
+			[]metrics.Label{{Name: coremetrics.LabelDenom, Value: types.DenomPath(token.Denom)}},
 		)
 	}
 
-	labels = append(labels, telemetry.NewLabel(coremetrics.LabelSource, fmt.Sprintf("%t", !types.DenomHasPrefix(token.Denom, sourcePort, sourceChannel))))
+	labels = append(labels, metrics.Label{Name: coremetrics.LabelSource, Value: fmt.Sprintf("%t", !types.DenomHasPrefix(token.Denom, sourcePort, sourceChannel))})
 
-	telemetry.IncrCounterWithLabels(
+	metrics.IncrCounterWithLabels(
 		[]string{"ibc", types.ModuleName, "send"},
 		1,
 		labels,
 	)
 }
 
-func ReportOnRecvPacket(sourcePort, sourceChannel, destinationPort, destinationChannel string, token transwapv1.Token) {
+func ReportOnRecvPacket(sourcePort, sourceChannel, destinationPort, destinationChannel string, token *transwapv1.Token) {
 	token = types.CloneToken(token)
+	if token == nil {
+		return
+	}
 
 	labels := []metrics.Label{
-		telemetry.NewLabel(coremetrics.LabelSourcePort, sourcePort),
-		telemetry.NewLabel(coremetrics.LabelSourceChannel, sourceChannel),
+		{Name: coremetrics.LabelSourcePort, Value: sourcePort},
+		{Name: coremetrics.LabelSourceChannel, Value: sourceChannel},
 	}
 
 	// Modify trace as Recv does.
@@ -58,16 +62,16 @@ func ReportOnRecvPacket(sourcePort, sourceChannel, destinationPort, destinationC
 	// Transfer amount has already been parsed in caller.
 	transferAmount, ok := sdkmath.NewIntFromString(token.Amount)
 	if ok && transferAmount.IsInt64() {
-		telemetry.SetGaugeWithLabels(
+		metrics.SetGaugeWithLabels(
 			[]string{"ibc", types.ModuleName, "packet", "receive"},
 			float32(transferAmount.Int64()),
-			[]metrics.Label{telemetry.NewLabel(coremetrics.LabelDenom, types.DenomPath(token.Denom))},
+			[]metrics.Label{{Name: coremetrics.LabelDenom, Value: types.DenomPath(token.Denom)}},
 		)
 	}
 
-	labels = append(labels, telemetry.NewLabel(coremetrics.LabelSource, fmt.Sprintf("%t", types.DenomHasPrefix(token.Denom, sourcePort, sourceChannel))))
+	labels = append(labels, metrics.Label{Name: coremetrics.LabelSource, Value: fmt.Sprintf("%t", types.DenomHasPrefix(token.Denom, sourcePort, sourceChannel))})
 
-	telemetry.IncrCounterWithLabels(
+	metrics.IncrCounterWithLabels(
 		[]string{"ibc", types.ModuleName, "receive"},
 		1,
 		labels,

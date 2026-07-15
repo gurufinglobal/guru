@@ -18,7 +18,12 @@ import (
 
 const DefaultNextExchangeID uint64 = 1
 
-type volumeWindowKey = collections.Quad[uint64, uint32, uint64, uint32]
+// volumeWindowKey is ordered by (expiry, exchange, direction,
+// (epoch seconds, generation)), so bounded global pruning always encounters
+// the earliest-expiring window first while every logical accounting
+// configuration retains a distinct key.
+type volumeWindowIdentity = collections.Pair[uint32, uint64]
+type volumeWindowKey = collections.Quad[uint64, uint64, uint32, volumeWindowIdentity]
 
 type Keeper struct {
 	accountCodec       address.Codec
@@ -28,16 +33,16 @@ type Keeper struct {
 	constitutionKeeper ConstitutionKeeper
 	channelKeeper      ChannelKeeper
 
-	admins            collections.KeySet[string]
-	exchanges         collections.Map[uint64, *bexv1.Exchange]
-	exchangesByAdmin  collections.KeySet[collections.Pair[string, uint64]]
-	reserveByAddress  collections.Map[string, uint64]
-	nextExchangeID    collections.Sequence
-	collectedFees     collections.Map[uint64, *bexv1.FeeLedger]
-	lockedFees        collections.Map[uint64, *bexv1.FeeLedger]
-	volumeWindow      collections.Map[volumeWindowKey, string]
-	volumePruneCursor collections.Map[collections.Pair[uint64, uint32], uint64]
-	reserveDepositors collections.KeySet[collections.Pair[uint64, string]]
+	admins             collections.KeySet[string]
+	exchanges          collections.Map[uint64, *bexv1.Exchange]
+	exchangesByAdmin   collections.KeySet[collections.Pair[string, uint64]]
+	reserveByAddress   collections.Map[string, uint64]
+	nextExchangeID     collections.Sequence
+	collectedFees      collections.Map[uint64, *bexv1.FeeLedger]
+	lockedFees         collections.Map[uint64, *bexv1.FeeLedger]
+	pendingLiabilities collections.Map[uint64, *bexv1.FeeLedger]
+	volumeWindow       collections.Map[volumeWindowKey, string]
+	reserveDepositors  collections.KeySet[collections.Pair[uint64, string]]
 
 	schema collections.Schema
 }
@@ -73,19 +78,24 @@ func NewKeeper(
 	k.nextExchangeID = collections.NewSequence(sb, types.NextExchangeIDKey, "next_exchange_id")
 	k.collectedFees = collections.NewMap(sb, types.CollectedFeesKey, "collected_fees", collections.Uint64Key, codec.CollValueV2[bexv1.FeeLedger]())
 	k.lockedFees = collections.NewMap(sb, types.LockedFeesKey, "locked_fees", collections.Uint64Key, codec.CollValueV2[bexv1.FeeLedger]())
+	k.pendingLiabilities = collections.NewMap(
+		sb,
+		types.PendingLiabilitiesKey,
+		"pending_liabilities",
+		collections.Uint64Key,
+		codec.CollValueV2[bexv1.FeeLedger](),
+	)
 	k.volumeWindow = collections.NewMap(
 		sb,
 		types.VolumeWindowKey,
 		"volume_window",
-		collections.QuadKeyCodec(collections.Uint64Key, collections.Uint32Key, collections.Uint64Key, collections.Uint32Key),
+		collections.QuadKeyCodec(
+			collections.Uint64Key,
+			collections.Uint64Key,
+			collections.Uint32Key,
+			collections.PairKeyCodec(collections.Uint32Key, collections.Uint64Key),
+		),
 		collections.StringValue,
-	)
-	k.volumePruneCursor = collections.NewMap(
-		sb,
-		types.VolumePruneCursorKey,
-		"volume_prune_cursor",
-		collections.PairKeyCodec(collections.Uint64Key, collections.Uint32Key),
-		collections.Uint64Value,
 	)
 	k.reserveDepositors = collections.NewKeySet(
 		sb,
@@ -104,6 +114,21 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx context.Context) log.Logger {
 	return sdk.UnwrapSDKContext(ctx).Logger().With("module", "x/"+types.ModuleName)
+}
+
+func executeStateTransition(ctx context.Context, fn func(sdk.Context) error) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if _, ok := ctx.(sdk.Context); !ok {
+		// Preserve outer deadlines and context capabilities when a trusted module
+		// wraps sdk.Context before entering the state transition.
+		sdkCtx = sdkCtx.WithContext(ctx)
+	}
+	cacheCtx, write := sdkCtx.CacheContext()
+	if err := fn(cacheCtx); err != nil {
+		return err
+	}
+	write()
+	return nil
 }
 
 func ReserveModuleName(exchangeID uint64) string {

@@ -15,7 +15,8 @@ enum ExchangeStatus {
   EXCHANGE_STATUS_ACTIVE = 1;
   // EXCHANGE_STATUS_INACTIVE retains configuration while blocking swaps.
   EXCHANGE_STATUS_INACTIVE = 2;
-  // EXCHANGE_STATUS_DELETED is a permanent logical-delete tombstone.
+  // EXCHANGE_STATUS_DELETED is a permanent logical-delete tombstone that
+  // retains the exchange's fully validated configuration.
   EXCHANGE_STATUS_DELETED = 3;
 }
 
@@ -64,10 +65,21 @@ message Exchange {
   ExchangeStatus status = 21;
   map<string, string> metadata = 22;
 
+  // Current volume-window duration. Updating this value directly takes effect
+  // immediately, does not carry usage from the previous window key, and does
+  // not alter an existing pending schedule.
   uint32 volume_epoch_seconds = 23;
+  // Scheduled volume-window duration. Use this with
+  // pending_volume_epoch_effective_at_unix to avoid an immediate reset. Both
+  // pending values are non-zero when scheduled and zero when no schedule exists.
   uint32 pending_volume_epoch_seconds = 24;
+  // Unix time at which pending_volume_epoch_seconds becomes current.
   uint64 pending_volume_epoch_effective_at_unix = 25;
   uint32 max_oracle_staleness_seconds = 26;
+  // Keeper-managed identity for the current volume-accounting configuration.
+  // It changes only when a new logical accounting window must not inherit
+  // usage from an earlier configuration.
+  uint64 volume_window_generation = 27;
 }
 
 // ExchangeUpdatePatch is a typed atomic update patch for an exchange.
@@ -89,10 +101,17 @@ message ExchangeUpdatePatch {
   ExchangeStatusPatch status = 15;
   map<string, string> metadata = 16;
   google.protobuf.BoolValue clear_metadata = 17;
+  // Applies immediately and starts accounting under a new volume-window key;
+  // existing usage is not carried and an existing pending schedule is unchanged.
+  // Use the pending fields for a scheduled change.
   google.protobuf.UInt32Value volume_epoch_seconds = 18;
+  // Schedules a new duration and must be paired with an effective Unix time.
+  // Set both pending fields to zero in one patch to clear a schedule.
   google.protobuf.UInt32Value pending_volume_epoch_seconds = 19;
+  // Unix time at which the pending duration becomes current.
   google.protobuf.UInt64Value pending_volume_epoch_effective_at_unix = 20;
   google.protobuf.UInt32Value max_oracle_staleness_seconds = 21;
+  google.protobuf.StringValue new_admin_address = 22 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 // ExchangeStatusPatch gives ExchangeUpdatePatch presence for enum updates.
@@ -112,6 +131,7 @@ message VolumeWindow {
   uint64 epoch_start_unix = 3;
   uint32 epoch_seconds = 4;
   string amount = 5 [(cosmos_proto.scalar) = "cosmos.Int"];
+  uint64 volume_window_generation = 6;
 }
 
 // QuoteSwapRequest is the keeper-level quote request.

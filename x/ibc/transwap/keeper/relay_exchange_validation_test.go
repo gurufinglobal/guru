@@ -28,12 +28,12 @@ func TestParseExchangeIDRequiresPositiveNumericID(t *testing.T) {
 func TestOutboundChannelFromTokenValidatesTraceRoute(t *testing.T) {
 	tests := []struct {
 		name  string
-		token transwapv1.Token
+		token *transwapv1.Token
 	}{
-		{"nil denom", transwapv1.Token{Amount: "1"}},
-		{"native output", transwapv1.Token{Denom: types.NewDenom("ugxkrw"), Amount: "1"}},
-		{"nil first hop", transwapv1.Token{Denom: types.NewDenom("ugxkrw", nil), Amount: "1"}},
-		{"wrong port", transwapv1.Token{Denom: types.NewDenom("ugxkrw", types.NewHop("transfer", "channel-0")), Amount: "1"}},
+		{"nil denom", &transwapv1.Token{Amount: "1"}},
+		{"native output", &transwapv1.Token{Denom: types.NewDenom("ugxkrw"), Amount: "1"}},
+		{"nil first hop", &transwapv1.Token{Denom: types.NewDenom("ugxkrw", nil), Amount: "1"}},
+		{"wrong port", &transwapv1.Token{Denom: types.NewDenom("ugxkrw", types.NewHop("transfer", "channel-0")), Amount: "1"}},
 	}
 
 	for _, tt := range tests {
@@ -43,7 +43,7 @@ func TestOutboundChannelFromTokenValidatesTraceRoute(t *testing.T) {
 		})
 	}
 
-	channel, err := outboundChannelFromToken(transwapv1.Token{
+	channel, err := outboundChannelFromToken(&transwapv1.Token{
 		Denom:  types.NewDenom("ugxkrw", types.NewHop(types.PortID, "channel-7")),
 		Amount: "1",
 	})
@@ -53,7 +53,7 @@ func TestOutboundChannelFromTokenValidatesTraceRoute(t *testing.T) {
 
 func TestLocalReceivedCoinUsesSourceSinkPathWithoutMutatingPacketDenom(t *testing.T) {
 	sourceDenom := types.NewDenom("ugxusd")
-	sourceData := types.NewInternalTransferRepresentation("7", transwapv1.Token{Denom: sourceDenom, Amount: "12"}, "sender", "receiver", "")
+	sourceData := types.NewInternalTransferRepresentation("7", &transwapv1.Token{Denom: sourceDenom, Amount: "12"}, "sender", "receiver", "")
 
 	sourceCoin, err := localReceivedCoin(sourceData, types.PortID, "channel-0", types.PortID, "channel-9")
 	require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestLocalReceivedCoinUsesSourceSinkPathWithoutMutatingPacketDenom(t *testin
 	require.Empty(t, sourceDenom.Trace)
 
 	sinkDenom := types.NewDenom("ugxusd", types.NewHop(types.PortID, "channel-0"), types.NewHop("transfer", "channel-2"))
-	sinkData := types.NewInternalTransferRepresentation("7", transwapv1.Token{Denom: sinkDenom, Amount: "5"}, "sender", "receiver", "")
+	sinkData := types.NewInternalTransferRepresentation("7", &transwapv1.Token{Denom: sinkDenom, Amount: "5"}, "sender", "receiver", "")
 
 	sinkCoin, err := localReceivedCoin(sinkData, types.PortID, "channel-0", types.PortID, "channel-9")
 	require.NoError(t, err)

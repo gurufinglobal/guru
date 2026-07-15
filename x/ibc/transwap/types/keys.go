@@ -31,7 +31,8 @@ const (
 
 	KeyTotalEscrowPrefix = "totalEscrowForDenom"
 
-	ParamsKey = "params"
+	ParamsKey          = "params"
+	RefundPacketPrefix = "refund/"
 
 	// V1 defines first version of the IBC transfer module
 	V1 = "ics20-1"

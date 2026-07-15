@@ -13,8 +13,8 @@ import (
 var maxUint256 = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
 
 // ValidateToken validates a token denomination and amount.
-func ValidateToken(t transwapv1.Token) error {
-	if t.Denom == nil {
+func ValidateToken(t *transwapv1.Token) error {
+	if t == nil || t.Denom == nil {
 		return errorsmod.Wrap(ErrInvalidDenomForTransfer, "token denom cannot be nil")
 	}
 
@@ -26,7 +26,7 @@ func ValidateToken(t transwapv1.Token) error {
 }
 
 // TokenToCoin converts a Token to an sdk.Coin.
-func TokenToCoin(t transwapv1.Token) (sdk.Coin, error) {
+func TokenToCoin(t *transwapv1.Token) (sdk.Coin, error) {
 	if err := ValidateToken(t); err != nil {
 		return sdk.Coin{}, err
 	}

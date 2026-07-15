@@ -8,7 +8,7 @@ import (
 )
 
 // InitGenesis initializes the ibc-transfer state and binds to PortID.
-func (k Keeper) InitGenesis(ctx sdk.Context, state transwapv1.GenesisState) {
+func (k Keeper) InitGenesis(ctx sdk.Context, state *transwapv1.GenesisState) {
 	k.SetPort(ctx, state.PortId)
 
 	for _, denom := range state.Denoms {
@@ -25,13 +25,19 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state transwapv1.GenesisState) {
 	for _, denomEscrow := range totalEscrowed {
 		k.SetTotalEscrowForDenom(ctx, denomEscrow)
 	}
+	for _, pending := range state.GetPendingRefunds() {
+		if err := k.SetRefundPacketData(ctx, pending.GetKey(), pending.GetPacket()); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // ExportGenesis exports ibc-transfer module's portID and denom trace info into its genesis state.
 func (k Keeper) ExportGenesis(ctx sdk.Context) *transwapv1.GenesisState {
 	return &transwapv1.GenesisState{
-		PortId:        k.GetPort(ctx),
-		Denoms:        k.GetAllDenoms(ctx),
-		TotalEscrowed: types.SDKCoinsToProto(k.GetAllTotalEscrowed(ctx)),
+		PortId:         k.GetPort(ctx),
+		Denoms:         k.GetAllDenoms(ctx),
+		TotalEscrowed:  types.SDKCoinsToProto(k.GetAllTotalEscrowed(ctx)),
+		PendingRefunds: k.GetAllRefundPacketData(ctx),
 	}
 }

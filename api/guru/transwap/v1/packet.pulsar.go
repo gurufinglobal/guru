@@ -755,16 +755,19 @@ func (x *fastReflection_FungibleTokenPacketData) ProtoMethods() *protoiface.Meth
 }
 
 var (
-	md_TransferPacketData                   protoreflect.MessageDescriptor
-	fd_TransferPacketData_source_port       protoreflect.FieldDescriptor
-	fd_TransferPacketData_source_channel    protoreflect.FieldDescriptor
-	fd_TransferPacketData_token             protoreflect.FieldDescriptor
-	fd_TransferPacketData_sender            protoreflect.FieldDescriptor
-	fd_TransferPacketData_receiver          protoreflect.FieldDescriptor
-	fd_TransferPacketData_timeout_timestamp protoreflect.FieldDescriptor
-	fd_TransferPacketData_memo              protoreflect.FieldDescriptor
-	fd_TransferPacketData_fee               protoreflect.FieldDescriptor
-	fd_TransferPacketData_exchange_id       protoreflect.FieldDescriptor
+	md_TransferPacketData                            protoreflect.MessageDescriptor
+	fd_TransferPacketData_source_port                protoreflect.FieldDescriptor
+	fd_TransferPacketData_source_channel             protoreflect.FieldDescriptor
+	fd_TransferPacketData_token                      protoreflect.FieldDescriptor
+	fd_TransferPacketData_sender                     protoreflect.FieldDescriptor
+	fd_TransferPacketData_receiver                   protoreflect.FieldDescriptor
+	fd_TransferPacketData_timeout_timestamp          protoreflect.FieldDescriptor
+	fd_TransferPacketData_memo                       protoreflect.FieldDescriptor
+	fd_TransferPacketData_fee                        protoreflect.FieldDescriptor
+	fd_TransferPacketData_exchange_id                protoreflect.FieldDescriptor
+	fd_TransferPacketData_pending_liability          protoreflect.FieldDescriptor
+	fd_TransferPacketData_original_timeout_timestamp protoreflect.FieldDescriptor
+	fd_TransferPacketData_retry_count                protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -779,6 +782,9 @@ func init() {
 	fd_TransferPacketData_memo = md_TransferPacketData.Fields().ByName("memo")
 	fd_TransferPacketData_fee = md_TransferPacketData.Fields().ByName("fee")
 	fd_TransferPacketData_exchange_id = md_TransferPacketData.Fields().ByName("exchange_id")
+	fd_TransferPacketData_pending_liability = md_TransferPacketData.Fields().ByName("pending_liability")
+	fd_TransferPacketData_original_timeout_timestamp = md_TransferPacketData.Fields().ByName("original_timeout_timestamp")
+	fd_TransferPacketData_retry_count = md_TransferPacketData.Fields().ByName("retry_count")
 }
 
 var _ protoreflect.Message = (*fastReflection_TransferPacketData)(nil)
@@ -900,6 +906,24 @@ func (x *fastReflection_TransferPacketData) Range(f func(protoreflect.FieldDescr
 			return
 		}
 	}
+	if x.PendingLiability != nil {
+		value := protoreflect.ValueOfMessage(x.PendingLiability.ProtoReflect())
+		if !f(fd_TransferPacketData_pending_liability, value) {
+			return
+		}
+	}
+	if x.OriginalTimeoutTimestamp != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.OriginalTimeoutTimestamp)
+		if !f(fd_TransferPacketData_original_timeout_timestamp, value) {
+			return
+		}
+	}
+	if x.RetryCount != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.RetryCount)
+		if !f(fd_TransferPacketData_retry_count, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -933,6 +957,12 @@ func (x *fastReflection_TransferPacketData) Has(fd protoreflect.FieldDescriptor)
 		return x.Fee != nil
 	case "guru.transwap.v1.TransferPacketData.exchange_id":
 		return x.ExchangeId != ""
+	case "guru.transwap.v1.TransferPacketData.pending_liability":
+		return x.PendingLiability != nil
+	case "guru.transwap.v1.TransferPacketData.original_timeout_timestamp":
+		return x.OriginalTimeoutTimestamp != uint64(0)
+	case "guru.transwap.v1.TransferPacketData.retry_count":
+		return x.RetryCount != uint32(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.transwap.v1.TransferPacketData"))
@@ -967,6 +997,12 @@ func (x *fastReflection_TransferPacketData) Clear(fd protoreflect.FieldDescripto
 		x.Fee = nil
 	case "guru.transwap.v1.TransferPacketData.exchange_id":
 		x.ExchangeId = ""
+	case "guru.transwap.v1.TransferPacketData.pending_liability":
+		x.PendingLiability = nil
+	case "guru.transwap.v1.TransferPacketData.original_timeout_timestamp":
+		x.OriginalTimeoutTimestamp = uint64(0)
+	case "guru.transwap.v1.TransferPacketData.retry_count":
+		x.RetryCount = uint32(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.transwap.v1.TransferPacketData"))
@@ -1010,6 +1046,15 @@ func (x *fastReflection_TransferPacketData) Get(descriptor protoreflect.FieldDes
 	case "guru.transwap.v1.TransferPacketData.exchange_id":
 		value := x.ExchangeId
 		return protoreflect.ValueOfString(value)
+	case "guru.transwap.v1.TransferPacketData.pending_liability":
+		value := x.PendingLiability
+		return protoreflect.ValueOfMessage(value.ProtoReflect())
+	case "guru.transwap.v1.TransferPacketData.original_timeout_timestamp":
+		value := x.OriginalTimeoutTimestamp
+		return protoreflect.ValueOfUint64(value)
+	case "guru.transwap.v1.TransferPacketData.retry_count":
+		value := x.RetryCount
+		return protoreflect.ValueOfUint32(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.transwap.v1.TransferPacketData"))
@@ -1048,6 +1093,12 @@ func (x *fastReflection_TransferPacketData) Set(fd protoreflect.FieldDescriptor,
 		x.Fee = value.Message().Interface().(*v1beta1.Coin)
 	case "guru.transwap.v1.TransferPacketData.exchange_id":
 		x.ExchangeId = value.Interface().(string)
+	case "guru.transwap.v1.TransferPacketData.pending_liability":
+		x.PendingLiability = value.Message().Interface().(*v1beta1.Coin)
+	case "guru.transwap.v1.TransferPacketData.original_timeout_timestamp":
+		x.OriginalTimeoutTimestamp = value.Uint()
+	case "guru.transwap.v1.TransferPacketData.retry_count":
+		x.RetryCount = uint32(value.Uint())
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.transwap.v1.TransferPacketData"))
@@ -1078,6 +1129,11 @@ func (x *fastReflection_TransferPacketData) Mutable(fd protoreflect.FieldDescrip
 			x.Fee = new(v1beta1.Coin)
 		}
 		return protoreflect.ValueOfMessage(x.Fee.ProtoReflect())
+	case "guru.transwap.v1.TransferPacketData.pending_liability":
+		if x.PendingLiability == nil {
+			x.PendingLiability = new(v1beta1.Coin)
+		}
+		return protoreflect.ValueOfMessage(x.PendingLiability.ProtoReflect())
 	case "guru.transwap.v1.TransferPacketData.source_port":
 		panic(fmt.Errorf("field source_port of message guru.transwap.v1.TransferPacketData is not mutable"))
 	case "guru.transwap.v1.TransferPacketData.source_channel":
@@ -1092,6 +1148,10 @@ func (x *fastReflection_TransferPacketData) Mutable(fd protoreflect.FieldDescrip
 		panic(fmt.Errorf("field memo of message guru.transwap.v1.TransferPacketData is not mutable"))
 	case "guru.transwap.v1.TransferPacketData.exchange_id":
 		panic(fmt.Errorf("field exchange_id of message guru.transwap.v1.TransferPacketData is not mutable"))
+	case "guru.transwap.v1.TransferPacketData.original_timeout_timestamp":
+		panic(fmt.Errorf("field original_timeout_timestamp of message guru.transwap.v1.TransferPacketData is not mutable"))
+	case "guru.transwap.v1.TransferPacketData.retry_count":
+		panic(fmt.Errorf("field retry_count of message guru.transwap.v1.TransferPacketData is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.transwap.v1.TransferPacketData"))
@@ -1125,6 +1185,13 @@ func (x *fastReflection_TransferPacketData) NewField(fd protoreflect.FieldDescri
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	case "guru.transwap.v1.TransferPacketData.exchange_id":
 		return protoreflect.ValueOfString("")
+	case "guru.transwap.v1.TransferPacketData.pending_liability":
+		m := new(v1beta1.Coin)
+		return protoreflect.ValueOfMessage(m.ProtoReflect())
+	case "guru.transwap.v1.TransferPacketData.original_timeout_timestamp":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "guru.transwap.v1.TransferPacketData.retry_count":
+		return protoreflect.ValueOfUint32(uint32(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.transwap.v1.TransferPacketData"))
@@ -1229,6 +1296,16 @@ func (x *fastReflection_TransferPacketData) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if x.PendingLiability != nil {
+			l = options.Size(x.PendingLiability)
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.OriginalTimeoutTimestamp != 0 {
+			n += 1 + runtime.Sov(uint64(x.OriginalTimeoutTimestamp))
+		}
+		if x.RetryCount != 0 {
+			n += 1 + runtime.Sov(uint64(x.RetryCount))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -1257,6 +1334,30 @@ func (x *fastReflection_TransferPacketData) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.RetryCount != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.RetryCount))
+			i--
+			dAtA[i] = 0x60
+		}
+		if x.OriginalTimeoutTimestamp != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.OriginalTimeoutTimestamp))
+			i--
+			dAtA[i] = 0x58
+		}
+		if x.PendingLiability != nil {
+			encoded, err := options.Marshal(x.PendingLiability)
+			if err != nil {
+				return protoiface.MarshalOutput{
+					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+					Buf:               input.Buf,
+				}, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+			i--
+			dAtA[i] = 0x52
 		}
 		if len(x.ExchangeId) > 0 {
 			i -= len(x.ExchangeId)
@@ -1665,6 +1766,80 @@ func (x *fastReflection_TransferPacketData) ProtoMethods() *protoiface.Methods {
 				}
 				x.ExchangeId = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
+			case 10:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field PendingLiability", wireType)
+				}
+				var msglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					msglen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if msglen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + msglen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if x.PendingLiability == nil {
+					x.PendingLiability = &v1beta1.Coin{}
+				}
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.PendingLiability); err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				iNdEx = postIndex
+			case 11:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field OriginalTimeoutTimestamp", wireType)
+				}
+				x.OriginalTimeoutTimestamp = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.OriginalTimeoutTimestamp |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 12:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field RetryCount", wireType)
+				}
+				x.RetryCount = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.RetryCount |= uint32(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -1814,7 +1989,7 @@ type TransferPacketData struct {
 	// the recipient address on the destination chain
 	Receiver string `protobuf:"bytes,5,opt,name=receiver,proto3" json:"receiver,omitempty"`
 	// Timeout timestamp in absolute nanoseconds since unix epoch.
-	// If you are sending with IBC v1 protocol, either timeout_height or timeout_timestamp must be set.
+	// For v1 transfer packets, either timeout_height or timeout_timestamp must be set.
 	TimeoutTimestamp uint64 `protobuf:"varint,6,opt,name=timeout_timestamp,json=timeoutTimestamp,proto3" json:"timeout_timestamp,omitempty"`
 	// optional memo
 	Memo string `protobuf:"bytes,7,opt,name=memo,proto3" json:"memo,omitempty"`
@@ -1822,6 +1997,13 @@ type TransferPacketData struct {
 	Fee *v1beta1.Coin `protobuf:"bytes,8,opt,name=fee,proto3" json:"fee,omitempty"`
 	// exvhange id
 	ExchangeId string `protobuf:"bytes,9,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
+	// pending_liability is the net input principal reserved by BEX until either
+	// the swap output or a compensating refund is acknowledged successfully.
+	PendingLiability *v1beta1.Coin `protobuf:"bytes,10,opt,name=pending_liability,json=pendingLiability,proto3" json:"pending_liability,omitempty"`
+	// original_timeout_timestamp is immutable audit data from the initiating
+	// exchange packet. timeout_timestamp is refreshed for every refund retry.
+	OriginalTimeoutTimestamp uint64 `protobuf:"varint,11,opt,name=original_timeout_timestamp,json=originalTimeoutTimestamp,proto3" json:"original_timeout_timestamp,omitempty"`
+	RetryCount               uint32 `protobuf:"varint,12,opt,name=retry_count,json=retryCount,proto3" json:"retry_count,omitempty"`
 }
 
 func (x *TransferPacketData) Reset() {
@@ -1907,17 +2089,38 @@ func (x *TransferPacketData) GetExchangeId() string {
 	return ""
 }
 
+func (x *TransferPacketData) GetPendingLiability() *v1beta1.Coin {
+	if x != nil {
+		return x.PendingLiability
+	}
+	return nil
+}
+
+func (x *TransferPacketData) GetOriginalTimeoutTimestamp() uint64 {
+	if x != nil {
+		return x.OriginalTimeoutTimestamp
+	}
+	return 0
+}
+
+func (x *TransferPacketData) GetRetryCount() uint32 {
+	if x != nil {
+		return x.RetryCount
+	}
+	return 0
+}
+
 var File_guru_transwap_v1_packet_proto protoreflect.FileDescriptor
 
 var file_guru_transwap_v1_packet_proto_rawDesc = []byte{
 	0x0a, 0x1d, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x2f,
 	0x76, 0x31, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
 	0x10, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x2e, 0x76,
-	0x31, 0x1a, 0x1c, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70,
-	0x2f, 0x76, 0x31, 0x2f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a,
-	0x14, 0x67, 0x6f, 0x67, 0x6f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6f, 0x67, 0x6f, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2f, 0x62, 0x61,
-	0x73, 0x65, 0x2f, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2f, 0x63, 0x6f, 0x69, 0x6e, 0x2e,
+	0x31, 0x1a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2f, 0x62, 0x61, 0x73, 0x65, 0x2f, 0x76,
+	0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2f, 0x63, 0x6f, 0x69, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x1a, 0x14, 0x67, 0x6f, 0x67, 0x6f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6f, 0x67,
+	0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1c, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x74, 0x72,
+	0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x2f, 0x76, 0x31, 0x2f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xb0, 0x01, 0x0a, 0x17, 0x46, 0x75, 0x6e, 0x67, 0x69, 0x62,
 	0x6c, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x50, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x44, 0x61, 0x74,
 	0x61, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64,
@@ -1929,7 +2132,7 @@ var file_guru_transwap_v1_packet_proto_rawDesc = []byte{
 	0x52, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x63, 0x65,
 	0x69, 0x76, 0x65, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x65, 0x63, 0x65,
 	0x69, 0x76, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x65, 0x6d, 0x6f, 0x18, 0x06, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x04, 0x6d, 0x65, 0x6d, 0x6f, 0x22, 0xda, 0x02, 0x0a, 0x12, 0x54, 0x72, 0x61,
+	0x28, 0x09, 0x52, 0x04, 0x6d, 0x65, 0x6d, 0x6f, 0x22, 0x87, 0x04, 0x0a, 0x12, 0x54, 0x72, 0x61,
 	0x6e, 0x73, 0x66, 0x65, 0x72, 0x50, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x12,
 	0x1f, 0x0a, 0x0b, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x70, 0x6f, 0x72, 0x74, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x50, 0x6f, 0x72, 0x74,
@@ -1951,19 +2154,31 @@ var file_guru_transwap_v1_packet_proto_rawDesc = []byte{
 	0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e, 0x42, 0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52,
 	0x03, 0x66, 0x65, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
 	0x5f, 0x69, 0x64, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61,
-	0x6e, 0x67, 0x65, 0x49, 0x64, 0x42, 0xb3, 0x01, 0x0a, 0x14, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75,
-	0x72, 0x75, 0x2e, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x2e, 0x76, 0x31, 0x42, 0x0b,
-	0x50, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x2c, 0x63,
-	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f,
-	0x67, 0x75, 0x72, 0x75, 0x2f, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x2f, 0x76, 0x31,
-	0x3b, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x54,
-	0x58, 0xaa, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61,
-	0x70, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x54, 0x72, 0x61, 0x6e,
-	0x73, 0x77, 0x61, 0x70, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1c, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x54,
-	0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65,
-	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x12, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x54,
-	0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x4c, 0x0a, 0x11, 0x70, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67,
+	0x5f, 0x6c, 0x69, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x79, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73, 0x65, 0x2e, 0x76,
+	0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e, 0x42, 0x04, 0xc8, 0xde, 0x1f,
+	0x00, 0x52, 0x10, 0x70, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x4c, 0x69, 0x61, 0x62, 0x69, 0x6c,
+	0x69, 0x74, 0x79, 0x12, 0x3c, 0x0a, 0x1a, 0x6f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x61, 0x6c, 0x5f,
+	0x74, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d,
+	0x70, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x04, 0x52, 0x18, 0x6f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x61,
+	0x6c, 0x54, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d,
+	0x70, 0x12, 0x1f, 0x0a, 0x0b, 0x72, 0x65, 0x74, 0x72, 0x79, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x18, 0x0c, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0a, 0x72, 0x65, 0x74, 0x72, 0x79, 0x43, 0x6f, 0x75,
+	0x6e, 0x74, 0x42, 0xc7, 0x01, 0x0a, 0x14, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
+	0x74, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x2e, 0x76, 0x31, 0x42, 0x0b, 0x50, 0x61, 0x63,
+	0x6b, 0x65, 0x74, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x40, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c,
+	0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69,
+	0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x2f, 0x76,
+	0x31, 0x3b, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47,
+	0x54, 0x58, 0xaa, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x77,
+	0x61, 0x70, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x54, 0x72, 0x61,
+	0x6e, 0x73, 0x77, 0x61, 0x70, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1c, 0x47, 0x75, 0x72, 0x75, 0x5c,
+	0x54, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d,
+	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x12, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a,
+	0x54, 0x72, 0x61, 0x6e, 0x73, 0x77, 0x61, 0x70, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1988,11 +2203,12 @@ var file_guru_transwap_v1_packet_proto_goTypes = []interface{}{
 var file_guru_transwap_v1_packet_proto_depIdxs = []int32{
 	2, // 0: guru.transwap.v1.TransferPacketData.token:type_name -> guru.transwap.v1.Token
 	3, // 1: guru.transwap.v1.TransferPacketData.fee:type_name -> cosmos.base.v1beta1.Coin
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 2: guru.transwap.v1.TransferPacketData.pending_liability:type_name -> cosmos.base.v1beta1.Coin
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_guru_transwap_v1_packet_proto_init() }

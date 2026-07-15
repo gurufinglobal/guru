@@ -25,6 +25,16 @@ func (m MsgServer) RegisterAdmin(ctx context.Context, req *bexv1.MsgRegisterAdmi
 	return &bexv1.MsgRegisterAdminResponse{}, m.keeper.RegisterAdmin(ctx, req.GetModerator(), req.GetAdminAddress())
 }
 
+func (m MsgServer) UpdateAdmin(ctx context.Context, req *bexv1.MsgUpdateAdmin) (*bexv1.MsgUpdateAdminResponse, error) {
+	if req == nil {
+		return nil, types.ErrInvalidRequest.Wrap("empty request")
+	}
+	if err := m.keeper.UpdateAdmin(ctx, req.GetModerator(), req.GetOldAdminAddress(), req.GetNewAdminAddress()); err != nil {
+		return nil, err
+	}
+	return &bexv1.MsgUpdateAdminResponse{}, nil
+}
+
 func (m MsgServer) RemoveAdmin(ctx context.Context, req *bexv1.MsgRemoveAdmin) (*bexv1.MsgRemoveAdminResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")

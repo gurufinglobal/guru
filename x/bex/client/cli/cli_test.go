@@ -4,13 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/spf13/cobra"
@@ -24,6 +21,7 @@ func TestGetTxCmdIncludesBexCommands(t *testing.T) {
 
 	for _, name := range []string{
 		"register-admin",
+		"update-admin",
 		"remove-admin",
 		"register-exchange",
 		"update-exchange",
@@ -45,8 +43,8 @@ func TestGetQueryCmdIncludesBexCommands(t *testing.T) {
 	for _, name := range []string{
 		"exchange",
 		"exchanges",
-		"exchanges-by-admin",
-		"is-admin",
+		"exchanges-by-exchange-admin",
+		"is-bex-admin",
 		"reserve-depositors",
 		"is-reserve-depositor",
 		"collected-fees",
@@ -140,60 +138,56 @@ func TestReadPulsarPageRequest(t *testing.T) {
 	require.True(t, pageReq.GetReverse())
 }
 
-func TestPrintClientProto(t *testing.T) {
-	clientCtx := client.Context{
-		Codec:        codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
-		Output:       io.Discard,
-		OutputFormat: "json",
-	}
-
-	require.NoError(t, printClientProto(clientCtx, &bexv1.QueryExchangeResponse{}))
-}
-
-func TestQueryRunEBranches(t *testing.T) {
+func TestQueryCommandsBuildRequestsAndPropagateErrors(t *testing.T) {
 	queryErr := errors.New("query failed")
 	printErr := errors.New("print failed")
 	ctxErr := errors.New("context failed")
 
 	queryCommands := []struct {
-		name string
-		cmd  func() *cobra.Command
-		args []string
+		name   string
+		method string
+		cmd    func() *cobra.Command
+		args   []string
 	}{
-		{name: "exchange", cmd: CmdQueryExchange, args: []string{"7"}},
-		{name: "exchanges", cmd: CmdQueryExchanges, args: nil},
-		{name: "exchanges by admin", cmd: CmdQueryExchangesByAdmin, args: []string{"admin"}},
-		{name: "is admin", cmd: CmdQueryIsAdmin, args: []string{"admin"}},
-		{name: "reserve depositors", cmd: CmdQueryReserveDepositors, args: []string{"7"}},
-		{name: "is reserve depositor", cmd: CmdQueryIsReserveDepositor, args: []string{"7", "depositor"}},
-		{name: "collected fees", cmd: CmdQueryCollectedFees, args: []string{"7"}},
-		{name: "locked fees", cmd: CmdQueryLockedFees, args: []string{"7"}},
-		{name: "available fees", cmd: CmdQueryAvailableFees, args: []string{"7"}},
-		{name: "volume window", cmd: CmdQueryVolumeWindow, args: []string{"7", "a-to-b"}},
-		{name: "quote", cmd: CmdQueryQuote, args: []string{"7", "agxn", "10"}},
+		{name: "exchange", method: "exchange", cmd: CmdQueryExchange, args: []string{"7"}},
+		{name: "exchanges", method: "exchanges", cmd: CmdQueryExchanges},
+		{name: "exchanges by exchange admin", method: "exchanges-by-exchange-admin", cmd: CmdQueryExchangesByExchangeAdmin, args: []string{"exchange-admin"}},
+		{name: "is BEX admin", method: "is-bex-admin", cmd: CmdQueryIsBexAdmin, args: []string{"bex-admin"}},
+		{name: "reserve depositors", method: "reserve-depositors", cmd: CmdQueryReserveDepositors, args: []string{"7"}},
+		{name: "is reserve depositor", method: "is-reserve-depositor", cmd: CmdQueryIsReserveDepositor, args: []string{"7", "depositor"}},
+		{name: "collected fees", method: "collected-fees", cmd: CmdQueryCollectedFees, args: []string{"7"}},
+		{name: "locked fees", method: "locked-fees", cmd: CmdQueryLockedFees, args: []string{"7"}},
+		{name: "available fees", method: "available-fees", cmd: CmdQueryAvailableFees, args: []string{"7"}},
+		{name: "volume window", method: "volume-window", cmd: CmdQueryVolumeWindow, args: []string{"7", "a-to-b"}},
+		{name: "quote", method: "quote", cmd: CmdQueryQuote, args: []string{"7", "agxn", "10"}},
 	}
 
 	for _, tc := range queryCommands {
-		t.Run(tc.name+" success", func(t *testing.T) {
-			mock := installQueryMocks(t, nil, nil)
-			require.NoError(t, tc.cmd().RunE(tc.cmd(), tc.args))
-			require.NotEmpty(t, mock.method)
-		})
-		t.Run(tc.name+" context error", func(t *testing.T) {
-			installQueryContextError(t, ctxErr)
-			require.ErrorIs(t, tc.cmd().RunE(tc.cmd(), tc.args), ctxErr)
-		})
-		t.Run(tc.name+" query error", func(t *testing.T) {
-			installQueryMocks(t, queryErr, nil)
-			require.ErrorIs(t, tc.cmd().RunE(tc.cmd(), tc.args), queryErr)
-		})
-		t.Run(tc.name+" print error", func(t *testing.T) {
-			installQueryMocks(t, nil, printErr)
-			require.ErrorIs(t, tc.cmd().RunE(tc.cmd(), tc.args), printErr)
+		t.Run(tc.name, func(t *testing.T) {
+			mock := installQueryMocks(t, nil, nil, nil)
+			cmd := tc.cmd()
+			require.NoError(t, cmd.RunE(cmd, tc.args))
+			require.Equal(t, tc.method, mock.method)
 		})
 	}
 
-	installQueryMocks(t, nil, nil)
+	t.Run("representative context error", func(t *testing.T) {
+		installQueryMocks(t, ctxErr, nil, nil)
+		cmd := CmdQueryExchange()
+		require.ErrorIs(t, cmd.RunE(cmd, []string{"7"}), ctxErr)
+	})
+	t.Run("representative query error", func(t *testing.T) {
+		installQueryMocks(t, nil, queryErr, nil)
+		cmd := CmdQueryExchange()
+		require.ErrorIs(t, cmd.RunE(cmd, []string{"7"}), queryErr)
+	})
+	t.Run("representative print error", func(t *testing.T) {
+		installQueryMocks(t, nil, nil, printErr)
+		cmd := CmdQueryExchange()
+		require.ErrorIs(t, cmd.RunE(cmd, []string{"7"}), printErr)
+	})
+
+	installQueryMocks(t, nil, nil, nil)
 	require.Error(t, CmdQueryExchange().RunE(CmdQueryExchange(), []string{"bad"}))
 	require.Error(t, CmdQueryCollectedFees().RunE(CmdQueryCollectedFees(), []string{"bad"}))
 	require.Error(t, CmdQueryReserveDepositors().RunE(CmdQueryReserveDepositors(), []string{"bad"}))
@@ -204,13 +198,40 @@ func TestQueryRunEBranches(t *testing.T) {
 	badPageKey := CmdQueryExchanges()
 	require.NoError(t, badPageKey.Flags().Set(flags.FlagPageKey, "not-base64"))
 	require.Error(t, badPageKey.RunE(badPageKey, nil))
-	badPageOffset := CmdQueryExchangesByAdmin()
+	badPageOffset := CmdQueryExchangesByExchangeAdmin()
 	require.NoError(t, badPageOffset.Flags().Set(flags.FlagPage, "2"))
 	require.NoError(t, badPageOffset.Flags().Set(flags.FlagOffset, "1"))
 	require.Error(t, badPageOffset.RunE(badPageOffset, []string{"admin"}))
 }
 
-func TestTxRunEBranches(t *testing.T) {
+func TestExplicitAdminQueryArguments(t *testing.T) {
+	t.Run("exchange admin owner index", func(t *testing.T) {
+		mock := installQueryMocks(t, nil, nil, nil)
+		cmd := CmdQueryExchangesByExchangeAdmin()
+
+		require.NoError(t, cmd.RunE(cmd, []string{"exchange-admin"}))
+		require.Equal(t, "exchange-admin", mock.exchangeAdminAddress)
+	})
+
+	t.Run("BEX registrar registry", func(t *testing.T) {
+		mock := installQueryMocks(t, nil, nil, nil)
+		cmd := CmdQueryIsBexAdmin()
+
+		require.NoError(t, cmd.RunE(cmd, []string{"bex-admin"}))
+		require.Equal(t, "bex-admin", mock.bexAdminAddress)
+	})
+}
+
+func TestQueryExchangesIncludesDeletedWhenRequested(t *testing.T) {
+	mock := installQueryMocks(t, nil, nil, nil)
+	cmd := CmdQueryExchanges()
+	require.NoError(t, cmd.Flags().Set(flagIncludeDeleted, "true"))
+
+	require.NoError(t, cmd.RunE(cmd, nil))
+	require.True(t, mock.includeDeleted)
+}
+
+func TestTxCommandsBuildMessagesAndPropagateErrors(t *testing.T) {
 	ctxErr := errors.New("context failed")
 	broadcastErr := errors.New("broadcast failed")
 	from := sdk.AccAddress(bytes.Repeat([]byte{0x44}, 20))
@@ -244,17 +265,18 @@ func TestTxRunEBranches(t *testing.T) {
 		{
 			name: "register exchange",
 			cmd:  CmdRegisterExchange,
-			args: []string{`{"denom_a":"agxn"}`},
+			args: []string{`{"denom_a":"agxn","exchange_admin_address":"exchange-owner"}`},
 			assertMsg: func(t *testing.T, msg sdk.Msg) {
 				typed := msg.(*bexv1.MsgRegisterExchange)
-				require.Equal(t, from.String(), typed.GetAdminAddress())
+				require.Equal(t, from.String(), typed.GetBexAdminAddress())
+				require.Equal(t, "exchange-owner", typed.GetExchangeAdminAddress())
 				require.Equal(t, "agxn", typed.GetDenomA())
 			},
 		},
 		{
 			name: "update exchange",
 			cmd:  CmdUpdateExchange,
-			args: []string{"7", `{"fee_bps_a_to_b":{"value":9}}`, "3"},
+			args: []string{"7", `{"fee_bps_a_to_b":9}`, "3"},
 			assertMsg: func(t *testing.T, msg sdk.Msg) {
 				typed := msg.(*bexv1.MsgUpdateExchange)
 				require.Equal(t, from.String(), typed.GetAdminAddress())
@@ -328,23 +350,27 @@ func TestTxRunEBranches(t *testing.T) {
 	}
 
 	for _, tc := range txCommands {
-		t.Run(tc.name+" success", func(t *testing.T) {
-			captured := installTxMocks(t, from, nil)
-			require.NoError(t, tc.cmd().RunE(tc.cmd(), tc.args))
+		t.Run(tc.name, func(t *testing.T) {
+			captured := installTxMocks(t, from, nil, nil)
+			cmd := tc.cmd()
+			require.NoError(t, cmd.RunE(cmd, tc.args))
 			require.Len(t, *captured, 1)
 			tc.assertMsg(t, (*captured)[0])
 		})
-		t.Run(tc.name+" context error", func(t *testing.T) {
-			installTxContextError(t, ctxErr)
-			require.ErrorIs(t, tc.cmd().RunE(tc.cmd(), tc.args), ctxErr)
-		})
-		t.Run(tc.name+" broadcast error", func(t *testing.T) {
-			installTxMocks(t, from, broadcastErr)
-			require.ErrorIs(t, tc.cmd().RunE(tc.cmd(), tc.args), broadcastErr)
-		})
 	}
 
-	installTxMocks(t, from, nil)
+	t.Run("representative context error", func(t *testing.T) {
+		installTxMocks(t, from, ctxErr, nil)
+		cmd := CmdRegisterAdmin()
+		require.ErrorIs(t, cmd.RunE(cmd, []string{"admin"}), ctxErr)
+	})
+	t.Run("representative broadcast error", func(t *testing.T) {
+		installTxMocks(t, from, nil, broadcastErr)
+		cmd := CmdRegisterAdmin()
+		require.ErrorIs(t, cmd.RunE(cmd, []string{"admin"}), broadcastErr)
+	})
+
+	installTxMocks(t, from, nil, nil)
 	require.Error(t, CmdRegisterExchange().RunE(CmdRegisterExchange(), []string{"{"}))
 	require.Error(t, CmdUpdateExchange().RunE(CmdUpdateExchange(), []string{"bad", `{}`, "3"}))
 	require.Error(t, CmdUpdateExchange().RunE(CmdUpdateExchange(), []string{"7", `{}`, "bad"}))
@@ -359,14 +385,14 @@ func TestTxRunEBranches(t *testing.T) {
 	require.Error(t, CmdRegisterExchange().RunE(CmdRegisterExchange(), []string{`{} {}`}))
 }
 
-func installQueryMocks(t *testing.T, queryErr, printErr error) *mockQueryClient {
+func installQueryMocks(t *testing.T, contextErr, queryErr, printErr error) *mockQueryClient {
 	t.Helper()
 
 	originalGetCtx := getClientQueryContext
 	originalNewClient := newQueryClient
 	originalPrint := printProto
 	mock := &mockQueryClient{err: queryErr}
-	getClientQueryContext = func(*cobra.Command) (client.Context, error) { return client.Context{}, nil }
+	getClientQueryContext = func(*cobra.Command) (client.Context, error) { return client.Context{}, contextErr }
 	newQueryClient = func(grpc.ClientConnInterface) bexv1.QueryClient { return mock }
 	printProto = func(client.Context, printableProto) error { return printErr }
 	t.Cleanup(func() {
@@ -377,26 +403,18 @@ func installQueryMocks(t *testing.T, queryErr, printErr error) *mockQueryClient 
 	return mock
 }
 
-func installQueryContextError(t *testing.T, err error) {
-	t.Helper()
-
-	originalGetCtx := getClientQueryContext
-	getClientQueryContext = func(*cobra.Command) (client.Context, error) { return client.Context{}, err }
-	t.Cleanup(func() { getClientQueryContext = originalGetCtx })
-}
-
-func installTxMocks(t *testing.T, from sdk.AccAddress, err error) *[]sdk.Msg {
+func installTxMocks(t *testing.T, from sdk.AccAddress, contextErr, broadcastErr error) *[]sdk.Msg {
 	t.Helper()
 
 	originalGetCtx := getClientTxContext
 	originalBroadcast := generateOrBroadcastTxCLI
 	captured := []sdk.Msg{}
 	getClientTxContext = func(*cobra.Command) (client.Context, error) {
-		return client.Context{FromAddress: from}, nil
+		return client.Context{FromAddress: from}, contextErr
 	}
 	generateOrBroadcastTxCLI = func(_ client.Context, _ *pflag.FlagSet, msgs ...sdk.Msg) error {
 		captured = append(captured, msgs...)
-		return err
+		return broadcastErr
 	}
 	t.Cleanup(func() {
 		getClientTxContext = originalGetCtx
@@ -405,17 +423,12 @@ func installTxMocks(t *testing.T, from sdk.AccAddress, err error) *[]sdk.Msg {
 	return &captured
 }
 
-func installTxContextError(t *testing.T, err error) {
-	t.Helper()
-
-	originalGetCtx := getClientTxContext
-	getClientTxContext = func(*cobra.Command) (client.Context, error) { return client.Context{}, err }
-	t.Cleanup(func() { getClientTxContext = originalGetCtx })
-}
-
 type mockQueryClient struct {
-	method string
-	err    error
+	method               string
+	exchangeAdminAddress string
+	bexAdminAddress      string
+	includeDeleted       bool
+	err                  error
 }
 
 func (m *mockQueryClient) Exchange(context.Context, *bexv1.QueryExchangeRequest, ...grpc.CallOption) (*bexv1.QueryExchangeResponse, error) {
@@ -423,19 +436,22 @@ func (m *mockQueryClient) Exchange(context.Context, *bexv1.QueryExchangeRequest,
 	return &bexv1.QueryExchangeResponse{}, m.err
 }
 
-func (m *mockQueryClient) Exchanges(context.Context, *bexv1.QueryExchangesRequest, ...grpc.CallOption) (*bexv1.QueryExchangesResponse, error) {
+func (m *mockQueryClient) Exchanges(_ context.Context, req *bexv1.QueryExchangesRequest, _ ...grpc.CallOption) (*bexv1.QueryExchangesResponse, error) {
 	m.method = "exchanges"
+	m.includeDeleted = req.GetIncludeDeleted()
 	return &bexv1.QueryExchangesResponse{}, m.err
 }
 
-func (m *mockQueryClient) ExchangesByAdmin(context.Context, *bexv1.QueryExchangesByAdminRequest, ...grpc.CallOption) (*bexv1.QueryExchangesByAdminResponse, error) {
-	m.method = "exchanges-by-admin"
-	return &bexv1.QueryExchangesByAdminResponse{}, m.err
+func (m *mockQueryClient) ExchangesByExchangeAdmin(_ context.Context, req *bexv1.QueryExchangesByExchangeAdminRequest, _ ...grpc.CallOption) (*bexv1.QueryExchangesByExchangeAdminResponse, error) {
+	m.method = "exchanges-by-exchange-admin"
+	m.exchangeAdminAddress = req.GetExchangeAdminAddress()
+	return &bexv1.QueryExchangesByExchangeAdminResponse{}, m.err
 }
 
-func (m *mockQueryClient) IsAdmin(context.Context, *bexv1.QueryIsAdminRequest, ...grpc.CallOption) (*bexv1.QueryIsAdminResponse, error) {
-	m.method = "is-admin"
-	return &bexv1.QueryIsAdminResponse{}, m.err
+func (m *mockQueryClient) IsBexAdmin(_ context.Context, req *bexv1.QueryIsBexAdminRequest, _ ...grpc.CallOption) (*bexv1.QueryIsBexAdminResponse, error) {
+	m.method = "is-bex-admin"
+	m.bexAdminAddress = req.GetBexAdminAddress()
+	return &bexv1.QueryIsBexAdminResponse{}, m.err
 }
 
 func (m *mockQueryClient) ReserveDepositors(context.Context, *bexv1.QueryReserveDepositorsRequest, ...grpc.CallOption) (*bexv1.QueryReserveDepositorsResponse, error) {

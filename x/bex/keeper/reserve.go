@@ -5,13 +5,23 @@ import (
 	"errors"
 
 	"cosmossdk.io/collections"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
 type reserveAllowanceKey struct{}
+
+type reserveOutflowAllowanceKey struct{}
+
+type reserveOutflowAllowance struct {
+	exchangeID uint64
+	recipient  sdk.AccAddress
+	amount     sdk.Coins
+}
 
 func (k Keeper) withReserveReceiveAllowance(ctx context.Context, exchangeID uint64) context.Context {
 	if sdkCtx, ok := ctx.(sdk.Context); ok {
@@ -23,16 +33,50 @@ func (k Keeper) withReserveReceiveAllowance(ctx context.Context, exchangeID uint
 	return sdk.UnwrapSDKContext(ctx).WithContext(ctx).WithValue(reserveAllowanceKey{}, exchangeID)
 }
 
-// WithReserveReceiveAllowance grants a context-scoped receive capability for a
-// trusted module integration. It is keeper-only and must not be exposed through
-// a user-facing Msg or query endpoint; wallet deposits use DepositReserve.
-func (k Keeper) WithReserveReceiveAllowance(ctx context.Context, exchangeID uint64) context.Context {
-	return k.withReserveReceiveAllowance(ctx, exchangeID)
-}
-
 func reserveAllowance(ctx context.Context) (uint64, bool) {
 	exchangeID, ok := ctx.Value(reserveAllowanceKey{}).(uint64)
 	return exchangeID, ok
+}
+
+func (k Keeper) withReserveOutflowAllowance(
+	ctx context.Context,
+	exchangeID uint64,
+	recipient sdk.AccAddress,
+	amount sdk.Coins,
+) context.Context {
+	allowance := reserveOutflowAllowance{
+		exchangeID: exchangeID,
+		recipient:  append(sdk.AccAddress(nil), recipient...),
+		amount:     cloneCoins(amount),
+	}
+	if sdkCtx, ok := ctx.(sdk.Context); ok {
+		return sdkCtx.WithValue(reserveOutflowAllowanceKey{}, allowance)
+	}
+	return sdk.UnwrapSDKContext(ctx).WithContext(ctx).WithValue(reserveOutflowAllowanceKey{}, allowance)
+}
+
+func cloneCoins(coins sdk.Coins) sdk.Coins {
+	cloned := make(sdk.Coins, len(coins))
+	for i, coin := range coins {
+		cloned[i] = sdk.Coin{
+			Denom:  coin.Denom,
+			Amount: sdkmath.NewIntFromBigInt(coin.Amount.BigInt()),
+		}
+	}
+	return cloned
+}
+
+func hasReserveOutflowAllowance(
+	ctx context.Context,
+	exchangeID uint64,
+	recipient sdk.AccAddress,
+	amount sdk.Coins,
+) bool {
+	allowance, ok := ctx.Value(reserveOutflowAllowanceKey{}).(reserveOutflowAllowance)
+	return ok &&
+		allowance.exchangeID == exchangeID &&
+		allowance.recipient.Equals(recipient) &&
+		allowance.amount.Equal(amount)
 }
 
 func (k Keeper) RegisterSendRestriction() {
@@ -123,6 +167,22 @@ func (k Keeper) SendRestrictionFn(ctx context.Context, fromAddr sdk.AccAddress, 
 		if !hasFeeOutflowAllowance(ctx, toAddr, amount) {
 			return nil, types.ErrInvariantViolation.Wrap("BEX module account transfers require an exact scoped fee outflow allowance")
 		}
+	} else if len(fromAddr) > 0 {
+		from, err := k.accountCodec.BytesToString(fromAddr)
+		if err != nil {
+			return nil, err
+		}
+		exchangeID, err := k.reserveByAddress.Get(ctx, from)
+		if err != nil && !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		if err == nil && !hasReserveOutflowAllowance(ctx, exchangeID, toAddr, amount) {
+			return nil, types.ErrDirectReserveTransfer.Wrapf(
+				"reserve %s for exchange %d transfers require an exact scoped outflow allowance",
+				from,
+				exchangeID,
+			)
+		}
 	}
 	to, err := k.accountCodec.BytesToString(toAddr)
 	if err != nil {
@@ -151,13 +211,7 @@ func (k Keeper) DepositReserve(ctx context.Context, signer string, exchangeID ui
 	if err != nil {
 		return types.ErrUnauthorizedReserveDepositor.Wrapf("invalid depositor address: %v", err)
 	}
-	authorized := false
-	if canonical == exchange.GetAdminAddress() {
-		authorized, err = k.admins.Has(ctx, canonical)
-		if err != nil {
-			return err
-		}
-	}
+	authorized := canonical == exchange.GetAdminAddress()
 	if !authorized {
 		authorized, err = k.reserveDepositors.Has(ctx, collections.Join(exchangeID, canonical))
 		if err != nil {
@@ -169,6 +223,9 @@ func (k Keeper) DepositReserve(ctx context.Context, signer string, exchangeID ui
 	}
 	if !amount.IsValid() || !amount.IsAllPositive() {
 		return types.ErrInvalidRequest.Wrap("amount must be positive coins")
+	}
+	if err := k.bankKeeper.IsSendEnabledCoins(ctx, amount...); err != nil {
+		return err
 	}
 	reserveAddr, err := k.accountCodec.StringToBytes(exchange.GetReserveAddress())
 	if err != nil {
@@ -189,6 +246,55 @@ func (k Keeper) DepositReserve(ctx context.Context, signer string, exchangeID ui
 	return nil
 }
 
+// ReceiveToReserve moves coins into the deterministic reserve through an exact,
+// keeper-scoped receive capability. It is intended only for trusted module
+// integrations such as transwap receive and callback processing.
+func (k Keeper) ReceiveToReserve(ctx context.Context, exchangeID uint64, fromAddr sdk.AccAddress, amount sdk.Coins) error {
+	exchange, err := k.GetActiveExchange(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	if len(fromAddr) == 0 || !amount.IsValid() || !amount.IsAllPositive() {
+		return types.ErrInvalidRequest.Wrap("reserve receive requires a sender and positive coins")
+	}
+	reserveAddr := k.GetReserveAddress(ctx, exchangeID)
+	reserveAddress, err := k.accountCodec.BytesToString(reserveAddr)
+	if err != nil {
+		return err
+	}
+	if exchange.GetReserveAddress() != reserveAddress {
+		return types.ErrInvariantViolation.Wrap("exchange reserve address does not match deterministic reserve")
+	}
+	if k.bankKeeper.BlockedAddr(reserveAddr) {
+		return sdkerrors.ErrUnauthorized.Wrapf("%s is not allowed to receive funds", reserveAddr)
+	}
+	allowedCtx := k.withReserveReceiveAllowance(ctx, exchangeID)
+	return k.bankKeeper.SendCoins(allowedCtx, fromAddr, reserveAddr, amount)
+}
+
+// SendFromReserve moves coins out of the deterministic reserve through an
+// exact recipient-and-amount capability. No caller can turn this into a
+// reusable context capability.
+func (k Keeper) SendFromReserve(ctx context.Context, exchangeID uint64, recipient sdk.AccAddress, amount sdk.Coins) error {
+	exchange, err := k.GetActiveExchange(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	if len(recipient) == 0 || !amount.IsValid() || !amount.IsAllPositive() {
+		return types.ErrInvalidRequest.Wrap("reserve send requires a recipient and positive coins")
+	}
+	reserveAddr := k.GetReserveAddress(ctx, exchangeID)
+	reserveAddress, err := k.accountCodec.BytesToString(reserveAddr)
+	if err != nil {
+		return err
+	}
+	if exchange.GetReserveAddress() != reserveAddress {
+		return types.ErrInvariantViolation.Wrap("exchange reserve address does not match deterministic reserve")
+	}
+	allowedCtx := k.withReserveOutflowAllowance(ctx, exchangeID, recipient, amount)
+	return k.bankKeeper.SendCoins(allowedCtx, reserveAddr, recipient, amount)
+}
+
 func (k Keeper) WithdrawReserve(ctx context.Context, signer string, exchangeID uint64, recipient sdk.AccAddress, amount sdk.Coins) error {
 	exchange, err := k.GetActiveExchange(ctx, exchangeID)
 	if err != nil {
@@ -203,6 +309,12 @@ func (k Keeper) WithdrawReserve(ctx context.Context, signer string, exchangeID u
 	if !amount.IsValid() || !amount.IsAllPositive() {
 		return types.ErrInvalidRequest.Wrap("amount must be positive coins")
 	}
+	if err := k.bankKeeper.IsSendEnabledCoins(ctx, amount...); err != nil {
+		return err
+	}
+	if k.bankKeeper.BlockedAddr(recipient) {
+		return sdkerrors.ErrUnauthorized.Wrapf("%s is not allowed to receive funds", recipient)
+	}
 	reserveAddr, err := k.accountCodec.StringToBytes(exchange.GetReserveAddress())
 	if err != nil {
 		return types.ErrInvalidRoute.Wrapf("invalid reserve address: %v", err)
@@ -211,11 +323,22 @@ func (k Keeper) WithdrawReserve(ctx context.Context, signer string, exchangeID u
 	if !hasCoins(balances, amount) {
 		return types.ErrInsufficientReserve.Wrap("reserve balance too low")
 	}
+	pending, err := k.GetPendingLiabilities(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	for _, coin := range amount {
+		available := balances.AmountOf(coin.Denom).Sub(pending.AmountOf(coin.Denom))
+		if available.IsNegative() || available.LT(coin.Amount) {
+			return types.ErrInsufficientReserve.Wrapf("reserve balance for %s is reserved for pending refunds", coin.Denom)
+		}
+	}
 	recipientString, err := k.accountCodec.BytesToString(recipient)
 	if err != nil {
 		return err
 	}
-	if err := k.bankKeeper.SendCoins(ctx, sdk.AccAddress(reserveAddr), recipient, amount); err != nil {
+	withdrawCtx := k.withReserveOutflowAllowance(ctx, exchangeID, recipient, amount)
+	if err := k.bankKeeper.SendCoins(withdrawCtx, sdk.AccAddress(reserveAddr), recipient, amount); err != nil {
 		return err
 	}
 	emitEvent(

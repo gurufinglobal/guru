@@ -20,6 +20,7 @@ func TestRegisterInterfaces(t *testing.T) {
 
 	msgs := []sdk.Msg{
 		&bexv1.MsgRegisterAdmin{},
+		&bexv1.MsgUpdateAdmin{},
 		&bexv1.MsgRemoveAdmin{},
 		&bexv1.MsgRegisterExchange{},
 		&bexv1.MsgUpdateExchange{},
@@ -36,6 +37,7 @@ func TestRegisterInterfaces(t *testing.T) {
 
 	responses := []tx.MsgResponse{
 		&bexv1.MsgRegisterAdminResponse{},
+		&bexv1.MsgUpdateAdminResponse{},
 		&bexv1.MsgRemoveAdminResponse{},
 		&bexv1.MsgRegisterExchangeResponse{},
 		&bexv1.MsgUpdateExchangeResponse{},
@@ -59,7 +61,7 @@ func TestMsgSignerAnnotationsBindAuthorityFields(t *testing.T) {
 	}{
 		{name: "register admin", msg: &bexv1.MsgRegisterAdmin{}, signer: "moderator"},
 		{name: "remove admin", msg: &bexv1.MsgRemoveAdmin{}, signer: "moderator"},
-		{name: "register exchange", msg: &bexv1.MsgRegisterExchange{}, signer: "admin_address"},
+		{name: "register exchange", msg: &bexv1.MsgRegisterExchange{}, signer: "bex_admin_address"},
 		{name: "update exchange", msg: &bexv1.MsgUpdateExchange{}, signer: "admin_address"},
 		{name: "delete exchange", msg: &bexv1.MsgDeleteExchange{}, signer: "admin_address"},
 		{name: "add reserve depositor", msg: &bexv1.MsgAddReserveDepositor{}, signer: "admin_address"},

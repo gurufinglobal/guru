@@ -19,7 +19,7 @@ import (
 // InternalTransferRepresentation defines a struct used internally by the transfer application.
 type InternalTransferRepresentation struct {
 	ExchangeID string
-	Token      transwapv1.Token
+	Token      *transwapv1.Token
 	Sender     string
 	Receiver   string
 	Memo       string
@@ -31,8 +31,8 @@ const (
 	EncodingABI      = "application/x-solidity-abi"
 )
 
-func NewFungibleTokenPacketData(denom string, amount string, sender, receiver string, memo string) transwapv1.FungibleTokenPacketData {
-	return transwapv1.FungibleTokenPacketData{
+func NewFungibleTokenPacketData(denom string, amount string, sender, receiver string, memo string) *transwapv1.FungibleTokenPacketData {
+	return &transwapv1.FungibleTokenPacketData{
 		ExchangeId: "0",
 		Denom:      denom,
 		Amount:     amount,
@@ -42,21 +42,30 @@ func NewFungibleTokenPacketData(denom string, amount string, sender, receiver st
 	}
 }
 
-func NewTransferPacketData(sourcePort string, sourceChannel string, token transwapv1.Token, sender, receiver string, memo string, timeoutTimestamp uint64, fee sdk.Coin, exchangeID string) transwapv1.TransferPacketData {
-	return transwapv1.TransferPacketData{
-		SourcePort:       sourcePort,
-		SourceChannel:    sourceChannel,
-		Token:            &token,
-		Sender:           sender,
-		Receiver:         receiver,
-		Memo:             memo,
-		TimeoutTimestamp: timeoutTimestamp,
-		Fee:              SDKCoinToProto(fee),
-		ExchangeId:       exchangeID,
+func NewTransferPacketData(sourcePort string, sourceChannel string, token *transwapv1.Token, sender, receiver string, memo string, timeoutTimestamp uint64, fee sdk.Coin, exchangeID string) *transwapv1.TransferPacketData {
+	packet := &transwapv1.TransferPacketData{
+		SourcePort:               sourcePort,
+		SourceChannel:            sourceChannel,
+		Token:                    token,
+		Sender:                   sender,
+		Receiver:                 receiver,
+		Memo:                     memo,
+		TimeoutTimestamp:         timeoutTimestamp,
+		Fee:                      SDKCoinToProto(fee),
+		ExchangeId:               exchangeID,
+		OriginalTimeoutTimestamp: timeoutTimestamp,
 	}
+	coin, err := TokenToCoin(token)
+	if err == nil && coin.Denom == fee.Denom && !fee.Amount.IsNegative() && coin.Amount.GT(fee.Amount) {
+		packet.PendingLiability = SDKCoinToProto(sdk.NewCoin(coin.Denom, coin.Amount.Sub(fee.Amount)))
+	}
+	return packet
 }
 
-func ValidateFungibleTokenPacketData(ftpd transwapv1.FungibleTokenPacketData) error {
+func ValidateFungibleTokenPacketData(ftpd *transwapv1.FungibleTokenPacketData) error {
+	if ftpd == nil {
+		return errorsmod.Wrap(ibcerrors.ErrInvalidType, "packet data cannot be nil")
+	}
 	if err := validateAmount(ftpd.Amount); err != nil {
 		return err
 	}
@@ -75,7 +84,7 @@ func ValidateFungibleTokenPacketData(ftpd transwapv1.FungibleTokenPacketData) er
 	return ValidateDenom(ExtractDenomFromPath(ftpd.Denom))
 }
 
-func FungibleTokenPacketDataBytes(ftpd transwapv1.FungibleTokenPacketData) []byte {
+func FungibleTokenPacketDataBytes(ftpd *transwapv1.FungibleTokenPacketData) []byte {
 	bz, err := json.Marshal(ftpd)
 	if err != nil {
 		panic(errors.New("cannot marshal FungibleTokenPacketData into bytes"))
@@ -83,7 +92,10 @@ func FungibleTokenPacketDataBytes(ftpd transwapv1.FungibleTokenPacketData) []byt
 	return bz
 }
 
-func FungibleTokenPacketDataCustomPacketData(ftpd transwapv1.FungibleTokenPacketData, key string) any {
+func FungibleTokenPacketDataCustomPacketData(ftpd *transwapv1.FungibleTokenPacketData, key string) any {
+	if ftpd == nil {
+		return nil
+	}
 	if len(ftpd.Memo) == 0 {
 		return nil
 	}
@@ -102,21 +114,15 @@ func FungibleTokenPacketDataCustomPacketData(ftpd transwapv1.FungibleTokenPacket
 }
 
 func UnmarshalFungibleTokenPacketDataJSON(bz []byte, ftpd *transwapv1.FungibleTokenPacketData) error {
-	type ftpdAlias transwapv1.FungibleTokenPacketData
-
 	d := json.NewDecoder(bytes.NewReader(bz))
 	d.DisallowUnknownFields()
-
-	var alias ftpdAlias
-	if err := d.Decode(&alias); err != nil {
+	if err := d.Decode(ftpd); err != nil {
 		return err
 	}
-
-	*ftpd = transwapv1.FungibleTokenPacketData(alias)
 	return nil
 }
 
-func NewInternalTransferRepresentation(exchangeID string, token transwapv1.Token, sender, receiver string, memo string) InternalTransferRepresentation {
+func NewInternalTransferRepresentation(exchangeID string, token *transwapv1.Token, sender, receiver string, memo string) InternalTransferRepresentation {
 	return InternalTransferRepresentation{ExchangeID: exchangeID, Token: token, Sender: sender, Receiver: receiver, Memo: memo}
 }
 
@@ -171,7 +177,7 @@ func (ftpd InternalTransferRepresentation) GetPacketSender(sourcePortID string) 
 	return ftpd.Sender
 }
 
-func MarshalPacketData(data transwapv1.FungibleTokenPacketData, ics20Version string, encoding string) ([]byte, error) {
+func MarshalPacketData(data *transwapv1.FungibleTokenPacketData, ics20Version string, encoding string) ([]byte, error) {
 	if ics20Version != V1 {
 		panic("unsupported ics20 version")
 	}
@@ -180,9 +186,9 @@ func MarshalPacketData(data transwapv1.FungibleTokenPacketData, ics20Version str
 	case EncodingJSON:
 		return json.Marshal(data)
 	case EncodingProtobuf:
-		return proto.Marshal(&data)
+		return proto.Marshal(data)
 	case EncodingABI:
-		return EncodeABIFungibleTokenPacketData(&data)
+		return EncodeABIFungibleTokenPacketData(data)
 	default:
 		return nil, errorsmod.Wrapf(ibcerrors.ErrInvalidType, "invalid encoding provided, must be either empty or one of [%q, %q], got %s", EncodingJSON, EncodingProtobuf, encoding)
 	}
@@ -231,17 +237,17 @@ func UnmarshalPacketData(bz []byte, ics20Version string, encoding string) (Inter
 		return InternalTransferRepresentation{}, errorsmod.Wrapf(ibcerrors.ErrInvalidType, "cannot convert proto message into FungibleTokenPacketData")
 	}
 
-	return PacketDataV1ToInternal(*datav1)
+	return PacketDataV1ToInternal(datav1)
 }
 
-func PacketDataV1ToInternal(packetData transwapv1.FungibleTokenPacketData) (InternalTransferRepresentation, error) {
+func PacketDataV1ToInternal(packetData *transwapv1.FungibleTokenPacketData) (InternalTransferRepresentation, error) {
 	if err := ValidateFungibleTokenPacketData(packetData); err != nil {
 		return InternalTransferRepresentation{}, errorsmod.Wrapf(err, "invalid packet data")
 	}
 
 	return InternalTransferRepresentation{
 		ExchangeID: packetData.ExchangeId,
-		Token: transwapv1.Token{
+		Token: &transwapv1.Token{
 			Denom:  ExtractDenomFromPath(packetData.Denom),
 			Amount: packetData.Amount,
 		},

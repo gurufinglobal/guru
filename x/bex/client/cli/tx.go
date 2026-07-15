@@ -1,10 +1,7 @@
 package cli
 
 import (
-	"encoding/json"
-	"io"
 	"strconv"
-	"strings"
 
 	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -14,6 +11,8 @@ import (
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -31,6 +30,7 @@ func GetTxCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		CmdRegisterAdmin(),
+		CmdUpdateAdmin(),
 		CmdRemoveAdmin(),
 		CmdRegisterExchange(),
 		CmdUpdateExchange(),
@@ -137,6 +137,27 @@ func CmdRemoveAdmin() *cobra.Command {
 	return cmd
 }
 
+func CmdUpdateAdmin() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-admin [old-admin] [new-admin]",
+		Short: "Replace one BEX exchange registrar",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := getClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgUpdateAdmin{
+				Moderator:       clientCtx.GetFromAddress().String(),
+				OldAdminAddress: args[0],
+				NewAdminAddress: args[1],
+			})
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
 func CmdRegisterExchange() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register-exchange [spec-json]",
@@ -151,7 +172,7 @@ func CmdRegisterExchange() *cobra.Command {
 			if err := decodeStrictJSON(args[0], msg); err != nil {
 				return err
 			}
-			msg.AdminAddress = clientCtx.GetFromAddress().String()
+			msg.BexAdminAddress = clientCtx.GetFromAddress().String()
 			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
@@ -310,18 +331,6 @@ func parseExchangeIDAndCoins(idRaw, coinsRaw string) (uint64, []*basev1beta1.Coi
 	return exchangeID, out, nil
 }
 
-func decodeStrictJSON(raw string, target any) error {
-	decoder := json.NewDecoder(strings.NewReader(raw))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(target); err != nil {
-		return err
-	}
-	var trailing any
-	if err := decoder.Decode(&trailing); err != io.EOF {
-		if err == nil {
-			return types.ErrInvalidRequest.Wrap("unexpected trailing JSON value")
-		}
-		return err
-	}
-	return nil
+func decodeStrictJSON(raw string, target proto.Message) error {
+	return (protojson.UnmarshalOptions{DiscardUnknown: false}).Unmarshal([]byte(raw), target)
 }

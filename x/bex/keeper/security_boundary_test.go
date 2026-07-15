@@ -3,6 +3,7 @@ package keeper
 import (
 	"testing"
 
+	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,7 +60,13 @@ func TestVolumeAccountingUint256BoundaryReturnsError(t *testing.T) {
 		nilAmountErr = f.keeper.RecordVolumeWindow(f.ctx, unlimited.GetId(), direction, sdkmath.Int{})
 	})
 	require.ErrorIs(t, nilAmountErr, types.ErrInvalidRequest)
-	key := currentVolumeKey(f.ctx.BlockTime(), unlimited.GetId(), direction, unlimited.GetVolumeEpochSeconds())
+	key := currentVolumeKey(
+		f.ctx.BlockTime(),
+		unlimited.GetId(),
+		direction,
+		unlimited.GetVolumeEpochSeconds(),
+		unlimited.GetVolumeWindowGeneration(),
+	)
 	maxMinusOne := maxUint256Int.Sub(sdkmath.OneInt())
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, key, maxMinusOne.String()))
 
@@ -265,18 +272,29 @@ func TestReserveIndexesAndDepositorsAreCoveredByInvariant(t *testing.T) {
 		f, exchange := newFixture(t)
 		require.NoError(t, f.keeper.volumeWindow.Set(
 			f.ctx,
-			collections.Join4(exchange.GetId(), uint32(bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B), uint64(1), minVolumeEpochSecs),
+			collections.Join4(
+				uint64(0),
+				exchange.GetId(),
+				uint32(bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B),
+				collections.Join(minVolumeEpochSecs, exchange.GetVolumeWindowGeneration()),
+			),
 			"invalid",
 		))
 		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
 	})
 
-	t.Run("orphan volume prune cursor", func(t *testing.T) {
-		f, _ := newFixture(t)
-		require.NoError(t, f.keeper.volumePruneCursor.Set(
+	t.Run("misaligned volume window", func(t *testing.T) {
+		f, exchange := newFixture(t)
+		require.NoError(t, f.keeper.volumeWindow.Set(
 			f.ctx,
-			collections.Join(uint64(999), uint32(bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B)),
-			1,
+			volumeWindowKeyFromStart(
+				exchange.GetId(),
+				bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+				uint64(1),
+				minVolumeEpochSecs,
+				exchange.GetVolumeWindowGeneration(),
+			),
+			"1",
 		))
 		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
 	})
@@ -308,6 +326,7 @@ func TestReserveIndexesAndDepositorsAreCoveredByInvariant(t *testing.T) {
 	t.Run("deleted exchange has a non-zero reserve", func(t *testing.T) {
 		f, exchange := newFixture(t)
 		require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, exchange.GetId()))
+		require.NoError(t, f.keeper.AssertInvariants(f.ctx))
 		f.bankKeeper.SetBalance(
 			f.keeper.GetReserveAddress(f.ctx, exchange.GetId()),
 			sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)),
@@ -335,6 +354,76 @@ func TestReserveIndexesAndDepositorsAreCoveredByInvariant(t *testing.T) {
 		reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 		f.accountKeeper.SetAccount(f.ctx, authtypes.NewEmptyModuleAccount(ReserveModuleName(exchange.GetId())))
 		require.NotNil(t, f.accountKeeper.GetAccount(f.ctx, reserve))
+		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
+	})
+}
+
+func TestInvariantRejectsIncompleteTombstoneAndNonCanonicalAmounts(t *testing.T) {
+	newFixture := func(t *testing.T) (keeperTestFixture, *bexv1.Exchange) {
+		t.Helper()
+		f := setupKeeperFixture(t)
+		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
+		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+		return f, exchange
+	}
+
+	t.Run("incomplete tombstone", func(t *testing.T) {
+		f, exchange := newFixture(t)
+		require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, exchange.GetId()))
+		deleted, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
+		require.NoError(t, err)
+		deleted.VolumeEpochSeconds = 0
+		require.NoError(t, f.keeper.exchanges.Set(f.ctx, deleted.GetId(), deleted))
+		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
+	})
+
+	t.Run("exchange limit", func(t *testing.T) {
+		f, exchange := newFixture(t)
+		corrupted := cloneExchange(exchange)
+		corrupted.LimitAToB = "01"
+		require.NoError(t, f.keeper.exchanges.Set(f.ctx, exchange.GetId(), corrupted))
+		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
+	})
+
+	t.Run("volume amount", func(t *testing.T) {
+		f, exchange := newFixture(t)
+		key := currentVolumeKey(
+			f.ctx.BlockTime(),
+			exchange.GetId(),
+			bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			exchange.GetVolumeEpochSeconds(),
+			exchange.GetVolumeWindowGeneration(),
+		)
+		require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, key, "01"))
+		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
+	})
+
+	t.Run("collected fee amount", func(t *testing.T) {
+		f, exchange := newFixture(t)
+		require.NoError(t, f.keeper.collectedFees.Set(f.ctx, exchange.GetId(), &bexv1.FeeLedger{
+			Coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "01"}},
+		}))
+		f.bankKeeper.SetBalance(
+			authtypes.NewModuleAddress(types.ModuleName),
+			sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)),
+		)
+		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
+	})
+
+	t.Run("locked fee amount", func(t *testing.T) {
+		f, exchange := newFixture(t)
+		require.NoError(t, f.keeper.collectedFees.Set(
+			f.ctx,
+			exchange.GetId(),
+			coinsToLedger(sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))),
+		))
+		require.NoError(t, f.keeper.lockedFees.Set(f.ctx, exchange.GetId(), &bexv1.FeeLedger{
+			Coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "01"}},
+		}))
+		f.bankKeeper.SetBalance(
+			authtypes.NewModuleAddress(types.ModuleName),
+			sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)),
+		)
 		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
 	})
 }

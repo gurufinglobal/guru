@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -261,7 +262,7 @@ func TestOnRecvExchangePacketCommitsRepeatedSwapsInBothDirections(t *testing.T) 
 
 	reversePacketData := types.NewInternalTransferRepresentation(
 		"7",
-		transwapv1.Token{Denom: types.NewDenom("atgxkrw"), Amount: "103"},
+		&transwapv1.Token{Denom: types.NewDenom("atgxkrw"), Amount: "103"},
 		state.sender.String(),
 		state.receiver.String(),
 		"source memo",
@@ -892,7 +893,7 @@ func setupExchangeReceiveAtomicity(t *testing.T, failRecordVolume bool) exchange
 
 	packetData := types.NewInternalTransferRepresentation(
 		"7",
-		transwapv1.Token{Denom: types.NewDenom("atgxusd"), Amount: "103"},
+		&transwapv1.Token{Denom: types.NewDenom("atgxusd"), Amount: "103"},
 		sender.String(),
 		receiver.String(),
 		"",
@@ -938,7 +939,7 @@ type exchangeAtomicSwapRoute struct {
 	feeAmount   string
 }
 
-func (m *exchangeAtomicBexKeeper) ResolveSwapDirection(_ context.Context, exchangeID uint64, inputDenom string) (bexv1.SwapDirection, error) {
+func (m *exchangeAtomicBexKeeper) ValidateSwapInput(_ context.Context, exchangeID uint64, inputDenom, _ string) (bexv1.SwapDirection, error) {
 	route, ok := m.routeForInputDenom(inputDenom)
 	if exchangeID != m.expectedExchangeID || !ok {
 		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, bextypes.ErrInvalidRoute.Wrap("unexpected exchange route")
@@ -989,8 +990,15 @@ func (m *exchangeAtomicBexKeeper) routeForInputDenom(inputDenom string) (exchang
 	}, true
 }
 
-func (*exchangeAtomicBexKeeper) WithReserveReceiveAllowance(ctx context.Context, _ uint64) context.Context {
-	return ctx
+func (m *exchangeAtomicBexKeeper) ReceiveToReserve(ctx context.Context, _ uint64, from sdk.AccAddress, amount sdk.Coins) error {
+	if m.bank.BlockedAddr(m.reserve) {
+		return fmt.Errorf("%s is not allowed to receive funds", m.reserve)
+	}
+	return m.bank.SendCoins(ctx, from, m.reserve, amount)
+}
+
+func (m *exchangeAtomicBexKeeper) SendFromReserve(ctx context.Context, _ uint64, recipient sdk.AccAddress, amount sdk.Coins) error {
+	return m.bank.SendCoins(ctx, m.reserve, recipient, amount)
 }
 
 func (m *exchangeAtomicBexKeeper) RecordVolumeWindow(ctx context.Context, _ uint64, direction bexv1.SwapDirection, amountOut sdkmath.Int) error {
@@ -1038,6 +1046,14 @@ func (m *exchangeAtomicBexKeeper) RefundLockedFee(ctx context.Context, _ uint64,
 		return err
 	}
 	return m.bank.SendCoinsFromModuleToAccount(ctx, bextypes.ModuleName, m.reserve, sdk.NewCoins(fee))
+}
+
+func (m *exchangeAtomicBexKeeper) AddPendingLiability(ctx context.Context, _ uint64, liability sdk.Coin) error {
+	return m.addLedgerCoin(ctx, "pending", liability)
+}
+
+func (m *exchangeAtomicBexKeeper) ReleasePendingLiability(ctx context.Context, _ uint64, liability sdk.Coin) error {
+	return m.addLedgerCoin(ctx, "liability_released", liability)
 }
 
 func (m *exchangeAtomicBexKeeper) GetReserveAddress(context.Context, uint64) sdk.AccAddress {

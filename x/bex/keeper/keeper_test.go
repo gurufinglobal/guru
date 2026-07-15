@@ -107,9 +107,9 @@ func setupKeeperFixtureWithExtraKVStoreKeys(t *testing.T, extraKeys map[string]*
 }
 
 func TestNewKeeperPanicsOnDuplicateSchemaPrefix(t *testing.T) {
-	old := types.VolumePruneCursorKey
-	types.VolumePruneCursorKey = types.VolumeWindowKey
-	defer func() { types.VolumePruneCursorKey = old }()
+	old := types.ReserveDepositorsKey
+	types.ReserveDepositorsKey = types.VolumeWindowKey
+	defer func() { types.ReserveDepositorsKey = old }()
 
 	key := storetypes.NewKVStoreKey(types.StoreKey)
 	accountCodec := evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr)
@@ -143,14 +143,14 @@ func TestRegisterExchangeCreatesReserveAndBlocksDirectTransfers(t *testing.T) {
 	err = f.bankKeeper.SendCoins(f.ctx, f.adminAddr, reserveAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 10)))
 	require.ErrorIs(t, err, types.ErrDirectReserveTransfer)
 
-	wrongAllowanceCtx := f.keeper.WithReserveReceiveAllowance(f.ctx, exchange.GetId()+1)
+	wrongAllowanceCtx := f.keeper.withReserveReceiveAllowance(f.ctx, exchange.GetId()+1)
 	err = f.bankKeeper.SendCoins(wrongAllowanceCtx, f.adminAddr, reserveAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 3)))
 	require.ErrorIs(t, err, types.ErrDirectReserveTransfer)
 
-	allowedCtx := f.keeper.WithReserveReceiveAllowance(f.ctx, exchange.GetId())
+	allowedCtx := f.keeper.withReserveReceiveAllowance(f.ctx, exchange.GetId())
 	require.NoError(t, f.bankKeeper.SendCoins(allowedCtx, f.adminAddr, reserveAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 7))))
 
-	unwrappedAllowedCtx := sdk.UnwrapSDKContext(f.keeper.WithReserveReceiveAllowance(f.ctx, exchange.GetId()))
+	unwrappedAllowedCtx := sdk.UnwrapSDKContext(f.keeper.withReserveReceiveAllowance(f.ctx, exchange.GetId()))
 	require.NoError(t, f.bankKeeper.SendCoins(unwrappedAllowedCtx, f.adminAddr, reserveAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 5))))
 
 	require.NoError(t, f.keeper.DepositReserve(f.ctx, f.admin, exchange.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 10))))
@@ -455,7 +455,13 @@ func TestQuoteAndRecordUsePendingEpochWindowConsistently(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), direction, sdkmath.NewInt(90)))
-	oldKey := currentVolumeKey(f.ctx.BlockTime(), exchange.GetId(), direction, minVolumeEpochSecs)
+	oldKey := currentVolumeKey(
+		f.ctx.BlockTime(),
+		exchange.GetId(),
+		direction,
+		minVolumeEpochSecs,
+		exchange.GetVolumeWindowGeneration(),
+	)
 	oldValue, err := f.keeper.volumeWindow.Get(f.ctx, oldKey)
 	require.NoError(t, err)
 	require.Equal(t, "90", oldValue)
@@ -517,7 +523,13 @@ func TestQuoteAndRecordUsePendingEpochWindowConsistently(t *testing.T) {
 	require.Zero(t, persisted.GetPendingVolumeEpochEffectiveAtUnix())
 	require.Equal(t, exchange.GetRevision()+1, persisted.GetRevision())
 
-	newKey := currentVolumeKey(futureCtx.BlockTime(), exchange.GetId(), direction, minVolumeEpochSecs*2)
+	newKey := currentVolumeKey(
+		futureCtx.BlockTime(),
+		exchange.GetId(),
+		direction,
+		minVolumeEpochSecs*2,
+		persisted.GetVolumeWindowGeneration(),
+	)
 	newValue, err := f.keeper.volumeWindow.Get(futureCtx, newKey)
 	require.NoError(t, err)
 	require.Equal(t, "100", newValue)
@@ -595,7 +607,8 @@ func collectFee(t *testing.T, f keeperTestFixture, exchangeID uint64, fee sdk.Co
 
 func validRegisterExchangeMsg(admin string, status bexv1.ExchangeStatus) *bexv1.MsgRegisterExchange {
 	return &bexv1.MsgRegisterExchange{
-		AdminAddress:              admin,
+		BexAdminAddress:           admin,
+		ExchangeAdminAddress:      admin,
 		DenomA:                    "agxn",
 		PortA:                     "transwap",
 		ChannelA:                  "channel-0",
@@ -665,10 +678,16 @@ func (m *mockAccountKeeper) AddressCodec() address.Codec {
 type mockBankKeeper struct {
 	balances     map[string]sdk.Coins
 	restrictions []banktypes.SendRestrictionFn
+	blockedAddrs map[string]bool
+	disabled     map[string]bool
 }
 
 func newMockBankKeeper() *mockBankKeeper {
-	return &mockBankKeeper{balances: map[string]sdk.Coins{}}
+	return &mockBankKeeper{
+		balances:     map[string]sdk.Coins{},
+		blockedAddrs: map[string]bool{},
+		disabled:     map[string]bool{},
+	}
 }
 
 func (m *mockBankKeeper) AppendSendRestriction(restriction banktypes.SendRestrictionFn) {
@@ -679,20 +698,33 @@ func (m *mockBankKeeper) SetBalance(addr sdk.AccAddress, coins sdk.Coins) {
 	m.balances[string(addr)] = coins.Sort()
 }
 
+func (m *mockBankKeeper) BlockedAddr(addr sdk.AccAddress) bool {
+	return m.blockedAddrs[string(addr)]
+}
+
+func (m *mockBankKeeper) SetBlockedAddr(addr sdk.AccAddress, blocked bool) {
+	m.blockedAddrs[string(addr)] = blocked
+}
+
+func (m *mockBankKeeper) SetSendEnabled(denom string, enabled bool) {
+	m.disabled[denom] = !enabled
+}
+
+func (m *mockBankKeeper) IsSendEnabledCoins(_ context.Context, coins ...sdk.Coin) error {
+	for _, coin := range coins {
+		if m.disabled[coin.Denom] {
+			return banktypes.ErrSendDisabled.Wrapf("%s transfers are currently disabled", coin.Denom)
+		}
+	}
+	return nil
+}
+
 func (m *mockBankKeeper) GetAllBalances(_ context.Context, addr sdk.AccAddress) sdk.Coins {
 	return m.balances[string(addr)]
 }
 
 func (m *mockBankKeeper) SpendableCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins {
 	return m.GetAllBalances(ctx, addr)
-}
-
-func (m *mockBankKeeper) IsSendEnabledCoins(context.Context, ...sdk.Coin) error {
-	return nil
-}
-
-func (m *mockBankKeeper) BlockedAddr(sdk.AccAddress) bool {
-	return false
 }
 
 func (m *mockBankKeeper) GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin {

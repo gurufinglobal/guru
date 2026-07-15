@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -169,7 +170,20 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	oldJSONWSRPCPort := pickTCPPort(t)
 	oldRPCAddr := fmt.Sprintf("tcp://127.0.0.1:%d", oldRPCPort)
 
-	oldNode := startNode(t, repoRoot, bin, home, oldRPCPort, oldP2PPort, oldPProfPort, oldGRPCPort, oldJSONRPCPort, oldJSONWSRPCPort)
+	oldNode := startNodeWithOptions(
+		t,
+		repoRoot,
+		bin,
+		home,
+		oldRPCPort,
+		oldP2PPort,
+		oldPProfPort,
+		oldGRPCPort,
+		oldJSONRPCPort,
+		oldJSONWSRPCPort,
+		nil,
+		map[string]string{envEnableUpgradeHandlerV1: "0"},
+	)
 	defer stopNode(t, oldNode)
 	waitForBlockHeight(t, repoRoot, bin, home, oldRPCAddr, 6, 45*time.Second)
 
@@ -198,6 +212,15 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	}
 	stopNode(t, oldNode)
 
+	// Both phases use the current test binary, so BEX and transwap have existed
+	// in this fresh database since genesis. The missing-store loader path is
+	// covered by TestV1StoreLoaderAddsBEXAndTranswapToLegacyDatabase; this E2E isolates the on-chain
+	// halt, handler, migration, and resume path without adding BEX twice.
+	upgradeInfoPath := filepath.Join(home, "data", "upgrade-info.json")
+	if err := os.Remove(upgradeInfoPath); err != nil {
+		t.Fatalf("remove same-binary upgrade info %s: %v", upgradeInfoPath, err)
+	}
+
 	// new binary enables handler and resumes from upgrade height
 	newRPCPort := pickTCPPort(t)
 	newP2PPort := pickTCPPort(t)
@@ -222,6 +245,11 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 		map[string]string{envEnableUpgradeHandlerV1: "1"},
 	)
 	defer stopNode(t, newNode)
+	defer func() {
+		if t.Failed() {
+			t.Logf("new node logs:\n%s", newNode.logBuf.String())
+		}
+	}()
 
 	waitForBlockHeight(t, repoRoot, bin, home, newRPCAddr, upgradeHeight+2, 90*time.Second)
 	appliedHeight := queryAppliedUpgradeHeight(t, repoRoot, bin, home, newRPCAddr, e2eUpgradeNameV1)
@@ -332,7 +360,24 @@ func TestE2ECometStateSyncFromPeerSnapshot(t *testing.T) {
 
 type runningNode struct {
 	cmd    *exec.Cmd
-	logBuf *bytes.Buffer
+	logBuf *synchronizedBuffer
+}
+
+type synchronizedBuffer struct {
+	mu  sync.RWMutex
+	buf bytes.Buffer
+}
+
+func (b *synchronizedBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *synchronizedBuffer) String() string {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.buf.String()
 }
 
 type nodeStatus struct {
@@ -396,7 +441,7 @@ func startNodeWithOptions(
 	}
 	args = append(args, extraArgs...)
 
-	logBuf := &bytes.Buffer{}
+	logBuf := &synchronizedBuffer{}
 	cmd := exec.Command(bin, args...)
 	cmd.Dir = repoRoot
 	cmd.Stdout = logBuf
@@ -1028,6 +1073,6 @@ func pickTCPPort(t *testing.T) int {
 	if err != nil {
 		t.Fatalf("pick tcp port: %v", err)
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port
 }
