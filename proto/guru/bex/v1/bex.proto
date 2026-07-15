@@ -134,6 +134,18 @@ message VolumeWindow {
   uint64 volume_window_generation = 6;
 }
 
+// VolumeReservation identifies the exact cap window charged by one in-flight
+// swap output. It is persisted by TransSwap so a failed output can release the
+// same window even after the active exchange configuration or epoch changes.
+message VolumeReservation {
+  uint64 exchange_id = 1;
+  SwapDirection direction = 2;
+  uint64 epoch_start_unix = 3;
+  uint32 epoch_seconds = 4;
+  string amount = 5 [(cosmos_proto.scalar) = "cosmos.Int"];
+  uint64 volume_window_generation = 6;
+}
+
 // QuoteSwapRequest is the keeper-level quote request.
 message QuoteSwapRequest {
   uint64 exchange_id = 1;
@@ -157,4 +169,6 @@ message QuoteSwapResponse {
   string volume_cap = 12 [(cosmos_proto.scalar) = "cosmos.Int"];
   string volume_used = 13 [(cosmos_proto.scalar) = "cosmos.Int"];
   string min_amount_in = 14 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // exchange_revision is the configuration revision used by this quote.
+  uint64 exchange_revision = 15;
 }

@@ -18,9 +18,11 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
+	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
@@ -68,19 +70,86 @@ func TestOnRecvExchangePacketCommitsStateAfterSuccessfulSwapReceive(t *testing.T
 	require.Equal(t, state.receiver.String(), internal.Receiver)
 	require.Equal(t, types.DenomPath(state.outputTokenDenom), types.DenomPath(internal.Token.Denom))
 
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	refund, err := state.keeper.GetRefundPacketData(state.ctx, refundKey)
+	refund, found, err := state.keeper.GetRefundRecord(state.ctx, RefundID(types.PortID, "channel-7", exchangeAtomicSequence))
 	require.NoError(t, err)
-	require.Equal(t, state.reserve.String(), refund.Sender)
+	require.True(t, found)
+	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_PENDING, refund.Status)
 	require.Equal(t, state.sender.String(), refund.Receiver)
 	require.Equal(t, "7", refund.ExchangeId)
-	require.Equal(t, state.inputIBCDenom, refund.GetFee().GetDenom())
-	require.Equal(t, "3", refund.GetFee().GetAmount())
+	require.Equal(t, state.inputIBCDenom, refund.GetOriginalFee().GetDenom())
+	require.Equal(t, "3", refund.GetOriginalFee().GetAmount())
+	require.Equal(t, "103", refund.GetToken().GetAmount())
+
+	pending, err := state.bex.GetPendingLiabilities(state.ctx, 7)
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(103))), pending)
+	locked, err := state.bex.GetLockedFees(state.ctx, 7)
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), locked)
 
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "collected"))
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "locked"))
 	require.Equal(t, sdkmath.NewInt(100), state.bex.recordedVolume(state.ctx))
 	require.True(t, state.keeper.HasDenom(state.ctx, types.DenomHash(state.inputTokenDenom)))
+}
+
+func TestExchangeEscrowUnderflowIsRejectedBeforeBankMovement(t *testing.T) {
+	t.Run("received input", func(t *testing.T) {
+		state := setupExchangeReceiveAtomicity(t, false)
+		coin := sdk.NewInt64Coin("uatom", 100)
+		escrow := types.GetEscrowAddress(types.PortID, "channel-0")
+		state.bank.SetBalance(state.ctx, escrow, sdk.NewCoins(coin))
+		state.keeper.SetTotalEscrowForDenom(state.ctx, sdk.NewInt64Coin(coin.Denom, 99))
+		data := types.NewInternalTransferRepresentation(
+			"7",
+			&transwapv1.Token{
+				Denom:  types.NewDenom(coin.Denom, types.NewHop("xswap", "channel-1")),
+				Amount: coin.Amount.String(),
+			},
+			state.sender.String(),
+			state.receiver.String(),
+			"",
+		)
+
+		err := state.keeper.receiveTokensToReserve(
+			state.ctx,
+			7,
+			data,
+			"xswap",
+			"channel-1",
+			types.PortID,
+			"channel-0",
+		)
+		require.ErrorIs(t, err, types.ErrRefundEscrowInvariant)
+		require.Equal(t, coin.Amount, state.bank.GetAllBalances(state.ctx, escrow).AmountOf(coin.Denom))
+		require.True(t, state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(coin.Denom).IsZero())
+	})
+
+	t.Run("failed output", func(t *testing.T) {
+		state := setupExchangeReceiveAtomicity(t, false)
+		coin := sdk.NewInt64Coin("atgxkrw", 100)
+		escrow := types.GetEscrowAddress(types.PortID, "channel-7")
+		state.bank.SetBalance(state.ctx, escrow, sdk.NewCoins(coin))
+		state.keeper.SetTotalEscrowForDenom(state.ctx, sdk.NewInt64Coin(coin.Denom, 99))
+		data := types.NewInternalTransferRepresentation(
+			"0",
+			&transwapv1.Token{Denom: types.NewDenom(coin.Denom), Amount: coin.Amount.String()},
+			state.reserve.String(),
+			state.receiver.String(),
+			"",
+		)
+
+		err := state.keeper.refundPacketTokensToReserve(
+			state.ctx,
+			7,
+			types.PortID,
+			"channel-7",
+			data,
+		)
+		require.ErrorIs(t, err, types.ErrRefundEscrowInvariant)
+		require.Equal(t, coin.Amount, state.bank.GetAllBalances(state.ctx, escrow).AmountOf(coin.Denom))
+		require.True(t, state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(coin.Denom).IsZero())
+	})
 }
 
 func TestOnRecvExchangePacketCommitsStateWithoutFee(t *testing.T) {
@@ -104,14 +173,70 @@ func TestOnRecvExchangePacketCommitsStateWithoutFee(t *testing.T) {
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 
 	require.Equal(t, 1, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	refund, err := state.keeper.GetRefundPacketData(state.ctx, refundKey)
+	refund, found, err := state.keeper.GetRefundRecord(state.ctx, RefundID(types.PortID, "channel-7", exchangeAtomicSequence))
 	require.NoError(t, err)
-	require.Equal(t, state.inputIBCDenom, refund.GetFee().GetDenom())
-	require.Equal(t, "0", refund.GetFee().GetAmount())
+	require.True(t, found)
+	require.Equal(t, state.inputIBCDenom, refund.GetOriginalFee().GetDenom())
+	require.Equal(t, "0", refund.GetOriginalFee().GetAmount())
+	pending, err := state.bex.GetPendingLiabilities(state.ctx, 7)
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(103))), pending)
+	locked, err := state.bex.GetLockedFees(state.ctx, 7)
+	require.NoError(t, err)
+	require.Empty(t, locked)
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.Equal(t, sdkmath.NewInt(100), state.bex.recordedVolume(state.ctx))
+}
+
+func TestOnRecvExchangePacketEnforcesOptionalMemoProtection(t *testing.T) {
+	tests := []struct {
+		name        string
+		memo        string
+		expectedErr error
+		nilQuote    bool
+	}{
+		{name: "minimum only", memo: `{"transwap":{"min_amount_out":"100"}}`},
+		{name: "revision only", memo: `{"transwap":{"expected_exchange_revision":"11"}}`},
+		{name: "both", memo: `{"transwap":{"min_amount_out":"100","expected_exchange_revision":"11"}}`},
+		{name: "minimum not met", memo: `{"transwap":{"min_amount_out":"101"}}`, expectedErr: types.ErrMinimumAmountOut},
+		{name: "stale revision", memo: `{"transwap":{"expected_exchange_revision":"10"}}`, expectedErr: bextypes.ErrRevisionConflict},
+		{name: "malformed field", memo: `{"transwap":{"min_amount_out":100}}`, expectedErr: types.ErrInvalidSwapProtection},
+		{name: "nil quote", expectedErr: bextypes.ErrInvariantViolation, nilQuote: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := setupExchangeReceiveAtomicity(t, false)
+			state.packetData.Memo = tt.memo
+			state.bex.nilQuote = tt.nilQuote
+
+			err := state.keeper.OnRecvExchangePacket(
+				state.ctx,
+				state.packetData,
+				"xswap",
+				"channel-1",
+				types.PortID,
+				"channel-0",
+				uint64(state.ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
+			)
+			if tt.expectedErr == nil {
+				require.NoError(t, err)
+				require.Equal(t, 1, state.ics4.sentCount(state.ctx))
+				return
+			}
+
+			require.ErrorIs(t, err, tt.expectedErr)
+			require.Zero(t, state.ics4.sentCount(state.ctx))
+			require.Equal(t, sdkmath.NewInt(1000), state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(state.outputIBCDenom))
+			require.True(t, state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(state.inputIBCDenom).IsZero())
+			require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
+			require.Empty(t, state.bex.ledger(state.ctx, "collected"))
+			require.Empty(t, state.bex.ledger(state.ctx, "locked"))
+			require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
+			require.False(t, state.keeper.HasDenom(state.ctx, types.DenomHash(state.inputTokenDenom)))
+		})
+	}
 }
 
 func TestOnRecvExchangePacketPreservesReceiverVariationAndUsesDeterministicMemos(t *testing.T) {
@@ -150,10 +275,9 @@ func TestOnRecvExchangePacketPreservesReceiverVariationAndUsesDeterministicMemos
 		require.Equal(t, "Station exchange", internal.Memo)
 		require.NotEqual(t, sourceMemos[i], internal.Memo)
 
-		refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", sequence)
-		refund, err := state.keeper.GetRefundPacketData(state.ctx, refundKey)
+		refund, found, err := state.keeper.GetRefundRecord(state.ctx, RefundID(types.PortID, "channel-7", sequence))
 		require.NoError(t, err)
-		require.Equal(t, state.reserve.String(), refund.Sender)
+		require.True(t, found)
 		require.Equal(t, state.sender.String(), refund.Receiver)
 		require.Equal(t, "refund coins through Guru station due to failure on the target chain", refund.Memo)
 		require.NotEqual(t, sourceMemos[i], refund.Memo)
@@ -165,6 +289,12 @@ func TestOnRecvExchangePacketPreservesReceiverVariationAndUsesDeterministicMemos
 	require.Equal(t, sdkmath.NewInt(6), state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).AmountOf(state.inputIBCDenom))
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(6))), state.bex.ledger(state.ctx, "collected"))
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(6))), state.bex.ledger(state.ctx, "locked"))
+	pending, err := state.bex.GetPendingLiabilities(state.ctx, 7)
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(206))), pending)
+	locked, err := state.bex.GetLockedFees(state.ctx, 7)
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(6))), locked)
 	require.Equal(t, sdkmath.NewInt(200), state.bex.recordedVolume(state.ctx))
 }
 
@@ -218,11 +348,11 @@ func TestOnRecvExchangePacketCommitsSmallAndLargeAmounts(t *testing.T) {
 		require.Equal(t, expected.amountOut, internal.Token.Amount)
 		require.Equal(t, types.DenomPath(state.outputTokenDenom), types.DenomPath(internal.Token.Denom))
 
-		refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", expected.sequence)
-		refund, err := state.keeper.GetRefundPacketData(state.ctx, refundKey)
+		refund, found, err := state.keeper.GetRefundRecord(state.ctx, RefundID(types.PortID, "channel-7", expected.sequence))
 		require.NoError(t, err)
-		require.Equal(t, state.inputIBCDenom, refund.GetFee().GetDenom())
-		require.Equal(t, expected.feeAmount, refund.GetFee().GetAmount())
+		require.True(t, found)
+		require.Equal(t, state.inputIBCDenom, refund.GetOriginalFee().GetDenom())
+		require.Equal(t, expected.feeAmount, refund.GetOriginalFee().GetAmount())
 	}
 
 	reserveBalances := state.bank.GetAllBalances(state.ctx, state.reserve)
@@ -232,6 +362,12 @@ func TestOnRecvExchangePacketCommitsSmallAndLargeAmounts(t *testing.T) {
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "collected"))
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "locked"))
+	pending, err := state.bex.GetPendingLiabilities(state.ctx, 7)
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(1_000_004))), pending)
+	locked, err := state.bex.GetLockedFees(state.ctx, 7)
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), locked)
 	require.Equal(t, sdkmath.NewInt(701), state.bex.recordedVolume(state.ctx))
 }
 
@@ -258,6 +394,7 @@ func TestOnRecvExchangePacketCommitsRepeatedSwapsInBothDirections(t *testing.T) 
 	state.keeper.channelKeeper = exchangeAtomicChannelKeeper{
 		portID:     types.PortID,
 		channelIDs: map[string]bool{"channel-0": true, "channel-7": true},
+		ics4:       state.ics4,
 	}
 
 	reversePacketData := types.NewInternalTransferRepresentation(
@@ -305,6 +442,15 @@ func TestOnRecvExchangePacketCommitsRepeatedSwapsInBothDirections(t *testing.T) 
 	)
 	require.Equal(t, expectedFees, state.bex.ledger(state.ctx, "collected"))
 	require.Equal(t, expectedFees, state.bex.ledger(state.ctx, "locked"))
+	pending, err := state.bex.GetPendingLiabilities(state.ctx, 7)
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoins(
+		sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(206)),
+		sdk.NewCoin(state.outputIBCDenom, sdkmath.NewInt(206)),
+	), pending)
+	locked, err := state.bex.GetLockedFees(state.ctx, 7)
+	require.NoError(t, err)
+	require.Equal(t, expectedFees, locked)
 	require.Equal(t, sdkmath.NewInt(400), state.bex.recordedVolume(state.ctx))
 	require.Equal(t, sdkmath.NewInt(200), state.bex.recordedVolumeForDirection(state.ctx, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B))
 	require.Equal(t, sdkmath.NewInt(200), state.bex.recordedVolumeForDirection(state.ctx, bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A))
@@ -330,14 +476,13 @@ func TestOnRecvExchangePacketCommitsRepeatedSwapsInBothDirections(t *testing.T) 
 		require.Equal(t, state.reserve.String(), internal.Sender)
 		require.Equal(t, state.receiver.String(), internal.Receiver)
 
-		refundKey := GetRefundPacketDataKey(types.PortID, expected.channel, expected.sequence)
-		refund, err := state.keeper.GetRefundPacketData(state.ctx, refundKey)
+		refund, found, err := state.keeper.GetRefundRecord(state.ctx, RefundID(types.PortID, expected.channel, expected.sequence))
 		require.NoError(t, err)
-		require.Equal(t, state.reserve.String(), refund.Sender)
+		require.True(t, found)
 		require.Equal(t, state.sender.String(), refund.Receiver)
 		require.Equal(t, "7", refund.ExchangeId)
-		require.Equal(t, expected.feeDenom, refund.GetFee().GetDenom())
-		require.Equal(t, "3", refund.GetFee().GetAmount())
+		require.Equal(t, expected.feeDenom, refund.GetOriginalFee().GetDenom())
+		require.Equal(t, "3", refund.GetOriginalFee().GetAmount())
 	}
 }
 
@@ -361,8 +506,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenVolumeRecordFails(t *testing.T) {
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -390,8 +534,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenTelemetryChannelLookupFails(t *te
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -419,8 +562,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenQuoteFailsAfterReceive(t *testing
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -448,8 +590,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenQuoteAmountOutIsInvalid(t *testin
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -478,8 +619,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenQuoteOutputDenomIsMissing(t *test
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -510,8 +650,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenQuoteOutputPortIsWrong(t *testing
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -549,8 +688,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenQuoteOutputChannelIsWrong(t *test
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-8", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-8")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -579,8 +717,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenReserveReceiverIsBlocked(t *testi
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -592,6 +729,7 @@ func TestExchangeTargetBlockedReceiverErrorAckRefundsAndCreatesRetry(t *testing.
 	state.keeper.channelKeeper = exchangeAtomicChannelKeeper{
 		portID:     types.PortID,
 		channelIDs: map[string]bool{"channel-0": true, "channel-7": true},
+		ics4:       state.ics4,
 	}
 	timeout := uint64(state.ctx.BlockTime().Add(time.Hour).UnixNano()) //nolint:gosec // fixed test time is positive.
 
@@ -647,14 +785,23 @@ func TestExchangeTargetBlockedReceiverErrorAckRefundsAndCreatesRetry(t *testing.
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "locked"))
 	require.Empty(t, state.bex.ledger(state.ctx, "released"))
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(3))), state.bex.ledger(state.ctx, "refunded"))
-
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)))
-	retryKey := GetRefundPacketDataKey(types.PortID, "channel-0", exchangeAtomicSequence+1)
-	retry, err := state.keeper.GetRefundPacketData(state.ctx, retryKey)
+	pending, err := state.bex.GetPendingLiabilities(state.ctx, 7)
 	require.NoError(t, err)
-	require.Equal(t, state.reserve.String(), retry.Sender)
-	require.Equal(t, state.sender.String(), retry.Receiver)
-	require.Nil(t, retry.Fee)
+	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(103))), pending)
+	locked, err := state.bex.GetLockedFees(state.ctx, 7)
+	require.NoError(t, err)
+	require.Empty(t, locked)
+
+	refund, found, err := state.keeper.GetRefundRecord(
+		state.ctx,
+		RefundID(types.PortID, "channel-7", exchangeAtomicSequence),
+	)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, refund.Status)
+	require.Equal(t, uint32(1), refund.RetryCount)
+	require.Equal(t, exchangeAtomicSequence+1, refund.ActivePacketSequence)
+	require.NotEqual(t, refund.OriginalTimeoutTimestamp, refund.ActiveTimeoutTimestamp)
 
 	require.Equal(t, 2, state.ics4.sentCount(state.ctx))
 	retryData, err := types.UnmarshalPacketData(state.ics4.sentPacketData(state.ctx, exchangeAtomicSequence+1), types.V1, types.EncodingJSON)
@@ -686,8 +833,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenReceiveSendFailsAfterMint(t *test
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -715,8 +861,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenOutboundSendFails(t *testing.T) {
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -736,7 +881,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenReserveOutputIsInsufficient(t *te
 		"channel-0",
 		uint64(state.ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
 	)
-	require.ErrorContains(t, err, "insufficient funds")
+	require.ErrorIs(t, err, bextypes.ErrInsufficientReserve)
 
 	require.Equal(t, sdkmath.NewInt(50), state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(state.outputIBCDenom))
 	require.True(t, state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(state.inputIBCDenom).IsZero())
@@ -744,8 +889,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenReserveOutputIsInsufficient(t *te
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -773,8 +917,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenFeeTransferFailsAfterOutboundPack
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -802,8 +945,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenCollectFeeFailsAfterWrite(t *test
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -831,8 +973,7 @@ func TestOnRecvExchangePacketRollsBackStateWhenLockExchangeFeeFailsAfterWrite(t 
 	require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
 
 	require.Zero(t, state.ics4.sentCount(state.ctx))
-	refundKey := GetRefundPacketDataKey(types.PortID, "channel-7", exchangeAtomicSequence)
-	require.False(t, state.keeper.HasRefundPacketData(state.ctx, refundKey))
+	requireNoExchangeRefundState(t, state, "channel-7")
 	require.Empty(t, state.bex.ledger(state.ctx, "collected"))
 	require.Empty(t, state.bex.ledger(state.ctx, "locked"))
 	require.True(t, state.bex.recordedVolume(state.ctx).IsZero())
@@ -853,6 +994,24 @@ type exchangeReceiveAtomicityState struct {
 	outputTokenDenom *transwapv1.Denom
 	outputIBCDenom   string
 	packetData       types.InternalTransferRepresentation
+}
+
+func requireNoExchangeRefundState(t *testing.T, state exchangeReceiveAtomicityState, outputChannel string) {
+	t.Helper()
+
+	_, found, err := state.keeper.GetRefundRecord(
+		state.ctx,
+		RefundID(types.PortID, outputChannel, exchangeAtomicSequence),
+	)
+	require.NoError(t, err)
+	require.False(t, found)
+
+	pending, err := state.bex.GetPendingLiabilities(state.ctx, state.bex.expectedExchangeID)
+	require.NoError(t, err)
+	require.Empty(t, pending)
+	locked, err := state.bex.GetLockedFees(state.ctx, state.bex.expectedExchangeID)
+	require.NoError(t, err)
+	require.Empty(t, locked)
 }
 
 func setupExchangeReceiveAtomicity(t *testing.T, failRecordVolume bool) exchangeReceiveAtomicityState {
@@ -883,13 +1042,22 @@ func setupExchangeReceiveAtomicity(t *testing.T, failRecordVolume bool) exchange
 		amountOut:          "100",
 		failRecordVolume:   failRecordVolume,
 		expectedExchangeID: 7,
+		exchangeRevision:   11,
 	}
 	ics4 := &exchangeAtomicICS4Wrapper{storeService: k.storeService, sequence: exchangeAtomicSequence}
 
 	k.BankKeeper = bank
 	k.BexKeeper = bex
 	k.ics4Wrapper = ics4
-	k.channelKeeper = refundAccountingChannelKeeper{portID: types.PortID, channelID: "channel-7"}
+	k.channelKeeper = exchangeAtomicChannelKeeper{
+		portID:     types.PortID,
+		channelIDs: map[string]bool{"channel-0": true, "channel-7": true},
+		ics4:       ics4,
+	}
+	k.WithIBCClientKeepers(
+		exchangeAtomicConnectionKeeper{},
+		exchangeAtomicClientKeeper{timestamp: ctx.BlockTime()},
+	)
 
 	packetData := types.NewInternalTransferRepresentation(
 		"7",
@@ -929,7 +1097,9 @@ type exchangeAtomicBexKeeper struct {
 	failCollectFee      bool
 	failLockExchangeFee bool
 	quoteErr            error
+	nilQuote            bool
 	expectedExchangeID  uint64
+	exchangeRevision    uint64
 }
 
 type exchangeAtomicSwapRoute struct {
@@ -951,6 +1121,9 @@ func (m *exchangeAtomicBexKeeper) QuoteSwap(_ context.Context, req *bexv1.QuoteS
 	if m.quoteErr != nil {
 		return nil, m.quoteErr
 	}
+	if m.nilQuote {
+		return nil, nil
+	}
 	route, ok := m.routeForInputDenom(req.GetInputDenom())
 	if req.GetExchangeId() != m.expectedExchangeID || !ok {
 		return nil, bextypes.ErrInvalidRoute.Wrap("unexpected exchange route")
@@ -963,14 +1136,15 @@ func (m *exchangeAtomicBexKeeper) QuoteSwap(_ context.Context, req *bexv1.QuoteS
 		route = quoteRoute
 	}
 	return &bexv1.QuoteSwapResponse{
-		ExchangeId:  req.GetExchangeId(),
-		Direction:   route.direction,
-		InputDenom:  req.GetInputDenom(),
-		OutputDenom: route.outputDenom,
-		AmountIn:    req.GetAmountIn(),
-		FeeAmount:   route.feeAmount,
-		NetAmountIn: "100",
-		AmountOut:   route.amountOut,
+		ExchangeId:       req.GetExchangeId(),
+		Direction:        route.direction,
+		InputDenom:       req.GetInputDenom(),
+		OutputDenom:      route.outputDenom,
+		AmountIn:         req.GetAmountIn(),
+		FeeAmount:        route.feeAmount,
+		NetAmountIn:      "100",
+		AmountOut:        route.amountOut,
+		ExchangeRevision: m.exchangeRevision,
 	}, nil
 }
 
@@ -997,11 +1171,71 @@ func (m *exchangeAtomicBexKeeper) ReceiveToReserve(ctx context.Context, _ uint64
 	return m.bank.SendCoins(ctx, from, m.reserve, amount)
 }
 
-func (m *exchangeAtomicBexKeeper) SendFromReserve(ctx context.Context, _ uint64, recipient sdk.AccAddress, amount sdk.Coins) error {
-	return m.bank.SendCoins(ctx, m.reserve, recipient, amount)
+func (m *exchangeAtomicBexKeeper) SendSwapOutputFromReserve(
+	ctx context.Context,
+	exchangeID uint64,
+	recipient sdk.AccAddress,
+	amount sdk.Coin,
+) error {
+	pending, err := m.GetPendingLiabilities(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	available := m.bank.GetAllBalances(ctx, m.reserve).AmountOf(amount.Denom).Sub(pending.AmountOf(amount.Denom))
+	if available.IsNegative() || available.LT(amount.Amount) {
+		return bextypes.ErrInsufficientReserve.Wrapf("refund liabilities reserve %s", amount.Denom)
+	}
+	return m.bank.SendCoins(ctx, m.reserve, recipient, sdk.NewCoins(amount))
 }
 
-func (m *exchangeAtomicBexKeeper) RecordVolumeWindow(ctx context.Context, _ uint64, direction bexv1.SwapDirection, amountOut sdkmath.Int) error {
+func (m *exchangeAtomicBexKeeper) SendRefundFromReserve(
+	ctx context.Context,
+	exchangeID uint64,
+	recipient sdk.AccAddress,
+	amount sdk.Coin,
+) error {
+	pending, err := m.GetPendingLiabilities(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	if pending.AmountOf(amount.Denom).LT(amount.Amount) {
+		return bextypes.ErrInvariantViolation.Wrap("refund send exceeds pending liability")
+	}
+	return m.bank.SendCoins(ctx, m.reserve, recipient, sdk.NewCoins(amount))
+}
+
+func (m *exchangeAtomicBexKeeper) ClaimRefundFromReserve(
+	ctx context.Context,
+	exchangeID uint64,
+	recipient sdk.AccAddress,
+	amount sdk.Coin,
+) error {
+	cacheCtx, writeCache := sdk.UnwrapSDKContext(ctx).CacheContext()
+	if _, err := m.GetPendingLiabilities(cacheCtx, exchangeID); err != nil {
+		return err
+	}
+	if m.bank.BlockedAddr(recipient) {
+		return errors.New("refund recipient is blocked")
+	}
+	if err := m.subtractLiveLedgerCoin(cacheCtx, "pending_current", amount); err != nil {
+		return err
+	}
+	if err := m.bank.SendCoins(cacheCtx, m.reserve, recipient, sdk.NewCoins(amount)); err != nil {
+		return err
+	}
+	if err := m.addLedgerCoin(cacheCtx, "liability_claimed", amount); err != nil {
+		return err
+	}
+	writeCache()
+	return nil
+}
+
+func (m *exchangeAtomicBexKeeper) ReserveVolumeWindow(
+	ctx context.Context,
+	exchangeID uint64,
+	direction bexv1.SwapDirection,
+	amountOut sdkmath.Int,
+) (*bexv1.VolumeReservation, error) {
 	store := exchangeAtomicStore(ctx, m.storeService)
 	store.Set(exchangeAtomicKey("bex", "volume"), []byte(m.recordedVolume(sdk.UnwrapSDKContext(ctx)).Add(amountOut).String()))
 	store.Set(
@@ -1009,8 +1243,33 @@ func (m *exchangeAtomicBexKeeper) RecordVolumeWindow(ctx context.Context, _ uint
 		[]byte(m.recordedVolumeForDirection(sdk.UnwrapSDKContext(ctx), direction).Add(amountOut).String()),
 	)
 	if m.failRecordVolume {
-		return errExchangeAtomicRecordVolume
+		return nil, errExchangeAtomicRecordVolume
 	}
+	return &bexv1.VolumeReservation{
+		ExchangeId:             exchangeID,
+		Direction:              direction,
+		EpochSeconds:           bextypes.MinVolumeEpochSeconds,
+		Amount:                 amountOut.String(),
+		VolumeWindowGeneration: 1,
+	}, nil
+}
+
+func (m *exchangeAtomicBexKeeper) ReleaseVolumeWindow(ctx context.Context, reservation *bexv1.VolumeReservation) error {
+	amount, ok := sdkmath.NewIntFromString(reservation.GetAmount())
+	if !ok {
+		return bextypes.ErrInvariantViolation.Wrap("invalid volume reservation amount")
+	}
+	current := m.recordedVolume(sdk.UnwrapSDKContext(ctx))
+	currentDirection := m.recordedVolumeForDirection(sdk.UnwrapSDKContext(ctx), reservation.GetDirection())
+	if current.LT(amount) || currentDirection.LT(amount) {
+		return bextypes.ErrInvariantViolation.Wrap("volume release exceeds recorded volume")
+	}
+	store := exchangeAtomicStore(ctx, m.storeService)
+	store.Set(exchangeAtomicKey("bex", "volume"), []byte(current.Sub(amount).String()))
+	store.Set(
+		exchangeAtomicKey("bex", "volume", strconv.Itoa(int(reservation.GetDirection()))),
+		[]byte(currentDirection.Sub(amount).String()),
+	)
 	return nil
 }
 
@@ -1028,6 +1287,9 @@ func (m *exchangeAtomicBexKeeper) CollectFee(ctx context.Context, _ uint64, fee 
 }
 
 func (m *exchangeAtomicBexKeeper) LockExchangeFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
+	if err := m.addLiveLedgerCoin(ctx, "locked_current", fee); err != nil {
+		return err
+	}
 	if err := m.addLedgerCoin(ctx, "locked", fee); err != nil {
 		return err
 	}
@@ -1038,10 +1300,16 @@ func (m *exchangeAtomicBexKeeper) LockExchangeFee(ctx context.Context, _ uint64,
 }
 
 func (m *exchangeAtomicBexKeeper) ReleaseExchangeFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
+	if err := m.subtractLiveLedgerCoin(ctx, "locked_current", fee); err != nil {
+		return err
+	}
 	return m.addLedgerCoin(ctx, "released", fee)
 }
 
 func (m *exchangeAtomicBexKeeper) RefundLockedFee(ctx context.Context, _ uint64, fee sdk.Coin) error {
+	if err := m.subtractLiveLedgerCoin(ctx, "locked_current", fee); err != nil {
+		return err
+	}
 	if err := m.addLedgerCoin(ctx, "refunded", fee); err != nil {
 		return err
 	}
@@ -1049,11 +1317,46 @@ func (m *exchangeAtomicBexKeeper) RefundLockedFee(ctx context.Context, _ uint64,
 }
 
 func (m *exchangeAtomicBexKeeper) AddPendingLiability(ctx context.Context, _ uint64, liability sdk.Coin) error {
+	if err := m.addLiveLedgerCoin(ctx, "pending_current", liability); err != nil {
+		return err
+	}
 	return m.addLedgerCoin(ctx, "pending", liability)
 }
 
 func (m *exchangeAtomicBexKeeper) ReleasePendingLiability(ctx context.Context, _ uint64, liability sdk.Coin) error {
+	if err := m.subtractLiveLedgerCoin(ctx, "pending_current", liability); err != nil {
+		return err
+	}
 	return m.addLedgerCoin(ctx, "liability_released", liability)
+}
+
+func (m *exchangeAtomicBexKeeper) GetPendingLiabilities(ctx context.Context, exchangeID uint64) (sdk.Coins, error) {
+	if exchangeID != m.expectedExchangeID {
+		return nil, bextypes.ErrInvalidRoute.Wrapf("unexpected exchange %d", exchangeID)
+	}
+	return m.ledger(sdk.UnwrapSDKContext(ctx), "pending_current"), nil
+}
+
+func (m *exchangeAtomicBexKeeper) GetLockedFees(ctx context.Context, exchangeID uint64) (sdk.Coins, error) {
+	if exchangeID != m.expectedExchangeID {
+		return nil, bextypes.ErrInvalidRoute.Wrapf("unexpected exchange %d", exchangeID)
+	}
+	return m.ledger(sdk.UnwrapSDKContext(ctx), "locked_current"), nil
+}
+
+func (m *exchangeAtomicBexKeeper) GetRefundAccountingExchangeIDs(ctx context.Context) ([]uint64, error) {
+	pending, err := m.GetPendingLiabilities(ctx, m.expectedExchangeID)
+	if err != nil {
+		return nil, err
+	}
+	locked, err := m.GetLockedFees(ctx, m.expectedExchangeID)
+	if err != nil {
+		return nil, err
+	}
+	if pending.Empty() && locked.Empty() {
+		return nil, nil
+	}
+	return []uint64{m.expectedExchangeID}, nil
 }
 
 func (m *exchangeAtomicBexKeeper) GetReserveAddress(context.Context, uint64) sdk.AccAddress {
@@ -1063,6 +1366,26 @@ func (m *exchangeAtomicBexKeeper) GetReserveAddress(context.Context, uint64) sdk
 func (m *exchangeAtomicBexKeeper) addLedgerCoin(ctx context.Context, kind string, coin sdk.Coin) error {
 	current := m.ledger(sdk.UnwrapSDKContext(ctx), kind)
 	exchangeAtomicStore(ctx, m.storeService).Set(exchangeAtomicKey("bex", "ledger", kind), []byte(current.Add(coin).String()))
+	return nil
+}
+
+func (m *exchangeAtomicBexKeeper) addLiveLedgerCoin(ctx context.Context, kind string, coin sdk.Coin) error {
+	return m.addLedgerCoin(ctx, kind, coin)
+}
+
+func (m *exchangeAtomicBexKeeper) subtractLiveLedgerCoin(ctx context.Context, kind string, coin sdk.Coin) error {
+	current := m.ledger(sdk.UnwrapSDKContext(ctx), kind)
+	if current.AmountOf(coin.Denom).LT(coin.Amount) {
+		return bextypes.ErrInvariantViolation.Wrapf("%s does not cover %s", kind, coin)
+	}
+	remaining := current.Sub(coin)
+	store := exchangeAtomicStore(ctx, m.storeService)
+	key := exchangeAtomicKey("bex", "ledger", kind)
+	if remaining.Empty() {
+		store.Delete(key)
+		return nil
+	}
+	store.Set(key, []byte(remaining.String()))
 	return nil
 }
 
@@ -1179,6 +1502,7 @@ type exchangeAtomicICS4Wrapper struct {
 	storeService   corestore.KVStoreService
 	sequence       uint64
 	failSendPacket bool
+	failSendCount  int
 }
 
 func (m *exchangeAtomicICS4Wrapper) SendPacket(ctx sdk.Context, sourcePort, sourceChannel string, _ clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
@@ -1187,7 +1511,10 @@ func (m *exchangeAtomicICS4Wrapper) SendPacket(ctx sdk.Context, sourcePort, sour
 	store.Set(exchangeAtomicKey("ics4", "count"), []byte(strconv.Itoa(m.sentCount(ctx)+1)))
 	store.Set(exchangeAtomicKey("ics4", "data", strconv.FormatUint(seq, 10)), append([]byte(nil), data...))
 	store.Set(exchangeAtomicKey("ics4", "source", strconv.FormatUint(seq, 10)), []byte(sourcePort+"/"+sourceChannel+"/"+strconv.FormatUint(timeoutTimestamp, 10)))
-	if m.failSendPacket {
+	if m.failSendPacket || m.failSendCount > 0 {
+		if m.failSendCount > 0 {
+			m.failSendCount--
+		}
 		return 0, errExchangeAtomicSendPacket
 	}
 	return seq, nil
@@ -1221,6 +1548,7 @@ func (m *exchangeAtomicICS4Wrapper) sentPacketData(ctx sdk.Context, sequence uin
 type exchangeAtomicChannelKeeper struct {
 	portID     string
 	channelIDs map[string]bool
+	ics4       *exchangeAtomicICS4Wrapper
 }
 
 func (m exchangeAtomicChannelKeeper) GetChannel(_ sdk.Context, portID, channelID string) (channeltypes.Channel, bool) {
@@ -1228,12 +1556,33 @@ func (m exchangeAtomicChannelKeeper) GetChannel(_ sdk.Context, portID, channelID
 		return channeltypes.Channel{}, false
 	}
 	return channeltypes.Channel{
-		State: channeltypes.OPEN,
+		State:          channeltypes.OPEN,
+		ConnectionHops: []string{"connection-0"},
 		Counterparty: channeltypes.Counterparty{
 			PortId:    "xswap",
 			ChannelId: channelID + "-counterparty",
 		},
 	}, true
+}
+
+type exchangeAtomicConnectionKeeper struct{}
+
+func (exchangeAtomicConnectionKeeper) GetConnection(_ sdk.Context, connectionID string) (connectiontypes.ConnectionEnd, bool) {
+	if connectionID != "connection-0" {
+		return connectiontypes.ConnectionEnd{}, false
+	}
+	return connectiontypes.ConnectionEnd{ClientId: "client-0"}, true
+}
+
+type exchangeAtomicClientKeeper struct {
+	timestamp time.Time
+}
+
+func (m exchangeAtomicClientKeeper) GetLatestClientConsensusState(_ sdk.Context, clientID string) (ibcexported.ConsensusState, bool) {
+	if clientID != "client-0" {
+		return nil, false
+	}
+	return &ibctm.ConsensusState{Timestamp: m.timestamp}, true
 }
 
 func (exchangeAtomicChannelKeeper) GetNextSequenceSend(sdk.Context, string, string) (uint64, bool) {
@@ -1247,6 +1596,35 @@ func (exchangeAtomicChannelKeeper) GetAllChannelsWithPortPrefix(sdk.Context, str
 func (m exchangeAtomicChannelKeeper) HasChannel(ctx sdk.Context, portID, channelID string) bool {
 	_, found := m.GetChannel(ctx, portID, channelID)
 	return found
+}
+
+func (m exchangeAtomicChannelKeeper) GetPacketCommitment(ctx sdk.Context, portID, channelID string, sequence uint64) []byte {
+	if m.ics4 == nil {
+		return nil
+	}
+
+	store := exchangeAtomicStore(ctx, m.ics4.storeService)
+	data := store.Get(exchangeAtomicKey("ics4", "data", strconv.FormatUint(sequence, 10)))
+	source := store.Get(exchangeAtomicKey("ics4", "source", strconv.FormatUint(sequence, 10)))
+	parts := strings.Split(string(source), "/")
+	if len(data) == 0 || len(parts) != 3 || parts[0] != portID || parts[1] != channelID {
+		return nil
+	}
+	timeoutTimestamp, err := strconv.ParseUint(parts[2], 10, 64)
+	if err != nil {
+		return nil
+	}
+
+	return channeltypes.CommitPacket(channeltypes.NewPacket(
+		data,
+		sequence,
+		portID,
+		channelID,
+		"",
+		"",
+		clienttypes.ZeroHeight(),
+		timeoutTimestamp,
+	))
 }
 
 func exchangeAtomicStore(ctx context.Context, storeService corestore.KVStoreService) storetypes.KVStore {

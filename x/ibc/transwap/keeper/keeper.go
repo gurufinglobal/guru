@@ -3,7 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	"slices"
 	"strings"
 
 	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
@@ -22,6 +22,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
@@ -33,12 +34,14 @@ type Keeper struct {
 	cdc            codec.BinaryCodec
 	legacySubspace types.ParamSubspace
 
-	ics4Wrapper   porttypes.ICS4Wrapper
-	channelKeeper types.ChannelKeeper
-	msgRouter     types.MessageRouter
-	AuthKeeper    types.AccountKeeper
-	BankKeeper    types.BankKeeper
-	BexKeeper     types.BexKeeper
+	ics4Wrapper      porttypes.ICS4Wrapper
+	channelKeeper    types.ChannelKeeper
+	connectionKeeper types.ConnectionKeeper
+	clientKeeper     types.ClientKeeper
+	msgRouter        types.MessageRouter
+	AuthKeeper       types.AccountKeeper
+	BankKeeper       types.BankKeeper
+	BexKeeper        types.BexKeeper
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
 	authority string
@@ -78,6 +81,13 @@ func NewKeeper(
 		BexKeeper:      bexKeeper,
 		authority:      authority,
 	}
+}
+
+// WithIBCClientKeepers configures the IBC connection and light-client readers
+// required to anchor fresh refund transport timeouts.
+func (k *Keeper) WithIBCClientKeepers(connectionKeeper types.ConnectionKeeper, clientKeeper types.ClientKeeper) {
+	k.connectionKeeper = connectionKeeper
+	k.clientKeeper = clientKeeper
 }
 
 // WithICS4Wrapper sets the ICS4Wrapper. This function may be used after
@@ -185,20 +195,30 @@ func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom *transwapv1.Denom) {
 		panic("denom cannot be nil")
 	}
 
+	bankDenom := types.DenomIBCDenom(denom)
+	denomPath := types.DenomPath(denom)
+	aliases := make([]string, 0, 2)
+	for _, alias := range []string{denom.Base, denomPath} {
+		if alias == "" || alias == bankDenom || slices.Contains(aliases, alias) {
+			continue
+		}
+		aliases = append(aliases, alias)
+	}
 	metadata := banktypes.Metadata{
-		Description: fmt.Sprintf("IBC token from %s", types.DenomPath(denom)),
+		Description: fmt.Sprintf("IBC token from %s", denomPath),
 		DenomUnits: []*banktypes.DenomUnit{
 			{
-				Denom:    denom.Base,
+				Denom:    bankDenom,
 				Exponent: 0,
+				Aliases:  aliases,
 			},
 		},
-		// Setting base as IBC hash denom since bank keepers's SetDenomMetadata uses
-		// Base as key path and the IBC hash is what gives this token uniqueness
-		// on the executing chain
-		Base:    types.DenomIBCDenom(denom),
-		Display: types.DenomPath(denom),
-		Name:    fmt.Sprintf("%s IBC token", types.DenomPath(denom)),
+		// Bank genesis requires the first exponent-zero unit to equal Base and
+		// Display to reference a real unit. The trace remains available through
+		// aliases and descriptive fields without inventing a conversion exponent.
+		Base:    bankDenom,
+		Display: bankDenom,
+		Name:    fmt.Sprintf("%s IBC token", denomPath),
 		Symbol:  strings.ToUpper(denom.Base),
 	}
 
@@ -296,59 +316,4 @@ func (k Keeper) IsBlockedAddr(addr sdk.AccAddress) bool {
 	}
 
 	return k.BankKeeper.BlockedAddr(addr)
-}
-
-// GetRefundPacketDataKey builds a deterministic key for refund packet data.
-func GetRefundPacketDataKey(sourcePort, sourceChannel string, sequence uint64) string {
-	return fmt.Sprintf("%s%s/%s/%d", types.RefundPacketPrefix, sourcePort, sourceChannel, sequence)
-}
-
-func (k Keeper) GetAllRefundPacketData(ctx sdk.Context) []*transwapv1.PendingRefundPacket {
-	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	iterator := storetypes.KVStorePrefixIterator(store, []byte(types.RefundPacketPrefix))
-	defer sdk.LogDeferred(k.Logger(ctx), func() error { return iterator.Close() })
-
-	pending := make([]*transwapv1.PendingRefundPacket, 0)
-	for ; iterator.Valid(); iterator.Next() {
-		packet := &transwapv1.TransferPacketData{}
-		k.cdc.MustUnmarshal(iterator.Value(), packet)
-		pending = append(pending, &transwapv1.PendingRefundPacket{
-			Key:    string(iterator.Key()),
-			Packet: packet,
-		})
-	}
-	return pending
-}
-
-func (k Keeper) SetRefundPacketData(ctx sdk.Context, key string, packet *transwapv1.TransferPacketData) error {
-	if packet == nil {
-		return fmt.Errorf("packet cannot be nil")
-	}
-
-	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	bz := k.cdc.MustMarshal(packet)
-	store.Set([]byte(key), bz)
-	return nil
-}
-
-func (k Keeper) GetRefundPacketData(ctx sdk.Context, key string) (*transwapv1.TransferPacketData, error) {
-	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	bz := store.Get([]byte(key))
-	if bz == nil {
-		return nil, fmt.Errorf("refund packet data not found")
-	}
-
-	packet := &transwapv1.TransferPacketData{}
-	k.cdc.MustUnmarshal(bz, packet)
-	return packet, nil
-}
-
-func (k Keeper) HasRefundPacketData(ctx sdk.Context, key string) bool {
-	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return store.Has([]byte(key))
-}
-
-func (k Keeper) DeleteRefundPacketData(ctx sdk.Context, key string) {
-	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	store.Delete([]byte(key))
 }

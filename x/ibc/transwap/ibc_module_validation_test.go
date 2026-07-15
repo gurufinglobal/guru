@@ -30,6 +30,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/keeper"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
@@ -139,6 +140,24 @@ func TestIBCModuleOnRecvPacketReturnsErrorAckForMalformedData(t *testing.T) {
 		SourcePort:    types.PortID,
 		SourceChannel: "channel-0",
 		Data:          []byte("{bad-json"),
+	}
+	ack := im.OnRecvPacket(ctx, types.V1, packet, sdk.AccAddress{})
+
+	require.False(t, ack.Success())
+}
+
+func TestIBCModuleOnRecvPacketRejectsMissingExchangeDiscriminator(t *testing.T) {
+	k, ctx := newIBCValidationKeeper(t)
+	ctx = ctx.WithEventManager(sdk.NewEventManager())
+	im := NewIBCModule(k)
+
+	packetData := types.NewFungibleTokenPacketData("ugxusd", "1", "sender", "receiver", "")
+	packetData.ExchangeId = ""
+	packet := channeltypes.Packet{
+		Sequence:      2,
+		SourcePort:    types.PortID,
+		SourceChannel: "channel-0",
+		Data:          types.FungibleTokenPacketDataBytes(packetData),
 	}
 	ack := im.OnRecvPacket(ctx, types.V1, packet, sdk.AccAddress{})
 
@@ -285,10 +304,19 @@ func (ibcValidationBexKeeper) QuoteSwap(context.Context, *bexv1.QuoteSwapRequest
 func (ibcValidationBexKeeper) ReceiveToReserve(context.Context, uint64, sdk.AccAddress, sdk.Coins) error {
 	return nil
 }
-func (ibcValidationBexKeeper) SendFromReserve(context.Context, uint64, sdk.AccAddress, sdk.Coins) error {
+func (ibcValidationBexKeeper) SendSwapOutputFromReserve(context.Context, uint64, sdk.AccAddress, sdk.Coin) error {
 	return nil
 }
-func (ibcValidationBexKeeper) RecordVolumeWindow(context.Context, uint64, bexv1.SwapDirection, sdkmath.Int) error {
+func (ibcValidationBexKeeper) SendRefundFromReserve(context.Context, uint64, sdk.AccAddress, sdk.Coin) error {
+	return nil
+}
+func (ibcValidationBexKeeper) ClaimRefundFromReserve(context.Context, uint64, sdk.AccAddress, sdk.Coin) error {
+	return nil
+}
+func (ibcValidationBexKeeper) ReserveVolumeWindow(_ context.Context, exchangeID uint64, direction bexv1.SwapDirection, amount sdkmath.Int) (*bexv1.VolumeReservation, error) {
+	return &bexv1.VolumeReservation{ExchangeId: exchangeID, Direction: direction, EpochSeconds: bextypes.MinVolumeEpochSeconds, Amount: amount.String(), VolumeWindowGeneration: 1}, nil
+}
+func (ibcValidationBexKeeper) ReleaseVolumeWindow(context.Context, *bexv1.VolumeReservation) error {
 	return nil
 }
 func (ibcValidationBexKeeper) CollectFee(context.Context, uint64, sdk.Coin) error {
@@ -309,6 +337,15 @@ func (ibcValidationBexKeeper) AddPendingLiability(context.Context, uint64, sdk.C
 func (ibcValidationBexKeeper) ReleasePendingLiability(context.Context, uint64, sdk.Coin) error {
 	return nil
 }
+func (ibcValidationBexKeeper) GetPendingLiabilities(context.Context, uint64) (sdk.Coins, error) {
+	return nil, nil
+}
+func (ibcValidationBexKeeper) GetLockedFees(context.Context, uint64) (sdk.Coins, error) {
+	return nil, nil
+}
+func (ibcValidationBexKeeper) GetRefundAccountingExchangeIDs(context.Context) ([]uint64, error) {
+	return nil, nil
+}
 func (ibcValidationBexKeeper) GetReserveAddress(context.Context, uint64) sdk.AccAddress {
 	return sdk.AccAddress("reserve")
 }
@@ -325,6 +362,9 @@ func (ibcValidationChannelKeeper) GetAllChannelsWithPortPrefix(sdk.Context, stri
 	return nil
 }
 func (ibcValidationChannelKeeper) HasChannel(sdk.Context, string, string) bool { return false }
+func (ibcValidationChannelKeeper) GetPacketCommitment(sdk.Context, string, string, uint64) []byte {
+	return nil
+}
 
 type ibcValidationMsgRouter struct{}
 

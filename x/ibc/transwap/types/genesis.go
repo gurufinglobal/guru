@@ -3,7 +3,6 @@ package types
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	host "github.com/cosmos/ibc-go/v11/modules/core/24-host"
 
@@ -17,6 +16,7 @@ func NewGenesisState(portID string, denoms Denoms, totalEscrowed sdk.Coins) *tra
 		PortId:        portID,
 		Denoms:        denoms,
 		TotalEscrowed: SDKCoinsToProto(totalEscrowed),
+		Params:        DefaultParams(),
 	}
 }
 
@@ -26,11 +26,16 @@ func DefaultGenesisState() *transwapv1.GenesisState {
 		PortId:        PortID,
 		Denoms:        Denoms{},
 		TotalEscrowed: SDKCoinsToProto(sdk.Coins{}),
+		Params:        DefaultParams(),
+		Refunds:       []*transwapv1.RefundRecord{},
 	}
 }
 
 // ValidateGenesisState performs basic genesis state validation.
 func ValidateGenesisState(gs *transwapv1.GenesisState) error {
+	if gs == nil {
+		return fmt.Errorf("genesis state cannot be nil")
+	}
 	if err := host.PortIdentifierValidator(gs.GetPortId()); err != nil {
 		return err
 	}
@@ -44,63 +49,49 @@ func ValidateGenesisState(gs *transwapv1.GenesisState) error {
 	if err := totalEscrowed.Validate(); err != nil {
 		return err
 	}
-	seen := make(map[string]struct{}, len(gs.GetPendingRefunds()))
-	for i, pending := range gs.GetPendingRefunds() {
-		if pending == nil || pending.GetPacket() == nil {
-			return fmt.Errorf("pending refund %d cannot be nil", i)
+	if err := ValidateParams(gs.GetParams()); err != nil {
+		return err
+	}
+	refundIDs := make(map[string]struct{}, len(gs.GetRefunds()))
+	livePackets := make(map[string]string, len(gs.GetRefunds()))
+	for i, refund := range gs.GetRefunds() {
+		if err := ValidateRefundRecord(refund); err != nil {
+			return fmt.Errorf("invalid refund %d: %w", i, err)
 		}
-		if err := validateRefundPacketKey(pending.GetKey()); err != nil {
-			return fmt.Errorf("invalid pending refund key %d: %w", i, err)
+		if _, exists := refundIDs[refund.GetId()]; exists {
+			return fmt.Errorf("duplicate refund id %q", refund.GetId())
 		}
-		if _, ok := seen[pending.GetKey()]; ok {
-			return fmt.Errorf("duplicate pending refund key %q", pending.GetKey())
-		}
-		seen[pending.GetKey()] = struct{}{}
-		packet := pending.GetPacket()
-		if packet.GetSourcePort() != PortID {
-			return fmt.Errorf("pending refund %q source port must be %s", pending.GetKey(), PortID)
-		}
-		if err := host.ChannelIdentifierValidator(packet.GetSourceChannel()); err != nil {
-			return fmt.Errorf("pending refund %q has invalid source channel: %w", pending.GetKey(), err)
-		}
-		if err := ValidateToken(packet.GetToken()); err != nil {
-			return fmt.Errorf("pending refund %q has invalid token: %w", pending.GetKey(), err)
-		}
-		if strings.TrimSpace(packet.GetSender()) == "" || strings.TrimSpace(packet.GetReceiver()) == "" {
-			return fmt.Errorf("pending refund %q sender and receiver must be non-empty", pending.GetKey())
-		}
-		if packet.GetTimeoutTimestamp() == 0 || packet.GetOriginalTimeoutTimestamp() == 0 {
-			return fmt.Errorf("pending refund %q timeout timestamps must be non-zero", pending.GetKey())
-		}
-		if exchangeID, err := strconv.ParseUint(packet.GetExchangeId(), 10, 64); err != nil || exchangeID == 0 {
-			return fmt.Errorf("pending refund %q has invalid exchange id", pending.GetKey())
-		}
-		fee, err := ProtoCoinToSDK(packet.GetFee())
-		if err != nil || fee.IsNegative() {
-			return fmt.Errorf("pending refund %q has invalid fee", pending.GetKey())
-		}
-		liability, err := ProtoCoinToSDK(packet.GetPendingLiability())
-		if err != nil || !liability.IsPositive() {
-			return fmt.Errorf("pending refund %q has invalid pending liability", pending.GetKey())
+		refundIDs[refund.GetId()] = struct{}{}
+		switch refund.GetStatus() {
+		case transwapv1.RefundStatus_REFUND_STATUS_PENDING:
+			key := refundPacketIdentity(
+				refund.GetOriginalOutputPort(),
+				refund.GetOriginalOutputChannel(),
+				refund.GetOriginalOutputSequence(),
+			)
+			if existing, exists := livePackets[key]; exists {
+				return fmt.Errorf("refunds %q and %q share live packet %s", existing, refund.GetId(), key)
+			}
+			livePackets[key] = refund.GetId()
+		case transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT:
+			key := refundPacketIdentity(
+				refund.GetRefundSourcePort(),
+				refund.GetRefundSourceChannel(),
+				refund.GetActivePacketSequence(),
+			)
+			if existing, exists := livePackets[key]; exists {
+				return fmt.Errorf("refunds %q and %q share live packet %s", existing, refund.GetId(), key)
+			}
+			livePackets[key] = refund.GetId()
+		case transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE:
+			if refund.GetNextRetryHeight() == 0 {
+				return fmt.Errorf("retryable refund %q must be scheduled", refund.GetId())
+			}
 		}
 	}
 	return nil
 }
 
-func validateRefundPacketKey(key string) error {
-	parts := strings.Split(key, "/")
-	if len(parts) != 4 || parts[0]+"/" != RefundPacketPrefix {
-		return fmt.Errorf("expected refund/<port>/<channel>/<sequence>")
-	}
-	if err := host.PortIdentifierValidator(parts[1]); err != nil {
-		return err
-	}
-	if err := host.ChannelIdentifierValidator(parts[2]); err != nil {
-		return err
-	}
-	sequence, err := strconv.ParseUint(parts[3], 10, 64)
-	if err != nil || sequence == 0 {
-		return fmt.Errorf("sequence must be a positive uint64")
-	}
-	return nil
+func refundPacketIdentity(portID, channelID string, sequence uint64) string {
+	return portID + "/" + channelID + "/" + strconv.FormatUint(sequence, 10)
 }

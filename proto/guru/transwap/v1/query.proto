@@ -2,16 +2,38 @@ syntax = "proto3";
 
 package guru.transwap.v1;
 
-import "gogoproto/gogo.proto";
-import "cosmos/base/v1beta1/coin.proto";
-import "guru/transwap/v1/token.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/query/v1/query.proto";
+import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "guru/transwap/v1/params.proto";
+import "guru/transwap/v1/refund.proto";
+import "guru/transwap/v1/token.proto";
 
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
 
 // Query provides defines the gRPC querier service.
 service Query {
+  // Params returns the effective refund retry governance parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/guru/transwap/v1/params";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // Refunds returns stable refund state-machine records with optional status
+  // and receiver filters. Keep this exact route before Refund's ** wildcard so
+  // grpc-gateway dispatches the collection endpoint deterministically.
+  rpc Refunds(QueryRefundsRequest) returns (QueryRefundsResponse) {
+    option (google.api.http).get = "/guru/transwap/v1/refunds";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // Refund returns one stable refund state-machine record.
+  rpc Refund(QueryRefundRequest) returns (QueryRefundResponse) {
+    option (google.api.http).get = "/guru/transwap/v1/refunds/{refund_id=**}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
 
   // Denoms queries all denominations
   rpc Denoms(QueryDenomsRequest) returns (QueryDenomsResponse) {
@@ -39,6 +61,33 @@ service Query {
   }
 }
 
+message QueryParamsRequest {}
+message QueryParamsResponse {
+  Params params = 1;
+}
+
+message QueryRefundRequest {
+  string refund_id = 1;
+}
+message QueryRefundResponse {
+  RefundRecord refund = 1;
+}
+
+message QueryRefundsRequest {
+  // status filters by one concrete refund state. UNSPECIFIED returns all
+  // states.
+  RefundStatus status = 1;
+  // receiver is the exact cross-chain receiver stored in the refund record.
+  // Empty returns all receivers.
+  string receiver = 2;
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+
+message QueryRefundsResponse {
+  repeated RefundRecord refunds = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
 // QueryDenomRequest is the request type for the Query/Denom RPC
 // method
 message QueryDenomRequest {
@@ -64,7 +113,10 @@ message QueryDenomsRequest {
 // method.
 message QueryDenomsResponse {
   // denoms returns all denominations.
-  repeated Denom denoms = 1 [(gogoproto.castrepeated) = "Denoms", (gogoproto.nullable) = false];
+  repeated Denom denoms = 1 [
+    (gogoproto.castrepeated) = "Denoms",
+    (gogoproto.nullable) = false
+  ];
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

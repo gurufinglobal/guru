@@ -6,7 +6,6 @@ import (
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -41,11 +40,6 @@ func (k Keeper) OnRecvTransferPacket(
 	}
 	token := types.CloneToken(data.Token)
 
-	// parse the transfer amount
-	transferAmount, ok := sdkmath.NewIntFromString(token.Amount)
-	if !ok {
-		return errorsmod.Wrapf(types.ErrInvalidAmount, "unable to parse transfer amount: %s", token.Amount)
-	}
 	// This is the prefix that would have been prefixed to the denomination
 	// on sender chain IF and only if the token originally came from the
 	// receiving chain.
@@ -58,7 +52,10 @@ func (k Keeper) OnRecvTransferPacket(
 		// remove prefix added by sender chain
 		token.Denom.Trace = token.Denom.Trace[1:]
 
-		coin := sdk.NewCoin(types.DenomIBCDenom(token.Denom), transferAmount)
+		coin, err := types.TokenToCoin(token)
+		if err != nil {
+			return err
+		}
 		escrowAddress := types.GetEscrowAddress(destPort, destChannel)
 		if err := k.UnescrowCoin(ctx, escrowAddress, receiver, coin); err != nil {
 			return err
@@ -71,12 +68,15 @@ func (k Keeper) OnRecvTransferPacket(
 		if !k.HasDenom(ctx, types.DenomHash(token.Denom)) {
 			k.SetDenom(ctx, token.Denom)
 		}
-		voucherDenom := types.DenomIBCDenom(token.Denom)
+		voucher, err := types.TokenToCoin(token)
+		if err != nil {
+			return err
+		}
+		voucherDenom := voucher.Denom
 		if !k.BankKeeper.HasDenomMetaData(ctx, voucherDenom) {
 			k.SetDenomMetadata(ctx, token.Denom)
 		}
 		events.EmitDenomEvent(ctx, token)
-		voucher := sdk.NewCoin(voucherDenom, transferAmount)
 
 		// mint new tokens if the source of the transfer is the same chain
 		if err := k.BankKeeper.MintCoins(
@@ -100,10 +100,9 @@ func (k Keeper) OnRecvTransferPacket(
 // OnAcknowledgementTransferPacket responds to the success or failure of a packet acknowledgment
 // written on the receiving chain.
 //
-// If the acknowledgement was a success, the exchange refund fee is released.
-// If the acknowledgement failed for a tracked exchange refund packet, the
-// outbound tokens are refunded and the original sender receives a retry packet.
-// Missing refund metadata is treated as an already-processed packet.
+// Only tracked output/refund packets may mutate refund accounting. Missing or
+// stale indexes are deterministic no-ops, which makes duplicate callbacks
+// idempotent and prevents legacy fallback logic from paying twice.
 func (k Keeper) OnAcknowledgementTransferPacket(
 	ctx sdk.Context,
 	sourcePort string,
@@ -112,43 +111,31 @@ func (k Keeper) OnAcknowledgementTransferPacket(
 	data types.InternalTransferRepresentation,
 	ack channeltypes.Acknowledgement,
 ) error {
-	refundKey := GetRefundPacketDataKey(sourcePort, sourceChannel, sequence)
-
 	switch ack.Response.(type) {
-	case *channeltypes.Acknowledgement_Result:
-		if err := k.releaseExchangeRefundFee(ctx, refundKey); err != nil {
-			return err
-		}
-		if err := k.releaseExchangeRefundLiability(ctx, refundKey); err != nil {
-			return err
-		}
-		k.DeleteRefundPacketData(ctx, refundKey)
-		return nil
-	case *channeltypes.Acknowledgement_Error:
-		if !k.HasRefundPacketData(ctx, refundKey) {
-			return nil
-		}
-		exchangeID, err := k.exchangeIDForRefund(ctx, refundKey)
-		if err != nil {
-			return err
-		}
-		if err := k.refundPacketTokensToReserve(ctx, exchangeID, sourcePort, sourceChannel, data); err != nil {
-			return err
-		}
-
-		if err := k.performExchangeRefund(ctx, refundKey); err != nil {
-			return err
-		}
-
-		return nil
+	case *channeltypes.Acknowledgement_Result, *channeltypes.Acknowledgement_Error:
 	default:
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidType, "expected one of [%T, %T], got %T", channeltypes.Acknowledgement_Result{}, channeltypes.Acknowledgement_Error{}, ack.Response)
+		return errorsmod.Wrapf(
+			ibcerrors.ErrInvalidType,
+			"expected one of [%T, %T], got %T",
+			channeltypes.Acknowledgement_Result{},
+			channeltypes.Acknowledgement_Error{},
+			ack.Response,
+		)
 	}
+	_, err := k.handleTrackedRefundAcknowledgement(
+		ctx,
+		sourcePort,
+		sourceChannel,
+		sequence,
+		data,
+		ack,
+	)
+	return err
 }
 
 // OnTimeoutTransferPacket processes a tracked transfer packet timeout by
-// refunding the tokens to the sender and performing exchange refund retry
-// accounting. Missing refund metadata is treated as an already-processed packet.
+// restoring the currently tracked packet to the reserve and applying the
+// bounded retry policy. Missing/stale metadata is an idempotent no-op.
 func (k Keeper) OnTimeoutTransferPacket(
 	ctx sdk.Context,
 	sourcePort string,
@@ -156,19 +143,6 @@ func (k Keeper) OnTimeoutTransferPacket(
 	sequence uint64,
 	data types.InternalTransferRepresentation,
 ) error {
-	refundKey := GetRefundPacketDataKey(sourcePort, sourceChannel, sequence)
-	if !k.HasRefundPacketData(ctx, refundKey) {
-		return nil
-	}
-
-	// refund the tokens to the sender
-	exchangeID, err := k.exchangeIDForRefund(ctx, refundKey)
-	if err != nil {
-		return err
-	}
-	if err := k.refundPacketTokensToReserve(ctx, exchangeID, sourcePort, sourceChannel, data); err != nil {
-		return err
-	}
-
-	return k.performExchangeRefund(ctx, refundKey)
+	_, err := k.handleTrackedRefundTimeout(ctx, sourcePort, sourceChannel, sequence, data)
+	return err
 }

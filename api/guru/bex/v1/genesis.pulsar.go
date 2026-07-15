@@ -3066,8 +3066,8 @@ type GenesisState struct {
 	VolumeWindows     []*VolumeWindowGenesis     `protobuf:"bytes,5,rep,name=volume_windows,json=volumeWindows,proto3" json:"volume_windows,omitempty"`
 	NextExchangeId    uint64                     `protobuf:"varint,6,opt,name=next_exchange_id,json=nextExchangeId,proto3" json:"next_exchange_id,omitempty"`
 	ReserveDepositors []*ReserveDepositorGenesis `protobuf:"bytes,7,rep,name=reserve_depositors,json=reserveDepositors,proto3" json:"reserve_depositors,omitempty"`
-	// pending_liabilities reserves the net input principal required to honor
-	// in-flight cross-chain refunds for each exchange.
+	// pending_liabilities records gross refund obligations until output/refund
+	// acknowledgement success or a local manual claim.
 	PendingLiabilities []*FeeGenesis `protobuf:"bytes,8,rep,name=pending_liabilities,json=pendingLiabilities,proto3" json:"pending_liabilities,omitempty"`
 }
 

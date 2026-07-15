@@ -41,6 +41,7 @@ func TestQuoteSwapRESTForwardsSlashDenom(t *testing.T) {
 			require.Equal(t, uint64(7), capture.lastRequest.GetExchangeId())
 			require.Equal(t, denom, capture.lastRequest.GetInputDenom())
 			require.Equal(t, "42", capture.lastRequest.GetAmountIn())
+			require.JSONEq(t, `{"quote":{"exchange_id":"7","input_denom":"`+denom+`","amount_in":"42","exchange_revision":"12"}}`, response.Body.String())
 		})
 	}
 }
@@ -57,9 +58,10 @@ func (c *quoteGatewayCapture) QuoteSwap(
 	c.lastRequest = proto.Clone(request).(*bexv1.QueryQuoteSwapRequest)
 	return &bexv1.QueryQuoteSwapResponse{
 		Quote: &bexv1.QuoteSwapResponse{
-			ExchangeId: request.GetExchangeId(),
-			InputDenom: request.GetInputDenom(),
-			AmountIn:   request.GetAmountIn(),
+			ExchangeId:       request.GetExchangeId(),
+			InputDenom:       request.GetInputDenom(),
+			AmountIn:         request.GetAmountIn(),
+			ExchangeRevision: 12,
 		},
 	}, nil
 }

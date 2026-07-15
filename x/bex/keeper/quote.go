@@ -157,20 +157,21 @@ func (k Keeper) QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*be
 		return nil, types.ErrVolumeCapExceeded.Wrap("quote output exceeds volume cap")
 	}
 	return &bexv1.QuoteSwapResponse{
-		ExchangeId:   exchange.GetId(),
-		Direction:    direction,
-		InputDenom:   req.GetInputDenom(),
-		OutputDenom:  outputDenom,
-		OracleSymbol: oracleSymbol,
-		OracleRate:   rate.String(),
-		AmountIn:     amountIn.String(),
-		FeeAmount:    fee.String(),
-		NetAmountIn:  netIn.String(),
-		AmountOut:    amountOut.String(),
-		OutputLimit:  outputLimit.String(),
-		VolumeCap:    volumeCap.String(),
-		VolumeUsed:   used.String(),
-		MinAmountIn:  minAmountIn(rate, feeBps).String(),
+		ExchangeId:       exchange.GetId(),
+		Direction:        direction,
+		InputDenom:       req.GetInputDenom(),
+		OutputDenom:      outputDenom,
+		OracleSymbol:     oracleSymbol,
+		OracleRate:       rate.String(),
+		AmountIn:         amountIn.String(),
+		FeeAmount:        fee.String(),
+		NetAmountIn:      netIn.String(),
+		AmountOut:        amountOut.String(),
+		OutputLimit:      outputLimit.String(),
+		VolumeCap:        volumeCap.String(),
+		VolumeUsed:       used.String(),
+		MinAmountIn:      minAmountIn(rate, feeBps).String(),
+		ExchangeRevision: exchange.GetRevision(),
 	}, nil
 }
 
@@ -259,54 +260,79 @@ func (k Keeper) GetCurrentVolumeAmount(ctx context.Context, exchange *bexv1.Exch
 }
 
 func (k Keeper) RecordVolumeWindow(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, amountOut sdkmath.Int) error {
-	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
-		return k.recordVolumeWindow(cacheCtx, exchangeID, direction, amountOut)
-	})
+	_, err := k.ReserveVolumeWindow(ctx, exchangeID, direction, amountOut)
+	return err
 }
 
-func (k Keeper) recordVolumeWindow(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, amountOut sdkmath.Int) error {
+// ReserveVolumeWindow charges the current cap window and returns its exact
+// accounting identity. Callers that may later roll back an asynchronous
+// operation must persist this value and pass it to ReleaseVolumeWindow.
+func (k Keeper) ReserveVolumeWindow(
+	ctx context.Context,
+	exchangeID uint64,
+	direction bexv1.SwapDirection,
+	amountOut sdkmath.Int,
+) (*bexv1.VolumeReservation, error) {
+	var reservation *bexv1.VolumeReservation
+	err := executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
+		var err error
+		reservation, err = k.recordVolumeWindow(cacheCtx, exchangeID, direction, amountOut)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return reservation, nil
+}
+
+func (k Keeper) recordVolumeWindow(
+	ctx context.Context,
+	exchangeID uint64,
+	direction bexv1.SwapDirection,
+	amountOut sdkmath.Int,
+) (*bexv1.VolumeReservation, error) {
 	exchange, err := k.GetActiveExchange(ctx, exchangeID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
-		return types.ErrInvalidRoute.Wrap("volume recording requires an active exchange")
+		return nil, types.ErrInvalidRoute.Wrap("volume recording requires an active exchange")
 	}
 	if amountOut.IsNil() || !amountOut.IsPositive() {
-		return types.ErrInvalidRequest.Wrap("amount_out must be positive")
+		return nil, types.ErrInvalidRequest.Wrap("amount_out must be positive")
 	}
 	exchange, err = k.activatePendingVolumeEpoch(ctx, exchange)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	_, _, _, _, cap, err := quoteConfig(exchange, direction)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
 	epochSeconds, generation, err := effectiveVolumeWindowIdentity(exchange, blockTime)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	key := currentVolumeKey(blockTime, exchangeID, direction, epochSeconds, generation)
 	used, found, err := k.getVolumeWindowAmount(ctx, key)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !found {
 		if err := k.pruneExpiredVolumeWindows(ctx, maxVolumePruneRowsPerPass); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	next, err := checkedVolumeAdd(used, amountOut)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !cap.IsZero() && next.GT(cap) {
-		return types.ErrVolumeCapExceeded.Wrap("recording would exceed volume cap")
+		return nil, types.ErrVolumeCapExceeded.Wrap("recording would exceed volume cap")
 	}
 	if err := k.volumeWindow.Set(ctx, key, next.String()); err != nil {
-		return err
+		return nil, err
 	}
 	epochStart, _ := volumeWindowEpochStart(key)
 	emitEvent(
@@ -318,6 +344,74 @@ func (k Keeper) recordVolumeWindow(ctx context.Context, exchangeID uint64, direc
 		sdk.NewAttribute(types.AttributeKeyEpochSeconds, strconv.FormatUint(uint64(volumeWindowEpochSeconds(key)), 10)),
 		uint64Attr(types.AttributeKeyGeneration, volumeWindowGeneration(key)),
 		intAttr(types.AttributeKeyAmount, amountOut),
+		intAttr(types.AttributeKeyCurrentAmount, next),
+	)
+	return &bexv1.VolumeReservation{
+		ExchangeId:             exchangeID,
+		Direction:              direction,
+		EpochStartUnix:         epochStart,
+		EpochSeconds:           volumeWindowEpochSeconds(key),
+		Amount:                 amountOut.String(),
+		VolumeWindowGeneration: volumeWindowGeneration(key),
+	}, nil
+}
+
+// ReleaseVolumeWindow removes one previously charged asynchronous output from
+// its original cap window. Missing expired rows are already pruned and are a
+// safe no-op; a missing live row indicates corrupted accounting.
+func (k Keeper) ReleaseVolumeWindow(ctx context.Context, reservation *bexv1.VolumeReservation) error {
+	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
+		return k.releaseVolumeWindow(cacheCtx, reservation)
+	})
+}
+
+func (k Keeper) releaseVolumeWindow(ctx context.Context, reservation *bexv1.VolumeReservation) error {
+	amount, err := types.ValidateVolumeReservation(reservation)
+	if err != nil {
+		return err
+	}
+	key := volumeWindowKeyFromStart(
+		reservation.GetExchangeId(),
+		reservation.GetDirection(),
+		reservation.GetEpochStartUnix(),
+		reservation.GetEpochSeconds(),
+		reservation.GetVolumeWindowGeneration(),
+	)
+	used, found, err := k.getVolumeWindowAmount(ctx, key)
+	if err != nil {
+		return err
+	}
+	if !found {
+		blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
+		if !blockTime.IsZero() && blockTime.Unix() >= 0 && key.K1() <= uint64(blockTime.Unix()) {
+			return nil
+		}
+		return types.ErrInvariantViolation.Wrap("live volume reservation references a missing window")
+	}
+	if used.LT(amount) {
+		return types.ErrInvariantViolation.Wrapf(
+			"volume window usage %s is below reservation %s",
+			used,
+			amount,
+		)
+	}
+	next := used.Sub(amount)
+	if next.IsZero() {
+		if err := k.volumeWindow.Remove(ctx, key); err != nil {
+			return err
+		}
+	} else if err := k.volumeWindow.Set(ctx, key, next.String()); err != nil {
+		return err
+	}
+	emitEvent(
+		ctx,
+		types.EventTypeVolumeReleased,
+		exchangeIDAttr(reservation.GetExchangeId()),
+		directionAttr(reservation.GetDirection()),
+		uint64Attr("epoch_start_unix", reservation.GetEpochStartUnix()),
+		sdk.NewAttribute(types.AttributeKeyEpochSeconds, strconv.FormatUint(uint64(reservation.GetEpochSeconds()), 10)),
+		uint64Attr(types.AttributeKeyGeneration, reservation.GetVolumeWindowGeneration()),
+		intAttr(types.AttributeKeyAmount, amount),
 		intAttr(types.AttributeKeyCurrentAmount, next),
 	)
 	return nil

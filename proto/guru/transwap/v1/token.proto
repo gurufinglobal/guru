@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package guru.transwap.v1;
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
-
 import "gogoproto/gogo.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
 
 // Token defines a struct which represents a token to be transferred.
 message Token {
@@ -25,6 +25,6 @@ message Denom {
 // Hop defines a port ID, channel ID pair specifying a unique "hop" in a trace
 message Hop {
   option (gogoproto.goproto_stringer) = false;
-  string port_id                      = 1;
-  string channel_id                   = 2;
+  string port_id = 1;
+  string channel_id = 2;
 }

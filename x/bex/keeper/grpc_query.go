@@ -156,6 +156,23 @@ func (q QueryServer) AvailableFees(ctx context.Context, req *bexv1.QueryFeesRequ
 	return q.fees(ctx, req, q.keeper.GetAvailableFees)
 }
 
+func (q QueryServer) PendingLiabilities(
+	ctx context.Context,
+	req *bexv1.QueryPendingLiabilitiesRequest,
+) (*bexv1.QueryPendingLiabilitiesResponse, error) {
+	if req == nil {
+		return nil, types.ErrInvalidRequest.Wrap("empty request")
+	}
+	if _, err := q.keeper.GetExchange(ctx, req.GetExchangeId()); err != nil {
+		return nil, err
+	}
+	coins, err := q.keeper.GetPendingLiabilities(ctx, req.GetExchangeId())
+	if err != nil {
+		return nil, err
+	}
+	return &bexv1.QueryPendingLiabilitiesResponse{Ledger: coinsToLedger(coins)}, nil
+}
+
 func (q QueryServer) fees(ctx context.Context, req *bexv1.QueryFeesRequest, get func(context.Context, uint64) (sdk.Coins, error)) (*bexv1.QueryFeesResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")

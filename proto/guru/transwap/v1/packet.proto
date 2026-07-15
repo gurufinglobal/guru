@@ -2,10 +2,6 @@ syntax = "proto3";
 
 package guru.transwap.v1;
 
-import "cosmos/base/v1beta1/coin.proto";
-import "gogoproto/gogo.proto";
-import "guru/transwap/v1/token.proto";
-
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
 
 // FungibleTokenPacketData defines a struct for the packet payload
@@ -24,34 +20,4 @@ message FungibleTokenPacketData {
   string receiver = 5;
   // optional memo
   string memo = 6;
-}
-
-// TransferPacketData defines the a struct for transfer details
-message TransferPacketData {
-  // the port on which the packet will be sent
-  string source_port = 1;
-  // the channel by which the packet will be sent
-  string source_channel = 2;
-  // token to be transferred
-  Token token = 3 [(gogoproto.nullable) = false];
-  // the sender address
-  string sender = 4;
-  // the recipient address on the destination chain
-  string receiver = 5;
-  // Timeout timestamp in absolute nanoseconds since unix epoch.
-  // For v1 transfer packets, either timeout_height or timeout_timestamp must be set.
-  uint64 timeout_timestamp = 6;
-  // optional memo
-  string memo = 7;
-  // calculated fee
-  cosmos.base.v1beta1.Coin fee = 8 [(gogoproto.nullable) = false];
-  // exvhange id
-  string exchange_id = 9;
-  // pending_liability is the net input principal reserved by BEX until either
-  // the swap output or a compensating refund is acknowledged successfully.
-  cosmos.base.v1beta1.Coin pending_liability = 10 [(gogoproto.nullable) = false];
-  // original_timeout_timestamp is immutable audit data from the initiating
-  // exchange packet. timeout_timestamp is refreshed for every refund retry.
-  uint64 original_timeout_timestamp = 11;
-  uint32 retry_count = 12;
 }

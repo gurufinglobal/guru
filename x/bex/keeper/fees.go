@@ -30,6 +30,19 @@ func validateExchangeFeeDenom(exchange *bexv1.Exchange, denom string) error {
 	}
 }
 
+// validateExchangeReserveDenom accepts only the local bank denominations held
+// by the deterministic reserve. Wire denominations are valid quote/fee audit
+// metadata but must never be used as reserve liabilities or outflows.
+func validateExchangeReserveDenom(exchange *bexv1.Exchange, denom string) error {
+	if exchange == nil {
+		return types.ErrInvariantViolation.Wrap("exchange is nil")
+	}
+	if denom == exchange.GetIbcDenomA() || denom == exchange.GetIbcDenomB() {
+		return nil
+	}
+	return types.ErrInvalidRoute.Wrapf("reserve denom %q is not configured for exchange %d", denom, exchange.GetId())
+}
+
 func validateExchangeFeeCoins(exchange *bexv1.Exchange, coins sdk.Coins) error {
 	for _, coin := range coins {
 		if err := validateExchangeFeeDenom(exchange, coin.Denom); err != nil {

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
@@ -14,27 +15,22 @@ import (
 )
 
 func TestRedteamDuplicateOriginalErrorAckIsGuardedIfAppCallbackReentered(t *testing.T) {
-	state := setupExchangeRefundCallback(t)
+	scenario := setupRefundStateMachineScenario(t)
+	before := mustRefundRecord(t, scenario.state, scenario.refundID)
+	sentCount := scenario.state.ics4.sentCount(scenario.state.ctx)
+	originalOutput := refundSentPacketData(t, scenario.state, exchangeAtomicSequence)
 
 	ack := channeltypes.NewErrorAcknowledgement(errors.New("destination rejected packet"))
-	require.NoError(t, state.k.OnAcknowledgementTransferPacket(
-		state.ctx,
+	require.NoError(t, scenario.state.keeper.OnAcknowledgementTransferPacket(
+		scenario.state.ctx,
 		transtypes.PortID,
 		"channel-7",
-		12,
-		state.outboundData,
-		ack,
-	))
-	requireExchangeRefundCallbackState(t, state)
-
-	require.NoError(t, state.k.OnAcknowledgementTransferPacket(
-		state.ctx,
-		transtypes.PortID,
-		"channel-7",
-		12,
-		state.outboundData,
+		exchangeAtomicSequence,
+		originalOutput,
 		ack,
 	))
 
-	requireExchangeRefundCallbackState(t, state)
+	require.Equal(t, sentCount, scenario.state.ics4.sentCount(scenario.state.ctx))
+	require.True(t, proto.Equal(before, mustRefundRecord(t, scenario.state, scenario.refundID)))
+	require.NoError(t, scenario.state.keeper.AssertRefundInvariants(scenario.state.ctx))
 }

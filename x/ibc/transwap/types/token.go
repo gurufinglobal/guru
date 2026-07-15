@@ -25,7 +25,12 @@ func ValidateToken(t *transwapv1.Token) error {
 	return validateAmount(t.Amount)
 }
 
-// TokenToCoin converts a Token to an sdk.Coin.
+// TokenToCoin converts a Token to an sdk.Coin that can be materialized by the
+// local bank module. Base denominations are intentionally not validated by
+// ValidateDenom because a remote chain may use different denomination rules.
+// Once the trace has been resolved to a local bank denomination, however, it
+// must satisfy the local SDK rules before sdk.NewCoin is called (which would
+// otherwise panic for an invalid denomination).
 func TokenToCoin(t *transwapv1.Token) (sdk.Coin, error) {
 	if err := ValidateToken(t); err != nil {
 		return sdk.Coin{}, err
@@ -36,7 +41,17 @@ func TokenToCoin(t *transwapv1.Token) (sdk.Coin, error) {
 		return sdk.Coin{}, errorsmod.Wrapf(ErrInvalidAmount, "unable to parse transfer amount (%s) into math.Int", transferAmount)
 	}
 
-	return sdk.NewCoin(DenomIBCDenom(t.Denom), transferAmount), nil
+	localDenom := DenomIBCDenom(t.Denom)
+	if err := sdk.ValidateDenom(localDenom); err != nil {
+		return sdk.Coin{}, errorsmod.Wrapf(
+			ErrInvalidDenomForTransfer,
+			"denomination %q cannot be materialized as a local bank coin: %v",
+			localDenom,
+			err,
+		)
+	}
+
+	return sdk.NewCoin(localDenom, transferAmount), nil
 }
 
 // UnboundedSpendLimit returns the sentinel value for unlimited spend grants.

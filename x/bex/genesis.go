@@ -231,7 +231,7 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 			return types.ErrInvalidGenesis.Wrapf("deleted exchange %d has pending liabilities", liability.GetExchangeId())
 		}
 		for _, coin := range pending {
-			if err := bexkeeper.ValidateFeeDenomForGenesis(exchange, coin.Denom); err != nil {
+			if err := bexkeeper.ValidateReserveDenomForGenesis(exchange, coin.Denom); err != nil {
 				return types.ErrInvalidGenesis.Wrapf("exchange %d pending liabilities: %v", liability.GetExchangeId(), err)
 			}
 		}

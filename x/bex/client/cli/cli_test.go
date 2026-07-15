@@ -50,6 +50,7 @@ func TestGetQueryCmdIncludesBexCommands(t *testing.T) {
 		"collected-fees",
 		"locked-fees",
 		"available-fees",
+		"pending-liabilities",
 		"volume-window",
 		"quote",
 	} {
@@ -158,6 +159,7 @@ func TestQueryCommandsBuildRequestsAndPropagateErrors(t *testing.T) {
 		{name: "collected fees", method: "collected-fees", cmd: CmdQueryCollectedFees, args: []string{"7"}},
 		{name: "locked fees", method: "locked-fees", cmd: CmdQueryLockedFees, args: []string{"7"}},
 		{name: "available fees", method: "available-fees", cmd: CmdQueryAvailableFees, args: []string{"7"}},
+		{name: "pending liabilities", method: "pending-liabilities", cmd: CmdQueryPendingLiabilities, args: []string{"7"}},
 		{name: "volume window", method: "volume-window", cmd: CmdQueryVolumeWindow, args: []string{"7", "a-to-b"}},
 		{name: "quote", method: "quote", cmd: CmdQueryQuote, args: []string{"7", "agxn", "10"}},
 	}
@@ -190,6 +192,7 @@ func TestQueryCommandsBuildRequestsAndPropagateErrors(t *testing.T) {
 	installQueryMocks(t, nil, nil, nil)
 	require.Error(t, CmdQueryExchange().RunE(CmdQueryExchange(), []string{"bad"}))
 	require.Error(t, CmdQueryCollectedFees().RunE(CmdQueryCollectedFees(), []string{"bad"}))
+	require.Error(t, CmdQueryPendingLiabilities().RunE(CmdQueryPendingLiabilities(), []string{"bad"}))
 	require.Error(t, CmdQueryReserveDepositors().RunE(CmdQueryReserveDepositors(), []string{"bad"}))
 	require.Error(t, CmdQueryIsReserveDepositor().RunE(CmdQueryIsReserveDepositor(), []string{"bad", "depositor"}))
 	require.Error(t, CmdQueryVolumeWindow().RunE(CmdQueryVolumeWindow(), []string{"7", "sideways"}))
@@ -477,6 +480,11 @@ func (m *mockQueryClient) LockedFees(context.Context, *bexv1.QueryFeesRequest, .
 func (m *mockQueryClient) AvailableFees(context.Context, *bexv1.QueryFeesRequest, ...grpc.CallOption) (*bexv1.QueryFeesResponse, error) {
 	m.method = "available-fees"
 	return &bexv1.QueryFeesResponse{}, m.err
+}
+
+func (m *mockQueryClient) PendingLiabilities(context.Context, *bexv1.QueryPendingLiabilitiesRequest, ...grpc.CallOption) (*bexv1.QueryPendingLiabilitiesResponse, error) {
+	m.method = "pending-liabilities"
+	return &bexv1.QueryPendingLiabilitiesResponse{}, m.err
 }
 
 func (m *mockQueryClient) VolumeWindow(context.Context, *bexv1.QueryVolumeWindowRequest, ...grpc.CallOption) (*bexv1.QueryVolumeWindowResponse, error) {

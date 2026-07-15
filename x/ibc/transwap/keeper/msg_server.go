@@ -35,7 +35,7 @@ func (k Keeper) transferV1PacketFromReserve(
 	timeoutTimestamp uint64,
 	packetData *transwapv1.FungibleTokenPacketData,
 ) (uint64, error) {
-	if err := k.sendTransferFromReserve(ctx, exchangeID, sourceChannel, token); err != nil {
+	if err := k.sendSwapOutputFromReserve(ctx, exchangeID, sourceChannel, token); err != nil {
 		return 0, err
 	}
 

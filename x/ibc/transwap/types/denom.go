@@ -31,8 +31,9 @@ func ValidateDenom(d *transwapv1.Denom) error {
 		return errorsmod.Wrap(ErrInvalidDenomForTransfer, "denomination cannot be nil")
 	}
 
-	// NOTE: base denom validation cannot be performed as each chain may define
-	// its own base denom validation.
+	// NOTE: base denom validation cannot be performed here as each chain may
+	// define its own base denom validation. TokenToCoin validates the resolved
+	// local bank denomination immediately before sdk.Coin materialization.
 	if strings.TrimSpace(d.Base) == "" {
 		return errorsmod.Wrap(ErrInvalidDenomForTransfer, "base denomination cannot be blank")
 	}

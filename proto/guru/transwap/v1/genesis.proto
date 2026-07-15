@@ -4,13 +4,17 @@ package guru.transwap.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
-import "guru/transwap/v1/packet.proto";
+import "guru/transwap/v1/params.proto";
+import "guru/transwap/v1/refund.proto";
 import "guru/transwap/v1/token.proto";
 
 option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
 
 // GenesisState defines the ibc-transfer genesis state
 message GenesisState {
+  reserved 4;
+  reserved "pending_refunds";
+
   string port_id = 1;
   repeated Denom denoms = 2 [
     (gogoproto.castrepeated) = "Denoms",
@@ -22,12 +26,6 @@ message GenesisState {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.nullable) = false
   ];
-  // pending_refunds preserves packet-keyed callback and retry state across
-  // export/import so locked fees and reserve liabilities remain recoverable.
-  repeated PendingRefundPacket pending_refunds = 4;
-}
-
-message PendingRefundPacket {
-  string key = 1;
-  TransferPacketData packet = 2;
+  Params params = 5;
+  repeated RefundRecord refunds = 6;
 }

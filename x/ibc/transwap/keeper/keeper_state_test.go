@@ -169,6 +169,27 @@ func TestEscrowAndUnescrowCoin(t *testing.T) {
 	require.True(t, k.GetTotalEscrowForDenom(ctx, denom).Amount.IsZero())
 }
 
+func TestUnescrowCoinRejectsTrackedTotalUnderflowWithoutMutation(t *testing.T) {
+	k, ctx, bank, _ := setupKeeperStateTester(t)
+
+	escrow := types.GetEscrowAddress(types.PortID, "channel-0")
+	receiver := sdk.AccAddress(bytes.Repeat([]byte{0x23}, 20))
+	denom := "axlusdc"
+	escrowBalance := sdk.NewCoin(denom, math.NewInt(10))
+	receiverBalance := sdk.NewCoin(denom, math.NewInt(2))
+	tracked := sdk.NewCoin(denom, math.NewInt(4))
+
+	bank.SetBalance(escrow, sdk.NewCoins(escrowBalance))
+	bank.SetBalance(receiver, sdk.NewCoins(receiverBalance))
+	k.SetTotalEscrowForDenom(ctx, tracked)
+
+	err := k.UnescrowCoin(ctx, escrow, receiver, sdk.NewCoin(denom, math.NewInt(5)))
+	require.ErrorIs(t, err, types.ErrRefundEscrowInvariant)
+	require.Equal(t, escrowBalance.Amount, bank.GetAllBalances(ctx, escrow).AmountOf(denom))
+	require.Equal(t, receiverBalance.Amount, bank.GetAllBalances(ctx, receiver).AmountOf(denom))
+	require.Equal(t, tracked, k.GetTotalEscrowForDenom(ctx, denom))
+}
+
 func TestSendTransferAndTransferV1Packet(t *testing.T) {
 	t.Run("source channel send burns prefixed tokens", func(t *testing.T) {
 		k, ctx, bank, _ := setupKeeperStateTester(t)

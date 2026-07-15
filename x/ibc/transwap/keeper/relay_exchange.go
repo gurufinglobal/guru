@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	ibcerrors "github.com/cosmos/ibc-go/v11/modules/core/errors"
 
@@ -12,7 +13,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"google.golang.org/protobuf/proto"
 
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
@@ -23,7 +23,6 @@ import (
 
 const (
 	minimumForwardTimeout = time.Minute
-	refundRetryTimeout    = 30 * time.Minute
 )
 
 func (k Keeper) receiveTokensToReserve(
@@ -40,21 +39,26 @@ func (k Keeper) receiveTokensToReserve(
 		return errorsmod.Wrap(types.ErrInvalidDenomForTransfer, "input token cannot be nil")
 	}
 
-	transferAmount, ok := sdkmath.NewIntFromString(token.Amount)
-	if !ok {
-		return errorsmod.Wrapf(types.ErrInvalidAmount, "unable to parse transfer amount: %s", token.Amount)
-	}
-
 	if types.DenomHasPrefix(token.Denom, sourcePort, sourceChannel) {
 		token.Denom.Trace = token.Denom.Trace[1:]
 
-		coin := sdk.NewCoin(types.DenomIBCDenom(token.Denom), transferAmount)
+		coin, err := types.TokenToCoin(token)
+		if err != nil {
+			return err
+		}
 
 		escrowAddress := types.GetEscrowAddress(destPort, destChannel)
+		currentTotalEscrow := k.GetTotalEscrowForDenom(ctx, coin.Denom)
+		if currentTotalEscrow.Amount.LT(coin.Amount) {
+			return types.ErrRefundEscrowInvariant.Wrapf(
+				"tracked escrow %s cannot release input %s",
+				currentTotalEscrow,
+				coin,
+			)
+		}
 		if err := k.BexKeeper.ReceiveToReserve(ctx, exchangeID, escrowAddress, sdk.NewCoins(coin)); err != nil {
 			return err
 		}
-		currentTotalEscrow := k.GetTotalEscrowForDenom(ctx, coin.Denom)
 		k.SetTotalEscrowForDenom(ctx, currentTotalEscrow.Sub(coin))
 	} else {
 		trace := []*transwapv1.Hop{types.NewHop(destPort, destChannel)}
@@ -64,12 +68,14 @@ func (k Keeper) receiveTokensToReserve(
 			k.SetDenom(ctx, token.Denom)
 		}
 
-		voucherDenom := types.DenomIBCDenom(token.Denom)
+		voucher, err := types.TokenToCoin(token)
+		if err != nil {
+			return err
+		}
+		voucherDenom := voucher.Denom
 		if !k.BankKeeper.HasDenomMetaData(ctx, voucherDenom) {
 			k.SetDenomMetadata(ctx, token.Denom)
 		}
-
-		voucher := sdk.NewCoin(voucherDenom, transferAmount)
 
 		if err := k.BankKeeper.MintCoins(
 			ctx, types.ModuleName, sdk.NewCoins(voucher),
@@ -85,7 +91,7 @@ func (k Keeper) receiveTokensToReserve(
 	return nil
 }
 
-func (k Keeper) sendTransferFromReserve(
+func (k Keeper) sendSwapOutputFromReserve(
 	ctx sdk.Context,
 	exchangeID uint64,
 	sourceChannel string,
@@ -99,20 +105,19 @@ func (k Keeper) sendTransferFromReserve(
 		return errorsmod.Wrap(types.ErrSendDisabled, err.Error())
 	}
 
-	coins := sdk.NewCoins(coin)
 	if types.DenomHasPrefix(token.Denom, types.PortID, sourceChannel) {
 		moduleAddr := k.AuthKeeper.GetModuleAddress(types.ModuleName)
-		if err := k.BexKeeper.SendFromReserve(ctx, exchangeID, moduleAddr, coins); err != nil {
+		if err := k.BexKeeper.SendSwapOutputFromReserve(ctx, exchangeID, moduleAddr, coin); err != nil {
 			return err
 		}
-		if err := k.BankKeeper.BurnCoins(ctx, types.ModuleName, coins); err != nil {
+		if err := k.BankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(coin)); err != nil {
 			return errorsmod.Wrap(err, "failed to burn reserve voucher after custody transfer")
 		}
 		return nil
 	}
 
 	escrowAddress := types.GetEscrowAddress(types.PortID, sourceChannel)
-	if err := k.BexKeeper.SendFromReserve(ctx, exchangeID, escrowAddress, coins); err != nil {
+	if err := k.BexKeeper.SendSwapOutputFromReserve(ctx, exchangeID, escrowAddress, coin); err != nil {
 		return err
 	}
 	currentTotalEscrow := k.GetTotalEscrowForDenom(ctx, coin.Denom)
@@ -141,10 +146,17 @@ func (k Keeper) refundPacketTokensToReserve(
 	}
 
 	escrowAddress := types.GetEscrowAddress(sourcePort, sourceChannel)
+	currentTotalEscrow := k.GetTotalEscrowForDenom(ctx, coin.Denom)
+	if currentTotalEscrow.Amount.LT(coin.Amount) {
+		return types.ErrRefundEscrowInvariant.Wrapf(
+			"tracked escrow %s cannot restore failed output %s",
+			currentTotalEscrow,
+			coin,
+		)
+	}
 	if err := k.BexKeeper.ReceiveToReserve(ctx, exchangeID, escrowAddress, coins); err != nil {
 		return err
 	}
-	currentTotalEscrow := k.GetTotalEscrowForDenom(ctx, coin.Denom)
 	k.SetTotalEscrowForDenom(ctx, currentTotalEscrow.Sub(coin))
 	return nil
 }
@@ -160,13 +172,17 @@ func (k Keeper) OnRecvExchangePacket(
 	destPort string,
 	destChannel string,
 	sourceTimeoutTimestamp uint64,
+	sourceTimeoutHeights ...clienttypes.Height,
 ) error {
+	sourceTimeoutHeight := clienttypes.ZeroHeight()
+	if len(sourceTimeoutHeights) > 0 {
+		sourceTimeoutHeight = sourceTimeoutHeights[0]
+	}
 	cacheCtx, writeCache := ctx.CacheContext()
-	if err := k.onRecvExchangePacket(cacheCtx, data, sourcePort, sourceChannel, destPort, destChannel, sourceTimeoutTimestamp); err != nil {
+	if err := k.onRecvExchangePacket(cacheCtx, data, sourcePort, sourceChannel, destPort, destChannel, sourceTimeoutTimestamp, sourceTimeoutHeight); err != nil {
 		return err
 	}
 	writeCache()
-	ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 	return nil
 }
 
@@ -178,9 +194,14 @@ func (k Keeper) onRecvExchangePacket(
 	destPort string,
 	destChannel string,
 	sourceTimeoutTimestamp uint64,
+	sourceTimeoutHeight clienttypes.Height,
 ) error {
 	if err := data.ValidateBasic(); err != nil {
 		return errorsmod.Wrapf(err, "error validating ICS-20 transfer packet data")
+	}
+	protection, err := types.ParseSwapProtection(data.Memo)
+	if err != nil {
+		return err
 	}
 	if err := validateInheritedTimeout(ctx, sourceTimeoutTimestamp); err != nil {
 		return errorsmod.Wrap(err, "rejecting exchange packet due to insufficient inherited timeout")
@@ -215,6 +236,9 @@ func (k Keeper) onRecvExchangePacket(
 	if err != nil {
 		return errorsmod.Wrapf(err, "failed to quote exchange %d", exchangeID)
 	}
+	if quote == nil {
+		return errorsmod.Wrapf(bextypes.ErrInvariantViolation, "exchange %d returned a nil quote", exchangeID)
+	}
 	if quote.GetDirection() != direction {
 		return errorsmod.Wrapf(bextypes.ErrInvariantViolation, "resolved direction %s differs from quote direction %s", direction.String(), quote.GetDirection().String())
 	}
@@ -223,9 +247,33 @@ func (k Keeper) onRecvExchangePacket(
 	if !ok || !amountOut.IsPositive() {
 		return errorsmod.Wrapf(types.ErrInvalidAmount, "invalid quote amount_out: %s", quote.GetAmountOut())
 	}
+	if protection.HasExpectedExchangeRevision && quote.GetExchangeRevision() != protection.ExpectedExchangeRevision {
+		return errorsmod.Wrapf(
+			bextypes.ErrRevisionConflict,
+			"expected exchange revision %d, got %d",
+			protection.ExpectedExchangeRevision,
+			quote.GetExchangeRevision(),
+		)
+	}
+	if protection.HasMinAmountOut && amountOut.LT(protection.MinAmountOut) {
+		return errorsmod.Wrapf(
+			types.ErrMinimumAmountOut,
+			"quoted amount_out %s is below minimum %s",
+			amountOut,
+			protection.MinAmountOut,
+		)
+	}
 	feeAmount, ok := sdkmath.NewIntFromString(quote.GetFeeAmount())
 	if !ok || feeAmount.IsNegative() {
 		return errorsmod.Wrapf(types.ErrInvalidAmount, "invalid quote fee_amount: %s", quote.GetFeeAmount())
+	}
+	if !localInputCoin.Amount.GT(feeAmount) {
+		return errorsmod.Wrapf(
+			bextypes.ErrInvariantViolation,
+			"fee %s must be less than gross input %s",
+			feeAmount,
+			localInputCoin.Amount,
+		)
 	}
 
 	feeCoin := sdk.NewCoin(localInputCoin.Denom, feeAmount)
@@ -258,35 +306,59 @@ func (k Keeper) onRecvExchangePacket(
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to resolve refund token: %s", localInputCoin.Denom)
 	}
-	refundMsg := types.NewTransferPacketData(
-		destPort,
-		destChannel,
-		refundToken,
-		reserveAddress,
-		data.Sender,
-		"refund coins through Guru station due to failure on the target chain",
+	if err := k.BexKeeper.AddPendingLiability(ctx, exchangeID, localInputCoin); err != nil {
+		return errorsmod.Wrapf(err, "unable to reserve pending refund liability: %s", localInputCoin.String())
+	}
+
+	claimAddress, err := claimAddressFromReceiver(data.Sender)
+	if err != nil {
+		return err
+	}
+	refundID := RefundID(types.PortID, swapChannel, sequence)
+	volumeReservation, err := k.BexKeeper.ReserveVolumeWindow(ctx, exchangeID, quote.GetDirection(), amountOut)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to reserve exchange volume for exchange %d", exchangeID)
+	}
+	if volumeReservation == nil ||
+		volumeReservation.GetExchangeId() != exchangeID ||
+		volumeReservation.GetDirection() != quote.GetDirection() ||
+		volumeReservation.GetAmount() != amountOut.String() {
+		return errorsmod.Wrapf(bextypes.ErrInvariantViolation, "exchange %d returned an invalid volume reservation", exchangeID)
+	}
+	originalOutputCommitment := channeltypes.CommitPacket(channeltypes.NewPacket(
+		types.FungibleTokenPacketDataBytes(packetData),
+		sequence,
+		types.PortID,
+		swapChannel,
+		"",
+		"",
+		clienttypes.ZeroHeight(),
 		sourceTimeoutTimestamp,
-		feeCoin,
-		strconv.FormatUint(exchangeID, 10),
-	)
-	liabilityAmount := localInputCoin.Amount.Sub(feeAmount)
-	if !liabilityAmount.IsPositive() {
-		return errorsmod.Wrap(bextypes.ErrInvariantViolation, "pending refund liability must be positive")
+	))
+	refundRecord := &transwapv1.RefundRecord{
+		Id:                       refundID,
+		Status:                   transwapv1.RefundStatus_REFUND_STATUS_PENDING,
+		RefundSourcePort:         destPort,
+		RefundSourceChannel:      destChannel,
+		Token:                    types.CloneToken(refundToken),
+		Receiver:                 data.Sender,
+		ClaimAddress:             claimAddress.String(),
+		Memo:                     "refund coins through Guru station due to failure on the target chain",
+		ExchangeId:               strconv.FormatUint(exchangeID, 10),
+		OriginalFee:              types.SDKCoinToProto(feeCoin),
+		OriginalTimeoutTimestamp: sourceTimeoutTimestamp,
+		OriginalTimeoutHeight: &transwapv1.RefundHeight{
+			RevisionNumber: sourceTimeoutHeight.RevisionNumber,
+			RevisionHeight: sourceTimeoutHeight.RevisionHeight,
+		},
+		OriginalOutputPort:             types.PortID,
+		OriginalOutputChannel:          swapChannel,
+		OriginalOutputSequence:         sequence,
+		OriginalOutputPacketCommitment: originalOutputCommitment,
+		VolumeReservation:              volumeReservation,
 	}
-	liabilityCoin := sdk.NewCoin(localInputCoin.Denom, liabilityAmount)
-	refundMsg.PendingLiability = types.SDKCoinToProto(liabilityCoin)
-	refundMsg.OriginalTimeoutTimestamp = sourceTimeoutTimestamp
-	if err := k.BexKeeper.AddPendingLiability(ctx, exchangeID, liabilityCoin); err != nil {
-		return errorsmod.Wrapf(err, "unable to reserve pending refund liability: %s", liabilityCoin.String())
-	}
-
-	refundKey := GetRefundPacketDataKey(types.PortID, swapChannel, sequence)
-	if err := k.SetRefundPacketData(ctx, refundKey, refundMsg); err != nil {
-		return errorsmod.Wrapf(err, "unable to set refund packet data: %s", refundKey)
-	}
-
-	if err := k.BexKeeper.RecordVolumeWindow(ctx, exchangeID, quote.GetDirection(), amountOut); err != nil {
-		return errorsmod.Wrapf(err, "unable to record exchange volume for exchange %d", exchangeID)
+	if err := k.CreateRefundRecord(ctx, refundRecord); err != nil {
+		return errorsmod.Wrapf(err, "unable to create refund record %s", refundID)
 	}
 
 	channel, found := k.channelKeeper.GetChannel(ctx, types.PortID, swapChannel)
@@ -327,142 +399,6 @@ func (k Keeper) OnTimeoutExchangePacket(
 	return k.refundPacketTokens(ctx, sourcePort, sourceChannel, data)
 }
 
-func (k Keeper) releaseExchangeRefundFee(ctx sdk.Context, refundKey string) error {
-	if !k.HasRefundPacketData(ctx, refundKey) {
-		return nil
-	}
-	refundPacket, err := k.GetRefundPacketData(ctx, refundKey)
-	if err != nil {
-		return err
-	}
-	feeCoin, err := types.ProtoCoinToSDK(refundPacket.GetFee())
-	if err != nil {
-		return err
-	}
-	if !feeCoin.IsPositive() {
-		return nil
-	}
-	exchangeID, err := parseExchangeID(refundPacket.ExchangeId)
-	if err != nil {
-		return err
-	}
-	if err := k.BexKeeper.ReleaseExchangeFee(ctx, exchangeID, feeCoin); err != nil {
-		return errorsmod.Wrapf(err, "unable to release exchange fee: %s", feeCoin.String())
-	}
-	return nil
-}
-
-func (k Keeper) exchangeIDForRefund(ctx sdk.Context, refundKey string) (uint64, error) {
-	refundPacket, err := k.GetRefundPacketData(ctx, refundKey)
-	if err != nil {
-		return 0, err
-	}
-	return parseExchangeID(refundPacket.GetExchangeId())
-}
-
-func (k Keeper) releaseExchangeRefundLiability(ctx sdk.Context, refundKey string) error {
-	if !k.HasRefundPacketData(ctx, refundKey) {
-		return nil
-	}
-	refundPacket, err := k.GetRefundPacketData(ctx, refundKey)
-	if err != nil {
-		return err
-	}
-	liability, err := types.ProtoCoinToSDK(refundPacket.GetPendingLiability())
-	if err != nil {
-		return err
-	}
-	if !liability.IsPositive() {
-		return errorsmod.Wrap(bextypes.ErrInvariantViolation, "tracked refund has no positive pending liability")
-	}
-	exchangeID, err := parseExchangeID(refundPacket.GetExchangeId())
-	if err != nil {
-		return err
-	}
-	if err := k.BexKeeper.ReleasePendingLiability(ctx, exchangeID, liability); err != nil {
-		return errorsmod.Wrapf(err, "unable to release pending refund liability: %s", liability.String())
-	}
-	return nil
-}
-
-func (k Keeper) performExchangeRefund(ctx sdk.Context, refundKey string) error {
-	if !k.HasRefundPacketData(ctx, refundKey) {
-		return nil
-	}
-	refundPacket, err := k.GetRefundPacketData(ctx, refundKey)
-	if err != nil {
-		return err
-	}
-
-	exchangeID, err := parseExchangeID(refundPacket.ExchangeId)
-	if err != nil {
-		return err
-	}
-
-	if _, err := sdk.AccAddressFromBech32(refundPacket.Sender); err != nil {
-		return errorsmod.Wrapf(err, "invalid reserve address: %s", refundPacket.Sender)
-	}
-
-	feeCoin, err := types.ProtoCoinToSDK(refundPacket.GetFee())
-	if err != nil {
-		return err
-	}
-	if feeCoin.IsPositive() {
-		if err := k.BexKeeper.RefundLockedFee(ctx, exchangeID, feeCoin); err != nil {
-			return errorsmod.Wrapf(err, "unable to refund locked exchange fee: %s", feeCoin.String())
-		}
-	}
-
-	if refundPacket.SourcePort != types.PortID {
-		return errorsmod.Wrapf(bextypes.ErrInvalidRoute, "refund source port %s does not match %s", refundPacket.SourcePort, types.PortID)
-	}
-	if _, found := k.channelKeeper.GetChannel(ctx, refundPacket.SourcePort, refundPacket.SourceChannel); !found {
-		return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "channel not found for %s/%s", refundPacket.SourcePort, refundPacket.SourceChannel)
-	}
-
-	refundToken := refundPacket.GetToken()
-	if refundToken == nil || refundToken.Denom == nil {
-		return errorsmod.Wrap(types.ErrInvalidDenomForTransfer, "refund packet token cannot be nil")
-	}
-	token := types.CloneToken(refundToken)
-	packetData := types.NewFungibleTokenPacketData(types.DenomPath(token.Denom), token.Amount, refundPacket.Sender, refundPacket.Receiver, refundPacket.Memo)
-	retryTimeout, err := nextRefundTimeout(ctx)
-	if err != nil {
-		return err
-	}
-	sequence, err := k.transferV1PacketFromReserve(ctx, exchangeID, refundPacket.SourceChannel, token, retryTimeout, packetData)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to send refund tokens: %s", types.DenomPath(token.Denom))
-	}
-
-	retryPacket, err := cloneRefundPacketForRetry(refundPacket, retryTimeout)
-	if err != nil {
-		return err
-	}
-	retryKey := GetRefundPacketDataKey(refundPacket.SourcePort, refundPacket.SourceChannel, sequence)
-	if err := k.SetRefundPacketData(ctx, retryKey, retryPacket); err != nil {
-		return errorsmod.Wrapf(err, "unable to set retry refund packet data: %s", retryKey)
-	}
-
-	k.DeleteRefundPacketData(ctx, refundKey)
-
-	return nil
-}
-
-func cloneRefundPacketForRetry(packet *transwapv1.TransferPacketData, timeoutTimestamp uint64) (*transwapv1.TransferPacketData, error) {
-	if packet.GetRetryCount() == math.MaxUint32 {
-		return nil, errorsmod.Wrap(types.ErrInvalidPacketTimeout, "refund retry count is exhausted")
-	}
-	retry := proto.Clone(packet).(*transwapv1.TransferPacketData)
-	retry.Fee = nil
-	retry.TimeoutTimestamp = timeoutTimestamp
-	if retry.GetOriginalTimeoutTimestamp() == 0 {
-		retry.OriginalTimeoutTimestamp = packet.GetTimeoutTimestamp()
-	}
-	retry.RetryCount++
-	return retry, nil
-}
-
 func localReceivedCoin(
 	data types.InternalTransferRepresentation,
 	sourcePort string,
@@ -470,11 +406,6 @@ func localReceivedCoin(
 	destPort string,
 	destChannel string,
 ) (sdk.Coin, error) {
-	amount, ok := sdkmath.NewIntFromString(data.Token.Amount)
-	if !ok {
-		return sdk.Coin{}, errorsmod.Wrapf(types.ErrInvalidAmount, "unable to parse transfer amount: %s", data.Token.Amount)
-	}
-
 	token := types.CloneToken(data.Token)
 	if token == nil {
 		return sdk.Coin{}, errorsmod.Wrap(types.ErrInvalidDenomForTransfer, "token cannot be nil")
@@ -486,7 +417,7 @@ func localReceivedCoin(
 		token.Denom.Trace = append(trace, token.Denom.Trace...)
 	}
 
-	return sdk.NewCoin(types.DenomIBCDenom(token.Denom), amount), nil
+	return types.TokenToCoin(token)
 }
 
 func outboundChannelFromToken(token *transwapv1.Token) (string, error) {
@@ -507,9 +438,12 @@ func outboundChannelFromToken(token *transwapv1.Token) (string, error) {
 }
 
 func parseExchangeID(raw string) (uint64, error) {
-	exchangeID, err := strconv.ParseUint(raw, 10, 64)
-	if err != nil || exchangeID == 0 {
-		return 0, errorsmod.Wrapf(types.ErrInvalidAmount, "unable to parse exchange id: %s", raw)
+	kind, exchangeID, err := types.ClassifyExchangeID(raw)
+	if err != nil {
+		return 0, err
+	}
+	if kind != types.PacketKindExchange {
+		return 0, errorsmod.Wrapf(types.ErrInvalidExchangeID, "exchange packet requires a positive exchange id: %q", raw)
 	}
 	return exchangeID, nil
 }
@@ -531,12 +465,4 @@ func validateInheritedTimeout(ctx sdk.Context, inheritedTimeoutTimestampNano uin
 	}
 
 	return nil
-}
-
-func nextRefundTimeout(ctx sdk.Context) (uint64, error) {
-	now := ctx.BlockTime().UnixNano()
-	if now < 0 || now > math.MaxInt64-int64(refundRetryTimeout) {
-		return 0, errorsmod.Wrap(types.ErrInvalidPacketTimeout, "block time cannot produce a refund retry timeout")
-	}
-	return uint64(now + int64(refundRetryTimeout)), nil //nolint:gosec // checked non-negative above
 }

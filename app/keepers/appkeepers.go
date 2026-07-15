@@ -319,6 +319,10 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		appKeepers.BexKeeper,
 		authority,
 	)
+	appKeepers.TranswapKeeper.WithIBCClientKeepers(
+		appKeepers.IBCKeeper.ConnectionKeeper,
+		appKeepers.IBCKeeper.ClientKeeper,
+	)
 
 	nonTransientKeys := appKeepers.GetNonTransientKeys()
 	appKeepers.EVMKeeper = evmkeeper.NewKeeper(

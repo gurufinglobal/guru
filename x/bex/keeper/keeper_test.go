@@ -247,6 +247,7 @@ func TestQuoteSwapUsesDirectionOracleCeilFeeAndVolumeCap(t *testing.T) {
 	require.Equal(t, "1", quote.GetFeeAmount())
 	require.Equal(t, "100", quote.GetNetAmountIn())
 	require.Equal(t, "200", quote.GetAmountOut())
+	require.Equal(t, exchange.GetRevision(), quote.GetExchangeRevision())
 
 	f.channelKeeper.SetChannel("transwap", "channel-0", channeltypes.CLOSED)
 	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{

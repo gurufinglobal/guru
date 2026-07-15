@@ -48,6 +48,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryCollectedFees(),
 		CmdQueryLockedFees(),
 		CmdQueryAvailableFees(),
+		CmdQueryPendingLiabilities(),
 		CmdQueryVolumeWindow(),
 		CmdQueryQuote(),
 	)
@@ -240,6 +241,34 @@ func CmdQueryAvailableFees() *cobra.Command {
 	return feeQueryCmd("available-fees", "Query available fees", func(c bexv1.QueryClient, ctx *cobra.Command, id uint64) (*bexv1.QueryFeesResponse, error) {
 		return c.AvailableFees(ctx.Context(), &bexv1.QueryFeesRequest{ExchangeId: id})
 	})
+}
+
+func CmdQueryPendingLiabilities() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pending-liabilities [exchange-id]",
+		Short: "Query aggregate pending refund liabilities",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := getClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			exchangeID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			resp, err := newQueryClient(clientCtx).PendingLiabilities(
+				cmd.Context(),
+				&bexv1.QueryPendingLiabilitiesRequest{ExchangeId: exchangeID},
+			)
+			if err != nil {
+				return err
+			}
+			return printProto(clientCtx, resp)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 func feeQueryCmd(use, short string, query func(bexv1.QueryClient, *cobra.Command, uint64) (*bexv1.QueryFeesResponse, error)) *cobra.Command {

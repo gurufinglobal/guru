@@ -6096,6 +6096,666 @@ func (x *fastReflection_VolumeWindow) ProtoMethods() *protoiface.Methods {
 }
 
 var (
+	md_VolumeReservation                          protoreflect.MessageDescriptor
+	fd_VolumeReservation_exchange_id              protoreflect.FieldDescriptor
+	fd_VolumeReservation_direction                protoreflect.FieldDescriptor
+	fd_VolumeReservation_epoch_start_unix         protoreflect.FieldDescriptor
+	fd_VolumeReservation_epoch_seconds            protoreflect.FieldDescriptor
+	fd_VolumeReservation_amount                   protoreflect.FieldDescriptor
+	fd_VolumeReservation_volume_window_generation protoreflect.FieldDescriptor
+)
+
+func init() {
+	file_guru_bex_v1_bex_proto_init()
+	md_VolumeReservation = File_guru_bex_v1_bex_proto.Messages().ByName("VolumeReservation")
+	fd_VolumeReservation_exchange_id = md_VolumeReservation.Fields().ByName("exchange_id")
+	fd_VolumeReservation_direction = md_VolumeReservation.Fields().ByName("direction")
+	fd_VolumeReservation_epoch_start_unix = md_VolumeReservation.Fields().ByName("epoch_start_unix")
+	fd_VolumeReservation_epoch_seconds = md_VolumeReservation.Fields().ByName("epoch_seconds")
+	fd_VolumeReservation_amount = md_VolumeReservation.Fields().ByName("amount")
+	fd_VolumeReservation_volume_window_generation = md_VolumeReservation.Fields().ByName("volume_window_generation")
+}
+
+var _ protoreflect.Message = (*fastReflection_VolumeReservation)(nil)
+
+type fastReflection_VolumeReservation VolumeReservation
+
+func (x *VolumeReservation) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_VolumeReservation)(x)
+}
+
+func (x *VolumeReservation) slowProtoReflect() protoreflect.Message {
+	mi := &file_guru_bex_v1_bex_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+var _fastReflection_VolumeReservation_messageType fastReflection_VolumeReservation_messageType
+var _ protoreflect.MessageType = fastReflection_VolumeReservation_messageType{}
+
+type fastReflection_VolumeReservation_messageType struct{}
+
+func (x fastReflection_VolumeReservation_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_VolumeReservation)(nil)
+}
+func (x fastReflection_VolumeReservation_messageType) New() protoreflect.Message {
+	return new(fastReflection_VolumeReservation)
+}
+func (x fastReflection_VolumeReservation_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_VolumeReservation
+}
+
+// Descriptor returns message descriptor, which contains only the protobuf
+// type information for the message.
+func (x *fastReflection_VolumeReservation) Descriptor() protoreflect.MessageDescriptor {
+	return md_VolumeReservation
+}
+
+// Type returns the message type, which encapsulates both Go and protobuf
+// type information. If the Go type information is not needed,
+// it is recommended that the message descriptor be used instead.
+func (x *fastReflection_VolumeReservation) Type() protoreflect.MessageType {
+	return _fastReflection_VolumeReservation_messageType
+}
+
+// New returns a newly allocated and mutable empty message.
+func (x *fastReflection_VolumeReservation) New() protoreflect.Message {
+	return new(fastReflection_VolumeReservation)
+}
+
+// Interface unwraps the message reflection interface and
+// returns the underlying ProtoMessage interface.
+func (x *fastReflection_VolumeReservation) Interface() protoreflect.ProtoMessage {
+	return (*VolumeReservation)(x)
+}
+
+// Range iterates over every populated field in an undefined order,
+// calling f for each field descriptor and value encountered.
+// Range returns immediately if f returns false.
+// While iterating, mutating operations may only be performed
+// on the current field descriptor.
+func (x *fastReflection_VolumeReservation) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.ExchangeId != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.ExchangeId)
+		if !f(fd_VolumeReservation_exchange_id, value) {
+			return
+		}
+	}
+	if x.Direction != 0 {
+		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.Direction))
+		if !f(fd_VolumeReservation_direction, value) {
+			return
+		}
+	}
+	if x.EpochStartUnix != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.EpochStartUnix)
+		if !f(fd_VolumeReservation_epoch_start_unix, value) {
+			return
+		}
+	}
+	if x.EpochSeconds != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.EpochSeconds)
+		if !f(fd_VolumeReservation_epoch_seconds, value) {
+			return
+		}
+	}
+	if x.Amount != "" {
+		value := protoreflect.ValueOfString(x.Amount)
+		if !f(fd_VolumeReservation_amount, value) {
+			return
+		}
+	}
+	if x.VolumeWindowGeneration != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.VolumeWindowGeneration)
+		if !f(fd_VolumeReservation_volume_window_generation, value) {
+			return
+		}
+	}
+}
+
+// Has reports whether a field is populated.
+//
+// Some fields have the property of nullability where it is possible to
+// distinguish between the default value of a field and whether the field
+// was explicitly populated with the default value. Singular message fields,
+// member fields of a oneof, and proto2 scalar fields are nullable. Such
+// fields are populated only if explicitly set.
+//
+// In other cases (aside from the nullable cases above),
+// a proto3 scalar field is populated if it contains a non-zero value, and
+// a repeated field is populated if it is non-empty.
+func (x *fastReflection_VolumeReservation) Has(fd protoreflect.FieldDescriptor) bool {
+	switch fd.FullName() {
+	case "guru.bex.v1.VolumeReservation.exchange_id":
+		return x.ExchangeId != uint64(0)
+	case "guru.bex.v1.VolumeReservation.direction":
+		return x.Direction != 0
+	case "guru.bex.v1.VolumeReservation.epoch_start_unix":
+		return x.EpochStartUnix != uint64(0)
+	case "guru.bex.v1.VolumeReservation.epoch_seconds":
+		return x.EpochSeconds != uint32(0)
+	case "guru.bex.v1.VolumeReservation.amount":
+		return x.Amount != ""
+	case "guru.bex.v1.VolumeReservation.volume_window_generation":
+		return x.VolumeWindowGeneration != uint64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeReservation"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.VolumeReservation does not contain field %s", fd.FullName()))
+	}
+}
+
+// Clear clears the field such that a subsequent Has call reports false.
+//
+// Clearing an extension field clears both the extension type and value
+// associated with the given field number.
+//
+// Clear is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_VolumeReservation) Clear(fd protoreflect.FieldDescriptor) {
+	switch fd.FullName() {
+	case "guru.bex.v1.VolumeReservation.exchange_id":
+		x.ExchangeId = uint64(0)
+	case "guru.bex.v1.VolumeReservation.direction":
+		x.Direction = 0
+	case "guru.bex.v1.VolumeReservation.epoch_start_unix":
+		x.EpochStartUnix = uint64(0)
+	case "guru.bex.v1.VolumeReservation.epoch_seconds":
+		x.EpochSeconds = uint32(0)
+	case "guru.bex.v1.VolumeReservation.amount":
+		x.Amount = ""
+	case "guru.bex.v1.VolumeReservation.volume_window_generation":
+		x.VolumeWindowGeneration = uint64(0)
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeReservation"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.VolumeReservation does not contain field %s", fd.FullName()))
+	}
+}
+
+// Get retrieves the value for a field.
+//
+// For unpopulated scalars, it returns the default value, where
+// the default value of a bytes scalar is guaranteed to be a copy.
+// For unpopulated composite types, it returns an empty, read-only view
+// of the value; to obtain a mutable reference, use Mutable.
+func (x *fastReflection_VolumeReservation) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+	switch descriptor.FullName() {
+	case "guru.bex.v1.VolumeReservation.exchange_id":
+		value := x.ExchangeId
+		return protoreflect.ValueOfUint64(value)
+	case "guru.bex.v1.VolumeReservation.direction":
+		value := x.Direction
+		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
+	case "guru.bex.v1.VolumeReservation.epoch_start_unix":
+		value := x.EpochStartUnix
+		return protoreflect.ValueOfUint64(value)
+	case "guru.bex.v1.VolumeReservation.epoch_seconds":
+		value := x.EpochSeconds
+		return protoreflect.ValueOfUint32(value)
+	case "guru.bex.v1.VolumeReservation.amount":
+		value := x.Amount
+		return protoreflect.ValueOfString(value)
+	case "guru.bex.v1.VolumeReservation.volume_window_generation":
+		value := x.VolumeWindowGeneration
+		return protoreflect.ValueOfUint64(value)
+	default:
+		if descriptor.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeReservation"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.VolumeReservation does not contain field %s", descriptor.FullName()))
+	}
+}
+
+// Set stores the value for a field.
+//
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType.
+// When setting a composite type, it is unspecified whether the stored value
+// aliases the source's memory in any way. If the composite value is an
+// empty, read-only value, then it panics.
+//
+// Set is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_VolumeReservation) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+	switch fd.FullName() {
+	case "guru.bex.v1.VolumeReservation.exchange_id":
+		x.ExchangeId = value.Uint()
+	case "guru.bex.v1.VolumeReservation.direction":
+		x.Direction = (SwapDirection)(value.Enum())
+	case "guru.bex.v1.VolumeReservation.epoch_start_unix":
+		x.EpochStartUnix = value.Uint()
+	case "guru.bex.v1.VolumeReservation.epoch_seconds":
+		x.EpochSeconds = uint32(value.Uint())
+	case "guru.bex.v1.VolumeReservation.amount":
+		x.Amount = value.Interface().(string)
+	case "guru.bex.v1.VolumeReservation.volume_window_generation":
+		x.VolumeWindowGeneration = value.Uint()
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeReservation"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.VolumeReservation does not contain field %s", fd.FullName()))
+	}
+}
+
+// Mutable returns a mutable reference to a composite type.
+//
+// If the field is unpopulated, it may allocate a composite value.
+// For a field belonging to a oneof, it implicitly clears any other field
+// that may be currently set within the same oneof.
+// For extension fields, it implicitly stores the provided ExtensionType
+// if not already stored.
+// It panics if the field does not contain a composite type.
+//
+// Mutable is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_VolumeReservation) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.bex.v1.VolumeReservation.exchange_id":
+		panic(fmt.Errorf("field exchange_id of message guru.bex.v1.VolumeReservation is not mutable"))
+	case "guru.bex.v1.VolumeReservation.direction":
+		panic(fmt.Errorf("field direction of message guru.bex.v1.VolumeReservation is not mutable"))
+	case "guru.bex.v1.VolumeReservation.epoch_start_unix":
+		panic(fmt.Errorf("field epoch_start_unix of message guru.bex.v1.VolumeReservation is not mutable"))
+	case "guru.bex.v1.VolumeReservation.epoch_seconds":
+		panic(fmt.Errorf("field epoch_seconds of message guru.bex.v1.VolumeReservation is not mutable"))
+	case "guru.bex.v1.VolumeReservation.amount":
+		panic(fmt.Errorf("field amount of message guru.bex.v1.VolumeReservation is not mutable"))
+	case "guru.bex.v1.VolumeReservation.volume_window_generation":
+		panic(fmt.Errorf("field volume_window_generation of message guru.bex.v1.VolumeReservation is not mutable"))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeReservation"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.VolumeReservation does not contain field %s", fd.FullName()))
+	}
+}
+
+// NewField returns a new value that is assignable to the field
+// for the given descriptor. For scalars, this returns the default value.
+// For lists, maps, and messages, this returns a new, empty, mutable value.
+func (x *fastReflection_VolumeReservation) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+	switch fd.FullName() {
+	case "guru.bex.v1.VolumeReservation.exchange_id":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "guru.bex.v1.VolumeReservation.direction":
+		return protoreflect.ValueOfEnum(0)
+	case "guru.bex.v1.VolumeReservation.epoch_start_unix":
+		return protoreflect.ValueOfUint64(uint64(0))
+	case "guru.bex.v1.VolumeReservation.epoch_seconds":
+		return protoreflect.ValueOfUint32(uint32(0))
+	case "guru.bex.v1.VolumeReservation.amount":
+		return protoreflect.ValueOfString("")
+	case "guru.bex.v1.VolumeReservation.volume_window_generation":
+		return protoreflect.ValueOfUint64(uint64(0))
+	default:
+		if fd.IsExtension() {
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.VolumeReservation"))
+		}
+		panic(fmt.Errorf("message guru.bex.v1.VolumeReservation does not contain field %s", fd.FullName()))
+	}
+}
+
+// WhichOneof reports which field within the oneof is populated,
+// returning nil if none are populated.
+// It panics if the oneof descriptor does not belong to this message.
+func (x *fastReflection_VolumeReservation) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+	switch d.FullName() {
+	default:
+		panic(fmt.Errorf("%s is not a oneof field in guru.bex.v1.VolumeReservation", d.FullName()))
+	}
+	panic("unreachable")
+}
+
+// GetUnknown retrieves the entire list of unknown fields.
+// The caller may only mutate the contents of the RawFields
+// if the mutated bytes are stored back into the message with SetUnknown.
+func (x *fastReflection_VolumeReservation) GetUnknown() protoreflect.RawFields {
+	return x.unknownFields
+}
+
+// SetUnknown stores an entire list of unknown fields.
+// The raw fields must be syntactically valid according to the wire format.
+// An implementation may panic if this is not the case.
+// Once stored, the caller must not mutate the content of the RawFields.
+// An empty RawFields may be passed to clear the fields.
+//
+// SetUnknown is a mutating operation and unsafe for concurrent use.
+func (x *fastReflection_VolumeReservation) SetUnknown(fields protoreflect.RawFields) {
+	x.unknownFields = fields
+}
+
+// IsValid reports whether the message is valid.
+//
+// An invalid message is an empty, read-only value.
+//
+// An invalid message often corresponds to a nil pointer of the concrete
+// message type, but the details are implementation dependent.
+// Validity is not part of the protobuf data model, and may not
+// be preserved in marshaling or other operations.
+func (x *fastReflection_VolumeReservation) IsValid() bool {
+	return x != nil
+}
+
+// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
+// This method may return nil.
+//
+// The returned methods type is identical to
+// "google.golang.org/protobuf/runtime/protoiface".Methods.
+// Consult the protoiface package documentation for details.
+func (x *fastReflection_VolumeReservation) ProtoMethods() *protoiface.Methods {
+	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
+		x := input.Message.Interface().(*VolumeReservation)
+		if x == nil {
+			return protoiface.SizeOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Size:              0,
+			}
+		}
+		options := runtime.SizeInputToOptions(input)
+		_ = options
+		var n int
+		var l int
+		_ = l
+		if x.ExchangeId != 0 {
+			n += 1 + runtime.Sov(uint64(x.ExchangeId))
+		}
+		if x.Direction != 0 {
+			n += 1 + runtime.Sov(uint64(x.Direction))
+		}
+		if x.EpochStartUnix != 0 {
+			n += 1 + runtime.Sov(uint64(x.EpochStartUnix))
+		}
+		if x.EpochSeconds != 0 {
+			n += 1 + runtime.Sov(uint64(x.EpochSeconds))
+		}
+		l = len(x.Amount)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.VolumeWindowGeneration != 0 {
+			n += 1 + runtime.Sov(uint64(x.VolumeWindowGeneration))
+		}
+		if x.unknownFields != nil {
+			n += len(x.unknownFields)
+		}
+		return protoiface.SizeOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Size:              n,
+		}
+	}
+
+	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
+		x := input.Message.Interface().(*VolumeReservation)
+		if x == nil {
+			return protoiface.MarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Buf:               input.Buf,
+			}, nil
+		}
+		options := runtime.MarshalInputToOptions(input)
+		_ = options
+		size := options.Size(x)
+		dAtA := make([]byte, size)
+		i := len(dAtA)
+		_ = i
+		var l int
+		_ = l
+		if x.unknownFields != nil {
+			i -= len(x.unknownFields)
+			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.VolumeWindowGeneration != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.VolumeWindowGeneration))
+			i--
+			dAtA[i] = 0x30
+		}
+		if len(x.Amount) > 0 {
+			i -= len(x.Amount)
+			copy(dAtA[i:], x.Amount)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Amount)))
+			i--
+			dAtA[i] = 0x2a
+		}
+		if x.EpochSeconds != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.EpochSeconds))
+			i--
+			dAtA[i] = 0x20
+		}
+		if x.EpochStartUnix != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.EpochStartUnix))
+			i--
+			dAtA[i] = 0x18
+		}
+		if x.Direction != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Direction))
+			i--
+			dAtA[i] = 0x10
+		}
+		if x.ExchangeId != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.ExchangeId))
+			i--
+			dAtA[i] = 0x8
+		}
+		if input.Buf != nil {
+			input.Buf = append(input.Buf, dAtA...)
+		} else {
+			input.Buf = dAtA
+		}
+		return protoiface.MarshalOutput{
+			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+			Buf:               input.Buf,
+		}, nil
+	}
+	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
+		x := input.Message.Interface().(*VolumeReservation)
+		if x == nil {
+			return protoiface.UnmarshalOutput{
+				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+				Flags:             input.Flags,
+			}, nil
+		}
+		options := runtime.UnmarshalInputToOptions(input)
+		_ = options
+		dAtA := input.Buf
+		l := len(dAtA)
+		iNdEx := 0
+		for iNdEx < l {
+			preIndex := iNdEx
+			var wire uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				wire |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			fieldNum := int32(wire >> 3)
+			wireType := int(wire & 0x7)
+			if wireType == 4 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: VolumeReservation: wiretype end group for non-group")
+			}
+			if fieldNum <= 0 {
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: VolumeReservation: illegal tag %d (wire type %d)", fieldNum, wire)
+			}
+			switch fieldNum {
+			case 1:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ExchangeId", wireType)
+				}
+				x.ExchangeId = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.ExchangeId |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 2:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Direction", wireType)
+				}
+				x.Direction = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Direction |= SwapDirection(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 3:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field EpochStartUnix", wireType)
+				}
+				x.EpochStartUnix = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.EpochStartUnix |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 4:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field EpochSeconds", wireType)
+				}
+				x.EpochSeconds = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.EpochSeconds |= uint32(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 5:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.Amount = string(dAtA[iNdEx:postIndex])
+				iNdEx = postIndex
+			case 6:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field VolumeWindowGeneration", wireType)
+				}
+				x.VolumeWindowGeneration = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.VolumeWindowGeneration |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			default:
+				iNdEx = preIndex
+				skippy, err := runtime.Skip(dAtA[iNdEx:])
+				if err != nil {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
+				}
+				if (skippy < 0) || (iNdEx+skippy) < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if (iNdEx + skippy) > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				if !options.DiscardUnknown {
+					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+				}
+				iNdEx += skippy
+			}
+		}
+
+		if iNdEx > l {
+			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+		}
+		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
+	}
+	return &protoiface.Methods{
+		NoUnkeyedLiterals: struct{}{},
+		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
+		Size:              size,
+		Marshal:           marshal,
+		Unmarshal:         unmarshal,
+		Merge:             nil,
+		CheckInitialized:  nil,
+	}
+}
+
+var (
 	md_QuoteSwapRequest             protoreflect.MessageDescriptor
 	fd_QuoteSwapRequest_exchange_id protoreflect.FieldDescriptor
 	fd_QuoteSwapRequest_input_denom protoreflect.FieldDescriptor
@@ -6119,7 +6779,7 @@ func (x *QuoteSwapRequest) ProtoReflect() protoreflect.Message {
 }
 
 func (x *QuoteSwapRequest) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_bex_v1_bex_proto_msgTypes[5]
+	mi := &file_guru_bex_v1_bex_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6628,21 +7288,22 @@ func (x *fastReflection_QuoteSwapRequest) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_QuoteSwapResponse               protoreflect.MessageDescriptor
-	fd_QuoteSwapResponse_exchange_id   protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_direction     protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_input_denom   protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_output_denom  protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_oracle_symbol protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_oracle_rate   protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_amount_in     protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_fee_amount    protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_net_amount_in protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_amount_out    protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_output_limit  protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_volume_cap    protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_volume_used   protoreflect.FieldDescriptor
-	fd_QuoteSwapResponse_min_amount_in protoreflect.FieldDescriptor
+	md_QuoteSwapResponse                   protoreflect.MessageDescriptor
+	fd_QuoteSwapResponse_exchange_id       protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_direction         protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_input_denom       protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_output_denom      protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_oracle_symbol     protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_oracle_rate       protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_amount_in         protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_fee_amount        protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_net_amount_in     protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_amount_out        protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_output_limit      protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_volume_cap        protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_volume_used       protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_min_amount_in     protoreflect.FieldDescriptor
+	fd_QuoteSwapResponse_exchange_revision protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -6662,6 +7323,7 @@ func init() {
 	fd_QuoteSwapResponse_volume_cap = md_QuoteSwapResponse.Fields().ByName("volume_cap")
 	fd_QuoteSwapResponse_volume_used = md_QuoteSwapResponse.Fields().ByName("volume_used")
 	fd_QuoteSwapResponse_min_amount_in = md_QuoteSwapResponse.Fields().ByName("min_amount_in")
+	fd_QuoteSwapResponse_exchange_revision = md_QuoteSwapResponse.Fields().ByName("exchange_revision")
 }
 
 var _ protoreflect.Message = (*fastReflection_QuoteSwapResponse)(nil)
@@ -6673,7 +7335,7 @@ func (x *QuoteSwapResponse) ProtoReflect() protoreflect.Message {
 }
 
 func (x *QuoteSwapResponse) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_bex_v1_bex_proto_msgTypes[6]
+	mi := &file_guru_bex_v1_bex_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6813,6 +7475,12 @@ func (x *fastReflection_QuoteSwapResponse) Range(f func(protoreflect.FieldDescri
 			return
 		}
 	}
+	if x.ExchangeRevision != uint64(0) {
+		value := protoreflect.ValueOfUint64(x.ExchangeRevision)
+		if !f(fd_QuoteSwapResponse_exchange_revision, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -6856,6 +7524,8 @@ func (x *fastReflection_QuoteSwapResponse) Has(fd protoreflect.FieldDescriptor) 
 		return x.VolumeUsed != ""
 	case "guru.bex.v1.QuoteSwapResponse.min_amount_in":
 		return x.MinAmountIn != ""
+	case "guru.bex.v1.QuoteSwapResponse.exchange_revision":
+		return x.ExchangeRevision != uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QuoteSwapResponse"))
@@ -6900,6 +7570,8 @@ func (x *fastReflection_QuoteSwapResponse) Clear(fd protoreflect.FieldDescriptor
 		x.VolumeUsed = ""
 	case "guru.bex.v1.QuoteSwapResponse.min_amount_in":
 		x.MinAmountIn = ""
+	case "guru.bex.v1.QuoteSwapResponse.exchange_revision":
+		x.ExchangeRevision = uint64(0)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QuoteSwapResponse"))
@@ -6958,6 +7630,9 @@ func (x *fastReflection_QuoteSwapResponse) Get(descriptor protoreflect.FieldDesc
 	case "guru.bex.v1.QuoteSwapResponse.min_amount_in":
 		value := x.MinAmountIn
 		return protoreflect.ValueOfString(value)
+	case "guru.bex.v1.QuoteSwapResponse.exchange_revision":
+		value := x.ExchangeRevision
+		return protoreflect.ValueOfUint64(value)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QuoteSwapResponse"))
@@ -7006,6 +7681,8 @@ func (x *fastReflection_QuoteSwapResponse) Set(fd protoreflect.FieldDescriptor, 
 		x.VolumeUsed = value.Interface().(string)
 	case "guru.bex.v1.QuoteSwapResponse.min_amount_in":
 		x.MinAmountIn = value.Interface().(string)
+	case "guru.bex.v1.QuoteSwapResponse.exchange_revision":
+		x.ExchangeRevision = value.Uint()
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QuoteSwapResponse"))
@@ -7054,6 +7731,8 @@ func (x *fastReflection_QuoteSwapResponse) Mutable(fd protoreflect.FieldDescript
 		panic(fmt.Errorf("field volume_used of message guru.bex.v1.QuoteSwapResponse is not mutable"))
 	case "guru.bex.v1.QuoteSwapResponse.min_amount_in":
 		panic(fmt.Errorf("field min_amount_in of message guru.bex.v1.QuoteSwapResponse is not mutable"))
+	case "guru.bex.v1.QuoteSwapResponse.exchange_revision":
+		panic(fmt.Errorf("field exchange_revision of message guru.bex.v1.QuoteSwapResponse is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QuoteSwapResponse"))
@@ -7095,6 +7774,8 @@ func (x *fastReflection_QuoteSwapResponse) NewField(fd protoreflect.FieldDescrip
 		return protoreflect.ValueOfString("")
 	case "guru.bex.v1.QuoteSwapResponse.min_amount_in":
 		return protoreflect.ValueOfString("")
+	case "guru.bex.v1.QuoteSwapResponse.exchange_revision":
+		return protoreflect.ValueOfUint64(uint64(0))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.bex.v1.QuoteSwapResponse"))
@@ -7218,6 +7899,9 @@ func (x *fastReflection_QuoteSwapResponse) ProtoMethods() *protoiface.Methods {
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
+		if x.ExchangeRevision != 0 {
+			n += 1 + runtime.Sov(uint64(x.ExchangeRevision))
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -7246,6 +7930,11 @@ func (x *fastReflection_QuoteSwapResponse) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if x.ExchangeRevision != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.ExchangeRevision))
+			i--
+			dAtA[i] = 0x78
 		}
 		if len(x.MinAmountIn) > 0 {
 			i -= len(x.MinAmountIn)
@@ -7812,6 +8501,25 @@ func (x *fastReflection_QuoteSwapResponse) ProtoMethods() *protoiface.Methods {
 				}
 				x.MinAmountIn = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
+			case 15:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ExchangeRevision", wireType)
+				}
+				x.ExchangeRevision = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.ExchangeRevision |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -8587,6 +9295,84 @@ func (x *VolumeWindow) GetVolumeWindowGeneration() uint64 {
 	return 0
 }
 
+// VolumeReservation identifies the exact cap window charged by one in-flight
+// swap output. It is persisted by TransSwap so a failed output can release the
+// same window even after the active exchange configuration or epoch changes.
+type VolumeReservation struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ExchangeId             uint64        `protobuf:"varint,1,opt,name=exchange_id,json=exchangeId,proto3" json:"exchange_id,omitempty"`
+	Direction              SwapDirection `protobuf:"varint,2,opt,name=direction,proto3,enum=guru.bex.v1.SwapDirection" json:"direction,omitempty"`
+	EpochStartUnix         uint64        `protobuf:"varint,3,opt,name=epoch_start_unix,json=epochStartUnix,proto3" json:"epoch_start_unix,omitempty"`
+	EpochSeconds           uint32        `protobuf:"varint,4,opt,name=epoch_seconds,json=epochSeconds,proto3" json:"epoch_seconds,omitempty"`
+	Amount                 string        `protobuf:"bytes,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	VolumeWindowGeneration uint64        `protobuf:"varint,6,opt,name=volume_window_generation,json=volumeWindowGeneration,proto3" json:"volume_window_generation,omitempty"`
+}
+
+func (x *VolumeReservation) Reset() {
+	*x = VolumeReservation{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_guru_bex_v1_bex_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *VolumeReservation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VolumeReservation) ProtoMessage() {}
+
+// Deprecated: Use VolumeReservation.ProtoReflect.Descriptor instead.
+func (*VolumeReservation) Descriptor() ([]byte, []int) {
+	return file_guru_bex_v1_bex_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *VolumeReservation) GetExchangeId() uint64 {
+	if x != nil {
+		return x.ExchangeId
+	}
+	return 0
+}
+
+func (x *VolumeReservation) GetDirection() SwapDirection {
+	if x != nil {
+		return x.Direction
+	}
+	return SwapDirection_SWAP_DIRECTION_UNSPECIFIED
+}
+
+func (x *VolumeReservation) GetEpochStartUnix() uint64 {
+	if x != nil {
+		return x.EpochStartUnix
+	}
+	return 0
+}
+
+func (x *VolumeReservation) GetEpochSeconds() uint32 {
+	if x != nil {
+		return x.EpochSeconds
+	}
+	return 0
+}
+
+func (x *VolumeReservation) GetAmount() string {
+	if x != nil {
+		return x.Amount
+	}
+	return ""
+}
+
+func (x *VolumeReservation) GetVolumeWindowGeneration() uint64 {
+	if x != nil {
+		return x.VolumeWindowGeneration
+	}
+	return 0
+}
+
 // QuoteSwapRequest is the keeper-level quote request.
 type QuoteSwapRequest struct {
 	state         protoimpl.MessageState
@@ -8601,7 +9387,7 @@ type QuoteSwapRequest struct {
 func (x *QuoteSwapRequest) Reset() {
 	*x = QuoteSwapRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_bex_v1_bex_proto_msgTypes[5]
+		mi := &file_guru_bex_v1_bex_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -8615,7 +9401,7 @@ func (*QuoteSwapRequest) ProtoMessage() {}
 
 // Deprecated: Use QuoteSwapRequest.ProtoReflect.Descriptor instead.
 func (*QuoteSwapRequest) Descriptor() ([]byte, []int) {
-	return file_guru_bex_v1_bex_proto_rawDescGZIP(), []int{5}
+	return file_guru_bex_v1_bex_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *QuoteSwapRequest) GetExchangeId() uint64 {
@@ -8659,12 +9445,14 @@ type QuoteSwapResponse struct {
 	VolumeCap    string        `protobuf:"bytes,12,opt,name=volume_cap,json=volumeCap,proto3" json:"volume_cap,omitempty"`
 	VolumeUsed   string        `protobuf:"bytes,13,opt,name=volume_used,json=volumeUsed,proto3" json:"volume_used,omitempty"`
 	MinAmountIn  string        `protobuf:"bytes,14,opt,name=min_amount_in,json=minAmountIn,proto3" json:"min_amount_in,omitempty"`
+	// exchange_revision is the configuration revision used by this quote.
+	ExchangeRevision uint64 `protobuf:"varint,15,opt,name=exchange_revision,json=exchangeRevision,proto3" json:"exchange_revision,omitempty"`
 }
 
 func (x *QuoteSwapResponse) Reset() {
 	*x = QuoteSwapResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_bex_v1_bex_proto_msgTypes[6]
+		mi := &file_guru_bex_v1_bex_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -8678,7 +9466,7 @@ func (*QuoteSwapResponse) ProtoMessage() {}
 
 // Deprecated: Use QuoteSwapResponse.ProtoReflect.Descriptor instead.
 func (*QuoteSwapResponse) Descriptor() ([]byte, []int) {
-	return file_guru_bex_v1_bex_proto_rawDescGZIP(), []int{6}
+	return file_guru_bex_v1_bex_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *QuoteSwapResponse) GetExchangeId() uint64 {
@@ -8777,6 +9565,13 @@ func (x *QuoteSwapResponse) GetMinAmountIn() string {
 		return x.MinAmountIn
 	}
 	return ""
+}
+
+func (x *QuoteSwapResponse) GetExchangeRevision() uint64 {
+	if x != nil {
+		return x.ExchangeRevision
+	}
+	return 0
 }
 
 var File_guru_bex_v1_bex_proto protoreflect.FileDescriptor
@@ -9004,81 +9799,102 @@ var file_guru_bex_v1_bex_proto_rawDesc = []byte{
 	0x12, 0x38, 0x0a, 0x18, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x77, 0x69, 0x6e, 0x64, 0x6f,
 	0x77, 0x5f, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x06, 0x20, 0x01,
 	0x28, 0x04, 0x52, 0x16, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77,
-	0x47, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x81, 0x01, 0x0a, 0x10, 0x51,
-	0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64,
-	0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x44, 0x65, 0x6e, 0x6f,
-	0x6d, 0x12, 0x2b, 0x0a, 0x09, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
-	0x2e, 0x49, 0x6e, 0x74, 0x52, 0x08, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x22, 0xfe,
-	0x04, 0x0a, 0x11, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
-	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61,
-	0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x38, 0x0a, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69,
-	0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e,
-	0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x77, 0x61, 0x70, 0x44, 0x69, 0x72, 0x65, 0x63,
-	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12,
-	0x1f, 0x0a, 0x0b, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x44, 0x65, 0x6e, 0x6f, 0x6d,
-	0x12, 0x21, 0x0a, 0x0c, 0x6f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d,
-	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x6f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x44, 0x65,
-	0x6e, 0x6f, 0x6d, 0x12, 0x23, 0x0a, 0x0d, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5f, 0x73, 0x79,
-	0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x6f, 0x72, 0x61, 0x63,
-	0x6c, 0x65, 0x53, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x1f, 0x0a, 0x0b, 0x6f, 0x72, 0x61, 0x63,
-	0x6c, 0x65, 0x5f, 0x72, 0x61, 0x74, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x6f,
-	0x72, 0x61, 0x63, 0x6c, 0x65, 0x52, 0x61, 0x74, 0x65, 0x12, 0x2b, 0x0a, 0x09, 0x61, 0x6d, 0x6f,
-	0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4,
-	0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x08, 0x61, 0x6d,
-	0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x12, 0x2d, 0x0a, 0x0a, 0x66, 0x65, 0x65, 0x5f, 0x61, 0x6d,
-	0x6f, 0x75, 0x6e, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a,
-	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x09, 0x66, 0x65, 0x65, 0x41,
-	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x32, 0x0a, 0x0d, 0x6e, 0x65, 0x74, 0x5f, 0x61, 0x6d, 0x6f,
-	0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4,
-	0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x0b, 0x6e, 0x65,
-	0x74, 0x41, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x12, 0x2d, 0x0a, 0x0a, 0x61, 0x6d, 0x6f,
-	0x75, 0x6e, 0x74, 0x5f, 0x6f, 0x75, 0x74, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2,
-	0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x09, 0x61,
-	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x4f, 0x75, 0x74, 0x12, 0x31, 0x0a, 0x0c, 0x6f, 0x75, 0x74, 0x70,
-	0x75, 0x74, 0x5f, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e,
+	0x47, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x9f, 0x02, 0x0a, 0x11, 0x56,
+	0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x52, 0x65, 0x73, 0x65, 0x72, 0x76, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x49,
+	0x64, 0x12, 0x38, 0x0a, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e,
+	0x76, 0x31, 0x2e, 0x53, 0x77, 0x61, 0x70, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e,
+	0x52, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x28, 0x0a, 0x10, 0x65,
+	0x70, 0x6f, 0x63, 0x68, 0x5f, 0x73, 0x74, 0x61, 0x72, 0x74, 0x5f, 0x75, 0x6e, 0x69, 0x78, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0e, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x53, 0x74, 0x61, 0x72,
+	0x74, 0x55, 0x6e, 0x69, 0x78, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x5f, 0x73,
+	0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0c, 0x65, 0x70,
+	0x6f, 0x63, 0x68, 0x53, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x12, 0x26, 0x0a, 0x06, 0x61, 0x6d,
+	0x6f, 0x75, 0x6e, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a,
+	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75,
+	0x6e, 0x74, 0x12, 0x38, 0x0a, 0x18, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x77, 0x69, 0x6e,
+	0x64, 0x6f, 0x77, 0x5f, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x06,
+	0x20, 0x01, 0x28, 0x04, 0x52, 0x16, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x57, 0x69, 0x6e, 0x64,
+	0x6f, 0x77, 0x47, 0x65, 0x6e, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x81, 0x01, 0x0a,
+	0x10, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x5f, 0x64, 0x65, 0x6e, 0x6f,
+	0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x44, 0x65,
+	0x6e, 0x6f, 0x6d, 0x12, 0x2b, 0x0a, 0x09, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d,
+	0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x08, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e,
+	0x22, 0xab, 0x05, 0x0a, 0x11, 0x51, 0x75, 0x6f, 0x74, 0x65, 0x53, 0x77, 0x61, 0x70, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e,
+	0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0a, 0x65, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x49, 0x64, 0x12, 0x38, 0x0a, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63,
+	0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x67, 0x75, 0x72,
+	0x75, 0x2e, 0x62, 0x65, 0x78, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x77, 0x61, 0x70, 0x44, 0x69, 0x72,
+	0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x09, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x5f, 0x64, 0x65, 0x6e, 0x6f, 0x6d,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x69, 0x6e, 0x70, 0x75, 0x74, 0x44, 0x65, 0x6e,
+	0x6f, 0x6d, 0x12, 0x21, 0x0a, 0x0c, 0x6f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x5f, 0x64, 0x65, 0x6e,
+	0x6f, 0x6d, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x6f, 0x75, 0x74, 0x70, 0x75, 0x74,
+	0x44, 0x65, 0x6e, 0x6f, 0x6d, 0x12, 0x23, 0x0a, 0x0d, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5f,
+	0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x6f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x53, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x1f, 0x0a, 0x0b, 0x6f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x5f, 0x72, 0x61, 0x74, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x0a, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x52, 0x61, 0x74, 0x65, 0x12, 0x2b, 0x0a, 0x09, 0x61,
+	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e,
+	0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x08,
+	0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x12, 0x2d, 0x0a, 0x0a, 0x66, 0x65, 0x65, 0x5f,
+	0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4,
+	0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x09, 0x66, 0x65,
+	0x65, 0x41, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x32, 0x0a, 0x0d, 0x6e, 0x65, 0x74, 0x5f, 0x61,
+	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x42, 0x0e,
 	0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52, 0x0b,
-	0x6f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x4c, 0x69, 0x6d, 0x69, 0x74, 0x12, 0x2d, 0x0a, 0x0a, 0x76,
-	0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x63, 0x61, 0x70, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09, 0x42,
+	0x6e, 0x65, 0x74, 0x41, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x12, 0x2d, 0x0a, 0x0a, 0x61,
+	0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x6f, 0x75, 0x74, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x09, 0x42,
 	0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52,
-	0x09, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x43, 0x61, 0x70, 0x12, 0x2f, 0x0a, 0x0b, 0x76, 0x6f,
-	0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x75, 0x73, 0x65, 0x64, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x09, 0x42,
-	0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74, 0x52,
-	0x0a, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x55, 0x73, 0x65, 0x64, 0x12, 0x32, 0x0a, 0x0d, 0x6d,
-	0x69, 0x6e, 0x5f, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x0e, 0x20, 0x01,
-	0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49,
-	0x6e, 0x74, 0x52, 0x0b, 0x6d, 0x69, 0x6e, 0x41, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49, 0x6e, 0x2a,
-	0x88, 0x01, 0x0a, 0x0e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x53, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x12, 0x1f, 0x0a, 0x1b, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53,
-	0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45,
-	0x44, 0x10, 0x00, 0x12, 0x1a, 0x0a, 0x16, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f,
-	0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x41, 0x43, 0x54, 0x49, 0x56, 0x45, 0x10, 0x01, 0x12,
-	0x1c, 0x0a, 0x18, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54, 0x41, 0x54,
-	0x55, 0x53, 0x5f, 0x49, 0x4e, 0x41, 0x43, 0x54, 0x49, 0x56, 0x45, 0x10, 0x02, 0x12, 0x1b, 0x0a,
-	0x17, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53,
-	0x5f, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x44, 0x10, 0x03, 0x2a, 0x65, 0x0a, 0x0d, 0x53, 0x77,
-	0x61, 0x70, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x0a, 0x1a, 0x53,
-	0x57, 0x41, 0x50, 0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x55, 0x4e,
-	0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x19, 0x0a, 0x15, 0x53,
-	0x57, 0x41, 0x50, 0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x41, 0x5f,
-	0x54, 0x4f, 0x5f, 0x42, 0x10, 0x01, 0x12, 0x19, 0x0a, 0x15, 0x53, 0x57, 0x41, 0x50, 0x5f, 0x44,
-	0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x42, 0x5f, 0x54, 0x4f, 0x5f, 0x41, 0x10,
-	0x02, 0x42, 0xa1, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62,
-	0x65, 0x78, 0x2e, 0x76, 0x31, 0x42, 0x08, 0x42, 0x65, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50,
-	0x01, 0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75,
-	0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75,
-	0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78,
-	0x2f, 0x76, 0x31, 0x3b, 0x62, 0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x42, 0x58, 0xaa,
-	0x02, 0x0b, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0b,
-	0x47, 0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17, 0x47, 0x75,
-	0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74,
-	0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42, 0x65,
-	0x78, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x09, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x4f, 0x75, 0x74, 0x12, 0x31, 0x0a, 0x0c, 0x6f, 0x75,
+	0x74, 0x70, 0x75, 0x74, 0x5f, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x09,
+	0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e, 0x74,
+	0x52, 0x0b, 0x6f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x4c, 0x69, 0x6d, 0x69, 0x74, 0x12, 0x2d, 0x0a,
+	0x0a, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x63, 0x61, 0x70, 0x18, 0x0c, 0x20, 0x01, 0x28,
+	0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e,
+	0x74, 0x52, 0x09, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x43, 0x61, 0x70, 0x12, 0x2f, 0x0a, 0x0b,
+	0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x5f, 0x75, 0x73, 0x65, 0x64, 0x18, 0x0d, 0x20, 0x01, 0x28,
+	0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x49, 0x6e,
+	0x74, 0x52, 0x0a, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x55, 0x73, 0x65, 0x64, 0x12, 0x32, 0x0a,
+	0x0d, 0x6d, 0x69, 0x6e, 0x5f, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69, 0x6e, 0x18, 0x0e,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x0e, 0xd2, 0xb4, 0x2d, 0x0a, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
+	0x2e, 0x49, 0x6e, 0x74, 0x52, 0x0b, 0x6d, 0x69, 0x6e, 0x41, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x49,
+	0x6e, 0x12, 0x2b, 0x0a, 0x11, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x5f, 0x72, 0x65,
+	0x76, 0x69, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x0f, 0x20, 0x01, 0x28, 0x04, 0x52, 0x10, 0x65, 0x78,
+	0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x76, 0x69, 0x73, 0x69, 0x6f, 0x6e, 0x2a, 0x88,
+	0x01, 0x0a, 0x0e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x12, 0x1f, 0x0a, 0x1b, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54,
+	0x41, 0x54, 0x55, 0x53, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44,
+	0x10, 0x00, 0x12, 0x1a, 0x0a, 0x16, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53,
+	0x54, 0x41, 0x54, 0x55, 0x53, 0x5f, 0x41, 0x43, 0x54, 0x49, 0x56, 0x45, 0x10, 0x01, 0x12, 0x1c,
+	0x0a, 0x18, 0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55,
+	0x53, 0x5f, 0x49, 0x4e, 0x41, 0x43, 0x54, 0x49, 0x56, 0x45, 0x10, 0x02, 0x12, 0x1b, 0x0a, 0x17,
+	0x45, 0x58, 0x43, 0x48, 0x41, 0x4e, 0x47, 0x45, 0x5f, 0x53, 0x54, 0x41, 0x54, 0x55, 0x53, 0x5f,
+	0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x44, 0x10, 0x03, 0x2a, 0x65, 0x0a, 0x0d, 0x53, 0x77, 0x61,
+	0x70, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x0a, 0x1a, 0x53, 0x57,
+	0x41, 0x50, 0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x55, 0x4e, 0x53,
+	0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x19, 0x0a, 0x15, 0x53, 0x57,
+	0x41, 0x50, 0x5f, 0x44, 0x49, 0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x41, 0x5f, 0x54,
+	0x4f, 0x5f, 0x42, 0x10, 0x01, 0x12, 0x19, 0x0a, 0x15, 0x53, 0x57, 0x41, 0x50, 0x5f, 0x44, 0x49,
+	0x52, 0x45, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x42, 0x5f, 0x54, 0x4f, 0x5f, 0x41, 0x10, 0x02,
+	0x42, 0xa1, 0x01, 0x0a, 0x0f, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x62, 0x65,
+	0x78, 0x2e, 0x76, 0x31, 0x42, 0x08, 0x42, 0x65, 0x78, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
+	0x5a, 0x36, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72,
+	0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f,
+	0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x62, 0x65, 0x78, 0x2f,
+	0x76, 0x31, 0x3b, 0x62, 0x65, 0x78, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x42, 0x58, 0xaa, 0x02,
+	0x0b, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x42, 0x65, 0x78, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0b, 0x47,
+	0x75, 0x72, 0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x17, 0x47, 0x75, 0x72,
+	0x75, 0x5c, 0x42, 0x65, 0x78, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x0d, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x42, 0x65, 0x78,
+	0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -9094,7 +9910,7 @@ func file_guru_bex_v1_bex_proto_rawDescGZIP() []byte {
 }
 
 var file_guru_bex_v1_bex_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_guru_bex_v1_bex_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_guru_bex_v1_bex_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_guru_bex_v1_bex_proto_goTypes = []interface{}{
 	(ExchangeStatus)(0),            // 0: guru.bex.v1.ExchangeStatus
 	(SwapDirection)(0),             // 1: guru.bex.v1.SwapDirection
@@ -9103,50 +9919,52 @@ var file_guru_bex_v1_bex_proto_goTypes = []interface{}{
 	(*ExchangeStatusPatch)(nil),    // 4: guru.bex.v1.ExchangeStatusPatch
 	(*FeeLedger)(nil),              // 5: guru.bex.v1.FeeLedger
 	(*VolumeWindow)(nil),           // 6: guru.bex.v1.VolumeWindow
-	(*QuoteSwapRequest)(nil),       // 7: guru.bex.v1.QuoteSwapRequest
-	(*QuoteSwapResponse)(nil),      // 8: guru.bex.v1.QuoteSwapResponse
-	nil,                            // 9: guru.bex.v1.Exchange.MetadataEntry
-	nil,                            // 10: guru.bex.v1.ExchangeUpdatePatch.MetadataEntry
-	(*wrapperspb.StringValue)(nil), // 11: google.protobuf.StringValue
-	(*wrapperspb.UInt32Value)(nil), // 12: google.protobuf.UInt32Value
-	(*wrapperspb.BoolValue)(nil),   // 13: google.protobuf.BoolValue
-	(*wrapperspb.UInt64Value)(nil), // 14: google.protobuf.UInt64Value
-	(*v1beta1.Coin)(nil),           // 15: cosmos.base.v1beta1.Coin
+	(*VolumeReservation)(nil),      // 7: guru.bex.v1.VolumeReservation
+	(*QuoteSwapRequest)(nil),       // 8: guru.bex.v1.QuoteSwapRequest
+	(*QuoteSwapResponse)(nil),      // 9: guru.bex.v1.QuoteSwapResponse
+	nil,                            // 10: guru.bex.v1.Exchange.MetadataEntry
+	nil,                            // 11: guru.bex.v1.ExchangeUpdatePatch.MetadataEntry
+	(*wrapperspb.StringValue)(nil), // 12: google.protobuf.StringValue
+	(*wrapperspb.UInt32Value)(nil), // 13: google.protobuf.UInt32Value
+	(*wrapperspb.BoolValue)(nil),   // 14: google.protobuf.BoolValue
+	(*wrapperspb.UInt64Value)(nil), // 15: google.protobuf.UInt64Value
+	(*v1beta1.Coin)(nil),           // 16: cosmos.base.v1beta1.Coin
 }
 var file_guru_bex_v1_bex_proto_depIdxs = []int32{
 	0,  // 0: guru.bex.v1.Exchange.status:type_name -> guru.bex.v1.ExchangeStatus
-	9,  // 1: guru.bex.v1.Exchange.metadata:type_name -> guru.bex.v1.Exchange.MetadataEntry
-	11, // 2: guru.bex.v1.ExchangeUpdatePatch.denom_a:type_name -> google.protobuf.StringValue
-	11, // 3: guru.bex.v1.ExchangeUpdatePatch.port_a:type_name -> google.protobuf.StringValue
-	11, // 4: guru.bex.v1.ExchangeUpdatePatch.channel_a:type_name -> google.protobuf.StringValue
-	11, // 5: guru.bex.v1.ExchangeUpdatePatch.denom_b:type_name -> google.protobuf.StringValue
-	11, // 6: guru.bex.v1.ExchangeUpdatePatch.port_b:type_name -> google.protobuf.StringValue
-	11, // 7: guru.bex.v1.ExchangeUpdatePatch.channel_b:type_name -> google.protobuf.StringValue
-	11, // 8: guru.bex.v1.ExchangeUpdatePatch.oracle_symbol_a_to_b:type_name -> google.protobuf.StringValue
-	11, // 9: guru.bex.v1.ExchangeUpdatePatch.oracle_symbol_b_to_a:type_name -> google.protobuf.StringValue
-	12, // 10: guru.bex.v1.ExchangeUpdatePatch.fee_bps_a_to_b:type_name -> google.protobuf.UInt32Value
-	12, // 11: guru.bex.v1.ExchangeUpdatePatch.fee_bps_b_to_a:type_name -> google.protobuf.UInt32Value
-	11, // 12: guru.bex.v1.ExchangeUpdatePatch.limit_a_to_b:type_name -> google.protobuf.StringValue
-	11, // 13: guru.bex.v1.ExchangeUpdatePatch.limit_b_to_a:type_name -> google.protobuf.StringValue
-	11, // 14: guru.bex.v1.ExchangeUpdatePatch.volume_cap_a_to_b:type_name -> google.protobuf.StringValue
-	11, // 15: guru.bex.v1.ExchangeUpdatePatch.volume_cap_b_to_a:type_name -> google.protobuf.StringValue
+	10, // 1: guru.bex.v1.Exchange.metadata:type_name -> guru.bex.v1.Exchange.MetadataEntry
+	12, // 2: guru.bex.v1.ExchangeUpdatePatch.denom_a:type_name -> google.protobuf.StringValue
+	12, // 3: guru.bex.v1.ExchangeUpdatePatch.port_a:type_name -> google.protobuf.StringValue
+	12, // 4: guru.bex.v1.ExchangeUpdatePatch.channel_a:type_name -> google.protobuf.StringValue
+	12, // 5: guru.bex.v1.ExchangeUpdatePatch.denom_b:type_name -> google.protobuf.StringValue
+	12, // 6: guru.bex.v1.ExchangeUpdatePatch.port_b:type_name -> google.protobuf.StringValue
+	12, // 7: guru.bex.v1.ExchangeUpdatePatch.channel_b:type_name -> google.protobuf.StringValue
+	12, // 8: guru.bex.v1.ExchangeUpdatePatch.oracle_symbol_a_to_b:type_name -> google.protobuf.StringValue
+	12, // 9: guru.bex.v1.ExchangeUpdatePatch.oracle_symbol_b_to_a:type_name -> google.protobuf.StringValue
+	13, // 10: guru.bex.v1.ExchangeUpdatePatch.fee_bps_a_to_b:type_name -> google.protobuf.UInt32Value
+	13, // 11: guru.bex.v1.ExchangeUpdatePatch.fee_bps_b_to_a:type_name -> google.protobuf.UInt32Value
+	12, // 12: guru.bex.v1.ExchangeUpdatePatch.limit_a_to_b:type_name -> google.protobuf.StringValue
+	12, // 13: guru.bex.v1.ExchangeUpdatePatch.limit_b_to_a:type_name -> google.protobuf.StringValue
+	12, // 14: guru.bex.v1.ExchangeUpdatePatch.volume_cap_a_to_b:type_name -> google.protobuf.StringValue
+	12, // 15: guru.bex.v1.ExchangeUpdatePatch.volume_cap_b_to_a:type_name -> google.protobuf.StringValue
 	4,  // 16: guru.bex.v1.ExchangeUpdatePatch.status:type_name -> guru.bex.v1.ExchangeStatusPatch
-	10, // 17: guru.bex.v1.ExchangeUpdatePatch.metadata:type_name -> guru.bex.v1.ExchangeUpdatePatch.MetadataEntry
-	13, // 18: guru.bex.v1.ExchangeUpdatePatch.clear_metadata:type_name -> google.protobuf.BoolValue
-	12, // 19: guru.bex.v1.ExchangeUpdatePatch.volume_epoch_seconds:type_name -> google.protobuf.UInt32Value
-	12, // 20: guru.bex.v1.ExchangeUpdatePatch.pending_volume_epoch_seconds:type_name -> google.protobuf.UInt32Value
-	14, // 21: guru.bex.v1.ExchangeUpdatePatch.pending_volume_epoch_effective_at_unix:type_name -> google.protobuf.UInt64Value
-	12, // 22: guru.bex.v1.ExchangeUpdatePatch.max_oracle_staleness_seconds:type_name -> google.protobuf.UInt32Value
-	11, // 23: guru.bex.v1.ExchangeUpdatePatch.new_admin_address:type_name -> google.protobuf.StringValue
+	11, // 17: guru.bex.v1.ExchangeUpdatePatch.metadata:type_name -> guru.bex.v1.ExchangeUpdatePatch.MetadataEntry
+	14, // 18: guru.bex.v1.ExchangeUpdatePatch.clear_metadata:type_name -> google.protobuf.BoolValue
+	13, // 19: guru.bex.v1.ExchangeUpdatePatch.volume_epoch_seconds:type_name -> google.protobuf.UInt32Value
+	13, // 20: guru.bex.v1.ExchangeUpdatePatch.pending_volume_epoch_seconds:type_name -> google.protobuf.UInt32Value
+	15, // 21: guru.bex.v1.ExchangeUpdatePatch.pending_volume_epoch_effective_at_unix:type_name -> google.protobuf.UInt64Value
+	13, // 22: guru.bex.v1.ExchangeUpdatePatch.max_oracle_staleness_seconds:type_name -> google.protobuf.UInt32Value
+	12, // 23: guru.bex.v1.ExchangeUpdatePatch.new_admin_address:type_name -> google.protobuf.StringValue
 	0,  // 24: guru.bex.v1.ExchangeStatusPatch.status:type_name -> guru.bex.v1.ExchangeStatus
-	15, // 25: guru.bex.v1.FeeLedger.coins:type_name -> cosmos.base.v1beta1.Coin
+	16, // 25: guru.bex.v1.FeeLedger.coins:type_name -> cosmos.base.v1beta1.Coin
 	1,  // 26: guru.bex.v1.VolumeWindow.direction:type_name -> guru.bex.v1.SwapDirection
-	1,  // 27: guru.bex.v1.QuoteSwapResponse.direction:type_name -> guru.bex.v1.SwapDirection
-	28, // [28:28] is the sub-list for method output_type
-	28, // [28:28] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	1,  // 27: guru.bex.v1.VolumeReservation.direction:type_name -> guru.bex.v1.SwapDirection
+	1,  // 28: guru.bex.v1.QuoteSwapResponse.direction:type_name -> guru.bex.v1.SwapDirection
+	29, // [29:29] is the sub-list for method output_type
+	29, // [29:29] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_guru_bex_v1_bex_proto_init() }
@@ -9216,7 +10034,7 @@ func file_guru_bex_v1_bex_proto_init() {
 			}
 		}
 		file_guru_bex_v1_bex_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QuoteSwapRequest); i {
+			switch v := v.(*VolumeReservation); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9228,6 +10046,18 @@ func file_guru_bex_v1_bex_proto_init() {
 			}
 		}
 		file_guru_bex_v1_bex_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QuoteSwapRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_guru_bex_v1_bex_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*QuoteSwapResponse); i {
 			case 0:
 				return &v.state
@@ -9246,7 +10076,7 @@ func file_guru_bex_v1_bex_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_guru_bex_v1_bex_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

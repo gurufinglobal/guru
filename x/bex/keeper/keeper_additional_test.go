@@ -504,6 +504,7 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 	quote, err := q.QuoteSwap(f.ctx, &bexv1.QueryQuoteSwapRequest{ExchangeId: ex1.GetId(), InputDenom: ex1.GetDenomA(), AmountIn: "2"})
 	require.NoError(t, err)
 	require.Equal(t, "2", quote.GetQuote().GetAmountOut())
+	require.Equal(t, ex1.GetRevision(), quote.GetQuote().GetExchangeRevision())
 }
 
 func TestExchangeQueryFiltersTombstonesFromPrimaryState(t *testing.T) {

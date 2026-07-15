@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	"io"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
+	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/client/cli"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/keeper"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/simulation"
@@ -34,6 +36,7 @@ var (
 	_ appmodule.AppModule        = AppModule{}
 	_ appmodule.HasServices      = AppModule{}
 	_ appmodule.HasGenesis       = AppModule{}
+	_ appmodule.HasEndBlocker    = AppModule{}
 
 	_ porttypes.IBCModule = (*IBCModule)(nil)
 )
@@ -110,8 +113,16 @@ func NewAppModule(k keeper.Keeper) AppModule {
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
+	transwapv1.RegisterMsgServer(registrar, keeper.NewMsgServer(&am.keeper))
 	transwapv1.RegisterQueryServer(registrar, am.keeper)
 	return nil
+}
+
+// EndBlock advances a bounded number of persisted local refund dispatch
+// failures. IBC timeout/ack retries still happen immediately in their callback;
+// only failures that emitted no packet enter this queue.
+func (am AppModule) EndBlock(ctx context.Context) error {
+	return am.keeper.ProcessRefundRetryQueue(sdk.UnwrapSDKContext(ctx))
 }
 
 // DefaultGenesis writes the default genesis state using the SDK 0.54 core
@@ -139,59 +150,57 @@ func (am AppModule) InitGenesis(ctx context.Context, source appmodule.GenesisSou
 	if err := types.ValidateGenesisState(genesisState); err != nil {
 		return err
 	}
-	am.keeper.InitGenesis(sdk.UnwrapSDKContext(ctx), genesisState)
-	return nil
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	am.keeper.InitGenesis(sdkCtx, genesisState)
+	return am.keeper.AssertRefundInvariants(sdkCtx)
 }
 
 // ExportGenesis exports genesis using the SDK 0.54 core appmodule genesis
 // target API.
 func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisTarget) error {
-	gs := am.keeper.ExportGenesis(sdk.UnwrapSDKContext(ctx))
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err := am.keeper.AssertRefundInvariants(sdkCtx); err != nil {
+		return err
+	}
+	gs := am.keeper.ExportGenesis(sdkCtx)
 	return writeGenesisState(target, gs)
 }
 
 func readGenesisState(source appmodule.GenesisSource, defaults *transwapv1.GenesisState) (*transwapv1.GenesisState, error) {
 	genesis := &transwapv1.GenesisState{
-		PortId:         defaults.GetPortId(),
-		Denoms:         defaults.GetDenoms(),
-		TotalEscrowed:  defaults.GetTotalEscrowed(),
-		PendingRefunds: defaults.GetPendingRefunds(),
+		PortId:        defaults.GetPortId(),
+		Denoms:        defaults.GetDenoms(),
+		TotalEscrowed: defaults.GetTotalEscrowed(),
+		Params:        defaults.GetParams(),
+		Refunds:       defaults.GetRefunds(),
 	}
 
-	portID := genesis.GetPortId()
-	found, err := readGenesisField(source, "port_id", &portID)
-	if err != nil {
-		return nil, err
-	}
-	if found {
-		genesis.PortId = portID
-	}
-
-	denoms := []*transwapv1.Denom{}
-	found, err = readGenesisField(source, "denoms", &denoms)
-	if err != nil {
-		return nil, err
-	}
-	if found {
-		genesis.Denoms = denoms
-	}
-
-	totalEscrowed := genesis.GetTotalEscrowed()
-	found, err = readGenesisField(source, "total_escrowed", &totalEscrowed)
-	if err != nil {
-		return nil, err
-	}
-	if found {
-		genesis.TotalEscrowed = totalEscrowed
-	}
-
-	pendingRefunds := genesis.GetPendingRefunds()
-	found, err = readGenesisField(source, "pending_refunds", &pendingRefunds)
-	if err != nil {
-		return nil, err
-	}
-	if found {
-		genesis.PendingRefunds = pendingRefunds
+	for _, fieldName := range []string{
+		"port_id",
+		"denoms",
+		"total_escrowed",
+		"params",
+		"refunds",
+	} {
+		partial, found, err := readGenesisStateField(source, fieldName)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			continue
+		}
+		switch fieldName {
+		case "port_id":
+			genesis.PortId = partial.GetPortId()
+		case "denoms":
+			genesis.Denoms = partial.GetDenoms()
+		case "total_escrowed":
+			genesis.TotalEscrowed = partial.GetTotalEscrowed()
+		case "params":
+			genesis.Params = partial.GetParams()
+		case "refunds":
+			genesis.Refunds = partial.GetRefunds()
+		}
 	}
 
 	return genesis, nil
@@ -211,24 +220,46 @@ func writeGenesisState(target appmodule.GenesisTarget, genesis *transwapv1.Genes
 	if err := writeGenesisField(target, "total_escrowed", genesis.GetTotalEscrowed()); err != nil {
 		return err
 	}
-	return writeGenesisField(target, "pending_refunds", genesis.GetPendingRefunds())
+	if err := writeGenesisField(target, "params", genesis.GetParams()); err != nil {
+		return err
+	}
+	return writeGenesisField(target, "refunds", genesis.GetRefunds())
 }
 
-func readGenesisField(source appmodule.GenesisSource, fieldName string, value any) (bool, error) {
+func readGenesisStateField(
+	source appmodule.GenesisSource,
+	fieldName string,
+) (*transwapv1.GenesisState, bool, error) {
 	reader, err := source(fieldName)
 	if err != nil {
-		return false, types.ErrReadGenesisField.Wrapf("%s: %v", fieldName, err)
+		return nil, false, types.ErrReadGenesisField.Wrapf("%s: %v", fieldName, err)
 	}
 	if reader == nil {
-		return false, nil
+		return nil, false, nil
 	}
 	defer func() { _ = reader.Close() }()
 
-	if err := json.NewDecoder(reader).Decode(value); err != nil {
-		return false, types.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	fieldJSON, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, false, types.ErrReadGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+	fieldNameJSON, err := json.Marshal(fieldName)
+	if err != nil {
+		return nil, false, types.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+	wrapped := make([]byte, 0, len(fieldNameJSON)+len(fieldJSON)+3)
+	wrapped = append(wrapped, '{')
+	wrapped = append(wrapped, fieldNameJSON...)
+	wrapped = append(wrapped, ':')
+	wrapped = append(wrapped, fieldJSON...)
+	wrapped = append(wrapped, '}')
+
+	partial := &transwapv1.GenesisState{}
+	if err := protojson.Unmarshal(wrapped, partial); err != nil {
+		return nil, false, types.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
 	}
 
-	return true, nil
+	return partial, true, nil
 }
 
 func writeGenesisField(target appmodule.GenesisTarget, fieldName string, value any) error {

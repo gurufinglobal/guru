@@ -272,27 +272,153 @@ func (k Keeper) ReceiveToReserve(ctx context.Context, exchangeID uint64, fromAdd
 	return k.bankKeeper.SendCoins(allowedCtx, fromAddr, reserveAddr, amount)
 }
 
-// SendFromReserve moves coins out of the deterministic reserve through an
-// exact recipient-and-amount capability. No caller can turn this into a
-// reusable context capability.
-func (k Keeper) SendFromReserve(ctx context.Context, exchangeID uint64, recipient sdk.AccAddress, amount sdk.Coins) error {
-	exchange, err := k.GetActiveExchange(ctx, exchangeID)
+// SendSwapOutputFromReserve sends a normal swap output without allowing the
+// output to consume funds reserved by aggregate refund liabilities.
+func (k Keeper) SendSwapOutputFromReserve(
+	ctx context.Context,
+	exchangeID uint64,
+	recipient sdk.AccAddress,
+	amount sdk.Coin,
+) error {
+	if err := validateReserveCoin(amount); err != nil {
+		return err
+	}
+	exchange, reserveAddr, err := k.validateReserveOutflow(ctx, exchangeID, recipient, amount, true)
 	if err != nil {
 		return err
 	}
-	if len(recipient) == 0 || !amount.IsValid() || !amount.IsAllPositive() {
-		return types.ErrInvalidRequest.Wrap("reserve send requires a recipient and positive coins")
+	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+		return types.ErrInvalidRoute.Wrap("swap output requires an active exchange")
+	}
+	pending, err := k.GetPendingLiabilities(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	balance := k.bankKeeper.GetBalance(ctx, reserveAddr, amount.Denom).Amount
+	available := balance.Sub(pending.AmountOf(amount.Denom))
+	if available.IsNegative() || available.LT(amount.Amount) {
+		return types.ErrInsufficientReserve.Wrapf("reserve balance for %s is reserved for pending refunds", amount.Denom)
+	}
+	coins := sdk.NewCoins(amount)
+	allowedCtx := k.withReserveOutflowAllowance(ctx, exchangeID, recipient, coins)
+	return k.bankKeeper.SendCoins(allowedCtx, reserveAddr, recipient, coins)
+}
+
+// SendRefundFromReserve commits a tracked refund obligation to IBC transport.
+// The aggregate liability remains until acknowledgement success or claim.
+func (k Keeper) SendRefundFromReserve(
+	ctx context.Context,
+	exchangeID uint64,
+	recipient sdk.AccAddress,
+	amount sdk.Coin,
+) error {
+	if err := validateReserveCoin(amount); err != nil {
+		return err
+	}
+	_, reserveAddr, err := k.validateReserveOutflow(ctx, exchangeID, recipient, amount, true)
+	if err != nil {
+		return err
+	}
+	pending, err := k.GetPendingLiabilities(ctx, exchangeID)
+	if err != nil {
+		return err
+	}
+	if pending.AmountOf(amount.Denom).LT(amount.Amount) {
+		return types.ErrInvariantViolation.Wrap("refund send exceeds pending reserve liability")
+	}
+	if k.bankKeeper.GetBalance(ctx, reserveAddr, amount.Denom).Amount.LT(amount.Amount) {
+		return types.ErrInsufficientReserve.Wrap("reserve balance is less than refund amount")
+	}
+	coins := sdk.NewCoins(amount)
+	allowedCtx := k.withReserveOutflowAllowance(ctx, exchangeID, recipient, coins)
+	return k.bankKeeper.SendCoins(allowedCtx, reserveAddr, recipient, coins)
+}
+
+// ClaimRefundFromReserve atomically pays a local manual claim and releases the
+// corresponding aggregate refund liability. TransSwap authenticates the exact
+// refund identity, receiver, and state before calling this trusted boundary.
+func (k Keeper) ClaimRefundFromReserve(
+	ctx context.Context,
+	exchangeID uint64,
+	recipient sdk.AccAddress,
+	amount sdk.Coin,
+) error {
+	if err := validateReserveCoin(amount); err != nil {
+		return err
+	}
+	err := executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
+		_, reserveAddr, err := k.validateReserveOutflow(cacheCtx, exchangeID, recipient, amount, false)
+		if err != nil {
+			return err
+		}
+		if k.bankKeeper.BlockedAddr(recipient) {
+			return sdkerrors.ErrUnauthorized.Wrapf("%s is not allowed to receive funds", recipient)
+		}
+		pending, err := k.GetPendingLiabilities(cacheCtx, exchangeID)
+		if err != nil {
+			return err
+		}
+		coins := sdk.NewCoins(amount)
+		if !hasCoins(pending, coins) {
+			return types.ErrInvariantViolation.Wrap("refund claim exceeds pending reserve liability")
+		}
+		if k.bankKeeper.GetBalance(cacheCtx, reserveAddr, amount.Denom).Amount.LT(amount.Amount) {
+			return types.ErrInsufficientReserve.Wrap("reserve balance is less than refund claim")
+		}
+		updatedPending := pending.Sub(amount)
+		if err := k.pendingLiabilities.Set(cacheCtx, exchangeID, coinsToLedger(updatedPending)); err != nil {
+			return err
+		}
+		allowedCtx := k.withReserveOutflowAllowance(cacheCtx, exchangeID, recipient, coins)
+		return k.bankKeeper.SendCoins(allowedCtx, reserveAddr, recipient, coins)
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateReserveCoin(amount sdk.Coin) error {
+	if err := amount.Validate(); err != nil || !amount.IsPositive() {
+		return types.ErrInvalidRequest.Wrap("reserve outflow amount must be a positive coin")
+	}
+	return nil
+}
+
+func (k Keeper) validateReserveOutflow(
+	ctx context.Context,
+	exchangeID uint64,
+	recipient sdk.AccAddress,
+	amount sdk.Coin,
+	enforceSendEnabled bool,
+) (*bexv1.Exchange, sdk.AccAddress, error) {
+	exchange, err := k.GetActiveExchange(ctx, exchangeID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(recipient) == 0 {
+		return nil, nil, types.ErrInvalidRequest.Wrap("reserve outflow requires a recipient")
+	}
+	if err := validateExchangeReserveDenom(exchange, amount.Denom); err != nil {
+		return nil, nil, err
+	}
+	if k.bankKeeper == nil {
+		return nil, nil, types.ErrInvariantViolation.Wrap("bank keeper is required for reserve outflow")
+	}
+	if enforceSendEnabled {
+		if err := k.bankKeeper.IsSendEnabledCoins(ctx, amount); err != nil {
+			return nil, nil, err
+		}
 	}
 	reserveAddr := k.GetReserveAddress(ctx, exchangeID)
 	reserveAddress, err := k.accountCodec.BytesToString(reserveAddr)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	if exchange.GetReserveAddress() != reserveAddress {
-		return types.ErrInvariantViolation.Wrap("exchange reserve address does not match deterministic reserve")
+		return nil, nil, types.ErrInvariantViolation.Wrap("exchange reserve address does not match deterministic reserve")
 	}
-	allowedCtx := k.withReserveOutflowAllowance(ctx, exchangeID, recipient, amount)
-	return k.bankKeeper.SendCoins(allowedCtx, reserveAddr, recipient, amount)
+	return exchange, reserveAddr, nil
 }
 
 func (k Keeper) WithdrawReserve(ctx context.Context, signer string, exchangeID uint64, recipient sdk.AccAddress, amount sdk.Coins) error {

@@ -65,6 +65,13 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
+  // PendingLiabilities returns aggregate unresolved refund obligations for an
+  // exchange.
+  rpc PendingLiabilities(QueryPendingLiabilitiesRequest) returns (QueryPendingLiabilitiesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/pending-liabilities";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
   // VolumeWindow returns current volume window state.
   rpc VolumeWindow(QueryVolumeWindowRequest) returns (QueryVolumeWindowResponse) {
     option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/volume/{direction}";
@@ -154,6 +161,18 @@ message QueryFeesRequest {
 
 // QueryFeesResponse returns fee ledger state.
 message QueryFeesResponse {
+  FeeLedger ledger = 1;
+}
+
+// QueryPendingLiabilitiesRequest requests aggregate unresolved refund
+// obligations for one exchange.
+message QueryPendingLiabilitiesRequest {
+  uint64 exchange_id = 1;
+}
+
+// QueryPendingLiabilitiesResponse returns an exchange-scoped aggregate coin
+// ledger. An empty ledger means no unresolved refund obligation exists.
+message QueryPendingLiabilitiesResponse {
   FeeLedger ledger = 1;
 }
 

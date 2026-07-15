@@ -10,10 +10,19 @@ import (
 // InitGenesis initializes the ibc-transfer state and binds to PortID.
 func (k Keeper) InitGenesis(ctx sdk.Context, state *transwapv1.GenesisState) {
 	k.SetPort(ctx, state.PortId)
+	if err := k.SetParams(ctx, state.GetParams()); err != nil {
+		panic(err)
+	}
 
 	for _, denom := range state.Denoms {
 		k.SetDenom(ctx, denom)
-		k.SetDenomMetadata(ctx, denom)
+		// Bank genesis is initialized before TransSwap and may contain richer
+		// operator-managed metadata. Preserve it exactly; only synthesize the
+		// minimal valid IBC metadata when the bank store has no entry.
+		bankDenom := types.DenomIBCDenom(denom)
+		if !k.BankKeeper.HasDenomMetaData(ctx, bankDenom) {
+			k.SetDenomMetadata(ctx, denom)
+		}
 	}
 
 	// Every denom will have only one total escrow amount, since any
@@ -25,19 +34,41 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state *transwapv1.GenesisState) {
 	for _, denomEscrow := range totalEscrowed {
 		k.SetTotalEscrowForDenom(ctx, denomEscrow)
 	}
-	for _, pending := range state.GetPendingRefunds() {
-		if err := k.SetRefundPacketData(ctx, pending.GetKey(), pending.GetPacket()); err != nil {
+	for _, refund := range state.GetRefunds() {
+		if err := k.SetRefundRecord(ctx, refund); err != nil {
 			panic(err)
+		}
+		switch refund.GetStatus() {
+		case transwapv1.RefundStatus_REFUND_STATUS_PENDING:
+			key := refundPacketIndexKey(
+				refund.GetOriginalOutputPort(),
+				refund.GetOriginalOutputChannel(),
+				refund.GetOriginalOutputSequence(),
+			)
+			k.refundOutputStore(ctx).Set([]byte(key), []byte(refund.GetId()))
+		case transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT:
+			if err := k.setActiveRefundPacketIndex(ctx, refund); err != nil {
+				panic(err)
+			}
+		case transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE:
+			if err := k.restoreRefundRetrySchedule(ctx, refund); err != nil {
+				panic(err)
+			}
 		}
 	}
 }
 
 // ExportGenesis exports ibc-transfer module's portID and denom trace info into its genesis state.
 func (k Keeper) ExportGenesis(ctx sdk.Context) *transwapv1.GenesisState {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
 	return &transwapv1.GenesisState{
-		PortId:         k.GetPort(ctx),
-		Denoms:         k.GetAllDenoms(ctx),
-		TotalEscrowed:  types.SDKCoinsToProto(k.GetAllTotalEscrowed(ctx)),
-		PendingRefunds: k.GetAllRefundPacketData(ctx),
+		PortId:        k.GetPort(ctx),
+		Denoms:        k.GetAllDenoms(ctx),
+		TotalEscrowed: types.SDKCoinsToProto(k.GetAllTotalEscrowed(ctx)),
+		Params:        params,
+		Refunds:       k.GetAllRefundRecords(ctx),
 	}
 }

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -69,4 +70,32 @@ func TestLocalReceivedCoinUsesSourceSinkPathWithoutMutatingPacketDenom(t *testin
 	require.Equal(t, sdk.NewCoin(types.DenomIBCDenom(expected), sdkmath.NewInt(5)), sinkCoin)
 	require.Equal(t, "channel-0", sinkDenom.Trace[0].ChannelId)
 	require.Len(t, sinkDenom.Trace, 2)
+}
+
+func TestLocalReceivedCoinValidatesOnlyResolvedLocalBankDenom(t *testing.T) {
+	invalidNative := types.NewInternalTransferRepresentation(
+		"7",
+		&transwapv1.Token{
+			Denom:  types.NewDenom("!", types.NewHop("xswap", "channel-1")),
+			Amount: "5",
+		},
+		"sender",
+		"receiver",
+		"",
+	)
+	_, err := localReceivedCoin(invalidNative, "xswap", "channel-1", types.PortID, "channel-0")
+	require.ErrorIs(t, err, types.ErrInvalidDenomForTransfer)
+
+	remoteBase := types.NewDenom("!")
+	remoteSource := types.NewInternalTransferRepresentation(
+		"7",
+		&transwapv1.Token{Denom: remoteBase, Amount: "5"},
+		"sender",
+		"receiver",
+		"",
+	)
+	coin, err := localReceivedCoin(remoteSource, "xswap", "channel-1", types.PortID, "channel-0")
+	require.NoError(t, err)
+	require.True(t, strings.HasPrefix(coin.Denom, types.DenomPrefix+"/"))
+	require.Empty(t, remoteBase.Trace)
 }

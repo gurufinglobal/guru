@@ -28,6 +28,7 @@ const (
 	Query_CollectedFees_FullMethodName            = "/guru.bex.v1.Query/CollectedFees"
 	Query_LockedFees_FullMethodName               = "/guru.bex.v1.Query/LockedFees"
 	Query_AvailableFees_FullMethodName            = "/guru.bex.v1.Query/AvailableFees"
+	Query_PendingLiabilities_FullMethodName       = "/guru.bex.v1.Query/PendingLiabilities"
 	Query_VolumeWindow_FullMethodName             = "/guru.bex.v1.Query/VolumeWindow"
 	Query_QuoteSwap_FullMethodName                = "/guru.bex.v1.Query/QuoteSwap"
 )
@@ -56,6 +57,9 @@ type QueryClient interface {
 	LockedFees(ctx context.Context, in *QueryFeesRequest, opts ...grpc.CallOption) (*QueryFeesResponse, error)
 	// AvailableFees returns collected minus locked fees.
 	AvailableFees(ctx context.Context, in *QueryFeesRequest, opts ...grpc.CallOption) (*QueryFeesResponse, error)
+	// PendingLiabilities returns aggregate unresolved refund obligations for an
+	// exchange.
+	PendingLiabilities(ctx context.Context, in *QueryPendingLiabilitiesRequest, opts ...grpc.CallOption) (*QueryPendingLiabilitiesResponse, error)
 	// VolumeWindow returns current volume window state.
 	VolumeWindow(ctx context.Context, in *QueryVolumeWindowRequest, opts ...grpc.CallOption) (*QueryVolumeWindowResponse, error)
 	// QuoteSwap returns a deterministic dry-run quote.
@@ -160,6 +164,16 @@ func (c *queryClient) AvailableFees(ctx context.Context, in *QueryFeesRequest, o
 	return out, nil
 }
 
+func (c *queryClient) PendingLiabilities(ctx context.Context, in *QueryPendingLiabilitiesRequest, opts ...grpc.CallOption) (*QueryPendingLiabilitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryPendingLiabilitiesResponse)
+	err := c.cc.Invoke(ctx, Query_PendingLiabilities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) VolumeWindow(ctx context.Context, in *QueryVolumeWindowRequest, opts ...grpc.CallOption) (*QueryVolumeWindowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(QueryVolumeWindowResponse)
@@ -204,6 +218,9 @@ type QueryServer interface {
 	LockedFees(context.Context, *QueryFeesRequest) (*QueryFeesResponse, error)
 	// AvailableFees returns collected minus locked fees.
 	AvailableFees(context.Context, *QueryFeesRequest) (*QueryFeesResponse, error)
+	// PendingLiabilities returns aggregate unresolved refund obligations for an
+	// exchange.
+	PendingLiabilities(context.Context, *QueryPendingLiabilitiesRequest) (*QueryPendingLiabilitiesResponse, error)
 	// VolumeWindow returns current volume window state.
 	VolumeWindow(context.Context, *QueryVolumeWindowRequest) (*QueryVolumeWindowResponse, error)
 	// QuoteSwap returns a deterministic dry-run quote.
@@ -244,6 +261,9 @@ func (UnimplementedQueryServer) LockedFees(context.Context, *QueryFeesRequest) (
 }
 func (UnimplementedQueryServer) AvailableFees(context.Context, *QueryFeesRequest) (*QueryFeesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AvailableFees not implemented")
+}
+func (UnimplementedQueryServer) PendingLiabilities(context.Context, *QueryPendingLiabilitiesRequest) (*QueryPendingLiabilitiesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PendingLiabilities not implemented")
 }
 func (UnimplementedQueryServer) VolumeWindow(context.Context, *QueryVolumeWindowRequest) (*QueryVolumeWindowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VolumeWindow not implemented")
@@ -434,6 +454,24 @@ func _Query_AvailableFees_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_PendingLiabilities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryPendingLiabilitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).PendingLiabilities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_PendingLiabilities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).PendingLiabilities(ctx, req.(*QueryPendingLiabilitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_VolumeWindow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryVolumeWindowRequest)
 	if err := dec(in); err != nil {
@@ -512,6 +550,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AvailableFees",
 			Handler:    _Query_AvailableFees_Handler,
+		},
+		{
+			MethodName: "PendingLiabilities",
+			Handler:    _Query_PendingLiabilities_Handler,
 		},
 		{
 			MethodName: "VolumeWindow",

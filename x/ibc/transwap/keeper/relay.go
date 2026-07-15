@@ -170,6 +170,22 @@ func (k Keeper) EscrowCoin(ctx sdk.Context, sender, escrowAddress sdk.AccAddress
 // UnescrowCoin will send the given coin from the escrow address to the provided receiver. It will also
 // update the total escrow by deducting the unescrowed coin's amount from the current total escrow.
 func (k Keeper) UnescrowCoin(ctx sdk.Context, escrowAddress, receiver sdk.AccAddress, coin sdk.Coin) error {
+	// Validate the aggregate tracker before moving bank funds. The aggregate is
+	// shared by every channel escrow for a denom, so a deficient value is an
+	// accounting invariant violation rather than an ordinary bank-send error.
+	// Computing the subtraction first also guarantees that this function never
+	// pays the receiver and then panics while applying a negative tracker value.
+	currentTotalEscrow := k.GetTotalEscrowForDenom(ctx, coin.GetDenom())
+	newTotalEscrow, err := currentTotalEscrow.SafeSub(coin)
+	if err != nil {
+		return types.ErrRefundEscrowInvariant.Wrapf(
+			"tracked total escrow %s cannot unescrow %s: %v",
+			currentTotalEscrow,
+			coin,
+			err,
+		)
+	}
+
 	if err := k.BankKeeper.SendCoins(ctx, escrowAddress, receiver, sdk.NewCoins(coin)); err != nil {
 		// NOTE: this error is only expected to occur given an unexpected bug or a malicious
 		// counterparty module. The bug may occur in bank or any part of the code that allows
@@ -179,8 +195,6 @@ func (k Keeper) UnescrowCoin(ctx sdk.Context, escrowAddress, receiver sdk.AccAdd
 	}
 
 	// track the total amount in escrow keyed by denomination to allow for efficient iteration
-	currentTotalEscrow := k.GetTotalEscrowForDenom(ctx, coin.GetDenom())
-	newTotalEscrow := currentTotalEscrow.Sub(coin)
 	k.SetTotalEscrowForDenom(ctx, newTotalEscrow)
 
 	return nil

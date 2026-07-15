@@ -13,17 +13,53 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
+
+func TestInitGenesisOrderIsUniqueAndRefundDependenciesAreOrdered(t *testing.T) {
+	order := ModuleOrderInitGenesis()
+	seen := make(map[string]struct{}, len(order))
+	for _, moduleName := range order {
+		_, duplicate := seen[moduleName]
+		require.False(t, duplicate, "module %s appears more than once in init genesis order", moduleName)
+		seen[moduleName] = struct{}{}
+	}
+
+	bankIndex := indexOf(order, banktypes.ModuleName)
+	bexIndex := indexOf(order, bextypes.ModuleName)
+	ibcIndex := indexOf(order, ibcexported.ModuleName)
+	transwapIndex := indexOf(order, transwaptypes.ModuleName)
+	for name, index := range map[string]int{
+		banktypes.ModuleName:     bankIndex,
+		bextypes.ModuleName:      bexIndex,
+		ibcexported.ModuleName:   ibcIndex,
+		transwaptypes.ModuleName: transwapIndex,
+	} {
+		require.NotEqual(t, -1, index, "module %s must be initialized", name)
+	}
+	require.Less(t, bankIndex, bexIndex)
+	require.Less(t, bexIndex, transwapIndex)
+	require.Less(t, ibcIndex, transwapIndex)
+}
+
+func TestTransSwapRefundRetryEndBlockerIsScheduled(t *testing.T) {
+	order := ModuleOrderEndBlockers()
+	require.Contains(t, order, transwaptypes.ModuleName)
+	require.Less(t, indexOf(order, banktypes.ModuleName), indexOf(order, transwaptypes.ModuleName))
+}
 
 func TestConstitutionModuleHasNoEndBlockerOrderEntry(t *testing.T) {
 	order := ModuleOrderEndBlockers()

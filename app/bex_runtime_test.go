@@ -201,6 +201,13 @@ func TestBexAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T) {
 	executeBexRuntimeQuery(t, testApp, ctx, "AvailableFees", &bexv1.QueryFeesRequest{ExchangeId: exchangeID}, availableResponse, executedQueries)
 	requireBexLedgerCoin(t, availableResponse.GetLedger(), appparams.BaseDenom, "3")
 
+	pendingLiabilitiesResponse := &bexv1.QueryPendingLiabilitiesResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "PendingLiabilities", &bexv1.QueryPendingLiabilitiesRequest{
+		ExchangeId: exchangeID,
+	}, pendingLiabilitiesResponse, executedQueries)
+	require.NotNil(t, pendingLiabilitiesResponse.GetLedger())
+	require.Empty(t, pendingLiabilitiesResponse.GetLedger().GetCoins())
+
 	volumeResponse := &bexv1.QueryVolumeWindowResponse{}
 	executeBexRuntimeQuery(t, testApp, ctx, "VolumeWindow", &bexv1.QueryVolumeWindowRequest{
 		ExchangeId: exchangeID,

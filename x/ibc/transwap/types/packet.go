@@ -1,18 +1,17 @@
 package types
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 
 	ibcerrors "github.com/cosmos/ibc-go/v11/modules/core/errors"
 	"google.golang.org/protobuf/proto"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 )
 
@@ -24,6 +23,17 @@ type InternalTransferRepresentation struct {
 	Receiver   string
 	Memo       string
 }
+
+// PacketKind identifies whether a transwap packet requests a plain transfer or
+// an exchange. The transwap port deliberately uses exchange_id = "0" as its
+// plain-transfer sentinel and canonical positive uint64 values for exchanges.
+type PacketKind uint8
+
+const (
+	PacketKindUnspecified PacketKind = iota
+	PacketKindTransfer
+	PacketKindExchange
+)
 
 const (
 	EncodingJSON     = "application/json"
@@ -42,29 +52,12 @@ func NewFungibleTokenPacketData(denom string, amount string, sender, receiver st
 	}
 }
 
-func NewTransferPacketData(sourcePort string, sourceChannel string, token *transwapv1.Token, sender, receiver string, memo string, timeoutTimestamp uint64, fee sdk.Coin, exchangeID string) *transwapv1.TransferPacketData {
-	packet := &transwapv1.TransferPacketData{
-		SourcePort:               sourcePort,
-		SourceChannel:            sourceChannel,
-		Token:                    token,
-		Sender:                   sender,
-		Receiver:                 receiver,
-		Memo:                     memo,
-		TimeoutTimestamp:         timeoutTimestamp,
-		Fee:                      SDKCoinToProto(fee),
-		ExchangeId:               exchangeID,
-		OriginalTimeoutTimestamp: timeoutTimestamp,
-	}
-	coin, err := TokenToCoin(token)
-	if err == nil && coin.Denom == fee.Denom && !fee.Amount.IsNegative() && coin.Amount.GT(fee.Amount) {
-		packet.PendingLiability = SDKCoinToProto(sdk.NewCoin(coin.Denom, coin.Amount.Sub(fee.Amount)))
-	}
-	return packet
-}
-
 func ValidateFungibleTokenPacketData(ftpd *transwapv1.FungibleTokenPacketData) error {
 	if ftpd == nil {
 		return errorsmod.Wrap(ibcerrors.ErrInvalidType, "packet data cannot be nil")
+	}
+	if _, err := classifyExchangeID(ftpd.ExchangeId); err != nil {
+		return err
 	}
 	if err := validateAmount(ftpd.Amount); err != nil {
 		return err
@@ -114,11 +107,39 @@ func FungibleTokenPacketDataCustomPacketData(ftpd *transwapv1.FungibleTokenPacke
 }
 
 func UnmarshalFungibleTokenPacketDataJSON(bz []byte, ftpd *transwapv1.FungibleTokenPacketData) error {
-	d := json.NewDecoder(bytes.NewReader(bz))
-	d.DisallowUnknownFields()
-	if err := d.Decode(ftpd); err != nil {
+	if ftpd == nil {
+		return fmt.Errorf("packet data target cannot be nil")
+	}
+
+	fields, duplicateFields, err := decodeJSONObject(bz)
+	if err != nil {
 		return err
 	}
+	if len(duplicateFields) > 0 {
+		return fmt.Errorf("duplicate packet field %q", duplicateFields[0])
+	}
+
+	unknownFields := make([]string, 0)
+	for field := range fields {
+		switch field {
+		case "exchange_id", "denom", "amount", "sender", "receiver", "memo":
+		default:
+			unknownFields = append(unknownFields, field)
+		}
+	}
+	if len(unknownFields) > 0 {
+		sort.Strings(unknownFields)
+		return fmt.Errorf("unknown packet field %q", unknownFields[0])
+	}
+
+	// Decode into a temporary value so a malformed packet cannot partially
+	// mutate a caller-owned message before returning an error.
+	var decoded transwapv1.FungibleTokenPacketData
+	if err := json.Unmarshal(bz, &decoded); err != nil {
+		return err
+	}
+	proto.Reset(ftpd)
+	proto.Merge(ftpd, &decoded)
 	return nil
 }
 
@@ -127,9 +148,8 @@ func NewInternalTransferRepresentation(exchangeID string, token *transwapv1.Toke
 }
 
 func (ftpd InternalTransferRepresentation) ValidateBasic() error {
-	_, ok := sdkmath.NewIntFromString(ftpd.ExchangeID)
-	if !ok {
-		return errorsmod.Wrapf(ErrInvalidAmount, "unable to parse exchange id: %s", ftpd.ExchangeID)
+	if _, err := ftpd.ClassifyPacket(); err != nil {
+		return err
 	}
 
 	if strings.TrimSpace(ftpd.Sender) == "" {
@@ -258,5 +278,34 @@ func PacketDataV1ToInternal(packetData *transwapv1.FungibleTokenPacketData) (Int
 }
 
 func (ftpd InternalTransferRepresentation) IsTransferPacket() bool {
-	return ftpd.ExchangeID == "0"
+	kind, err := ftpd.ClassifyPacket()
+	return err == nil && kind == PacketKindTransfer
+}
+
+// ClassifyPacket validates the custom transwap exchange_id discriminator and
+// returns the corresponding packet kind. Non-canonical encodings are rejected
+// so every implementation observes the same packet semantics.
+func (ftpd InternalTransferRepresentation) ClassifyPacket() (PacketKind, error) {
+	kind, _, err := ClassifyExchangeID(ftpd.ExchangeID)
+	return kind, err
+}
+
+func classifyExchangeID(raw string) (PacketKind, error) {
+	kind, _, err := ClassifyExchangeID(raw)
+	return kind, err
+}
+
+// ClassifyExchangeID validates a raw exchange_id and returns both its packet
+// kind and numeric exchange ID. The numeric ID is zero only for transfers.
+func ClassifyExchangeID(raw string) (PacketKind, uint64, error) {
+	if raw == "0" {
+		return PacketKindTransfer, 0, nil
+	}
+
+	exchangeID, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil || exchangeID == 0 || strconv.FormatUint(exchangeID, 10) != raw {
+		return PacketKindUnspecified, 0, errorsmod.Wrapf(ErrInvalidExchangeID, "exchange_id must be \"0\" or a canonical positive uint64: %q", raw)
+	}
+
+	return PacketKindExchange, exchangeID, nil
 }

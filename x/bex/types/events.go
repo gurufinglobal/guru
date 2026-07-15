@@ -19,6 +19,7 @@ const (
 	EventTypeFeesWithdrawn           = "fees_withdrawn"
 	EventTypeVolumeEpochActivated    = "volume_epoch_activated"
 	EventTypeVolumeRecorded          = "volume_recorded"
+	EventTypeVolumeReleased          = "volume_released"
 )
 
 const (

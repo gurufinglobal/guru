@@ -3,6 +3,9 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/tx"
+	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 )
 
 // RegisterLegacyAminoCodec registers the necessary x/ibc transfer interfaces and concrete types
@@ -14,7 +17,16 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 // RegisterInterfaces register the ibc transfer module interfaces to protobuf
 // Any.
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
-	// do nothing
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&transwapv1.MsgUpdateParams{},
+		&transwapv1.MsgRetryRefund{},
+		&transwapv1.MsgClaimRefund{},
+	)
+	registry.RegisterImplementations((*tx.MsgResponse)(nil),
+		&transwapv1.MsgUpdateParamsResponse{},
+		&transwapv1.MsgRetryRefundResponse{},
+		&transwapv1.MsgClaimRefundResponse{},
+	)
 }
 
 // ModuleCdc references the global x/ibc-transfer module codec. Note, the codec

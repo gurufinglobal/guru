@@ -79,7 +79,7 @@ var (
 		// constitution separation must run before distribution.
 		constitutiontypes.ModuleName,
 
-		// no-op and legacy blockers
+		// no-op and legacy begin blockers
 		bextypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -106,7 +106,7 @@ var (
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
 
-		// no-op and legacy blockers
+		// IBC applications and legacy end blockers; TransSwap drains its bounded refund queue.
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		transwaptypes.ModuleName,

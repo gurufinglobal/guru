@@ -10,13 +10,13 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
-	keeperpkg "github.com/gurufinglobal/guru/v3/x/ibc/transwap/keeper"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
@@ -61,6 +61,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsSuccessAckAndCommitsAccounting(t *t
 		DestinationPort:    types.PortID,
 		DestinationChannel: "channel-0",
 		Data:               types.FungibleTokenPacketDataBytes(&packetData),
+		TimeoutHeight:      clienttypes.NewHeight(2, 99),
 		TimeoutTimestamp:   uint64(ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
 	}
 
@@ -84,16 +85,21 @@ func TestIBCModuleOnRecvExchangePacketReturnsSuccessAckAndCommitsAccounting(t *t
 	require.Equal(t, "Station exchange", outboundData.Memo)
 	require.Equal(t, types.DenomPath(outputDenom), types.DenomPath(outboundData.Token.Denom))
 
-	refundKey := keeperpkg.GetRefundPacketDataKey(types.PortID, "channel-7", ics4.sent[0].sequence)
-	refund, err := k.GetRefundPacketData(ctx, refundKey)
+	refundID := types.RefundID(types.PortID, "channel-7", ics4.sent[0].sequence)
+	refund, found, err := k.GetRefundRecord(ctx, refundID)
 	require.NoError(t, err)
-	require.Equal(t, reserve.String(), refund.Sender)
+	require.True(t, found)
+	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_PENDING, refund.Status)
 	require.Equal(t, sender.String(), refund.Receiver)
 	require.Equal(t, "7", refund.ExchangeId)
-	require.Equal(t, types.PortID, refund.SourcePort)
-	require.Equal(t, "channel-0", refund.SourceChannel)
-	require.Equal(t, inputIBCDenom, refund.GetFee().GetDenom())
-	require.Equal(t, "3", refund.GetFee().GetAmount())
+	require.Equal(t, types.PortID, refund.RefundSourcePort)
+	require.Equal(t, "channel-0", refund.RefundSourceChannel)
+	require.Equal(t, inputIBCDenom, refund.GetOriginalFee().GetDenom())
+	require.Equal(t, "3", refund.GetOriginalFee().GetAmount())
+	require.Equal(t, packet.TimeoutTimestamp, refund.OriginalTimeoutTimestamp)
+	require.Equal(t, packet.TimeoutHeight.RevisionNumber, refund.GetOriginalTimeoutHeight().GetRevisionNumber())
+	require.Equal(t, packet.TimeoutHeight.RevisionHeight, refund.GetOriginalTimeoutHeight().GetRevisionHeight())
+	require.Zero(t, refund.ActiveTimeoutTimestamp)
 
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(inputIBCDenom, sdkmath.NewInt(3))), recvBex.ledger("collected"))
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(inputIBCDenom, sdkmath.NewInt(3))), recvBex.ledger("locked"))
@@ -137,7 +143,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsErrorAckForNonNumericExchangeID(t *
 				continue
 			}
 			foundAckErr = true
-			require.Contains(t, attr.Value, "unable to parse exchange id")
+			require.Contains(t, attr.Value, "canonical positive uint64")
 		}
 	}
 	require.True(t, foundAckErr)
@@ -165,6 +171,13 @@ func TestIBCModuleOnRecvPacketReturnsErrorAckForMalformedSemanticFields(t *testi
 				data.Denom = " "
 			},
 			wantErrContains: "base denomination cannot be blank",
+		},
+		{
+			name: "invalid resolved local bank denom",
+			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+				data.Denom = "xswap/channel-1/!"
+			},
+			wantErrContains: "cannot be materialized as a local bank coin",
 		},
 		{
 			name: "invalid hop",
@@ -520,15 +533,47 @@ func (m *moduleRecvExchangeBexKeeper) ReceiveToReserve(ctx context.Context, _ ui
 	return m.bank.SendCoins(ctx, from, m.reserve, amount)
 }
 
-func (m *moduleRecvExchangeBexKeeper) SendFromReserve(ctx context.Context, _ uint64, recipient sdk.AccAddress, amount sdk.Coins) error {
-	return m.bank.SendCoins(ctx, m.reserve, recipient, amount)
+func (m *moduleRecvExchangeBexKeeper) SendSwapOutputFromReserve(ctx context.Context, _ uint64, recipient sdk.AccAddress, amount sdk.Coin) error {
+	return m.bank.SendCoins(ctx, m.reserve, recipient, sdk.NewCoins(amount))
 }
 
-func (m *moduleRecvExchangeBexKeeper) RecordVolumeWindow(_ context.Context, _ uint64, direction bexv1.SwapDirection, amountOut sdkmath.Int) error {
+func (m *moduleRecvExchangeBexKeeper) SendRefundFromReserve(ctx context.Context, _ uint64, recipient sdk.AccAddress, amount sdk.Coin) error {
+	return m.bank.SendCoins(ctx, m.reserve, recipient, sdk.NewCoins(amount))
+}
+
+func (m *moduleRecvExchangeBexKeeper) ClaimRefundFromReserve(ctx context.Context, _ uint64, recipient sdk.AccAddress, amount sdk.Coin) error {
+	if err := m.bank.SendCoins(ctx, m.reserve, recipient, sdk.NewCoins(amount)); err != nil {
+		return err
+	}
+	m.addLedger("liability_released", amount)
+	return nil
+}
+
+func (m *moduleRecvExchangeBexKeeper) ReserveVolumeWindow(
+	_ context.Context,
+	exchangeID uint64,
+	direction bexv1.SwapDirection,
+	amountOut sdkmath.Int,
+) (*bexv1.VolumeReservation, error) {
 	if direction != bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B {
-		return bextypes.ErrInvalidRoute.Wrap("unexpected volume direction")
+		return nil, bextypes.ErrInvalidRoute.Wrap("unexpected volume direction")
 	}
 	m.recordedVolume = m.recordedVolume.Add(amountOut)
+	return &bexv1.VolumeReservation{
+		ExchangeId:             exchangeID,
+		Direction:              direction,
+		EpochSeconds:           bextypes.MinVolumeEpochSeconds,
+		Amount:                 amountOut.String(),
+		VolumeWindowGeneration: 1,
+	}, nil
+}
+
+func (m *moduleRecvExchangeBexKeeper) ReleaseVolumeWindow(_ context.Context, reservation *bexv1.VolumeReservation) error {
+	amount, ok := sdkmath.NewIntFromString(reservation.GetAmount())
+	if !ok || m.recordedVolume.LT(amount) {
+		return bextypes.ErrInvariantViolation.Wrap("invalid volume release")
+	}
+	m.recordedVolume = m.recordedVolume.Sub(amount)
 	return nil
 }
 
@@ -566,6 +611,31 @@ func (m *moduleRecvExchangeBexKeeper) AddPendingLiability(_ context.Context, _ u
 func (m *moduleRecvExchangeBexKeeper) ReleasePendingLiability(_ context.Context, _ uint64, liability sdk.Coin) error {
 	m.addLedger("liability_released", liability)
 	return nil
+}
+
+func (m *moduleRecvExchangeBexKeeper) GetPendingLiabilities(context.Context, uint64) (sdk.Coins, error) {
+	pending := m.ledger("pending")
+	released := m.ledger("liability_released")
+	if !moduleAckRefundHasCoins(pending, released) {
+		return sdk.Coins{}, nil
+	}
+	return pending.Sub(released...), nil
+}
+
+func (m *moduleRecvExchangeBexKeeper) GetLockedFees(context.Context, uint64) (sdk.Coins, error) {
+	locked := m.ledger("locked")
+	settled := m.ledger("released").Add(m.ledger("refunded")...)
+	if !moduleAckRefundHasCoins(locked, settled) {
+		return sdk.Coins{}, nil
+	}
+	return locked.Sub(settled...), nil
+}
+
+func (m *moduleRecvExchangeBexKeeper) GetRefundAccountingExchangeIDs(context.Context) ([]uint64, error) {
+	if m.ledger("pending").IsZero() && m.ledger("locked").IsZero() {
+		return nil, nil
+	}
+	return []uint64{7}, nil
 }
 
 func (m *moduleRecvExchangeBexKeeper) GetReserveAddress(context.Context, uint64) sdk.AccAddress {

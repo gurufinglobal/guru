@@ -84,6 +84,8 @@ FORCE:
 test:
 	@echo "Running unit tests..."
 	@go test -mod=readonly -race -cover ./...
+	@echo "Running two-chain TransSwap proof-relay acceptance test..."
+	@go test -mod=readonly -tags=test -race -cover ./tests/transwaptwochain
 
 format:
 	@echo "Formatting Go files..."

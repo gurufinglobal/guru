@@ -70,3 +70,62 @@ func TestIBCModuleOnRecvTransferPacketUnescrowsReturningNativeCoin(t *testing.T)
 		})
 	}
 }
+
+func TestIBCModuleOnRecvTransferPacketValidatesResolvedLocalBankDenom(t *testing.T) {
+	tests := []struct {
+		name      string
+		wireDenom string
+		wantAck   bool
+	}{
+		{
+			name:      "returning invalid native denom produces error ack",
+			wireDenom: "xswap/channel-1/!",
+		},
+		{
+			name:      "remote non SDK base remains interoperable as voucher",
+			wireDenom: "!",
+			wantAck:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k, ctx, bank, _, _ := setupIBCModuleAckRefund(t)
+			ctx = ctx.WithEventManager(sdk.NewEventManager())
+			im := NewIBCModule(k)
+
+			sender := sdk.AccAddress(bytes.Repeat([]byte{0x68}, 20))
+			receiver := sdk.AccAddress(bytes.Repeat([]byte{0x78}, 20))
+			packetData := types.NewFungibleTokenPacketData(
+				tt.wireDenom,
+				"42",
+				sender.String(),
+				receiver.String(),
+				"denom materialization boundary",
+			)
+			packet := channeltypes.Packet{
+				Sequence:           42,
+				SourcePort:         "xswap",
+				SourceChannel:      "channel-1",
+				DestinationPort:    types.PortID,
+				DestinationChannel: "channel-0",
+				Data:               types.FungibleTokenPacketDataBytes(packetData),
+			}
+
+			ack := im.OnRecvPacket(ctx, types.V1, packet, sdk.AccAddress{})
+			require.Equal(t, tt.wantAck, ack.Success())
+			require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
+
+			voucherDenom := types.NewDenom("!", types.NewHop(types.PortID, "channel-0"))
+			voucherIBCDenom := types.DenomIBCDenom(voucherDenom)
+			if tt.wantAck {
+				require.True(t, k.HasDenom(ctx, types.DenomHash(voucherDenom)))
+				require.Equal(t, sdkmath.NewInt(42), bank.GetAllBalances(ctx, receiver).AmountOf(voucherIBCDenom))
+				return
+			}
+
+			require.False(t, k.HasDenom(ctx, types.DenomHash(voucherDenom)))
+			require.True(t, bank.GetAllBalances(ctx, receiver).IsZero())
+		})
+	}
+}

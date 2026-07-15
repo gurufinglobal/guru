@@ -94,6 +94,13 @@ func ValidateFeeDenomForGenesis(exchange *bexv1.Exchange, denom string) error {
 	return nil
 }
 
+func ValidateReserveDenomForGenesis(exchange *bexv1.Exchange, denom string) error {
+	if err := validateExchangeReserveDenom(exchange, denom); err != nil {
+		return types.ErrInvalidGenesis.Wrapf("invalid reserve denom: %v", err)
+	}
+	return nil
+}
+
 func (k Keeper) ImportGenesis(ctx context.Context, genesis *bexv1.GenesisState) error {
 	for _, admin := range genesis.GetAdmins() {
 		canonical, _, err := k.canonicalAddress(admin)
@@ -180,6 +187,10 @@ func (k Keeper) ImportGenesis(ctx context.Context, genesis *bexv1.GenesisState) 
 }
 
 func (k Keeper) ExportGenesis(ctx context.Context) (*bexv1.GenesisState, error) {
+	if err := k.AssertInvariants(ctx); err != nil {
+		return nil, err
+	}
+
 	genesis := &bexv1.GenesisState{}
 	if err := k.admins.Walk(ctx, nil, func(admin string) (bool, error) {
 		genesis.Admins = append(genesis.Admins, admin)
@@ -334,8 +345,10 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		if err := assertCanonicalFeeLedger("pending liability", exchangeID, ledger, pending); err != nil {
 			return false, err
 		}
-		if err := validateExchangeFeeCoins(exchange, pending); err != nil {
-			return false, types.ErrInvariantViolation.Wrapf("exchange %d pending liabilities contain an unsupported denom: %v", exchangeID, err)
+		for _, coin := range pending {
+			if err := validateExchangeReserveDenom(exchange, coin.Denom); err != nil {
+				return false, types.ErrInvariantViolation.Wrapf("exchange %d pending liabilities contain an unsupported denom: %v", exchangeID, err)
+			}
 		}
 		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !pending.IsZero() {
 			return false, types.ErrInvariantViolation.Wrapf("deleted exchange %d has pending liabilities", exchangeID)

@@ -32,6 +32,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 	transferGenesis := transwapv1.GenesisState{
 		PortId: portID,
 		Denoms: types.Denoms{},
+		Params: types.DefaultParams(),
 	}
 
 	bz, err := json.MarshalIndent(&transferGenesis, "", " ")

@@ -2,6 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 
 	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
@@ -13,6 +16,134 @@ import (
 
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
+
+const (
+	flagRefundStatus   = "status"
+	flagRefundReceiver = "receiver"
+)
+
+// GetCmdQueryParams returns the effective refund retry governance parameters.
+func GetCmdQueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query TransSwap refund retry parameters",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			res, err := transwapv1.NewQueryClient(clientCtx).Params(
+				cmd.Context(),
+				&transwapv1.QueryParamsRequest{},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryRefund returns one stable refund record by ID.
+func GetCmdQueryRefund() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "refund [refund-id]",
+		Short: "Query one TransSwap refund record",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			res, err := transwapv1.NewQueryClient(clientCtx).Refund(
+				cmd.Context(),
+				&transwapv1.QueryRefundRequest{RefundId: args[0]},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryRefunds lists refund records with optional state and receiver
+// filters. Pagination is evaluated after filtering on the server.
+func GetCmdQueryRefunds() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "refunds",
+		Short: "List TransSwap refund records",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			statusRaw, err := cmd.Flags().GetString(flagRefundStatus)
+			if err != nil {
+				return err
+			}
+			refundStatus, err := parseRefundStatus(statusRaw)
+			if err != nil {
+				return err
+			}
+			receiver, err := cmd.Flags().GetString(flagRefundReceiver)
+			if err != nil {
+				return err
+			}
+			pageReq, err := readPulsarPageRequest(cmd)
+			if err != nil {
+				return err
+			}
+			res, err := transwapv1.NewQueryClient(clientCtx).Refunds(
+				cmd.Context(),
+				&transwapv1.QueryRefundsRequest{
+					Status:     refundStatus,
+					Receiver:   receiver,
+					Pagination: pageReq,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	cmd.Flags().String(flagRefundStatus, "", "filter by refund status (for example pending or manual-claimable; all disables the filter)")
+	cmd.Flags().String(flagRefundReceiver, "", "filter by exact cross-chain receiver")
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "refund records")
+	return cmd
+}
+
+func parseRefundStatus(raw string) (transwapv1.RefundStatus, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || strings.EqualFold(raw, "all") {
+		return transwapv1.RefundStatus_REFUND_STATUS_UNSPECIFIED, nil
+	}
+	if numeric, err := strconv.ParseInt(raw, 10, 32); err == nil {
+		refundStatus := transwapv1.RefundStatus(numeric)
+		if _, ok := transwapv1.RefundStatus_name[int32(refundStatus)]; ok {
+			return refundStatus, nil
+		}
+		return transwapv1.RefundStatus_REFUND_STATUS_UNSPECIFIED, fmt.Errorf("unsupported refund status %q", raw)
+	}
+
+	normalized := strings.ToUpper(strings.NewReplacer("-", "_", " ", "_").Replace(raw))
+	if !strings.HasPrefix(normalized, "REFUND_STATUS_") {
+		normalized = "REFUND_STATUS_" + normalized
+	}
+	value, ok := transwapv1.RefundStatus_value[normalized]
+	if !ok {
+		return transwapv1.RefundStatus_REFUND_STATUS_UNSPECIFIED, fmt.Errorf("unsupported refund status %q", raw)
+	}
+	return transwapv1.RefundStatus(value), nil
+}
 
 // GetCmdQueryDenom defines the command to query a denomination from a given hash or ibc denom.
 func GetCmdQueryDenom() *cobra.Command {

@@ -78,21 +78,75 @@ func TestFungibleTokenPacketValidationRejectsMalformedFields(t *testing.T) {
 	}
 }
 
-func TestUnmarshalPacketDataRejectsJSONUnknownFields(t *testing.T) {
-	packet := NewFungibleTokenPacketData("ugxusd", "1", "sender", "receiver", "")
-	bz, err := json.Marshal(map[string]string{
-		"exchange_id": "0",
-		"denom":       packet.Denom,
-		"amount":      packet.Amount,
-		"sender":      packet.Sender,
-		"receiver":    packet.Receiver,
-		"memo":        packet.Memo,
-		"unexpected":  "field",
-	})
-	require.NoError(t, err)
+func TestUnmarshalPacketDataRejectsNonCanonicalJSON(t *testing.T) {
+	const valid = `{"exchange_id":"0","denom":"ugxusd","amount":"1","sender":"sender","receiver":"receiver","memo":""}`
 
-	_, err = UnmarshalPacketData(bz, V1, EncodingJSON)
+	tests := []struct {
+		name            string
+		packet          string
+		wantErrContains string
+	}{
+		{
+			name:            "unknown field",
+			packet:          `{"exchange_id":"0","denom":"ugxusd","amount":"1","sender":"sender","receiver":"receiver","memo":"","unexpected":"field"}`,
+			wantErrContains: `unknown packet field "unexpected"`,
+		},
+		{
+			name:            "duplicate known field",
+			packet:          `{"exchange_id":"0","denom":"ugxusd","denom":"uatom","amount":"1","sender":"sender","receiver":"receiver","memo":""}`,
+			wantErrContains: `duplicate packet field "denom"`,
+		},
+		{
+			name:            "duplicate unknown field",
+			packet:          `{"exchange_id":"0","denom":"ugxusd","amount":"1","sender":"sender","receiver":"receiver","memo":"","future":"one","future":"two"}`,
+			wantErrContains: `duplicate packet field "future"`,
+		},
+		{
+			name:            "trailing object",
+			packet:          valid + `{}`,
+			wantErrContains: "unexpected trailing JSON value",
+		},
+		{
+			name:            "trailing scalar",
+			packet:          valid + ` true`,
+			wantErrContains: "unexpected trailing JSON value",
+		},
+		{
+			name:            "non object",
+			packet:          `[]`,
+			wantErrContains: "expected JSON object",
+		},
+		{
+			name:            "wrong field type",
+			packet:          `{"exchange_id":"0","denom":7,"amount":"1","sender":"sender","receiver":"receiver","memo":""}`,
+			wantErrContains: "cannot unmarshal number",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := UnmarshalPacketData([]byte(tt.packet), V1, EncodingJSON)
+			require.Error(t, err)
+			require.ErrorContains(t, err, tt.wantErrContains)
+		})
+	}
+
+	decoded, err := UnmarshalPacketData([]byte(" \n"+valid+"\t "), V1, EncodingJSON)
+	require.NoError(t, err)
+	require.Equal(t, "0", decoded.ExchangeID)
+	require.Equal(t, "ugxusd", decoded.Token.Denom.Base)
+}
+
+func TestUnmarshalFungibleTokenPacketDataJSONDoesNotPartiallyMutateTarget(t *testing.T) {
+	target := NewFungibleTokenPacketData("uatom", "9", "original-sender", "original-receiver", "original-memo")
+	want := proto.Clone(target).(*transwapv1.FungibleTokenPacketData)
+
+	err := UnmarshalFungibleTokenPacketDataJSON(
+		[]byte(`{"exchange_id":"0","denom":"ugxusd","denom":"uatom","amount":"1","sender":"sender","receiver":"receiver","memo":""}`),
+		target,
+	)
 	require.Error(t, err)
+	require.True(t, proto.Equal(want, target))
 }
 
 func TestUnmarshalPacketDataRoundTripsSupportedEncodings(t *testing.T) {
@@ -163,6 +217,42 @@ func TestInternalTransferRepresentationDistinguishesExchangePackets(t *testing.T
 
 	nonNumeric := NewInternalTransferRepresentation("abc", &transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}, "sender", "receiver", "")
 	require.Error(t, nonNumeric.ValidateBasic())
+}
+
+func TestClassifyExchangeIDRequiresCanonicalDiscriminator(t *testing.T) {
+	tests := []struct {
+		raw        string
+		kind       PacketKind
+		exchangeID uint64
+		valid      bool
+	}{
+		{raw: "0", kind: PacketKindTransfer, valid: true},
+		{raw: "1", kind: PacketKindExchange, exchangeID: 1, valid: true},
+		{raw: "18446744073709551615", kind: PacketKindExchange, exchangeID: ^uint64(0), valid: true},
+		{raw: ""},
+		{raw: " "},
+		{raw: "+1"},
+		{raw: "-1"},
+		{raw: "00"},
+		{raw: "01"},
+		{raw: "abc"},
+		{raw: "18446744073709551616"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.raw, func(t *testing.T) {
+			kind, exchangeID, err := ClassifyExchangeID(tt.raw)
+			if !tt.valid {
+				require.ErrorIs(t, err, ErrInvalidExchangeID)
+				require.Equal(t, PacketKindUnspecified, kind)
+				require.Zero(t, exchangeID)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tt.kind, kind)
+			require.Equal(t, tt.exchangeID, exchangeID)
+		})
+	}
 }
 
 func TestCloneDenomAndTokenPreventTraceAliasing(t *testing.T) {
@@ -257,6 +347,18 @@ func TestTokenToCoinSupportsValidToken(t *testing.T) {
 	require.Equal(t, sdkmath.NewInt(123), coin.Amount)
 }
 
+func TestTokenToCoinValidatesOnlyResolvedLocalBankDenom(t *testing.T) {
+	_, err := TokenToCoin(&transwapv1.Token{Denom: NewDenom("!"), Amount: "1"})
+	require.ErrorIs(t, err, ErrInvalidDenomForTransfer)
+	require.ErrorContains(t, err, "cannot be materialized as a local bank coin")
+
+	remoteDenom := NewDenom("!", NewHop(PortID, "channel-0"))
+	coin, err := TokenToCoin(&transwapv1.Token{Denom: remoteDenom, Amount: "1"})
+	require.NoError(t, err)
+	require.Equal(t, DenomIBCDenom(remoteDenom), coin.Denom)
+	require.Equal(t, sdkmath.OneInt(), coin.Amount)
+}
+
 func TestMarshalPacketDataAndUnmarshalPacketDataRejectBadInputs(t *testing.T) {
 	packet := NewFungibleTokenPacketData("ugxusd", "1", "sender", "receiver", "")
 
@@ -310,4 +412,46 @@ func newOverflowAmount() string {
 	overflow := UnboundedSpendLimit().BigInt()
 	overflow.Add(overflow, big.NewInt(1))
 	return overflow.String()
+}
+
+func FuzzUnmarshalFungibleTokenPacketDataJSONNeverPanics(f *testing.F) {
+	for _, seed := range [][]byte{
+		FungibleTokenPacketDataBytes(NewFungibleTokenPacketData("ugxusd", "1", "sender", "receiver", "")),
+		[]byte(`{"exchange_id":"0","denom":"a","denom":"b","amount":"1","sender":"s","receiver":"r"}`),
+		[]byte(`{"exchange_id":"0","denom":"ugxusd","amount":"1","sender":"s","receiver":"r"}{}`),
+		[]byte(`not-json`),
+	} {
+		f.Add(seed)
+	}
+
+	f.Fuzz(func(t *testing.T, raw []byte) {
+		var packet transwapv1.FungibleTokenPacketData
+		if err := UnmarshalFungibleTokenPacketDataJSON(raw, &packet); err != nil {
+			return
+		}
+
+		canonical, err := json.Marshal(&packet)
+		if err != nil {
+			t.Fatalf("marshal accepted packet: %v", err)
+		}
+		var roundTrip transwapv1.FungibleTokenPacketData
+		if err := UnmarshalFungibleTokenPacketDataJSON(canonical, &roundTrip); err != nil {
+			t.Fatalf("decoder rejected its canonical output: %v", err)
+		}
+	})
+}
+
+func FuzzTokenToCoinNeverPanics(f *testing.F) {
+	f.Add("uatom", false)
+	f.Add("!", false)
+	f.Add("!", true)
+	f.Add("", true)
+
+	f.Fuzz(func(t *testing.T, base string, traced bool) {
+		denom := NewDenom(base)
+		if traced {
+			denom.Trace = []*transwapv1.Hop{NewHop(PortID, "channel-0")}
+		}
+		_, _ = TokenToCoin(&transwapv1.Token{Denom: denom, Amount: "1"})
+	})
 }

@@ -195,8 +195,16 @@ func (im IBCModule) OnRecvPacket(
 		return ack
 	}
 
+	packetKind, err := data.ClassifyPacket()
+	if err != nil {
+		ackErr = err
+		ack = channeltypes.NewErrorAcknowledgement(ackErr)
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("%s sequence %d", ackErr.Error(), packet.Sequence))
+		return ack
+	}
+
 	// NOTE: this needs to set the ackErr variable and not do if ackErr := ... because the ackErr variable is used in the defer function
-	if data.IsTransferPacket() {
+	if packetKind == types.PacketKindTransfer {
 		ackErr = im.keeper.OnRecvTransferPacket(
 			ctx,
 			data,
@@ -214,6 +222,7 @@ func (im IBCModule) OnRecvPacket(
 			packet.DestinationPort,
 			packet.DestinationChannel,
 			v1ExchangeSourceTimeoutTimestamp(packet),
+			packet.TimeoutHeight,
 		)
 	}
 	if ackErr != nil {
@@ -255,8 +264,13 @@ func (im IBCModule) OnAcknowledgementPacket(
 		return errorsmod.Wrapf(ibcerrors.ErrInvalidType, "acknowledgement did not marshal to expected bytes: %X ≠ %X", bz, acknowledgement)
 	}
 
+	packetKind, err := data.ClassifyPacket()
+	if err != nil {
+		return err
+	}
+
 	// acknowledgement
-	if data.IsTransferPacket() {
+	if packetKind == types.PacketKindTransfer {
 		err = im.keeper.OnAcknowledgementTransferPacket(ctx, packet.SourcePort, packet.SourceChannel, packet.Sequence, data, ack)
 	} else {
 		err = im.keeper.OnAcknowledgementExchangePacket(ctx, packet.SourcePort, packet.SourceChannel, data, ack)
@@ -282,8 +296,13 @@ func (im IBCModule) OnTimeoutPacket(
 		return err
 	}
 
+	packetKind, err := data.ClassifyPacket()
+	if err != nil {
+		return err
+	}
+
 	// refund tokens
-	if data.IsTransferPacket() {
+	if packetKind == types.PacketKindTransfer {
 		err = im.keeper.OnTimeoutTransferPacket(ctx, packet.SourcePort, packet.SourceChannel, packet.Sequence, data)
 	} else {
 		err = im.keeper.OnTimeoutExchangePacket(ctx, packet.SourcePort, packet.SourceChannel, data)

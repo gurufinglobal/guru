@@ -5,6 +5,7 @@ import (
 
 	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 
 	"cosmossdk.io/math"
 
@@ -43,20 +44,27 @@ type ChannelKeeper interface {
 	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
 	GetAllChannelsWithPortPrefix(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel
 	HasChannel(ctx sdk.Context, portID, channelID string) bool
+	GetPacketCommitment(ctx sdk.Context, portID, channelID string, sequence uint64) []byte
 }
 
 type BexKeeper interface {
 	ValidateSwapInput(ctx context.Context, exchangeID uint64, inputDenom, localInputDenom string) (bexv1.SwapDirection, error)
 	QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*bexv1.QuoteSwapResponse, error)
 	ReceiveToReserve(ctx context.Context, exchangeID uint64, fromAddr sdk.AccAddress, amount sdk.Coins) error
-	SendFromReserve(ctx context.Context, exchangeID uint64, recipient sdk.AccAddress, amount sdk.Coins) error
-	RecordVolumeWindow(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, amountOut math.Int) error
+	SendSwapOutputFromReserve(ctx context.Context, exchangeID uint64, recipient sdk.AccAddress, amount sdk.Coin) error
+	SendRefundFromReserve(ctx context.Context, exchangeID uint64, recipient sdk.AccAddress, amount sdk.Coin) error
+	ClaimRefundFromReserve(ctx context.Context, exchangeID uint64, recipient sdk.AccAddress, amount sdk.Coin) error
+	ReserveVolumeWindow(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, amountOut math.Int) (*bexv1.VolumeReservation, error)
+	ReleaseVolumeWindow(ctx context.Context, reservation *bexv1.VolumeReservation) error
 	CollectFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	LockExchangeFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	ReleaseExchangeFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	RefundLockedFee(ctx context.Context, exchangeID uint64, fee sdk.Coin) error
 	AddPendingLiability(ctx context.Context, exchangeID uint64, liability sdk.Coin) error
 	ReleasePendingLiability(ctx context.Context, exchangeID uint64, liability sdk.Coin) error
+	GetPendingLiabilities(ctx context.Context, exchangeID uint64) (sdk.Coins, error)
+	GetLockedFees(ctx context.Context, exchangeID uint64) (sdk.Coins, error)
+	GetRefundAccountingExchangeIDs(ctx context.Context) ([]uint64, error)
 	GetReserveAddress(ctx context.Context, exchangeID uint64) sdk.AccAddress
 }
 
@@ -69,6 +77,12 @@ type MessageRouter interface {
 // ConnectionKeeper defines the expected IBC connection keeper
 type ConnectionKeeper interface {
 	GetConnection(ctx sdk.Context, connectionID string) (connection connectiontypes.ConnectionEnd, found bool)
+}
+
+// ClientKeeper exposes the latest trusted destination consensus timestamp used
+// to anchor fresh refund packet timeouts.
+type ClientKeeper interface {
+	GetLatestClientConsensusState(ctx sdk.Context, clientID string) (ibcexported.ConsensusState, bool)
 }
 
 // ParamSubspace defines the expected Subspace interface for module parameters.

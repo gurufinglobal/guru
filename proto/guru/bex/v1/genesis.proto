@@ -16,8 +16,8 @@ message GenesisState {
   repeated VolumeWindowGenesis volume_windows = 5;
   uint64 next_exchange_id = 6;
   repeated ReserveDepositorGenesis reserve_depositors = 7;
-  // pending_liabilities reserves the net input principal required to honor
-  // in-flight cross-chain refunds for each exchange.
+  // pending_liabilities records gross refund obligations until output/refund
+  // acknowledgement success or a local manual claim.
   repeated FeeGenesis pending_liabilities = 8;
 }
 

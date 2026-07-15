@@ -23,8 +23,8 @@ const (
 	maxMetadataKeyLen    = 64
 	maxMetadataValLen    = 256
 	maxIntDigits         = 78
-	minVolumeEpochSecs   = uint32(86400)
-	maxVolumeEpochSecs   = uint32(604800)
+	minVolumeEpochSecs   = types.MinVolumeEpochSeconds
+	maxVolumeEpochSecs   = types.MaxVolumeEpochSeconds
 	minOracleStaleSecs   = uint32(1)
 	maxOracleStaleSecs   = uint32(3600)
 	requiredExchangePort = "transwap"
