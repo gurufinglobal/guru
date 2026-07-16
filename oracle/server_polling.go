@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (s *Sidecar) runSourcePollers(ctx context.Context) error {
+func (s *Sidecar) runSourcePollers(ctx context.Context, activeTasks []*oraclev1.OracleTask) error {
 	sourceTimeout, err := s.config.SourceTimeoutDuration()
 	if err != nil {
 		return err
@@ -18,7 +18,7 @@ func (s *Sidecar) runSourcePollers(ctx context.Context) error {
 
 	group, pollCtx := errgroup.WithContext(ctx)
 	pollers := 0
-	for _, task := range s.activeTasks {
+	for _, task := range activeTasks {
 		for _, source := range s.matchingSources(task) {
 			if _, ok, err := source.IntervalDuration(); err != nil {
 				return err

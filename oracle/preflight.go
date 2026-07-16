@@ -3,8 +3,10 @@ package oracle
 import (
 	"context"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
+	"time"
 
 	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
@@ -12,7 +14,78 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-const nodeTasksPageLimit uint64 = 100
+const (
+	nodeTasksPageLimit      uint64 = 100
+	initialPreflightBackoff        = 250 * time.Millisecond
+	maximumPreflightBackoff        = 5 * time.Second
+)
+
+type nodeTaskPreflight struct {
+	config         Config
+	sidecar        *Sidecar
+	ensure         func(context.Context, Config) ([]*oraclev1.OracleTask, error)
+	initialBackoff time.Duration
+	maxBackoff     time.Duration
+}
+
+func NewNodeTaskPreflight(config Config, sidecar *Sidecar) Runnable {
+	config.applyDefaults("")
+
+	return &nodeTaskPreflight{
+		config:         config,
+		sidecar:        sidecar,
+		ensure:         EnsureNodeTasksConfigured,
+		initialBackoff: initialPreflightBackoff,
+		maxBackoff:     maximumPreflightBackoff,
+	}
+}
+
+func (p *nodeTaskPreflight) Run(ctx context.Context) error {
+	backoff := p.initialBackoff
+	for attempt := uint64(1); ; attempt++ {
+		tasks, err := p.ensure(ctx, p.config)
+		if err == nil {
+			if err := p.sidecar.ConfigureActiveTasks(tasks); err != nil {
+				return err
+			}
+			log.Printf(
+				"oracle sidecar node_preflight=ready attempts=%d active_tasks=%d node_grpc=%q",
+				attempt,
+				len(tasks),
+				strings.TrimSpace(p.config.NodeGRPC),
+			)
+
+			return nil
+		}
+		if ctx.Err() != nil {
+			return nil
+		}
+
+		log.Printf(
+			"oracle sidecar node_preflight=degraded attempt=%d retry_in=%s node_grpc=%q err=%v",
+			attempt,
+			backoff,
+			strings.TrimSpace(p.config.NodeGRPC),
+			err,
+		)
+		timer := time.NewTimer(backoff)
+		select {
+		case <-ctx.Done():
+			if !timer.Stop() {
+				<-timer.C
+			}
+			return nil
+		case <-timer.C:
+		}
+
+		if backoff < p.maxBackoff {
+			backoff *= 2
+			if backoff > p.maxBackoff {
+				backoff = p.maxBackoff
+			}
+		}
+	}
+}
 
 func EnsureNodeTasksConfigured(ctx context.Context, cfg Config) ([]*oraclev1.OracleTask, error) {
 	cfg.applyDefaults("")
