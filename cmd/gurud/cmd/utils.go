@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"cosmossdk.io/log/v2"
@@ -143,17 +144,27 @@ func appExport(
 	jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
-) (servertypes.ExportedApp, error) {
+) (exported servertypes.ExportedApp, err error) {
 	var emptyApp *app.App
+	viperAppOpts, ok := appOpts.(*viper.Viper)
+	if !ok {
+		return servertypes.ExportedApp{}, errors.New("appOpts is not viper.Viper")
+	}
+	// ExportCmd writes the genesis document to stdout. Cosmos SDK constructs
+	// its server logger on that same writer, so module initialization logs would
+	// otherwise corrupt the JSON stream. Preserve the configured format/level
+	// while routing only export-time application logs to stderr.
+	logger, err = sdkserver.CreateSDKLogger(
+		sdkserver.NewContext(viperAppOpts, cmtcfg.DefaultConfig(), logger),
+		os.Stderr,
+	)
+	if err != nil {
+		return servertypes.ExportedApp{}, err
+	}
 
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
-	}
-
-	viperAppOpts, ok := appOpts.(*viper.Viper)
-	if !ok {
-		return servertypes.ExportedApp{}, errors.New("appOpts is not viper.Viper")
 	}
 
 	// overwrite the FlagInvCheckPeriod
@@ -166,16 +177,22 @@ func appExport(
 		return servertypes.ExportedApp{}, err
 	}
 
-	if height != -1 {
+	if height == -1 {
+		emptyApp = app.NewApp(logger, db, true, appOpts, baseapp.SetChainID(chainID))
+	} else {
 		emptyApp = app.NewApp(logger, db, false, appOpts, baseapp.SetChainID(chainID))
+	}
+	defer func() {
+		err = errors.Join(err, emptyApp.Close())
+	}()
 
+	if height != -1 {
 		if err := emptyApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	}
 
 	return emptyApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
-
 }
 
 func getChainIDFromOpts(appOpts servertypes.AppOptions) (chainID string, err error) {

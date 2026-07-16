@@ -54,13 +54,27 @@ func (c pulsarTxConfig) TxEncoder() sdk.TxEncoder {
 	return c.encoder
 }
 
+func (c pulsarTxConfig) TxJSONEncoder() sdk.TxEncoder {
+	baseEncoder := c.TxConfig.TxJSONEncoder()
+	return func(tx sdk.Tx) ([]byte, error) {
+		decoded, ok := tx.(*pulsarDecodedTx)
+		if !ok {
+			return baseEncoder(tx)
+		}
+		if decoded == nil || decoded.tx == nil {
+			return nil, fmt.Errorf("cannot JSON encode nil Pulsar transaction")
+		}
+		return c.cdc.MarshalJSON(decoded.tx)
+	}
+}
+
 func (c pulsarTxConfig) WrapTxBuilder(tx sdk.Tx) (client.TxBuilder, error) {
 	decoded, ok := tx.(*pulsarDecodedTx)
 	if !ok {
 		return c.TxConfig.WrapTxBuilder(tx)
 	}
 
-	builder := c.TxConfig.NewTxBuilder()
+	builder := c.NewTxBuilder()
 	if err := builder.SetMsgs(decoded.GetMsgs()...); err != nil {
 		return nil, err
 	}
@@ -198,6 +212,13 @@ type pulsarDecodedTx struct {
 
 	signers [][]byte
 	msgsV2  []proto.Message
+}
+
+// AsAny mirrors the SDK transaction wrapper contract used by the tx query
+// service. The decoded Tx preserves the original message Any values while
+// exposing the canonical cosmos.tx.v1beta1.Tx query representation.
+func (tx *pulsarDecodedTx) AsAny() *codectypes.Any {
+	return codectypes.UnsafePackAny(tx.tx)
 }
 
 func (tx *pulsarDecodedTx) GetMsgs() []sdk.Msg {
