@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -22,11 +24,13 @@ import (
 const (
 	envOracleSoak           = "GURU_E2E_SOAK"
 	envOracleTxSmoke        = "GURU_E2E_ORACLE_TX_SMOKE"
-	oracleSoakHeight        = int64(100)
+	oracleSoakBlocks        = int64(1_000)
 	oracleSoakWorkloadStep  = int64(5)
 	oracleSoakImportBlocks  = int64(20)
 	oracleSoakTimeout       = 25 * time.Minute
 	oracleSoakTxFee         = highFeeAGXN
+	oracleSoakValidatorFund = "1000000000000000000000agxn"
+	oracleSoakOperatorFund  = "3000000000000000000000agxn"
 	oracleSoakInitialMinGas = "630000000000.000000000000000000"
 	// 630000000000 min gas price * 250000 gas. It is valid at genesis but
 	// must be rejected after the oracle raises the chain-wide minimum.
@@ -84,6 +88,9 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 	if os.Getenv(envOracleSoak) != "1" {
 		t.Skipf("set %s=1 to run the 4-validator oracle soak", envOracleSoak)
 	}
+	previousLogOutput := log.Writer()
+	log.SetOutput(io.Discard)
+	defer log.SetOutput(previousLogOutput)
 
 	repoRoot := projectRootFromTestFile(t)
 	bin := buildGurudBinary(t, repoRoot)
@@ -99,18 +106,66 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, 15, 2*time.Minute)
 	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", 3, 90*time.Second)
 	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "TRX/USD", 3, 90*time.Second)
+	t.Logf("four-validator checkpoint=baseline height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 	updatedMinGasPrice := waitForMinGasPriceAbove(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, oracleSoakInitialMinGas, 2*time.Minute)
 	t.Logf("oracle-driven min gas price update observed current_min_gas_price=%s", updatedMinGasPrice)
 	assertUpdatedMinGasPriceRejectsGenesisFee(t, repoRoot, bin, nodes[0], accounts)
 
 	runOracleSoakTxMix(t, repoRoot, bin, nodes[0], accounts)
 
+	for index := range nodes {
+		assertNoOracleVoteExtensionValidationFailures(t, nodes)
+		heightBeforeRestart := latestOracleSoakHeight(t, repoRoot, bin, nodes)
+		latestBeforeRestart := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
+		restartOracleSoakNode(t, repoRoot, bin, nodes, index)
+		waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, heightBeforeRestart+5, 2*time.Minute)
+		waitForOracleLatestHeight(
+			t,
+			repoRoot,
+			bin,
+			nodes[0].home,
+			nodes[0].rpcAddr,
+			"BTC/USD",
+			latestBeforeRestart.BlockHeight+1,
+			90*time.Second,
+		)
+		t.Logf(
+			"four-validator checkpoint=node-restart validator=%d height=%d",
+			index,
+			latestOracleSoakHeight(t, repoRoot, bin, nodes),
+		)
+	}
+	for index := range nodes {
+		heightBeforeRestart := latestOracleSoakHeight(t, repoRoot, bin, nodes)
+		latestBeforeRestart := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
+		stopOracleSidecar(t, nodes[index])
+		startOracleSidecar(t, nodes[index], sourceServer.URL)
+		waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, heightBeforeRestart+5, 90*time.Second)
+		waitForOracleLatestHeight(
+			t,
+			repoRoot,
+			bin,
+			nodes[0].home,
+			nodes[0].rpcAddr,
+			"BTC/USD",
+			latestBeforeRestart.BlockHeight+1,
+			90*time.Second,
+		)
+		t.Logf(
+			"four-validator checkpoint=sidecar-restart validator=%d height=%d",
+			index,
+			latestOracleSoakHeight(t, repoRoot, bin, nodes),
+		)
+	}
+
 	heightBeforeStop := latestOracleSoakHeight(t, repoRoot, bin, nodes[:3])
 	stopNode(t, nodes[3].node)
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes[:3], heightBeforeStop+10, 2*time.Minute)
+	t.Logf("four-validator checkpoint=one-validator-offline height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes[:3]))
 
 	restartOracleSoakNode(t, repoRoot, bin, nodes, 3)
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, heightBeforeStop+20, 3*time.Minute)
+	t.Logf("four-validator checkpoint=one-validator-recovered height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 
 	latestWithAllSidecars := waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", 3, 90*time.Second)
 	stopOracleSidecar(t, nodes[3])
@@ -127,21 +182,39 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 	if latestDuringOracleQuorumLoss.BlockHeight != latestBeforeOracleQuorumLoss.BlockHeight {
 		t.Fatalf("oracle value advanced without min_validators quorum: before=%+v after=%+v", latestBeforeOracleQuorumLoss, latestDuringOracleQuorumLoss)
 	}
+	t.Logf(
+		"four-validator checkpoint=oracle-quorum-lost chain_height=%d oracle_height=%d",
+		latestOracleSoakHeight(t, repoRoot, bin, nodes),
+		latestDuringOracleQuorumLoss.BlockHeight,
+	)
 	startOracleSidecar(t, nodes[1], sourceServer.URL)
 	startOracleSidecar(t, nodes[2], sourceServer.URL)
 	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", latestBeforeOracleQuorumLoss.BlockHeight+1, 90*time.Second)
+	t.Logf("four-validator checkpoint=oracle-quorum-recovered height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 
 	heightBeforeValidatorQuorumLoss := latestOracleSoakHeight(t, repoRoot, bin, nodes)
 	stopNode(t, nodes[2].node)
 	stopNode(t, nodes[3].node)
 	assertOracleSoakHalted(t, repoRoot, bin, nodes[0], 6*time.Second)
+	t.Logf("four-validator checkpoint=consensus-quorum-halted height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes[:2]))
 	restartOracleSoakNode(t, repoRoot, bin, nodes, 2)
 	restartOracleSoakNode(t, repoRoot, bin, nodes, 3)
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, heightBeforeValidatorQuorumLoss, 2*time.Minute)
+	t.Logf("four-validator checkpoint=consensus-quorum-recovered height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 
-	runOracleSoakWorkloadUntilHeight(t, repoRoot, bin, nodes, accounts, oracleSoakHeight)
-	assertCommonOracleSoakBlock(t, repoRoot, bin, nodes, oracleSoakHeight)
+	oracleSoakStartHeight := latestOracleSoakHeight(t, repoRoot, bin, nodes)
+	oracleSoakTargetHeight := oracleSoakStartHeight + oracleSoakBlocks
+	t.Logf(
+		"four-validator checkpoint=soak-start height=%d target=%d additional=%d",
+		oracleSoakStartHeight,
+		oracleSoakTargetHeight,
+		oracleSoakBlocks,
+	)
+	runOracleSoakWorkloadUntilHeight(t, repoRoot, bin, nodes, accounts, oracleSoakTargetHeight)
+	assertNoOracleVoteExtensionValidationFailures(t, nodes)
+	assertCommonOracleSoakBlock(t, repoRoot, bin, nodes, oracleSoakTargetHeight)
 	assertOracleHistory(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
+	t.Logf("four-validator checkpoint=soak-complete height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 
 	exportHeight := latestOracleSoakHeight(t, repoRoot, bin, nodes)
 	latestBTCBeforeExport := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
@@ -163,6 +236,11 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 	waitForOracleLatestHeight(t, repoRoot, bin, importedNodes[0].home, importedNodes[0].rpcAddr, "BTC/USD", latestBTCBeforeExport.BlockHeight+1, 2*time.Minute)
 	waitForOracleLatestHeight(t, repoRoot, bin, importedNodes[0].home, importedNodes[0].rpcAddr, "ETH/USD", latestETHBeforeExport.BlockHeight+1, 2*time.Minute)
 	assertCommonOracleSoakBlock(t, repoRoot, bin, importedNodes, importTargetHeight)
+	t.Logf(
+		"four-validator checkpoint=export-import export_height=%d imported_height=%d",
+		exportHeight,
+		latestOracleSoakHeight(t, repoRoot, bin, importedNodes),
+	)
 }
 
 type oracleSoakNode struct {
@@ -258,10 +336,10 @@ func bootstrapOracleSoakNetwork(t *testing.T, repoRoot, bin, baseDir, sourceURL 
 
 	for _, node := range nodes {
 		addr := keyAddress(t, repoRoot, bin, node.home, node.keyName)
-		runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", addr, "200000000000000000000agxn", "--home", nodes[0].home)
+		runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", addr, oracleSoakValidatorFund, "--home", nodes[0].home)
 	}
-	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.moderator, "500000000000000000000agxn", "--home", nodes[0].home)
-	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.user, "500000000000000000000agxn", "--home", nodes[0].home)
+	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.moderator, oracleSoakOperatorFund, "--home", nodes[0].home)
+	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.user, oracleSoakOperatorFund, "--home", nodes[0].home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.receiver, "1000000000000000000agxn", "--home", nodes[0].home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.poor, "1agxn", "--home", nodes[0].home)
 
@@ -459,6 +537,7 @@ func startOracleSoakNodes(t *testing.T, repoRoot, bin string, nodes []*oracleSoa
 			node.jsonWSRPCPort,
 			[]string{
 				"--p2p.persistent_peers", persistentPeersFor(node, nodes),
+				"--state-sync.snapshot-interval", "0",
 			},
 			nil,
 		)
@@ -481,6 +560,7 @@ func restartOracleSoakNode(t *testing.T, repoRoot, bin string, nodes []*oracleSo
 		nodes[index].jsonWSRPCPort,
 		[]string{
 			"--p2p.persistent_peers", persistentPeersFor(nodes[index], nodes),
+			"--state-sync.snapshot-interval", "0",
 		},
 		nil,
 	)
@@ -1185,6 +1265,20 @@ func oracleSoakNodeLogs(node *oracleSoakNode) string {
 		return ""
 	}
 	return node.node.logBuf.String()
+}
+
+func assertNoOracleVoteExtensionValidationFailures(t *testing.T, nodes []*oracleSoakNode) {
+	t.Helper()
+	for _, node := range nodes {
+		if count := oracleValidationErrorCount(oracleSoakNodeLogs(node)); count != 0 {
+			t.Fatalf(
+				"node %d logged %d oracle vote-extension validation errors:\n%s",
+				node.index,
+				count,
+				oracleSoakNodeLogs(node),
+			)
+		}
+	}
 }
 
 func waitForAllOracleSoakNodesHeight(t *testing.T, repoRoot, bin string, nodes []*oracleSoakNode, minHeight int64, timeout time.Duration) {
