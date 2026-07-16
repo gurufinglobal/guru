@@ -402,10 +402,41 @@ func startNodeWithOptions(
 ) *runningNode {
 	t.Helper()
 
+	return startNodeWithChainIDOption(
+		t,
+		repoRoot,
+		bin,
+		home,
+		rpcPort,
+		p2pPort,
+		pprofPort,
+		grpcPort,
+		jsonRPCPort,
+		jsonWSRPCPort,
+		true,
+		extraArgs,
+		extraEnv,
+	)
+}
+
+func startNodeWithChainIDOption(
+	t *testing.T,
+	repoRoot, bin, home string,
+	rpcPort, p2pPort, pprofPort, grpcPort, jsonRPCPort, jsonWSRPCPort int,
+	includeChainID bool,
+	extraArgs []string,
+	extraEnv map[string]string,
+) *runningNode {
+	t.Helper()
+
 	args := []string{
 		"start",
 		"--home", home,
-		"--chain-id", e2eChainID,
+	}
+	if includeChainID {
+		args = append(args, "--chain-id", e2eChainID)
+	}
+	args = append(args,
 		"--minimum-gas-prices", "0agxn",
 		"--log_level", "error",
 		"--app-db-backend", e2eAppDBBackend,
@@ -417,7 +448,7 @@ func startNodeWithOptions(
 		"--json-rpc.ws-address", fmt.Sprintf("127.0.0.1:%d", jsonWSRPCPort),
 		"--state-sync.snapshot-interval", "2",
 		"--state-sync.snapshot-keep-recent", "2",
-	}
+	)
 	args = append(args, extraArgs...)
 
 	logBuf := &synchronizedBuffer{}
