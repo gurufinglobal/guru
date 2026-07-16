@@ -95,6 +95,16 @@ Proposal verification checks:
 - vote extension `BlockIdFlag` values match the current `LastCommit`;
 - the payload values match locally recomputed aggregation output.
 
+If BaseApp rejects an extended commit, Guru logs the block/header height,
+canonical chain ID, extended-commit and last-commit rounds, vote count, and one
+bounded tuple record per vote. Tuple records contain validator identity and
+power, block-ID flag, byte lengths, SHA-256 hashes of the extension, signature,
+canonical sign bytes, and public key, plus the result of diagnostic signature
+verification. Raw vote-extension bytes, signatures, source responses, and
+private keys are never logged. These records are emitted only after the
+unchanged `baseapp.ValidateVoteExtensions` call returns an error; they do not
+weaken or replace proposal validation.
+
 Proposal height `H` aggregates vote extensions submitted at height `H-1`, so the
 payload uses due tasks for `H-1`. Due tasks are the exact `H-1` bucket plus
 missed buckets at `H-3` or older; the `H-2` bucket is preserved for the normal

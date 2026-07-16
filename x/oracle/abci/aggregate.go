@@ -54,7 +54,7 @@ func (a Aggregator) BuildPayload(ctx sdk.Context, height int64, extCommit abcity
 		return nil, nil
 	}
 
-	if err := baseapp.ValidateVoteExtensions(ctx, a.validatorStore, 0, "", extCommit); err != nil {
+	if err := a.validateVoteExtensions(ctx, extCommit); err != nil {
 		return nil, err
 	}
 	if err := validateExtendedCommitBlockIDFlags(ctx, extCommit); err != nil {
