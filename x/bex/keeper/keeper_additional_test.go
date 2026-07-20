@@ -89,7 +89,7 @@ func TestRegisterExchangeDefaultsAndValidation(t *testing.T) {
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 
 	defaulted := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_UNSPECIFIED)
-	defaulted.LimitAToB = " "
+	defaulted.LimitAToB = ""
 	defaulted.VolumeCapBToA = ""
 	defaulted.Metadata = nil
 	exchange, err := f.keeper.RegisterExchange(f.ctx, defaulted)
@@ -135,6 +135,16 @@ func TestRegisterExchangeDefaultsAndValidation(t *testing.T) {
 		{
 			name:    "invalid integer",
 			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.LimitAToB = "nan" },
+			wantErr: types.ErrInvalidRequest,
+		},
+		{
+			name:    "noncanonical integer",
+			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.LimitAToB = "010" },
+			wantErr: types.ErrInvalidRequest,
+		},
+		{
+			name:    "whitespace is not unlimited",
+			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.LimitAToB = " " },
 			wantErr: types.ErrInvalidRequest,
 		},
 		{

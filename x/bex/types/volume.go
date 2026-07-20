@@ -2,11 +2,11 @@ package types
 
 import (
 	"math"
-	"strings"
 
 	sdkmath "cosmossdk.io/math"
 
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 )
 
 const (
@@ -45,12 +45,9 @@ func ValidateVolumeReservation(reservation *bexv1.VolumeReservation) (sdkmath.In
 		return sdkmath.Int{}, ErrInvalidRequest.Wrap("volume reservation expiry overflows uint64")
 	}
 	value := reservation.GetAmount()
-	if value == "" || value != strings.TrimSpace(value) {
-		return sdkmath.Int{}, ErrInvalidRequest.Wrap("volume reservation amount must be a canonical positive integer")
-	}
-	amount, ok := sdkmath.NewIntFromString(value)
-	if !ok || !amount.IsPositive() || amount.String() != value || amount.BigInt().BitLen() > 256 {
-		return sdkmath.Int{}, ErrInvalidRequest.Wrap("volume reservation amount must be a canonical positive uint256")
+	amount, err := uint256decimal.ParseCanonicalPositive(value)
+	if err != nil {
+		return sdkmath.Int{}, ErrInvalidRequest.Wrapf("volume reservation amount must be a canonical positive uint256: %v", err)
 	}
 	return amount, nil
 }

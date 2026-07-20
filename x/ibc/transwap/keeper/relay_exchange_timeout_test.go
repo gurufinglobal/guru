@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -18,4 +19,9 @@ func TestValidateInheritedTimeout(t *testing.T) {
 	require.Error(t, validateInheritedTimeout(ctx, minimum))
 	require.NoError(t, validateInheritedTimeout(ctx, minimum+1))
 	require.Error(t, validateInheritedTimeout(ctx, current))
+
+	maximum := current + uint64(maximumForwardTimeout)
+	require.NoError(t, validateInheritedTimeout(ctx, maximum))
+	require.ErrorContains(t, validateInheritedTimeout(ctx, maximum+1), "too far in the future")
+	require.ErrorContains(t, validateInheritedTimeout(ctx, math.MaxUint64), "too far in the future")
 }

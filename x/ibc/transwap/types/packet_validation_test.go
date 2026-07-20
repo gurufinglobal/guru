@@ -28,6 +28,13 @@ func TestValidateTokenRejectsInvalidDenomAndAmounts(t *testing.T) {
 		{"zero amount", func(token *transwapv1.Token) { token.Amount = "0" }},
 		{"negative amount", func(token *transwapv1.Token) { token.Amount = "-1" }},
 		{"non numeric amount", func(token *transwapv1.Token) { token.Amount = "one" }},
+		{"leading zero amount", func(token *transwapv1.Token) { token.Amount = "010" }},
+		{"explicit plus amount", func(token *transwapv1.Token) { token.Amount = "+10" }},
+		{"hex amount", func(token *transwapv1.Token) { token.Amount = "0x10" }},
+		{"octal amount", func(token *transwapv1.Token) { token.Amount = "0o10" }},
+		{"whitespace amount", func(token *transwapv1.Token) { token.Amount = " 10 " }},
+		{"separator amount", func(token *transwapv1.Token) { token.Amount = "1_0" }},
+		{"unicode amount", func(token *transwapv1.Token) { token.Amount = "１０" }},
 		{"uint256 overflow amount", func(token *transwapv1.Token) { token.Amount = newOverflowAmount() }},
 	}
 
@@ -55,6 +62,13 @@ func TestFungibleTokenPacketValidationRejectsMalformedFields(t *testing.T) {
 		{"zero amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "0" }},
 		{"negative amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "-1" }},
 		{"non numeric amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "nan" }},
+		{"leading zero amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "010" }},
+		{"explicit plus amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "+10" }},
+		{"hex amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "0x10" }},
+		{"octal amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "0o10" }},
+		{"whitespace amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = " 10 " }},
+		{"separator amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "1_0" }},
+		{"unicode amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "１０" }},
 		{"uint256 overflow amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = newOverflowAmount() }},
 		{"blank sender", func(packet *transwapv1.FungibleTokenPacketData) { packet.Sender = " " }},
 		{"blank receiver", func(packet *transwapv1.FungibleTokenPacketData) { packet.Receiver = " " }},
@@ -169,9 +183,8 @@ func TestUnmarshalPacketDataRoundTripsSupportedEncodings(t *testing.T) {
 	}
 }
 
-func TestABIPacketDataDefaultsExchangeIDToTransfer(t *testing.T) {
+func TestABIPacketDataOnlyEncodesCanonicalTransfers(t *testing.T) {
 	packet := NewFungibleTokenPacketData("transwap/channel-0/ugxusd", "123", "sender", "receiver", "memo")
-	packet.ExchangeId = "7"
 
 	bz, err := MarshalPacketData(packet, V1, EncodingABI)
 	require.NoError(t, err)
@@ -186,11 +199,28 @@ func TestABIPacketDataDefaultsExchangeIDToTransfer(t *testing.T) {
 	require.Equal(t, packet.Receiver, internal.Receiver)
 	require.Equal(t, packet.Memo, internal.Memo)
 
+	for _, exchangeID := range []string{"7", "", "00", "01", "+1"} {
+		packet.ExchangeId = exchangeID
+		_, err = MarshalPacketData(packet, V1, EncodingABI)
+		require.Error(t, err, exchangeID)
+	}
+
+	packet.ExchangeId = "0"
+	for _, amount := range []string{"0", "00", "010", "+10", "-1", " 10", "10 ", "0x10", "0o10", "1_0", "１０"} {
+		packet.Amount = amount
+		_, err = MarshalPacketData(packet, V1, EncodingABI)
+		require.Error(t, err, amount)
+	}
+
+	packet.Amount = "123"
 	_, err = UnmarshalPacketData([]byte{0x01, 0x02, 0x03}, V1, EncodingABI)
 	require.Error(t, err)
 
 	packet.Amount = "not-a-number"
 	_, err = MarshalPacketData(packet, V1, EncodingABI)
+	require.Error(t, err)
+
+	_, err = EncodeABIFungibleTokenPacketData(nil)
 	require.Error(t, err)
 }
 
@@ -382,10 +412,26 @@ func TestMarshalPacketDataAndUnmarshalPacketDataRejectBadInputs(t *testing.T) {
 func TestValidateAmountBranches(t *testing.T) {
 	require.NoError(t, validateAmount("1"))
 	require.NoError(t, validateAmount("999999999999999999999999999999"))
-	require.Error(t, validateAmount("invalid"))
-	require.Error(t, validateAmount("0"))
-	require.Error(t, validateAmount("-1"))
-	require.Error(t, validateAmount(newOverflowAmount()))
+	for _, invalid := range []string{
+		"",
+		"invalid",
+		"0",
+		"-1",
+		"+1",
+		"00",
+		"01",
+		"010",
+		" 10",
+		"10 ",
+		"0x10",
+		"0o10",
+		"1_0",
+		"1e1",
+		"１０",
+		newOverflowAmount(),
+	} {
+		require.Error(t, validateAmount(invalid), invalid)
+	}
 }
 
 func TestDenomPathRoundTripAndHash(t *testing.T) {

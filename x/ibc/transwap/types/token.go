@@ -1,16 +1,13 @@
 package types
 
 import (
-	"math/big"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 )
-
-var maxUint256 = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
 
 // ValidateToken validates a token denomination and amount.
 func ValidateToken(t *transwapv1.Token) error {
@@ -32,13 +29,16 @@ func ValidateToken(t *transwapv1.Token) error {
 // must satisfy the local SDK rules before sdk.NewCoin is called (which would
 // otherwise panic for an invalid denomination).
 func TokenToCoin(t *transwapv1.Token) (sdk.Coin, error) {
-	if err := ValidateToken(t); err != nil {
-		return sdk.Coin{}, err
+	if t == nil || t.Denom == nil {
+		return sdk.Coin{}, errorsmod.Wrap(ErrInvalidDenomForTransfer, "token denom cannot be nil")
+	}
+	if err := ValidateDenom(t.Denom); err != nil {
+		return sdk.Coin{}, errorsmod.Wrap(err, "invalid token denom")
 	}
 
-	transferAmount, ok := sdkmath.NewIntFromString(t.Amount)
-	if !ok {
-		return sdk.Coin{}, errorsmod.Wrapf(ErrInvalidAmount, "unable to parse transfer amount (%s) into math.Int", transferAmount)
+	transferAmount, err := parseAmount(t.Amount)
+	if err != nil {
+		return sdk.Coin{}, err
 	}
 
 	localDenom := DenomIBCDenom(t.Denom)
@@ -56,22 +56,23 @@ func TokenToCoin(t *transwapv1.Token) (sdk.Coin, error) {
 
 // UnboundedSpendLimit returns the sentinel value for unlimited spend grants.
 func UnboundedSpendLimit() sdkmath.Int {
-	return sdkmath.NewIntFromBigInt(maxUint256)
+	return uint256decimal.Max()
 }
 
 func validateAmount(raw string) error {
-	amount, ok := sdkmath.NewIntFromString(raw)
-	if !ok {
-		return errorsmod.Wrapf(ErrInvalidAmount, "unable to parse transfer amount (%s) into math.Int", raw)
-	}
+	_, err := parseAmount(raw)
+	return err
+}
 
-	if !amount.IsPositive() {
-		return errorsmod.Wrapf(ErrInvalidAmount, "amount must be strictly positive: got %d", amount)
+func parseAmount(raw string) (sdkmath.Int, error) {
+	amount, err := uint256decimal.ParseCanonicalPositive(raw)
+	if err != nil {
+		return sdkmath.Int{}, errorsmod.Wrapf(
+			ErrInvalidAmount,
+			"amount must be a canonical positive uint256 decimal: %q: %v",
+			raw,
+			err,
+		)
 	}
-
-	if amount.BigInt().Cmp(maxUint256) > 0 {
-		return errorsmod.Wrapf(ErrInvalidAmount, "amount exceeds uint256 maximum: got %s", raw)
-	}
-
-	return nil
+	return amount, nil
 }

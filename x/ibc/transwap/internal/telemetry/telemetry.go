@@ -2,13 +2,13 @@ package telemetry
 
 import (
 	"fmt"
+
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 
 	"github.com/hashicorp/go-metrics"
 
 	coremetrics "github.com/cosmos/ibc-go/v11/modules/core/metrics"
-
-	sdkmath "cosmossdk.io/math"
 
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
@@ -22,8 +22,8 @@ func ReportTransfer(sourcePort, sourceChannel, destinationPort, destinationChann
 	if token == nil {
 		return
 	}
-	amount, ok := sdkmath.NewIntFromString(token.Amount)
-	if ok && amount.IsInt64() {
+	amount, err := uint256decimal.ParseCanonicalPositive(token.Amount)
+	if err == nil && amount.IsInt64() {
 		metrics.SetGaugeWithLabels(
 			[]string{"tx", "msg", "ibc", "transfer"},
 			float32(amount.Int64()),
@@ -60,8 +60,8 @@ func ReportOnRecvPacket(sourcePort, sourceChannel, destinationPort, destinationC
 	}
 
 	// Transfer amount has already been parsed in caller.
-	transferAmount, ok := sdkmath.NewIntFromString(token.Amount)
-	if ok && transferAmount.IsInt64() {
+	transferAmount, err := uint256decimal.ParseCanonicalPositive(token.Amount)
+	if err == nil && transferAmount.IsInt64() {
 		metrics.SetGaugeWithLabels(
 			[]string{"ibc", types.ModuleName, "packet", "receive"},
 			float32(transferAmount.Int64()),

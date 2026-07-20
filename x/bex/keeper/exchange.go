@@ -282,11 +282,10 @@ func (k Keeper) registerExchange(ctx context.Context, req *bexv1.MsgRegisterExch
 }
 
 func normalizeIntString(value string) string {
-	value = strings.TrimSpace(value)
 	if value == "" {
 		return "0"
 	}
-	amount, err := validateIntString("integer value", value)
+	amount, err := validateExchangeLimitIntString("integer value", value)
 	if err == nil {
 		return amount.String()
 	}

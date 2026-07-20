@@ -10,12 +10,12 @@ import (
 	ibcerrors "github.com/cosmos/ibc-go/v11/modules/core/errors"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/internal/telemetry"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
@@ -23,6 +23,7 @@ import (
 
 const (
 	minimumForwardTimeout = time.Minute
+	maximumForwardTimeout = types.MaximumRefundTimeoutWindow
 )
 
 func (k Keeper) receiveTokensToReserve(
@@ -243,8 +244,8 @@ func (k Keeper) onRecvExchangePacket(
 		return errorsmod.Wrapf(bextypes.ErrInvariantViolation, "resolved direction %s differs from quote direction %s", direction.String(), quote.GetDirection().String())
 	}
 
-	amountOut, ok := sdkmath.NewIntFromString(quote.GetAmountOut())
-	if !ok || !amountOut.IsPositive() {
+	amountOut, err := uint256decimal.ParseCanonicalPositive(quote.GetAmountOut())
+	if err != nil {
 		return errorsmod.Wrapf(types.ErrInvalidAmount, "invalid quote amount_out: %s", quote.GetAmountOut())
 	}
 	if protection.HasExpectedExchangeRevision && quote.GetExchangeRevision() != protection.ExpectedExchangeRevision {
@@ -263,8 +264,8 @@ func (k Keeper) onRecvExchangePacket(
 			protection.MinAmountOut,
 		)
 	}
-	feeAmount, ok := sdkmath.NewIntFromString(quote.GetFeeAmount())
-	if !ok || feeAmount.IsNegative() {
+	feeAmount, err := uint256decimal.ParseCanonical(quote.GetFeeAmount())
+	if err != nil {
 		return errorsmod.Wrapf(types.ErrInvalidAmount, "invalid quote fee_amount: %s", quote.GetFeeAmount())
 	}
 	if !localInputCoin.Amount.GT(feeAmount) {
@@ -450,10 +451,11 @@ func parseExchangeID(raw string) (uint64, error) {
 
 func validateInheritedTimeout(ctx sdk.Context, inheritedTimeoutTimestampNano uint64) error {
 	now := ctx.BlockTime().UnixNano()
-	if now < 0 || now > math.MaxInt64-int64(minimumForwardTimeout) {
+	if now < 0 || now > math.MaxInt64-int64(maximumForwardTimeout) {
 		return errorsmod.Wrap(ibcerrors.ErrInvalidRequest, "block time cannot produce a safe packet timeout")
 	}
 	minAcceptable := uint64(now + int64(minimumForwardTimeout)) //nolint:gosec // checked non-negative above
+	maxAcceptable := uint64(now + int64(maximumForwardTimeout)) //nolint:gosec // checked non-negative above
 
 	if inheritedTimeoutTimestampNano <= minAcceptable {
 		return errorsmod.Wrapf(
@@ -461,6 +463,14 @@ func validateInheritedTimeout(ctx sdk.Context, inheritedTimeoutTimestampNano uin
 			"inherited timeout timestamp is too close: got %d, required at least %d",
 			inheritedTimeoutTimestampNano,
 			minAcceptable,
+		)
+	}
+	if inheritedTimeoutTimestampNano > maxAcceptable {
+		return errorsmod.Wrapf(
+			ibcerrors.ErrInvalidRequest,
+			"inherited timeout timestamp is too far in the future: got %d, maximum %d",
+			inheritedTimeoutTimestampNano,
+			maxAcceptable,
 		)
 	}
 

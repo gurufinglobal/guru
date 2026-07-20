@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"math"
-	"math/big"
 	"sort"
 	"strings"
 
@@ -14,15 +13,15 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v11/modules/core/24-host"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
 const (
-	maxUint256String     = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+	maxUint256String     = uint256decimal.MaxDecimalString
 	maxMetadataEntries   = 16
 	maxMetadataKeyLen    = 64
 	maxMetadataValLen    = 256
-	maxIntDigits         = 78
 	minVolumeEpochSecs   = types.MinVolumeEpochSeconds
 	maxVolumeEpochSecs   = types.MaxVolumeEpochSeconds
 	minOracleStaleSecs   = uint32(1)
@@ -30,13 +29,7 @@ const (
 	requiredExchangePort = "transwap"
 )
 
-var maxUint256Int = func() sdkmath.Int {
-	amount, ok := sdkmath.NewIntFromString(maxUint256String)
-	if !ok {
-		panic("invalid max uint256")
-	}
-	return amount
-}()
+var maxUint256Int = uint256decimal.Max()
 
 func (k Keeper) canonicalAddress(address string) (string, sdk.AccAddress, error) {
 	bz, err := k.accountCodec.StringToBytes(strings.TrimSpace(address))
@@ -57,68 +50,29 @@ func validateFeeBps(bps uint32) error {
 	return nil
 }
 
-func validateIntString(name, value string) (sdkmath.Int, error) {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		value = "0"
-	}
-	digits, negative, decimal := decimalDigits(value)
-	if !decimal {
-		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s must be a decimal integer string", name)
-	}
-	if len(digits) > maxIntDigits {
-		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s exceeds %d decimal digits", name, maxIntDigits)
-	}
-	if negative {
-		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s cannot be negative", name)
-	}
-	normalizedDigits := strings.TrimLeft(digits, "0")
-	if normalizedDigits == "" {
-		normalizedDigits = "0"
-	}
-	if len(normalizedDigits) == maxIntDigits && normalizedDigits > maxUint256String {
-		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s exceeds uint256 max", name)
-	}
-	amount, ok := new(big.Int).SetString(normalizedDigits, 10)
-	if !ok {
-		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s must be a decimal integer string", name)
-	}
-	return sdkmath.NewIntFromBigInt(amount), nil
-}
-
 // validateRequiredIntString validates a decimal integer string for fields where empty value is invalid.
 func validateRequiredIntString(name, value string) (sdkmath.Int, error) {
-	value = strings.TrimSpace(value)
 	if value == "" {
 		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s is required", name)
 	}
-	return validateIntString(name, value)
+	amount, err := uint256decimal.ParseCanonical(value)
+	if err != nil {
+		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s must be a canonical uint256 decimal: %v", name, err)
+	}
+	return amount, nil
 }
 
 // validateExchangeLimitIntString validates exchange limit/cap values.
 // For exchange limit/cap fields, empty string is intentionally interpreted as 0 (unlimited).
 func validateExchangeLimitIntString(name, value string) (sdkmath.Int, error) {
-	return validateIntString(name, value)
-}
-
-func decimalDigits(value string) (string, bool, bool) {
 	if value == "" {
-		return "", false, false
+		return sdkmath.ZeroInt(), nil
 	}
-	negative := false
-	if value[0] == '-' || value[0] == '+' {
-		negative = value[0] == '-'
-		value = value[1:]
+	amount, err := uint256decimal.ParseCanonical(value)
+	if err != nil {
+		return sdkmath.Int{}, types.ErrInvalidRequest.Wrapf("%s must be empty or a canonical uint256 decimal: %v", name, err)
 	}
-	if value == "" {
-		return "", negative, false
-	}
-	for _, char := range value {
-		if char < '0' || char > '9' {
-			return value, negative, false
-		}
-	}
-	return value, negative, true
+	return amount, nil
 }
 
 func validateMetadata(metadata map[string]string) error {

@@ -191,28 +191,49 @@ func TestIBCModuleOnRecvPacketReturnsErrorAckForMalformedSemanticFields(t *testi
 			mutate: func(data *transwapv1.FungibleTokenPacketData) {
 				data.Amount = "0"
 			},
-			wantErrContains: "amount must be strictly positive",
+			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "negative amount",
 			mutate: func(data *transwapv1.FungibleTokenPacketData) {
 				data.Amount = "-1"
 			},
-			wantErrContains: "amount must be strictly positive",
+			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "non numeric amount",
 			mutate: func(data *transwapv1.FungibleTokenPacketData) {
 				data.Amount = "nan"
 			},
-			wantErrContains: "unable to parse transfer amount",
+			wantErrContains: "canonical positive uint256 decimal",
+		},
+		{
+			name: "ambiguous leading zero amount",
+			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+				data.Amount = "010"
+			},
+			wantErrContains: "canonical positive uint256 decimal",
+		},
+		{
+			name: "explicit plus amount",
+			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+				data.Amount = "+10"
+			},
+			wantErrContains: "canonical positive uint256 decimal",
+		},
+		{
+			name: "prefixed amount",
+			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+				data.Amount = "0x10"
+			},
+			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "uint256 overflow amount",
 			mutate: func(data *transwapv1.FungibleTokenPacketData) {
 				data.Amount = overflowUint256
 			},
-			wantErrContains: "unable to parse transfer amount",
+			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "blank sender",

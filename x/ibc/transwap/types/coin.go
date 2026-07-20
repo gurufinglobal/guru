@@ -7,6 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 )
 
 // SDKCoinToProto converts an SDK coin into the API coin type emitted by
@@ -37,8 +38,8 @@ func ProtoCoinToSDK(coin *basev1beta1.Coin) (sdk.Coin, error) {
 		return sdk.Coin{}, err
 	}
 
-	amount, ok := sdkmath.NewIntFromString(coin.Amount)
-	if !ok {
+	amount, err := uint256decimal.ParseCanonical(coin.Amount)
+	if err != nil {
 		return sdk.Coin{}, fmt.Errorf("invalid coin amount %q for denom %s", coin.Amount, coin.Denom)
 	}
 

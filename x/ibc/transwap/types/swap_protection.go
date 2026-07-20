@@ -11,6 +11,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 )
 
 const SwapProtectionMemoKey = "transwap"
@@ -76,9 +77,9 @@ func ParseSwapProtection(memo string) (SwapProtection, error) {
 		if err != nil {
 			return SwapProtection{}, err
 		}
-		amount, ok := sdkmath.NewIntFromString(value)
-		if !ok || !amount.IsPositive() || amount.String() != value || amount.BigInt().BitLen() > 256 {
-			return SwapProtection{}, errorsmod.Wrap(ErrInvalidSwapProtection, "min_amount_out must be a canonical positive uint256 string")
+		amount, err := uint256decimal.ParseCanonicalPositive(value)
+		if err != nil {
+			return SwapProtection{}, errorsmod.Wrapf(ErrInvalidSwapProtection, "min_amount_out must be a canonical positive uint256 string: %v", err)
 		}
 		protection.MinAmountOut = amount
 		protection.HasMinAmountOut = true

@@ -83,9 +83,22 @@ func DecodeABIFungibleTokenPacketData(data []byte) (*transwapv1.FungibleTokenPac
 }
 
 func EncodeABIFungibleTokenPacketData(data *transwapv1.FungibleTokenPacketData) ([]byte, error) {
-	amount, ok := new(big.Int).SetString(data.Amount, 10)
-	if !ok {
-		return nil, errorsmod.Wrapf(ErrAbiEncoding, "failed to parse amount: %s", data.Amount)
+	if data == nil {
+		return nil, errorsmod.Wrap(ErrAbiEncoding, "packet data cannot be nil")
+	}
+	if err := ValidateFungibleTokenPacketData(data); err != nil {
+		return nil, errorsmod.Wrapf(ErrAbiEncoding, "invalid packet data: %v", err)
+	}
+	kind, _, err := ClassifyExchangeID(data.ExchangeId)
+	if err != nil {
+		return nil, errorsmod.Wrapf(ErrAbiEncoding, "invalid exchange id: %v", err)
+	}
+	if kind != PacketKindTransfer {
+		return nil, errorsmod.Wrap(ErrAbiEncoding, "Solidity ABI encoding supports transfer packets only")
+	}
+	amount, err := parseAmount(data.Amount)
+	if err != nil {
+		return nil, errorsmod.Wrapf(ErrAbiEncoding, "failed to parse amount: %v", err)
 	}
 
 	packetData := struct {
@@ -98,7 +111,7 @@ func EncodeABIFungibleTokenPacketData(data *transwapv1.FungibleTokenPacketData) 
 		data.Denom,
 		data.Sender,
 		data.Receiver,
-		amount,
+		amount.BigInt(),
 		data.Memo,
 	}
 

@@ -36,6 +36,11 @@ func TestCoinCodecRoundTripsAndFailures(t *testing.T) {
 	_, err = ProtoCoinToSDK(&basev1beta1.Coin{Denom: "uatom", Amount: "bad"})
 	require.Error(t, err)
 
+	for _, amount := range []string{"", "00", "010", "+10", "-1", " 10", "10 ", "0x10", "0o10", "1_0", "１０"} {
+		_, err = ProtoCoinToSDK(&basev1beta1.Coin{Denom: "uatom", Amount: amount})
+		require.Error(t, err, amount)
+	}
+
 	invalid := sdk.NewCoins(sdk.NewInt64Coin("uatom", 1))
 	protoCoins := SDKCoinsToProto(invalid)
 	protoCoins[0].Amount = ""

@@ -9,17 +9,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidateIntStringParsesDecimalOnly(t *testing.T) {
+func TestExchangeLimitRequiresCanonicalDecimalOrEmpty(t *testing.T) {
 	tests := []struct {
 		name    string
 		value   string
 		want    string
 		wantErr bool
 	}{
-		{name: "leading zero", value: "010", want: "10"},
-		{name: "invalid octal digit is decimal", value: "08", want: "8"},
-		{name: "explicit plus", value: "+010", want: "10"},
+		{name: "empty is unlimited", value: "", want: "0"},
+		{name: "zero", value: "0", want: "0"},
+		{name: "decimal", value: "10", want: "10"},
 		{name: "uint256 max", value: maxUint256String, want: maxUint256String},
+		{name: "leading zero", value: "010", wantErr: true},
+		{name: "invalid octal digit", value: "08", wantErr: true},
+		{name: "explicit plus", value: "+010", wantErr: true},
+		{name: "whitespace", value: " 10 ", wantErr: true},
 		{name: "hex prefix", value: "0x10", wantErr: true},
 		{name: "negative", value: "-1", wantErr: true},
 		{name: "uint256 overflow", value: "115792089237316195423570985008687907853269984665640564039457584007913129639936", wantErr: true},
@@ -32,7 +36,7 @@ func TestValidateIntStringParsesDecimalOnly(t *testing.T) {
 				err error
 			)
 			require.NotPanics(t, func() {
-				amount, parseErr := validateRequiredIntString("amount", tc.value)
+				amount, parseErr := validateExchangeLimitIntString("amount", tc.value)
 				err = parseErr
 				if parseErr == nil {
 					got = amount.String()
@@ -48,35 +52,79 @@ func TestValidateIntStringParsesDecimalOnly(t *testing.T) {
 	}
 }
 
+func TestValidateRequiredIntStringRequiresCanonicalDecimal(t *testing.T) {
+	for _, valid := range []string{"0", "8", "10", maxUint256String} {
+		t.Run("valid_"+valid, func(t *testing.T) {
+			amount, err := validateRequiredIntString("amount", valid)
+			require.NoError(t, err)
+			require.Equal(t, valid, amount.String())
+		})
+	}
+
+	for _, invalid := range []string{
+		"",
+		"00",
+		"08",
+		"010",
+		"+10",
+		"-10",
+		" 10",
+		"10 ",
+		"0x10",
+		"0o10",
+		"1_0",
+		"1e1",
+		"１０",
+		"115792089237316195423570985008687907853269984665640564039457584007913129639936",
+	} {
+		t.Run("invalid_"+invalid, func(t *testing.T) {
+			_, err := validateRequiredIntString("amount", invalid)
+			require.ErrorIs(t, err, types.ErrInvalidRequest)
+		})
+	}
+}
+
 func TestDecimalAmountsAreCanonicalAcrossStateAndCoins(t *testing.T) {
-	require.Equal(t, "10", normalizeIntString("010"))
-	require.Equal(t, "8", normalizeIntString("08"))
+	require.Equal(t, "0", normalizeIntString(""))
+	require.Equal(t, "10", normalizeIntString("10"))
+	require.Equal(t, "010", normalizeIntString("010"))
+	require.Equal(t, "08", normalizeIntString("08"))
 	require.Equal(t, "0x10", normalizeIntString("0x10"))
 
-	coins, err := protoCoinsToSDK([]*basev1beta1.Coin{{Denom: "agxn", Amount: "010"}})
+	coins, err := protoCoinsToSDK([]*basev1beta1.Coin{{Denom: "agxn", Amount: "10"}})
 	require.NoError(t, err)
 	require.Equal(t, "10agxn", coins.String())
+
+	_, err = protoCoinsToSDK([]*basev1beta1.Coin{{Denom: "agxn", Amount: "010"}})
+	require.ErrorIs(t, err, types.ErrInvalidRequest)
 
 	_, err = protoCoinsToSDK([]*basev1beta1.Coin{{Denom: "agxn", Amount: "0x10"}})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 }
 
-func TestQuoteSwapAcceptsEightAsDecimalWithoutPanic(t *testing.T) {
+func TestQuoteSwapRejectsNonCanonicalAmountWithoutPanic(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	f.oracleKeeper.SetValue(exchange.GetOracleSymbolAToB(), "1", f.ctx.BlockTime().Unix())
 
-	var (
-		quote *bexv1.QuoteSwapResponse
-		err   error
-	)
-	require.NotPanics(t, func() {
-		quote, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
-			ExchangeId: exchange.GetId(),
-			InputDenom: exchange.GetDenomA(),
-			AmountIn:   "08",
+	for _, amount := range []string{"08", "010", "+10", " 10", "10 ", "0x10", "0o10"} {
+		t.Run(amount, func(t *testing.T) {
+			require.NotPanics(t, func() {
+				_, err := f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+					ExchangeId: exchange.GetId(),
+					InputDenom: exchange.GetDenomA(),
+					AmountIn:   amount,
+				})
+				require.ErrorIs(t, err, types.ErrInvalidRequest)
+			})
 		})
+	}
+
+	quote, err := f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+		ExchangeId: exchange.GetId(),
+		InputDenom: exchange.GetDenomA(),
+		AmountIn:   "8",
 	})
 	require.NoError(t, err)
 	require.Equal(t, "8", quote.GetAmountIn())
