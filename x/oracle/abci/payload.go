@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"errors"
 
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
-	"google.golang.org/protobuf/proto"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 const magicPrefix = "GURU_ORACLE_V1:"
@@ -15,7 +14,7 @@ func EncodeProposalTx(payload *oraclev1.OracleProposalPayload) ([]byte, error) {
 		return nil, errors.New("oracle proposal payload cannot be nil")
 	}
 
-	bz, err := proto.Marshal(payload)
+	bz, err := payload.Marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +32,7 @@ func DecodeProposalTx(tx []byte) (*oraclev1.OracleProposalPayload, bool, error) 
 	}
 
 	payload := &oraclev1.OracleProposalPayload{}
-	if err := proto.Unmarshal(tx[len(prefix):], payload); err != nil {
+	if err := payload.Unmarshal(tx[len(prefix):]); err != nil {
 		return nil, true, err
 	}
 

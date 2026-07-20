@@ -98,7 +98,8 @@ lint:
 ###############################################################################
 
 BUF_IMAGE := ghcr.io/cosmos/proto-builder:0.18.1
-DOCKER_BUF := docker run --rm -v $(CURDIR):/workspace --workdir /workspace --user 0 $(BUF_IMAGE) buf
+DOCKER_PROTO := docker run --rm -v $(CURDIR):/workspace --workdir /workspace --user 0 $(BUF_IMAGE)
+DOCKER_BUF := $(DOCKER_PROTO) buf
 
 .PHONY: proto-all proto-gen proto-format proto-lint
 
@@ -107,8 +108,8 @@ proto-all: proto-format proto-lint proto-gen
 proto-gen:
 	@echo "Downloading Protobuf dependencies (buf dep update)..."
 	@$(DOCKER_BUF) dep update proto
-	@echo "Generating Protobuf files (*.pulsar.go, *_grpc.pb.go, *.pb.gw.go)..."
-	@$(DOCKER_BUF) generate proto --template proto/buf.gen.pulsar.yaml
+	@echo "Generating internal gogo and external Pulsar Protobuf files..."
+	@$(DOCKER_PROTO) sh scripts/proto-gen.sh
 	@echo "Protobuf generation complete."
 
 proto-format:

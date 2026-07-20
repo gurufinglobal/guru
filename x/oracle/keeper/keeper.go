@@ -9,19 +9,18 @@ import (
 	"cosmossdk.io/log/v2"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
-	"github.com/gurufinglobal/guru/v3/x/oracle/types"
+	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 type Keeper struct {
 	accountCodec       address.Codec
 	constitutionKeeper ConstitutionKeeper
-	hooks              types.OracleHooks
+	hooks              oracletypes.OracleHooks
 
-	params               collections.Item[*oraclev1.Params]
-	tasks                collections.Map[string, *oraclev1.OracleTask]
-	latest               collections.Map[string, *oraclev1.OracleValue]
-	history              collections.Map[string, *oraclev1.OracleHistory]
+	params               collections.Item[oracletypes.Params]
+	tasks                collections.Map[string, oracletypes.OracleTask]
+	latest               collections.Map[string, oracletypes.OracleValue]
+	history              collections.Map[string, oracletypes.OracleHistory]
 	taskSchedule         collections.KeySet[collections.Pair[int64, string]]
 	taskScheduleBySymbol collections.KeySet[collections.Pair[string, int64]]
 
@@ -30,6 +29,7 @@ type Keeper struct {
 
 func NewKeeper(
 	storeService store.KVStoreService,
+	cdc codec.Codec,
 	accountCodec address.Codec,
 	constitutionKeeper ConstitutionKeeper,
 ) Keeper {
@@ -39,19 +39,19 @@ func NewKeeper(
 	}
 
 	sb := collections.NewSchemaBuilder(storeService)
-	k.params = collections.NewItem(sb, types.ParamsKey, "params", codec.CollValueV2[oraclev1.Params]())
-	k.tasks = collections.NewMap(sb, types.TasksKey, "tasks", collections.StringKey, codec.CollValueV2[oraclev1.OracleTask]())
-	k.latest = collections.NewMap(sb, types.LatestKey, "latest", collections.StringKey, codec.CollValueV2[oraclev1.OracleValue]())
-	k.history = collections.NewMap(sb, types.HistoryKey, "history", collections.StringKey, codec.CollValueV2[oraclev1.OracleHistory]())
+	k.params = collections.NewItem(sb, oracletypes.ParamsKey, "params", codec.CollValue[oracletypes.Params](cdc))
+	k.tasks = collections.NewMap(sb, oracletypes.TasksKey, "tasks", collections.StringKey, codec.CollValue[oracletypes.OracleTask](cdc))
+	k.latest = collections.NewMap(sb, oracletypes.LatestKey, "latest", collections.StringKey, codec.CollValue[oracletypes.OracleValue](cdc))
+	k.history = collections.NewMap(sb, oracletypes.HistoryKey, "history", collections.StringKey, codec.CollValue[oracletypes.OracleHistory](cdc))
 	k.taskSchedule = collections.NewKeySet(
 		sb,
-		types.TaskScheduleKey,
+		oracletypes.TaskScheduleKey,
 		"task_schedule",
 		collections.PairKeyCodec(collections.Int64Key, collections.StringKey),
 	)
 	k.taskScheduleBySymbol = collections.NewKeySet(
 		sb,
-		types.TaskScheduleBySymbolKey,
+		oracletypes.TaskScheduleBySymbolKey,
 		"task_schedule_by_symbol",
 		collections.PairKeyCodec(collections.StringKey, collections.Int64Key),
 	)
@@ -65,10 +65,10 @@ func NewKeeper(
 	return k
 }
 
-func (k *Keeper) SetHooks(hooks types.OracleHooks) {
+func (k *Keeper) SetHooks(hooks oracletypes.OracleHooks) {
 	k.hooks = hooks
 }
 
 func (k Keeper) Logger(ctx context.Context) log.Logger {
-	return sdk.UnwrapSDKContext(ctx).Logger().With("module", "x/"+types.ModuleName)
+	return sdk.UnwrapSDKContext(ctx).Logger().With("module", "x/"+oracletypes.ModuleName)
 }

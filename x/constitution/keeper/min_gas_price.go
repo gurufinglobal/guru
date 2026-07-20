@@ -5,14 +5,18 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	"github.com/gurufinglobal/guru/v3/x/constitution/types"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
-func (k Keeper) GetMinGasPriceSchedule(ctx context.Context) (*constitutionv1.MinGasPriceSchedule, error) {
-	return k.minGasPriceSchedule.Get(ctx)
+func (k Keeper) GetMinGasPriceSchedule(ctx context.Context) (*types.MinGasPriceSchedule, error) {
+	schedule, err := k.minGasPriceSchedule.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &schedule, nil
 }
 
 func (k Keeper) GetCurrentMinGasPrice(ctx context.Context) (sdkmath.LegacyDec, error) {
@@ -24,12 +28,12 @@ func (k Keeper) GetCurrentMinGasPrice(ctx context.Context) (sdkmath.LegacyDec, e
 	return params.MinGasPrice, nil
 }
 
-func (k Keeper) SetMinGasPriceSchedule(ctx context.Context, schedule *constitutionv1.MinGasPriceSchedule) error {
+func (k Keeper) SetMinGasPriceSchedule(ctx context.Context, schedule *types.MinGasPriceSchedule) error {
 	if err := k.ValidateMinGasPriceSchedule(schedule); err != nil {
 		return err
 	}
 
-	return k.minGasPriceSchedule.Set(ctx, schedule)
+	return k.minGasPriceSchedule.Set(ctx, *schedule)
 }
 
 func (k Keeper) ClearMinGasPriceSchedule(ctx context.Context) error {
@@ -90,7 +94,7 @@ func (k Keeper) AfterOracleValueApplied(ctx context.Context, value *oraclev1.Ora
 		return err
 	}
 
-	schedule := &constitutionv1.MinGasPriceSchedule{
+	schedule := &types.MinGasPriceSchedule{
 		EffectiveHeight:                value.GetBlockHeight() + int64(delayBlocks),
 		ScheduledMinGasPrice:           clampedMinGasPrice.String(),
 		SourceSymbol:                   normalizeMinGasPriceSymbol(value.GetSymbol()),
@@ -112,7 +116,7 @@ func (k Keeper) AfterOracleValueApplied(ctx context.Context, value *oraclev1.Ora
 }
 
 func (k Keeper) ApplyDueMinGasPriceSchedule(ctx context.Context) error {
-	schedule, err := k.minGasPriceSchedule.Get(ctx)
+	schedule, err := k.GetMinGasPriceSchedule(ctx)
 	if err != nil {
 		if isNotFound(err) {
 			return nil
@@ -170,7 +174,7 @@ func (k Keeper) ApplyDueMinGasPriceSchedule(ctx context.Context) error {
 	return nil
 }
 
-func (k Keeper) ValidateMinGasPriceSchedule(schedule *constitutionv1.MinGasPriceSchedule) error {
+func (k Keeper) ValidateMinGasPriceSchedule(schedule *types.MinGasPriceSchedule) error {
 	if schedule == nil {
 		return types.ErrInvalidMinGasPrice.Wrap("schedule cannot be nil")
 	}

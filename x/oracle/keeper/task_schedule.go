@@ -7,7 +7,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 func (k Keeper) DueTasksForVoteExtension(ctx context.Context, height int64) ([]*oraclev1.OracleTask, error) {

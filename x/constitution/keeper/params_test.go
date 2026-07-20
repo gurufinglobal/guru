@@ -3,25 +3,26 @@ package keeper
 import (
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	constitutionv1 "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestValidateMinValidatorBondAmount(t *testing.T) {
 	tests := []struct {
 		name      string
-		coin      *basev1beta1.Coin
+		coin      *sdk.Coin
 		shouldErr bool
 	}{
 		{"fails on nil coin", nil, true},
-		{"fails on invalid denom", &basev1beta1.Coin{Denom: "1invalid", Amount: "10"}, true},
-		{"fails on non-base denom", &basev1beta1.Coin{Denom: "uatom", Amount: "10"}, true},
-		{"fails on non-integer amount", &basev1beta1.Coin{Denom: appparams.BaseDenom, Amount: "1.5"}, true},
-		{"fails on zero amount", &basev1beta1.Coin{Denom: appparams.BaseDenom, Amount: "0"}, true},
-		{"fails on negative amount", &basev1beta1.Coin{Denom: appparams.BaseDenom, Amount: "-1"}, true},
-		{"passes on positive integer amount", &basev1beta1.Coin{Denom: appparams.BaseDenom, Amount: "11"}, false},
+		{"fails on invalid denom", &sdk.Coin{Denom: "1invalid", Amount: sdkmath.NewInt(10)}, true},
+		{"fails on non-base denom", &sdk.Coin{Denom: "uatom", Amount: sdkmath.NewInt(10)}, true},
+		{"fails on uninitialized amount", &sdk.Coin{Denom: appparams.BaseDenom}, true},
+		{"fails on zero amount", &sdk.Coin{Denom: appparams.BaseDenom, Amount: sdkmath.ZeroInt()}, true},
+		{"fails on negative amount", &sdk.Coin{Denom: appparams.BaseDenom, Amount: sdkmath.NewInt(-1)}, true},
+		{"passes on positive integer amount", &sdk.Coin{Denom: appparams.BaseDenom, Amount: sdkmath.NewInt(11)}, false},
 	}
 
 	for _, tc := range tests {
@@ -54,11 +55,11 @@ func TestParamsGetSetAndMinBondGetters(t *testing.T) {
 
 	params, err := f.keeper.GetParams(f.ctx)
 	require.NoError(t, err)
-	require.Equal(t, "13", params.GetMinValidatorBondAmount().Amount)
+	require.Equal(t, "13", params.GetMinValidatorBondAmount().Amount.String())
 
 	coin, err := f.keeper.GetMinValidatorBondAmountCoin(f.ctx)
 	require.NoError(t, err)
-	require.Equal(t, "13", coin.Amount)
+	require.Equal(t, "13", coin.Amount.String())
 
 	amount, err := f.keeper.GetMinValidatorBondAmount(f.ctx)
 	require.NoError(t, err)
@@ -67,10 +68,10 @@ func TestParamsGetSetAndMinBondGetters(t *testing.T) {
 
 func TestGetMinValidatorBondAmountFailsOnCorruptedStoredParams(t *testing.T) {
 	f := setupKeeperFixtureWithoutParams(t)
-	require.NoError(t, f.keeper.params.Set(f.ctx, &constitutionv1.Params{
-		MinValidatorBondAmount: &basev1beta1.Coin{
+	require.NoError(t, f.keeper.params.Set(f.ctx, constitutionv1.Params{
+		MinValidatorBondAmount: &sdk.Coin{
 			Denom:  "uatom",
-			Amount: "10",
+			Amount: sdkmath.NewInt(10),
 		},
 	}))
 
@@ -116,23 +117,23 @@ func TestUpdateParamsWithoutExistingParams(t *testing.T) {
 func TestSetMinValidatorBondAmount(t *testing.T) {
 	tests := []struct {
 		name           string
-		minBond        *basev1beta1.Coin
+		minBond        *sdk.Coin
 		expectErr      bool
 		expectedAmount string
 	}{
 		{
 			name: "updates and sets full scan flag on increase",
-			minBond: &basev1beta1.Coin{
+			minBond: &sdk.Coin{
 				Denom:  appparams.BaseDenom,
-				Amount: "15",
+				Amount: sdkmath.NewInt(15),
 			},
 			expectedAmount: "15",
 		},
 		{
 			name: "fails on invalid denom",
-			minBond: &basev1beta1.Coin{
+			minBond: &sdk.Coin{
 				Denom:  "uatom",
-				Amount: "15",
+				Amount: sdkmath.NewInt(15),
 			},
 			expectErr:      true,
 			expectedAmount: "10",

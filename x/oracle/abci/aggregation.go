@@ -7,9 +7,9 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 func (a Aggregator) aggregateValues(ctx sdk.Context, height int64, extCommit abcitypes.ExtendedCommitInfo) ([]*oraclev1.OracleValue, error) {

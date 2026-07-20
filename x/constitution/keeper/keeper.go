@@ -12,8 +12,7 @@ import (
 	"cosmossdk.io/core/store"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	"github.com/gurufinglobal/guru/v3/x/constitution/types"
+	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 type Keeper struct {
@@ -22,11 +21,11 @@ type Keeper struct {
 	bankKeeper   BankKeeper
 	feeMarket    FeeMarketKeeper
 
-	params              collections.Item[*constitutionv1.Params]
+	params              collections.Item[constitutiontypes.Params]
 	baseAddress         collections.Item[string]
 	moderatorAddress    collections.Item[string]
-	separationRatio     collections.Item[*constitutionv1.SeparationRatio]
-	minGasPriceSchedule collections.Item[*constitutionv1.MinGasPriceSchedule]
+	separationRatio     collections.Item[constitutiontypes.SeparationRatio]
+	minGasPriceSchedule collections.Item[constitutiontypes.MinGasPriceSchedule]
 
 	schema collections.Schema
 }
@@ -34,6 +33,7 @@ type Keeper struct {
 func NewKeeper(
 	authority sdk.AccAddress,
 	storeService store.KVStoreService,
+	cdc codec.Codec,
 	accountCodec address.Codec,
 	bankKeeper BankKeeper,
 ) Keeper {
@@ -45,11 +45,11 @@ func NewKeeper(
 
 	sb := collections.NewSchemaBuilder(storeService)
 
-	k.params = collections.NewItem(sb, types.ParamsKey, "params", codec.CollValueV2[constitutionv1.Params]())
-	k.baseAddress = collections.NewItem(sb, types.BaseAddressKey, "base_address", collections.StringValue)
-	k.moderatorAddress = collections.NewItem(sb, types.ModeratorAddressKey, "moderator_address", collections.StringValue)
-	k.separationRatio = collections.NewItem(sb, types.SeparationRatioKey, "separation_ratio", codec.CollValueV2[constitutionv1.SeparationRatio]())
-	k.minGasPriceSchedule = collections.NewItem(sb, types.MinGasPriceKey, "min_gas_price_schedule", codec.CollValueV2[constitutionv1.MinGasPriceSchedule]())
+	k.params = collections.NewItem(sb, constitutiontypes.ParamsKey, "params", codec.CollValue[constitutiontypes.Params](cdc))
+	k.baseAddress = collections.NewItem(sb, constitutiontypes.BaseAddressKey, "base_address", collections.StringValue)
+	k.moderatorAddress = collections.NewItem(sb, constitutiontypes.ModeratorAddressKey, "moderator_address", collections.StringValue)
+	k.separationRatio = collections.NewItem(sb, constitutiontypes.SeparationRatioKey, "separation_ratio", codec.CollValue[constitutiontypes.SeparationRatio](cdc))
+	k.minGasPriceSchedule = collections.NewItem(sb, constitutiontypes.MinGasPriceKey, "min_gas_price_schedule", codec.CollValue[constitutiontypes.MinGasPriceSchedule](cdc))
 	schema, err := sb.Build()
 	if err != nil {
 		panic(err)
@@ -64,7 +64,7 @@ func (k *Keeper) SetFeeMarketKeeper(feeMarket FeeMarketKeeper) {
 }
 
 func (k Keeper) Logger(ctx context.Context) log.Logger {
-	return sdk.UnwrapSDKContext(ctx).Logger().With("module", "x/"+types.ModuleName)
+	return sdk.UnwrapSDKContext(ctx).Logger().With("module", "x/"+constitutiontypes.ModuleName)
 }
 
 func (k Keeper) AuthorityAddressString() (string, error) {
@@ -113,17 +113,17 @@ func (k Keeper) ValidateModeratorAddress(moderatorAddress string) error {
 
 func (k Keeper) validateAddress(fieldName, value string, rejectBlocked bool) error {
 	if strings.TrimSpace(value) == "" {
-		return types.ErrInvalidParams.Wrapf("%s cannot be empty", fieldName)
+		return constitutiontypes.ErrInvalidParams.Wrapf("%s cannot be empty", fieldName)
 	}
 
 	addressBytes, err := k.accountCodec.StringToBytes(value)
 	if err != nil {
-		return types.ErrInvalidParams.Wrapf("invalid %s: %v", fieldName, err)
+		return constitutiontypes.ErrInvalidParams.Wrapf("invalid %s: %v", fieldName, err)
 	}
 	address := sdk.AccAddress(addressBytes)
 
 	if bytes.Equal(address, k.authority) {
-		return types.ErrInvalidParams.Wrapf("%s must be explicitly configured and cannot equal authority", fieldName)
+		return constitutiontypes.ErrInvalidParams.Wrapf("%s must be explicitly configured and cannot equal authority", fieldName)
 	}
 	if rejectBlocked && k.bankKeeper != nil {
 		blocked := k.bankKeeper.BlockedAddr(address)
@@ -133,12 +133,12 @@ func (k Keeper) validateAddress(fieldName, value string, rejectBlocked bool) err
 			// Bech32 configuration.
 			canonical, err := k.accountCodec.BytesToString(address)
 			if err != nil {
-				return types.ErrInvalidParams.Wrapf("invalid %s: %v", fieldName, err)
+				return constitutiontypes.ErrInvalidParams.Wrapf("invalid %s: %v", fieldName, err)
 			}
 			blocked = k.bankKeeper.GetBlockedAddresses()[canonical]
 		}
 		if blocked {
-			return types.ErrInvalidParams.Wrapf("%s cannot be a blocked address", fieldName)
+			return constitutiontypes.ErrInvalidParams.Wrapf("%s cannot be a blocked address", fieldName)
 		}
 	}
 

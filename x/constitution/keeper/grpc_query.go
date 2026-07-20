@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"cosmossdk.io/collections"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	constitutionv1 "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 var _ constitutionv1.QueryServer = QueryServer{}

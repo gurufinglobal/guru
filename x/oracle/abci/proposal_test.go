@@ -7,7 +7,7 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 

@@ -5,15 +5,14 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	"github.com/gurufinglobal/guru/v3/x/constitution/types"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 func (k Keeper) emitMinGasPriceScheduled(
 	ctx context.Context,
-	schedule *constitutionv1.MinGasPriceSchedule,
+	schedule *types.MinGasPriceSchedule,
 	scheduledHeight int64,
 	previousEffectiveHeight int64,
 	replaced bool,
@@ -41,7 +40,7 @@ func (k Keeper) emitMinGasPriceScheduled(
 
 func (k Keeper) emitMinGasPriceApplied(
 	ctx context.Context,
-	schedule *constitutionv1.MinGasPriceSchedule,
+	schedule *types.MinGasPriceSchedule,
 	previousMinGasPrice string,
 	newMinGasPrice string,
 ) {
@@ -84,7 +83,7 @@ func (k Keeper) emitMinGasPriceSkipped(ctx context.Context, reason string, value
 	))
 }
 
-func oracleValueFromSchedule(schedule *constitutionv1.MinGasPriceSchedule) *oraclev1.OracleValue {
+func oracleValueFromSchedule(schedule *types.MinGasPriceSchedule) *oraclev1.OracleValue {
 	if schedule == nil {
 		return nil
 	}

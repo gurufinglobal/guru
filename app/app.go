@@ -32,7 +32,6 @@ import (
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
-	sdkregistry "github.com/cosmos/cosmos-sdk/types/registry"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -41,6 +40,7 @@ import (
 	cosmosevmserver "github.com/cosmos/evm/server"
 	srvflags "github.com/cosmos/evm/server/flags"
 	evmutils "github.com/cosmos/evm/utils"
+	gogoproto "github.com/cosmos/gogoproto/proto"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 	appkeepers "github.com/gurufinglobal/guru/v3/app/keepers"
@@ -176,7 +176,7 @@ func NewApp(
 	app.setPostHandler()
 
 	// Validate protobuf annotations after all modules are registered.
-	if err := msgservice.ValidateProtoAnnotations(sdkregistry.MergedProtoRegistry()); err != nil {
+	if err := msgservice.ValidateProtoAnnotations(gogoproto.HybridResolver); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
 

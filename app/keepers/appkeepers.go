@@ -149,11 +149,13 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	appKeepers.ConstitutionKeeper = constitutionkeeper.NewKeeper(
 		govAddress,
 		runtime.NewKVStoreService(appKeepers.kvKeys[constitutiontypes.StoreKey]),
+		cfg.AppCodec,
 		appKeepers.AccountKeeper.AddressCodec(),
 		appKeepers.BankKeeper,
 	)
 	appKeepers.OracleKeeper = oraclekeeper.NewKeeper(
 		runtime.NewKVStoreService(appKeepers.kvKeys[oracletypes.StoreKey]),
+		cfg.AppCodec,
 		appKeepers.AccountKeeper.AddressCodec(),
 		&appKeepers.ConstitutionKeeper,
 	)

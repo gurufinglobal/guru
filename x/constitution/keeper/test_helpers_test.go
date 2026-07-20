@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/core/address"
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -17,7 +18,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	"github.com/stretchr/testify/require"
@@ -48,7 +48,7 @@ func setupKeeperFixture(t *testing.T) keeperTestFixture {
 	bankKeeper := newMockBankKeeper()
 	feeMarketKeeper := newMockFeeMarketKeeper()
 
-	keeper := NewKeeper(authorityBytes, runtime.NewKVStoreService(key), accountCodec, bankKeeper)
+	keeper := NewKeeper(authorityBytes, runtime.NewKVStoreService(key), codec.NewProtoCodec(codectypes.NewInterfaceRegistry()), accountCodec, bankKeeper)
 	keeper.SetFeeMarketKeeper(feeMarketKeeper)
 	require.NoError(t, keeper.SetParams(testCtx.Ctx, testParams("10")))
 	require.NoError(t, keeper.SetBaseAddress(testCtx.Ctx, baseAddress))
@@ -81,7 +81,7 @@ func setupKeeperFixtureWithoutParams(t *testing.T) keeperTestFixture {
 	bankKeeper := newMockBankKeeper()
 	feeMarketKeeper := newMockFeeMarketKeeper()
 
-	keeper := NewKeeper(authorityBytes, runtime.NewKVStoreService(key), accountCodec, bankKeeper)
+	keeper := NewKeeper(authorityBytes, runtime.NewKVStoreService(key), codec.NewProtoCodec(codectypes.NewInterfaceRegistry()), accountCodec, bankKeeper)
 	keeper.SetFeeMarketKeeper(feeMarketKeeper)
 
 	return keeperTestFixture{
@@ -95,17 +95,22 @@ func setupKeeperFixtureWithoutParams(t *testing.T) keeperTestFixture {
 	}
 }
 
-func testParams(amount string) *constitutionv1.Params {
-	return &constitutionv1.Params{
-		MinValidatorBondAmount: &basev1beta1.Coin{
+func testParams(amount string) *constitutiontypes.Params {
+	amountInt, ok := sdkmath.NewIntFromString(amount)
+	if !ok {
+		panic("invalid test coin amount: " + amount)
+	}
+
+	return &constitutiontypes.Params{
+		MinValidatorBondAmount: &sdk.Coin{
 			Denom:  appparams.BaseDenom,
-			Amount: amount,
+			Amount: amountInt,
 		},
 	}
 }
 
-func testSeparationRatio(base, burn, validators uint32) *constitutionv1.SeparationRatio {
-	return &constitutionv1.SeparationRatio{
+func testSeparationRatio(base, burn, validators uint32) *constitutiontypes.SeparationRatio {
+	return &constitutiontypes.SeparationRatio{
 		BasePpm:       base,
 		BurnPpm:       burn,
 		ValidatorsPpm: validators,

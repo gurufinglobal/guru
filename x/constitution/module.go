@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
@@ -55,15 +54,15 @@ func (AppModule) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 
 // RegisterGRPCGatewayRoutes wires constitution query routes into grpc-gateway.
 func (AppModule) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	if err := constitutionv1.RegisterQueryHandlerClient(context.Background(), mux, constitutionv1.NewQueryClient(clientCtx)); err != nil {
+	if err := constitutiontypes.RegisterQueryHandlerClient(context.Background(), mux, constitutiontypes.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
 
 // RegisterServices registers Msg and Query gRPC services.
 func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
-	constitutionv1.RegisterMsgServer(registrar, constitutionkeeper.NewMsgServer(&am.keeper))
-	constitutionv1.RegisterQueryServer(registrar, constitutionkeeper.NewQueryServer(&am.keeper))
+	constitutiontypes.RegisterMsgServer(registrar, constitutionkeeper.NewMsgServer(&am.keeper))
+	constitutiontypes.RegisterQueryServer(registrar, constitutionkeeper.NewQueryServer(&am.keeper))
 	return nil
 }
 

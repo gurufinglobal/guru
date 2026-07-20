@@ -4,14 +4,13 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
-	"google.golang.org/protobuf/proto"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 func DecodeVoteExtension(bz []byte) (*oraclev1.OracleVoteExtension, error) {
 	extension := &oraclev1.OracleVoteExtension{}
-	if err := proto.Unmarshal(bz, extension); err != nil {
+	if err := extension.Unmarshal(bz); err != nil {
 		return nil, err
 	}
 	if err := ValidateVoteExtension(extension); err != nil {

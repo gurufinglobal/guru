@@ -11,7 +11,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 type HTTPSourceClient struct {

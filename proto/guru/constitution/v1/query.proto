@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 import "guru/constitution/v1/params.proto";
 import "guru/constitution/v1/types.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/constitution/types";
 
 // Query exposes read-only constitution module state.
 service Query {

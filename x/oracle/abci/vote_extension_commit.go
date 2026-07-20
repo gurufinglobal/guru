@@ -6,7 +6,7 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 func signedVoteExtensionsFromExtendedCommit(extCommit abcitypes.ExtendedCommitInfo) *oraclev1.OracleSignedVoteExtensions {

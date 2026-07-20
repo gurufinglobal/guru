@@ -7,8 +7,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 

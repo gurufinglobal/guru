@@ -6,12 +6,10 @@ import (
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	evmante "github.com/cosmos/evm/ante/evm"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -247,7 +245,7 @@ func TestAfterOracleValueAppliedSkipsInvalidSchedulingInputs(t *testing.T) {
 
 func TestValidateMinGasPriceScheduleRejectsInconsistentDerivedFields(t *testing.T) {
 	f := setupKeeperFixture(t)
-	valid := &constitutionv1.MinGasPriceSchedule{
+	valid := &constitutiontypes.MinGasPriceSchedule{
 		EffectiveHeight:                25,
 		ScheduledMinGasPrice:           defaultMinGasPriceDec,
 		SourceSymbol:                   appparams.MinGasPriceOracleSymbol,
@@ -261,16 +259,19 @@ func TestValidateMinGasPriceScheduleRejectsInconsistentDerivedFields(t *testing.
 	}
 	require.NoError(t, f.keeper.ValidateMinGasPriceSchedule(valid))
 
-	rawMismatch := proto.Clone(valid).(*constitutionv1.MinGasPriceSchedule)
+	rawMismatchValue := *valid
+	rawMismatch := &rawMismatchValue
 	rawMismatch.RawMinGasPrice = "1"
 	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(rawMismatch), "raw_min_gas_price does not match")
 
-	delayMismatch := proto.Clone(valid).(*constitutionv1.MinGasPriceSchedule)
+	delayMismatchValue := *valid
+	delayMismatch := &delayMismatchValue
 	delayMismatch.PendingDelayBlocks = 4
 	delayMismatch.EffectiveHeight = 24
 	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(delayMismatch), "pending_delay_blocks must equal")
 
-	clampMismatch := proto.Clone(valid).(*constitutionv1.MinGasPriceSchedule)
+	clampMismatchValue := *valid
+	clampMismatch := &clampMismatchValue
 	clampMismatch.ScheduledMinGasPrice = "1"
 	require.ErrorContains(t, f.keeper.ValidateMinGasPriceSchedule(clampMismatch), "scheduled_min_gas_price does not match")
 }
@@ -280,14 +281,14 @@ func TestQueryServerMinGasPriceReturnsCurrentAndPending(t *testing.T) {
 	ctx := f.ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
 	queryServer := NewQueryServer(&f.keeper)
 
-	resp, err := queryServer.MinGasPrice(ctx, &constitutionv1.QueryMinGasPriceRequest{})
+	resp, err := queryServer.MinGasPrice(ctx, &constitutiontypes.QueryMinGasPriceRequest{})
 	require.NoError(t, err)
 	require.Equal(t, defaultMinGasPriceDec, resp.GetCurrentMinGasPrice())
 	require.Nil(t, resp.GetPending())
 
 	require.NoError(t, f.keeper.AfterOracleValueApplied(ctx, testOracleValue(appparams.MinGasPriceOracleSymbol, "1.0", 20), 2))
 
-	resp, err = queryServer.MinGasPrice(ctx, &constitutionv1.QueryMinGasPriceRequest{})
+	resp, err = queryServer.MinGasPrice(ctx, &constitutiontypes.QueryMinGasPriceRequest{})
 	require.NoError(t, err)
 	require.Equal(t, defaultMinGasPriceDec, resp.GetCurrentMinGasPrice())
 	require.NotNil(t, resp.GetPending())

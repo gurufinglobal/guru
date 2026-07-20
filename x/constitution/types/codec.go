@@ -3,22 +3,16 @@ package types
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&constitutionv1.MsgUpdateParams{},
-		&constitutionv1.MsgUpdateBaseAddress{},
-		&constitutionv1.MsgUpdateModeratorAddress{},
-		&constitutionv1.MsgUpdateSeparationRatio{},
+		&MsgUpdateParams{},
+		&MsgUpdateBaseAddress{},
+		&MsgUpdateModeratorAddress{},
+		&MsgUpdateSeparationRatio{},
 	)
 
-	registry.RegisterImplementations((*tx.MsgResponse)(nil),
-		&constitutionv1.MsgUpdateParamsResponse{},
-		&constitutionv1.MsgUpdateBaseAddressResponse{},
-		&constitutionv1.MsgUpdateModeratorAddressResponse{},
-		&constitutionv1.MsgUpdateSeparationRatioResponse{},
-	)
+	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

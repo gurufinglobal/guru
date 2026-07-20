@@ -7,7 +7,7 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 type Keeper interface {

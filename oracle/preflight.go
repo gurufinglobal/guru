@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	querytypes "github.com/cosmos/cosmos-sdk/types/query"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -137,7 +137,7 @@ func EnsureNodeTasksConfigured(ctx context.Context, cfg Config) ([]*oraclev1.Ora
 
 func queryActiveTasks(ctx context.Context, client oraclev1.QueryClient) ([]*oraclev1.OracleTask, error) {
 	var tasks []*oraclev1.OracleTask
-	pagination := &queryv1beta1.PageRequest{Limit: nodeTasksPageLimit}
+	pagination := &querytypes.PageRequest{Limit: nodeTasksPageLimit}
 	for {
 		tasksResp, err := client.ActiveTasks(ctx, &oraclev1.QueryActiveTasksRequest{Pagination: pagination})
 		if err != nil {
@@ -149,7 +149,7 @@ func queryActiveTasks(ctx context.Context, client oraclev1.QueryClient) ([]*orac
 		if len(nextKey) == 0 {
 			return tasks, nil
 		}
-		pagination = &queryv1beta1.PageRequest{
+		pagination = &querytypes.PageRequest{
 			Key:   nextKey,
 			Limit: nodeTasksPageLimit,
 		}

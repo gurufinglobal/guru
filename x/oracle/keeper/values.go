@@ -6,18 +6,23 @@ import (
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	"github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
-func (k Keeper) GetLatestValue(ctx context.Context, symbol string) (*oraclev1.OracleValue, error) {
-	return k.latest.Get(ctx, NormalizeSymbol(symbol))
+func (k Keeper) GetLatestValue(ctx context.Context, symbol string) (*types.OracleValue, error) {
+	value, err := k.latest.Get(ctx, NormalizeSymbol(symbol))
+	if err != nil {
+		return nil, err
+	}
+
+	return &value, nil
 }
 
-func (k Keeper) ListLatestValues(ctx context.Context) ([]*oraclev1.OracleValue, error) {
-	values := []*oraclev1.OracleValue{}
-	err := k.latest.Walk(ctx, nil, func(_ string, value *oraclev1.OracleValue) (bool, error) {
-		values = append(values, value)
+func (k Keeper) ListLatestValues(ctx context.Context) ([]*types.OracleValue, error) {
+	values := []*types.OracleValue{}
+	err := k.latest.Walk(ctx, nil, func(_ string, value types.OracleValue) (bool, error) {
+		valueCopy := value
+		values = append(values, &valueCopy)
 		return false, nil
 	})
 	if err != nil {
@@ -27,14 +32,20 @@ func (k Keeper) ListLatestValues(ctx context.Context) ([]*oraclev1.OracleValue, 
 	return values, nil
 }
 
-func (k Keeper) GetHistory(ctx context.Context, symbol string) (*oraclev1.OracleHistory, error) {
-	return k.history.Get(ctx, NormalizeSymbol(symbol))
+func (k Keeper) GetHistory(ctx context.Context, symbol string) (*types.OracleHistory, error) {
+	history, err := k.history.Get(ctx, NormalizeSymbol(symbol))
+	if err != nil {
+		return nil, err
+	}
+
+	return &history, nil
 }
 
-func (k Keeper) ListHistory(ctx context.Context) ([]*oraclev1.OracleHistory, error) {
-	history := []*oraclev1.OracleHistory{}
-	err := k.history.Walk(ctx, nil, func(_ string, item *oraclev1.OracleHistory) (bool, error) {
-		history = append(history, item)
+func (k Keeper) ListHistory(ctx context.Context) ([]*types.OracleHistory, error) {
+	history := []*types.OracleHistory{}
+	err := k.history.Walk(ctx, nil, func(_ string, item types.OracleHistory) (bool, error) {
+		itemCopy := item
+		history = append(history, &itemCopy)
 		return false, nil
 	})
 	if err != nil {
@@ -44,7 +55,7 @@ func (k Keeper) ListHistory(ctx context.Context) ([]*oraclev1.OracleHistory, err
 	return history, nil
 }
 
-func (k Keeper) ApplyOracleValues(ctx context.Context, values []*oraclev1.OracleValue) error {
+func (k Keeper) ApplyOracleValues(ctx context.Context, values []*types.OracleValue) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		return err
@@ -77,31 +88,31 @@ func (k Keeper) ApplyOracleValues(ctx context.Context, values []*oraclev1.Oracle
 	return nil
 }
 
-func (k Keeper) SetLatestValue(ctx context.Context, value *oraclev1.OracleValue) error {
+func (k Keeper) SetLatestValue(ctx context.Context, value *types.OracleValue) error {
 	if err := ValidateOracleValue(value); err != nil {
 		return err
 	}
 
 	value.Symbol = NormalizeSymbol(value.GetSymbol())
-	return k.latest.Set(ctx, value.Symbol, value)
+	return k.latest.Set(ctx, value.Symbol, *value)
 }
 
-func (k Keeper) SetHistory(ctx context.Context, history *oraclev1.OracleHistory, historyLimit uint32) error {
+func (k Keeper) SetHistory(ctx context.Context, history *types.OracleHistory, historyLimit uint32) error {
 	if err := ValidateHistory(history, historyLimit); err != nil {
 		return err
 	}
 
 	history.Symbol = NormalizeSymbol(history.GetSymbol())
-	return k.history.Set(ctx, history.Symbol, history)
+	return k.history.Set(ctx, history.Symbol, *history)
 }
 
-func (k Keeper) setOracleValue(ctx context.Context, value *oraclev1.OracleValue, historyLimit uint32) error {
+func (k Keeper) setOracleValue(ctx context.Context, value *types.OracleValue, historyLimit uint32) error {
 	if err := ValidateOracleValue(value); err != nil {
 		return err
 	}
 
 	value.Symbol = NormalizeSymbol(value.GetSymbol())
-	if err := k.latest.Set(ctx, value.Symbol, value); err != nil {
+	if err := k.latest.Set(ctx, value.Symbol, *value); err != nil {
 		return err
 	}
 
@@ -110,7 +121,7 @@ func (k Keeper) setOracleValue(ctx context.Context, value *oraclev1.OracleValue,
 		if !isNotFound(err) {
 			return err
 		}
-		history = &oraclev1.OracleHistory{Symbol: value.Symbol}
+		history = types.OracleHistory{Symbol: value.Symbol}
 	}
 	history.Values = append(history.GetValues(), value)
 	if limit := int(historyLimit); limit > 0 && len(history.Values) > limit {
@@ -120,17 +131,17 @@ func (k Keeper) setOracleValue(ctx context.Context, value *oraclev1.OracleValue,
 	return k.history.Set(ctx, value.Symbol, history)
 }
 
-func ValidateOracleValue(value *oraclev1.OracleValue) error {
+func ValidateOracleValue(value *types.OracleValue) error {
 	if value == nil {
 		return types.ErrInvalidValue.Wrap("value cannot be nil")
 	}
 	if NormalizeSymbol(value.GetSymbol()) == "" {
 		return types.ErrInvalidValue.Wrap("symbol cannot be empty")
 	}
-	if value.GetValueType() == oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED {
+	if value.GetValueType() == types.ValueType_VALUE_TYPE_UNSPECIFIED {
 		return types.ErrInvalidValue.Wrap("value_type cannot be unspecified")
 	}
-	if value.GetValueType() != oraclev1.ValueType_VALUE_TYPE_NUMERIC {
+	if value.GetValueType() != types.ValueType_VALUE_TYPE_NUMERIC {
 		return types.ErrInvalidValue.Wrap("non-numeric value_type is not supported")
 	}
 	if value.GetValue() == "" {
@@ -146,7 +157,7 @@ func ValidateOracleValue(value *oraclev1.OracleValue) error {
 	return nil
 }
 
-func ValidateHistory(history *oraclev1.OracleHistory, historyLimit uint32) error {
+func ValidateHistory(history *types.OracleHistory, historyLimit uint32) error {
 	if history == nil {
 		return types.ErrInvalidValue.Wrap("history cannot be nil")
 	}

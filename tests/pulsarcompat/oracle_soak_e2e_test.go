@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	"github.com/gurufinglobal/guru/v3/oracle"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 const (

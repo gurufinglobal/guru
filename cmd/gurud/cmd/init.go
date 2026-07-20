@@ -26,7 +26,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	"github.com/gurufinglobal/guru/v3/app"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
@@ -232,7 +231,7 @@ func applyConstitutionGenesisAddresses(
 		return fmt.Errorf("constitution genesis state not found")
 	}
 
-	var constitutionState constitutionv1.GenesisState
+	var constitutionState constitutiontypes.GenesisState
 	if err := json.Unmarshal(constitutionStateBz, &constitutionState); err != nil {
 		return fmt.Errorf("failed to decode constitution genesis state: %w", err)
 	}

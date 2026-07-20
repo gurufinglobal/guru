@@ -1,6 +1,6 @@
 package abci
 
-import oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+import oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 
 func oracleValuesEqual(a, b []*oraclev1.OracleValue) bool {
 	if len(a) != len(b) {

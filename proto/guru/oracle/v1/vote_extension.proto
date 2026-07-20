@@ -3,7 +3,7 @@ package guru.oracle.v1;
 
 import "guru/oracle/v1/oracle.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/oracle/types";
 
 message OracleVoteExtension {
   repeated OracleValidatorResult results = 1;

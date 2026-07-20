@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	querytypes "github.com/cosmos/cosmos-sdk/types/query"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -364,7 +364,7 @@ func TestQueryServerPaginatesLargeResponses(t *testing.T) {
 	require.Equal(t, []byte("30"), tasksResp.GetPagination().GetNextKey())
 
 	nextTasksResp, err := queryServer.ActiveTasks(f.ctx, &oraclev1.QueryActiveTasksRequest{
-		Pagination: &queryv1beta1.PageRequest{
+		Pagination: &querytypes.PageRequest{
 			Key:   tasksResp.GetPagination().GetNextKey(),
 			Limit: 3,
 		},
@@ -375,7 +375,7 @@ func TestQueryServerPaginatesLargeResponses(t *testing.T) {
 	require.Equal(t, []byte("33"), nextTasksResp.GetPagination().GetNextKey())
 
 	latestResp, err := queryServer.LatestValues(f.ctx, &oraclev1.QueryLatestValuesRequest{
-		Pagination: &queryv1beta1.PageRequest{Limit: 10},
+		Pagination: &querytypes.PageRequest{Limit: 10},
 	})
 	require.NoError(t, err)
 	require.Len(t, latestResp.GetValues(), 10)
@@ -390,7 +390,7 @@ func TestQueryServerPaginatesLargeResponses(t *testing.T) {
 
 	historyTailResp, err := queryServer.History(f.ctx, &oraclev1.QueryHistoryRequest{
 		Symbol:     "BTC/USD",
-		Pagination: &queryv1beta1.PageRequest{Offset: 30, Limit: 10},
+		Pagination: &querytypes.PageRequest{Offset: 30, Limit: 10},
 	})
 	require.NoError(t, err)
 	require.Len(t, historyTailResp.GetHistory().GetValues(), 5)

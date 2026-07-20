@@ -6,11 +6,10 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	"github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
-func (k Keeper) SetTask(ctx context.Context, task *oraclev1.OracleTask) error {
+func (k Keeper) SetTask(ctx context.Context, task *types.OracleTask) error {
 	if err := ValidateTask(task); err != nil {
 		return err
 	}
@@ -31,7 +30,7 @@ func (k Keeper) SetTask(ctx context.Context, task *oraclev1.OracleTask) error {
 
 // SetTaskDefinition stores a task without mutating task schedule. It is used
 // when restoring task definitions before importing their exported schedule.
-func (k Keeper) SetTaskDefinition(ctx context.Context, task *oraclev1.OracleTask) error {
+func (k Keeper) SetTaskDefinition(ctx context.Context, task *types.OracleTask) error {
 	if err := ValidateTask(task); err != nil {
 		return err
 	}
@@ -40,12 +39,17 @@ func (k Keeper) SetTaskDefinition(ctx context.Context, task *oraclev1.OracleTask
 	return k.setTaskDefinition(ctx, task)
 }
 
-func (k Keeper) setTaskDefinition(ctx context.Context, task *oraclev1.OracleTask) error {
-	return k.tasks.Set(ctx, task.GetSymbol(), task)
+func (k Keeper) setTaskDefinition(ctx context.Context, task *types.OracleTask) error {
+	return k.tasks.Set(ctx, task.GetSymbol(), *task)
 }
 
-func (k Keeper) GetTask(ctx context.Context, symbol string) (*oraclev1.OracleTask, error) {
-	return k.tasks.Get(ctx, NormalizeSymbol(symbol))
+func (k Keeper) GetTask(ctx context.Context, symbol string) (*types.OracleTask, error) {
+	task, err := k.tasks.Get(ctx, NormalizeSymbol(symbol))
+	if err != nil {
+		return nil, err
+	}
+
+	return &task, nil
 }
 
 func (k Keeper) RemoveTask(ctx context.Context, symbol string) error {
@@ -59,13 +63,14 @@ func (k Keeper) RemoveTask(ctx context.Context, symbol string) error {
 	return k.tasks.Remove(ctx, normalized)
 }
 
-func (k Keeper) ListTasks(ctx context.Context, enabledOnly bool) ([]*oraclev1.OracleTask, error) {
-	tasks := []*oraclev1.OracleTask{}
-	err := k.tasks.Walk(ctx, nil, func(_ string, task *oraclev1.OracleTask) (bool, error) {
+func (k Keeper) ListTasks(ctx context.Context, enabledOnly bool) ([]*types.OracleTask, error) {
+	tasks := []*types.OracleTask{}
+	err := k.tasks.Walk(ctx, nil, func(_ string, task types.OracleTask) (bool, error) {
 		if enabledOnly && !task.GetEnabled() {
 			return false, nil
 		}
-		tasks = append(tasks, task)
+		taskCopy := task
+		tasks = append(tasks, &taskCopy)
 		return false, nil
 	})
 	if err != nil {
@@ -75,7 +80,7 @@ func (k Keeper) ListTasks(ctx context.Context, enabledOnly bool) ([]*oraclev1.Or
 	return tasks, nil
 }
 
-func (k Keeper) SetTaskSchedule(ctx context.Context, entry *oraclev1.OracleTaskScheduleEntry) error {
+func (k Keeper) SetTaskSchedule(ctx context.Context, entry *types.OracleTaskScheduleEntry) error {
 	if err := ValidateTaskScheduleEntry(entry); err != nil {
 		return err
 	}
@@ -95,10 +100,10 @@ func (k Keeper) SetTaskSchedule(ctx context.Context, entry *oraclev1.OracleTaskS
 	return k.scheduleTaskAt(ctx, symbol, entry.GetHeight())
 }
 
-func (k Keeper) ListTaskSchedule(ctx context.Context) ([]*oraclev1.OracleTaskScheduleEntry, error) {
-	schedule := []*oraclev1.OracleTaskScheduleEntry{}
+func (k Keeper) ListTaskSchedule(ctx context.Context) ([]*types.OracleTaskScheduleEntry, error) {
+	schedule := []*types.OracleTaskScheduleEntry{}
 	err := k.taskSchedule.Walk(ctx, nil, func(key collections.Pair[int64, string]) (bool, error) {
-		schedule = append(schedule, &oraclev1.OracleTaskScheduleEntry{
+		schedule = append(schedule, &types.OracleTaskScheduleEntry{
 			Symbol: key.K2(),
 			Height: key.K1(),
 		})
@@ -111,12 +116,12 @@ func (k Keeper) ListTaskSchedule(ctx context.Context) ([]*oraclev1.OracleTaskSch
 	return schedule, nil
 }
 
-func (k Keeper) DueTasks(ctx context.Context, height int64) ([]*oraclev1.OracleTask, error) {
+func (k Keeper) DueTasks(ctx context.Context, height int64) ([]*types.OracleTask, error) {
 	if height <= 0 {
 		return nil, nil
 	}
 
-	tasks := []*oraclev1.OracleTask{}
+	tasks := []*types.OracleTask{}
 	err := k.taskSchedule.Walk(ctx, collections.NewPrefixedPairRange[int64, string](height), func(key collections.Pair[int64, string]) (bool, error) {
 		task, err := k.GetTask(ctx, key.K2())
 		if err != nil {

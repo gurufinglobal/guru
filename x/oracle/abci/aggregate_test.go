@@ -8,10 +8,9 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestValidatorResultsFromSamplesComputesMedian(t *testing.T) {
@@ -96,12 +95,12 @@ func TestVerifyVoteExtensionAcceptsEmptyAndRejectsMalformed(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, abcitypes.ResponseVerifyVoteExtension_REJECT, malformed.Status)
 
-	validBz, err := proto.Marshal(&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
+	validBz, err := (&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
 		Symbol:      "BTC/USD",
 		ValueType:   oraclev1.ValueType_VALUE_TYPE_NUMERIC,
 		Value:       "1.0",
 		SourceCount: 3,
-	}}})
+	}}}).Marshal()
 	require.NoError(t, err)
 	valid, err := handler.VerifyVoteExtension(sdk.Context{}, &abcitypes.RequestVerifyVoteExtension{VoteExtension: validBz})
 	require.NoError(t, err)
@@ -223,12 +222,12 @@ func TestOraclePayloadExpectedRequiresDueTasks(t *testing.T) {
 func mustVoteExtensionBz(t *testing.T, symbol string, value string) []byte {
 	t.Helper()
 
-	bz, err := proto.Marshal(&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
+	bz, err := (&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
 		Symbol:      symbol,
 		ValueType:   oraclev1.ValueType_VALUE_TYPE_NUMERIC,
 		Value:       value,
 		SourceCount: 3,
-	}}})
+	}}}).Marshal()
 	require.NoError(t, err)
 	return bz
 }

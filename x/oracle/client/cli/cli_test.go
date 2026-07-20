@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -82,14 +82,14 @@ func TestUpsertTaskCommandHasNoValueTypeFlag(t *testing.T) {
 	require.Nil(t, cmd.Flags().Lookup("value-type"))
 }
 
-func TestReadPulsarPageRequest(t *testing.T) {
+func TestReadPageRequest(t *testing.T) {
 	cmd := CmdQueryActiveTasks()
 	require.NoError(t, cmd.Flags().Set(flags.FlagLimit, "25"))
 	require.NoError(t, cmd.Flags().Set(flags.FlagOffset, "50"))
 	require.NoError(t, cmd.Flags().Set(flags.FlagCountTotal, "true"))
 	require.NoError(t, cmd.Flags().Set(flags.FlagReverse, "true"))
 
-	pageReq, err := readPulsarPageRequest(cmd)
+	pageReq, err := readPageRequest(cmd)
 
 	require.NoError(t, err)
 	require.Equal(t, uint64(25), pageReq.GetLimit())

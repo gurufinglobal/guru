@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	"github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/spf13/cobra"
 )
@@ -95,7 +94,7 @@ func CmdRemoveTask() *cobra.Command {
 				return err
 			}
 
-			msg := &oraclev1.MsgRemoveTask{
+			msg := &types.MsgRemoveTask{
 				Moderator: clientCtx.GetFromAddress().String(),
 				Symbol:    args[0],
 			}
@@ -108,7 +107,7 @@ func CmdRemoveTask() *cobra.Command {
 	return cmd
 }
 
-func newMsgUpdateParams(moderator string, args []string) (*oraclev1.MsgUpdateParams, error) {
+func newMsgUpdateParams(moderator string, args []string) (*types.MsgUpdateParams, error) {
 	minValidators, err := parsePositiveUint32Argument("min_validators", args[0])
 	if err != nil {
 		return nil, err
@@ -122,9 +121,9 @@ func newMsgUpdateParams(moderator string, args []string) (*oraclev1.MsgUpdatePar
 		return nil, err
 	}
 
-	return &oraclev1.MsgUpdateParams{
+	return &types.MsgUpdateParams{
 		Moderator: moderator,
-		Params: &oraclev1.Params{
+		Params: &types.Params{
 			MinValidators: minValidators,
 			MinSources:    minSources,
 			HistoryLimit:  historyLimit,
@@ -132,17 +131,17 @@ func newMsgUpdateParams(moderator string, args []string) (*oraclev1.MsgUpdatePar
 	}, nil
 }
 
-func newMsgUpsertTask(moderator, symbol, intervalRaw string, enabled bool) (*oraclev1.MsgUpsertTask, error) {
+func newMsgUpsertTask(moderator, symbol, intervalRaw string, enabled bool) (*types.MsgUpsertTask, error) {
 	interval, err := parsePositiveUint32Argument("submission_interval", intervalRaw)
 	if err != nil {
 		return nil, err
 	}
 
-	return &oraclev1.MsgUpsertTask{
+	return &types.MsgUpsertTask{
 		Moderator: moderator,
-		Task: &oraclev1.OracleTask{
+		Task: &types.OracleTask{
 			Symbol:             symbol,
-			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			ValueType:          types.ValueType_VALUE_TYPE_NUMERIC,
 			Enabled:            enabled,
 			SubmissionInterval: interval,
 		},

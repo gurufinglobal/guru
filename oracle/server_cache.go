@@ -5,8 +5,7 @@ import (
 	"strings"
 	"time"
 
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
-	"google.golang.org/protobuf/proto"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 type cachedSample struct {
@@ -73,5 +72,10 @@ func cloneOracleSample(sample *oraclev1.OracleSample) *oraclev1.OracleSample {
 		return nil
 	}
 
-	return proto.Clone(sample).(*oraclev1.OracleSample)
+	return &oraclev1.OracleSample{
+		Source:         sample.Source,
+		ValueType:      sample.ValueType,
+		Value:          sample.Value,
+		SampleTimeUnix: sample.SampleTimeUnix,
+	}
 }

@@ -13,7 +13,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
@@ -53,7 +52,7 @@ func (app *App) ValidateChainGenesis(genesis map[string]json.RawMessage) error {
 		return fmt.Errorf("staking bond denom must be %q, got %q", appparams.BaseDenom, stakingGenesis.Params.BondDenom)
 	}
 
-	constitutionGenesis := &constitutionv1.GenesisState{}
+	constitutionGenesis := &constitutiontypes.GenesisState{}
 	if bz, ok := genesis[constitutiontypes.ModuleName]; ok {
 		if err := app.appCodec.UnmarshalJSON(bz, constitutionGenesis); err != nil {
 			return fmt.Errorf("failed to decode constitution genesis: %w", err)
@@ -139,7 +138,7 @@ func (app *App) ValidateChainGenesis(genesis map[string]json.RawMessage) error {
 
 func (app *App) validateGenesisValidatorSelfBonds(
 	stakingGenesis *stakingtypes.GenesisState,
-	constitutionGenesis *constitutionv1.GenesisState,
+	constitutionGenesis *constitutiontypes.GenesisState,
 ) error {
 	if stakingGenesis == nil || constitutionGenesis == nil {
 		return nil
@@ -164,10 +163,10 @@ func (app *App) validateGenesisValidatorSelfBonds(
 			minBondCoin.Denom,
 		)
 	}
-	minBond, ok := sdkmath.NewIntFromString(minBondCoin.Amount)
-	if !ok {
-		return fmt.Errorf("constitution min_validator_bond_amount amount must be an integer string")
+	if minBondCoin.Amount.IsNil() {
+		return fmt.Errorf("constitution min_validator_bond_amount amount cannot be nil")
 	}
+	minBond := minBondCoin.Amount
 
 	activeExportedValidators, err := app.activeExportedGenesisValidators(stakingGenesis)
 	if err != nil {
@@ -201,14 +200,14 @@ func (app *App) validateGenesisValidatorSelfBonds(
 	return nil
 }
 
-func (app *App) defaultConstitutionGenesis() (*constitutionv1.GenesisState, error) {
+func (app *App) defaultConstitutionGenesis() (*constitutiontypes.GenesisState, error) {
 	defaultGenesis := app.BasicModuleManager.DefaultGenesis(app.appCodec)
 	bz, ok := defaultGenesis[constitutiontypes.ModuleName]
 	if !ok {
 		return nil, fmt.Errorf("constitution default genesis missing")
 	}
 
-	constitutionGenesis := &constitutionv1.GenesisState{}
+	constitutionGenesis := &constitutiontypes.GenesisState{}
 	if err := app.appCodec.UnmarshalJSON(bz, constitutionGenesis); err != nil {
 		return nil, fmt.Errorf("failed to decode constitution default genesis: %w", err)
 	}

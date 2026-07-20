@@ -10,11 +10,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/proto"
 )
 
 type VoteExtensionHandler struct {
@@ -63,7 +62,7 @@ func (h VoteExtensionHandler) ExtendVote(ctx sdk.Context, req *abcitypes.Request
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	bz, err := proto.Marshal(&oraclev1.OracleVoteExtension{Results: results})
+	bz, err := (&oraclev1.OracleVoteExtension{Results: results}).Marshal()
 	if err != nil {
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
