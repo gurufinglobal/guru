@@ -59,6 +59,13 @@ func TestDefaultAppTomlEnablesGRPCForOraclePreflight(t *testing.T) {
 	require.True(t, config.GRPC.Enable)
 }
 
+func TestDefaultAppTomlDisablesInsecureJSONRPCUnlock(t *testing.T) {
+	_, rawConfig := defaultAppToml()
+	config, ok := rawConfig.(guruConfig)
+	require.True(t, ok)
+	require.False(t, config.JSONRPC.AllowInsecureUnlock)
+}
+
 func writeChainIDGenesis(t *testing.T, chainID string) string {
 	t.Helper()
 

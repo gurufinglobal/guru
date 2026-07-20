@@ -67,6 +67,8 @@ func defaultAppToml() (string, any) {
 	cfg.API.Enable = true
 	cfg.JSONRPC.Enable = true
 	cfg.JSONRPC.Address = "0.0.0.0:8545"
+	// Never permit personal account unlocking from JSON-RPC by default.
+	cfg.JSONRPC.AllowInsecureUnlock = false
 
 	return template, guruConfig{
 		Config: *cfg,
