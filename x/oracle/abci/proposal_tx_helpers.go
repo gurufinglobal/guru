@@ -21,7 +21,7 @@ func oracleValuesEqual(a, b []*oraclev1.OracleValue) bool {
 
 func containsPayloadAfterFirst(txs [][]byte) bool {
 	for i := 1; i < len(txs); i++ {
-		if IsProposalTx(txs[i]) {
+		if isProposalTxCandidate(txs[i]) {
 			return true
 		}
 	}
@@ -32,7 +32,7 @@ func containsPayloadAfterFirst(txs [][]byte) bool {
 func stripPayloadTxs(txs [][]byte) [][]byte {
 	stripped := make([][]byte, 0, len(txs))
 	for _, tx := range txs {
-		if !IsProposalTx(tx) {
+		if !isProposalTxCandidate(tx) {
 			stripped = append(stripped, tx)
 		}
 	}

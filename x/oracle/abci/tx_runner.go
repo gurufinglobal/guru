@@ -27,7 +27,7 @@ func (r PayloadSkippingTxRunner) Run(
 	results := make([]*abcitypes.ExecTxResult, len(txs))
 
 	for i, tx := range txs {
-		if IsProposalTx(tx) {
+		if i == 0 && IsProposalTx(tx) {
 			results[i] = &abcitypes.ExecTxResult{}
 			continue
 		}

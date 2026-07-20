@@ -7,6 +7,8 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 )
 
+const ProposalPayloadTypeURL = "/guru.oracle.v1.OracleProposalPayload"
+
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgUpdateParams{},

@@ -21,6 +21,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
@@ -44,6 +45,9 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 
 	injectedPayloadTx, err := EncodeProposalTx(&oracletypes.OracleProposalPayload{Height: 99})
 	require.NoError(t, err)
+	malformedPayloadTx := mutateProposalTx(t, injectedPayloadTx, func(_ *txtypes.TxRaw, body *txtypes.TxBody, _ *txtypes.AuthInfo) {
+		body.Memo = "user-injected"
+	})(t)
 	normalA := []byte("normal-a")
 	normalB := []byte("normal-b")
 	prepareCalled := false
@@ -53,7 +57,7 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 			prepareCalled = true
 			require.Equal(t, [][]byte{normalA, normalB}, req.Txs)
 			return &abcitypes.ResponsePrepareProposal{
-				Txs: [][]byte{normalB, injectedPayloadTx},
+				Txs: [][]byte{normalB, injectedPayloadTx, malformedPayloadTx},
 			}, nil
 		},
 		nil,
@@ -63,7 +67,7 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 		Height:          3,
 		MaxTxBytes:      1_000_000,
 		LocalLastCommit: extCommit,
-		Txs:             [][]byte{normalA, injectedPayloadTx, normalB},
+		Txs:             [][]byte{normalA, injectedPayloadTx, malformedPayloadTx, normalB},
 	})
 	require.NoError(t, err)
 	require.True(t, prepareCalled)
@@ -78,6 +82,30 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 	require.Equal(t, int64(3), payload.GetHeight())
 	require.Len(t, payload.GetValues(), 1)
 	require.Equal(t, "BTC/USD", payload.GetValues()[0].GetSymbol())
+}
+
+func TestPrepareProposalWithoutExpectedPayloadStripsInnerOracleCandidates(t *testing.T) {
+	payloadTx, err := EncodeProposalTx(&oracletypes.OracleProposalPayload{Height: 99})
+	require.NoError(t, err)
+	malformedPayloadTx := mutateProposalTx(t, payloadTx, func(_ *txtypes.TxRaw, body *txtypes.TxBody, _ *txtypes.AuthInfo) {
+		body.NonCriticalExtensionOptions = body.ExtensionOptions
+		body.ExtensionOptions = nil
+	})(t)
+	normalTx := []byte("normal")
+
+	handler := NewProposalHandler(
+		Aggregator{},
+		func(_ sdk.Context, req *abcitypes.RequestPrepareProposal) (*abcitypes.ResponsePrepareProposal, error) {
+			require.Equal(t, [][]byte{normalTx}, req.Txs)
+			return &abcitypes.ResponsePrepareProposal{Txs: [][]byte{payloadTx, malformedPayloadTx, normalTx}}, nil
+		},
+		nil,
+	)
+	resp, err := handler.PrepareProposal(sdk.Context{}, &abcitypes.RequestPrepareProposal{
+		Txs: [][]byte{payloadTx, malformedPayloadTx, normalTx},
+	})
+	require.NoError(t, err)
+	require.Equal(t, [][]byte{normalTx}, resp.Txs)
 }
 
 func TestPrepareProposalDoesNotIncludeNormalTxWhenPayloadUsesMaxTxBytes(t *testing.T) {
@@ -219,6 +247,118 @@ func TestProcessProposalAcceptsRecomputedPayloadAndRejectsMismatch(t *testing.T)
 	require.NoError(t, err)
 	require.False(t, processCalled)
 	require.Equal(t, abcitypes.ResponseProcessProposal_REJECT, mismatchedResp.Status)
+}
+
+func TestProcessProposalRejectsMissingUnexpectedAndMalformedOraclePayloads(t *testing.T) {
+	validator := newOracleTestValidator()
+	extCommit := signedOracleExtCommit(t, 3, validator, "1.0")
+	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
+	aggregator := Aggregator{
+		keeper: fakeKeeper{
+			params: &oracletypes.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			tasks:  oracleTestTasks(),
+		},
+		validatorStore: oracleValidatorStoreFor(validator),
+	}
+	payload, err := aggregator.BuildPayload(ctx, 3, extCommit)
+	require.NoError(t, err)
+	payloadTx, err := EncodeProposalTx(payload)
+	require.NoError(t, err)
+	malformedPayloadTx := mutateProposalTx(t, payloadTx, func(_ *txtypes.TxRaw, body *txtypes.TxBody, _ *txtypes.AuthInfo) {
+		body.Memo = "not canonical"
+	})(t)
+	normalTx := []byte("normal")
+
+	tests := []struct {
+		name string
+		ctx  sdk.Context
+		txs  [][]byte
+	}{
+		{
+			name: "expected payload absent",
+			ctx:  ctx,
+			txs:  [][]byte{normalTx},
+		},
+		{
+			name: "payload present when not expected",
+			ctx:  sdk.Context{},
+			txs:  [][]byte{payloadTx, normalTx},
+		},
+		{
+			name: "malformed payload first",
+			ctx:  ctx,
+			txs:  [][]byte{malformedPayloadTx, normalTx},
+		},
+		{
+			name: "malformed payload after first",
+			ctx:  ctx,
+			txs:  [][]byte{payloadTx, malformedPayloadTx, normalTx},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			processCalled := false
+			handler := NewProposalHandler(
+				aggregator,
+				nil,
+				func(sdk.Context, *abcitypes.RequestProcessProposal) (*abcitypes.ResponseProcessProposal, error) {
+					processCalled = true
+					return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_ACCEPT}, nil
+				},
+			)
+			resp, err := handler.ProcessProposal(tc.ctx, &abcitypes.RequestProcessProposal{Txs: tc.txs})
+			require.NoError(t, err)
+			require.False(t, processCalled)
+			require.Equal(t, abcitypes.ResponseProcessProposal_REJECT, resp.Status)
+		})
+	}
+}
+
+func TestApplyProposalPayloadRejectsMalformedOracleCandidates(t *testing.T) {
+	payloadTx, err := EncodeProposalTx(&oracletypes.OracleProposalPayload{Height: 3})
+	require.NoError(t, err)
+	malformedPayloadTx := mutateProposalTx(t, payloadTx, func(_ *txtypes.TxRaw, body *txtypes.TxBody, _ *txtypes.AuthInfo) {
+		body.Memo = "not canonical"
+	})(t)
+
+	for _, tc := range []struct {
+		name string
+		txs  [][]byte
+	}{
+		{name: "malformed payload first", txs: [][]byte{malformedPayloadTx}},
+		{name: "malformed payload after first", txs: [][]byte{[]byte("normal"), malformedPayloadTx}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := (ProposalHandler{}).ApplyProposalPayload(sdk.Context{}, &abcitypes.RequestFinalizeBlock{Txs: tc.txs})
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestApplyProposalPayloadRejectsMissingAndUnexpectedOraclePayloads(t *testing.T) {
+	validator := newOracleTestValidator()
+	extCommit := signedOracleExtCommit(t, 3, validator, "1.0")
+	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
+	handler := NewProposalHandler(
+		Aggregator{
+			keeper: fakeKeeper{
+				params: &oracletypes.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+				tasks:  oracleTestTasks(),
+			},
+			validatorStore: oracleValidatorStoreFor(validator),
+		},
+		nil,
+		nil,
+	)
+
+	err := handler.ApplyProposalPayload(ctx, &abcitypes.RequestFinalizeBlock{Txs: [][]byte{[]byte("normal")}})
+	require.ErrorContains(t, err, "missing oracle proposal payload")
+
+	payloadTx, err := EncodeProposalTx(&oracletypes.OracleProposalPayload{Height: 3})
+	require.NoError(t, err)
+	err = (ProposalHandler{}).ApplyProposalPayload(sdk.Context{}, &abcitypes.RequestFinalizeBlock{Txs: [][]byte{payloadTx}})
+	require.ErrorContains(t, err, "unexpected oracle proposal payload")
 }
 
 func TestProcessProposalRejectsPayloadWithMutatedBlockIDFlag(t *testing.T) {

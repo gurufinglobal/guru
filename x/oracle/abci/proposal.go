@@ -51,13 +51,14 @@ func (h ProposalHandler) PrepareProposal(ctx sdk.Context, req *abcitypes.Request
 	if err != nil {
 		return nil, err
 	}
+	resp.Txs = stripPayloadTxs(resp.Txs)
 	if payloadTx == nil {
 		return resp, nil
 	}
 
 	txs := make([][]byte, 0, len(resp.Txs)+1)
 	txs = append(txs, payloadTx)
-	txs = append(txs, trimTxsToMaxBytes(stripPayloadTxs(resp.Txs), innerReq.MaxTxBytes)...)
+	txs = append(txs, trimTxsToMaxBytes(resp.Txs, innerReq.MaxTxBytes)...)
 	resp.Txs = txs
 	return resp, nil
 }
@@ -117,12 +118,11 @@ func (h ProposalHandler) ApplyProposalPayload(ctx sdk.Context, req *abcitypes.Re
 }
 
 func firstPayload(txs [][]byte) (payload *oraclev1.OracleProposalPayload, hasPayload bool, err error) {
-	if len(txs) == 0 || !IsProposalTx(txs[0]) {
+	if len(txs) == 0 {
 		return nil, false, nil
 	}
 
-	payload, _, err = DecodeProposalTx(txs[0])
-	return payload, true, err
+	return DecodeProposalTx(txs[0])
 }
 
 func remainingMaxTxBytes(maxTxBytes int64, reservedTxs [][]byte) int64 {
