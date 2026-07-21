@@ -41,7 +41,17 @@ func TestE2EOracleProposalConsumerCompatibility(t *testing.T) {
 	if os.Getenv(envOracleConsumerCompat) != "1" {
 		t.Skipf("set %s=1 to run Oracle proposal consumer compatibility", envOracleConsumerCompat)
 	}
+	runE2EOracleProposalConsumerCompatibility(t, "pebbledb", false)
+}
 
+func TestE2EOracleProposalConsumerCompatibilityGoLevelDBIndexerPersistence(t *testing.T) {
+	if os.Getenv(envOracleConsumerCompat) != "1" {
+		t.Skipf("set %s=1 to run Oracle proposal consumer compatibility", envOracleConsumerCompat)
+	}
+	runE2EOracleProposalConsumerCompatibility(t, "goleveldb", true)
+}
+
+func runE2EOracleProposalConsumerCompatibility(t *testing.T, appDBBackend string, requireIndexerPersistence bool) {
 	repoRoot := projectRootFromTestFile(t)
 	bin := buildGurudBinary(t, repoRoot)
 	privateKey, err := crypto.HexToECDSA("0000000000000000000000000000000000000000000000000000000000000001")
@@ -52,7 +62,7 @@ func TestE2EOracleProposalConsumerCompatibility(t *testing.T) {
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", evmAddress.Hex(), "1000000000000000000000agxn", "--home", node.home)
 	patchOracleConsumerGenesis(t, node.home)
 	setOracleNodeAppConfig(t, node.home, node.oracleSocket, node.apiPort)
-	setOracleConsumerAppDBBackend(t, node.home)
+	setOracleConsumerAppDBBackend(t, node.home, appDBBackend)
 	setOracleNodeCometConfig(t, node.home)
 	runCmd(t, repoRoot, bin, "genesis", "validate-genesis", "--home", node.home)
 
@@ -61,7 +71,7 @@ func TestE2EOracleProposalConsumerCompatibility(t *testing.T) {
 	startOracleConsumerSidecar(t, node, sourceServer.URL)
 	defer stopOracleSidecar(t, node)
 
-	node.node = startOracleConsumerNode(t, repoRoot, bin, node)
+	node.node = startOracleConsumerNode(t, repoRoot, bin, node, appDBBackend)
 	defer func() { stopNode(t, node.node) }()
 	waitForOracleSoakNodeHeight(t, repoRoot, bin, node, 7, 90*time.Second)
 	waitForOracleLatestHeight(t, repoRoot, bin, node.home, node.rpcAddr, "BTC/USD", 4, 90*time.Second)
@@ -152,6 +162,20 @@ func TestE2EOracleProposalConsumerCompatibility(t *testing.T) {
 	liveLogs := oracleSoakNodeLogs(node)
 	assertNoOracleDecoderErrors(t, "live node", liveLogs)
 	stopNode(t, node.node)
+	if requireIndexerPersistence {
+		node.node = startOracleConsumerNode(t, repoRoot, bin, node, appDBBackend)
+		waitForOracleSoakNodeHeight(t, repoRoot, bin, node, tailOracle.Height+2, 90*time.Second)
+		restartedReceipt := waitForEthereumReceipt(t, ethClient, signedTx.Hash(), 30*time.Second)
+		require.Equal(t, receipt.BlockHash, restartedReceipt.BlockHash)
+		require.Equal(t, receipt.BlockNumber, restartedReceipt.BlockNumber)
+		assertEthereumConsumerCompatibility(t, ethClient, rpcClient, signedTx, receipt)
+		assertNoOracleDecoderErrors(t, "restarted live index", oracleSoakNodeLogs(node))
+		stopNode(t, node.node)
+
+		indexDBPath := filepath.Join(node.home, "data", "evmindexer.db")
+		require.DirExists(t, indexDBPath)
+		require.NoError(t, os.Rename(indexDBPath, indexDBPath+".live-backup"))
+	}
 
 	reindexOut, err := runOracleSoakCmdE(
 		repoRoot,
@@ -164,13 +188,21 @@ func TestE2EOracleProposalConsumerCompatibility(t *testing.T) {
 	)
 	require.NoError(t, err, "offline index output:\n%s", reindexOut)
 	require.True(t, outputContainsLine(reindexOut, strconv.FormatInt(tailOracle.Height, 10)), "offline index did not traverse Oracle-only tail height %d:\n%s", tailOracle.Height, reindexOut)
+	if requireIndexerPersistence {
+		require.True(t, outputContainsLine(reindexOut, strconv.FormatInt(evmHeight, 10)), "offline index did not rebuild EVM height %d from an empty index DB:\n%s", evmHeight, reindexOut)
+	}
 	assertNoOracleDecoderErrors(t, "offline reindex", reindexOut)
 	t.Logf("offline index-eth-tx forward output:\n%s", reindexOut)
 
-	node.node = startOracleConsumerNode(t, repoRoot, bin, node)
+	node.node = startOracleConsumerNode(t, repoRoot, bin, node, appDBBackend)
 	waitForOracleSoakNodeHeight(t, repoRoot, bin, node, tailOracle.Height+2, 90*time.Second)
 	assertOracleGetTx(t, txClient, tailOracle.Hash)
-	if _, err := waitForEthereumReceiptE(ethClient, signedTx.Hash(), 5*time.Second); err == nil {
+	if requireIndexerPersistence {
+		restartedReceipt := waitForEthereumReceipt(t, ethClient, signedTx.Hash(), 30*time.Second)
+		require.Equal(t, receipt.BlockHash, restartedReceipt.BlockHash)
+		require.Equal(t, receipt.BlockNumber, restartedReceipt.BlockNumber)
+		assertEthereumConsumerCompatibility(t, ethClient, rpcClient, signedTx, receipt)
+	} else if _, err := waitForEthereumReceiptE(ethClient, signedTx.Hash(), 5*time.Second); err == nil {
 		assertEthereumConsumerCompatibility(t, ethClient, rpcClient, signedTx, receipt)
 	} else {
 		require.Contains(t, strings.ToLower(err.Error()), "not found")
@@ -179,7 +211,8 @@ func TestE2EOracleProposalConsumerCompatibility(t *testing.T) {
 	assertNoOracleDecoderErrors(t, "restarted node", oracleSoakNodeLogs(node))
 
 	t.Logf(
-		"Oracle consumer compatibility passed cosmos_height=%d cosmos_oracle_hash=%X evm_height=%d evm_hash=%s evm_oracle_hash=%X tail_height=%d tail_oracle_hash=%X moderator=%s",
+		"Oracle consumer compatibility passed app_db_backend=%s cosmos_height=%d cosmos_oracle_hash=%X evm_height=%d evm_hash=%s evm_oracle_hash=%X tail_height=%d tail_oracle_hash=%X moderator=%s",
+		appDBBackend,
 		cosmosResult.Height,
 		cosmosOracle.Hash,
 		evmHeight,
@@ -225,17 +258,19 @@ func patchOracleConsumerGenesis(t *testing.T, home string) {
 	require.NoError(t, os.WriteFile(genesisPath, out, 0o644))
 }
 
-func setOracleConsumerAppDBBackend(t *testing.T, home string) {
+func setOracleConsumerAppDBBackend(t *testing.T, home, backend string) {
 	t.Helper()
+	require.Contains(t, []string{"goleveldb", "pebbledb"}, backend)
 
 	appTomlPath := filepath.Join(home, "config", "app.toml")
 	bz, err := os.ReadFile(appTomlPath)
 	require.NoError(t, err)
 	content := string(bz)
+	backendConfig := fmt.Sprintf(`app-db-backend = %q`, backend)
 	if strings.Contains(content, `app-db-backend = ""`) {
-		content = strings.Replace(content, `app-db-backend = ""`, `app-db-backend = "pebbledb"`, 1)
+		content = strings.Replace(content, `app-db-backend = ""`, backendConfig, 1)
 	} else {
-		require.Contains(t, content, `app-db-backend = "pebbledb"`)
+		require.Contains(t, content, backendConfig)
 	}
 	require.NoError(t, os.WriteFile(appTomlPath, []byte(content), 0o644))
 }
@@ -269,7 +304,7 @@ func startOracleConsumerSidecar(t *testing.T, node *oracleSoakNode, sourceURL st
 	waitForOracleSocket(t, node.oracleSocket, done, 5*time.Second)
 }
 
-func startOracleConsumerNode(t *testing.T, repoRoot, bin string, node *oracleSoakNode) *runningNode {
+func startOracleConsumerNode(t *testing.T, repoRoot, bin string, node *oracleSoakNode, appDBBackend string) *runningNode {
 	t.Helper()
 
 	return startNodeWithOptions(
@@ -284,6 +319,7 @@ func startOracleConsumerNode(t *testing.T, repoRoot, bin string, node *oracleSoa
 		node.jsonRPCPort,
 		node.jsonWSRPCPort,
 		[]string{
+			"--app-db-backend", appDBBackend,
 			"--api.enable", "true",
 			"--json-rpc.enable", "true",
 			"--json-rpc.enable-indexer", "true",
@@ -383,7 +419,19 @@ func assertOracleBlockConsumerCompatibility(
 func assertOracleGetTx(t *testing.T, txClient txtypes.ServiceClient, hash []byte) {
 	t.Helper()
 
-	resp, err := txClient.GetTx(context.Background(), &txtypes.GetTxRequest{Hash: strings.ToUpper(hex.EncodeToString(hash))})
+	request := &txtypes.GetTxRequest{Hash: strings.ToUpper(hex.EncodeToString(hash))}
+	deadline := time.Now().Add(20 * time.Second)
+	var (
+		resp *txtypes.GetTxResponse
+		err  error
+	)
+	for time.Now().Before(deadline) {
+		resp, err = txClient.GetTx(context.Background(), request)
+		if err == nil {
+			break
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
 	require.NoError(t, err)
 	require.NotNil(t, resp.GetTx())
 	require.Len(t, resp.GetTx().GetBody().GetExtensionOptions(), 1)
