@@ -205,14 +205,21 @@ func (im IBCModule) OnRecvPacket(
 
 	// NOTE: this needs to set the ackErr variable and not do if ackErr := ... because the ackErr variable is used in the defer function
 	if packetKind == types.PacketKindTransfer {
-		ackErr = im.keeper.OnRecvTransferPacket(
-			ctx,
-			data,
-			packet.SourcePort,
-			packet.SourceChannel,
-			packet.DestinationPort,
-			packet.DestinationChannel,
-		)
+		protectionMemo, parseErr := types.ParseSwapProtectionMemo(data.Memo)
+		if parseErr != nil {
+			ackErr = parseErr
+		} else if protectionMemo.State != types.SwapProtectionNoIntent {
+			ackErr = errorsmod.Wrap(types.ErrInvalidSwapProtection, "swap protection memo requires an exchange packet")
+		} else {
+			ackErr = im.keeper.OnRecvTransferPacket(
+				ctx,
+				data,
+				packet.SourcePort,
+				packet.SourceChannel,
+				packet.DestinationPort,
+				packet.DestinationChannel,
+			)
+		}
 	} else {
 		ackErr = im.keeper.OnRecvExchangePacket(
 			ctx,

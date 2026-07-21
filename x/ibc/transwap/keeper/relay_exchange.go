@@ -198,10 +198,11 @@ func (k Keeper) onRecvExchangePacket(
 	if err := data.ValidateBasic(); err != nil {
 		return errorsmod.Wrapf(err, "error validating ICS-20 transfer packet data")
 	}
-	protection, err := types.ParseSwapProtection(data.Memo)
+	protectionMemo, err := types.ParseSwapProtectionMemo(data.Memo)
 	if err != nil {
 		return err
 	}
+	protection := protectionMemo.Protection
 	if err := validateInheritedTimeout(ctx, sourceTimeoutTimestamp); err != nil {
 		return errorsmod.Wrap(err, "rejecting exchange packet due to insufficient inherited timeout")
 	}

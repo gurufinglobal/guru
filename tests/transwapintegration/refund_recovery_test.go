@@ -584,7 +584,7 @@ func (s *appScenario) receiveSwap() *transwaptypes.RefundRecord {
 		&transwaptypes.Token{Denom: transwaptypes.NewDenom(inputDenom), Amount: strconv.FormatInt(inputAmount, 10)},
 		s.userString,
 		s.userString,
-		`{"transwap":{"min_amount_out":"101","expected_exchange_revision":"1"}}`,
+		`guru.transwap.protection:v1:{"min_amount_out":"101","expected_exchange_revision":"1"}`,
 	)
 	require.NoError(s.t, s.app.TranswapKeeper.OnRecvExchangePacket(
 		s.ctx,

@@ -189,18 +189,24 @@ func TestOnRecvExchangePacketCommitsStateWithoutFee(t *testing.T) {
 
 func TestOnRecvExchangePacketEnforcesOptionalMemoProtection(t *testing.T) {
 	tests := []struct {
-		name        string
-		memo        string
-		expectedErr error
-		nilQuote    bool
+		name               string
+		memo               string
+		expectedErr        error
+		nilQuote           bool
+		expectedQuoteCalls int
 	}{
-		{name: "minimum only", memo: `{"transwap":{"min_amount_out":"100"}}`},
-		{name: "revision only", memo: `{"transwap":{"expected_exchange_revision":"11"}}`},
-		{name: "both", memo: `{"transwap":{"min_amount_out":"100","expected_exchange_revision":"11"}}`},
-		{name: "minimum not met", memo: `{"transwap":{"min_amount_out":"101"}}`, expectedErr: types.ErrMinimumAmountOut},
-		{name: "stale revision", memo: `{"transwap":{"expected_exchange_revision":"10"}}`, expectedErr: bextypes.ErrRevisionConflict},
-		{name: "malformed field", memo: `{"transwap":{"min_amount_out":100}}`, expectedErr: types.ErrInvalidSwapProtection},
-		{name: "nil quote", expectedErr: bextypes.ErrInvariantViolation, nilQuote: true},
+		{name: "minimum only", memo: `guru.transwap.protection:v1:{"min_amount_out":"100"}`, expectedQuoteCalls: 1},
+		{name: "revision only", memo: `guru.transwap.protection:v1:{"expected_exchange_revision":"11"}`, expectedQuoteCalls: 1},
+		{name: "both", memo: `guru.transwap.protection:v1:{"min_amount_out":"100","expected_exchange_revision":"11"}`, expectedQuoteCalls: 1},
+		{name: "minimum not met", memo: `guru.transwap.protection:v1:{"min_amount_out":"101"}`, expectedErr: types.ErrMinimumAmountOut, expectedQuoteCalls: 1},
+		{name: "stale revision", memo: `guru.transwap.protection:v1:{"expected_exchange_revision":"10"}`, expectedErr: bextypes.ErrRevisionConflict, expectedQuoteCalls: 1},
+		{name: "malformed field", memo: `guru.transwap.protection:v1:{"min_amount_out":100}`, expectedErr: types.ErrInvalidSwapProtection},
+		{name: "BOM before marker", memo: "\uFEFF" + `guru.transwap.protection:v1:{"min_amount_out":"100"}`, expectedErr: types.ErrInvalidSwapProtection},
+		{name: "NUL before marker", memo: "\x00" + `guru.transwap.protection:v1:{"min_amount_out":"100"}`, expectedErr: types.ErrInvalidSwapProtection},
+		{name: "arbitrary prefix before marker", memo: `xguru.transwap.protection:v1:{"min_amount_out":"100"}`, expectedErr: types.ErrInvalidSwapProtection},
+		{name: "duplicate protection field", memo: `guru.transwap.protection:v1:{"min_amount_out":"100","min_amount_out":"1"}`, expectedErr: types.ErrInvalidSwapProtection},
+		{name: "trailing object", memo: `guru.transwap.protection:v1:{"min_amount_out":"100"}{}`, expectedErr: types.ErrInvalidSwapProtection},
+		{name: "nil quote", expectedErr: bextypes.ErrInvariantViolation, nilQuote: true, expectedQuoteCalls: 1},
 	}
 
 	for _, tt := range tests {
@@ -220,12 +226,15 @@ func TestOnRecvExchangePacketEnforcesOptionalMemoProtection(t *testing.T) {
 			)
 			if tt.expectedErr == nil {
 				require.NoError(t, err)
+				require.Equal(t, tt.expectedQuoteCalls, state.bex.quoteCalls)
 				require.Equal(t, 1, state.ics4.sentCount(state.ctx))
 				return
 			}
 
 			require.ErrorIs(t, err, tt.expectedErr)
+			require.Equal(t, tt.expectedQuoteCalls, state.bex.quoteCalls)
 			require.Zero(t, state.ics4.sentCount(state.ctx))
+			requireNoExchangeRefundState(t, state, "channel-7")
 			require.Equal(t, sdkmath.NewInt(1000), state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(state.outputIBCDenom))
 			require.True(t, state.bank.GetAllBalances(state.ctx, state.reserve).AmountOf(state.inputIBCDenom).IsZero())
 			require.True(t, state.bank.GetAllBalances(state.ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
@@ -1096,6 +1105,7 @@ type exchangeAtomicBexKeeper struct {
 	failLockExchangeFee bool
 	quoteErr            error
 	nilQuote            bool
+	quoteCalls          int
 	expectedExchangeID  uint64
 	exchangeRevision    uint64
 }
@@ -1116,6 +1126,7 @@ func (m *exchangeAtomicBexKeeper) ValidateSwapInput(_ context.Context, exchangeI
 }
 
 func (m *exchangeAtomicBexKeeper) QuoteSwap(_ context.Context, req *bextypes.QuoteSwapRequest) (*bextypes.QuoteSwapResponse, error) {
+	m.quoteCalls++
 	if m.quoteErr != nil {
 		return nil, m.quoteErr
 	}

@@ -246,7 +246,7 @@ func TestProofRelayedRefundTimeoutRetryAndAcknowledgement(t *testing.T) {
 		inputAmount,
 		strconv.FormatUint(exchange.GetId(), 10),
 		chainA.SenderAccount.GetAddress().String(),
-		`{"transwap":{"min_amount_out":"101","expected_exchange_revision":"1"}}`,
+		`guru.transwap.protection:v1:{"min_amount_out":"101","expected_exchange_revision":"1"}`,
 		originalTimeout,
 	)
 	require.Zero(t, sourceApp.BankKeeper.GetBalance(

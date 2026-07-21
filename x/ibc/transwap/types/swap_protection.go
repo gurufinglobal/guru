@@ -8,17 +8,27 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 )
 
-const SwapProtectionMemoKey = "transwap"
+const (
+	// SwapProtectionMemoStem reserves all versioned TransSwap protection memos.
+	SwapProtectionMemoStem = "guru.transwap.protection:"
+	// SwapProtectionMemoMarkerV1 identifies the strict v1 protection envelope.
+	SwapProtectionMemoMarkerV1 = SwapProtectionMemoStem + "v1:"
+
+	// SwapProtectionMemoKey is the deprecated top-level JSON namespace. It is
+	// retained only so the parser can reject the legacy, downgrade-prone form.
+	SwapProtectionMemoKey = "transwap"
+)
 
 // SwapProtection contains optional execution constraints supplied in the
-// transwap memo namespace. Presence is tracked independently so callers may
-// enforce either constraint without imposing the other.
+// versioned TransSwap protection memo. Presence is tracked independently so
+// callers may enforce either constraint without imposing the other.
 type SwapProtection struct {
 	MinAmountOut                sdkmath.Int
 	ExpectedExchangeRevision    uint64
@@ -26,41 +36,81 @@ type SwapProtection struct {
 	HasExpectedExchangeRevision bool
 }
 
-// ParseSwapProtection parses the optional memo form:
-//
-//	{"transwap":{"min_amount_out":"1000","expected_exchange_revision":"12"}}
-//
-// Non-JSON memos and JSON objects without the transwap namespace do not enable
-// protection. Once the namespace is present, its schema is intentionally
-// strict so malformed protection cannot be mistaken for an unprotected swap.
+// SwapProtectionMemoState distinguishes an ordinary memo, a valid protection
+// intent, and a malformed protection intent that must fail closed.
+type SwapProtectionMemoState uint8
+
+const (
+	SwapProtectionNoIntent SwapProtectionMemoState = iota
+	SwapProtectionValidIntent
+	SwapProtectionMalformedIntent
+)
+
+// SwapProtectionMemoResult is the explicit three-state parse result.
+type SwapProtectionMemoResult struct {
+	State      SwapProtectionMemoState
+	Protection SwapProtection
+}
+
+// ParseSwapProtection preserves the existing caller API while delegating to
+// the explicit three-state parser. A malformed intent always returns an error.
 func ParseSwapProtection(memo string) (SwapProtection, error) {
-	var protection SwapProtection
-	trimmed := strings.TrimSpace(memo)
-	if trimmed == "" || trimmed[0] != '{' {
-		return protection, nil
-	}
+	result, err := ParseSwapProtectionMemo(memo)
+	return result.Protection, err
+}
 
-	outer, duplicateOuter, err := decodeJSONObject([]byte(trimmed))
-	if err != nil {
-		return protection, errorsmod.Wrapf(ErrInvalidMemo, "invalid JSON memo: %v", err)
-	}
-	for _, field := range duplicateOuter {
-		if field == SwapProtectionMemoKey {
-			return protection, errorsmod.Wrap(ErrInvalidSwapProtection, "duplicate transwap memo namespace")
+// ParseSwapProtectionMemo parses the optional, domain-separated memo form:
+//
+//	guru.transwap.protection:v1:{"min_amount_out":"1000","expected_exchange_revision":"12"}
+//
+// Memos without the reserved stem have no protection intent and are otherwise
+// opaque. Once the stem is present, the marker must start at byte offset zero,
+// use a supported version, and contain exactly one strict JSON object. The
+// deprecated top-level {"transwap": ...} form is rejected rather than silently
+// downgraded to an unprotected exchange.
+func ParseSwapProtectionMemo(memo string) (SwapProtectionMemoResult, error) {
+	result := SwapProtectionMemoResult{State: SwapProtectionNoIntent}
+
+	if !strings.Contains(memo, SwapProtectionMemoStem) {
+		if isDeprecatedSwapProtectionMemo(memo) {
+			result.State = SwapProtectionMalformedIntent
+			return result, errorsmod.Wrap(ErrInvalidSwapProtection, "deprecated transwap memo namespace")
 		}
-	}
-	rawNamespace, found := outer[SwapProtectionMemoKey]
-	if !found {
-		return protection, nil
+		return result, nil
 	}
 
-	fields, duplicateFields, err := decodeJSONObject(rawNamespace)
+	result.State = SwapProtectionMalformedIntent
+	if !strings.HasPrefix(memo, SwapProtectionMemoMarkerV1) {
+		return result, errorsmod.Wrap(ErrInvalidSwapProtection, "transwap protection marker must use supported v1 marker at byte offset zero")
+	}
+
+	body := memo[len(SwapProtectionMemoMarkerV1):]
+	if len(body) == 0 || body[0] != '{' {
+		return result, errorsmod.Wrap(ErrInvalidSwapProtection, "transwap protection v1 body must immediately begin with a JSON object")
+	}
+	if !utf8.ValidString(body) {
+		return result, errorsmod.Wrap(ErrInvalidSwapProtection, "transwap protection v1 body must be valid UTF-8")
+	}
+
+	protection, err := parseSwapProtectionV1([]byte(body))
 	if err != nil {
-		return protection, errorsmod.Wrap(ErrInvalidSwapProtection, "transwap memo value must be an object")
+		return result, err
+	}
+	result.State = SwapProtectionValidIntent
+	result.Protection = protection
+	return result, nil
+}
+
+func parseSwapProtectionV1(raw []byte) (SwapProtection, error) {
+	var protection SwapProtection
+	fields, duplicateFields, err := decodeJSONObject(raw)
+	if err != nil {
+		return protection, errorsmod.Wrapf(ErrInvalidSwapProtection, "invalid transwap protection v1 JSON object: %v", err)
 	}
 	if len(duplicateFields) > 0 {
 		return protection, errorsmod.Wrapf(ErrInvalidSwapProtection, "duplicate transwap protection field %q", duplicateFields[0])
 	}
+
 	unknownFields := make([]string, 0)
 	for field := range fields {
 		if field != "min_amount_out" && field != "expected_exchange_revision" {
@@ -70,6 +120,9 @@ func ParseSwapProtection(memo string) (SwapProtection, error) {
 	if len(unknownFields) > 0 {
 		sort.Strings(unknownFields)
 		return protection, errorsmod.Wrapf(ErrInvalidSwapProtection, "unknown transwap protection field %q", unknownFields[0])
+	}
+	if len(fields) == 0 {
+		return protection, errorsmod.Wrap(ErrInvalidSwapProtection, "transwap protection v1 requires at least one protection field")
 	}
 
 	if rawValue, found := fields["min_amount_out"]; found {
@@ -99,6 +152,29 @@ func ParseSwapProtection(memo string) (SwapProtection, error) {
 	}
 
 	return protection, nil
+}
+
+// isDeprecatedSwapProtectionMemo narrowly detects a valid top-level legacy
+// namespace. Invalid or unrelated JSON remains an opaque memo when no reserved
+// stem is present, avoiding false positives for other memo formats.
+func isDeprecatedSwapProtectionMemo(memo string) bool {
+	trimmed := strings.TrimSpace(memo)
+	if trimmed == "" || trimmed[0] != '{' {
+		return false
+	}
+	fields, duplicateFields, err := decodeJSONObject([]byte(trimmed))
+	if err != nil {
+		return false
+	}
+	if _, found := fields[SwapProtectionMemoKey]; found {
+		return true
+	}
+	for _, field := range duplicateFields {
+		if field == SwapProtectionMemoKey {
+			return true
+		}
+	}
+	return false
 }
 
 func parseProtectionString(field string, raw json.RawMessage) (string, error) {

@@ -104,6 +104,89 @@ func TestIBCModuleOnRecvExchangePacketReturnsSuccessAckAndCommitsAccounting(t *t
 	require.Equal(t, sdkmath.NewInt(100), recvBex.recordedVolume)
 }
 
+func TestIBCModuleOnRecvExchangePacketRejectsMalformedProtectionMemoBeforeMutation(t *testing.T) {
+	tests := []struct {
+		name string
+		memo string
+	}{
+		{name: "BOM before marker", memo: "\uFEFF" + `guru.transwap.protection:v1:{"min_amount_out":"100"}`},
+		{name: "NUL before marker", memo: "\x00" + `guru.transwap.protection:v1:{"min_amount_out":"100"}`},
+		{name: "arbitrary prefix before marker", memo: `xguru.transwap.protection:v1:{"min_amount_out":"100"}`},
+		{name: "leading space before marker", memo: ` guru.transwap.protection:v1:{"min_amount_out":"100"}`},
+		{name: "unsupported marker version", memo: `guru.transwap.protection:v2:{"min_amount_out":"100"}`},
+		{name: "empty protection", memo: `guru.transwap.protection:v1:{}`},
+		{name: "duplicate protection field", memo: `guru.transwap.protection:v1:{"min_amount_out":"100","min_amount_out":"1"}`},
+		{name: "trailing object", memo: `guru.transwap.protection:v1:{"min_amount_out":"100"}{}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k, ctx, bank, _, ics4 := setupIBCModuleAckRefund(t)
+			ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+			reserve := sdk.AccAddress(bytes.Repeat([]byte{0x11}, 20))
+			reserveBalance := sdk.NewCoins(sdk.NewInt64Coin("atgxkrw", 123))
+			bank.SetBalance(reserve, reserveBalance)
+			recvBex := &moduleRecvExchangeBexKeeper{
+				reserve:        reserve,
+				bank:           bank,
+				outputDenom:    "atgxkrw",
+				amountOut:      "100",
+				feeAmount:      "3",
+				ledgers:        make(map[string]sdk.Coins),
+				recordedVolume: sdkmath.ZeroInt(),
+			}
+			k.BexKeeper = recvBex
+			im := NewIBCModule(k)
+
+			packetData := types.FungibleTokenPacketData{
+				ExchangeId: "7",
+				Denom:      "atgxusd",
+				Amount:     "103",
+				Sender:     sdk.AccAddress(bytes.Repeat([]byte{0x22}, 20)).String(),
+				Receiver:   sdk.AccAddress(bytes.Repeat([]byte{0x33}, 20)).String(),
+				Memo:       tt.memo,
+			}
+			packet := channeltypes.Packet{
+				Sequence:           39,
+				SourcePort:         "xswap",
+				SourceChannel:      "channel-1",
+				DestinationPort:    types.PortID,
+				DestinationChannel: "channel-0",
+				Data:               types.FungibleTokenPacketDataBytes(&packetData),
+				TimeoutTimestamp:   uint64(ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
+			}
+
+			ack := im.OnRecvPacket(ctx, types.V1, packet, sdk.AccAddress{})
+			require.False(t, ack.Success())
+			require.Zero(t, recvBex.validateCalls)
+			require.Zero(t, recvBex.quoteCalls)
+			require.Zero(t, recvBex.receiveCalls)
+			require.True(t, recvBex.recordedVolume.IsZero())
+			require.Equal(t, reserveBalance, bank.GetAllBalances(ctx, reserve))
+			require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(types.ModuleName)).IsZero())
+			require.True(t, bank.GetAllBalances(ctx, authtypes.NewModuleAddress(bextypes.ModuleName)).IsZero())
+			require.Empty(t, recvBex.ledger("collected"))
+			require.Empty(t, recvBex.ledger("locked"))
+			require.Empty(t, ics4.sent)
+			require.Empty(t, k.GetAllRefundRecords(ctx))
+			require.False(t, k.HasDenom(ctx, types.DenomHash(types.NewDenom("atgxusd", types.NewHop(types.PortID, "channel-0")))))
+
+			foundAckErr := false
+			for _, event := range ctx.EventManager().Events() {
+				for _, attr := range event.Attributes {
+					if attr.Key != types.AttributeKeyAckError {
+						continue
+					}
+					foundAckErr = true
+					require.Contains(t, attr.Value, "invalid swap protection")
+				}
+			}
+			require.True(t, foundAckErr)
+		})
+	}
+}
+
 func TestIBCModuleOnRecvExchangePacketReturnsErrorAckForNonNumericExchangeID(t *testing.T) {
 	k, ctx, bank, bex, ics4 := setupIBCModuleAckRefund(t)
 	ctx = ctx.WithEventManager(sdk.NewEventManager())
@@ -515,12 +598,15 @@ type moduleRecvExchangeBexKeeper struct {
 	amountOut      string
 	feeAmount      string
 	resolveErr     error
+	validateCalls  int
 	quoteCalls     int
+	receiveCalls   int
 	ledgers        map[string]sdk.Coins
 	recordedVolume sdkmath.Int
 }
 
 func (m *moduleRecvExchangeBexKeeper) ValidateSwapInput(_ context.Context, exchangeID uint64, inputDenom, localInputDenom string) (bextypes.SwapDirection, error) {
+	m.validateCalls++
 	if m.resolveErr != nil {
 		return bextypes.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, m.resolveErr
 	}
@@ -549,6 +635,7 @@ func (m *moduleRecvExchangeBexKeeper) QuoteSwap(_ context.Context, req *bextypes
 }
 
 func (m *moduleRecvExchangeBexKeeper) ReceiveToReserve(ctx context.Context, _ uint64, from sdk.AccAddress, amount sdk.Coins) error {
+	m.receiveCalls++
 	return m.bank.SendCoins(ctx, from, m.reserve, amount)
 }
 
