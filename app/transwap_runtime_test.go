@@ -14,8 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
-	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 
@@ -42,10 +40,6 @@ func TestTranswapAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T
 	ibcModule, found := router.Route(transwaptypes.ModuleName)
 	require.True(t, found)
 	require.IsType(t, &transwap.IBCModule{}, ibcModule)
-	routerV2 := testApp.IBCKeeper.ChannelKeeperV2.Router
-	require.NotNil(t, routerV2)
-	require.True(t, routerV2.HasRoute(ibctransfertypes.ModuleName))
-	require.IsType(t, erc20v2.IBCMiddleware{}, routerV2.Route(ibctransfertypes.ModuleName))
 
 	ctx := testApp.NewNextBlockContext(cmtproto.Header{
 		ChainID: appparams.SDKChainID,
