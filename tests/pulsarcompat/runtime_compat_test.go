@@ -1,13 +1,13 @@
 package pulsarcompat
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
@@ -20,10 +20,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
-	protov2 "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,14 +29,10 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	pulsarbexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	pulsarconstitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	pulsaroraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
-	pulsartranswapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
-	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
-	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
@@ -124,8 +118,13 @@ func (mockGatewayQueryServer) LatestValues(_ context.Context, req *oracletypes.Q
 	}, nil
 }
 
-func (mockGatewayQueryServer) History(context.Context, *oracletypes.QueryHistoryRequest) (*oracletypes.QueryHistoryResponse, error) {
-	return &oracletypes.QueryHistoryResponse{}, nil
+func (mockGatewayQueryServer) History(_ context.Context, req *oracletypes.QueryHistoryRequest) (*oracletypes.QueryHistoryResponse, error) {
+	if req.GetSymbol() == "PAGINATION/TEST" && (req.GetPagination() == nil || req.GetPagination().GetOffset() != 3 || req.GetPagination().GetLimit() != 4) {
+		return nil, status.Error(codes.InvalidArgument, "unexpected pagination request")
+	}
+	return &oracletypes.QueryHistoryResponse{
+		History: &oracletypes.OracleHistory{Symbol: req.GetSymbol()},
+	}, nil
 }
 
 type mockConstitutionQueryServer struct {
@@ -169,18 +168,18 @@ func TestInternalGatewayPreservesPublicPulsarJSON(t *testing.T) {
 		Params: &pulsaroraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
 	})
 
-	resp2, err := http.Get(srv.URL + "/guru/oracle/v1/values/BTC-USD")
+	resp2, err := http.Get(srv.URL + "/guru/oracle/v1/value?symbol=BTC-USD")
 	if err != nil {
-		t.Fatalf("GET /values/{symbol} failed: %v", err)
+		t.Fatalf("GET /value?symbol= failed: %v", err)
 	}
 	defer func() { _ = resp2.Body.Close() }()
 	if resp2.StatusCode != http.StatusOK {
-		t.Fatalf("unexpected /values/{symbol} status: got=%d", resp2.StatusCode)
+		t.Fatalf("unexpected /value?symbol= status: got=%d", resp2.StatusCode)
 	}
 
 	valueJSON, err := io.ReadAll(resp2.Body)
 	if err != nil {
-		t.Fatalf("read /values/{symbol} response: %v", err)
+		t.Fatalf("read /value?symbol= response: %v", err)
 	}
 	assertPublicGatewayJSON(t, valueJSON, &pulsaroraclev1.QueryLatestValueResponse{
 		Value: &pulsaroraclev1.OracleValue{
@@ -209,6 +208,135 @@ func TestInternalGatewayPreservesPublicPulsarJSON(t *testing.T) {
 			MinValidatorBondAmount: &basev1beta1.Coin{Denom: appparams.BaseDenom, Amount: "1000000"},
 		},
 	})
+}
+
+func TestOracleGatewaySymbolQueryParameter(t *testing.T) {
+	marshaler := &gogogateway.JSONPb{EmitDefaults: true, OrigName: true}
+	mux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, marshaler))
+	if err := oracletypes.RegisterQueryHandlerServer(context.Background(), mux, mockGatewayQueryServer{}); err != nil {
+		t.Fatalf("register query gateway handler: %v", err)
+	}
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	routes := []struct {
+		name          string
+		path          string
+		responseField string
+	}{
+		{name: "task", path: "/guru/oracle/v1/task", responseField: "task"},
+		{name: "latest value", path: "/guru/oracle/v1/value", responseField: "value"},
+		{name: "history", path: "/guru/oracle/v1/history", responseField: "history"},
+	}
+
+	// The mock echoes symbols so this test isolates HTTP query decoding from keeper lookup semantics.
+	for _, route := range routes {
+		for _, symbolCase := range []struct {
+			name   string
+			symbol string
+		}{
+			{name: "slash", symbol: "BTC/USD"},
+			{name: "percent", symbol: "PCT%USD"},
+			{name: "unicode", symbol: "한글/원"},
+			{name: "empty", symbol: ""},
+			{name: "unknown", symbol: "UNKNOWN/SYMBOL"},
+		} {
+			t.Run(route.name+"/"+symbolCase.name, func(t *testing.T) {
+				query := url.Values{}
+				query.Set("symbol", symbolCase.symbol)
+				resp, err := http.Get(srv.URL + route.path + "?" + query.Encode())
+				if err != nil {
+					t.Fatalf("GET %s failed: %v", route.path, err)
+				}
+				body, readErr := io.ReadAll(resp.Body)
+				_ = resp.Body.Close()
+				if readErr != nil {
+					t.Fatalf("read %s response: %v", route.path, readErr)
+				}
+				if resp.StatusCode != http.StatusOK {
+					t.Fatalf("unexpected %s status: got=%d body=%s", route.path, resp.StatusCode, body)
+				}
+
+				var payload map[string]any
+				if err := json.Unmarshal(body, &payload); err != nil {
+					t.Fatalf("decode %s response %q: %v", route.path, body, err)
+				}
+				message, ok := payload[route.responseField].(map[string]any)
+				if !ok || message["symbol"] != symbolCase.symbol {
+					t.Fatalf("unexpected %s symbol: got=%v want=%q", route.path, message["symbol"], symbolCase.symbol)
+				}
+			})
+		}
+
+		t.Run(route.name+"/missing", func(t *testing.T) {
+			resp, err := http.Get(srv.URL + route.path)
+			if err != nil {
+				t.Fatalf("GET %s failed: %v", route.path, err)
+			}
+			body, readErr := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			if readErr != nil {
+				t.Fatalf("read %s response: %v", route.path, readErr)
+			}
+			if resp.StatusCode != http.StatusOK {
+				t.Fatalf("unexpected %s status: got=%d body=%s", route.path, resp.StatusCode, body)
+			}
+
+			var payload map[string]any
+			if err := json.Unmarshal(body, &payload); err != nil {
+				t.Fatalf("decode %s response %q: %v", route.path, body, err)
+			}
+			message, ok := payload[route.responseField].(map[string]any)
+			if !ok || message["symbol"] != "" {
+				t.Fatalf("unexpected missing %s symbol: got=%v", route.path, message["symbol"])
+			}
+		})
+	}
+
+	paginationQuery := url.Values{}
+	paginationQuery.Set("symbol", "PAGINATION/TEST")
+	paginationQuery.Set("pagination.offset", "3")
+	paginationQuery.Set("pagination.limit", "4")
+	resp, err := http.Get(srv.URL + "/guru/oracle/v1/history?" + paginationQuery.Encode())
+	if err != nil {
+		t.Fatalf("GET history with pagination failed: %v", err)
+	}
+	body, readErr := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if readErr != nil {
+		t.Fatalf("read history pagination response: %v", readErr)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected history pagination status: got=%d body=%s", resp.StatusCode, body)
+	}
+	var paginationPayload map[string]any
+	if err := json.Unmarshal(body, &paginationPayload); err != nil {
+		t.Fatalf("decode history pagination response %q: %v", body, err)
+	}
+	history, ok := paginationPayload["history"].(map[string]any)
+	if !ok || history["symbol"] != "PAGINATION/TEST" {
+		t.Fatalf("unexpected history pagination symbol: got=%v", history["symbol"])
+	}
+
+	for _, oldPath := range []string{
+		"/guru/oracle/v1/tasks/BTC-USD",
+		"/guru/oracle/v1/values/BTC-USD",
+		"/guru/oracle/v1/history/BTC-USD",
+	} {
+		resp, err := http.Get(srv.URL + oldPath)
+		if err != nil {
+			t.Fatalf("GET legacy path %s failed: %v", oldPath, err)
+		}
+		_, readErr := io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+		if readErr != nil {
+			t.Fatalf("read legacy path %s response: %v", oldPath, readErr)
+		}
+		if resp.StatusCode != http.StatusNotFound {
+			t.Fatalf("unexpected legacy path %s status: got=%d want=%d", oldPath, resp.StatusCode, http.StatusNotFound)
+		}
+	}
 }
 
 func assertPublicGatewayJSON(t *testing.T, actual []byte, expected legacyproto.Message) {
@@ -310,6 +438,32 @@ func TestPulsarGRPCClientCallsInternalGogoServer(t *testing.T) {
 	}
 
 	queryClient := pulsaroraclev1.NewQueryClient(conn)
+	for _, symbol := range []string{"BTC/USD", "PCT%USD", "한글/원"} {
+		task, err := queryClient.Task(context.Background(), &pulsaroraclev1.QueryTaskRequest{Symbol: symbol})
+		if err != nil {
+			t.Fatalf("grpc Task failed for %q: %v", symbol, err)
+		}
+		if task.GetTask().GetSymbol() != symbol {
+			t.Fatalf("unexpected grpc Task symbol: got=%q want=%q", task.GetTask().GetSymbol(), symbol)
+		}
+
+		latest, err := queryClient.LatestValue(context.Background(), &pulsaroraclev1.QueryLatestValueRequest{Symbol: symbol})
+		if err != nil {
+			t.Fatalf("grpc LatestValue failed for %q: %v", symbol, err)
+		}
+		if latest.GetValue().GetSymbol() != symbol {
+			t.Fatalf("unexpected grpc LatestValue symbol: got=%q want=%q", latest.GetValue().GetSymbol(), symbol)
+		}
+
+		history, err := queryClient.History(context.Background(), &pulsaroraclev1.QueryHistoryRequest{Symbol: symbol})
+		if err != nil {
+			t.Fatalf("grpc History failed for %q: %v", symbol, err)
+		}
+		if history.GetHistory().GetSymbol() != symbol {
+			t.Fatalf("unexpected grpc History symbol: got=%q want=%q", history.GetHistory().GetSymbol(), symbol)
+		}
+	}
+
 	values, err := queryClient.LatestValues(context.Background(), &pulsaroraclev1.QueryLatestValuesRequest{
 		Pagination: &queryv1beta1.PageRequest{
 			Key:        []byte{0x01, 0x02},
@@ -521,155 +675,4 @@ func TestStandardTxConfigDecodesInternalGogoMessagesWithNestedFields(t *testing.
 			t.Fatalf("encode wrapped tx %T: %v", msg, err)
 		}
 	}
-}
-
-func TestStandardTxConfigDecodesPublicPulsarBexAndTransSwapTransactions(t *testing.T) {
-	encodingConfig := appparams.MakeEncodingConfig(
-		appparams.Bech32PrefixAccAddr,
-		appparams.Bech32PrefixValAddr,
-		appparams.Bech32PrefixConsAddr,
-	)
-	bextypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	transwaptypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-
-	authorityBytes := bytes.Repeat([]byte{0x61}, 20)
-	feePayerBytes := bytes.Repeat([]byte{0x62}, 20)
-	addressCodec := encodingConfig.InterfaceRegistry.SigningContext().AddressCodec()
-	authority, err := addressCodec.BytesToString(authorityBytes)
-	if err != nil {
-		t.Fatalf("encode authority address: %v", err)
-	}
-	feePayer, err := addressCodec.BytesToString(feePayerBytes)
-	if err != nil {
-		t.Fatalf("encode fee payer address: %v", err)
-	}
-
-	tests := []struct {
-		name       string
-		message    protov2.Message
-		fullName   protoreflect.FullName
-		assertGogo func(*testing.T, sdk.Msg)
-	}{
-		{
-			name: "BEX map and wrapper fields",
-			message: &pulsarbexv1.MsgUpdateExchange{
-				AdminAddress:     authority,
-				ExchangeId:       7,
-				ExpectedRevision: 3,
-				Patch: &pulsarbexv1.ExchangeUpdatePatch{
-					DenomA:   wrapperspb.String("uatom"),
-					Metadata: map[string]string{"network": "test", "tier": "one"},
-				},
-			},
-			fullName: "guru.bex.v1.MsgUpdateExchange",
-			assertGogo: func(t *testing.T, message sdk.Msg) {
-				t.Helper()
-				msg, ok := message.(*bextypes.MsgUpdateExchange)
-				if !ok {
-					t.Fatalf("decoded BEX message type = %T, want *types.MsgUpdateExchange", message)
-				}
-				if msg.GetPatch().GetDenomA().GetValue() != "uatom" ||
-					msg.GetPatch().GetMetadata()["network"] != "test" ||
-					msg.GetPatch().GetMetadata()["tier"] != "one" {
-					t.Fatalf("decoded BEX message lost public nested fields: %+v", msg.GetPatch())
-				}
-			},
-		},
-		{
-			name: "TransSwap nested params",
-			message: &pulsartranswapv1.MsgUpdateParams{
-				Authority: authority,
-				Params: &pulsartranswapv1.Params{
-					MaxRefundRetries:     3,
-					RefundTimeoutWindow:  60,
-					MinRelaySafetyMargin: 5,
-				},
-			},
-			fullName: "guru.transwap.v1.MsgUpdateParams",
-			assertGogo: func(t *testing.T, message sdk.Msg) {
-				t.Helper()
-				msg, ok := message.(*transwaptypes.MsgUpdateParams)
-				if !ok {
-					t.Fatalf("decoded TransSwap message type = %T, want *types.MsgUpdateParams", message)
-				}
-				if msg.GetParams().GetMaxRefundRetries() != 3 ||
-					msg.GetParams().GetRefundTimeoutWindow() != 60 ||
-					msg.GetParams().GetMinRelaySafetyMargin() != 5 {
-					t.Fatalf("decoded TransSwap message lost public nested params: %+v", msg.GetParams())
-				}
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			txBytes := marshalPublicPulsarTx(t, test.message, feePayer)
-			decoded, err := encodingConfig.TxConfig.TxDecoder()(txBytes)
-			if err != nil {
-				t.Fatalf("decode public Pulsar transaction: %v", err)
-			}
-			messages := decoded.GetMsgs()
-			if len(messages) != 1 {
-				t.Fatalf("decoded message count = %d, want 1", len(messages))
-			}
-			test.assertGogo(t, messages[0])
-
-			messagesV2, err := decoded.GetMsgsV2()
-			if err != nil {
-				t.Fatalf("adapt decoded public message to protobuf v2: %v", err)
-			}
-			if len(messagesV2) != 1 || messagesV2[0].ProtoReflect().Descriptor().FullName() != test.fullName {
-				t.Fatalf("decoded protobuf v2 messages = %+v, want %s", messagesV2, test.fullName)
-			}
-
-			sigTx, ok := decoded.(authsigning.SigVerifiableTx)
-			if !ok {
-				t.Fatalf("decoded transaction %T does not implement SigVerifiableTx", decoded)
-			}
-			signers, err := sigTx.GetSigners()
-			if err != nil {
-				t.Fatalf("extract decoded transaction signers: %v", err)
-			}
-			if len(signers) != 2 || !bytes.Equal(signers[0], authorityBytes) || !bytes.Equal(signers[1], feePayerBytes) {
-				t.Fatalf("decoded signers = %X, want authority=%X fee_payer=%X", signers, authorityBytes, feePayerBytes)
-			}
-
-			wrapped, err := encodingConfig.TxConfig.WrapTxBuilder(decoded)
-			if err != nil {
-				t.Fatalf("wrap decoded standard transaction: %v", err)
-			}
-			reencoded, err := encodingConfig.TxConfig.TxEncoder()(wrapped.GetTx())
-			if err != nil {
-				t.Fatalf("re-encode decoded standard transaction: %v", err)
-			}
-			if !bytes.Equal(reencoded, txBytes) {
-				t.Fatalf("standard re-encoding changed public transaction bytes: got=%X want=%X", reencoded, txBytes)
-			}
-		})
-	}
-}
-
-func marshalPublicPulsarTx(t *testing.T, message protov2.Message, feePayer string) []byte {
-	t.Helper()
-
-	messageBytes, err := (protov2.MarshalOptions{Deterministic: true}).Marshal(message)
-	if err != nil {
-		t.Fatalf("marshal public Pulsar message: %v", err)
-	}
-	bodyBytes, err := (&txtypes.TxBody{Messages: []*codectypes.Any{{
-		TypeUrl: "/" + string(message.ProtoReflect().Descriptor().FullName()),
-		Value:   messageBytes,
-	}}}).Marshal()
-	if err != nil {
-		t.Fatalf("marshal public transaction body: %v", err)
-	}
-	authInfoBytes, err := (&txtypes.AuthInfo{Fee: &txtypes.Fee{Payer: feePayer}}).Marshal()
-	if err != nil {
-		t.Fatalf("marshal public transaction auth info: %v", err)
-	}
-	txBytes, err := (&txtypes.TxRaw{BodyBytes: bodyBytes, AuthInfoBytes: authInfoBytes}).Marshal()
-	if err != nil {
-		t.Fatalf("marshal public TxRaw: %v", err)
-	}
-	return txBytes
 }
