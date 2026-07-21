@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
@@ -287,7 +287,7 @@ func (k Keeper) SendSwapOutputFromReserve(
 	if err != nil {
 		return err
 	}
-	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+	if exchange.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
 		return types.ErrInvalidRoute.Wrap("swap output requires an active exchange")
 	}
 	pending, err := k.GetPendingLiabilities(ctx, exchangeID)
@@ -391,7 +391,7 @@ func (k Keeper) validateReserveOutflow(
 	recipient sdk.AccAddress,
 	amount sdk.Coin,
 	enforceSendEnabled bool,
-) (*bexv1.Exchange, sdk.AccAddress, error) {
+) (*types.Exchange, sdk.AccAddress, error) {
 	exchange, err := k.GetActiveExchange(ctx, exchangeID)
 	if err != nil {
 		return nil, nil, err
@@ -426,7 +426,7 @@ func (k Keeper) WithdrawReserve(ctx context.Context, signer string, exchangeID u
 	if err != nil {
 		return err
 	}
-	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE {
+	if exchange.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE {
 		return types.ErrInvalidRequest.Wrap("reserve withdraw requires inactive exchange")
 	}
 	if _, _, err := k.requireExchangeAdmin(ctx, exchange, signer); err != nil {

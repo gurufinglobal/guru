@@ -3,8 +3,9 @@ package keeper
 import (
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
 )
@@ -84,34 +85,43 @@ func TestValidateRequiredIntStringRequiresCanonicalDecimal(t *testing.T) {
 	}
 }
 
-func TestDecimalAmountsAreCanonicalAcrossStateAndCoins(t *testing.T) {
+func TestDecimalAmountsAreCanonicalAcrossStateAndSDKCoins(t *testing.T) {
 	require.Equal(t, "0", normalizeIntString(""))
 	require.Equal(t, "10", normalizeIntString("10"))
 	require.Equal(t, "010", normalizeIntString("010"))
 	require.Equal(t, "08", normalizeIntString("08"))
 	require.Equal(t, "0x10", normalizeIntString("0x10"))
 
-	coins, err := protoCoinsToSDK([]*basev1beta1.Coin{{Denom: "agxn", Amount: "10"}})
+	coins, err := protoCoinsToSDK(sdk.Coins{
+		sdk.NewInt64Coin("gxusd", 2),
+		sdk.NewInt64Coin("agxn", 10),
+	})
 	require.NoError(t, err)
-	require.Equal(t, "10agxn", coins.String())
+	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("agxn", 10), sdk.NewInt64Coin("gxusd", 2)), coins)
 
-	_, err = protoCoinsToSDK([]*basev1beta1.Coin{{Denom: "agxn", Amount: "010"}})
-	require.ErrorIs(t, err, types.ErrInvalidRequest)
-
-	_, err = protoCoinsToSDK([]*basev1beta1.Coin{{Denom: "agxn", Amount: "0x10"}})
-	require.ErrorIs(t, err, types.ErrInvalidRequest)
+	for name, invalid := range map[string]sdk.Coins{
+		"nil amount":    {{Denom: "agxn", Amount: sdkmath.Int{}}},
+		"zero amount":   {{Denom: "agxn", Amount: sdkmath.ZeroInt()}},
+		"negative":      {{Denom: "agxn", Amount: sdkmath.NewInt(-1)}},
+		"invalid denom": {{Denom: "bad denom", Amount: sdkmath.OneInt()}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := protoCoinsToSDK(invalid)
+			require.ErrorIs(t, err, types.ErrInvalidRequest)
+		})
+	}
 }
 
 func TestQuoteSwapRejectsNonCanonicalAmountWithoutPanic(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	f.oracleKeeper.SetValue(exchange.GetOracleSymbolAToB(), "1", f.ctx.BlockTime().Unix())
 
 	for _, amount := range []string{"08", "010", "+10", " 10", "10 ", "0x10", "0o10"} {
 		t.Run(amount, func(t *testing.T) {
 			require.NotPanics(t, func() {
-				_, err := f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+				_, err := f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 					ExchangeId: exchange.GetId(),
 					InputDenom: exchange.GetDenomA(),
 					AmountIn:   amount,
@@ -121,7 +131,7 @@ func TestQuoteSwapRejectsNonCanonicalAmountWithoutPanic(t *testing.T) {
 		})
 	}
 
-	quote, err := f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	quote, err := f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "8",

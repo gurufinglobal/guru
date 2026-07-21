@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	errorsmod "cosmossdk.io/errors"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 )
 
 // getICS20ABI returns an abi.Arguments slice describing the Solidity types of the struct.
@@ -53,7 +52,7 @@ func getICS20ABI() abi.Arguments {
 
 // DecodeABIFungibleTokenPacketData decodes a solidity ABI encoded ics20lib.ICS20LibFungibleTokenPacketData
 // and converts it into an ibc-go FungibleTokenPacketData.
-func DecodeABIFungibleTokenPacketData(data []byte) (*transwapv1.FungibleTokenPacketData, error) {
+func DecodeABIFungibleTokenPacketData(data []byte) (*FungibleTokenPacketData, error) {
 	arguments := getICS20ABI()
 
 	packetDataI, err := arguments.Unpack(data)
@@ -72,7 +71,7 @@ func DecodeABIFungibleTokenPacketData(data []byte) (*transwapv1.FungibleTokenPac
 		return nil, errorsmod.Wrapf(ErrAbiDecoding, "failed to parse packet data")
 	}
 
-	return &transwapv1.FungibleTokenPacketData{
+	return &FungibleTokenPacketData{
 		ExchangeId: "0",
 		Denom:      packetData.Denom,
 		Sender:     packetData.Sender,
@@ -82,7 +81,7 @@ func DecodeABIFungibleTokenPacketData(data []byte) (*transwapv1.FungibleTokenPac
 	}, nil
 }
 
-func EncodeABIFungibleTokenPacketData(data *transwapv1.FungibleTokenPacketData) ([]byte, error) {
+func EncodeABIFungibleTokenPacketData(data *FungibleTokenPacketData) ([]byte, error) {
 	if data == nil {
 		return nil, errorsmod.Wrap(ErrAbiEncoding, "packet data cannot be nil")
 	}

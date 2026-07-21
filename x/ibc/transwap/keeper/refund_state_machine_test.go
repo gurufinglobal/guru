@@ -8,15 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/protobuf/proto"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
@@ -44,7 +40,7 @@ func setupRefundStateMachineScenario(t *testing.T) refundStateMachineScenario {
 
 	refundID := RefundID(types.PortID, "channel-7", exchangeAtomicSequence)
 	record := mustRefundRecord(t, state, refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_PENDING, record.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_PENDING, record.GetStatus())
 	require.Equal(t, originalTimeout, record.GetOriginalTimeoutTimestamp())
 	require.Equal(t, sdkmath.NewInt(103), pendingRefundAmount(t, state, state.inputIBCDenom))
 	require.Equal(t, sdkmath.NewInt(3), lockedRefundFeeAmount(t, state, state.inputIBCDenom))
@@ -61,7 +57,7 @@ func setupRefundStateMachineScenario(t *testing.T) refundStateMachineScenario {
 	))
 
 	record = mustRefundRecord(t, state, refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, record.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, record.GetStatus())
 	require.Equal(t, uint32(1), record.GetRetryCount())
 	require.Equal(t, exchangeAtomicSequence+1, record.GetActivePacketSequence())
 	require.Equal(t, state.reserve.String(), refundSentPacketData(t, state, record.GetActivePacketSequence()).Sender)
@@ -160,7 +156,7 @@ func TestRefundRetriesRecalculateTimeoutAndRejectStaleCallbacks(t *testing.T) {
 	))
 
 	second := mustRefundRecord(t, scenario.state, scenario.refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, second.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, second.GetStatus())
 	require.Equal(t, uint32(2), second.GetRetryCount())
 	require.NotEqual(t, firstSequence, second.GetActivePacketSequence())
 	require.Equal(
@@ -171,7 +167,7 @@ func TestRefundRetriesRecalculateTimeoutAndRejectStaleCallbacks(t *testing.T) {
 	require.NotEqual(t, firstTimeout, second.GetActiveTimeoutTimestamp())
 	require.Equal(t, scenario.originalTimeout, second.GetOriginalTimeoutTimestamp())
 
-	secondSnapshot := proto.Clone(second).(*transwapv1.RefundRecord)
+	secondSnapshot := types.CloneRefundRecord(second)
 	sentCount := scenario.state.ics4.sentCount(scenario.state.ctx)
 	require.NoError(t, scenario.state.keeper.OnTimeoutTransferPacket(
 		scenario.state.ctx,
@@ -189,7 +185,7 @@ func TestRefundRetriesRecalculateTimeoutAndRejectStaleCallbacks(t *testing.T) {
 		channeltypes.NewResultAcknowledgement([]byte{1}),
 	))
 	require.Equal(t, sentCount, scenario.state.ics4.sentCount(scenario.state.ctx))
-	require.True(t, proto.Equal(secondSnapshot, mustRefundRecord(t, scenario.state, scenario.refundID)))
+	require.Equal(t, secondSnapshot, mustRefundRecord(t, scenario.state, scenario.refundID))
 
 	secondData := refundSentPacketData(t, scenario.state, second.GetActivePacketSequence())
 	scenario.state.ctx = scenario.state.ctx.WithBlockTime(baseTime.Add(25 * time.Minute))
@@ -206,7 +202,7 @@ func TestRefundRetriesRecalculateTimeoutAndRejectStaleCallbacks(t *testing.T) {
 	))
 
 	third := mustRefundRecord(t, scenario.state, scenario.refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, third.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, third.GetStatus())
 	require.Equal(t, uint32(3), third.GetRetryCount())
 	require.Equal(
 		t,
@@ -226,7 +222,7 @@ func TestRefundRetryLimitManualClaimAndLateAckCannotDoublePay(t *testing.T) {
 	var lastData types.InternalTransferRepresentation
 	for attempt := 1; attempt <= int(types.DefaultMaxRefundRetries); attempt++ {
 		record := mustRefundRecord(t, scenario.state, scenario.refundID)
-		require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, record.GetStatus())
+		require.Equal(t, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, record.GetStatus())
 		lastSequence = record.GetActivePacketSequence()
 		lastData = refundSentPacketData(t, scenario.state, lastSequence)
 		scenario.state.ctx = scenario.state.ctx.WithBlockTime(baseTime.Add(time.Duration(attempt) * 10 * time.Minute))
@@ -244,7 +240,7 @@ func TestRefundRetryLimitManualClaimAndLateAckCannotDoublePay(t *testing.T) {
 	}
 
 	manual := mustRefundRecord(t, scenario.state, scenario.refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, manual.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, manual.GetStatus())
 	require.Equal(t, types.DefaultMaxRefundRetries, manual.GetRetryCount())
 	require.Zero(t, manual.GetActivePacketSequence())
 	require.Equal(t, 1+int(types.DefaultMaxRefundRetries), scenario.state.ics4.sentCount(scenario.state.ctx))
@@ -266,7 +262,7 @@ func TestRefundRetryLimitManualClaimAndLateAckCannotDoublePay(t *testing.T) {
 		scenario.state.sender.String(),
 	)
 	require.NoError(t, err)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, claimed.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_CLAIMED, claimed.GetStatus())
 	require.Equal(
 		t,
 		sdkmath.NewInt(103),
@@ -280,7 +276,7 @@ func TestRefundRetryLimitManualClaimAndLateAckCannotDoublePay(t *testing.T) {
 		scenario.state.sender.String(),
 	)
 	require.NoError(t, err)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, claimedAgain.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_CLAIMED, claimedAgain.GetStatus())
 	require.NoError(t, scenario.state.keeper.OnAcknowledgementTransferPacket(
 		scenario.state.ctx,
 		types.PortID,
@@ -294,7 +290,7 @@ func TestRefundRetryLimitManualClaimAndLateAckCannotDoublePay(t *testing.T) {
 		sdkmath.NewInt(103),
 		scenario.state.bank.GetAllBalances(scenario.state.ctx, scenario.state.sender).AmountOf(scenario.state.inputIBCDenom),
 	)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, mustRefundRecord(t, scenario.state, scenario.refundID).GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_CLAIMED, mustRefundRecord(t, scenario.state, scenario.refundID).GetStatus())
 	require.NoError(t, scenario.state.keeper.AssertRefundInvariants(scenario.state.ctx))
 }
 
@@ -312,7 +308,7 @@ func TestPersistentRefundDispatchFailureExhaustsIntoManualClaimWithoutDustingDoS
 		firstData,
 	))
 	retryable := mustRefundRecord(t, scenario.state, scenario.refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE, retryable.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_RETRYABLE, retryable.GetStatus())
 	require.Equal(t, uint32(2), retryable.GetRetryCount())
 	require.Equal(t, uint64(scenario.state.ctx.BlockHeight()+1), retryable.GetNextRetryHeight()) //nolint:gosec // test height is non-negative.
 	require.NoError(t, scenario.state.keeper.AssertRefundInvariants(scenario.state.ctx))
@@ -323,7 +319,7 @@ func TestPersistentRefundDispatchFailureExhaustsIntoManualClaimWithoutDustingDoS
 	scenario.state.ctx = scenario.state.ctx.WithBlockHeight(int64(retryable.GetNextRetryHeight())) //nolint:gosec // test height is bounded.
 	require.NoError(t, scenario.state.keeper.ProcessRefundRetryQueue(scenario.state.ctx))
 	manual := mustRefundRecord(t, scenario.state, scenario.refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, manual.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, manual.GetStatus())
 	require.Equal(t, types.DefaultMaxRefundRetries, manual.GetRetryCount())
 	require.Zero(t, manual.GetNextRetryHeight())
 	require.Zero(t, manual.GetActivePacketSequence())
@@ -358,7 +354,7 @@ func TestPersistentRefundDispatchFailureExhaustsIntoManualClaimWithoutDustingDoS
 		scenario.state.sender.String(),
 	)
 	require.NoError(t, err)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, claimed.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_CLAIMED, claimed.GetStatus())
 	require.Equal(t, sdkmath.OneInt(), reserveRefundAmount(scenario.state, scenario.state.inputIBCDenom))
 	require.Equal(t, sdkmath.NewInt(7), reserveRefundAmount(scenario.state, "adust"))
 	require.NoError(t, scenario.state.keeper.AssertRefundInvariants(scenario.state.ctx))
@@ -383,7 +379,7 @@ func TestTransientRefundDispatchFailureAutomaticallyRetries(t *testing.T) {
 	))
 
 	retryable := mustRefundRecord(t, scenario.state, scenario.refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE, retryable.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_RETRYABLE, retryable.GetStatus())
 	require.Equal(t, uint32(2), retryable.GetRetryCount())
 	require.NotZero(t, retryable.GetNextRetryHeight())
 	require.NoError(t, scenario.state.keeper.AssertRefundInvariants(scenario.state.ctx))
@@ -391,7 +387,7 @@ func TestTransientRefundDispatchFailureAutomaticallyRetries(t *testing.T) {
 	scenario.state.ctx = scenario.state.ctx.WithBlockHeight(int64(retryable.GetNextRetryHeight())) //nolint:gosec // test height is bounded.
 	require.NoError(t, scenario.state.keeper.ProcessRefundRetryQueue(scenario.state.ctx))
 	retried := mustRefundRecord(t, scenario.state, scenario.refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, retried.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, retried.GetStatus())
 	require.Equal(t, types.DefaultMaxRefundRetries, retried.GetRetryCount())
 	require.Zero(t, retried.GetNextRetryHeight())
 	require.NotEqual(t, first.GetActiveTimeoutTimestamp(), retried.GetActiveTimeoutTimestamp())
@@ -434,19 +430,19 @@ func TestProcessRefundRetryQueueDispatchesAtMostPerBlockBound(t *testing.T) {
 
 	for sequence := 1; sequence <= count; sequence++ {
 		refundID := RefundID(types.PortID, "channel-7", uint64(sequence)) //nolint:gosec // bounded test value.
-		record := &transwapv1.RefundRecord{
+		record := &types.RefundRecord{
 			Id:                             refundID,
-			Status:                         transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE,
+			Status:                         types.RefundStatus_REFUND_STATUS_RETRYABLE,
 			RefundSourcePort:               types.PortID,
 			RefundSourceChannel:            "channel-0",
-			Token:                          &transwapv1.Token{Denom: types.NewDenom(coin.Denom), Amount: coin.Amount.String()},
+			Token:                          types.Token{Denom: types.NewDenom(coin.Denom), Amount: coin.Amount.String()},
 			Receiver:                       state.sender.String(),
 			ClaimAddress:                   state.sender.String(),
 			Memo:                           "bounded retry queue",
 			ExchangeId:                     "7",
 			OriginalFee:                    types.SDKCoinToProto(sdk.NewInt64Coin(coin.Denom, 0)),
 			OriginalTimeoutTimestamp:       uint64(state.ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed positive test time.
-			OriginalTimeoutHeight:          &transwapv1.RefundHeight{},
+			OriginalTimeoutHeight:          &types.RefundHeight{},
 			OriginalOutputPort:             types.PortID,
 			OriginalOutputChannel:          "channel-7",
 			OriginalOutputSequence:         uint64(sequence), //nolint:gosec // bounded test value.
@@ -464,9 +460,9 @@ func TestProcessRefundRetryQueueDispatchesAtMostPerBlockBound(t *testing.T) {
 	retryable := 0
 	for _, record := range state.keeper.GetAllRefundRecords(state.ctx) {
 		switch record.GetStatus() {
-		case transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT:
+		case types.RefundStatus_REFUND_STATUS_IN_FLIGHT:
 			inFlight++
-		case transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE:
+		case types.RefundStatus_REFUND_STATUS_RETRYABLE:
 			retryable++
 		}
 	}
@@ -487,19 +483,19 @@ func TestNativeRefundEscrowMovesOnlyBetweenReserveAndIBCCommitment(t *testing.T)
 
 	refundID := RefundID(types.PortID, "channel-7", 999)
 	coin := sdk.NewInt64Coin("atgxusd", 100)
-	record := &transwapv1.RefundRecord{
+	record := &types.RefundRecord{
 		Id:                             refundID,
-		Status:                         transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE,
+		Status:                         types.RefundStatus_REFUND_STATUS_RETRYABLE,
 		RefundSourcePort:               types.PortID,
 		RefundSourceChannel:            "channel-0",
-		Token:                          &transwapv1.Token{Denom: types.NewDenom(coin.Denom), Amount: coin.Amount.String()},
+		Token:                          types.Token{Denom: types.NewDenom(coin.Denom), Amount: coin.Amount.String()},
 		Receiver:                       state.sender.String(),
 		ClaimAddress:                   state.sender.String(),
 		Memo:                           "native refund",
 		ExchangeId:                     "7",
 		OriginalFee:                    types.SDKCoinToProto(sdk.NewInt64Coin(coin.Denom, 0)),
 		OriginalTimeoutTimestamp:       uint64(state.ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
-		OriginalTimeoutHeight:          &transwapv1.RefundHeight{},
+		OriginalTimeoutHeight:          &types.RefundHeight{},
 		OriginalOutputPort:             types.PortID,
 		OriginalOutputChannel:          "channel-7",
 		OriginalOutputSequence:         999,
@@ -516,7 +512,7 @@ func TestNativeRefundEscrowMovesOnlyBetweenReserveAndIBCCommitment(t *testing.T)
 
 	inFlight, err := state.keeper.RetryRefund(state.ctx, refundID)
 	require.NoError(t, err)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, inFlight.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, inFlight.GetStatus())
 	require.True(t, reserveRefundAmount(state, coin.Denom).IsZero())
 	require.Equal(
 		t,
@@ -543,14 +539,14 @@ func TestNativeRefundEscrowMovesOnlyBetweenReserveAndIBCCommitment(t *testing.T)
 		packetData,
 	))
 	manual := mustRefundRecord(t, state, refundID)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, manual.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, manual.GetStatus())
 	require.Equal(t, coin.Amount, reserveRefundAmount(state, coin.Denom))
 	require.True(t, state.bank.GetAllBalances(state.ctx, types.GetEscrowAddress(types.PortID, "channel-0")).IsZero())
 	require.True(t, state.keeper.GetTotalEscrowForDenom(state.ctx, coin.Denom).Amount.IsZero())
 
 	claimed, err := state.keeper.ClaimRefund(state.ctx, refundID, state.sender.String())
 	require.NoError(t, err)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, claimed.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_CLAIMED, claimed.GetStatus())
 	require.Equal(t, coin.Amount, state.bank.GetAllBalances(state.ctx, state.sender).AmountOf(coin.Denom))
 	require.True(t, pendingRefundAmount(t, state, coin.Denom).IsZero())
 	require.NoError(t, state.keeper.AssertRefundInvariants(state.ctx))
@@ -580,19 +576,19 @@ func TestRefundInvariantAggregatesTrackedEscrowAcrossChannels(t *testing.T) {
 
 	for i, refundChannel := range []string{"channel-0", "channel-1"} {
 		sequence := uint64(900 + i) //nolint:gosec // fixed test index is bounded.
-		record := &transwapv1.RefundRecord{
+		record := &types.RefundRecord{
 			Id:                             RefundID(types.PortID, "channel-7", sequence),
-			Status:                         transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE,
+			Status:                         types.RefundStatus_REFUND_STATUS_RETRYABLE,
 			RefundSourcePort:               types.PortID,
 			RefundSourceChannel:            refundChannel,
-			Token:                          &transwapv1.Token{Denom: types.NewDenom(coin.Denom), Amount: coin.Amount.String()},
+			Token:                          types.Token{Denom: types.NewDenom(coin.Denom), Amount: coin.Amount.String()},
 			Receiver:                       state.sender.String(),
 			ClaimAddress:                   state.sender.String(),
 			Memo:                           "multi-channel native refund",
 			ExchangeId:                     "7",
 			OriginalFee:                    types.SDKCoinToProto(sdk.NewInt64Coin(coin.Denom, 0)),
 			OriginalTimeoutTimestamp:       uint64(state.ctx.BlockTime().Add(time.Hour).UnixNano()), //nolint:gosec // fixed test time is positive.
-			OriginalTimeoutHeight:          &transwapv1.RefundHeight{},
+			OriginalTimeoutHeight:          &types.RefundHeight{},
 			OriginalOutputPort:             types.PortID,
 			OriginalOutputChannel:          "channel-7",
 			OriginalOutputSequence:         sequence,
@@ -685,8 +681,40 @@ func TestRefundTimeoutValidationAndImmutableBusinessDeadline(t *testing.T) {
 	require.ErrorIs(t, scenario.state.keeper.SetRefundRecord(scenario.state.ctx, record), types.ErrInvalidRefundState)
 	require.Equal(t, scenario.originalTimeout, mustRefundRecord(t, scenario.state, scenario.refundID).GetOriginalTimeoutTimestamp())
 	record = mustRefundRecord(t, scenario.state, scenario.refundID)
-	record.OriginalTimeoutHeight = &transwapv1.RefundHeight{RevisionNumber: 2, RevisionHeight: 99}
+	record.OriginalTimeoutHeight = &types.RefundHeight{RevisionNumber: 2, RevisionHeight: 99}
 	require.ErrorIs(t, scenario.state.keeper.SetRefundRecord(scenario.state.ctx, record), types.ErrInvalidRefundState)
+}
+
+func TestImmutableRefundFieldsUseProtobufWireSemantics(t *testing.T) {
+	original := &types.RefundRecord{
+		Id:                    "transwap/channel-7/12",
+		RefundSourcePort:      types.PortID,
+		RefundSourceChannel:   "channel-0",
+		Token:                 types.Token{Denom: types.NewDenom("uatom"), Amount: "10"},
+		Receiver:              "receiver",
+		ClaimAddress:          "claim-address",
+		Memo:                  "memo",
+		ExchangeId:            "7",
+		OriginalFee:           sdk.NewInt64Coin("uatom", 1),
+		OriginalTimeoutHeight: &types.RefundHeight{RevisionNumber: 2, RevisionHeight: 99},
+		VolumeReservation: &bextypes.VolumeReservation{
+			ExchangeId: 7,
+			Amount:     "10",
+		},
+	}
+
+	wireEquivalent := types.CloneRefundRecord(original)
+	wireEquivalent.Token.Denom.Trace = make([]types.Hop, 0)
+	require.NotNil(t, wireEquivalent.Token.Denom.Trace)
+	require.True(t, immutableRefundFieldsEqual(original, wireEquivalent))
+
+	different := types.CloneRefundRecord(wireEquivalent)
+	different.Token.Denom.Trace = []types.Hop{types.NewHop(types.PortID, "channel-0")}
+	require.False(t, immutableRefundFieldsEqual(original, different))
+
+	different = types.CloneRefundRecord(wireEquivalent)
+	different.OriginalTimeoutHeight = nil
+	require.False(t, immutableRefundFieldsEqual(original, different), "message presence remains immutable")
 }
 
 func TestRefundCallbackTemplateMismatchRollsBack(t *testing.T) {
@@ -704,7 +732,7 @@ func TestRefundCallbackTemplateMismatchRollsBack(t *testing.T) {
 		channeltypes.NewResultAcknowledgement([]byte{1}),
 	)
 	require.ErrorIs(t, err, types.ErrRefundEscrowInvariant)
-	require.True(t, proto.Equal(before, mustRefundRecord(t, scenario.state, scenario.refundID)))
+	require.Equal(t, before, mustRefundRecord(t, scenario.state, scenario.refundID))
 	require.Equal(t, sdkmath.NewInt(103), pendingRefundAmount(t, scenario.state, scenario.state.inputIBCDenom))
 }
 
@@ -721,9 +749,9 @@ func TestRefundInvariantRejectsOutputAndActivePacketCollision(t *testing.T) {
 		timeout,
 	))
 	pending := mustRefundRecord(t, state, RefundID(types.PortID, "channel-7", exchangeAtomicSequence))
-	active := proto.Clone(pending).(*transwapv1.RefundRecord)
+	active := types.CloneRefundRecord(pending)
 	active.Id = RefundID(types.PortID, "channel-8", 999)
-	active.Status = transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT
+	active.Status = types.RefundStatus_REFUND_STATUS_IN_FLIGHT
 	active.OriginalOutputChannel = "channel-8"
 	active.OriginalOutputSequence = 999
 	active.OriginalOutputPacketCommitment = make([]byte, sha256.Size)
@@ -745,7 +773,7 @@ func TestRefundInvariantRejectsOrphanAndDuplicateActivePacketIndexes(t *testing.
 
 	cacheCtx, _ := scenario.state.ctx.CacheContext()
 	active := mustRefundRecord(t, scenario.state, scenario.refundID)
-	duplicate := proto.Clone(active).(*transwapv1.RefundRecord)
+	duplicate := types.CloneRefundRecord(active)
 	duplicate.Id = RefundID(types.PortID, "channel-7", 1_000)
 	duplicate.OriginalOutputSequence = 1_000
 	require.NoError(t, scenario.state.keeper.SetRefundRecord(cacheCtx, duplicate))
@@ -770,25 +798,25 @@ func TestRefundInvariantRejectsOrphanRetryQueueIndex(t *testing.T) {
 func TestRefundStateTransitionsAreDeterministic(t *testing.T) {
 	tests := []struct {
 		name    string
-		current transwapv1.RefundStatus
-		next    transwapv1.RefundStatus
+		current types.RefundStatus
+		next    types.RefundStatus
 		wantErr bool
 	}{
-		{"pending to retryable", transwapv1.RefundStatus_REFUND_STATUS_PENDING, transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE, false},
-		{"pending to completed", transwapv1.RefundStatus_REFUND_STATUS_PENDING, transwapv1.RefundStatus_REFUND_STATUS_COMPLETED, false},
-		{"pending cannot skip to in flight", transwapv1.RefundStatus_REFUND_STATUS_PENDING, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, true},
-		{"retryable to in flight", transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, false},
-		{"in flight to retryable", transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE, false},
-		{"in flight to completed", transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, transwapv1.RefundStatus_REFUND_STATUS_COMPLETED, false},
-		{"in flight to manual", transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, false},
-		{"manual to claimed", transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, false},
-		{"completed is terminal", transwapv1.RefundStatus_REFUND_STATUS_COMPLETED, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, true},
-		{"claimed is terminal", transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, transwapv1.RefundStatus_REFUND_STATUS_COMPLETED, true},
+		{"pending to retryable", types.RefundStatus_REFUND_STATUS_PENDING, types.RefundStatus_REFUND_STATUS_RETRYABLE, false},
+		{"pending to completed", types.RefundStatus_REFUND_STATUS_PENDING, types.RefundStatus_REFUND_STATUS_COMPLETED, false},
+		{"pending cannot skip to in flight", types.RefundStatus_REFUND_STATUS_PENDING, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, true},
+		{"retryable to in flight", types.RefundStatus_REFUND_STATUS_RETRYABLE, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, false},
+		{"in flight to retryable", types.RefundStatus_REFUND_STATUS_IN_FLIGHT, types.RefundStatus_REFUND_STATUS_RETRYABLE, false},
+		{"in flight to completed", types.RefundStatus_REFUND_STATUS_IN_FLIGHT, types.RefundStatus_REFUND_STATUS_COMPLETED, false},
+		{"in flight to manual", types.RefundStatus_REFUND_STATUS_IN_FLIGHT, types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, false},
+		{"manual to claimed", types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, types.RefundStatus_REFUND_STATUS_CLAIMED, false},
+		{"completed is terminal", types.RefundStatus_REFUND_STATUS_COMPLETED, types.RefundStatus_REFUND_STATUS_CLAIMED, true},
+		{"claimed is terminal", types.RefundStatus_REFUND_STATUS_CLAIMED, types.RefundStatus_REFUND_STATUS_COMPLETED, true},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			record := &transwapv1.RefundRecord{Status: test.current}
+			record := &types.RefundRecord{Status: test.current}
 			err := transitionRefundStatus(record, test.next)
 			if test.wantErr {
 				require.ErrorIs(t, err, types.ErrInvalidRefundState)
@@ -801,7 +829,7 @@ func TestRefundStateTransitionsAreDeterministic(t *testing.T) {
 	}
 }
 
-func mustRefundRecord(t *testing.T, state exchangeReceiveAtomicityState, refundID string) *transwapv1.RefundRecord {
+func mustRefundRecord(t *testing.T, state exchangeReceiveAtomicityState, refundID string) *types.RefundRecord {
 	t.Helper()
 	record, found, err := state.keeper.GetRefundRecord(state.ctx, refundID)
 	require.NoError(t, err)
@@ -809,10 +837,10 @@ func mustRefundRecord(t *testing.T, state exchangeReceiveAtomicityState, refundI
 	return record
 }
 
-func testRefundVolumeReservation(exchangeID uint64, amount string) *bexv1.VolumeReservation {
-	return &bexv1.VolumeReservation{
+func testRefundVolumeReservation(exchangeID uint64, amount string) *bextypes.VolumeReservation {
+	return &bextypes.VolumeReservation{
 		ExchangeId:             exchangeID,
-		Direction:              bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		Direction:              bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		EpochSeconds:           bextypes.MinVolumeEpochSeconds,
 		Amount:                 amount,
 		VolumeWindowGeneration: 1,

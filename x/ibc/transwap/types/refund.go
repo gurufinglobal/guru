@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	host "github.com/cosmos/ibc-go/v11/modules/core/24-host"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
@@ -18,14 +17,14 @@ func RefundID(outputPort, outputChannel string, outputSequence uint64) string {
 	return outputPort + "/" + outputChannel + "/" + strconv.FormatUint(outputSequence, 10)
 }
 
-func ValidateRefundRecord(record *transwapv1.RefundRecord) error {
+func ValidateRefundRecord(record *RefundRecord) error {
 	if record == nil {
 		return ErrInvalidRefundState.Wrap("refund record cannot be nil")
 	}
 	if err := ValidateRefundID(record.GetId()); err != nil {
 		return err
 	}
-	if record.GetStatus() == transwapv1.RefundStatus_REFUND_STATUS_UNSPECIFIED {
+	if record.GetStatus() == RefundStatus_REFUND_STATUS_UNSPECIFIED {
 		return ErrInvalidRefundState.Wrap("refund status cannot be unspecified")
 	}
 	if record.GetRefundSourcePort() != PortID {
@@ -34,7 +33,7 @@ func ValidateRefundRecord(record *transwapv1.RefundRecord) error {
 	if err := host.ChannelIdentifierValidator(record.GetRefundSourceChannel()); err != nil {
 		return ErrInvalidRefundState.Wrapf("invalid refund source channel: %v", err)
 	}
-	if err := ValidateToken(record.GetToken()); err != nil {
+	if err := ValidateToken(&record.Token); err != nil {
 		return ErrInvalidRefundState.Wrapf("invalid refund token: %v", err)
 	}
 	_, receiverAddress, err := bech32.DecodeAndConvert(record.GetReceiver())
@@ -62,12 +61,12 @@ func ValidateRefundRecord(record *transwapv1.RefundRecord) error {
 	if record.GetVolumeReservation().GetExchangeId() != exchangeID {
 		return ErrInvalidRefundState.Wrap("volume reservation exchange does not match refund")
 	}
-	tokenCoin, err := TokenToCoin(record.GetToken())
+	tokenCoin, err := TokenToCoin(&record.Token)
 	if err != nil {
 		return ErrInvalidRefundState.Wrapf("invalid refund token coin: %v", err)
 	}
 	fee, err := ProtoCoinToSDK(record.GetOriginalFee())
-	if err != nil || fee.IsNegative() || fee.Denom != tokenCoin.Denom || !tokenCoin.Amount.GT(fee.Amount) {
+	if err != nil || fee.Denom != tokenCoin.Denom || !tokenCoin.Amount.GT(fee.Amount) {
 		return ErrInvalidRefundState.Wrap("invalid original fee")
 	}
 	originalHeight := record.GetOriginalTimeoutHeight()
@@ -95,32 +94,32 @@ func ValidateRefundRecord(record *transwapv1.RefundRecord) error {
 	if HasPartialActiveRefundPacket(record) {
 		return ErrInvalidRefundState.Wrap("active refund packet sequence and timeout must both be set or both be zero")
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE && record.GetNextRetryHeight() != 0 {
+	if record.GetStatus() != RefundStatus_REFUND_STATUS_RETRYABLE && record.GetNextRetryHeight() != 0 {
 		return ErrInvalidRefundState.Wrap("only retryable refunds may have a next retry height")
 	}
 
 	switch record.GetStatus() {
-	case transwapv1.RefundStatus_REFUND_STATUS_PENDING:
+	case RefundStatus_REFUND_STATUS_PENDING:
 		if record.GetRetryCount() != 0 || HasActiveRefundPacket(record) {
 			return ErrInvalidRefundState.Wrap("pending refund has invalid retry or packet state")
 		}
-	case transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT:
+	case RefundStatus_REFUND_STATUS_IN_FLIGHT:
 		if record.GetRetryCount() == 0 || !HasActiveRefundPacket(record) {
 			return ErrInvalidRefundState.Wrap("in-flight refund requires one active packet")
 		}
-	case transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE:
+	case RefundStatus_REFUND_STATUS_RETRYABLE:
 		if HasActiveRefundPacket(record) {
 			return ErrInvalidRefundState.Wrap("retryable refund cannot have an active packet")
 		}
-	case transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE:
+	case RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE:
 		if HasActiveRefundPacket(record) {
 			return ErrInvalidRefundState.Wrap("manual refund cannot have an active packet")
 		}
-	case transwapv1.RefundStatus_REFUND_STATUS_COMPLETED:
+	case RefundStatus_REFUND_STATUS_COMPLETED:
 		if HasActiveRefundPacket(record) {
 			return ErrInvalidRefundState.Wrap("completed refund cannot have an active packet")
 		}
-	case transwapv1.RefundStatus_REFUND_STATUS_CLAIMED:
+	case RefundStatus_REFUND_STATUS_CLAIMED:
 		if HasActiveRefundPacket(record) {
 			return ErrInvalidRefundState.Wrap("claimed refund cannot have an active packet")
 		}
@@ -148,10 +147,29 @@ func ValidateRefundID(refundID string) error {
 	return nil
 }
 
-func HasActiveRefundPacket(record *transwapv1.RefundRecord) bool {
+func HasActiveRefundPacket(record *RefundRecord) bool {
 	return record.GetActivePacketSequence() != 0 && record.GetActiveTimeoutTimestamp() != 0
 }
 
-func HasPartialActiveRefundPacket(record *transwapv1.RefundRecord) bool {
+func HasPartialActiveRefundPacket(record *RefundRecord) bool {
 	return (record.GetActivePacketSequence() == 0) != (record.GetActiveTimeoutTimestamp() == 0)
+}
+
+// CloneRefundRecord returns a protobuf-deep copy without exposing a concrete
+// proto runtime to keeper packages. Generated Marshal/Unmarshal methods copy
+// nested tokens, timeout metadata, byte slices, coins, and BEX reservations.
+func CloneRefundRecord(record *RefundRecord) *RefundRecord {
+	if record == nil {
+		return nil
+	}
+
+	bz, err := record.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	cloned := &RefundRecord{}
+	if err := cloned.Unmarshal(bz); err != nil {
+		panic(err)
+	}
+	return cloned
 }

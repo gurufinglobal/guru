@@ -8,7 +8,7 @@ import "guru/transwap/v1/params.proto";
 import "guru/transwap/v1/refund.proto";
 import "guru/transwap/v1/token.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
 
 // GenesisState defines the ibc-transfer genesis state
 message GenesisState {

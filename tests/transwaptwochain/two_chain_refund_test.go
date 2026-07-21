@@ -29,9 +29,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	"github.com/stretchr/testify/require"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	bexv1 "github.com/gurufinglobal/guru/v3/x/bex/types"
+
 	guruapp "github.com/gurufinglobal/guru/v3/app"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
@@ -266,7 +266,7 @@ func TestProofRelayedRefundTimeoutRetryAndAcknowledgement(t *testing.T) {
 	records := hubApp.TranswapKeeper.GetAllRefundRecords(hubCtx)
 	require.Len(t, records, 1)
 	pending := records[0]
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_PENDING, pending.GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_PENDING, pending.GetStatus())
 	require.Equal(t, originalTimeout, pending.GetOriginalTimeoutTimestamp())
 	require.Zero(t, pending.GetRetryCount())
 	outputPacket := originalOutputPacket(t, hubApp, hubCtx, pending, outputDenom, outputAmount)
@@ -283,7 +283,7 @@ func TestProofRelayedRefundTimeoutRetryAndAcknowledgement(t *testing.T) {
 	hubCtx = chainB.GetContext()
 	firstAttempt := mustSingleRefund(t, hubApp, hubCtx)
 	requireVolumeUsed(t, hubApp, hubCtx, exchange, 0)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, firstAttempt.GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_IN_FLIGHT, firstAttempt.GetStatus())
 	require.Equal(t, uint32(1), firstAttempt.GetRetryCount())
 	require.Equal(t, originalTimeout, firstAttempt.GetOriginalTimeoutTimestamp())
 	require.Greater(t, firstAttempt.GetActiveTimeoutTimestamp(), originalTimeout)
@@ -301,7 +301,7 @@ func TestProofRelayedRefundTimeoutRetryAndAcknowledgement(t *testing.T) {
 	advancePastPacketTimeout(t, coordinator, path.EndpointB, firstRefundPacket)
 	hubCtx = chainB.GetContext()
 	secondAttempt := mustSingleRefund(t, hubApp, hubCtx)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, secondAttempt.GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_IN_FLIGHT, secondAttempt.GetStatus())
 	require.Equal(t, uint32(2), secondAttempt.GetRetryCount())
 	require.NotEqual(t, firstAttempt.GetActivePacketSequence(), secondAttempt.GetActivePacketSequence())
 	require.Greater(t, secondAttempt.GetActiveTimeoutTimestamp(), firstAttempt.GetActiveTimeoutTimestamp())
@@ -351,7 +351,7 @@ func sendNativeTranswapPacket(
 	coin := sdk.NewInt64Coin(denom, amount)
 	require.NoError(t, app.BankKeeper.MintCoins(ctx, transwaptypes.ModuleName, sdk.NewCoins(coin)))
 	require.NoError(t, app.BankKeeper.SendCoinsFromModuleToAccount(ctx, transwaptypes.ModuleName, sender, sdk.NewCoins(coin)))
-	token := &transwapv1.Token{Denom: transwaptypes.NewDenom(denom), Amount: coin.Amount.String()}
+	token := &transwaptypes.Token{Denom: transwaptypes.NewDenom(denom), Amount: coin.Amount.String()}
 	require.NoError(t, app.TranswapKeeper.SendTransfer(
 		ctx,
 		transwaptypes.PortID,
@@ -359,7 +359,7 @@ func sendNativeTranswapPacket(
 		token,
 		sender,
 	))
-	data := &transwapv1.FungibleTokenPacketData{
+	data := &transwaptypes.FungibleTokenPacketData{
 		ExchangeId: exchangeID,
 		Denom:      denom,
 		Amount:     coin.Amount.String(),
@@ -386,7 +386,7 @@ func originalOutputPacket(
 	t *testing.T,
 	app *guruapp.App,
 	ctx sdk.Context,
-	record *transwapv1.RefundRecord,
+	record *transwaptypes.RefundRecord,
 	denom string,
 	amount int64,
 ) channeltypes.Packet {
@@ -414,15 +414,16 @@ func originalOutputPacket(
 	)
 }
 
-func activeRefundPacket(t *testing.T, app *guruapp.App, ctx sdk.Context, record *transwapv1.RefundRecord) channeltypes.Packet {
+func activeRefundPacket(t *testing.T, app *guruapp.App, ctx sdk.Context, record *transwaptypes.RefundRecord) channeltypes.Packet {
 	t.Helper()
 	channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, record.GetRefundSourcePort(), record.GetRefundSourceChannel())
 	require.True(t, found)
 	exchangeID, err := strconv.ParseUint(record.GetExchangeId(), 10, 64)
 	require.NoError(t, err)
+	token := record.GetToken()
 	data := transwaptypes.NewFungibleTokenPacketData(
-		transwaptypes.DenomPath(record.GetToken().GetDenom()),
-		record.GetToken().GetAmount(),
+		transwaptypes.DenomPath(token.GetDenom()),
+		token.GetAmount(),
 		app.BexKeeper.GetReserveAddress(ctx, exchangeID).String(),
 		record.GetReceiver(),
 		record.GetMemo(),
@@ -452,7 +453,7 @@ func advancePastPacketTimeout(
 	require.NoError(t, sourceEndpoint.TimeoutPacket(packet))
 }
 
-func mustSingleRefund(t *testing.T, app *guruapp.App, ctx sdk.Context) *transwapv1.RefundRecord {
+func mustSingleRefund(t *testing.T, app *guruapp.App, ctx sdk.Context) *transwaptypes.RefundRecord {
 	t.Helper()
 	records := app.TranswapKeeper.GetAllRefundRecords(ctx)
 	require.Len(t, records, 1)
@@ -516,7 +517,7 @@ func requireFreshRefundTimeout(
 	app *guruapp.App,
 	chain *ibctesting.TestChain,
 	ctx sdk.Context,
-	record *transwapv1.RefundRecord,
+	record *transwaptypes.RefundRecord,
 ) {
 	t.Helper()
 	channel, found := app.IBCKeeper.ChannelKeeper.GetChannel(ctx, record.GetRefundSourcePort(), record.GetRefundSourceChannel())

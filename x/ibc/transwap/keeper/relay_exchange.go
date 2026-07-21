@@ -13,8 +13,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/internal/telemetry"
@@ -62,7 +60,7 @@ func (k Keeper) receiveTokensToReserve(
 		}
 		k.SetTotalEscrowForDenom(ctx, currentTotalEscrow.Sub(coin))
 	} else {
-		trace := []*transwapv1.Hop{types.NewHop(destPort, destChannel)}
+		trace := []types.Hop{types.NewHop(destPort, destChannel)}
 		token.Denom.Trace = append(trace, token.Denom.Trace...)
 
 		if !k.HasDenom(ctx, types.DenomHash(token.Denom)) {
@@ -96,7 +94,7 @@ func (k Keeper) sendSwapOutputFromReserve(
 	ctx sdk.Context,
 	exchangeID uint64,
 	sourceChannel string,
-	token *transwapv1.Token,
+	token *types.Token,
 ) error {
 	coin, err := types.TokenToCoin(token)
 	if err != nil {
@@ -229,7 +227,7 @@ func (k Keeper) onRecvExchangePacket(
 		return err
 	}
 
-	quote, err := k.BexKeeper.QuoteSwap(ctx, &bexv1.QuoteSwapRequest{
+	quote, err := k.BexKeeper.QuoteSwap(ctx, &bextypes.QuoteSwapRequest{
 		ExchangeId: exchangeID,
 		InputDenom: inputDenom,
 		AmountIn:   data.Token.Amount,
@@ -336,19 +334,19 @@ func (k Keeper) onRecvExchangePacket(
 		clienttypes.ZeroHeight(),
 		sourceTimeoutTimestamp,
 	))
-	refundRecord := &transwapv1.RefundRecord{
+	refundRecord := &types.RefundRecord{
 		Id:                       refundID,
-		Status:                   transwapv1.RefundStatus_REFUND_STATUS_PENDING,
+		Status:                   types.RefundStatus_REFUND_STATUS_PENDING,
 		RefundSourcePort:         destPort,
 		RefundSourceChannel:      destChannel,
-		Token:                    types.CloneToken(refundToken),
+		Token:                    *types.CloneToken(refundToken),
 		Receiver:                 data.Sender,
 		ClaimAddress:             claimAddress.String(),
 		Memo:                     "refund coins through Guru station due to failure on the target chain",
 		ExchangeId:               strconv.FormatUint(exchangeID, 10),
 		OriginalFee:              types.SDKCoinToProto(feeCoin),
 		OriginalTimeoutTimestamp: sourceTimeoutTimestamp,
-		OriginalTimeoutHeight: &transwapv1.RefundHeight{
+		OriginalTimeoutHeight: &types.RefundHeight{
 			RevisionNumber: sourceTimeoutHeight.RevisionNumber,
 			RevisionHeight: sourceTimeoutHeight.RevisionHeight,
 		},
@@ -414,24 +412,21 @@ func localReceivedCoin(
 	if types.DenomHasPrefix(token.Denom, sourcePort, sourceChannel) {
 		token.Denom.Trace = token.Denom.Trace[1:]
 	} else {
-		trace := []*transwapv1.Hop{types.NewHop(destPort, destChannel)}
+		trace := []types.Hop{types.NewHop(destPort, destChannel)}
 		token.Denom.Trace = append(trace, token.Denom.Trace...)
 	}
 
 	return types.TokenToCoin(token)
 }
 
-func outboundChannelFromToken(token *transwapv1.Token) (string, error) {
-	if token == nil || token.Denom == nil {
+func outboundChannelFromToken(token *types.Token) (string, error) {
+	if token == nil {
 		return "", errorsmod.Wrap(bextypes.ErrInvalidRoute, "quote output denom cannot be nil")
 	}
 	if types.DenomIsNative(token.Denom) {
 		return "", errorsmod.Wrapf(bextypes.ErrInvalidRoute, "quote output denom %s has no IBC trace", types.DenomPath(token.Denom))
 	}
 	hop := token.Denom.Trace[0]
-	if hop == nil {
-		return "", errorsmod.Wrap(bextypes.ErrInvalidRoute, "quote output first hop cannot be nil")
-	}
 	if hop.PortId != types.PortID {
 		return "", errorsmod.Wrapf(bextypes.ErrInvalidRoute, "quote output port %s does not match %s", hop.PortId, types.PortID)
 	}

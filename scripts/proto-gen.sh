@@ -28,20 +28,15 @@ find "$gogo_module_root" -type f \
   \( -name '*.pb.go' -o -name '*.pb.gw.go' \) -print |
   while IFS= read -r file; do
     relative=${file#"$gogo_module_root/"}
-    case "$relative" in
-      x/*/types/*)
-        module=${relative#x/}
-        module=${module%%/types/*}
-        case "$module" in
-          "" | */*) printf '%s\n' "$relative" >> "$unexpected" ;;
-        esac
-        ;;
+    directory=${relative%/*}
+    case "$directory" in
+      x/*/types) ;;
       *) printf '%s\n' "$relative" >> "$unexpected" ;;
     esac
   done
 
 if [ -s "$unexpected" ]; then
-  echo "generated gogo files must use github.com/gurufinglobal/guru/v3/x/<module>/types:" >&2
+  echo "generated gogo files must use github.com/gurufinglobal/guru/v3/x/<module-path>/types:" >&2
   sort "$unexpected" >&2
   exit 1
 fi
@@ -51,33 +46,37 @@ if [ ! -d "$pulsar_stage" ]; then
   exit 1
 fi
 
-for destination in x/*/types; do
-  if [ ! -d "$destination" ] || [ -d "$gogo_module_root/$destination" ]; then
-    continue
-  fi
-  find "$destination" -maxdepth 1 -type f \
-    \( -name '*.pb.go' -o -name '*.pb.gw.go' \) -delete
-done
+find x -type d -name types -print |
+  while IFS= read -r destination; do
+    if [ -d "$gogo_module_root/$destination" ]; then
+      continue
+    fi
+    find "$destination" -maxdepth 1 -type f \
+      \( -name '*.pb.go' -o -name '*.pb.gw.go' \) -delete
+  done
 
-found=false
-for generated in "$gogo_generated_root"/*/types; do
-  if [ ! -d "$generated" ]; then
-    continue
-  fi
+generated_dirs="$stage/generated-gogo-dirs"
+find "$gogo_generated_root" -type d -name types -print > "$generated_dirs"
+if [ ! -s "$generated_dirs" ]; then
+  echo "no generated gogo packages found under $gogo_generated_root" >&2
+  exit 1
+fi
 
-  found=true
+while IFS= read -r generated; do
   destination=${generated#"$gogo_module_root/"}
-  mkdir -p "$destination"
+  case "$destination" in
+    x/*/types) ;;
+    *)
+      echo "invalid generated gogo package directory: $destination" >&2
+      exit 1
+      ;;
+  esac
 
+  mkdir -p "$destination"
   find "$destination" -maxdepth 1 -type f \
     \( -name '*.pb.go' -o -name '*.pb.gw.go' \) -delete
   cp -R "$generated/." "$destination/"
-done
-
-if [ "$found" = false ]; then
-  echo "no generated gogo packages found under $gogo_generated_root/*/types" >&2
-  exit 1
-fi
+done < "$generated_dirs"
 
 mkdir -p api
 if [ -d "$pulsar_destination" ]; then

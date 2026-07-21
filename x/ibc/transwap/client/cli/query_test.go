@@ -3,7 +3,7 @@ package cli
 import (
 	"testing"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	transwapv1 "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,16 +16,16 @@ func TestGetQueryCmdHasSubcommands(t *testing.T) {
 	}
 }
 
-func TestReadPulsarPageRequest(t *testing.T) {
+func TestReadPageRequest(t *testing.T) {
 	cmd := GetCmdQueryDenoms()
-	pageReq, err := readPulsarPageRequest(cmd)
+	pageReq, err := readPageRequest(cmd)
 	require.NoError(t, err)
 	require.NotNil(t, pageReq)
 	require.Equal(t, uint64(100), pageReq.Limit)
 	require.Equal(t, []byte{}, pageReq.Key)
 
 	require.NoError(t, cmd.Flags().Set("limit", "25"))
-	pageReq, err = readPulsarPageRequest(cmd)
+	pageReq, err = readPageRequest(cmd)
 	require.NoError(t, err)
 	require.Equal(t, uint64(25), pageReq.Limit)
 }

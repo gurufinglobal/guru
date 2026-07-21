@@ -8,15 +8,12 @@ import (
 	"io"
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
@@ -43,9 +40,9 @@ func TestAppModuleGenesisRoundTrip(t *testing.T) {
 		sdk.NewCoins(sdk.NewInt64Coin("uatom", 125)),
 	)
 	receiver := sdk.AccAddress(bytes.Repeat([]byte{0x42}, 20))
-	pending := refundRecordForGenesisTest(receiver, 12, transwapv1.RefundStatus_REFUND_STATUS_PENDING)
-	inFlight := refundRecordForGenesisTest(receiver, 13, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT)
-	retryable := refundRecordForGenesisTest(receiver, 14, transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE)
+	pending := refundRecordForGenesisTest(receiver, 12, types.RefundStatus_REFUND_STATUS_PENDING)
+	inFlight := refundRecordForGenesisTest(receiver, 13, types.RefundStatus_REFUND_STATUS_IN_FLIGHT)
+	retryable := refundRecordForGenesisTest(receiver, 14, types.RefundStatus_REFUND_STATUS_RETRYABLE)
 	inFlight.ActivePacketSequence = 88
 	inFlight.ActiveTimeoutTimestamp = 1_700_000_300_000_000_000
 	inFlight.RetryCount = 1
@@ -73,8 +70,8 @@ func TestAppModuleGenesisRoundTrip(t *testing.T) {
 
 	activePacket := channeltypes.NewPacket(
 		types.FungibleTokenPacketDataBytes(types.NewFungibleTokenPacketData(
-			types.DenomPath(inFlight.GetToken().GetDenom()),
-			inFlight.GetToken().GetAmount(),
+			types.DenomPath(inFlight.Token.Denom),
+			inFlight.Token.Amount,
 			bex.reserve.String(),
 			inFlight.GetReceiver(),
 			inFlight.GetMemo(),
@@ -88,7 +85,7 @@ func TestAppModuleGenesisRoundTrip(t *testing.T) {
 		inFlight.GetActiveTimeoutTimestamp(),
 	)
 	ics4.recordPacketCommitment(activePacket)
-	state.Refunds = []*transwapv1.RefundRecord{pending, inFlight, retryable}
+	state.Refunds = []*types.RefundRecord{pending, inFlight, retryable}
 
 	require.NoError(t, bex.AddPendingLiability(ctx, 7, sdk.NewInt64Coin("uatom", 300)))
 	require.NoError(t, bex.LockExchangeFee(ctx, 7, sdk.NewInt64Coin("uatom", 1)))
@@ -115,28 +112,90 @@ func TestAppModuleGenesisRoundTrip(t *testing.T) {
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("uatom", 125)), gotEscrowed)
 }
 
+func TestWriteGenesisStatePreservesLegacyPulsarEncodingJSON(t *testing.T) {
+	state := &types.GenesisState{
+		PortId: types.PortID,
+		Denoms: types.Denoms{
+			types.NewDenom("uatom"),
+			types.NewDenom("uusdc", types.NewHop(types.PortID, "channel-7")),
+		},
+		TotalEscrowed: sdk.NewCoins(sdk.NewInt64Coin("uatom", 125)),
+		Params: &types.Params{
+			MaxRefundRetries:     3,
+			RefundTimeoutWindow:  300_000_000_000,
+			MinRelaySafetyMargin: 30_000_000_000,
+		},
+		Refunds: []*types.RefundRecord{{
+			Id:                             "transwap/channel-7/12",
+			Status:                         types.RefundStatus_REFUND_STATUS_PENDING,
+			RefundSourcePort:               types.PortID,
+			RefundSourceChannel:            "channel-0",
+			Token:                          types.Token{Denom: types.NewDenom("uatom"), Amount: "100"},
+			Receiver:                       "receiver",
+			ClaimAddress:                   "claim-address",
+			Memo:                           "memo",
+			ExchangeId:                     "7",
+			OriginalFee:                    sdk.NewInt64Coin("uatom", 1),
+			OriginalTimeoutTimestamp:       9,
+			OriginalTimeoutHeight:          &types.RefundHeight{RevisionNumber: 2, RevisionHeight: 99},
+			OriginalOutputPort:             types.PortID,
+			OriginalOutputChannel:          "channel-7",
+			OriginalOutputSequence:         12,
+			OriginalOutputPacketCommitment: []byte{1, 2, 3},
+			VolumeReservation: &bextypes.VolumeReservation{
+				ExchangeId:             7,
+				Direction:              bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
+				EpochStartUnix:         11,
+				EpochSeconds:           60,
+				Amount:                 "100",
+				VolumeWindowGeneration: 2,
+			},
+		}},
+	}
+
+	fields := newTranswapGenesisFields()
+	require.NoError(t, writeGenesisState(fields.target, state))
+	require.Equal(t, `"transwap"`+"\n", string(fields.fields["port_id"]))
+	require.Equal(
+		t,
+		`[{"base":"uatom"},{"base":"uusdc","trace":[{"port_id":"transwap","channel_id":"channel-7"}]}]`+"\n",
+		string(fields.fields["denoms"]),
+	)
+	require.Equal(t, `[{"denom":"uatom","amount":"125"}]`+"\n", string(fields.fields["total_escrowed"]))
+	require.Equal(
+		t,
+		`{"max_refund_retries":3,"refund_timeout_window":300000000000,"min_relay_safety_margin":30000000000}`+"\n",
+		string(fields.fields["params"]),
+	)
+	require.Equal(
+		t,
+		`[{"id":"transwap/channel-7/12","status":1,"refund_source_port":"transwap","refund_source_channel":"channel-0","token":{"denom":{"base":"uatom"},"amount":"100"},"receiver":"receiver","claim_address":"claim-address","memo":"memo","exchange_id":"7","original_fee":{"denom":"uatom","amount":"1"},"original_timeout_timestamp":9,"original_timeout_height":{"revision_number":2,"revision_height":99},"original_output_port":"transwap","original_output_channel":"channel-7","original_output_sequence":12,"original_output_packet_commitment":"AQID","volume_reservation":{"exchange_id":7,"direction":1,"epoch_start_unix":11,"epoch_seconds":60,"amount":"100","volume_window_generation":2}}]`+"\n",
+		string(fields.fields["refunds"]),
+	)
+}
+
 func refundRecordForGenesisTest(
 	receiver sdk.AccAddress,
 	sequence uint64,
-	status transwapv1.RefundStatus,
-) *transwapv1.RefundRecord {
+	status types.RefundStatus,
+) *types.RefundRecord {
 	feeAmount := int64(0)
-	if status == transwapv1.RefundStatus_REFUND_STATUS_PENDING {
+	if status == types.RefundStatus_REFUND_STATUS_PENDING {
 		feeAmount = 1
 	}
-	record := &transwapv1.RefundRecord{
+	record := &types.RefundRecord{
 		Id:                       types.RefundID(types.PortID, "channel-7", sequence),
 		Status:                   status,
 		RefundSourcePort:         types.PortID,
 		RefundSourceChannel:      "channel-0",
-		Token:                    &transwapv1.Token{Denom: types.NewDenom("uatom"), Amount: "100"},
+		Token:                    types.Token{Denom: types.NewDenom("uatom"), Amount: "100"},
 		Receiver:                 receiver.String(),
 		ClaimAddress:             receiver.String(),
 		Memo:                     "genesis refund",
 		ExchangeId:               "7",
 		OriginalFee:              types.SDKCoinToProto(sdk.NewInt64Coin("uatom", feeAmount)),
 		OriginalTimeoutTimestamp: 1_700_000_000_000_000_000,
-		OriginalTimeoutHeight:    &transwapv1.RefundHeight{RevisionNumber: 2, RevisionHeight: 99},
+		OriginalTimeoutHeight:    &types.RefundHeight{RevisionNumber: 2, RevisionHeight: 99},
 		OriginalOutputPort:       types.PortID,
 		OriginalOutputChannel:    "channel-7",
 		OriginalOutputSequence:   sequence,
@@ -157,24 +216,24 @@ func TestReadGenesisStateAcceptsCanonicalProtoJSONUint64Strings(t *testing.T) {
 
 	receiver := sdk.AccAddress(bytes.Repeat([]byte{0x42}, 20))
 	refundID := types.RefundID(types.PortID, "channel-7", 12)
-	refund := &transwapv1.RefundRecord{
+	refund := &types.RefundRecord{
 		Id:                       refundID,
-		Status:                   transwapv1.RefundStatus_REFUND_STATUS_PENDING,
+		Status:                   types.RefundStatus_REFUND_STATUS_PENDING,
 		RefundSourcePort:         types.PortID,
 		RefundSourceChannel:      "channel-0",
-		Token:                    &transwapv1.Token{Denom: types.NewDenom("uatom"), Amount: "2"},
+		Token:                    types.Token{Denom: types.NewDenom("uatom"), Amount: "2"},
 		Receiver:                 receiver.String(),
 		ClaimAddress:             receiver.String(),
 		ExchangeId:               "7",
 		OriginalFee:              types.SDKCoinToProto(sdk.NewInt64Coin("uatom", 0)),
 		OriginalTimeoutTimestamp: 1_700_000_000_000_000_000,
-		OriginalTimeoutHeight:    &transwapv1.RefundHeight{RevisionNumber: 2, RevisionHeight: 99},
+		OriginalTimeoutHeight:    &types.RefundHeight{RevisionNumber: 2, RevisionHeight: 99},
 		OriginalOutputPort:       types.PortID,
 		OriginalOutputChannel:    "channel-7",
 		OriginalOutputSequence:   12,
 		VolumeReservation:        genesisTestVolumeReservation(),
 	}
-	encoded, err := protojson.Marshal(&transwapv1.GenesisState{Refunds: []*transwapv1.RefundRecord{refund}})
+	encoded, err := types.ModuleCdc.MarshalJSON(&types.GenesisState{Refunds: []*types.RefundRecord{refund}})
 	require.NoError(t, err)
 	var encodedFields map[string]json.RawMessage
 	require.NoError(t, json.Unmarshal(encoded, &encodedFields))
@@ -189,10 +248,10 @@ func TestReadGenesisStateAcceptsCanonicalProtoJSONUint64Strings(t *testing.T) {
 	require.Equal(t, refund.GetOriginalOutputSequence(), state.GetRefunds()[0].GetOriginalOutputSequence())
 }
 
-func genesisTestVolumeReservation() *bexv1.VolumeReservation {
-	return &bexv1.VolumeReservation{
+func genesisTestVolumeReservation() *bextypes.VolumeReservation {
+	return &bextypes.VolumeReservation{
 		ExchangeId:             7,
-		Direction:              bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		Direction:              bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		EpochSeconds:           bextypes.MinVolumeEpochSeconds,
 		Amount:                 "100",
 		VolumeWindowGeneration: 1,
@@ -202,7 +261,7 @@ func genesisTestVolumeReservation() *bexv1.VolumeReservation {
 func TestAppModuleGenesisValidationRejectsInvalidStateBeforeWrite(t *testing.T) {
 	tests := []struct {
 		name  string
-		state *transwapv1.GenesisState
+		state *types.GenesisState
 	}{
 		{
 			name:  "invalid port",
@@ -217,11 +276,11 @@ func TestAppModuleGenesisValidationRejectsInvalidStateBeforeWrite(t *testing.T) 
 		},
 		{
 			name: "invalid total escrow denom",
-			state: &transwapv1.GenesisState{
+			state: &types.GenesisState{
 				PortId: types.PortID,
-				TotalEscrowed: []*basev1beta1.Coin{{
+				TotalEscrowed: sdk.Coins{{
 					Denom:  "bad denom",
-					Amount: "1",
+					Amount: sdkmath.OneInt(),
 				}},
 			},
 		},

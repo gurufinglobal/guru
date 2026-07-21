@@ -7,32 +7,31 @@ import (
 	host "github.com/cosmos/ibc-go/v11/modules/core/24-host"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 )
 
 // NewGenesisState creates a new transwap GenesisState instance.
-func NewGenesisState(portID string, denoms Denoms, totalEscrowed sdk.Coins) *transwapv1.GenesisState {
-	return &transwapv1.GenesisState{
+func NewGenesisState(portID string, denoms Denoms, totalEscrowed sdk.Coins) *GenesisState {
+	return &GenesisState{
 		PortId:        portID,
 		Denoms:        denoms,
-		TotalEscrowed: SDKCoinsToProto(totalEscrowed),
+		TotalEscrowed: append(sdk.Coins(nil), totalEscrowed...),
 		Params:        DefaultParams(),
 	}
 }
 
 // DefaultGenesisState returns a GenesisState with transwap as the default PortID.
-func DefaultGenesisState() *transwapv1.GenesisState {
-	return &transwapv1.GenesisState{
+func DefaultGenesisState() *GenesisState {
+	return &GenesisState{
 		PortId:        PortID,
 		Denoms:        Denoms{},
-		TotalEscrowed: SDKCoinsToProto(sdk.Coins{}),
+		TotalEscrowed: sdk.Coins{},
 		Params:        DefaultParams(),
-		Refunds:       []*transwapv1.RefundRecord{},
+		Refunds:       []*RefundRecord{},
 	}
 }
 
 // ValidateGenesisState performs basic genesis state validation.
-func ValidateGenesisState(gs *transwapv1.GenesisState) error {
+func ValidateGenesisState(gs *GenesisState) error {
 	if gs == nil {
 		return fmt.Errorf("genesis state cannot be nil")
 	}
@@ -42,11 +41,7 @@ func ValidateGenesisState(gs *transwapv1.GenesisState) error {
 	if err := Denoms(gs.GetDenoms()).Validate(); err != nil {
 		return err
 	}
-	totalEscrowed, err := ProtoCoinsToSDK(gs.GetTotalEscrowed())
-	if err != nil {
-		return err
-	}
-	if err := totalEscrowed.Validate(); err != nil {
+	if err := gs.GetTotalEscrowed().Validate(); err != nil {
 		return err
 	}
 	if err := ValidateParams(gs.GetParams()); err != nil {
@@ -63,7 +58,7 @@ func ValidateGenesisState(gs *transwapv1.GenesisState) error {
 		}
 		refundIDs[refund.GetId()] = struct{}{}
 		switch refund.GetStatus() {
-		case transwapv1.RefundStatus_REFUND_STATUS_PENDING:
+		case RefundStatus_REFUND_STATUS_PENDING:
 			key := refundPacketIdentity(
 				refund.GetOriginalOutputPort(),
 				refund.GetOriginalOutputChannel(),
@@ -73,7 +68,7 @@ func ValidateGenesisState(gs *transwapv1.GenesisState) error {
 				return fmt.Errorf("refunds %q and %q share live packet %s", existing, refund.GetId(), key)
 			}
 			livePackets[key] = refund.GetId()
-		case transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT:
+		case RefundStatus_REFUND_STATUS_IN_FLIGHT:
 			key := refundPacketIdentity(
 				refund.GetRefundSourcePort(),
 				refund.GetRefundSourceChannel(),
@@ -83,7 +78,7 @@ func ValidateGenesisState(gs *transwapv1.GenesisState) error {
 				return fmt.Errorf("refunds %q and %q share live packet %s", existing, refund.GetId(), key)
 			}
 			livePackets[key] = refund.GetId()
-		case transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE:
+		case RefundStatus_REFUND_STATUS_RETRYABLE:
 			if refund.GetNextRetryHeight() == 0 {
 				return fmt.Errorf("retryable refund %q must be scheduled", refund.GetId())
 			}

@@ -28,7 +28,6 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	keeperpkg "github.com/gurufinglobal/guru/v3/x/ibc/transwap/keeper"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
@@ -158,11 +157,11 @@ type moduleAckRefundBexKeeper struct {
 	ledgers map[string]sdk.Coins
 }
 
-func (*moduleAckRefundBexKeeper) ValidateSwapInput(context.Context, uint64, string, string) (bexv1.SwapDirection, error) {
-	return bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
+func (*moduleAckRefundBexKeeper) ValidateSwapInput(context.Context, uint64, string, string) (bextypes.SwapDirection, error) {
+	return bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
 }
 
-func (*moduleAckRefundBexKeeper) QuoteSwap(context.Context, *bexv1.QuoteSwapRequest) (*bexv1.QuoteSwapResponse, error) {
+func (*moduleAckRefundBexKeeper) QuoteSwap(context.Context, *bextypes.QuoteSwapRequest) (*bextypes.QuoteSwapResponse, error) {
 	return nil, errors.New("unexpected quote")
 }
 
@@ -192,11 +191,11 @@ func (m *moduleAckRefundBexKeeper) ClaimRefundFromReserve(ctx context.Context, _
 	return nil
 }
 
-func (*moduleAckRefundBexKeeper) ReserveVolumeWindow(_ context.Context, exchangeID uint64, direction bexv1.SwapDirection, amount sdkmath.Int) (*bexv1.VolumeReservation, error) {
-	return &bexv1.VolumeReservation{ExchangeId: exchangeID, Direction: direction, EpochSeconds: bextypes.MinVolumeEpochSeconds, Amount: amount.String(), VolumeWindowGeneration: 1}, nil
+func (*moduleAckRefundBexKeeper) ReserveVolumeWindow(_ context.Context, exchangeID uint64, direction bextypes.SwapDirection, amount sdkmath.Int) (*bextypes.VolumeReservation, error) {
+	return &bextypes.VolumeReservation{ExchangeId: exchangeID, Direction: direction, EpochSeconds: bextypes.MinVolumeEpochSeconds, Amount: amount.String(), VolumeWindowGeneration: 1}, nil
 }
 
-func (*moduleAckRefundBexKeeper) ReleaseVolumeWindow(context.Context, *bexv1.VolumeReservation) error {
+func (*moduleAckRefundBexKeeper) ReleaseVolumeWindow(context.Context, *bextypes.VolumeReservation) error {
 	return nil
 }
 

@@ -7,7 +7,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	bexv1 "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
 )
 

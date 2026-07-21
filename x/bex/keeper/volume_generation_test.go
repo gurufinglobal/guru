@@ -7,35 +7,33 @@ import (
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestVolumeGenerationPreventsD1D2D1ReuseAcrossDirections(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	directions := []bexv1.SwapDirection{
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
-		bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A,
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	directions := []types.SwapDirection{
+		types.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		types.SwapDirection_SWAP_DIRECTION_B_TO_A,
 	}
-	d1Amounts := map[bexv1.SwapDirection]int64{
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B: 17,
-		bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A: 23,
+	d1Amounts := map[types.SwapDirection]int64{
+		types.SwapDirection_SWAP_DIRECTION_A_TO_B: 17,
+		types.SwapDirection_SWAP_DIRECTION_B_TO_A: 23,
 	}
-	d2Amounts := map[bexv1.SwapDirection]int64{
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B: 3,
-		bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A: 5,
+	d2Amounts := map[types.SwapDirection]int64{
+		types.SwapDirection_SWAP_DIRECTION_A_TO_B: 3,
+		types.SwapDirection_SWAP_DIRECTION_B_TO_A: 5,
 	}
-	finalAmounts := map[bexv1.SwapDirection]int64{
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B: 7,
-		bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A: 11,
+	finalAmounts := map[types.SwapDirection]int64{
+		types.SwapDirection_SWAP_DIRECTION_A_TO_B: 7,
+		types.SwapDirection_SWAP_DIRECTION_B_TO_A: 11,
 	}
 
-	firstD1Keys := make(map[bexv1.SwapDirection]volumeWindowKey, len(directions))
+	firstD1Keys := make(map[types.SwapDirection]volumeWindowKey, len(directions))
 	for _, direction := range directions {
 		firstD1Keys[direction] = currentVolumeKey(
 			f.ctx.BlockTime(),
@@ -58,7 +56,7 @@ func TestVolumeGenerationPreventsD1D2D1ReuseAcrossDirections(t *testing.T) {
 		f.admin,
 		exchange.GetId(),
 		exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{VolumeEpochSeconds: wrapperspb.UInt32(d2)},
+		&types.ExchangeUpdatePatch{VolumeEpochSeconds: types.NewUInt32Value(d2)},
 	)
 	require.NoError(t, err)
 	require.Equal(t, exchange.GetVolumeWindowGeneration()+1, d2Exchange.GetVolumeWindowGeneration())
@@ -76,7 +74,7 @@ func TestVolumeGenerationPreventsD1D2D1ReuseAcrossDirections(t *testing.T) {
 		f.admin,
 		d2Exchange.GetId(),
 		d2Exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{VolumeEpochSeconds: wrapperspb.UInt32(minVolumeEpochSecs)},
+		&types.ExchangeUpdatePatch{VolumeEpochSeconds: types.NewUInt32Value(minVolumeEpochSecs)},
 	)
 	require.NoError(t, err)
 	require.Equal(t, d2Exchange.GetVolumeWindowGeneration()+1, finalD1Exchange.GetVolumeWindowGeneration())
@@ -114,8 +112,8 @@ func TestVolumeGenerationPreventsD1D2D1ReuseAcrossDirections(t *testing.T) {
 func TestSameDurationPendingQueryAndActivationUseNextGeneration(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	direction := types.SwapDirection_SWAP_DIRECTION_A_TO_B
 	oldKey := currentVolumeKey(
 		f.ctx.BlockTime(),
 		exchange.GetId(),
@@ -131,9 +129,9 @@ func TestSameDurationPendingQueryAndActivationUseNextGeneration(t *testing.T) {
 		f.admin,
 		exchange.GetId(),
 		exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{
-			PendingVolumeEpochSeconds:         wrapperspb.UInt32(exchange.GetVolumeEpochSeconds()),
-			PendingVolumeEpochEffectiveAtUnix: wrapperspb.UInt64(effectiveAt),
+		&types.ExchangeUpdatePatch{
+			PendingVolumeEpochSeconds:         types.NewUInt32Value(exchange.GetVolumeEpochSeconds()),
+			PendingVolumeEpochEffectiveAtUnix: types.NewUInt64Value(effectiveAt),
 		},
 	)
 	require.NoError(t, err)
@@ -141,7 +139,7 @@ func TestSameDurationPendingQueryAndActivationUseNextGeneration(t *testing.T) {
 
 	beforeQuery, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	queryResponse, err := NewQueryServer(&f.keeper).VolumeWindow(f.ctx, &bexv1.QueryVolumeWindowRequest{
+	queryResponse, err := NewQueryServer(&f.keeper).VolumeWindow(f.ctx, &types.QueryVolumeWindowRequest{
 		ExchangeId: exchange.GetId(),
 		Direction:  direction,
 	})
@@ -151,7 +149,7 @@ func TestSameDurationPendingQueryAndActivationUseNextGeneration(t *testing.T) {
 	require.Equal(t, pending.GetVolumeWindowGeneration()+1, queryResponse.GetWindow().GetVolumeWindowGeneration())
 	afterQuery, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	require.True(t, proto.Equal(beforeQuery, afterQuery), "query must not persist due activation")
+	require.True(t, types.EqualMessages(beforeQuery, afterQuery), "query must not persist due activation")
 
 	eventCount := len(f.ctx.EventManager().Events())
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), direction, sdkmath.NewInt(4)))
@@ -194,21 +192,21 @@ func TestSameDurationPendingQueryAndActivationUseNextGeneration(t *testing.T) {
 func TestVolumeGenerationCapFailureRollsBackActivationPruneAndEvents(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	direction := types.SwapDirection_SWAP_DIRECTION_A_TO_B
 	effectiveAt := uint64(f.ctx.BlockTime().Unix() + 1)
 	pending, err := f.keeper.UpdateExchange(
 		f.ctx,
 		f.admin,
 		exchange.GetId(),
 		exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{
-			PendingVolumeEpochSeconds:         wrapperspb.UInt32(minVolumeEpochSecs * 2),
-			PendingVolumeEpochEffectiveAtUnix: wrapperspb.UInt64(effectiveAt),
+		&types.ExchangeUpdatePatch{
+			PendingVolumeEpochSeconds:         types.NewUInt32Value(minVolumeEpochSecs * 2),
+			PendingVolumeEpochEffectiveAtUnix: types.NewUInt64Value(effectiveAt),
 		},
 	)
 	require.NoError(t, err)
-	pendingSnapshot := proto.Clone(pending).(*bexv1.Exchange)
+	pendingSnapshot := types.CloneMessage(pending)
 	futureCtx := f.ctx.WithBlockTime(f.ctx.BlockTime().Add(2 * time.Second))
 	currentStart := uint64(futureCtx.BlockTime().Unix()) / uint64(minVolumeEpochSecs) * uint64(minVolumeEpochSecs)
 	expiredKey := volumeWindowKeyFromStart(
@@ -234,7 +232,7 @@ func TestVolumeGenerationCapFailureRollsBackActivationPruneAndEvents(t *testing.
 
 	unchanged, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	require.True(t, proto.Equal(pendingSnapshot, unchanged))
+	require.True(t, types.EqualMessages(pendingSnapshot, unchanged))
 	require.Equal(t, pendingSnapshot.GetVolumeWindowGeneration(), unchanged.GetVolumeWindowGeneration())
 	require.Equal(t, pendingSnapshot.GetRevision(), unchanged.GetRevision())
 	require.Equal(t, pendingSnapshot.GetPendingVolumeEpochSeconds(), unchanged.GetPendingVolumeEpochSeconds())
@@ -249,12 +247,12 @@ func TestVolumeGenerationCapFailureRollsBackActivationPruneAndEvents(t *testing.
 func TestVolumeGenerationChangesOnlyForAccountingIdentity(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	directions := []bexv1.SwapDirection{
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
-		bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A,
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	directions := []types.SwapDirection{
+		types.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		types.SwapDirection_SWAP_DIRECTION_B_TO_A,
 	}
-	oldKeys := make(map[bexv1.SwapDirection]volumeWindowKey, len(directions))
+	oldKeys := make(map[types.SwapDirection]volumeWindowKey, len(directions))
 	for i, direction := range directions {
 		oldKeys[direction] = currentVolumeKey(
 			f.ctx.BlockTime(),
@@ -277,12 +275,12 @@ func TestVolumeGenerationChangesOnlyForAccountingIdentity(t *testing.T) {
 		f.admin,
 		exchange.GetId(),
 		exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{
-			MaxOracleStalenessSeconds: wrapperspb.UInt32(exchange.GetMaxOracleStalenessSeconds() + 1),
-			FeeBpsAToB:                wrapperspb.UInt32(exchange.GetFeeBpsAToB() + 1),
-			VolumeCapAToB:             wrapperspb.String("999"),
+		&types.ExchangeUpdatePatch{
+			MaxOracleStalenessSeconds: types.NewUInt32Value(exchange.GetMaxOracleStalenessSeconds() + 1),
+			FeeBpsAToB:                types.NewUInt32Value(exchange.GetFeeBpsAToB() + 1),
+			VolumeCapAToB:             types.NewStringValue("999"),
 			Metadata:                  map[string]string{"accounting": "unchanged"},
-			NewAdminAddress:           wrapperspb.String(nextAdmin),
+			NewAdminAddress:           types.NewStringValue(nextAdmin),
 		},
 	)
 	require.NoError(t, err)
@@ -294,8 +292,8 @@ func TestVolumeGenerationChangesOnlyForAccountingIdentity(t *testing.T) {
 		nextAdmin,
 		unrelated.GetId(),
 		unrelated.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{
-			Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+		&types.ExchangeUpdatePatch{
+			Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
 		},
 	)
 	require.NoError(t, err)
@@ -306,9 +304,9 @@ func TestVolumeGenerationChangesOnlyForAccountingIdentity(t *testing.T) {
 		nextAdmin,
 		inactive.GetId(),
 		inactive.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{
-			DenomA:   wrapperspb.String("uatom"),
-			ChannelA: wrapperspb.String("channel-2"),
+		&types.ExchangeUpdatePatch{
+			DenomA:   types.NewStringValue("uatom"),
+			ChannelA: types.NewStringValue("channel-2"),
 		},
 	)
 	require.NoError(t, err)
@@ -328,9 +326,9 @@ func TestVolumeGenerationChangesOnlyForAccountingIdentity(t *testing.T) {
 		nextAdmin,
 		routed.GetId(),
 		routed.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{
-			DenomA:   wrapperspb.String(routed.GetDenomA()),
-			ChannelA: wrapperspb.String(routed.GetChannelA()),
+		&types.ExchangeUpdatePatch{
+			DenomA:   types.NewStringValue(routed.GetDenomA()),
+			ChannelA: types.NewStringValue(routed.GetChannelA()),
 		},
 	)
 	require.ErrorIs(t, err, types.ErrNoOpUpdate)
@@ -345,7 +343,7 @@ func TestVolumeGenerationOverflowIsRejectedWithoutMutation(t *testing.T) {
 	t.Run("immediate epoch update", func(t *testing.T) {
 		f := setupKeeperFixture(t)
 		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+		exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 		exhausted := cloneExchange(exchange)
 		exhausted.VolumeWindowGeneration = ^uint64(0)
 		require.NoError(t, f.keeper.exchanges.Set(f.ctx, exhausted.GetId(), exhausted))
@@ -356,19 +354,19 @@ func TestVolumeGenerationOverflowIsRejectedWithoutMutation(t *testing.T) {
 			f.admin,
 			exhausted.GetId(),
 			exhausted.GetRevision(),
-			&bexv1.ExchangeUpdatePatch{VolumeEpochSeconds: wrapperspb.UInt32(minVolumeEpochSecs * 2)},
+			&types.ExchangeUpdatePatch{VolumeEpochSeconds: types.NewUInt32Value(minVolumeEpochSecs * 2)},
 		)
 		require.ErrorIs(t, err, types.ErrInvariantViolation)
 		persisted, err := f.keeper.GetExchange(f.ctx, exhausted.GetId())
 		require.NoError(t, err)
-		require.True(t, proto.Equal(exhausted, persisted))
+		require.True(t, types.EqualMessages(exhausted, persisted))
 		require.Len(t, f.ctx.EventManager().Events(), eventCount)
 	})
 
 	t.Run("due pending activation", func(t *testing.T) {
 		f := setupKeeperFixture(t)
 		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+		exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 		exhausted := cloneExchange(exchange)
 		exhausted.VolumeWindowGeneration = ^uint64(0)
 		exhausted.PendingVolumeEpochSeconds = minVolumeEpochSecs * 2
@@ -379,19 +377,19 @@ func TestVolumeGenerationOverflowIsRejectedWithoutMutation(t *testing.T) {
 		_, err := f.keeper.GetCurrentVolumeAmount(
 			f.ctx,
 			exhausted,
-			bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		)
 		require.ErrorIs(t, err, types.ErrInvariantViolation)
 		err = f.keeper.RecordVolumeWindow(
 			f.ctx,
 			exhausted.GetId(),
-			bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 			sdkmath.OneInt(),
 		)
 		require.ErrorIs(t, err, types.ErrInvariantViolation)
 		persisted, err := f.keeper.GetExchange(f.ctx, exhausted.GetId())
 		require.NoError(t, err)
-		require.True(t, proto.Equal(exhausted, persisted))
+		require.True(t, types.EqualMessages(exhausted, persisted))
 		require.Len(t, f.ctx.EventManager().Events(), eventCount)
 	})
 }
@@ -399,17 +397,17 @@ func TestVolumeGenerationOverflowIsRejectedWithoutMutation(t *testing.T) {
 func TestVolumeWindowInvariantRejectsInvalidGeneration(t *testing.T) {
 	for _, testCase := range []struct {
 		name       string
-		generation func(*bexv1.Exchange) uint64
+		generation func(*types.Exchange) uint64
 	}{
 		{
 			name: "zero",
-			generation: func(*bexv1.Exchange) uint64 {
+			generation: func(*types.Exchange) uint64 {
 				return 0
 			},
 		},
 		{
 			name: "greater than exchange",
-			generation: func(exchange *bexv1.Exchange) uint64 {
+			generation: func(exchange *types.Exchange) uint64 {
 				return exchange.GetVolumeWindowGeneration() + 1
 			},
 		},
@@ -417,11 +415,11 @@ func TestVolumeWindowInvariantRejectsInvalidGeneration(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			f := setupKeeperFixture(t)
 			require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-			exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+			exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 			key := currentVolumeKey(
 				f.ctx.BlockTime(),
 				exchange.GetId(),
-				bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+				types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 				exchange.GetVolumeEpochSeconds(),
 				testCase.generation(exchange),
 			)
@@ -434,14 +432,14 @@ func TestVolumeWindowInvariantRejectsInvalidGeneration(t *testing.T) {
 func TestVolumeGenerationKeeperGenesisRoundTripPreservesDistinctRows(t *testing.T) {
 	source := setupKeeperFixture(t)
 	require.NoError(t, source.keeper.RegisterAdmin(source.ctx, source.moderator, source.admin))
-	exchange := registerExchange(t, source, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, source, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	current := cloneExchange(exchange)
 	current.VolumeWindowGeneration = 2
 	require.NoError(t, source.keeper.exchanges.Set(source.ctx, current.GetId(), current))
 
 	epochSeconds := current.GetVolumeEpochSeconds()
 	epochStart := uint64(source.ctx.BlockTime().Unix()) / uint64(epochSeconds) * uint64(epochSeconds)
-	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
+	direction := types.SwapDirection_SWAP_DIRECTION_A_TO_B
 	require.NoError(t, source.keeper.volumeWindow.Set(
 		source.ctx,
 		volumeWindowKeyFromStart(current.GetId(), direction, epochStart, epochSeconds, 1),

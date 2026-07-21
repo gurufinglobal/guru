@@ -5,11 +5,10 @@ import (
 	"errors"
 	"strings"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
@@ -17,15 +16,15 @@ func (k Keeper) CanonicalAddressForGenesis(address string) (string, sdk.AccAddre
 	return k.canonicalAddress(address)
 }
 
-func ValidateExchangeForGenesis(exchange *bexv1.Exchange) error {
+func ValidateExchangeForGenesis(exchange *types.Exchange) error {
 	if err := validateExchangeConfig(exchange); err != nil {
 		return types.ErrInvalidGenesis.Wrapf("invalid exchange: %v", err)
 	}
 	return nil
 }
 
-func ProtoCoinsForGenesis(coins []*basev1beta1.Coin) (sdk.Coins, error) {
-	parsed, err := ledgerToCoins(&bexv1.FeeLedger{Coins: coins})
+func ProtoCoinsForGenesis(coins sdk.Coins) (sdk.Coins, error) {
+	parsed, err := ledgerToCoins(&types.FeeLedger{Coins: coins})
 	if err != nil {
 		return nil, types.ErrInvalidGenesis.Wrapf("invalid coin list: %v", err)
 	}
@@ -34,7 +33,7 @@ func ProtoCoinsForGenesis(coins []*basev1beta1.Coin) (sdk.Coins, error) {
 		return nil, types.ErrInvalidGenesis.Wrap("coin list must be canonical and sorted")
 	}
 	for i, coin := range coins {
-		if coin == nil || coin.GetDenom() != canonical[i].GetDenom() || coin.GetAmount() != canonical[i].GetAmount() {
+		if coin.Denom != canonical[i].Denom || !coin.Amount.Equal(canonical[i].Amount) {
 			return nil, types.ErrInvalidGenesis.Wrap("coin list must be canonical and sorted")
 		}
 	}
@@ -87,21 +86,21 @@ func ExpectedIBCDenomForGenesis(denom, portID, channelID string) (string, error)
 	return ibcDenom, nil
 }
 
-func ValidateFeeDenomForGenesis(exchange *bexv1.Exchange, denom string) error {
+func ValidateFeeDenomForGenesis(exchange *types.Exchange, denom string) error {
 	if err := validateExchangeFeeDenom(exchange, denom); err != nil {
 		return types.ErrInvalidGenesis.Wrapf("invalid fee denom: %v", err)
 	}
 	return nil
 }
 
-func ValidateReserveDenomForGenesis(exchange *bexv1.Exchange, denom string) error {
+func ValidateReserveDenomForGenesis(exchange *types.Exchange, denom string) error {
 	if err := validateExchangeReserveDenom(exchange, denom); err != nil {
 		return types.ErrInvalidGenesis.Wrapf("invalid reserve denom: %v", err)
 	}
 	return nil
 }
 
-func (k Keeper) ImportGenesis(ctx context.Context, genesis *bexv1.GenesisState) error {
+func (k Keeper) ImportGenesis(ctx context.Context, genesis *types.GenesisState) error {
 	for _, admin := range genesis.GetAdmins() {
 		canonical, _, err := k.canonicalAddress(admin)
 		if err != nil {
@@ -116,7 +115,7 @@ func (k Keeper) ImportGenesis(ctx context.Context, genesis *bexv1.GenesisState) 
 		if err := k.exchanges.Set(ctx, copied.GetId(), copied); err != nil {
 			return err
 		}
-		if copied.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED {
+		if copied.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_DELETED {
 			if err := k.exchangesByAdmin.Set(ctx, collections.Join(copied.GetAdminAddress(), copied.GetId())); err != nil {
 				return err
 			}
@@ -186,38 +185,38 @@ func (k Keeper) ImportGenesis(ctx context.Context, genesis *bexv1.GenesisState) 
 	return k.setNextExchangeID(ctx, genesis.GetNextExchangeId())
 }
 
-func (k Keeper) ExportGenesis(ctx context.Context) (*bexv1.GenesisState, error) {
+func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) {
 	if err := k.AssertInvariants(ctx); err != nil {
 		return nil, err
 	}
 
-	genesis := &bexv1.GenesisState{}
+	genesis := &types.GenesisState{}
 	if err := k.admins.Walk(ctx, nil, func(admin string) (bool, error) {
 		genesis.Admins = append(genesis.Admins, admin)
 		return false, nil
 	}); err != nil {
 		return nil, err
 	}
-	if err := k.exchanges.Walk(ctx, nil, func(_ uint64, exchange *bexv1.Exchange) (bool, error) {
+	if err := k.exchanges.Walk(ctx, nil, func(_ uint64, exchange *types.Exchange) (bool, error) {
 		genesis.Exchanges = append(genesis.Exchanges, cloneExchange(exchange))
 		return false, nil
 	}); err != nil {
 		return nil, err
 	}
-	if err := k.collectedFees.Walk(ctx, nil, func(exchangeID uint64, ledger *bexv1.FeeLedger) (bool, error) {
-		genesis.CollectedFees = append(genesis.CollectedFees, &bexv1.FeeGenesis{ExchangeId: exchangeID, Coins: ledger.GetCoins()})
+	if err := k.collectedFees.Walk(ctx, nil, func(exchangeID uint64, ledger *types.FeeLedger) (bool, error) {
+		genesis.CollectedFees = append(genesis.CollectedFees, &types.FeeGenesis{ExchangeId: exchangeID, Coins: ledger.GetCoins()})
 		return false, nil
 	}); err != nil {
 		return nil, err
 	}
-	if err := k.lockedFees.Walk(ctx, nil, func(exchangeID uint64, ledger *bexv1.FeeLedger) (bool, error) {
-		genesis.LockedFees = append(genesis.LockedFees, &bexv1.FeeGenesis{ExchangeId: exchangeID, Coins: ledger.GetCoins()})
+	if err := k.lockedFees.Walk(ctx, nil, func(exchangeID uint64, ledger *types.FeeLedger) (bool, error) {
+		genesis.LockedFees = append(genesis.LockedFees, &types.FeeGenesis{ExchangeId: exchangeID, Coins: ledger.GetCoins()})
 		return false, nil
 	}); err != nil {
 		return nil, err
 	}
-	if err := k.pendingLiabilities.Walk(ctx, nil, func(exchangeID uint64, ledger *bexv1.FeeLedger) (bool, error) {
-		genesis.PendingLiabilities = append(genesis.PendingLiabilities, &bexv1.FeeGenesis{ExchangeId: exchangeID, Coins: ledger.GetCoins()})
+	if err := k.pendingLiabilities.Walk(ctx, nil, func(exchangeID uint64, ledger *types.FeeLedger) (bool, error) {
+		genesis.PendingLiabilities = append(genesis.PendingLiabilities, &types.FeeGenesis{ExchangeId: exchangeID, Coins: ledger.GetCoins()})
 		return false, nil
 	}); err != nil {
 		return nil, err
@@ -227,9 +226,9 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*bexv1.GenesisState, error) 
 		if !ok {
 			return true, types.ErrInvariantViolation.Wrap("volume window key has an invalid expiry")
 		}
-		genesis.VolumeWindows = append(genesis.VolumeWindows, &bexv1.VolumeWindowGenesis{
+		genesis.VolumeWindows = append(genesis.VolumeWindows, &types.VolumeWindowGenesis{
 			ExchangeId:             key.K2(),
-			Direction:              bexv1.SwapDirection(key.K3()),
+			Direction:              types.SwapDirection(key.K3()),
 			EpochStartUnix:         epochStart,
 			EpochSeconds:           volumeWindowEpochSeconds(key),
 			Amount:                 amount,
@@ -240,7 +239,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*bexv1.GenesisState, error) 
 		return nil, err
 	}
 	if err := k.reserveDepositors.Walk(ctx, nil, func(key collections.Pair[uint64, string]) (bool, error) {
-		genesis.ReserveDepositors = append(genesis.ReserveDepositors, &bexv1.ReserveDepositorGenesis{
+		genesis.ReserveDepositors = append(genesis.ReserveDepositors, &types.ReserveDepositorGenesis{
 			ExchangeId:       key.K1(),
 			DepositorAddress: key.K2(),
 		})
@@ -270,7 +269,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		return err
 	}
 	totalCollected := map[string]sdkmath.Int{}
-	err := k.collectedFees.Walk(ctx, nil, func(exchangeID uint64, ledger *bexv1.FeeLedger) (bool, error) {
+	err := k.collectedFees.Walk(ctx, nil, func(exchangeID uint64, ledger *types.FeeLedger) (bool, error) {
 		exchange, err := k.GetExchange(ctx, exchangeID)
 		if err != nil {
 			return false, types.ErrInvariantViolation.Wrapf("collected fee ledger references unknown exchange %d", exchangeID)
@@ -292,7 +291,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		if !hasCoins(collected, locked) {
 			return false, types.ErrInvariantViolation.Wrapf("locked exceeds collected for exchange %d", exchangeID)
 		}
-		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !collected.IsZero() {
+		if exchange.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_DELETED && !collected.IsZero() {
 			return false, types.ErrInvariantViolation.Wrapf("deleted exchange %d has collected fees", exchangeID)
 		}
 		if err := accumulateFeeTotals(totalCollected, collected); err != nil {
@@ -303,7 +302,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	err = k.lockedFees.Walk(ctx, nil, func(exchangeID uint64, ledger *bexv1.FeeLedger) (bool, error) {
+	err = k.lockedFees.Walk(ctx, nil, func(exchangeID uint64, ledger *types.FeeLedger) (bool, error) {
 		exchange, err := k.GetExchange(ctx, exchangeID)
 		if err != nil {
 			return false, types.ErrInvariantViolation.Wrapf("locked fee ledger references unknown exchange %d", exchangeID)
@@ -325,7 +324,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		if !hasCoins(collected, locked) {
 			return false, types.ErrInvariantViolation.Wrapf("locked exceeds collected for exchange %d", exchangeID)
 		}
-		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !locked.IsZero() {
+		if exchange.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_DELETED && !locked.IsZero() {
 			return false, types.ErrInvariantViolation.Wrapf("deleted exchange %d has locked fees", exchangeID)
 		}
 		return false, nil
@@ -333,7 +332,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	err = k.pendingLiabilities.Walk(ctx, nil, func(exchangeID uint64, ledger *bexv1.FeeLedger) (bool, error) {
+	err = k.pendingLiabilities.Walk(ctx, nil, func(exchangeID uint64, ledger *types.FeeLedger) (bool, error) {
 		exchange, err := k.GetExchange(ctx, exchangeID)
 		if err != nil {
 			return false, types.ErrInvariantViolation.Wrapf("pending liability references unknown exchange %d", exchangeID)
@@ -350,7 +349,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 				return false, types.ErrInvariantViolation.Wrapf("exchange %d pending liabilities contain an unsupported denom: %v", exchangeID, err)
 			}
 		}
-		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !pending.IsZero() {
+		if exchange.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_DELETED && !pending.IsZero() {
 			return false, types.ErrInvariantViolation.Wrapf("deleted exchange %d has pending liabilities", exchangeID)
 		}
 		return false, nil
@@ -362,7 +361,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		return err
 	}
 	maxExchangeID := uint64(0)
-	err = k.exchanges.Walk(ctx, nil, func(exchangeID uint64, exchange *bexv1.Exchange) (bool, error) {
+	err = k.exchanges.Walk(ctx, nil, func(exchangeID uint64, exchange *types.Exchange) (bool, error) {
 		if exchange == nil {
 			return false, types.ErrInvariantViolation.Wrapf("exchange %d is nil", exchangeID)
 		}
@@ -442,7 +441,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		if err != nil {
 			return false, err
 		}
-		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED {
+		if exchange.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_DELETED {
 			if adminIndexed {
 				return false, types.ErrInvariantViolation.Wrapf("deleted exchange %d remains in admin index", exchangeID)
 			}
@@ -495,7 +494,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		if err != nil {
 			return false, types.ErrInvariantViolation.Wrapf("admin index references unknown exchange %d", key.K2())
 		}
-		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED {
+		if exchange.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_DELETED {
 			return false, types.ErrInvariantViolation.Wrapf("admin index references deleted exchange %d", key.K2())
 		}
 		if exchange.GetAdminAddress() != key.K1() {
@@ -529,8 +528,8 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 		if err != nil {
 			return false, types.ErrInvariantViolation.Wrapf("volume window references unknown exchange %d", exchangeID)
 		}
-		direction := bexv1.SwapDirection(key.K3())
-		if direction != bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B && direction != bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A {
+		direction := types.SwapDirection(key.K3())
+		if direction != types.SwapDirection_SWAP_DIRECTION_A_TO_B && direction != types.SwapDirection_SWAP_DIRECTION_B_TO_A {
 			return false, types.ErrInvariantViolation.Wrapf("volume window has invalid direction %d", key.K3())
 		}
 		epochStart, ok := volumeWindowEpochStart(key)
@@ -574,7 +573,7 @@ func (k Keeper) AssertInvariants(ctx context.Context) error {
 	return nil
 }
 
-func assertCanonicalFeeLedger(name string, exchangeID uint64, ledger *bexv1.FeeLedger, canonical sdk.Coins) error {
+func assertCanonicalFeeLedger(name string, exchangeID uint64, ledger *types.FeeLedger, canonical sdk.Coins) error {
 	if ledger == nil {
 		return types.ErrInvariantViolation.Wrapf("exchange %d %s fee ledger is nil", exchangeID, name)
 	}
@@ -583,7 +582,7 @@ func assertCanonicalFeeLedger(name string, exchangeID uint64, ledger *bexv1.FeeL
 		return types.ErrInvariantViolation.Wrapf("exchange %d %s fee ledger is not canonical and sorted", exchangeID, name)
 	}
 	for i, coin := range ledger.GetCoins() {
-		if coin == nil || coin.GetDenom() != expected[i].GetDenom() || coin.GetAmount() != expected[i].GetAmount() {
+		if coin.Denom != expected[i].Denom || !coin.Amount.Equal(expected[i].Amount) {
 			return types.ErrInvariantViolation.Wrapf(
 				"exchange %d %s fee ledger is not canonical and sorted",
 				exchangeID,

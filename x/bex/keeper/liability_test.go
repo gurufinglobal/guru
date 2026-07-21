@@ -8,16 +8,15 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestReserveIntegrationAPIsUseExactCapabilities(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 	coin := sdk.NewInt64Coin(exchange.GetIbcDenomA(), 10)
 	coins := sdk.NewCoins(coin)
@@ -59,11 +58,11 @@ func TestRefundAccountingExchangeIDsAreSortedUnion(t *testing.T) {
 func TestValidateSwapInputBindsWireDenomToConfiguredLocalVoucher(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 
 	direction, err := f.keeper.ValidateSwapInput(f.ctx, exchange.GetId(), exchange.GetDenomA(), exchange.GetIbcDenomA())
 	require.NoError(t, err)
-	require.Equal(t, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, direction)
+	require.Equal(t, types.SwapDirection_SWAP_DIRECTION_A_TO_B, direction)
 
 	_, err = f.keeper.ValidateSwapInput(f.ctx, exchange.GetId(), exchange.GetDenomA(), exchange.GetIbcDenomB())
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
@@ -72,7 +71,7 @@ func TestValidateSwapInputBindsWireDenomToConfiguredLocalVoucher(t *testing.T) {
 func TestPendingLiabilityRestrictsWithdrawalRouteChangeAndDelete(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	liability := sdk.NewInt64Coin(exchange.GetIbcDenomA(), 40)
 	require.NoError(t, f.keeper.AddPendingLiability(f.ctx, exchange.GetId(), liability))
 
@@ -85,7 +84,7 @@ func TestPendingLiabilityRestrictsWithdrawalRouteChangeAndDelete(t *testing.T) {
 		f.admin,
 		exchange.GetId(),
 		exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE}},
+		&types.ExchangeUpdatePatch{Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE}},
 	)
 	require.NoError(t, err)
 
@@ -109,7 +108,7 @@ func TestPendingLiabilityRestrictsWithdrawalRouteChangeAndDelete(t *testing.T) {
 		f.admin,
 		exchange.GetId(),
 		inactive.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{DenomA: wrapperspb.String("newagxn")},
+		&types.ExchangeUpdatePatch{DenomA: types.NewStringValue("newagxn")},
 	)
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
 
@@ -125,7 +124,7 @@ func TestPendingLiabilityRestrictsWithdrawalRouteChangeAndDelete(t *testing.T) {
 func TestPendingLiabilityKeeperGenesisRoundTrip(t *testing.T) {
 	source := setupKeeperFixture(t)
 	require.NoError(t, source.keeper.RegisterAdmin(source.ctx, source.moderator, source.admin))
-	exchange := registerExchange(t, source, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, source, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	liability := sdk.NewInt64Coin(exchange.GetIbcDenomA(), 95)
 	require.NoError(t, source.keeper.AddPendingLiability(source.ctx, exchange.GetId(), liability))
 
@@ -143,7 +142,7 @@ func TestPendingLiabilityKeeperGenesisRoundTrip(t *testing.T) {
 func TestSwapOutputCannotSpendPendingRefundLiability(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 	liability := sdk.NewInt64Coin(exchange.GetIbcDenomA(), 40)
 	f.bankKeeper.SetBalance(reserve, sdk.NewCoins(sdk.NewInt64Coin(exchange.GetIbcDenomA(), 100)))
@@ -171,7 +170,7 @@ func TestSwapOutputCannotSpendPendingRefundLiability(t *testing.T) {
 func TestRefundTransportRetainsGrossLiabilityOnInactiveExchange(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 	liability := sdk.NewInt64Coin(exchange.GetIbcDenomA(), 40)
 	f.bankKeeper.SetBalance(reserve, sdk.NewCoins(sdk.NewInt64Coin(exchange.GetIbcDenomA(), 100)))
@@ -182,7 +181,7 @@ func TestRefundTransportRetainsGrossLiabilityOnInactiveExchange(t *testing.T) {
 		f.admin,
 		exchange.GetId(),
 		exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE}},
+		&types.ExchangeUpdatePatch{Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE}},
 	)
 	require.NoError(t, err)
 	require.ErrorIs(
@@ -211,7 +210,7 @@ func TestRefundTransportRetainsGrossLiabilityOnInactiveExchange(t *testing.T) {
 func TestManualRefundClaimPaysOnceAndReleasesLiabilityAtomically(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 	liability := sdk.NewInt64Coin(exchange.GetIbcDenomA(), 40)
 	f.bankKeeper.SetBalance(reserve, sdk.NewCoins(sdk.NewInt64Coin(exchange.GetIbcDenomA(), 100)))
@@ -221,7 +220,7 @@ func TestManualRefundClaimPaysOnceAndReleasesLiabilityAtomically(t *testing.T) {
 		f.admin,
 		exchange.GetId(),
 		exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE}},
+		&types.ExchangeUpdatePatch{Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE}},
 	)
 	require.NoError(t, err)
 
@@ -245,7 +244,7 @@ func TestManualRefundClaimPaysOnceAndReleasesLiabilityAtomically(t *testing.T) {
 func TestManualRefundClaimFailureKeepsLiability(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 	liability := sdk.NewInt64Coin(exchange.GetIbcDenomA(), 40)
 	f.bankKeeper.SetBalance(reserve, sdk.NewCoins(liability))
@@ -264,7 +263,7 @@ func TestManualRefundClaimFailureKeepsLiability(t *testing.T) {
 func TestManualRefundClaimBankFailureRollsBackLiability(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 	liability := sdk.NewInt64Coin(exchange.GetIbcDenomA(), 40)
 	f.bankKeeper.SetBalance(reserve, sdk.NewCoins(liability))
@@ -295,7 +294,7 @@ func TestManualRefundClaimBankFailureRollsBackLiability(t *testing.T) {
 func TestPendingLiabilityRejectsWireDenomAndInvariantCorruption(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	require.NotEqual(t, exchange.GetDenomA(), exchange.GetIbcDenomA())
 	wireLiability := sdk.NewInt64Coin(exchange.GetDenomA(), 1)
 

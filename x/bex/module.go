@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
@@ -22,7 +22,7 @@ var (
 	_ appmodule.HasServices = AppModule{}
 	_ appmodule.HasGenesis  = AppModule{}
 
-	registerQueryGateway = bexv1.RegisterQueryHandlerClient
+	registerQueryGateway = types.RegisterQueryHandlerClient
 )
 
 type AppModule struct {
@@ -48,14 +48,14 @@ func (AppModule) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 }
 
 func (AppModule) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	if err := registerQueryGateway(context.Background(), mux, bexv1.NewQueryClient(clientCtx)); err != nil {
+	if err := registerQueryGateway(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
 
 func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
-	bexv1.RegisterMsgServer(registrar, bexkeeper.NewMsgServer(&am.keeper))
-	bexv1.RegisterQueryServer(registrar, bexkeeper.NewQueryServer(&am.keeper))
+	types.RegisterMsgServer(registrar, bexkeeper.NewMsgServer(&am.keeper))
+	types.RegisterQueryServer(registrar, bexkeeper.NewQueryServer(&am.keeper))
 	return nil
 }
 

@@ -3,7 +3,7 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+
 	"math/rand"
 	"strings"
 
@@ -29,7 +29,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { portID = strings.ToLower(simtypes.RandStringOfLength(r, 20)) },
 	)
 
-	transferGenesis := transwapv1.GenesisState{
+	transferGenesis := types.GenesisState{
 		PortId: portID,
 		Denoms: types.Denoms{},
 		Params: types.DefaultParams(),

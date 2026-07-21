@@ -6,7 +6,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
@@ -26,6 +26,6 @@ func intAttr(key string, value sdkmath.Int) sdk.Attribute {
 	return sdk.NewAttribute(key, value.String())
 }
 
-func directionAttr(direction bexv1.SwapDirection) sdk.Attribute {
+func directionAttr(direction types.SwapDirection) sdk.Attribute {
 	return sdk.NewAttribute(types.AttributeKeyDirection, direction.String())
 }

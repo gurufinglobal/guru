@@ -5,7 +5,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 )
 
@@ -17,13 +16,13 @@ const (
 // ValidateVolumeReservation validates the persisted identity used to reverse
 // one asynchronous volume charge. The amount is limited to uint256 so it has
 // the same domain as quotes and volume windows.
-func ValidateVolumeReservation(reservation *bexv1.VolumeReservation) (sdkmath.Int, error) {
+func ValidateVolumeReservation(reservation *VolumeReservation) (sdkmath.Int, error) {
 	if reservation == nil || reservation.GetExchangeId() == 0 {
 		return sdkmath.Int{}, ErrInvalidRequest.Wrap("volume reservation is required")
 	}
 	switch reservation.GetDirection() {
-	case bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
-		bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A:
+	case SwapDirection_SWAP_DIRECTION_A_TO_B,
+		SwapDirection_SWAP_DIRECTION_B_TO_A:
 	default:
 		return sdkmath.Int{}, ErrInvalidRoute.Wrap("volume reservation direction is invalid")
 	}

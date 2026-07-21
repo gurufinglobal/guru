@@ -29,7 +29,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/keeper"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
@@ -295,10 +294,10 @@ func (ibcValidationBankKeeper) GetAllBalances(context.Context, sdk.AccAddress) s
 
 type ibcValidationBexKeeper struct{}
 
-func (ibcValidationBexKeeper) ValidateSwapInput(context.Context, uint64, string, string) (bexv1.SwapDirection, error) {
-	return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, nil
+func (ibcValidationBexKeeper) ValidateSwapInput(context.Context, uint64, string, string) (bextypes.SwapDirection, error) {
+	return bextypes.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, nil
 }
-func (ibcValidationBexKeeper) QuoteSwap(context.Context, *bexv1.QuoteSwapRequest) (*bexv1.QuoteSwapResponse, error) {
+func (ibcValidationBexKeeper) QuoteSwap(context.Context, *bextypes.QuoteSwapRequest) (*bextypes.QuoteSwapResponse, error) {
 	return nil, nil
 }
 func (ibcValidationBexKeeper) ReceiveToReserve(context.Context, uint64, sdk.AccAddress, sdk.Coins) error {
@@ -313,10 +312,10 @@ func (ibcValidationBexKeeper) SendRefundFromReserve(context.Context, uint64, sdk
 func (ibcValidationBexKeeper) ClaimRefundFromReserve(context.Context, uint64, sdk.AccAddress, sdk.Coin) error {
 	return nil
 }
-func (ibcValidationBexKeeper) ReserveVolumeWindow(_ context.Context, exchangeID uint64, direction bexv1.SwapDirection, amount sdkmath.Int) (*bexv1.VolumeReservation, error) {
-	return &bexv1.VolumeReservation{ExchangeId: exchangeID, Direction: direction, EpochSeconds: bextypes.MinVolumeEpochSeconds, Amount: amount.String(), VolumeWindowGeneration: 1}, nil
+func (ibcValidationBexKeeper) ReserveVolumeWindow(_ context.Context, exchangeID uint64, direction bextypes.SwapDirection, amount sdkmath.Int) (*bextypes.VolumeReservation, error) {
+	return &bextypes.VolumeReservation{ExchangeId: exchangeID, Direction: direction, EpochSeconds: bextypes.MinVolumeEpochSeconds, Amount: amount.String(), VolumeWindowGeneration: 1}, nil
 }
-func (ibcValidationBexKeeper) ReleaseVolumeWindow(context.Context, *bexv1.VolumeReservation) error {
+func (ibcValidationBexKeeper) ReleaseVolumeWindow(context.Context, *bextypes.VolumeReservation) error {
 	return nil
 }
 func (ibcValidationBexKeeper) CollectFee(context.Context, uint64, sdk.Coin) error {

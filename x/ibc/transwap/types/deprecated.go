@@ -7,7 +7,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 )
 
 // Deprecated: usage of this function should be replaced by `Denom.hasPrefix`
@@ -56,6 +55,6 @@ func GetTransferCoin(portID, channelID, baseDenom string, amount sdkmath.Int) sd
 
 // Deprecated: usage of this function should be replaced by `ExtractDenomFromPath`
 // ExtractDenomFromPath returns the denom from the full path.
-func ParseDenomTrace(rawDenom string) *transwapv1.Denom {
+func ParseDenomTrace(rawDenom string) Denom {
 	return ExtractDenomFromPath(rawDenom)
 }

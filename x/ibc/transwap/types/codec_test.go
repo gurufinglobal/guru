@@ -5,16 +5,24 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	legacyproto "github.com/golang/protobuf/proto" //nolint:staticcheck // verifies the grpc-gateway v1 enum registry bridge.
 	"github.com/stretchr/testify/require"
 )
+
+//nolint:staticcheck // verifies the grpc-gateway v1 enum registry bridge.
+func TestLegacyGatewayRefundStatusEnumRegistration(t *testing.T) {
+	values := legacyproto.EnumValueMap(refundStatusProtoName)
+	require.NotNil(t, values)
+	require.Equal(t, int32(RefundStatus_REFUND_STATUS_PENDING), values["REFUND_STATUS_PENDING"])
+	require.Equal(t, int32(RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE), values["REFUND_STATUS_MANUAL_CLAIMABLE"])
+}
 
 func TestCoinCodecRoundTripsAndFailures(t *testing.T) {
 	coin := sdk.NewCoin("uatom", sdkmath.NewInt(1234))
 	protoCoin := SDKCoinToProto(coin)
 	require.Equal(t, coin.Denom, protoCoin.Denom)
-	require.Equal(t, "1234", protoCoin.Amount)
+	require.Equal(t, sdkmath.NewInt(1234), protoCoin.Amount)
 
 	decoded, err := ProtoCoinToSDK(protoCoin)
 	require.NoError(t, err)
@@ -30,23 +38,18 @@ func TestCoinCodecRoundTripsAndFailures(t *testing.T) {
 	require.Len(t, requiredCoins, 2)
 	require.Equal(t, sdk.NewCoins(sdk.NewInt64Coin("uatom", 3), sdk.NewInt64Coin("ugxusdc", 10)), requiredCoins)
 
-	_, err = ProtoCoinToSDK(&basev1beta1.Coin{Denom: "bad denom", Amount: "1"})
+	_, err = ProtoCoinToSDK(sdk.Coin{Denom: "bad denom", Amount: sdkmath.OneInt()})
 	require.Error(t, err)
 
-	_, err = ProtoCoinToSDK(&basev1beta1.Coin{Denom: "uatom", Amount: "bad"})
+	_, err = ProtoCoinToSDK(sdk.Coin{Denom: "uatom"})
 	require.Error(t, err)
 
-	for _, amount := range []string{"", "00", "010", "+10", "-1", " 10", "10 ", "0x10", "0o10", "1_0", "１０"} {
-		_, err = ProtoCoinToSDK(&basev1beta1.Coin{Denom: "uatom", Amount: amount})
-		require.Error(t, err, amount)
-	}
-
-	invalid := sdk.NewCoins(sdk.NewInt64Coin("uatom", 1))
-	protoCoins := SDKCoinsToProto(invalid)
-	protoCoins[0].Amount = ""
-	_, err = ProtoCoinsToSDK(protoCoins)
+	_, err = ProtoCoinToSDK(sdk.Coin{Denom: "uatom", Amount: sdkmath.NewInt(-1)})
 	require.Error(t, err)
 
-	_, err = ProtoCoinsToSDK([]*basev1beta1.Coin{nil})
+	_, err = ProtoCoinsToSDK(sdk.Coins{
+		sdk.NewInt64Coin("uatom", 1),
+		sdk.NewInt64Coin("uatom", 2),
+	})
 	require.Error(t, err)
 }

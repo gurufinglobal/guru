@@ -5,14 +5,13 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 )
 
 // ValidateToken validates a token denomination and amount.
-func ValidateToken(t *transwapv1.Token) error {
-	if t == nil || t.Denom == nil {
-		return errorsmod.Wrap(ErrInvalidDenomForTransfer, "token denom cannot be nil")
+func ValidateToken(t *Token) error {
+	if t == nil {
+		return errorsmod.Wrap(ErrInvalidDenomForTransfer, "token cannot be nil")
 	}
 
 	if err := ValidateDenom(t.Denom); err != nil {
@@ -28,9 +27,9 @@ func ValidateToken(t *transwapv1.Token) error {
 // Once the trace has been resolved to a local bank denomination, however, it
 // must satisfy the local SDK rules before sdk.NewCoin is called (which would
 // otherwise panic for an invalid denomination).
-func TokenToCoin(t *transwapv1.Token) (sdk.Coin, error) {
-	if t == nil || t.Denom == nil {
-		return sdk.Coin{}, errorsmod.Wrap(ErrInvalidDenomForTransfer, "token denom cannot be nil")
+func TokenToCoin(t *Token) (sdk.Coin, error) {
+	if t == nil {
+		return sdk.Coin{}, errorsmod.Wrap(ErrInvalidDenomForTransfer, "token cannot be nil")
 	}
 	if err := ValidateDenom(t.Denom); err != nil {
 		return sdk.Coin{}, errorsmod.Wrap(err, "invalid token denom")

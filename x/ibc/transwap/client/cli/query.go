@@ -5,13 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
-
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	querytypes "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/version"
 
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
@@ -33,9 +31,9 @@ func GetCmdQueryParams() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			res, err := transwapv1.NewQueryClient(clientCtx).Params(
+			res, err := types.NewQueryClient(clientCtx).Params(
 				cmd.Context(),
-				&transwapv1.QueryParamsRequest{},
+				&types.QueryParamsRequest{},
 			)
 			if err != nil {
 				return err
@@ -58,9 +56,9 @@ func GetCmdQueryRefund() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			res, err := transwapv1.NewQueryClient(clientCtx).Refund(
+			res, err := types.NewQueryClient(clientCtx).Refund(
 				cmd.Context(),
-				&transwapv1.QueryRefundRequest{RefundId: args[0]},
+				&types.QueryRefundRequest{RefundId: args[0]},
 			)
 			if err != nil {
 				return err
@@ -96,13 +94,13 @@ func GetCmdQueryRefunds() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pageReq, err := readPulsarPageRequest(cmd)
+			pageReq, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
-			res, err := transwapv1.NewQueryClient(clientCtx).Refunds(
+			res, err := types.NewQueryClient(clientCtx).Refunds(
 				cmd.Context(),
-				&transwapv1.QueryRefundsRequest{
+				&types.QueryRefundsRequest{
 					Status:     refundStatus,
 					Receiver:   receiver,
 					Pagination: pageReq,
@@ -121,28 +119,28 @@ func GetCmdQueryRefunds() *cobra.Command {
 	return cmd
 }
 
-func parseRefundStatus(raw string) (transwapv1.RefundStatus, error) {
+func parseRefundStatus(raw string) (types.RefundStatus, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" || strings.EqualFold(raw, "all") {
-		return transwapv1.RefundStatus_REFUND_STATUS_UNSPECIFIED, nil
+		return types.RefundStatus_REFUND_STATUS_UNSPECIFIED, nil
 	}
 	if numeric, err := strconv.ParseInt(raw, 10, 32); err == nil {
-		refundStatus := transwapv1.RefundStatus(numeric)
-		if _, ok := transwapv1.RefundStatus_name[int32(refundStatus)]; ok {
+		refundStatus := types.RefundStatus(numeric)
+		if _, ok := types.RefundStatus_name[int32(refundStatus)]; ok {
 			return refundStatus, nil
 		}
-		return transwapv1.RefundStatus_REFUND_STATUS_UNSPECIFIED, fmt.Errorf("unsupported refund status %q", raw)
+		return types.RefundStatus_REFUND_STATUS_UNSPECIFIED, fmt.Errorf("unsupported refund status %q", raw)
 	}
 
 	normalized := strings.ToUpper(strings.NewReplacer("-", "_", " ", "_").Replace(raw))
 	if !strings.HasPrefix(normalized, "REFUND_STATUS_") {
 		normalized = "REFUND_STATUS_" + normalized
 	}
-	value, ok := transwapv1.RefundStatus_value[normalized]
+	value, ok := types.RefundStatus_value[normalized]
 	if !ok {
-		return transwapv1.RefundStatus_REFUND_STATUS_UNSPECIFIED, fmt.Errorf("unsupported refund status %q", raw)
+		return types.RefundStatus_REFUND_STATUS_UNSPECIFIED, fmt.Errorf("unsupported refund status %q", raw)
 	}
-	return transwapv1.RefundStatus(value), nil
+	return types.RefundStatus(value), nil
 }
 
 // GetCmdQueryDenom defines the command to query a denomination from a given hash or ibc denom.
@@ -158,9 +156,9 @@ func GetCmdQueryDenom() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			queryClient := transwapv1.NewQueryClient(clientCtx)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &transwapv1.QueryDenomRequest{
+			req := &types.QueryDenomRequest{
 				Hash: args[0],
 			}
 
@@ -190,14 +188,14 @@ func GetCmdQueryDenoms() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			queryClient := transwapv1.NewQueryClient(clientCtx)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			pageReq, err := readPulsarPageRequest(cmd)
+			pageReq, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
 
-			req := &transwapv1.QueryDenomsRequest{
+			req := &types.QueryDenomsRequest{
 				Pagination: pageReq,
 			}
 
@@ -215,23 +213,12 @@ func GetCmdQueryDenoms() *cobra.Command {
 	return cmd
 }
 
-func readPulsarPageRequest(cmd *cobra.Command) (*queryv1beta1.PageRequest, error) {
+func readPageRequest(cmd *cobra.Command) (*querytypes.PageRequest, error) {
 	flagSet, err := client.FlagSetWithPageKeyDecoded(cmd.Flags())
 	if err != nil {
 		return nil, err
 	}
-	pageReq, err := client.ReadPageRequest(flagSet)
-	if err != nil {
-		return nil, err
-	}
-
-	return &queryv1beta1.PageRequest{
-		Key:        pageReq.GetKey(),
-		Offset:     pageReq.GetOffset(),
-		Limit:      pageReq.GetLimit(),
-		CountTotal: pageReq.GetCountTotal(),
-		Reverse:    pageReq.GetReverse(),
-	}, nil
+	return client.ReadPageRequest(flagSet)
 }
 
 // GetCmdQueryEscrowAddress returns the command handler for transwap escrow address querying.
@@ -272,9 +259,9 @@ func GetCmdQueryDenomHash() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			queryClient := transwapv1.NewQueryClient(clientCtx)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &transwapv1.QueryDenomHashRequest{
+			req := &types.QueryDenomHashRequest{
 				Trace: args[0],
 			}
 
@@ -305,9 +292,9 @@ func GetCmdQueryTotalEscrowForDenom() *cobra.Command {
 				return err
 			}
 
-			queryClient := transwapv1.NewQueryClient(clientCtx)
+			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &transwapv1.QueryTotalEscrowForDenomRequest{
+			req := &types.QueryTotalEscrowForDenomRequest{
 				Denom: args[0],
 			}
 

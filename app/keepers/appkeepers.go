@@ -236,6 +236,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	)
 	appKeepers.BexKeeper = bexkeeper.NewKeeper(
 		runtime.NewKVStoreService(appKeepers.kvKeys[bextypes.StoreKey]),
+		cfg.AppCodec,
 		appKeepers.AccountKeeper.AddressCodec(),
 		appKeepers.AccountKeeper,
 		appKeepers.BankKeeper,

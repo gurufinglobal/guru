@@ -25,8 +25,6 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
@@ -73,12 +71,12 @@ func TestOnRecvExchangePacketCommitsStateAfterSuccessfulSwapReceive(t *testing.T
 	refund, found, err := state.keeper.GetRefundRecord(state.ctx, RefundID(types.PortID, "channel-7", exchangeAtomicSequence))
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_PENDING, refund.Status)
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_PENDING, refund.Status)
 	require.Equal(t, state.sender.String(), refund.Receiver)
 	require.Equal(t, "7", refund.ExchangeId)
-	require.Equal(t, state.inputIBCDenom, refund.GetOriginalFee().GetDenom())
-	require.Equal(t, "3", refund.GetOriginalFee().GetAmount())
-	require.Equal(t, "103", refund.GetToken().GetAmount())
+	require.Equal(t, state.inputIBCDenom, refund.OriginalFee.Denom)
+	require.Equal(t, "3", refund.OriginalFee.Amount.String())
+	require.Equal(t, "103", refund.Token.Amount)
 
 	pending, err := state.bex.GetPendingLiabilities(state.ctx, 7)
 	require.NoError(t, err)
@@ -102,7 +100,7 @@ func TestExchangeEscrowUnderflowIsRejectedBeforeBankMovement(t *testing.T) {
 		state.keeper.SetTotalEscrowForDenom(state.ctx, sdk.NewInt64Coin(coin.Denom, 99))
 		data := types.NewInternalTransferRepresentation(
 			"7",
-			&transwapv1.Token{
+			&types.Token{
 				Denom:  types.NewDenom(coin.Denom, types.NewHop("xswap", "channel-1")),
 				Amount: coin.Amount.String(),
 			},
@@ -133,7 +131,7 @@ func TestExchangeEscrowUnderflowIsRejectedBeforeBankMovement(t *testing.T) {
 		state.keeper.SetTotalEscrowForDenom(state.ctx, sdk.NewInt64Coin(coin.Denom, 99))
 		data := types.NewInternalTransferRepresentation(
 			"0",
-			&transwapv1.Token{Denom: types.NewDenom(coin.Denom), Amount: coin.Amount.String()},
+			&types.Token{Denom: types.NewDenom(coin.Denom), Amount: coin.Amount.String()},
 			state.reserve.String(),
 			state.receiver.String(),
 			"",
@@ -176,8 +174,8 @@ func TestOnRecvExchangePacketCommitsStateWithoutFee(t *testing.T) {
 	refund, found, err := state.keeper.GetRefundRecord(state.ctx, RefundID(types.PortID, "channel-7", exchangeAtomicSequence))
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, state.inputIBCDenom, refund.GetOriginalFee().GetDenom())
-	require.Equal(t, "0", refund.GetOriginalFee().GetAmount())
+	require.Equal(t, state.inputIBCDenom, refund.OriginalFee.Denom)
+	require.Equal(t, "0", refund.OriginalFee.Amount.String())
 	pending, err := state.bex.GetPendingLiabilities(state.ctx, 7)
 	require.NoError(t, err)
 	require.Equal(t, sdk.NewCoins(sdk.NewCoin(state.inputIBCDenom, sdkmath.NewInt(103))), pending)
@@ -302,13 +300,13 @@ func TestOnRecvExchangePacketCommitsSmallAndLargeAmounts(t *testing.T) {
 	state := setupExchangeReceiveAtomicity(t, false)
 	state.bex.quoteByAmount = map[string]exchangeAtomicSwapRoute{
 		"1": {
-			direction:   bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			direction:   bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 			outputDenom: state.outputIBCDenom,
 			amountOut:   "1",
 			feeAmount:   "0",
 		},
 		"1000003": {
-			direction:   bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			direction:   bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 			outputDenom: state.outputIBCDenom,
 			amountOut:   "700",
 			feeAmount:   "3",
@@ -351,8 +349,8 @@ func TestOnRecvExchangePacketCommitsSmallAndLargeAmounts(t *testing.T) {
 		refund, found, err := state.keeper.GetRefundRecord(state.ctx, RefundID(types.PortID, "channel-7", expected.sequence))
 		require.NoError(t, err)
 		require.True(t, found)
-		require.Equal(t, state.inputIBCDenom, refund.GetOriginalFee().GetDenom())
-		require.Equal(t, expected.feeAmount, refund.GetOriginalFee().GetAmount())
+		require.Equal(t, state.inputIBCDenom, refund.OriginalFee.Denom)
+		require.Equal(t, expected.feeAmount, refund.OriginalFee.Amount.String())
 	}
 
 	reserveBalances := state.bank.GetAllBalances(state.ctx, state.reserve)
@@ -379,13 +377,13 @@ func TestOnRecvExchangePacketCommitsRepeatedSwapsInBothDirections(t *testing.T) 
 	))
 	state.bex.routes = map[string]exchangeAtomicSwapRoute{
 		"atgxusd": {
-			direction:   bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			direction:   bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 			outputDenom: state.outputIBCDenom,
 			amountOut:   "100",
 			feeAmount:   "3",
 		},
 		"atgxkrw": {
-			direction:   bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A,
+			direction:   bextypes.SwapDirection_SWAP_DIRECTION_B_TO_A,
 			outputDenom: state.inputIBCDenom,
 			amountOut:   "100",
 			feeAmount:   "3",
@@ -399,7 +397,7 @@ func TestOnRecvExchangePacketCommitsRepeatedSwapsInBothDirections(t *testing.T) 
 
 	reversePacketData := types.NewInternalTransferRepresentation(
 		"7",
-		&transwapv1.Token{Denom: types.NewDenom("atgxkrw"), Amount: "103"},
+		&types.Token{Denom: types.NewDenom("atgxkrw"), Amount: "103"},
 		state.sender.String(),
 		state.receiver.String(),
 		"source memo",
@@ -452,8 +450,8 @@ func TestOnRecvExchangePacketCommitsRepeatedSwapsInBothDirections(t *testing.T) 
 	require.NoError(t, err)
 	require.Equal(t, expectedFees, locked)
 	require.Equal(t, sdkmath.NewInt(400), state.bex.recordedVolume(state.ctx))
-	require.Equal(t, sdkmath.NewInt(200), state.bex.recordedVolumeForDirection(state.ctx, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B))
-	require.Equal(t, sdkmath.NewInt(200), state.bex.recordedVolumeForDirection(state.ctx, bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A))
+	require.Equal(t, sdkmath.NewInt(200), state.bex.recordedVolumeForDirection(state.ctx, bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B))
+	require.Equal(t, sdkmath.NewInt(200), state.bex.recordedVolumeForDirection(state.ctx, bextypes.SwapDirection_SWAP_DIRECTION_B_TO_A))
 	require.Equal(t, 4, state.ics4.sentCount(state.ctx))
 
 	expectedPackets := []struct {
@@ -481,8 +479,8 @@ func TestOnRecvExchangePacketCommitsRepeatedSwapsInBothDirections(t *testing.T) 
 		require.True(t, found)
 		require.Equal(t, state.sender.String(), refund.Receiver)
 		require.Equal(t, "7", refund.ExchangeId)
-		require.Equal(t, expected.feeDenom, refund.GetOriginalFee().GetDenom())
-		require.Equal(t, "3", refund.GetOriginalFee().GetAmount())
+		require.Equal(t, expected.feeDenom, refund.OriginalFee.Denom)
+		require.Equal(t, "3", refund.OriginalFee.Amount.String())
 	}
 }
 
@@ -798,7 +796,7 @@ func TestExchangeTargetBlockedReceiverErrorAckRefundsAndCreatesRetry(t *testing.
 	)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, refund.Status)
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, refund.Status)
 	require.Equal(t, uint32(1), refund.RetryCount)
 	require.Equal(t, exchangeAtomicSequence+1, refund.ActivePacketSequence)
 	require.NotEqual(t, refund.OriginalTimeoutTimestamp, refund.ActiveTimeoutTimestamp)
@@ -989,9 +987,9 @@ type exchangeReceiveAtomicityState struct {
 	reserve          sdk.AccAddress
 	sender           sdk.AccAddress
 	receiver         sdk.AccAddress
-	inputTokenDenom  *transwapv1.Denom
+	inputTokenDenom  types.Denom
 	inputIBCDenom    string
-	outputTokenDenom *transwapv1.Denom
+	outputTokenDenom types.Denom
 	outputIBCDenom   string
 	packetData       types.InternalTransferRepresentation
 }
@@ -1061,7 +1059,7 @@ func setupExchangeReceiveAtomicity(t *testing.T, failRecordVolume bool) exchange
 
 	packetData := types.NewInternalTransferRepresentation(
 		"7",
-		&transwapv1.Token{Denom: types.NewDenom("atgxusd"), Amount: "103"},
+		&types.Token{Denom: types.NewDenom("atgxusd"), Amount: "103"},
 		sender.String(),
 		receiver.String(),
 		"",
@@ -1103,21 +1101,21 @@ type exchangeAtomicBexKeeper struct {
 }
 
 type exchangeAtomicSwapRoute struct {
-	direction   bexv1.SwapDirection
+	direction   bextypes.SwapDirection
 	outputDenom string
 	amountOut   string
 	feeAmount   string
 }
 
-func (m *exchangeAtomicBexKeeper) ValidateSwapInput(_ context.Context, exchangeID uint64, inputDenom, _ string) (bexv1.SwapDirection, error) {
+func (m *exchangeAtomicBexKeeper) ValidateSwapInput(_ context.Context, exchangeID uint64, inputDenom, _ string) (bextypes.SwapDirection, error) {
 	route, ok := m.routeForInputDenom(inputDenom)
 	if exchangeID != m.expectedExchangeID || !ok {
-		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, bextypes.ErrInvalidRoute.Wrap("unexpected exchange route")
+		return bextypes.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, bextypes.ErrInvalidRoute.Wrap("unexpected exchange route")
 	}
 	return route.direction, nil
 }
 
-func (m *exchangeAtomicBexKeeper) QuoteSwap(_ context.Context, req *bexv1.QuoteSwapRequest) (*bexv1.QuoteSwapResponse, error) {
+func (m *exchangeAtomicBexKeeper) QuoteSwap(_ context.Context, req *bextypes.QuoteSwapRequest) (*bextypes.QuoteSwapResponse, error) {
 	if m.quoteErr != nil {
 		return nil, m.quoteErr
 	}
@@ -1135,7 +1133,7 @@ func (m *exchangeAtomicBexKeeper) QuoteSwap(_ context.Context, req *bexv1.QuoteS
 		}
 		route = quoteRoute
 	}
-	return &bexv1.QuoteSwapResponse{
+	return &bextypes.QuoteSwapResponse{
 		ExchangeId:       req.GetExchangeId(),
 		Direction:        route.direction,
 		InputDenom:       req.GetInputDenom(),
@@ -1157,7 +1155,7 @@ func (m *exchangeAtomicBexKeeper) routeForInputDenom(inputDenom string) (exchang
 		return exchangeAtomicSwapRoute{}, false
 	}
 	return exchangeAtomicSwapRoute{
-		direction:   bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		direction:   bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		outputDenom: m.outputDenom,
 		amountOut:   m.amountOut,
 		feeAmount:   m.feeAmount,
@@ -1233,9 +1231,9 @@ func (m *exchangeAtomicBexKeeper) ClaimRefundFromReserve(
 func (m *exchangeAtomicBexKeeper) ReserveVolumeWindow(
 	ctx context.Context,
 	exchangeID uint64,
-	direction bexv1.SwapDirection,
+	direction bextypes.SwapDirection,
 	amountOut sdkmath.Int,
-) (*bexv1.VolumeReservation, error) {
+) (*bextypes.VolumeReservation, error) {
 	store := exchangeAtomicStore(ctx, m.storeService)
 	store.Set(exchangeAtomicKey("bex", "volume"), []byte(m.recordedVolume(sdk.UnwrapSDKContext(ctx)).Add(amountOut).String()))
 	store.Set(
@@ -1245,7 +1243,7 @@ func (m *exchangeAtomicBexKeeper) ReserveVolumeWindow(
 	if m.failRecordVolume {
 		return nil, errExchangeAtomicRecordVolume
 	}
-	return &bexv1.VolumeReservation{
+	return &bextypes.VolumeReservation{
 		ExchangeId:             exchangeID,
 		Direction:              direction,
 		EpochSeconds:           bextypes.MinVolumeEpochSeconds,
@@ -1254,7 +1252,7 @@ func (m *exchangeAtomicBexKeeper) ReserveVolumeWindow(
 	}, nil
 }
 
-func (m *exchangeAtomicBexKeeper) ReleaseVolumeWindow(ctx context.Context, reservation *bexv1.VolumeReservation) error {
+func (m *exchangeAtomicBexKeeper) ReleaseVolumeWindow(ctx context.Context, reservation *bextypes.VolumeReservation) error {
 	amount, ok := sdkmath.NewIntFromString(reservation.GetAmount())
 	if !ok {
 		return bextypes.ErrInvariantViolation.Wrap("invalid volume reservation amount")
@@ -1397,7 +1395,7 @@ func (m *exchangeAtomicBexKeeper) recordedVolume(ctx sdk.Context) sdkmath.Int {
 	return m.recordedVolumeByKey(ctx, exchangeAtomicKey("bex", "volume"))
 }
 
-func (m *exchangeAtomicBexKeeper) recordedVolumeForDirection(ctx sdk.Context, direction bexv1.SwapDirection) sdkmath.Int {
+func (m *exchangeAtomicBexKeeper) recordedVolumeForDirection(ctx sdk.Context, direction bextypes.SwapDirection) sdkmath.Int {
 	return m.recordedVolumeByKey(ctx, exchangeAtomicKey("bex", "volume", strconv.Itoa(int(direction))))
 }
 

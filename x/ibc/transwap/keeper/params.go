@@ -3,19 +3,18 @@ package keeper
 import (
 	"context"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
-func DefaultParams() *transwapv1.Params {
+func DefaultParams() *types.Params {
 	return types.DefaultParams()
 }
 
-func ValidateParams(params *transwapv1.Params) error {
+func ValidateParams(params *types.Params) error {
 	return types.ValidateParams(params)
 }
 
-func (k Keeper) GetParams(ctx context.Context) (*transwapv1.Params, error) {
+func (k Keeper) GetParams(ctx context.Context) (*types.Params, error) {
 	store := k.storeService.OpenKVStore(ctx)
 	bz, err := store.Get([]byte(types.ParamsKey))
 	if err != nil {
@@ -26,7 +25,7 @@ func (k Keeper) GetParams(ctx context.Context) (*transwapv1.Params, error) {
 		// store predates the refund retry parameters.
 		return DefaultParams(), nil
 	}
-	params := &transwapv1.Params{}
+	params := &types.Params{}
 	if err := k.cdc.Unmarshal(bz, params); err != nil {
 		return nil, err
 	}
@@ -36,7 +35,7 @@ func (k Keeper) GetParams(ctx context.Context) (*transwapv1.Params, error) {
 	return params, nil
 }
 
-func (k Keeper) SetParams(ctx context.Context, params *transwapv1.Params) error {
+func (k Keeper) SetParams(ctx context.Context, params *types.Params) error {
 	if err := ValidateParams(params); err != nil {
 		return err
 	}

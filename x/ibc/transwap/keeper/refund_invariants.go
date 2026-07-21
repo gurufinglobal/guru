@@ -9,7 +9,6 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
@@ -58,7 +57,7 @@ func (k Keeper) AssertRefundInvariants(ctx sdk.Context) error {
 			expectedByExchange[exchangeID] = expected
 		}
 
-		gross, err := types.TokenToCoin(record.GetToken())
+		gross, err := types.TokenToCoin(&record.Token)
 		if err != nil {
 			return types.ErrRefundEscrowInvariant.Wrapf("refund %s gross token: %v", record.GetId(), err)
 		}
@@ -68,7 +67,7 @@ func (k Keeper) AssertRefundInvariants(ctx sdk.Context) error {
 		}
 
 		switch record.GetStatus() {
-		case transwapv1.RefundStatus_REFUND_STATUS_PENDING:
+		case types.RefundStatus_REFUND_STATUS_PENDING:
 			if err := addRefundAccountingCoin(expected.pending, gross); err != nil {
 				return refundAccountingOverflow(record.GetId(), gross.Denom)
 			}
@@ -118,7 +117,7 @@ func (k Keeper) AssertRefundInvariants(ctx sdk.Context) error {
 				)
 			}
 
-		case transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE:
+		case types.RefundStatus_REFUND_STATUS_RETRYABLE:
 			if err := addRefundAccountingCoin(expected.pending, gross); err != nil {
 				return refundAccountingOverflow(record.GetId(), gross.Denom)
 			}
@@ -131,7 +130,7 @@ func (k Keeper) AssertRefundInvariants(ctx sdk.Context) error {
 			queueKey := refundRetryQueueKey(record.GetNextRetryHeight(), record.GetId())
 			expectedRetryIndexes[string(queueKey[len(types.RefundRetryPrefix):])] = record.GetId()
 
-		case transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE:
+		case types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE:
 			if err := addRefundAccountingCoin(expected.pending, gross); err != nil {
 				return refundAccountingOverflow(record.GetId(), gross.Denom)
 			}
@@ -139,7 +138,7 @@ func (k Keeper) AssertRefundInvariants(ctx sdk.Context) error {
 				return refundAccountingOverflow(record.GetId(), gross.Denom)
 			}
 
-		case transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT:
+		case types.RefundStatus_REFUND_STATUS_IN_FLIGHT:
 			if err := addRefundAccountingCoin(expected.pending, gross); err != nil {
 				return refundAccountingOverflow(record.GetId(), gross.Denom)
 			}
@@ -220,8 +219,8 @@ func (k Keeper) AssertRefundInvariants(ctx sdk.Context) error {
 				backing.amount = next
 			}
 
-		case transwapv1.RefundStatus_REFUND_STATUS_COMPLETED,
-			transwapv1.RefundStatus_REFUND_STATUS_CLAIMED:
+		case types.RefundStatus_REFUND_STATUS_COMPLETED,
+			types.RefundStatus_REFUND_STATUS_CLAIMED:
 			// Terminal records retain audit metadata but no live accounting.
 		}
 	}

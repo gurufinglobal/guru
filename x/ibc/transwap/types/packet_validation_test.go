@@ -9,33 +9,30 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
-
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 )
 
 func TestValidateTokenRejectsInvalidDenomAndAmounts(t *testing.T) {
-	valid := &transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}
+	valid := &Token{Denom: NewDenom("ugxusd"), Amount: "1"}
 
 	tests := []struct {
 		name   string
-		mutate func(*transwapv1.Token)
+		mutate func(*Token)
 	}{
-		{"nil denom", func(token *transwapv1.Token) { token.Denom = nil }},
-		{"blank denom", func(token *transwapv1.Token) { token.Denom = NewDenom(" ") }},
-		{"nil hop", func(token *transwapv1.Token) { token.Denom = NewDenom("ugxusd", nil) }},
-		{"invalid hop", func(token *transwapv1.Token) { token.Denom = NewDenom("ugxusd", NewHop("bad port", "channel-0")) }},
-		{"zero amount", func(token *transwapv1.Token) { token.Amount = "0" }},
-		{"negative amount", func(token *transwapv1.Token) { token.Amount = "-1" }},
-		{"non numeric amount", func(token *transwapv1.Token) { token.Amount = "one" }},
-		{"leading zero amount", func(token *transwapv1.Token) { token.Amount = "010" }},
-		{"explicit plus amount", func(token *transwapv1.Token) { token.Amount = "+10" }},
-		{"hex amount", func(token *transwapv1.Token) { token.Amount = "0x10" }},
-		{"octal amount", func(token *transwapv1.Token) { token.Amount = "0o10" }},
-		{"whitespace amount", func(token *transwapv1.Token) { token.Amount = " 10 " }},
-		{"separator amount", func(token *transwapv1.Token) { token.Amount = "1_0" }},
-		{"unicode amount", func(token *transwapv1.Token) { token.Amount = "１０" }},
-		{"uint256 overflow amount", func(token *transwapv1.Token) { token.Amount = newOverflowAmount() }},
+		{"zero denom", func(token *Token) { token.Denom = Denom{} }},
+		{"blank denom", func(token *Token) { token.Denom = NewDenom(" ") }},
+		{"zero hop", func(token *Token) { token.Denom = NewDenom("ugxusd", Hop{}) }},
+		{"invalid hop", func(token *Token) { token.Denom = NewDenom("ugxusd", NewHop("bad port", "channel-0")) }},
+		{"zero amount", func(token *Token) { token.Amount = "0" }},
+		{"negative amount", func(token *Token) { token.Amount = "-1" }},
+		{"non numeric amount", func(token *Token) { token.Amount = "one" }},
+		{"leading zero amount", func(token *Token) { token.Amount = "010" }},
+		{"explicit plus amount", func(token *Token) { token.Amount = "+10" }},
+		{"hex amount", func(token *Token) { token.Amount = "0x10" }},
+		{"octal amount", func(token *Token) { token.Amount = "0o10" }},
+		{"whitespace amount", func(token *Token) { token.Amount = " 10 " }},
+		{"separator amount", func(token *Token) { token.Amount = "1_0" }},
+		{"unicode amount", func(token *Token) { token.Amount = "１０" }},
+		{"uint256 overflow amount", func(token *Token) { token.Amount = newOverflowAmount() }},
 	}
 
 	for _, tt := range tests {
@@ -55,34 +52,34 @@ func TestFungibleTokenPacketValidationRejectsMalformedFields(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(*transwapv1.FungibleTokenPacketData)
+		mutate func(*FungibleTokenPacketData)
 	}{
-		{"blank denom", func(packet *transwapv1.FungibleTokenPacketData) { packet.Denom = " " }},
-		{"invalid hop", func(packet *transwapv1.FungibleTokenPacketData) { packet.Denom = "bad port/channel-0/ugxusd" }},
-		{"zero amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "0" }},
-		{"negative amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "-1" }},
-		{"non numeric amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "nan" }},
-		{"leading zero amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "010" }},
-		{"explicit plus amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "+10" }},
-		{"hex amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "0x10" }},
-		{"octal amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "0o10" }},
-		{"whitespace amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = " 10 " }},
-		{"separator amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "1_0" }},
-		{"unicode amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = "１０" }},
-		{"uint256 overflow amount", func(packet *transwapv1.FungibleTokenPacketData) { packet.Amount = newOverflowAmount() }},
-		{"blank sender", func(packet *transwapv1.FungibleTokenPacketData) { packet.Sender = " " }},
-		{"blank receiver", func(packet *transwapv1.FungibleTokenPacketData) { packet.Receiver = " " }},
-		{"receiver too long", func(packet *transwapv1.FungibleTokenPacketData) {
+		{"blank denom", func(packet *FungibleTokenPacketData) { packet.Denom = " " }},
+		{"invalid hop", func(packet *FungibleTokenPacketData) { packet.Denom = "bad port/channel-0/ugxusd" }},
+		{"zero amount", func(packet *FungibleTokenPacketData) { packet.Amount = "0" }},
+		{"negative amount", func(packet *FungibleTokenPacketData) { packet.Amount = "-1" }},
+		{"non numeric amount", func(packet *FungibleTokenPacketData) { packet.Amount = "nan" }},
+		{"leading zero amount", func(packet *FungibleTokenPacketData) { packet.Amount = "010" }},
+		{"explicit plus amount", func(packet *FungibleTokenPacketData) { packet.Amount = "+10" }},
+		{"hex amount", func(packet *FungibleTokenPacketData) { packet.Amount = "0x10" }},
+		{"octal amount", func(packet *FungibleTokenPacketData) { packet.Amount = "0o10" }},
+		{"whitespace amount", func(packet *FungibleTokenPacketData) { packet.Amount = " 10 " }},
+		{"separator amount", func(packet *FungibleTokenPacketData) { packet.Amount = "1_0" }},
+		{"unicode amount", func(packet *FungibleTokenPacketData) { packet.Amount = "１０" }},
+		{"uint256 overflow amount", func(packet *FungibleTokenPacketData) { packet.Amount = newOverflowAmount() }},
+		{"blank sender", func(packet *FungibleTokenPacketData) { packet.Sender = " " }},
+		{"blank receiver", func(packet *FungibleTokenPacketData) { packet.Receiver = " " }},
+		{"receiver too long", func(packet *FungibleTokenPacketData) {
 			packet.Receiver = strings.Repeat("r", MaximumReceiverLength+1)
 		}},
-		{"memo too long", func(packet *transwapv1.FungibleTokenPacketData) {
+		{"memo too long", func(packet *FungibleTokenPacketData) {
 			packet.Memo = strings.Repeat("m", MaximumMemoLength+1)
 		}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			packet := proto.Clone(valid).(*transwapv1.FungibleTokenPacketData)
+			packet := cloneFungibleTokenPacketData(valid)
 			tt.mutate(packet)
 
 			require.Error(t, ValidateFungibleTokenPacketData(packet))
@@ -153,14 +150,14 @@ func TestUnmarshalPacketDataRejectsNonCanonicalJSON(t *testing.T) {
 
 func TestUnmarshalFungibleTokenPacketDataJSONDoesNotPartiallyMutateTarget(t *testing.T) {
 	target := NewFungibleTokenPacketData("uatom", "9", "original-sender", "original-receiver", "original-memo")
-	want := proto.Clone(target).(*transwapv1.FungibleTokenPacketData)
+	want := cloneFungibleTokenPacketData(target)
 
 	err := UnmarshalFungibleTokenPacketDataJSON(
 		[]byte(`{"exchange_id":"0","denom":"ugxusd","denom":"uatom","amount":"1","sender":"sender","receiver":"receiver","memo":""}`),
 		target,
 	)
 	require.Error(t, err)
-	require.True(t, proto.Equal(want, target))
+	require.Equal(t, want, target)
 }
 
 func TestUnmarshalPacketDataRoundTripsSupportedEncodings(t *testing.T) {
@@ -226,7 +223,7 @@ func TestABIPacketDataOnlyEncodesCanonicalTransfers(t *testing.T) {
 
 func TestUnmarshalPacketDataRejectsProtobufUnknownFields(t *testing.T) {
 	packet := NewFungibleTokenPacketData("ugxusd", "1", "sender", "receiver", "")
-	bz, err := proto.Marshal(packet)
+	bz, err := packet.Marshal()
 	require.NoError(t, err)
 
 	bz = append(bz, 0x7a, 0x01, 0x00)
@@ -245,7 +242,7 @@ func TestInternalTransferRepresentationDistinguishesExchangePackets(t *testing.T
 	require.NoError(t, err)
 	require.False(t, exchange.IsTransferPacket())
 
-	nonNumeric := NewInternalTransferRepresentation("abc", &transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}, "sender", "receiver", "")
+	nonNumeric := NewInternalTransferRepresentation("abc", &Token{Denom: NewDenom("ugxusd"), Amount: "1"}, "sender", "receiver", "")
 	require.Error(t, nonNumeric.ValidateBasic())
 }
 
@@ -297,7 +294,7 @@ func TestCloneDenomAndTokenPreventTraceAliasing(t *testing.T) {
 	require.Equal(t, "transwap", original.Trace[0].PortId)
 	require.Len(t, original.Trace, 2)
 
-	token := transwapv1.Token{Denom: original, Amount: "9"}
+	token := Token{Denom: original, Amount: "9"}
 	tokenClone := CloneToken(&token)
 	tokenClone.Denom.Trace[1].ChannelId = "channel-99"
 
@@ -333,7 +330,7 @@ func TestFungibleTokenPacketDataCustomPacketData(t *testing.T) {
 }
 
 func TestInternalTransferRepresentationGettersAndValidationBranches(t *testing.T) {
-	transfer := NewInternalTransferRepresentation("0", &transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "1"}, "sender", "receiver", `{"k":"v"}`)
+	transfer := NewInternalTransferRepresentation("0", &Token{Denom: NewDenom("ugxusd"), Amount: "1"}, "sender", "receiver", `{"k":"v"}`)
 
 	require.Equal(t, "sender", transfer.GetPacketSender("sourcePort"))
 	require.Equal(t, "v", transfer.GetCustomPacketData("k"))
@@ -353,7 +350,7 @@ func TestInternalTransferRepresentationGettersAndValidationBranches(t *testing.T
 		}},
 		{"token amount zero", func(data *InternalTransferRepresentation) { data.Token.Amount = "0" }},
 		{"token amount negative", func(data *InternalTransferRepresentation) { data.Token.Amount = "-1" }},
-		{"nil token denom", func(data *InternalTransferRepresentation) { data.Token.Denom = nil }},
+		{"zero token denom", func(data *InternalTransferRepresentation) { data.Token.Denom = Denom{} }},
 		{"invalid token denom", func(data *InternalTransferRepresentation) {
 			data.Token.Denom = NewDenom("ugxusd", NewHop("bad port", "channel-0"))
 		}},
@@ -370,7 +367,7 @@ func TestInternalTransferRepresentationGettersAndValidationBranches(t *testing.T
 }
 
 func TestTokenToCoinSupportsValidToken(t *testing.T) {
-	token := transwapv1.Token{Denom: NewDenom("ugxusd"), Amount: "123"}
+	token := Token{Denom: NewDenom("ugxusd"), Amount: "123"}
 	coin, err := TokenToCoin(&token)
 	require.NoError(t, err)
 	require.Equal(t, "ugxusd", coin.Denom)
@@ -378,12 +375,12 @@ func TestTokenToCoinSupportsValidToken(t *testing.T) {
 }
 
 func TestTokenToCoinValidatesOnlyResolvedLocalBankDenom(t *testing.T) {
-	_, err := TokenToCoin(&transwapv1.Token{Denom: NewDenom("!"), Amount: "1"})
+	_, err := TokenToCoin(&Token{Denom: NewDenom("!"), Amount: "1"})
 	require.ErrorIs(t, err, ErrInvalidDenomForTransfer)
 	require.ErrorContains(t, err, "cannot be materialized as a local bank coin")
 
 	remoteDenom := NewDenom("!", NewHop(PortID, "channel-0"))
-	coin, err := TokenToCoin(&transwapv1.Token{Denom: remoteDenom, Amount: "1"})
+	coin, err := TokenToCoin(&Token{Denom: remoteDenom, Amount: "1"})
 	require.NoError(t, err)
 	require.Equal(t, DenomIBCDenom(remoteDenom), coin.Denom)
 	require.Equal(t, sdkmath.OneInt(), coin.Amount)
@@ -435,7 +432,7 @@ func TestValidateAmountBranches(t *testing.T) {
 }
 
 func TestDenomPathRoundTripAndHash(t *testing.T) {
-	tests := []*transwapv1.Denom{
+	tests := []Denom{
 		NewDenom("ugxusd"),
 		NewDenom("ugxkrw", NewHop("transwap", "channel-0")),
 		NewDenom("ugxusd", NewHop("transwap", "channel-0"), NewHop("transfer", "channel-17")),
@@ -471,7 +468,7 @@ func FuzzUnmarshalFungibleTokenPacketDataJSONNeverPanics(f *testing.F) {
 	}
 
 	f.Fuzz(func(t *testing.T, raw []byte) {
-		var packet transwapv1.FungibleTokenPacketData
+		var packet FungibleTokenPacketData
 		if err := UnmarshalFungibleTokenPacketDataJSON(raw, &packet); err != nil {
 			return
 		}
@@ -480,7 +477,7 @@ func FuzzUnmarshalFungibleTokenPacketDataJSONNeverPanics(f *testing.F) {
 		if err != nil {
 			t.Fatalf("marshal accepted packet: %v", err)
 		}
-		var roundTrip transwapv1.FungibleTokenPacketData
+		var roundTrip FungibleTokenPacketData
 		if err := UnmarshalFungibleTokenPacketDataJSON(canonical, &roundTrip); err != nil {
 			t.Fatalf("decoder rejected its canonical output: %v", err)
 		}
@@ -496,8 +493,23 @@ func FuzzTokenToCoinNeverPanics(f *testing.F) {
 	f.Fuzz(func(t *testing.T, base string, traced bool) {
 		denom := NewDenom(base)
 		if traced {
-			denom.Trace = []*transwapv1.Hop{NewHop(PortID, "channel-0")}
+			denom.Trace = []Hop{NewHop(PortID, "channel-0")}
 		}
-		_, _ = TokenToCoin(&transwapv1.Token{Denom: denom, Amount: "1"})
+		_, _ = TokenToCoin(&Token{Denom: denom, Amount: "1"})
 	})
+}
+
+func cloneFungibleTokenPacketData(packet *FungibleTokenPacketData) *FungibleTokenPacketData {
+	if packet == nil {
+		return nil
+	}
+	bz, err := packet.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	cloned := &FungibleTokenPacketData{}
+	if err := cloned.Unmarshal(bz); err != nil {
+		panic(err)
+	}
+	return cloned
 }

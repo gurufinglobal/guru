@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"fmt"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+
 	"strings"
 
 	ibcerrors "github.com/cosmos/ibc-go/v11/modules/core/errors"
@@ -50,7 +50,7 @@ func (k Keeper) SendTransfer(
 	ctx sdk.Context,
 	sourcePort,
 	sourceChannel string,
-	token *transwapv1.Token,
+	token *types.Token,
 	sender sdk.AccAddress,
 ) error {
 	if k.IsBlockedAddr(sender) {
@@ -201,10 +201,10 @@ func (k Keeper) UnescrowCoin(ctx sdk.Context, escrowAddress, receiver sdk.AccAdd
 }
 
 // tokenFromCoin constructs an IBC token given an SDK coin.
-func (k Keeper) TokenFromCoin(ctx sdk.Context, coin sdk.Coin) (*transwapv1.Token, error) {
+func (k Keeper) TokenFromCoin(ctx sdk.Context, coin sdk.Coin) (*types.Token, error) {
 	// if the coin does not have an IBC denom, return as is
 	if !strings.HasPrefix(coin.Denom, "ibc/") {
-		return &transwapv1.Token{
+		return &types.Token{
 			Denom:  types.NewDenom(coin.Denom),
 			Amount: coin.Amount.String(),
 		}, nil
@@ -216,7 +216,7 @@ func (k Keeper) TokenFromCoin(ctx sdk.Context, coin sdk.Coin) (*transwapv1.Token
 		return nil, err
 	}
 
-	return &transwapv1.Token{
+	return &types.Token{
 		Denom:  denom,
 		Amount: coin.Amount.String(),
 	}, nil
@@ -224,17 +224,17 @@ func (k Keeper) TokenFromCoin(ctx sdk.Context, coin sdk.Coin) (*transwapv1.Token
 
 // GetDenomFromIBCDenom returns the `Denom` given the IBC Denom (ibc/{hex hash}) of the denomination.
 // The ibcDenom is the hex hash of the denomination prefixed by "ibc/", often referred to as the IBC denom.
-func (k Keeper) GetDenomFromIBCDenom(ctx sdk.Context, ibcDenom string) (*transwapv1.Denom, error) {
+func (k Keeper) GetDenomFromIBCDenom(ctx sdk.Context, ibcDenom string) (types.Denom, error) {
 	hexHash := ibcDenom[len(types.DenomPrefix+"/"):]
 
 	hash, err := types.ParseHexHash(hexHash)
 	if err != nil {
-		return nil, errorsmod.Wrap(types.ErrInvalidDenomForTransfer, err.Error())
+		return types.Denom{}, errorsmod.Wrap(types.ErrInvalidDenomForTransfer, err.Error())
 	}
 
 	denom, found := k.GetDenom(ctx, hash)
 	if !found {
-		return nil, errorsmod.Wrap(types.ErrDenomNotFound, hexHash)
+		return types.Denom{}, errorsmod.Wrap(types.ErrDenomNotFound, hexHash)
 	}
 
 	return denom, nil

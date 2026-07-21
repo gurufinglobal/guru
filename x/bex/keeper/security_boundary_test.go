@@ -3,21 +3,19 @@ package keeper
 import (
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestQuoteSwapRejectsFutureOracleTimestamp(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 
 	now := f.ctx.BlockTime()
 	require.NoError(t, validateOracleFreshness(now, now.Unix(), exchange.GetMaxOracleStalenessSeconds()))
@@ -33,7 +31,7 @@ func TestQuoteSwapRejectsFutureOracleTimestamp(t *testing.T) {
 	f.oracleKeeper.SetValue(exchange.GetOracleSymbolAToB(), "1", now.Unix()+1)
 	var quoteErr error
 	require.NotPanics(t, func() {
-		_, quoteErr = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+		_, quoteErr = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 			ExchangeId: exchange.GetId(),
 			InputDenom: exchange.GetDenomA(),
 			AmountIn:   "2",
@@ -45,7 +43,7 @@ func TestQuoteSwapRejectsFutureOracleTimestamp(t *testing.T) {
 func TestVolumeAccountingUint256BoundaryReturnsError(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 
 	unlimited := cloneExchange(exchange)
 	unlimited.FeeBpsAToB = 0
@@ -54,7 +52,7 @@ func TestVolumeAccountingUint256BoundaryReturnsError(t *testing.T) {
 	require.NoError(t, f.keeper.exchanges.Set(f.ctx, unlimited.GetId(), unlimited))
 	f.oracleKeeper.SetValue(unlimited.GetOracleSymbolAToB(), "1", f.ctx.BlockTime().Unix())
 
-	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
+	direction := types.SwapDirection_SWAP_DIRECTION_A_TO_B
 	var nilAmountErr error
 	require.NotPanics(t, func() {
 		nilAmountErr = f.keeper.RecordVolumeWindow(f.ctx, unlimited.GetId(), direction, sdkmath.Int{})
@@ -77,7 +75,7 @@ func TestVolumeAccountingUint256BoundaryReturnsError(t *testing.T) {
 
 	var quoteErr error
 	require.NotPanics(t, func() {
-		_, quoteErr = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+		_, quoteErr = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 			ExchangeId: unlimited.GetId(),
 			InputDenom: unlimited.GetDenomA(),
 			AmountIn:   "1",
@@ -98,7 +96,7 @@ func TestVolumeAccountingUint256BoundaryReturnsError(t *testing.T) {
 func TestFeeLedgersUint256BoundaryReturnError(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 
 	denom := "agxn"
 	one := sdk.NewInt64Coin(denom, 1)
@@ -152,7 +150,7 @@ func TestFeeLedgersUint256BoundaryReturnError(t *testing.T) {
 func TestFeeInvariantDetectsOrphanAndCrossExchangeOverflow(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	first := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	first := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 
 	require.NoError(t, f.keeper.collectedFees.Remove(f.ctx, first.GetId()))
 	require.NoError(t, f.keeper.lockedFees.Set(
@@ -168,7 +166,7 @@ func TestFeeInvariantDetectsOrphanAndCrossExchangeOverflow(t *testing.T) {
 		first.GetId(),
 		coinsToLedger(sdk.NewCoins(sdk.NewCoin("agxn", maxUint256Int))),
 	))
-	second := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	second := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, f.keeper.collectedFees.Set(
 		f.ctx,
 		second.GetId(),
@@ -203,7 +201,7 @@ func TestExchangeIDAndRevisionNeverWrapUint64(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrRevisionConflict)
 
 	require.NoError(t, f.keeper.setNextExchangeID(f.ctx, DefaultNextExchangeID))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	terminal := cloneExchange(exchange)
 	terminal.Revision = ^uint64(0)
 	require.NoError(t, f.keeper.exchanges.Set(f.ctx, terminal.GetId(), terminal))
@@ -212,7 +210,7 @@ func TestExchangeIDAndRevisionNeverWrapUint64(t *testing.T) {
 		f.admin,
 		terminal.GetId(),
 		terminal.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{FeeBpsAToB: wrapperspb.UInt32(terminal.GetFeeBpsAToB() + 1)},
+		&types.ExchangeUpdatePatch{FeeBpsAToB: types.NewUInt32Value(terminal.GetFeeBpsAToB() + 1)},
 	)
 	require.ErrorIs(t, err, types.ErrRevisionConflict)
 	stored, err := f.keeper.GetExchange(f.ctx, terminal.GetId())
@@ -221,11 +219,11 @@ func TestExchangeIDAndRevisionNeverWrapUint64(t *testing.T) {
 }
 
 func TestReserveIndexesAndDepositorsAreCoveredByInvariant(t *testing.T) {
-	newFixture := func(t *testing.T) (keeperTestFixture, *bexv1.Exchange) {
+	newFixture := func(t *testing.T) (keeperTestFixture, *types.Exchange) {
 		t.Helper()
 		f := setupKeeperFixture(t)
 		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+		exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 		require.NoError(t, f.keeper.AssertInvariants(f.ctx))
 		return f, exchange
 	}
@@ -275,7 +273,7 @@ func TestReserveIndexesAndDepositorsAreCoveredByInvariant(t *testing.T) {
 			collections.Join4(
 				uint64(0),
 				exchange.GetId(),
-				uint32(bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B),
+				uint32(types.SwapDirection_SWAP_DIRECTION_A_TO_B),
 				collections.Join(minVolumeEpochSecs, exchange.GetVolumeWindowGeneration()),
 			),
 			"invalid",
@@ -289,7 +287,7 @@ func TestReserveIndexesAndDepositorsAreCoveredByInvariant(t *testing.T) {
 			f.ctx,
 			volumeWindowKeyFromStart(
 				exchange.GetId(),
-				bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+				types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 				uint64(1),
 				minVolumeEpochSecs,
 				exchange.GetVolumeWindowGeneration(),
@@ -359,11 +357,11 @@ func TestReserveIndexesAndDepositorsAreCoveredByInvariant(t *testing.T) {
 }
 
 func TestInvariantRejectsIncompleteTombstoneAndNonCanonicalAmounts(t *testing.T) {
-	newFixture := func(t *testing.T) (keeperTestFixture, *bexv1.Exchange) {
+	newFixture := func(t *testing.T) (keeperTestFixture, *types.Exchange) {
 		t.Helper()
 		f := setupKeeperFixture(t)
 		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+		exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 		return f, exchange
 	}
 
@@ -390,7 +388,7 @@ func TestInvariantRejectsIncompleteTombstoneAndNonCanonicalAmounts(t *testing.T)
 		key := currentVolumeKey(
 			f.ctx.BlockTime(),
 			exchange.GetId(),
-			bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 			exchange.GetVolumeEpochSeconds(),
 			exchange.GetVolumeWindowGeneration(),
 		)
@@ -398,10 +396,10 @@ func TestInvariantRejectsIncompleteTombstoneAndNonCanonicalAmounts(t *testing.T)
 		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
 	})
 
-	t.Run("collected fee amount", func(t *testing.T) {
+	t.Run("zero collected fee amount", func(t *testing.T) {
 		f, exchange := newFixture(t)
-		require.NoError(t, f.keeper.collectedFees.Set(f.ctx, exchange.GetId(), &bexv1.FeeLedger{
-			Coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "01"}},
+		require.NoError(t, f.keeper.collectedFees.Set(f.ctx, exchange.GetId(), &types.FeeLedger{
+			Coins: sdk.Coins{{Denom: "agxn", Amount: sdkmath.ZeroInt()}},
 		}))
 		f.bankKeeper.SetBalance(
 			authtypes.NewModuleAddress(types.ModuleName),
@@ -410,15 +408,15 @@ func TestInvariantRejectsIncompleteTombstoneAndNonCanonicalAmounts(t *testing.T)
 		require.ErrorIs(t, f.keeper.AssertInvariants(f.ctx), types.ErrInvariantViolation)
 	})
 
-	t.Run("locked fee amount", func(t *testing.T) {
+	t.Run("zero locked fee amount", func(t *testing.T) {
 		f, exchange := newFixture(t)
 		require.NoError(t, f.keeper.collectedFees.Set(
 			f.ctx,
 			exchange.GetId(),
 			coinsToLedger(sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))),
 		))
-		require.NoError(t, f.keeper.lockedFees.Set(f.ctx, exchange.GetId(), &bexv1.FeeLedger{
-			Coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "01"}},
+		require.NoError(t, f.keeper.lockedFees.Set(f.ctx, exchange.GetId(), &types.FeeLedger{
+			Coins: sdk.Coins{{Denom: "agxn", Amount: sdkmath.ZeroInt()}},
 		}))
 		f.bankKeeper.SetBalance(
 			authtypes.NewModuleAddress(types.ModuleName),

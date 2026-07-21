@@ -9,7 +9,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
@@ -28,7 +27,7 @@ func refundRetryQueueKey(height uint64, refundID string) []byte {
 	return key
 }
 
-func (k Keeper) clearRefundRetrySchedule(ctx sdk.Context, record *transwapv1.RefundRecord) {
+func (k Keeper) clearRefundRetrySchedule(ctx sdk.Context, record *types.RefundRecord) {
 	if record.GetNextRetryHeight() == 0 {
 		return
 	}
@@ -37,8 +36,8 @@ func (k Keeper) clearRefundRetrySchedule(ctx sdk.Context, record *transwapv1.Ref
 	record.NextRetryHeight = 0
 }
 
-func (k Keeper) scheduleRefundRetry(ctx sdk.Context, record *transwapv1.RefundRecord) error {
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE {
+func (k Keeper) scheduleRefundRetry(ctx sdk.Context, record *types.RefundRecord) error {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_RETRYABLE {
 		return types.ErrInvalidRefundState.Wrap("only REFUND_RETRYABLE may be scheduled")
 	}
 	height := ctx.BlockHeight()
@@ -54,8 +53,8 @@ func (k Keeper) scheduleRefundRetry(ctx sdk.Context, record *transwapv1.RefundRe
 	return k.restoreRefundRetrySchedule(ctx, record)
 }
 
-func (k Keeper) restoreRefundRetrySchedule(ctx sdk.Context, record *transwapv1.RefundRecord) error {
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE || record.GetNextRetryHeight() == 0 {
+func (k Keeper) restoreRefundRetrySchedule(ctx sdk.Context, record *types.RefundRecord) error {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_RETRYABLE || record.GetNextRetryHeight() == 0 {
 		return types.ErrInvalidRefundState.Wrap("retry queue entry requires a scheduled RETRYABLE record")
 	}
 	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
@@ -117,7 +116,7 @@ func (k Keeper) ProcessRefundRetryQueue(ctx sdk.Context) error {
 		if err != nil {
 			return types.ErrRefundEscrowInvariant.Wrapf("queued refund %s: %v", scheduled.refundID, err)
 		}
-		if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE ||
+		if record.GetStatus() != types.RefundStatus_REFUND_STATUS_RETRYABLE ||
 			record.GetNextRetryHeight() != scheduled.height {
 			return types.ErrRefundEscrowInvariant.Wrapf(
 				"refund %s queue entry does not match persisted retry state",

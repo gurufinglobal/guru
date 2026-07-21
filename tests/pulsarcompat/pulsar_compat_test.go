@@ -10,14 +10,19 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogoproto "github.com/cosmos/gogoproto/proto"
+	pulsarbex "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	pulsarconstitution "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	pulsaroracle "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	pulsartranswap "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	protov2 "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type gogoWireMessage interface {
@@ -25,6 +30,8 @@ type gogoWireMessage interface {
 	String() string
 	ProtoMessage()
 	Marshal() ([]byte, error)
+	Size() int
+	XXX_Marshal([]byte, bool) ([]byte, error)
 	Unmarshal([]byte) error
 }
 
@@ -39,6 +46,33 @@ func TestInternalGogoAndPublicPulsarWireParity(t *testing.T) {
 		pulsar    protov2.Message
 		newPulsar func() protov2.Message
 	}{
+		{
+			name: "bex exchange state", fullName: "guru.bex.v1.Exchange",
+			gogo:      &bextypes.Exchange{Id: 7, AdminAddress: "guru1admin", Metadata: map[string]string{"network": "test", "tier": "one"}},
+			newGogo:   func() gogoWireMessage { return &bextypes.Exchange{} },
+			pulsar:    &pulsarbex.Exchange{Id: 7, AdminAddress: "guru1admin", Metadata: map[string]string{"network": "test", "tier": "one"}},
+			newPulsar: func() protov2.Message { return &pulsarbex.Exchange{} },
+		},
+		{
+			name: "bex fee ledger", fullName: "guru.bex.v1.FeeLedger",
+			gogo:      &bextypes.FeeLedger{Coins: sdk.NewCoins(sdk.NewInt64Coin("agxn", 10))},
+			newGogo:   func() gogoWireMessage { return &bextypes.FeeLedger{} },
+			pulsar:    &pulsarbex.FeeLedger{Coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "10"}}},
+			newPulsar: func() protov2.Message { return &pulsarbex.FeeLedger{} },
+		},
+		{
+			name: "bex nested update msg", fullName: "guru.bex.v1.MsgUpdateExchange",
+			gogo: &bextypes.MsgUpdateExchange{
+				AdminAddress: "guru1admin", ExchangeId: 7, ExpectedRevision: 3,
+				Patch: &bextypes.ExchangeUpdatePatch{DenomA: bextypes.NewStringValue("uatom"), Metadata: map[string]string{"network": "test", "tier": "one"}},
+			},
+			newGogo: func() gogoWireMessage { return &bextypes.MsgUpdateExchange{} },
+			pulsar: &pulsarbex.MsgUpdateExchange{
+				AdminAddress: "guru1admin", ExchangeId: 7, ExpectedRevision: 3,
+				Patch: &pulsarbex.ExchangeUpdatePatch{DenomA: wrapperspb.String("uatom"), Metadata: map[string]string{"network": "test", "tier": "one"}},
+			},
+			newPulsar: func() protov2.Message { return &pulsarbex.MsgUpdateExchange{} },
+		},
 		{
 			name: "constitution params", fullName: "guru.constitution.v1.Params",
 			gogo:      &constitutiontypes.Params{MinValidatorBondAmount: &minBond},
@@ -123,6 +157,37 @@ func TestInternalGogoAndPublicPulsarWireParity(t *testing.T) {
 			pulsar:    &pulsaroracle.GetSamplesResponse{Symbols: []*pulsaroracle.OracleSymbolSamples{{Symbol: "BTC/USD", Samples: []*pulsaroracle.OracleSample{{Source: "source-a", ValueType: pulsaroracle.ValueType_VALUE_TYPE_NUMERIC, Value: "65000.25", SampleTimeUnix: 34}}}}},
 			newPulsar: func() protov2.Message { return &pulsaroracle.GetSamplesResponse{} },
 		},
+		{
+			name: "transwap denom", fullName: "guru.transwap.v1.Denom",
+			gogo:      &transwaptypes.Denom{Base: "agxn", Trace: []transwaptypes.Hop{{PortId: "transwap", ChannelId: "channel-0"}}},
+			newGogo:   func() gogoWireMessage { return &transwaptypes.Denom{} },
+			pulsar:    &pulsartranswap.Denom{Base: "agxn", Trace: []*pulsartranswap.Hop{{PortId: "transwap", ChannelId: "channel-0"}}},
+			newPulsar: func() protov2.Message { return &pulsartranswap.Denom{} },
+		},
+		{
+			name: "transwap refund record", fullName: "guru.transwap.v1.RefundRecord",
+			gogo: &transwaptypes.RefundRecord{
+				Id: "refund-1", Status: transwaptypes.RefundStatus_REFUND_STATUS_PENDING,
+				Token:             transwaptypes.Token{Denom: transwaptypes.Denom{Base: "agxn"}, Amount: "10"},
+				OriginalFee:       sdk.NewInt64Coin("agxn", 1),
+				VolumeReservation: &bextypes.VolumeReservation{ExchangeId: 7, Direction: bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B, EpochStartUnix: 100, EpochSeconds: 10, Amount: "9", VolumeWindowGeneration: 2},
+			},
+			newGogo: func() gogoWireMessage { return &transwaptypes.RefundRecord{} },
+			pulsar: &pulsartranswap.RefundRecord{
+				Id: "refund-1", Status: pulsartranswap.RefundStatus_REFUND_STATUS_PENDING,
+				Token:             &pulsartranswap.Token{Denom: &pulsartranswap.Denom{Base: "agxn"}, Amount: "10"},
+				OriginalFee:       &basev1beta1.Coin{Denom: "agxn", Amount: "1"},
+				VolumeReservation: &pulsarbex.VolumeReservation{ExchangeId: 7, Direction: pulsarbex.SwapDirection_SWAP_DIRECTION_A_TO_B, EpochStartUnix: 100, EpochSeconds: 10, Amount: "9", VolumeWindowGeneration: 2},
+			},
+			newPulsar: func() protov2.Message { return &pulsartranswap.RefundRecord{} },
+		},
+		{
+			name: "transwap nested params msg", fullName: "guru.transwap.v1.MsgUpdateParams",
+			gogo:      &transwaptypes.MsgUpdateParams{Authority: "guru1authority", Params: &transwaptypes.Params{MaxRefundRetries: 3, RefundTimeoutWindow: 60, MinRelaySafetyMargin: 5}},
+			newGogo:   func() gogoWireMessage { return &transwaptypes.MsgUpdateParams{} },
+			pulsar:    &pulsartranswap.MsgUpdateParams{Authority: "guru1authority", Params: &pulsartranswap.Params{MaxRefundRetries: 3, RefundTimeoutWindow: 60, MinRelaySafetyMargin: 5}},
+			newPulsar: func() protov2.Message { return &pulsartranswap.MsgUpdateParams{} },
+		},
 	}
 
 	for _, tc := range tests {
@@ -134,6 +199,10 @@ func TestInternalGogoAndPublicPulsarWireParity(t *testing.T) {
 
 func TestInternalGogoAndPublicPulsarDescriptorsMatch(t *testing.T) {
 	files := []string{
+		"guru/bex/v1/bex.proto",
+		"guru/bex/v1/genesis.proto",
+		"guru/bex/v1/query.proto",
+		"guru/bex/v1/tx.proto",
 		"guru/constitution/v1/genesis.proto",
 		"guru/constitution/v1/params.proto",
 		"guru/constitution/v1/query.proto",
@@ -146,6 +215,14 @@ func TestInternalGogoAndPublicPulsarDescriptorsMatch(t *testing.T) {
 		"guru/oracle/v1/query.proto",
 		"guru/oracle/v1/tx.proto",
 		"guru/oracle/v1/vote_extension.proto",
+		"guru/transwap/v1/denomtrace.proto",
+		"guru/transwap/v1/genesis.proto",
+		"guru/transwap/v1/packet.proto",
+		"guru/transwap/v1/params.proto",
+		"guru/transwap/v1/query.proto",
+		"guru/transwap/v1/refund.proto",
+		"guru/transwap/v1/token.proto",
+		"guru/transwap/v1/tx.proto",
 	}
 
 	for _, file := range files {
@@ -198,7 +275,7 @@ func assertWireParity(
 ) {
 	t.Helper()
 
-	gogoBz, err := gogo.Marshal()
+	gogoBz, err := gogo.XXX_Marshal(make([]byte, 0, gogo.Size()), true)
 	if err != nil {
 		t.Fatalf("marshal internal gogo message: %v", err)
 	}
@@ -206,17 +283,23 @@ func assertWireParity(
 	if err != nil {
 		t.Fatalf("marshal public Pulsar message: %v", err)
 	}
-	if string(gogoBz) != string(pulsarBz) {
-		t.Fatalf("wire bytes differ: gogo=%x pulsar=%x", gogoBz, pulsarBz)
+	if !bytes.Equal(gogoBz, pulsarBz) {
+		t.Fatalf("deterministic wire bytes differ: gogo=%x pulsar=%x", gogoBz, pulsarBz)
 	}
-
 	gogoFromPulsar := newGogo()
 	if err := gogoFromPulsar.Unmarshal(pulsarBz); err != nil {
 		t.Fatalf("unmarshal public bytes into internal gogo message: %v", err)
 	}
-	gogoRoundTrip, err := gogoFromPulsar.Marshal()
-	if err != nil || string(gogoRoundTrip) != string(gogoBz) {
-		t.Fatalf("internal gogo cross-round-trip failed: err=%v bytes=%x", err, gogoRoundTrip)
+	gogoFromPulsarBz, err := gogoFromPulsar.XXX_Marshal(make([]byte, 0, gogoFromPulsar.Size()), true)
+	if err != nil {
+		t.Fatalf("re-marshal public bytes from internal gogo message: %v", err)
+	}
+	publicRoundTrip := newPulsar()
+	if err := protov2.Unmarshal(gogoFromPulsarBz, publicRoundTrip); err != nil {
+		t.Fatalf("unmarshal internal cross-round-trip into public message: %v", err)
+	}
+	if !protov2.Equal(pulsar, publicRoundTrip) {
+		t.Fatalf("public-to-internal cross-round-trip differs: got=%v want=%v", publicRoundTrip, pulsar)
 	}
 
 	pulsarFromGogo := newPulsar()

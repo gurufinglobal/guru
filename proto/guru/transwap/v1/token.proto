@@ -4,7 +4,7 @@ package guru.transwap.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
 
 // Token defines a struct which represents a token to be transferred.
 message Token {

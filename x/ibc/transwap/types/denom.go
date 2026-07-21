@@ -12,25 +12,20 @@ import (
 
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 
 	errorsmod "cosmossdk.io/errors"
 )
 
 // NewDenom creates a new Denom instance given the base denomination and a variable number of hops.
-func NewDenom(base string, trace ...*transwapv1.Hop) *transwapv1.Denom {
-	return &transwapv1.Denom{
+func NewDenom(base string, trace ...Hop) Denom {
+	return Denom{
 		Base:  base,
 		Trace: trace,
 	}
 }
 
 // ValidateDenom performs a basic validation of the Denom fields.
-func ValidateDenom(d *transwapv1.Denom) error {
-	if d == nil {
-		return errorsmod.Wrap(ErrInvalidDenomForTransfer, "denomination cannot be nil")
-	}
-
+func ValidateDenom(d Denom) error {
 	// NOTE: base denom validation cannot be performed here as each chain may
 	// define its own base denom validation. TokenToCoin validates the resolved
 	// local bank denomination immediately before sdk.Coin materialization.
@@ -48,16 +43,13 @@ func ValidateDenom(d *transwapv1.Denom) error {
 }
 
 // DenomHash returns the hex bytes of the SHA256 hash of the Denom fields.
-func DenomHash(d *transwapv1.Denom) cmtbytes.HexBytes {
+func DenomHash(d Denom) cmtbytes.HexBytes {
 	hash := sha256.Sum256([]byte(DenomPath(d)))
 	return hash[:]
 }
 
 // DenomIBCDenom returns the ICS20 ibc/{hash} denom for traced denominations.
-func DenomIBCDenom(d *transwapv1.Denom) string {
-	if d == nil {
-		return ""
-	}
+func DenomIBCDenom(d Denom) string {
 	if DenomIsNative(d) {
 		return d.Base
 	}
@@ -66,10 +58,7 @@ func DenomIBCDenom(d *transwapv1.Denom) string {
 }
 
 // DenomPath returns the full denomination according to the ICS20 specification.
-func DenomPath(d *transwapv1.Denom) string {
-	if d == nil {
-		return ""
-	}
+func DenomPath(d Denom) string {
 	if DenomIsNative(d) {
 		return d.Base
 	}
@@ -89,36 +78,25 @@ func DenomPath(d *transwapv1.Denom) string {
 }
 
 // DenomIsNative returns true if the denomination is native, thus containing no trace history.
-func DenomIsNative(d *transwapv1.Denom) bool {
-	if d == nil {
-		return true
-	}
+func DenomIsNative(d Denom) bool {
 	return len(d.Trace) == 0
 }
 
 // DenomHasPrefix returns true if the first trace hop matches the provided port and channel.
-func DenomHasPrefix(d *transwapv1.Denom, portID, channelID string) bool {
+func DenomHasPrefix(d Denom, portID, channelID string) bool {
 	if DenomIsNative(d) {
 		return false
 	}
-	if d.Trace[0] == nil {
-		return false
-	}
-
 	return d.Trace[0].PortId == portID && d.Trace[0].ChannelId == channelID
 }
 
 // Denoms defines a wrapper type for a slice of Denom.
-type Denoms []*transwapv1.Denom
+type Denoms []Denom
 
 // Validate performs a basic validation of each denomination trace info.
 func (d Denoms) Validate() error {
 	seenDenoms := make(map[string]bool)
 	for i, denom := range d {
-		if denom == nil {
-			return fmt.Errorf("denomination %d cannot be nil", i)
-		}
-
 		hash := DenomHash(denom).String()
 		if seenDenoms[hash] {
 			return fmt.Errorf("duplicated denomination with hash %s", DenomHash(denom))
@@ -137,13 +115,6 @@ var _ sort.Interface = (*Denoms)(nil)
 func (d Denoms) Len() int { return len(d) }
 
 func (d Denoms) Less(i, j int) bool {
-	if d[i] == nil {
-		return d[j] != nil
-	}
-	if d[j] == nil {
-		return false
-	}
-
 	if d[i].Base != d[j].Base {
 		return d[i].Base < d[j].Base
 	}
@@ -163,15 +134,15 @@ func (d Denoms) Sort() Denoms {
 }
 
 // ExtractDenomFromPath returns the denom from the full path.
-func ExtractDenomFromPath(fullPath string) *transwapv1.Denom {
+func ExtractDenomFromPath(fullPath string) Denom {
 	denomSplit := strings.Split(fullPath, "/")
 
 	if denomSplit[0] == fullPath {
-		return &transwapv1.Denom{Base: fullPath}
+		return Denom{Base: fullPath}
 	}
 
 	var (
-		trace          []*transwapv1.Hop
+		trace          []Hop
 		baseDenomSlice []string
 	)
 
@@ -187,34 +158,24 @@ func ExtractDenomFromPath(fullPath string) *transwapv1.Denom {
 
 	base := strings.Join(baseDenomSlice, "/")
 
-	return &transwapv1.Denom{
+	return Denom{
 		Base:  base,
 		Trace: trace,
 	}
 }
 
 // CloneDenom returns a deep copy of denom so packet-local trace mutation does not alias state.
-func CloneDenom(denom *transwapv1.Denom) *transwapv1.Denom {
-	if denom == nil {
-		return nil
-	}
-
-	trace := make([]*transwapv1.Hop, len(denom.Trace))
-	for i, hop := range denom.Trace {
-		if hop != nil {
-			trace[i] = &transwapv1.Hop{PortId: hop.PortId, ChannelId: hop.ChannelId}
-		}
-	}
-
-	return &transwapv1.Denom{Base: denom.Base, Trace: trace}
+func CloneDenom(denom Denom) Denom {
+	trace := append([]Hop(nil), denom.Trace...)
+	return Denom{Base: denom.Base, Trace: trace}
 }
 
 // CloneToken returns a token copy with a deep-copied denom trace.
-func CloneToken(token *transwapv1.Token) *transwapv1.Token {
+func CloneToken(token *Token) *Token {
 	if token == nil {
 		return nil
 	}
-	return &transwapv1.Token{Denom: CloneDenom(token.Denom), Amount: token.Amount}
+	return &Token{Denom: CloneDenom(token.Denom), Amount: token.Amount}
 }
 
 // ParseHexHash parses a hex hash in string format to bytes and validates its correctness.

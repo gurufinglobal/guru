@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package guru.transwap.v1;
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
 
 // Params controls the bounded automatic refund retry policy. Duration fields
 // are expressed in nanoseconds because IBC packet timestamps use Unix nanos.

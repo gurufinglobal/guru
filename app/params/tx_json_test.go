@@ -17,21 +17,21 @@ import (
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
-type pulsarQueryClient struct {
+type txQueryClient struct {
 	client.MockClient
 	txResult    *coretypes.ResultTx
 	block       *coretypes.ResultBlock
 	blockHeight int64
 }
 
-func (c pulsarQueryClient) Tx(_ context.Context, hash []byte, prove bool) (*coretypes.ResultTx, error) {
+func (c txQueryClient) Tx(_ context.Context, hash []byte, prove bool) (*coretypes.ResultTx, error) {
 	if !prove || !bytes.Equal(hash, c.txResult.Hash) {
 		return nil, fmt.Errorf("unexpected tx query: hash=%X prove=%t", hash, prove)
 	}
 	return c.txResult, nil
 }
 
-func (c pulsarQueryClient) Block(_ context.Context, height *int64) (*coretypes.ResultBlock, error) {
+func (c txQueryClient) Block(_ context.Context, height *int64) (*coretypes.ResultBlock, error) {
 	if height == nil || *height != c.blockHeight {
 		return nil, fmt.Errorf("unexpected block query height: %v", height)
 	}
@@ -60,7 +60,7 @@ func TestStandardTxConfigSupportsJSONAndQueryTxRepresentation(t *testing.T) {
 			SubmissionInterval: 5,
 		},
 	}); err != nil {
-		t.Fatalf("set Pulsar message: %v", err)
+		t.Fatalf("set internal Oracle message: %v", err)
 	}
 
 	// Preserve the base TxConfig behavior for ordinary SDK transaction wrappers.
@@ -86,14 +86,14 @@ func TestStandardTxConfigSupportsJSONAndQueryTxRepresentation(t *testing.T) {
 
 	jsonTx, err := encoding.TxConfig.TxJSONEncoder()(decoded)
 	if err != nil {
-		t.Fatalf("JSON encode decoded Pulsar tx: %v", err)
+		t.Fatalf("JSON encode decoded internal tx: %v", err)
 	}
 	if !json.Valid(jsonTx) {
-		t.Fatalf("decoded Pulsar tx is not valid JSON: %s", jsonTx)
+		t.Fatalf("decoded internal tx is not valid JSON: %s", jsonTx)
 	}
 	if !bytes.Contains(jsonTx, []byte(`"@type":"/guru.oracle.v1.MsgUpsertTask"`)) ||
 		!bytes.Contains(jsonTx, []byte(`"symbol":"BTC/USD"`)) {
-		t.Fatalf("decoded Pulsar JSON lost nested message data: %s", jsonTx)
+		t.Fatalf("decoded internal JSON lost nested message data: %s", jsonTx)
 	}
 
 	// Exercise the SDK query-tx path: RPC Tx/Block lookup, application decoder,
@@ -101,7 +101,7 @@ func TestStandardTxConfigSupportsJSONAndQueryTxRepresentation(t *testing.T) {
 	const height int64 = 7
 	blockTime := time.Date(2026, 7, 16, 1, 2, 3, 0, time.UTC)
 	hash := bytes.Repeat([]byte{0x42}, 32)
-	node := pulsarQueryClient{
+	node := txQueryClient{
 		txResult: &coretypes.ResultTx{
 			Hash:   hash,
 			Height: height,
@@ -130,7 +130,7 @@ func TestStandardTxConfigSupportsJSONAndQueryTxRepresentation(t *testing.T) {
 		t.Fatalf("query response tx type = %T, want *tx.Tx", response.Tx.GetCachedValue())
 	}
 	if len(protoTx.GetBody().GetMessages()) != 1 || protoTx.GetBody().GetMessages()[0].GetTypeUrl() != "/guru.oracle.v1.MsgUpsertTask" {
-		t.Fatalf("query response lost Pulsar message: %+v", protoTx.GetBody().GetMessages())
+		t.Fatalf("query response lost internal message: %+v", protoTx.GetBody().GetMessages())
 	}
 	if err := clientCtx.PrintProto(response); err != nil {
 		t.Fatalf("print query tx response: %v", err)

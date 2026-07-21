@@ -3,7 +3,6 @@ package simulation
 import (
 	"bytes"
 	"fmt"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
@@ -19,11 +18,11 @@ func NewDecodeStore() func(kvA, kvB kv.Pair) string {
 			return fmt.Sprintf("Port A: %s\nPort B: %s", string(kvA.Value), string(kvB.Value))
 
 		case bytes.Equal(kvA.Key[:1], types.DenomKey):
-			denomA := &transwapv1.Denom{}
-			denomB := &transwapv1.Denom{}
+			denomA := &types.Denom{}
+			denomB := &types.Denom{}
 			types.ModuleCdc.MustUnmarshal(kvA.Value, denomA)
 			types.ModuleCdc.MustUnmarshal(kvB.Value, denomB)
-			return fmt.Sprintf("Denom A: %s\nDenom B: %s", types.DenomIBCDenom(denomA), types.DenomIBCDenom(denomB))
+			return fmt.Sprintf("Denom A: %s\nDenom B: %s", types.DenomIBCDenom(*denomA), types.DenomIBCDenom(*denomB))
 
 		default:
 			panic(fmt.Errorf("invalid %s key prefix %X", types.ModuleName, kvA.Key[:1]))

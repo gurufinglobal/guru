@@ -5,17 +5,16 @@ import (
 	"sort"
 	"testing"
 
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	"cosmossdk.io/collections"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/ethereum/go-ethereum/common"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type reserveAllowanceOuterContextKey struct{}
@@ -23,7 +22,7 @@ type reserveAllowanceOuterContextKey struct{}
 func TestReserveDepositorAdminLifecycleCanonicalStorage(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 
 	depositor, depositorAddr := testAddress(t, f.accountCodec, 0x11)
 	depositorAlias := common.BytesToAddress(depositorAddr).Hex()
@@ -77,8 +76,8 @@ func TestReserveDepositorAdminLifecycleCanonicalStorage(t *testing.T) {
 func TestReserveDepositorDepositsActiveAndInactiveWithoutDirectSendBypass(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	active := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	inactive := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	active := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	inactive := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 
 	depositor, depositorAddr := testAddress(t, f.accountCodec, 0x21)
 	unauthorized, unauthorizedAddr := testAddress(t, f.accountCodec, 0x22)
@@ -146,11 +145,11 @@ func TestReserveDepositorDepositsActiveAndInactiveWithoutDirectSendBypass(t *tes
 func TestPreviousExchangeAdminCanDepositOnlyThroughExplicitAllowlist(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, f.keeper.AddReserveDepositor(f.ctx, f.admin, exchange.GetId(), f.admin))
 	newAdmin, _ := testAddress(t, f.accountCodec, 0x04)
-	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		NewAdminAddress: wrapperspb.String(newAdmin),
+	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		NewAdminAddress: types.NewStringValue(newAdmin),
 	})
 	require.NoError(t, err)
 	require.Equal(t, newAdmin, updated.GetAdminAddress())
@@ -181,7 +180,7 @@ func TestPreviousExchangeAdminCanDepositOnlyThroughExplicitAllowlist(t *testing.
 func TestReserveDepositorHasNoAdministrativeOrWithdrawalPrivilegesAndDeletedIsTerminal(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	depositor, depositorAddr := testAddress(t, f.accountCodec, 0x31)
 	f.accountKeeper.SetAccount(f.ctx, f.accountKeeper.NewAccountWithAddress(f.ctx, depositorAddr))
 	f.bankKeeper.SetBalance(depositorAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 10)))
@@ -190,8 +189,8 @@ func TestReserveDepositorHasNoAdministrativeOrWithdrawalPrivilegesAndDeletedIsTe
 	amount := sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))
 	err := f.keeper.WithdrawReserve(f.ctx, depositor, exchange.GetId(), f.recipient, amount)
 	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
-	_, err = f.keeper.UpdateExchange(f.ctx, depositor, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(exchange.GetFeeBpsAToB() + 1),
+	_, err = f.keeper.UpdateExchange(f.ctx, depositor, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(exchange.GetFeeBpsAToB() + 1),
 	})
 	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	err = f.keeper.DeleteExchange(f.ctx, depositor, exchange.GetId())
@@ -202,7 +201,7 @@ func TestReserveDepositorHasNoAdministrativeOrWithdrawalPrivilegesAndDeletedIsTe
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, exchange.GetId()))
 	deleted, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED, deleted.GetStatus())
+	require.Equal(t, types.ExchangeStatus_EXCHANGE_STATUS_DELETED, deleted.GetStatus())
 	require.Equal(t, exchange.GetRevision()+1, deleted.GetRevision())
 
 	isDepositor, err := f.keeper.IsReserveDepositor(f.ctx, exchange.GetId(), depositor)
@@ -233,16 +232,15 @@ func TestReserveDepositorHasNoAdministrativeOrWithdrawalPrivilegesAndDeletedIsTe
 func TestReserveDepositorQueriesMembershipAndSDKPagination(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 
-	require.Nil(t, sdkPageRequest(nil))
-	pageRequest := sdkPageRequest(&queryv1beta1.PageRequest{
+	pageRequest := &sdkquery.PageRequest{
 		Key:        []byte("key"),
 		Offset:     1001,
 		Limit:      1001,
 		CountTotal: true,
 		Reverse:    true,
-	})
+	}
 	require.Equal(t, []byte("key"), pageRequest.GetKey())
 	require.Equal(t, uint64(1001), pageRequest.GetOffset())
 	require.Equal(t, uint64(1001), pageRequest.GetLimit())
@@ -258,34 +256,34 @@ func TestReserveDepositorQueriesMembershipAndSDKPagination(t *testing.T) {
 	sort.Strings(want)
 
 	queryServer := NewQueryServer(&f.keeper)
-	counted, err := queryServer.ReserveDepositors(f.ctx, &bexv1.QueryReserveDepositorsRequest{
+	counted, err := queryServer.ReserveDepositors(f.ctx, &types.QueryReserveDepositorsRequest{
 		ExchangeId: exchange.GetId(),
-		Pagination: &queryv1beta1.PageRequest{Offset: 1, Limit: 1, CountTotal: true},
+		Pagination: &sdkquery.PageRequest{Offset: 1, Limit: 1, CountTotal: true},
 	})
 	require.NoError(t, err)
 	require.Equal(t, want[1:2], counted.GetDepositors())
 	require.Equal(t, uint64(len(want)), counted.GetPagination().GetTotal())
 
-	first, err := queryServer.ReserveDepositors(f.ctx, &bexv1.QueryReserveDepositorsRequest{
+	first, err := queryServer.ReserveDepositors(f.ctx, &types.QueryReserveDepositorsRequest{
 		ExchangeId: exchange.GetId(),
-		Pagination: &queryv1beta1.PageRequest{Limit: 2},
+		Pagination: &sdkquery.PageRequest{Limit: 2},
 	})
 	require.NoError(t, err)
 	require.Equal(t, want[:2], first.GetDepositors())
 	require.NotEmpty(t, first.GetPagination().GetNextKey())
 	require.Zero(t, first.GetPagination().GetTotal())
-	_, err = queryServer.ReserveDepositors(f.ctx, &bexv1.QueryReserveDepositorsRequest{
+	_, err = queryServer.ReserveDepositors(f.ctx, &types.QueryReserveDepositorsRequest{
 		ExchangeId: exchange.GetId(),
-		Pagination: &queryv1beta1.PageRequest{
+		Pagination: &sdkquery.PageRequest{
 			Key:    first.GetPagination().GetNextKey(),
 			Offset: 1,
 		},
 	})
 	require.ErrorContains(t, err, "either offset or key")
 
-	second, err := queryServer.ReserveDepositors(f.ctx, &bexv1.QueryReserveDepositorsRequest{
+	second, err := queryServer.ReserveDepositors(f.ctx, &types.QueryReserveDepositorsRequest{
 		ExchangeId: exchange.GetId(),
-		Pagination: &queryv1beta1.PageRequest{
+		Pagination: &sdkquery.PageRequest{
 			Key:   first.GetPagination().GetNextKey(),
 			Limit: 2,
 		},
@@ -294,14 +292,14 @@ func TestReserveDepositorQueriesMembershipAndSDKPagination(t *testing.T) {
 	require.Equal(t, want[2:], second.GetDepositors())
 	require.Empty(t, second.GetPagination().GetNextKey())
 
-	membership, err := queryServer.IsReserveDepositor(f.ctx, &bexv1.QueryIsReserveDepositorRequest{
+	membership, err := queryServer.IsReserveDepositor(f.ctx, &types.QueryIsReserveDepositorRequest{
 		ExchangeId:       exchange.GetId(),
 		DepositorAddress: want[1],
 	})
 	require.NoError(t, err)
 	require.True(t, membership.GetIsReserveDepositor())
 	nonMember, _ := testAddress(t, f.accountCodec, 0x44)
-	membership, err = queryServer.IsReserveDepositor(f.ctx, &bexv1.QueryIsReserveDepositorRequest{
+	membership, err = queryServer.IsReserveDepositor(f.ctx, &types.QueryIsReserveDepositorRequest{
 		ExchangeId:       exchange.GetId(),
 		DepositorAddress: nonMember,
 	})
@@ -309,11 +307,11 @@ func TestReserveDepositorQueriesMembershipAndSDKPagination(t *testing.T) {
 	require.False(t, membership.GetIsReserveDepositor())
 
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, exchange.GetId()))
-	afterDelete, err := queryServer.ReserveDepositors(f.ctx, &bexv1.QueryReserveDepositorsRequest{ExchangeId: exchange.GetId()})
+	afterDelete, err := queryServer.ReserveDepositors(f.ctx, &types.QueryReserveDepositorsRequest{ExchangeId: exchange.GetId()})
 	require.NoError(t, err)
 	require.Equal(t, want, afterDelete.GetDepositors())
 	require.Equal(t, uint64(len(want)), afterDelete.GetPagination().GetTotal())
-	membership, err = queryServer.IsReserveDepositor(f.ctx, &bexv1.QueryIsReserveDepositorRequest{
+	membership, err = queryServer.IsReserveDepositor(f.ctx, &types.QueryIsReserveDepositorRequest{
 		ExchangeId:       exchange.GetId(),
 		DepositorAddress: want[0],
 	})
@@ -324,14 +322,14 @@ func TestReserveDepositorQueriesMembershipAndSDKPagination(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 	_, err = queryServer.IsReserveDepositor(f.ctx, nil)
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
-	_, err = queryServer.ReserveDepositors(f.ctx, &bexv1.QueryReserveDepositorsRequest{ExchangeId: exchange.GetId() + 100})
+	_, err = queryServer.ReserveDepositors(f.ctx, &types.QueryReserveDepositorsRequest{ExchangeId: exchange.GetId() + 100})
 	require.ErrorIs(t, err, types.ErrExchangeNotFound)
 }
 
 func TestReserveReceiveAllowancePreservesSDKContext(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserveBytes, err := f.accountCodec.StringToBytes(exchange.GetReserveAddress())
 	require.NoError(t, err)
 	reserveAddr := sdk.AccAddress(reserveBytes)
@@ -382,7 +380,7 @@ func TestReserveAccountIsKeylessBaseAccountAndRejectsUnsafeExistingAccounts(t *t
 	t.Run("creates keyless base account", func(t *testing.T) {
 		f := setupKeeperFixture(t)
 		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+		exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 		reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 		account := f.accountKeeper.GetAccount(f.ctx, reserve)
 		baseAccount, ok := account.(*authtypes.BaseAccount)
@@ -403,7 +401,7 @@ func TestReserveAccountIsKeylessBaseAccountAndRejectsUnsafeExistingAccounts(t *t
 
 		exchange, err := f.keeper.RegisterExchange(
 			f.ctx,
-			validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE),
+			validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE),
 		)
 		require.NoError(t, err)
 		require.Equal(t, DefaultNextExchangeID, exchange.GetId())
@@ -429,7 +427,7 @@ func TestReserveAccountIsKeylessBaseAccountAndRejectsUnsafeExistingAccounts(t *t
 
 		exchange, err := f.keeper.RegisterExchange(
 			f.ctx,
-			validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE),
+			validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE),
 		)
 		require.NoError(t, err)
 		require.Equal(t, DefaultNextExchangeID, exchange.GetId())
@@ -457,7 +455,7 @@ func TestReserveAccountIsKeylessBaseAccountAndRejectsUnsafeExistingAccounts(t *t
 
 		_, err = f.keeper.RegisterExchange(
 			f.ctx,
-			validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE),
+			validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE),
 		)
 		require.ErrorIs(t, err, types.ErrInvariantViolation)
 	})
@@ -487,7 +485,7 @@ func TestReserveAccountIsKeylessBaseAccountAndRejectsUnsafeExistingAccounts(t *t
 
 			_, err := f.keeper.RegisterExchange(
 				f.ctx,
-				validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE),
+				validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE),
 			)
 			require.ErrorIs(t, err, types.ErrInvariantViolation)
 		})
@@ -497,7 +495,7 @@ func TestReserveAccountIsKeylessBaseAccountAndRejectsUnsafeExistingAccounts(t *t
 func TestReserveDepositorMsgServerAndGenesisRoundTrip(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	depositor, depositorAddr := testAddress(t, f.accountCodec, 0x51)
 	f.accountKeeper.SetAccount(f.ctx, f.accountKeeper.NewAccountWithAddress(f.ctx, depositorAddr))
 	f.bankKeeper.SetBalance(depositorAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 10)))
@@ -508,13 +506,13 @@ func TestReserveDepositorMsgServerAndGenesisRoundTrip(t *testing.T) {
 	_, err = msgServer.RemoveReserveDepositor(f.ctx, nil)
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 
-	_, err = msgServer.AddReserveDepositor(f.ctx, &bexv1.MsgAddReserveDepositor{
+	_, err = msgServer.AddReserveDepositor(f.ctx, &types.MsgAddReserveDepositor{
 		AdminAddress:     f.admin,
 		ExchangeId:       exchange.GetId(),
 		DepositorAddress: depositor,
 	})
 	require.NoError(t, err)
-	_, err = msgServer.DepositReserve(f.ctx, &bexv1.MsgDepositReserve{
+	_, err = msgServer.DepositReserve(f.ctx, &types.MsgDepositReserve{
 		Sender:     depositor,
 		ExchangeId: exchange.GetId(),
 		Amount:     sdkCoinsToProto(sdk.NewCoins(sdk.NewInt64Coin("agxn", 3))),
@@ -532,7 +530,7 @@ func TestReserveDepositorMsgServerAndGenesisRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, isDepositor)
 
-	_, err = msgServer.RemoveReserveDepositor(f.ctx, &bexv1.MsgRemoveReserveDepositor{
+	_, err = msgServer.RemoveReserveDepositor(f.ctx, &types.MsgRemoveReserveDepositor{
 		AdminAddress:     f.admin,
 		ExchangeId:       exchange.GetId(),
 		DepositorAddress: depositor,

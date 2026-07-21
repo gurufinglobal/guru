@@ -9,7 +9,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
 
@@ -22,7 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/client/cli"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/keeper"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/simulation"
@@ -73,7 +71,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 
 // ValidateGenesis performs genesis state validation for the ibc transfer module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
-	var gs transwapv1.GenesisState
+	var gs types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &gs); err != nil {
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
@@ -83,7 +81,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncod
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the transwap module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	if err := transwapv1.RegisterQueryHandlerClient(context.Background(), mux, transwapv1.NewQueryClient(clientCtx)); err != nil {
+	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
@@ -113,8 +111,8 @@ func NewAppModule(k keeper.Keeper) AppModule {
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
-	transwapv1.RegisterMsgServer(registrar, keeper.NewMsgServer(&am.keeper))
-	transwapv1.RegisterQueryServer(registrar, am.keeper)
+	types.RegisterMsgServer(registrar, keeper.NewMsgServer(&am.keeper))
+	types.RegisterQueryServer(registrar, am.keeper)
 	return nil
 }
 
@@ -166,8 +164,8 @@ func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisT
 	return writeGenesisState(target, gs)
 }
 
-func readGenesisState(source appmodule.GenesisSource, defaults *transwapv1.GenesisState) (*transwapv1.GenesisState, error) {
-	genesis := &transwapv1.GenesisState{
+func readGenesisState(source appmodule.GenesisSource, defaults *types.GenesisState) (*types.GenesisState, error) {
+	genesis := &types.GenesisState{
 		PortId:        defaults.GetPortId(),
 		Denoms:        defaults.GetDenoms(),
 		TotalEscrowed: defaults.GetTotalEscrowed(),
@@ -206,7 +204,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *transwapv1.Genes
 	return genesis, nil
 }
 
-func writeGenesisState(target appmodule.GenesisTarget, genesis *transwapv1.GenesisState) error {
+func writeGenesisState(target appmodule.GenesisTarget, genesis *types.GenesisState) error {
 	if genesis == nil {
 		return types.ErrDecodeGenesisField.Wrap("genesis state cannot be nil")
 	}
@@ -229,7 +227,7 @@ func writeGenesisState(target appmodule.GenesisTarget, genesis *transwapv1.Genes
 func readGenesisStateField(
 	source appmodule.GenesisSource,
 	fieldName string,
-) (*transwapv1.GenesisState, bool, error) {
+) (*types.GenesisState, bool, error) {
 	reader, err := source(fieldName)
 	if err != nil {
 		return nil, false, types.ErrReadGenesisField.Wrapf("%s: %v", fieldName, err)
@@ -254,12 +252,20 @@ func readGenesisStateField(
 	wrapped = append(wrapped, fieldJSON...)
 	wrapped = append(wrapped, '}')
 
-	partial := &transwapv1.GenesisState{}
-	if err := protojson.Unmarshal(wrapped, partial); err != nil {
+	partial := &types.GenesisState{}
+	if err := types.ModuleCdc.UnmarshalJSON(wrapped, partial); err != nil {
 		return nil, false, types.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
 	}
 
 	return partial, true, nil
+}
+
+type legacyPulsarJSONValue struct {
+	value any
+}
+
+func (value legacyPulsarJSONValue) MarshalJSON() ([]byte, error) {
+	return types.MarshalLegacyPulsarJSON(value.value)
 }
 
 func writeGenesisField(target appmodule.GenesisTarget, fieldName string, value any) error {
@@ -271,7 +277,7 @@ func writeGenesisField(target appmodule.GenesisTarget, fieldName string, value a
 		return types.ErrNilGenesisTargetWriter.Wrapf("%s genesis target field writer is nil", fieldName)
 	}
 
-	if err := json.NewEncoder(writer).Encode(value); err != nil {
+	if err := json.NewEncoder(writer).Encode(legacyPulsarJSONValue{value: value}); err != nil {
 		_ = writer.Close()
 		return types.ErrEncodeGenesisField.Wrapf("%s: %v", fieldName, err)
 	}

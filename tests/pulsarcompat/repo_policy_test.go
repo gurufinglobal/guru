@@ -14,12 +14,15 @@ func TestGuruSourceDoesNotImportGoGoProtoDirectly(t *testing.T) {
 	repoRoot := projectRootFromTestFile(t)
 	disallowed := "github.com/cosmos/" + "gogoproto"
 	allowed := map[string]struct{}{
-		filepath.Join("app", "app.go"):                                  {},
-		filepath.Join("app", "params", "encoding.go"):                   {},
-		filepath.Join("app", "tx_service_wrapper.go"):                   {},
-		filepath.Join("tests", "pulsarcompat", "pulsar_compat_test.go"): {},
-		filepath.Join("x", "constitution", "genesis.go"):                {},
-		filepath.Join("x", "oracle", "genesis.go"):                      {},
+		filepath.Join("app", "app.go"):                                   {},
+		filepath.Join("app", "params", "bex_transwap_tx_config_test.go"): {},
+		filepath.Join("app", "params", "encoding.go"):                    {},
+		filepath.Join("app", "params", "bex_gogo_map_entries.go"):        {},
+		filepath.Join("app", "tx_service_wrapper.go"):                    {},
+		filepath.Join("tests", "pulsarcompat", "pulsar_compat_test.go"):  {},
+		filepath.Join("x", "constitution", "genesis.go"):                 {},
+		filepath.Join("x", "bex", "types", "proto_helpers.go"):           {},
+		filepath.Join("x", "oracle", "genesis.go"):                       {},
 	}
 
 	var offenders []string
@@ -71,10 +74,7 @@ func TestMigratedNodeModulesDoNotImportPublicPulsarAPI(t *testing.T) {
 	publicAPI := "github.com/gurufinglobal/guru/v3/api/guru/"
 	var offenders []string
 
-	// Constitution and Oracle have internal gogo runtime types. BEX and
-	// TransSwap still require the public Pulsar descriptors for nested message
-	// decoding, so they remain outside this migration boundary for now.
-	for _, sourceDir := range []string{"oracle", "x/constitution", "x/oracle"} {
+	for _, sourceDir := range []string{"app", "cmd", "oracle", "x"} {
 		root := filepath.Join(repoRoot, sourceDir)
 		err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 			if err != nil {
@@ -108,11 +108,20 @@ func TestMigratedNodeModulesDoNotImportPublicPulsarAPI(t *testing.T) {
 
 func TestInternalAndPublicGatewayPatternsMatch(t *testing.T) {
 	repoRoot := projectRootFromTestFile(t)
-	for _, module := range []string{"constitution", "oracle"} {
-		internal := gatewayPatternLines(t, filepath.Join(repoRoot, "x", module, "types", "query.pb.gw.go"))
-		public := gatewayPatternLines(t, filepath.Join(repoRoot, "api", "guru", module, "v1", "query.pb.gw.go"))
+	modules := []struct {
+		name         string
+		internalPath string
+	}{
+		{name: "bex", internalPath: filepath.Join("x", "bex", "types")},
+		{name: "constitution", internalPath: filepath.Join("x", "constitution", "types")},
+		{name: "oracle", internalPath: filepath.Join("x", "oracle", "types")},
+		{name: "transwap", internalPath: filepath.Join("x", "ibc", "transwap", "types")},
+	}
+	for _, module := range modules {
+		internal := gatewayPatternLines(t, filepath.Join(repoRoot, module.internalPath, "query.pb.gw.go"))
+		public := gatewayPatternLines(t, filepath.Join(repoRoot, "api", "guru", module.name, "v1", "query.pb.gw.go"))
 		if strings.Join(internal, "\n") != strings.Join(public, "\n") {
-			t.Fatalf("%s internal and public gateway patterns differ:\ninternal=%s\npublic=%s", module, internal, public)
+			t.Fatalf("%s internal and public gateway patterns differ:\ninternal=%s\npublic=%s", module.name, internal, public)
 		}
 	}
 }
@@ -129,6 +138,7 @@ func TestProtoGenScriptDiscoversFutureModulesAndPrunesStalePublicAPI(t *testing.
 		filepath.Join(tempRoot, "proto"),
 		filepath.Join(tempRoot, "scripts"),
 		filepath.Join(tempRoot, "x", "constitution", "types"),
+		filepath.Join(tempRoot, "x", "ibc", "transwap", "types"),
 		filepath.Join(tempRoot, "x", "legacy", "types"),
 	} {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -149,7 +159,7 @@ set -eu
 case "$*" in
   *buf.gen.gogo.yaml*)
     root=.proto-gen/gogo/github.com/gurufinglobal/guru/v3/x
-    for module in constitution future; do
+    for module in constitution future ibc/transwap; do
       mkdir -p "$root/$module/types"
       printf '%s\n' '// generated fixture' > "$root/$module/types/types.pb.go"
     done
@@ -171,6 +181,12 @@ esac
 	}
 	if err := os.WriteFile(filepath.Join(tempRoot, "x", "constitution", "types", "codec.go"), []byte("package types\n"), 0o644); err != nil {
 		t.Fatalf("write handwritten fixture: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempRoot, "x", "ibc", "transwap", "types", "stale.pb.go"), []byte("stale"), 0o644); err != nil {
+		t.Fatalf("write nested stale generated fixture: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempRoot, "x", "ibc", "transwap", "types", "codec.go"), []byte("package types\n"), 0o644); err != nil {
+		t.Fatalf("write nested handwritten fixture: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(tempRoot, "x", "legacy", "types", "stale.pb.go"), []byte("stale"), 0o644); err != nil {
 		t.Fatalf("write removed module generated fixture: %v", err)
@@ -195,7 +211,9 @@ esac
 	for _, path := range []string{
 		filepath.Join(tempRoot, "x", "constitution", "types", "types.pb.go"),
 		filepath.Join(tempRoot, "x", "future", "types", "types.pb.go"),
+		filepath.Join(tempRoot, "x", "ibc", "transwap", "types", "types.pb.go"),
 		filepath.Join(tempRoot, "x", "constitution", "types", "codec.go"),
+		filepath.Join(tempRoot, "x", "ibc", "transwap", "types", "codec.go"),
 		filepath.Join(tempRoot, "x", "legacy", "types", "codec.go"),
 		filepath.Join(tempRoot, "api", "guru", "constitution", "v1", "types.pulsar.go"),
 		filepath.Join(tempRoot, "api", "guru", "future", "v1", "types.pulsar.go"),
@@ -207,6 +225,9 @@ esac
 	if _, err := os.Stat(filepath.Join(tempRoot, "x", "constitution", "types", "stale.pb.go")); !os.IsNotExist(err) {
 		t.Fatalf("stale generated file was not removed: %v", err)
 	}
+	if _, err := os.Stat(filepath.Join(tempRoot, "x", "ibc", "transwap", "types", "stale.pb.go")); !os.IsNotExist(err) {
+		t.Fatalf("nested stale generated file was not removed: %v", err)
+	}
 	if _, err := os.Stat(filepath.Join(tempRoot, "x", "legacy", "types", "stale.pb.go")); !os.IsNotExist(err) {
 		t.Fatalf("removed module generated file was not removed: %v", err)
 	}
@@ -215,6 +236,62 @@ esac
 	}
 	if _, err := os.Stat(filepath.Join(tempRoot, ".proto-gen")); !os.IsNotExist(err) {
 		t.Fatalf("staging directory was not removed: %v", err)
+	}
+}
+
+func TestProtoGenScriptRejectsFilesBelowTypesPackage(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the repository codegen script requires a POSIX shell")
+	}
+
+	repoRoot := projectRootFromTestFile(t)
+	tempRoot := t.TempDir()
+	for _, dir := range []string{
+		filepath.Join(tempRoot, "bin"),
+		filepath.Join(tempRoot, "proto"),
+		filepath.Join(tempRoot, "scripts"),
+	} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("create fixture directory %s: %v", dir, err)
+		}
+	}
+
+	script, err := os.ReadFile(filepath.Join(repoRoot, "scripts", "proto-gen.sh"))
+	if err != nil {
+		t.Fatalf("read repository codegen script: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempRoot, "scripts", "proto-gen.sh"), script, 0o755); err != nil {
+		t.Fatalf("write fixture codegen script: %v", err)
+	}
+
+	fakeBuf := `#!/bin/sh
+set -eu
+case "$*" in
+  *buf.gen.gogo.yaml*)
+    root=.proto-gen/gogo/github.com/gurufinglobal/guru/v3/x/future/types/internal
+    mkdir -p "$root"
+    printf '%s\n' '// invalid generated fixture' > "$root/invalid.pb.go"
+    ;;
+  *buf.gen.pulsar.yaml*)
+    root=.proto-gen/pulsar/api/guru/future/v1
+    mkdir -p "$root"
+    printf '%s\n' '// generated fixture' > "$root/types.pulsar.go"
+    ;;
+esac
+`
+	if err := os.WriteFile(filepath.Join(tempRoot, "bin", "buf"), []byte(fakeBuf), 0o755); err != nil {
+		t.Fatalf("write fake buf executable: %v", err)
+	}
+
+	cmd := exec.Command("sh", "scripts/proto-gen.sh")
+	cmd.Dir = tempRoot
+	cmd.Env = []string{"PATH=" + filepath.Join(tempRoot, "bin") + string(os.PathListSeparator) + os.Getenv("PATH")}
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("codegen script accepted a generated package below a types directory:\n%s", output)
+	}
+	if !strings.Contains(string(output), "x/future/types/internal/invalid.pb.go") {
+		t.Fatalf("codegen rejection did not identify the invalid file:\n%s", output)
 	}
 }
 
@@ -309,5 +386,5 @@ func isGeneratedGuruGogo(rel string) bool {
 	}
 
 	parts := strings.Split(filepath.ToSlash(rel), "/")
-	return len(parts) == 4 && parts[0] == "x" && parts[2] == "types"
+	return len(parts) >= 4 && parts[0] == "x" && parts[len(parts)-2] == "types"
 }

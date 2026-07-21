@@ -11,9 +11,7 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	ibcerrors "github.com/cosmos/ibc-go/v11/modules/core/errors"
-	"google.golang.org/protobuf/proto"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/internal/events"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
@@ -106,8 +104,8 @@ func validateRefundTransportTimeout(timeout, destinationTimestamp, safetyMargin 
 	return nil
 }
 
-func (k Keeper) commitRefundTokensToTransport(ctx sdk.Context, record *transwapv1.RefundRecord) error {
-	token := types.CloneToken(record.GetToken())
+func (k Keeper) commitRefundTokensToTransport(ctx sdk.Context, record *types.RefundRecord) error {
+	token := types.CloneToken(&record.Token)
 	coin, err := types.TokenToCoin(token)
 	if err != nil {
 		return err
@@ -142,7 +140,7 @@ func (k Keeper) commitRefundTokensToTransport(ctx sdk.Context, record *transwapv
 
 func (k Keeper) validateActiveRefundPacketData(
 	ctx sdk.Context,
-	record *transwapv1.RefundRecord,
+	record *types.RefundRecord,
 	data types.InternalTransferRepresentation,
 ) (sdk.Coin, error) {
 	kind, err := data.ClassifyPacket()
@@ -153,7 +151,7 @@ func (k Keeper) validateActiveRefundPacketData(
 	if err != nil {
 		return sdk.Coin{}, err
 	}
-	expected, err := types.TokenToCoin(record.GetToken())
+	expected, err := types.TokenToCoin(&record.Token)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
@@ -178,7 +176,7 @@ func (k Keeper) validateActiveRefundPacketData(
 
 func (k Keeper) restoreRefundTokensToReserve(
 	ctx sdk.Context,
-	record *transwapv1.RefundRecord,
+	record *types.RefundRecord,
 	data types.InternalTransferRepresentation,
 ) error {
 	coin, err := k.validateActiveRefundPacketData(ctx, record, data)
@@ -210,12 +208,12 @@ func (k Keeper) restoreRefundTokensToReserve(
 	return nil
 }
 
-func (k Keeper) attemptRefundPacket(ctx sdk.Context, refundID string) (*transwapv1.RefundRecord, error) {
+func (k Keeper) attemptRefundPacket(ctx sdk.Context, refundID string) (*types.RefundRecord, error) {
 	record, err := k.MustGetRefundRecord(ctx, refundID)
 	if err != nil {
 		return nil, err
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_RETRYABLE {
 		return nil, types.ErrInvalidRefundState.Wrapf(
 			"refund %s is %s, expected REFUND_RETRYABLE",
 			refundID,
@@ -292,7 +290,7 @@ func (k Keeper) attemptRefundPacket(ctx sdk.Context, refundID string) (*transwap
 	}
 
 	k.clearRefundRetrySchedule(cacheCtx, cached)
-	if err := transitionRefundStatus(cached, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT); err != nil {
+	if err := transitionRefundStatus(cached, types.RefundStatus_REFUND_STATUS_IN_FLIGHT); err != nil {
 		return nil, err
 	}
 	cached.ActivePacketSequence = sequence
@@ -304,17 +302,17 @@ func (k Keeper) attemptRefundPacket(ctx sdk.Context, refundID string) (*transwap
 	if err := k.setActiveRefundPacketIndex(cacheCtx, cached); err != nil {
 		return nil, err
 	}
-	events.EmitTransferEvent(cacheCtx, reserveAddress, cached.GetReceiver(), cached.GetToken(), cached.GetMemo())
+	events.EmitTransferEvent(cacheCtx, reserveAddress, cached.GetReceiver(), &cached.Token, cached.GetMemo())
 	emitRefundEvent(cacheCtx, types.EventTypeRefundAttempt, cached)
 
 	writeCache()
-	return proto.Clone(cached).(*transwapv1.RefundRecord), nil
+	return types.CloneRefundRecord(cached), nil
 }
 
 // dispatchRefundPackets performs exactly one attempt. A local transport
 // failure is persisted in the bounded retry queue for a later block;
 // accounting/invariant failures remain transaction errors.
-func (k Keeper) dispatchRefundPackets(ctx sdk.Context, refundID string) (*transwapv1.RefundRecord, error) {
+func (k Keeper) dispatchRefundPackets(ctx sdk.Context, refundID string) (*types.RefundRecord, error) {
 	record, err := k.attemptRefundPacket(ctx, refundID)
 	if err == nil {
 		return record, nil
@@ -341,12 +339,12 @@ func (k Keeper) recordRefundDispatchFailure(
 	ctx sdk.Context,
 	refundID string,
 	cause error,
-) (*transwapv1.RefundRecord, error) {
+) (*types.RefundRecord, error) {
 	record, err := k.MustGetRefundRecord(ctx, refundID)
 	if err != nil {
 		return nil, err
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_RETRYABLE {
 		return nil, types.ErrInvalidRefundState.Wrapf(
 			"refund %s is %s after dispatch failure",
 			refundID,
@@ -366,7 +364,7 @@ func (k Keeper) recordRefundDispatchFailure(
 	}
 	record.RetryCount++
 	if record.GetRetryCount() >= params.GetMaxRefundRetries() {
-		if err := transitionRefundStatus(record, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE); err != nil {
+		if err := transitionRefundStatus(record, types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE); err != nil {
 			return nil, err
 		}
 		k.clearRefundRetrySchedule(ctx, record)
@@ -382,7 +380,7 @@ func (k Keeper) recordRefundDispatchFailure(
 		record,
 		sdk.NewAttribute(types.AttributeKeyFailureReason, cause.Error()),
 	)
-	return proto.Clone(record).(*transwapv1.RefundRecord), nil
+	return types.CloneRefundRecord(record), nil
 }
 
 func (k Keeper) settleSuccessfulOutput(ctx sdk.Context, refundID string) error {
@@ -391,14 +389,14 @@ func (k Keeper) settleSuccessfulOutput(ctx sdk.Context, refundID string) error {
 	if err != nil {
 		return err
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_PENDING {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_PENDING {
 		return nil
 	}
 	fee, err := types.ProtoCoinToSDK(record.GetOriginalFee())
 	if err != nil {
 		return err
 	}
-	liability, err := types.TokenToCoin(record.GetToken())
+	liability, err := types.TokenToCoin(&record.Token)
 	if err != nil {
 		return err
 	}
@@ -415,7 +413,7 @@ func (k Keeper) settleSuccessfulOutput(ctx sdk.Context, refundID string) error {
 		return err
 	}
 	k.deleteOutputRefundPacketIndex(cacheCtx, record)
-	if err := transitionRefundStatus(record, transwapv1.RefundStatus_REFUND_STATUS_COMPLETED); err != nil {
+	if err := transitionRefundStatus(record, types.RefundStatus_REFUND_STATUS_COMPLETED); err != nil {
 		return err
 	}
 	emitRefundEvent(cacheCtx, types.EventTypeRefundStateChanged, record)
@@ -436,7 +434,7 @@ func (k Keeper) failOriginalOutput(
 	if err != nil {
 		return err
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_PENDING {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_PENDING {
 		return nil
 	}
 	exchangeID, err := parseExchangeID(record.GetExchangeId())
@@ -459,7 +457,7 @@ func (k Keeper) failOriginalOutput(
 		return errorsmod.Wrap(err, "failed to release rejected swap volume reservation")
 	}
 	k.deleteOutputRefundPacketIndex(cacheCtx, record)
-	if err := transitionRefundStatus(record, transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE); err != nil {
+	if err := transitionRefundStatus(record, types.RefundStatus_REFUND_STATUS_RETRYABLE); err != nil {
 		return err
 	}
 	if err := k.SetRefundRecord(cacheCtx, record); err != nil {
@@ -551,13 +549,13 @@ func (k Keeper) completeActiveRefund(
 	if err != nil {
 		return err
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_IN_FLIGHT {
 		return nil
 	}
 	if _, err := k.validateActiveRefundPacketData(cacheCtx, record, data); err != nil {
 		return err
 	}
-	liability, err := types.TokenToCoin(record.GetToken())
+	liability, err := types.TokenToCoin(&record.Token)
 	if err != nil {
 		return err
 	}
@@ -571,7 +569,7 @@ func (k Keeper) completeActiveRefund(
 	k.deleteActiveRefundPacketIndex(cacheCtx, record)
 	record.ActivePacketSequence = 0
 	record.ActiveTimeoutTimestamp = 0
-	if err := transitionRefundStatus(record, transwapv1.RefundStatus_REFUND_STATUS_COMPLETED); err != nil {
+	if err := transitionRefundStatus(record, types.RefundStatus_REFUND_STATUS_COMPLETED); err != nil {
 		return err
 	}
 	emitRefundEvent(cacheCtx, types.EventTypeRefundStateChanged, record)
@@ -592,7 +590,7 @@ func (k Keeper) failActiveRefund(
 	if err != nil {
 		return err
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_IN_FLIGHT {
 		return nil
 	}
 	if err := k.restoreRefundTokensToReserve(cacheCtx, record, data); err != nil {
@@ -606,7 +604,7 @@ func (k Keeper) failActiveRefund(
 		return err
 	}
 	if record.GetRetryCount() >= params.GetMaxRefundRetries() {
-		if err := transitionRefundStatus(record, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE); err != nil {
+		if err := transitionRefundStatus(record, types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE); err != nil {
 			return err
 		}
 		if err := k.SetRefundRecord(cacheCtx, record); err != nil {
@@ -614,7 +612,7 @@ func (k Keeper) failActiveRefund(
 		}
 		emitRefundEvent(cacheCtx, types.EventTypeRefundStateChanged, record)
 	} else {
-		if err := transitionRefundStatus(record, transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE); err != nil {
+		if err := transitionRefundStatus(record, types.RefundStatus_REFUND_STATUS_RETRYABLE); err != nil {
 			return err
 		}
 		if err := k.SetRefundRecord(cacheCtx, record); err != nil {
@@ -630,7 +628,7 @@ func (k Keeper) failActiveRefund(
 	return nil
 }
 
-func (k Keeper) ClaimRefund(ctx sdk.Context, refundID, signer string) (*transwapv1.RefundRecord, error) {
+func (k Keeper) ClaimRefund(ctx sdk.Context, refundID, signer string) (*types.RefundRecord, error) {
 	cacheCtx, writeCache := ctx.CacheContext()
 	record, err := k.MustGetRefundRecord(cacheCtx, refundID)
 	if err != nil {
@@ -647,33 +645,33 @@ func (k Keeper) ClaimRefund(ctx sdk.Context, refundID, signer string) (*transwap
 	if !bytes.Equal(signerAddr, claimAddr) {
 		return nil, types.ErrRefundUnauthorized.Wrap("only the refund receiver may claim")
 	}
-	if record.GetStatus() == transwapv1.RefundStatus_REFUND_STATUS_CLAIMED {
-		return proto.Clone(record).(*transwapv1.RefundRecord), nil
+	if record.GetStatus() == types.RefundStatus_REFUND_STATUS_CLAIMED {
+		return types.CloneRefundRecord(record), nil
 	}
-	if record.GetStatus() == transwapv1.RefundStatus_REFUND_STATUS_COMPLETED {
+	if record.GetStatus() == types.RefundStatus_REFUND_STATUS_COMPLETED {
 		return nil, types.ErrRefundNotClaimable.Wrap("completed refund cannot be claimed")
 	}
-	if record.GetStatus() == transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT {
+	if record.GetStatus() == types.RefundStatus_REFUND_STATUS_IN_FLIGHT {
 		return nil, types.ErrRefundNotClaimable.Wrap("in-flight refund cannot be claimed")
 	}
 	params, err := k.GetParams(cacheCtx)
 	if err != nil {
 		return nil, err
 	}
-	if record.GetStatus() == transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE &&
+	if record.GetStatus() == types.RefundStatus_REFUND_STATUS_RETRYABLE &&
 		record.GetRetryCount() >= params.GetMaxRefundRetries() {
-		if err := transitionRefundStatus(record, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE); err != nil {
+		if err := transitionRefundStatus(record, types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE); err != nil {
 			return nil, err
 		}
 		k.clearRefundRetrySchedule(cacheCtx, record)
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE {
 		return nil, types.ErrRefundNotClaimable.Wrapf("refund status is %s", record.GetStatus())
 	}
 	if k.BankKeeper.BlockedAddr(signerAddr) {
 		return nil, types.ErrRefundUnauthorized.Wrap("claim address is blocked")
 	}
-	coin, err := types.TokenToCoin(record.GetToken())
+	coin, err := types.TokenToCoin(&record.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -684,7 +682,7 @@ func (k Keeper) ClaimRefund(ctx sdk.Context, refundID, signer string) (*transwap
 	if err := k.BexKeeper.ClaimRefundFromReserve(cacheCtx, exchangeID, signerAddr, coin); err != nil {
 		return nil, err
 	}
-	if err := transitionRefundStatus(record, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED); err != nil {
+	if err := transitionRefundStatus(record, types.RefundStatus_REFUND_STATUS_CLAIMED); err != nil {
 		return nil, err
 	}
 	if err := k.SetRefundRecord(cacheCtx, record); err != nil {
@@ -692,15 +690,15 @@ func (k Keeper) ClaimRefund(ctx sdk.Context, refundID, signer string) (*transwap
 	}
 	emitRefundEvent(cacheCtx, types.EventTypeRefundClaimed, record)
 	writeCache()
-	return proto.Clone(record).(*transwapv1.RefundRecord), nil
+	return types.CloneRefundRecord(record), nil
 }
 
-func (k Keeper) RetryRefund(ctx sdk.Context, refundID string) (*transwapv1.RefundRecord, error) {
+func (k Keeper) RetryRefund(ctx sdk.Context, refundID string) (*types.RefundRecord, error) {
 	record, err := k.MustGetRefundRecord(ctx, refundID)
 	if err != nil {
 		return nil, err
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_RETRYABLE {
 		return nil, types.ErrInvalidRefundState.Wrapf(
 			"refund %s is %s, expected REFUND_RETRYABLE",
 			refundID,
@@ -712,7 +710,7 @@ func (k Keeper) RetryRefund(ctx sdk.Context, refundID string) (*transwapv1.Refun
 		return nil, err
 	}
 	if record.GetRetryCount() >= params.GetMaxRefundRetries() {
-		if err := transitionRefundStatus(record, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE); err != nil {
+		if err := transitionRefundStatus(record, types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE); err != nil {
 			return nil, err
 		}
 		k.clearRefundRetrySchedule(ctx, record)
@@ -720,13 +718,13 @@ func (k Keeper) RetryRefund(ctx sdk.Context, refundID string) (*transwapv1.Refun
 			return nil, err
 		}
 		emitRefundEvent(ctx, types.EventTypeRefundStateChanged, record)
-		return proto.Clone(record).(*transwapv1.RefundRecord), nil
+		return types.CloneRefundRecord(record), nil
 	}
 	return k.dispatchRefundPackets(ctx, refundID)
 }
 
-func isCurrentActivePacket(record *transwapv1.RefundRecord, portID, channelID string, sequence uint64) bool {
-	return record.GetStatus() == transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT &&
+func isCurrentActivePacket(record *types.RefundRecord, portID, channelID string, sequence uint64) bool {
+	return record.GetStatus() == types.RefundStatus_REFUND_STATUS_IN_FLIGHT &&
 		record.GetRefundSourcePort() == portID &&
 		record.GetRefundSourceChannel() == channelID &&
 		record.GetActivePacketSequence() == sequence

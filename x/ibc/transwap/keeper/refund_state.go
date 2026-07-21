@@ -10,9 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"google.golang.org/protobuf/proto"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
@@ -39,7 +38,7 @@ func (k Keeper) refundActiveStore(ctx sdk.Context) prefix.Store {
 	return prefix.NewStore(store, []byte(types.RefundActivePrefix))
 }
 
-func (k Keeper) CreateRefundRecord(ctx sdk.Context, record *transwapv1.RefundRecord) error {
+func (k Keeper) CreateRefundRecord(ctx sdk.Context, record *types.RefundRecord) error {
 	if err := ValidateRefundRecord(record); err != nil {
 		return err
 	}
@@ -47,7 +46,7 @@ func (k Keeper) CreateRefundRecord(ctx sdk.Context, record *transwapv1.RefundRec
 	if store.Has([]byte(record.GetId())) {
 		return types.ErrInvalidRefundState.Wrapf("refund %s already exists", record.GetId())
 	}
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_PENDING {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_PENDING {
 		return types.ErrInvalidRefundState.Wrap("new refund must start in REFUND_PENDING")
 	}
 	outputKey := refundPacketIndexKey(
@@ -65,7 +64,7 @@ func (k Keeper) CreateRefundRecord(ctx sdk.Context, record *transwapv1.RefundRec
 	return nil
 }
 
-func (k Keeper) SetRefundRecord(ctx sdk.Context, record *transwapv1.RefundRecord) error {
+func (k Keeper) SetRefundRecord(ctx sdk.Context, record *types.RefundRecord) error {
 	if err := ValidateRefundRecord(record); err != nil {
 		return err
 	}
@@ -83,8 +82,8 @@ func (k Keeper) SetRefundRecord(ctx sdk.Context, record *transwapv1.RefundRecord
 // deleteCompletedRefundRecord removes resolved transport state once every
 // packet index and liability has been settled. CLAIMED records deliberately
 // remain as one-time claim receipts so a repeated manual claim is idempotent.
-func (k Keeper) deleteCompletedRefundRecord(ctx sdk.Context, record *transwapv1.RefundRecord) error {
-	if record == nil || record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_COMPLETED {
+func (k Keeper) deleteCompletedRefundRecord(ctx sdk.Context, record *types.RefundRecord) error {
+	if record == nil || record.GetStatus() != types.RefundStatus_REFUND_STATUS_COMPLETED {
 		return types.ErrInvalidRefundState.Wrap("only completed refunds may be pruned")
 	}
 	if types.HasActiveRefundPacket(record) || record.GetNextRetryHeight() != 0 {
@@ -94,7 +93,7 @@ func (k Keeper) deleteCompletedRefundRecord(ctx sdk.Context, record *transwapv1.
 	return nil
 }
 
-func (k Keeper) GetRefundRecord(ctx sdk.Context, refundID string) (*transwapv1.RefundRecord, bool, error) {
+func (k Keeper) GetRefundRecord(ctx sdk.Context, refundID string) (*types.RefundRecord, bool, error) {
 	if strings.TrimSpace(refundID) == "" {
 		return nil, false, types.ErrRefundNotFound.Wrap("refund id cannot be empty")
 	}
@@ -102,14 +101,14 @@ func (k Keeper) GetRefundRecord(ctx sdk.Context, refundID string) (*transwapv1.R
 	if len(bz) == 0 {
 		return nil, false, nil
 	}
-	record := &transwapv1.RefundRecord{}
+	record := &types.RefundRecord{}
 	if err := k.cdc.Unmarshal(bz, record); err != nil {
 		return nil, false, err
 	}
 	return record, true, nil
 }
 
-func (k Keeper) MustGetRefundRecord(ctx sdk.Context, refundID string) (*transwapv1.RefundRecord, error) {
+func (k Keeper) MustGetRefundRecord(ctx sdk.Context, refundID string) (*types.RefundRecord, error) {
 	record, found, err := k.GetRefundRecord(ctx, refundID)
 	if err != nil {
 		return nil, err
@@ -120,14 +119,14 @@ func (k Keeper) MustGetRefundRecord(ctx sdk.Context, refundID string) (*transwap
 	return record, nil
 }
 
-func (k Keeper) GetAllRefundRecords(ctx sdk.Context) []*transwapv1.RefundRecord {
+func (k Keeper) GetAllRefundRecords(ctx sdk.Context) []*types.RefundRecord {
 	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	iterator := storetypes.KVStorePrefixIterator(store, []byte(types.RefundRecordPrefix))
 	defer sdk.LogDeferred(k.Logger(ctx), func() error { return iterator.Close() })
 
-	records := make([]*transwapv1.RefundRecord, 0)
+	records := make([]*types.RefundRecord, 0)
 	for ; iterator.Valid(); iterator.Next() {
-		record := &transwapv1.RefundRecord{}
+		record := &types.RefundRecord{}
 		k.cdc.MustUnmarshal(iterator.Value(), record)
 		records = append(records, record)
 	}
@@ -186,7 +185,7 @@ func (k Keeper) refundForOutputPacket(
 	ctx sdk.Context,
 	portID, channelID string,
 	sequence uint64,
-) (*transwapv1.RefundRecord, bool, error) {
+) (*types.RefundRecord, bool, error) {
 	key := refundPacketIndexKey(portID, channelID, sequence)
 	refundID := k.refundOutputStore(ctx).Get([]byte(key))
 	if len(refundID) == 0 {
@@ -206,7 +205,7 @@ func (k Keeper) refundForActivePacket(
 	ctx sdk.Context,
 	portID, channelID string,
 	sequence uint64,
-) (*transwapv1.RefundRecord, bool, error) {
+) (*types.RefundRecord, bool, error) {
 	key := refundPacketIndexKey(portID, channelID, sequence)
 	refundID := k.refundActiveStore(ctx).Get([]byte(key))
 	if len(refundID) == 0 {
@@ -222,8 +221,8 @@ func (k Keeper) refundForActivePacket(
 	return record, true, nil
 }
 
-func (k Keeper) setActiveRefundPacketIndex(ctx sdk.Context, record *transwapv1.RefundRecord) error {
-	if record.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT ||
+func (k Keeper) setActiveRefundPacketIndex(ctx sdk.Context, record *types.RefundRecord) error {
+	if record.GetStatus() != types.RefundStatus_REFUND_STATUS_IN_FLIGHT ||
 		record.GetActivePacketSequence() == 0 || record.GetActiveTimeoutTimestamp() == 0 {
 		return types.ErrRefundPacketNotActive.Wrap("active index requires an in-flight packet")
 	}
@@ -240,7 +239,7 @@ func (k Keeper) setActiveRefundPacketIndex(ctx sdk.Context, record *transwapv1.R
 	return nil
 }
 
-func (k Keeper) deleteOutputRefundPacketIndex(ctx sdk.Context, record *transwapv1.RefundRecord) {
+func (k Keeper) deleteOutputRefundPacketIndex(ctx sdk.Context, record *types.RefundRecord) {
 	key := refundPacketIndexKey(
 		record.GetOriginalOutputPort(),
 		record.GetOriginalOutputChannel(),
@@ -249,7 +248,7 @@ func (k Keeper) deleteOutputRefundPacketIndex(ctx sdk.Context, record *transwapv
 	k.refundOutputStore(ctx).Delete([]byte(key))
 }
 
-func (k Keeper) deleteActiveRefundPacketIndex(ctx sdk.Context, record *transwapv1.RefundRecord) {
+func (k Keeper) deleteActiveRefundPacketIndex(ctx sdk.Context, record *types.RefundRecord) {
 	if record.GetActivePacketSequence() == 0 {
 		return
 	}
@@ -261,43 +260,78 @@ func (k Keeper) deleteActiveRefundPacketIndex(ctx sdk.Context, record *transwapv
 	k.refundActiveStore(ctx).Delete([]byte(key))
 }
 
-func ValidateRefundRecord(record *transwapv1.RefundRecord) error {
+func ValidateRefundRecord(record *types.RefundRecord) error {
 	return types.ValidateRefundRecord(record)
 }
 
-func immutableRefundFieldsEqual(a, b *transwapv1.RefundRecord) bool {
+func immutableRefundFieldsEqual(a, b *types.RefundRecord) bool {
 	return a.GetId() == b.GetId() &&
 		a.GetRefundSourcePort() == b.GetRefundSourcePort() &&
 		a.GetRefundSourceChannel() == b.GetRefundSourceChannel() &&
-		proto.Equal(a.GetToken(), b.GetToken()) &&
+		protobufWireEqual(&a.Token, &b.Token) &&
 		a.GetReceiver() == b.GetReceiver() &&
 		a.GetClaimAddress() == b.GetClaimAddress() &&
 		a.GetMemo() == b.GetMemo() &&
 		a.GetExchangeId() == b.GetExchangeId() &&
-		proto.Equal(a.GetOriginalFee(), b.GetOriginalFee()) &&
+		protobufWireEqual(&a.OriginalFee, &b.OriginalFee) &&
 		a.GetOriginalTimeoutTimestamp() == b.GetOriginalTimeoutTimestamp() &&
-		proto.Equal(a.GetOriginalTimeoutHeight(), b.GetOriginalTimeoutHeight()) &&
+		refundHeightWireEqual(a.GetOriginalTimeoutHeight(), b.GetOriginalTimeoutHeight()) &&
 		a.GetOriginalOutputPort() == b.GetOriginalOutputPort() &&
 		a.GetOriginalOutputChannel() == b.GetOriginalOutputChannel() &&
 		a.GetOriginalOutputSequence() == b.GetOriginalOutputSequence() &&
 		bytes.Equal(a.GetOriginalOutputPacketCommitment(), b.GetOriginalOutputPacketCommitment()) &&
-		proto.Equal(a.GetVolumeReservation(), b.GetVolumeReservation())
+		volumeReservationWireEqual(a.GetVolumeReservation(), b.GetVolumeReservation())
 }
 
-func transitionRefundStatus(record *transwapv1.RefundRecord, next transwapv1.RefundStatus) error {
+type protobufWireMarshaler interface {
+	Marshal() ([]byte, error)
+}
+
+// protobufWireEqual compares the generated protobuf representation instead of
+// Go implementation details. These immutable nested messages contain no maps,
+// so their generated wire output is stable. In particular, nil and non-nil
+// empty repeated fields have identical protobuf meaning, while sdkmath.Int's
+// internal pointer representation must not influence refund immutability.
+func protobufWireEqual(a, b protobufWireMarshaler) bool {
+	aBz, err := a.Marshal()
+	if err != nil {
+		return false
+	}
+	bBz, err := b.Marshal()
+	if err != nil {
+		return false
+	}
+	return bytes.Equal(aBz, bBz)
+}
+
+func refundHeightWireEqual(a, b *types.RefundHeight) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return protobufWireEqual(a, b)
+}
+
+func volumeReservationWireEqual(a, b *bextypes.VolumeReservation) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return protobufWireEqual(a, b)
+}
+
+func transitionRefundStatus(record *types.RefundRecord, next types.RefundStatus) error {
 	allowed := false
 	switch record.GetStatus() {
-	case transwapv1.RefundStatus_REFUND_STATUS_PENDING:
-		allowed = next == transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE || next == transwapv1.RefundStatus_REFUND_STATUS_COMPLETED
-	case transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE:
-		allowed = next == transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT || next == transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE
-	case transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT:
-		allowed = next == transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE ||
-			next == transwapv1.RefundStatus_REFUND_STATUS_COMPLETED ||
-			next == transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE
-	case transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE:
-		allowed = next == transwapv1.RefundStatus_REFUND_STATUS_CLAIMED
-	case transwapv1.RefundStatus_REFUND_STATUS_COMPLETED, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED:
+	case types.RefundStatus_REFUND_STATUS_PENDING:
+		allowed = next == types.RefundStatus_REFUND_STATUS_RETRYABLE || next == types.RefundStatus_REFUND_STATUS_COMPLETED
+	case types.RefundStatus_REFUND_STATUS_RETRYABLE:
+		allowed = next == types.RefundStatus_REFUND_STATUS_IN_FLIGHT || next == types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE
+	case types.RefundStatus_REFUND_STATUS_IN_FLIGHT:
+		allowed = next == types.RefundStatus_REFUND_STATUS_RETRYABLE ||
+			next == types.RefundStatus_REFUND_STATUS_COMPLETED ||
+			next == types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE
+	case types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE:
+		allowed = next == types.RefundStatus_REFUND_STATUS_CLAIMED
+	case types.RefundStatus_REFUND_STATUS_COMPLETED, types.RefundStatus_REFUND_STATUS_CLAIMED:
 		allowed = false
 	}
 	if !allowed {
@@ -307,7 +341,7 @@ func transitionRefundStatus(record *transwapv1.RefundRecord, next transwapv1.Ref
 	return nil
 }
 
-func emitRefundEvent(ctx sdk.Context, eventType string, record *transwapv1.RefundRecord, extra ...sdk.Attribute) {
+func emitRefundEvent(ctx sdk.Context, eventType string, record *types.RefundRecord, extra ...sdk.Attribute) {
 	attributes := []sdk.Attribute{
 		sdk.NewAttribute(types.AttributeKeyRefundID, record.GetId()),
 		sdk.NewAttribute(types.AttributeKeyRefundStatus, record.GetStatus().String()),

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strconv"
 
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/spf13/cobra"
 )
@@ -16,7 +16,7 @@ const flagIncludeDeleted = "include-deleted"
 
 var (
 	getClientQueryContext = client.GetClientQueryContext
-	newQueryClient        = bexv1.NewQueryClient
+	newQueryClient        = func(clientCtx client.Context) types.QueryClient { return types.NewQueryClient(clientCtx) }
 	printProto            = printClientProto
 )
 
@@ -69,11 +69,11 @@ func CmdQueryReserveDepositors() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pageReq, err := readPulsarPageRequest(cmd)
+			pageReq, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).ReserveDepositors(cmd.Context(), &bexv1.QueryReserveDepositorsRequest{
+			resp, err := newQueryClient(clientCtx).ReserveDepositors(cmd.Context(), &types.QueryReserveDepositorsRequest{
 				ExchangeId: exchangeID,
 				Pagination: pageReq,
 			})
@@ -102,7 +102,7 @@ func CmdQueryIsReserveDepositor() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).IsReserveDepositor(cmd.Context(), &bexv1.QueryIsReserveDepositorRequest{
+			resp, err := newQueryClient(clientCtx).IsReserveDepositor(cmd.Context(), &types.QueryIsReserveDepositorRequest{
 				ExchangeId:       exchangeID,
 				DepositorAddress: args[1],
 			})
@@ -130,7 +130,7 @@ func CmdQueryExchange() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).Exchange(cmd.Context(), &bexv1.QueryExchangeRequest{ExchangeId: exchangeID})
+			resp, err := newQueryClient(clientCtx).Exchange(cmd.Context(), &types.QueryExchangeRequest{ExchangeId: exchangeID})
 			if err != nil {
 				return err
 			}
@@ -151,7 +151,7 @@ func CmdQueryExchanges() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pageReq, err := readPulsarPageRequest(cmd)
+			pageReq, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
@@ -159,7 +159,7 @@ func CmdQueryExchanges() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).Exchanges(cmd.Context(), &bexv1.QueryExchangesRequest{
+			resp, err := newQueryClient(clientCtx).Exchanges(cmd.Context(), &types.QueryExchangesRequest{
 				Pagination:     pageReq,
 				IncludeDeleted: includeDeleted,
 			})
@@ -185,11 +185,11 @@ func CmdQueryExchangesByExchangeAdmin() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pageReq, err := readPulsarPageRequest(cmd)
+			pageReq, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).ExchangesByExchangeAdmin(cmd.Context(), &bexv1.QueryExchangesByExchangeAdminRequest{
+			resp, err := newQueryClient(clientCtx).ExchangesByExchangeAdmin(cmd.Context(), &types.QueryExchangesByExchangeAdminRequest{
 				ExchangeAdminAddress: args[0],
 				Pagination:           pageReq,
 			})
@@ -214,7 +214,7 @@ func CmdQueryIsBexAdmin() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).IsBexAdmin(cmd.Context(), &bexv1.QueryIsBexAdminRequest{BexAdminAddress: args[0]})
+			resp, err := newQueryClient(clientCtx).IsBexAdmin(cmd.Context(), &types.QueryIsBexAdminRequest{BexAdminAddress: args[0]})
 			if err != nil {
 				return err
 			}
@@ -226,20 +226,20 @@ func CmdQueryIsBexAdmin() *cobra.Command {
 }
 
 func CmdQueryCollectedFees() *cobra.Command {
-	return feeQueryCmd("collected-fees", "Query collected fees", func(c bexv1.QueryClient, ctx *cobra.Command, id uint64) (*bexv1.QueryFeesResponse, error) {
-		return c.CollectedFees(ctx.Context(), &bexv1.QueryFeesRequest{ExchangeId: id})
+	return feeQueryCmd("collected-fees", "Query collected fees", func(c types.QueryClient, ctx *cobra.Command, id uint64) (*types.QueryFeesResponse, error) {
+		return c.CollectedFees(ctx.Context(), &types.QueryFeesRequest{ExchangeId: id})
 	})
 }
 
 func CmdQueryLockedFees() *cobra.Command {
-	return feeQueryCmd("locked-fees", "Query locked fees", func(c bexv1.QueryClient, ctx *cobra.Command, id uint64) (*bexv1.QueryFeesResponse, error) {
-		return c.LockedFees(ctx.Context(), &bexv1.QueryFeesRequest{ExchangeId: id})
+	return feeQueryCmd("locked-fees", "Query locked fees", func(c types.QueryClient, ctx *cobra.Command, id uint64) (*types.QueryFeesResponse, error) {
+		return c.LockedFees(ctx.Context(), &types.QueryFeesRequest{ExchangeId: id})
 	})
 }
 
 func CmdQueryAvailableFees() *cobra.Command {
-	return feeQueryCmd("available-fees", "Query available fees", func(c bexv1.QueryClient, ctx *cobra.Command, id uint64) (*bexv1.QueryFeesResponse, error) {
-		return c.AvailableFees(ctx.Context(), &bexv1.QueryFeesRequest{ExchangeId: id})
+	return feeQueryCmd("available-fees", "Query available fees", func(c types.QueryClient, ctx *cobra.Command, id uint64) (*types.QueryFeesResponse, error) {
+		return c.AvailableFees(ctx.Context(), &types.QueryFeesRequest{ExchangeId: id})
 	})
 }
 
@@ -259,7 +259,7 @@ func CmdQueryPendingLiabilities() *cobra.Command {
 			}
 			resp, err := newQueryClient(clientCtx).PendingLiabilities(
 				cmd.Context(),
-				&bexv1.QueryPendingLiabilitiesRequest{ExchangeId: exchangeID},
+				&types.QueryPendingLiabilitiesRequest{ExchangeId: exchangeID},
 			)
 			if err != nil {
 				return err
@@ -271,7 +271,7 @@ func CmdQueryPendingLiabilities() *cobra.Command {
 	return cmd
 }
 
-func feeQueryCmd(use, short string, query func(bexv1.QueryClient, *cobra.Command, uint64) (*bexv1.QueryFeesResponse, error)) *cobra.Command {
+func feeQueryCmd(use, short string, query func(types.QueryClient, *cobra.Command, uint64) (*types.QueryFeesResponse, error)) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   use + " [exchange-id]",
 		Short: short,
@@ -310,7 +310,7 @@ func CmdQueryVolumeWindow() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).VolumeWindow(cmd.Context(), &bexv1.QueryVolumeWindowRequest{ExchangeId: exchangeID, Direction: direction})
+			resp, err := newQueryClient(clientCtx).VolumeWindow(cmd.Context(), &types.QueryVolumeWindowRequest{ExchangeId: exchangeID, Direction: direction})
 			if err != nil {
 				return err
 			}
@@ -335,7 +335,7 @@ func CmdQueryQuote() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			resp, err := newQueryClient(clientCtx).QuoteSwap(cmd.Context(), &bexv1.QueryQuoteSwapRequest{
+			resp, err := newQueryClient(clientCtx).QuoteSwap(cmd.Context(), &types.QueryQuoteSwapRequest{
 				ExchangeId: exchangeID,
 				InputDenom: args[1],
 				AmountIn:   args[2],
@@ -350,22 +350,22 @@ func CmdQueryQuote() *cobra.Command {
 	return cmd
 }
 
-func parseExchangeIDAndDirection(idRaw, directionRaw string) (uint64, bexv1.SwapDirection, error) {
+func parseExchangeIDAndDirection(idRaw, directionRaw string) (uint64, types.SwapDirection, error) {
 	exchangeID, err := strconv.ParseUint(idRaw, 10, 64)
 	if err != nil {
-		return 0, bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, err
+		return 0, types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, err
 	}
 	switch directionRaw {
 	case "a-to-b", "A_TO_B", "1":
-		return exchangeID, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
+		return exchangeID, types.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
 	case "b-to-a", "B_TO_A", "2":
-		return exchangeID, bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A, nil
+		return exchangeID, types.SwapDirection_SWAP_DIRECTION_B_TO_A, nil
 	default:
-		return 0, bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, fmt.Errorf("invalid direction %q", directionRaw)
+		return 0, types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, fmt.Errorf("invalid direction %q", directionRaw)
 	}
 }
 
-func readPulsarPageRequest(cmd *cobra.Command) (*queryv1beta1.PageRequest, error) {
+func readPageRequest(cmd *cobra.Command) (*sdkquery.PageRequest, error) {
 	flagSet, err := client.FlagSetWithPageKeyDecoded(cmd.Flags())
 	if err != nil {
 		return nil, err
@@ -374,11 +374,5 @@ func readPulsarPageRequest(cmd *cobra.Command) (*queryv1beta1.PageRequest, error
 	if err != nil {
 		return nil, err
 	}
-	return &queryv1beta1.PageRequest{
-		Key:        pageReq.GetKey(),
-		Offset:     pageReq.GetOffset(),
-		Limit:      pageReq.GetLimit(),
-		CountTotal: pageReq.GetCountTotal(),
-		Reverse:    pageReq.GetReverse(),
-	}, nil
+	return pageReq, nil
 }

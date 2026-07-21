@@ -5,7 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	bexv1 "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"

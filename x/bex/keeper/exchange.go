@@ -7,9 +7,8 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
-	"google.golang.org/protobuf/proto"
 )
 
 func (k Keeper) RegisterAdmin(ctx context.Context, moderator, admin string) error {
@@ -159,7 +158,7 @@ func (k Keeper) requireRegisteredAdmin(ctx context.Context, admin string) (strin
 	return canonical, addr, nil
 }
 
-func (k Keeper) requireExchangeAdmin(ctx context.Context, exchange *bexv1.Exchange, signer string) (string, sdk.AccAddress, error) {
+func (k Keeper) requireExchangeAdmin(ctx context.Context, exchange *types.Exchange, signer string) (string, sdk.AccAddress, error) {
 	canonical, addr, err := k.canonicalAddress(signer)
 	if err != nil {
 		return "", nil, types.ErrInvalidRequest.Wrapf("invalid exchange admin address: %v", err)
@@ -170,8 +169,8 @@ func (k Keeper) requireExchangeAdmin(ctx context.Context, exchange *bexv1.Exchan
 	return canonical, addr, nil
 }
 
-func (k Keeper) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterExchange) (*bexv1.Exchange, error) {
-	var exchange *bexv1.Exchange
+func (k Keeper) RegisterExchange(ctx context.Context, req *types.MsgRegisterExchange) (*types.Exchange, error) {
+	var exchange *types.Exchange
 	err := executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		var err error
 		exchange, err = k.registerExchange(cacheCtx, req)
@@ -183,7 +182,7 @@ func (k Keeper) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterExch
 	return exchange, nil
 }
 
-func (k Keeper) registerExchange(ctx context.Context, req *bexv1.MsgRegisterExchange) (*bexv1.Exchange, error) {
+func (k Keeper) registerExchange(ctx context.Context, req *types.MsgRegisterExchange) (*types.Exchange, error) {
 	bexAdmin, _, err := k.requireRegisteredAdmin(ctx, req.GetBexAdminAddress())
 	if err != nil {
 		return nil, err
@@ -211,10 +210,10 @@ func (k Keeper) registerExchange(ctx context.Context, req *bexv1.MsgRegisterExch
 		return nil, err
 	}
 	status := req.GetStatus()
-	if status == bexv1.ExchangeStatus_EXCHANGE_STATUS_UNSPECIFIED {
-		status = bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE
+	if status == types.ExchangeStatus_EXCHANGE_STATUS_UNSPECIFIED {
+		status = types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE
 	}
-	exchange := &bexv1.Exchange{
+	exchange := &types.Exchange{
 		Id:                        id,
 		AdminAddress:              exchangeAdmin,
 		ReserveAddress:            reserveAddress,
@@ -292,7 +291,7 @@ func normalizeIntString(value string) string {
 	return value
 }
 
-func (k Keeper) GetExchange(ctx context.Context, exchangeID uint64) (*bexv1.Exchange, error) {
+func (k Keeper) GetExchange(ctx context.Context, exchangeID uint64) (*types.Exchange, error) {
 	exchange, err := k.exchanges.Get(ctx, exchangeID)
 	if err != nil {
 		if errors.Is(err, collections.ErrNotFound) {
@@ -303,19 +302,19 @@ func (k Keeper) GetExchange(ctx context.Context, exchangeID uint64) (*bexv1.Exch
 	return exchange, nil
 }
 
-func (k Keeper) GetActiveExchange(ctx context.Context, exchangeID uint64) (*bexv1.Exchange, error) {
+func (k Keeper) GetActiveExchange(ctx context.Context, exchangeID uint64) (*types.Exchange, error) {
 	exchange, err := k.GetExchange(ctx, exchangeID)
 	if err != nil {
 		return nil, err
 	}
-	if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED {
+	if exchange.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_DELETED {
 		return nil, types.ErrExchangeDeleted.Wrapf("exchange %d is deleted", exchangeID)
 	}
 	return exchange, nil
 }
 
-func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, expectedRevision uint64, patch *bexv1.ExchangeUpdatePatch) (*bexv1.Exchange, error) {
-	var updated *bexv1.Exchange
+func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, expectedRevision uint64, patch *types.ExchangeUpdatePatch) (*types.Exchange, error) {
+	var updated *types.Exchange
 	err := executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		var err error
 		updated, err = k.updateExchange(cacheCtx, signer, exchangeID, expectedRevision, patch)
@@ -327,7 +326,7 @@ func (k Keeper) UpdateExchange(ctx context.Context, signer string, exchangeID, e
 	return updated, nil
 }
 
-func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, expectedRevision uint64, patch *bexv1.ExchangeUpdatePatch) (*bexv1.Exchange, error) {
+func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, expectedRevision uint64, patch *types.ExchangeUpdatePatch) (*types.Exchange, error) {
 	if patch == nil || patchIsEmpty(patch) {
 		return nil, types.ErrNoOpUpdate.Wrap("empty patch")
 	}
@@ -381,7 +380,7 @@ func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, e
 		current.GetDenomB() != updated.GetDenomB() ||
 		current.GetPortB() != updated.GetPortB() ||
 		current.GetChannelB() != updated.GetChannelB()
-	if current.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE && routeChanged {
+	if current.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE && routeChanged {
 		return nil, types.ErrInvalidRoute.Wrap("route fields cannot change while active")
 	}
 	if routeValuesChanged {
@@ -465,7 +464,7 @@ func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, e
 	if v := patch.GetMaxOracleStalenessSeconds(); v != nil {
 		updated.MaxOracleStalenessSeconds = v.GetValue()
 	}
-	if proto.Equal(current, updated) {
+	if types.EqualMessages(current, updated) {
 		return nil, types.ErrNoOpUpdate.Wrap("patch does not change exchange")
 	}
 	if routeValuesChanged || current.GetVolumeEpochSeconds() != updated.GetVolumeEpochSeconds() {
@@ -481,8 +480,8 @@ func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, e
 	if err := validateMutableExchangeConfig(updated); err != nil {
 		return nil, err
 	}
-	if current.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE &&
-		updated.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+	if current.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE &&
+		updated.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
 		if err := k.validateActiveRoutes(ctx, updated); err != nil {
 			return nil, err
 		}
@@ -548,7 +547,7 @@ func (k Keeper) updateExchange(ctx context.Context, signer string, exchangeID, e
 	return updated, nil
 }
 
-func patchIsEmpty(patch *bexv1.ExchangeUpdatePatch) bool {
+func patchIsEmpty(patch *types.ExchangeUpdatePatch) bool {
 	return patch.GetDenomA() == nil &&
 		patch.GetPortA() == nil &&
 		patch.GetChannelA() == nil &&
@@ -573,11 +572,11 @@ func patchIsEmpty(patch *bexv1.ExchangeUpdatePatch) bool {
 		patch.GetNewAdminAddress() == nil
 }
 
-func cloneExchange(exchange *bexv1.Exchange) *bexv1.Exchange {
+func cloneExchange(exchange *types.Exchange) *types.Exchange {
 	if exchange == nil {
 		return nil
 	}
-	copied := proto.Clone(exchange).(*bexv1.Exchange)
+	copied := types.CloneMessage(exchange)
 	copied.Metadata = sortedMetadataCopy(copied.GetMetadata())
 	return copied
 }
@@ -616,7 +615,7 @@ func (k Keeper) deleteExchange(ctx context.Context, signer string, exchangeID ui
 	if _, _, err := k.requireExchangeAdmin(ctx, exchange, signer); err != nil {
 		return err
 	}
-	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE {
+	if exchange.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE {
 		return types.ErrInvalidRequest.Wrap("exchange must be inactive before delete")
 	}
 	reserveAddr, err := k.accountCodec.StringToBytes(exchange.GetReserveAddress())
@@ -645,7 +644,7 @@ func (k Keeper) deleteExchange(ctx context.Context, signer string, exchangeID ui
 		return types.ErrInvalidRequest.Wrap("pending refund liabilities must be zero before delete")
 	}
 	deleted := cloneExchange(exchange)
-	deleted.Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
+	deleted.Status = types.ExchangeStatus_EXCHANGE_STATUS_DELETED
 	nextRevision, err := incrementRevision(deleted.GetRevision())
 	if err != nil {
 		return err

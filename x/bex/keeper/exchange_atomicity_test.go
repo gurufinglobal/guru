@@ -9,10 +9,9 @@ import (
 	corestore "cosmossdk.io/core/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestRegisterExchangeRollsBackAllStateOnLateStoreFailure(t *testing.T) {
@@ -30,6 +29,7 @@ func TestRegisterExchangeRollsBackAllStateOnLateStoreFailure(t *testing.T) {
 				err:    faultErr,
 			},
 		},
+		f.codec,
 		f.accountCodec,
 		accountKeeper,
 		f.bankKeeper,
@@ -48,7 +48,7 @@ func TestRegisterExchangeRollsBackAllStateOnLateStoreFailure(t *testing.T) {
 
 	_, err = faultyKeeper.RegisterExchange(
 		f.ctx,
-		validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE),
+		validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE),
 	)
 	require.ErrorIs(t, err, faultErr)
 	require.Len(t, f.ctx.EventManager().Events(), eventCount)
@@ -74,7 +74,7 @@ func TestRegisterExchangeRollsBackAllStateOnLateStoreFailure(t *testing.T) {
 func TestDeleteExchangeRollsBackExchangeOnIndexDeleteFailure(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	exchangeBefore := cloneExchange(exchange)
 	collectedBefore, err := f.keeper.collectedFees.Get(f.ctx, exchange.GetId())
 	require.NoError(t, err)
@@ -92,6 +92,7 @@ func TestDeleteExchangeRollsBackExchangeOnIndexDeleteFailure(t *testing.T) {
 				err:    faultErr,
 			},
 		},
+		f.codec,
 		f.accountCodec,
 		f.accountKeeper,
 		f.bankKeeper,
@@ -106,7 +107,7 @@ func TestDeleteExchangeRollsBackExchangeOnIndexDeleteFailure(t *testing.T) {
 
 	exchangeAfter, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	require.True(t, proto.Equal(exchangeBefore, exchangeAfter))
+	require.True(t, types.EqualMessages(exchangeBefore, exchangeAfter))
 	indexed, err := f.keeper.exchangesByAdmin.Has(f.ctx, collections.Join(f.admin, exchange.GetId()))
 	require.NoError(t, err)
 	require.True(t, indexed)
@@ -115,10 +116,10 @@ func TestDeleteExchangeRollsBackExchangeOnIndexDeleteFailure(t *testing.T) {
 	require.Equal(t, exchange.GetId(), reserveOwner)
 	collectedAfter, err := f.keeper.collectedFees.Get(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	require.True(t, proto.Equal(collectedBefore, collectedAfter))
+	require.True(t, types.EqualMessages(collectedBefore, collectedAfter))
 	lockedAfter, err := f.keeper.lockedFees.Get(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	require.True(t, proto.Equal(lockedBefore, lockedAfter))
+	require.True(t, types.EqualMessages(lockedBefore, lockedAfter))
 }
 
 const transactionalAccountPrefix byte = 0xfe

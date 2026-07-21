@@ -24,6 +24,8 @@ type EncodingConfig struct {
 }
 
 func MakeEncodingConfig(accountPrefix, validatorPrefix, consensusPrefix string) EncodingConfig {
+	registerBexGogoMapEntries()
+
 	// SDK v0.54.3 txsigning.Options has no ConsensusAddressCodec field.
 	// Keep the consensus prefix in the signature for forward compatibility
 	// and to make all address prefixes explicit at call sites.
@@ -35,7 +37,8 @@ func MakeEncodingConfig(accountPrefix, validatorPrefix, consensusPrefix string) 
 		CustomGetSigners:      customGetSigners(),
 	}
 
-	// HybridResolver is the pinned SDK/EVM boundary that resolves both SDK Pulsar descriptors and Guru's internal gogo descriptors.
+	// HybridResolver is the pinned SDK/EVM boundary that resolves both SDK
+	// protobuf descriptors and Guru's internal gogo descriptors.
 	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
 		ProtoFiles:     gogoproto.HybridResolver,
 		SigningOptions: *signingOptions,
@@ -52,17 +55,13 @@ func MakeEncodingConfig(accountPrefix, validatorPrefix, consensusPrefix string) 
 
 	signingOptions.FileResolver = interfaceRegistry
 
-	baseTxConfig, err := authtx.NewTxConfigWithOptions(appCodec, authtx.ConfigOptions{
+	txConfig, err := authtx.NewTxConfigWithOptions(appCodec, authtx.ConfigOptions{
 		EnabledSignModes: []signingtypes.SignMode{
 			signingtypes.SignMode_SIGN_MODE_DIRECT,
 			signingtypes.SignMode_SIGN_MODE_DIRECT_AUX,
 		},
 		SigningOptions: signingOptions,
 	})
-	if err != nil {
-		panic(err)
-	}
-	txConfig, err := newPulsarTxConfig(baseTxConfig, appCodec)
 	if err != nil {
 		panic(err)
 	}

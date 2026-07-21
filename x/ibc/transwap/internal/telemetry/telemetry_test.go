@@ -6,14 +6,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
 func TestTelemetryReportTransferRecordsMetrics(t *testing.T) {
 	t.Run("int64 amount", func(t *testing.T) {
 		require.NotPanics(t, func() {
-			ReportTransfer("port", "channel-1", "dest", "channel-2", &transwapv1.Token{
+			ReportTransfer("port", "channel-1", "dest", "channel-2", &types.Token{
 				Denom:  types.NewDenom("uatom"),
 				Amount: "123",
 			})
@@ -24,7 +23,7 @@ func TestTelemetryReportTransferRecordsMetrics(t *testing.T) {
 		hugeAmount := new(big.Int).SetUint64(1)
 		hugeAmount.Lsh(hugeAmount, 100)
 		require.NotPanics(t, func() {
-			ReportTransfer("port", "channel-1", "dest", "channel-2", &transwapv1.Token{
+			ReportTransfer("port", "channel-1", "dest", "channel-2", &types.Token{
 				Denom:  types.NewDenom("uatom"),
 				Amount: hugeAmount.String(),
 			})
@@ -33,7 +32,7 @@ func TestTelemetryReportTransferRecordsMetrics(t *testing.T) {
 
 	t.Run("invalid amount skips gauge path", func(t *testing.T) {
 		require.NotPanics(t, func() {
-			ReportTransfer("port", "channel-1", "dest", "channel-2", &transwapv1.Token{
+			ReportTransfer("port", "channel-1", "dest", "channel-2", &types.Token{
 				Denom:  types.NewDenom("uatom"),
 				Amount: "invalid-amount",
 			})
@@ -44,7 +43,7 @@ func TestTelemetryReportTransferRecordsMetrics(t *testing.T) {
 func TestTelemetryReportOnRecvPacketRecordsMetrics(t *testing.T) {
 	t.Run("prefixed incoming token", func(t *testing.T) {
 		require.NotPanics(t, func() {
-			ReportOnRecvPacket("port", "channel-1", "dest", "channel-2", &transwapv1.Token{
+			ReportOnRecvPacket("port", "channel-1", "dest", "channel-2", &types.Token{
 				Denom:  types.NewDenom("uatom", types.NewHop("port", "channel-1")),
 				Amount: "456",
 			})
@@ -53,7 +52,7 @@ func TestTelemetryReportOnRecvPacketRecordsMetrics(t *testing.T) {
 
 	t.Run("non prefixed incoming token", func(t *testing.T) {
 		require.NotPanics(t, func() {
-			ReportOnRecvPacket("port", "channel-1", "dest", "channel-2", &transwapv1.Token{
+			ReportOnRecvPacket("port", "channel-1", "dest", "channel-2", &types.Token{
 				Denom:  types.NewDenom("uatom"),
 				Amount: "456",
 			})

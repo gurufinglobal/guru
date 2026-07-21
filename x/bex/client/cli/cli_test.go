@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	bexv1 "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
@@ -66,7 +66,7 @@ func TestParseExchangeIDAndCoins(t *testing.T) {
 	require.Equal(t, uint64(7), exchangeID)
 	require.Len(t, coins, 1)
 	require.Equal(t, "agxn", coins[0].GetDenom())
-	require.Equal(t, "123", coins[0].GetAmount())
+	require.Equal(t, "123", coins[0].Amount.String())
 }
 
 func TestParseExchangeIDAndCoinsRejectsInvalidArguments(t *testing.T) {
@@ -123,14 +123,14 @@ func TestParseExchangeIDAndDirectionRejectsInvalidArguments(t *testing.T) {
 	}
 }
 
-func TestReadPulsarPageRequest(t *testing.T) {
+func TestReadPageRequest(t *testing.T) {
 	cmd := CmdQueryExchanges()
 	require.NoError(t, cmd.Flags().Set(flags.FlagLimit, "25"))
 	require.NoError(t, cmd.Flags().Set(flags.FlagOffset, "50"))
 	require.NoError(t, cmd.Flags().Set(flags.FlagCountTotal, "true"))
 	require.NoError(t, cmd.Flags().Set(flags.FlagReverse, "true"))
 
-	pageReq, err := readPulsarPageRequest(cmd)
+	pageReq, err := readPageRequest(cmd)
 
 	require.NoError(t, err)
 	require.Equal(t, uint64(25), pageReq.GetLimit())
@@ -396,7 +396,7 @@ func installQueryMocks(t *testing.T, contextErr, queryErr, printErr error) *mock
 	originalPrint := printProto
 	mock := &mockQueryClient{err: queryErr}
 	getClientQueryContext = func(*cobra.Command) (client.Context, error) { return client.Context{}, contextErr }
-	newQueryClient = func(grpc.ClientConnInterface) bexv1.QueryClient { return mock }
+	newQueryClient = func(client.Context) bexv1.QueryClient { return mock }
 	printProto = func(client.Context, printableProto) error { return printErr }
 	t.Cleanup(func() {
 		getClientQueryContext = originalGetCtx

@@ -3,11 +3,11 @@ package keeper
 import (
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestMsgServerRejectsNilRequestsAndMapsExchangeFields(t *testing.T) {
@@ -30,38 +30,38 @@ func TestMsgServerRejectsNilRequestsAndMapsExchangeFields(t *testing.T) {
 		require.ErrorIs(t, call(), types.ErrInvalidRequest)
 	}
 
-	_, err := server.RegisterAdmin(f.ctx, &bexv1.MsgRegisterAdmin{
+	_, err := server.RegisterAdmin(f.ctx, &types.MsgRegisterAdmin{
 		Moderator:    f.moderator,
 		AdminAddress: f.admin,
 	})
 	require.NoError(t, err)
 	registered, err := server.RegisterExchange(
 		f.ctx,
-		validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE),
+		validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE),
 	)
 	require.NoError(t, err)
 	require.NotZero(t, registered.GetExchangeId())
 	require.NotEmpty(t, registered.GetReserveAddress())
 
-	updated, err := server.UpdateExchange(f.ctx, &bexv1.MsgUpdateExchange{
+	updated, err := server.UpdateExchange(f.ctx, &types.MsgUpdateExchange{
 		AdminAddress:     f.admin,
 		ExchangeId:       registered.GetExchangeId(),
 		ExpectedRevision: 1,
-		Patch:            &bexv1.ExchangeUpdatePatch{FeeBpsAToB: wrapperspb.UInt32(7)},
+		Patch:            &types.ExchangeUpdatePatch{FeeBpsAToB: types.NewUInt32Value(7)},
 	})
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), updated.GetRevision())
 
-	_, err = server.DepositReserve(f.ctx, &bexv1.MsgDepositReserve{
+	_, err = server.DepositReserve(f.ctx, &types.MsgDepositReserve{
 		Sender:     f.admin,
 		ExchangeId: registered.GetExchangeId(),
-		Amount:     []*basev1beta1.Coin{{Denom: "agxn", Amount: "bad"}},
+		Amount:     sdk.Coins{{Denom: "agxn", Amount: sdkmath.Int{}}},
 	})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
-	_, err = server.WithdrawReserve(f.ctx, &bexv1.MsgWithdrawReserve{
+	_, err = server.WithdrawReserve(f.ctx, &types.MsgWithdrawReserve{
 		AdminAddress: f.admin,
 		ExchangeId:   registered.GetExchangeId(),
-		Amount:       []*basev1beta1.Coin{{Denom: "agxn", Amount: "1"}},
+		Amount:       sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)),
 		Recipient:    "bad",
 	})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
@@ -74,14 +74,14 @@ func TestMsgServerRoutesUpdateAdmin(t *testing.T) {
 
 	wrongModerator, _ := testAddress(t, f.accountCodec, 0x60)
 	newBEXAdmin, _ := testAddress(t, f.accountCodec, 0x61)
-	_, err := server.UpdateAdmin(f.ctx, &bexv1.MsgUpdateAdmin{
+	_, err := server.UpdateAdmin(f.ctx, &types.MsgUpdateAdmin{
 		Moderator:       wrongModerator,
 		OldAdminAddress: f.admin,
 		NewAdminAddress: newBEXAdmin,
 	})
 	require.ErrorIs(t, err, types.ErrInvalidModerator)
 
-	updateResponse, err := server.UpdateAdmin(f.ctx, &bexv1.MsgUpdateAdmin{
+	updateResponse, err := server.UpdateAdmin(f.ctx, &types.MsgUpdateAdmin{
 		Moderator:       f.moderator,
 		OldAdminAddress: f.admin,
 		NewAdminAddress: newBEXAdmin,

@@ -2,7 +2,7 @@
 
 Guru uses two generated Go boundaries from the same protobuf sources:
 
-- internal gogo runtime types under `x/<module>/types` for node, consensus,
+- internal gogo runtime types under `x/<module-path>/types` for node, consensus,
   state, transactions, and registered services;
 - external Pulsar API types under `api/guru/<module>/v1` for protov2 clients.
 
@@ -11,18 +11,18 @@ legacy Amino transactions, `sdk.StdTx`, or compatibility decoder fallbacks.
 
 ## Package And Generation
 
-For a new module named `<module>`:
+For a new module at `<module-path>`:
 
 - Place proto sources under `proto/guru/<module>/v1`.
 - Use the protobuf package `guru.<module>.v1`.
 - Set `go_package` to
-  `github.com/gurufinglobal/guru/v3/x/<module>/types`.
+  `github.com/gurufinglobal/guru/v3/x/<module-path>/types`.
 - Run `make proto-format`, `make proto-lint`, and `make proto-gen`.
 - Never hand-edit generated files under `x/<module>/types` or `api/`.
 
 `make proto-gen` runs the pinned proto-builder Docker image. The internal gogo
 generator stages packages by their `go_package` and automatically copies every
-generated `x/*/types` package into the repository. The external Pulsar template
+generated `x/<module-path>/types` package into the repository. The external Pulsar template
 uses Buf managed mode to override the Go package prefix to
 `github.com/gurufinglobal/guru/v3/api`, so the source schema remains the single
 package authority for both outputs. Pulsar output is also staged before

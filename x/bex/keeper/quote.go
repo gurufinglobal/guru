@@ -10,7 +10,7 @@ import (
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
@@ -40,18 +40,18 @@ func checkedVolumeAdd(used, amount sdkmath.Int) (sdkmath.Int, error) {
 	return next, nil
 }
 
-func (k Keeper) ResolveSwapDirection(ctx context.Context, exchangeID uint64, inputDenom string) (bexv1.SwapDirection, error) {
+func (k Keeper) ResolveSwapDirection(ctx context.Context, exchangeID uint64, inputDenom string) (types.SwapDirection, error) {
 	exchange, err := k.GetActiveExchange(ctx, exchangeID)
 	if err != nil {
-		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, err
+		return types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, err
 	}
 	switch inputDenom {
 	case exchange.GetDenomA():
-		return bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
+		return types.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
 	case exchange.GetDenomB():
-		return bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A, nil
+		return types.SwapDirection_SWAP_DIRECTION_B_TO_A, nil
 	default:
-		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, types.ErrInvalidRoute.Wrap("input denom does not match exchange")
+		return types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, types.ErrInvalidRoute.Wrap("input denom does not match exchange")
 	}
 }
 
@@ -63,21 +63,21 @@ func (k Keeper) ValidateSwapInput(
 	exchangeID uint64,
 	inputDenom string,
 	localInputDenom string,
-) (bexv1.SwapDirection, error) {
+) (types.SwapDirection, error) {
 	exchange, err := k.GetActiveExchange(ctx, exchangeID)
 	if err != nil {
-		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, err
+		return types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, err
 	}
 	direction, err := k.ResolveSwapDirection(ctx, exchangeID, inputDenom)
 	if err != nil {
-		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, err
+		return types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, err
 	}
 	expectedLocalDenom := exchange.GetIbcDenomA()
-	if direction == bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A {
+	if direction == types.SwapDirection_SWAP_DIRECTION_B_TO_A {
 		expectedLocalDenom = exchange.GetIbcDenomB()
 	}
 	if localInputDenom != expectedLocalDenom {
-		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, types.ErrInvalidRoute.Wrapf(
+		return types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, types.ErrInvalidRoute.Wrapf(
 			"local input denom %q does not match configured route denom %q",
 			localInputDenom,
 			expectedLocalDenom,
@@ -86,7 +86,7 @@ func (k Keeper) ValidateSwapInput(
 	return direction, nil
 }
 
-func (k Keeper) QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*bexv1.QuoteSwapResponse, error) {
+func (k Keeper) QuoteSwap(ctx context.Context, req *types.QuoteSwapRequest) (*types.QuoteSwapResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty quote request")
 	}
@@ -94,7 +94,7 @@ func (k Keeper) QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*be
 	if err != nil {
 		return nil, err
 	}
-	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+	if exchange.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
 		return nil, types.ErrInvalidRoute.Wrap("exchange is not active")
 	}
 	if err := k.validateActiveRoutes(ctx, exchange); err != nil {
@@ -156,7 +156,7 @@ func (k Keeper) QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*be
 	if !volumeCap.IsZero() && nextVolume.GT(volumeCap) {
 		return nil, types.ErrVolumeCapExceeded.Wrap("quote output exceeds volume cap")
 	}
-	return &bexv1.QuoteSwapResponse{
+	return &types.QuoteSwapResponse{
 		ExchangeId:       exchange.GetId(),
 		Direction:        direction,
 		InputDenom:       req.GetInputDenom(),
@@ -175,9 +175,9 @@ func (k Keeper) QuoteSwap(ctx context.Context, req *bexv1.QuoteSwapRequest) (*be
 	}, nil
 }
 
-func quoteConfig(exchange *bexv1.Exchange, direction bexv1.SwapDirection) (string, string, uint32, sdkmath.Int, sdkmath.Int, error) {
+func quoteConfig(exchange *types.Exchange, direction types.SwapDirection) (string, string, uint32, sdkmath.Int, sdkmath.Int, error) {
 	switch direction {
-	case bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B:
+	case types.SwapDirection_SWAP_DIRECTION_A_TO_B:
 		limit, err := validateExchangeLimitIntString("limit_a_to_b", exchange.GetLimitAToB())
 		if err != nil {
 			return "", "", 0, sdkmath.Int{}, sdkmath.Int{}, err
@@ -187,7 +187,7 @@ func quoteConfig(exchange *bexv1.Exchange, direction bexv1.SwapDirection) (strin
 			return "", "", 0, sdkmath.Int{}, sdkmath.Int{}, err
 		}
 		return exchange.GetOracleSymbolAToB(), exchange.GetIbcDenomB(), exchange.GetFeeBpsAToB(), limit, cap, nil
-	case bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A:
+	case types.SwapDirection_SWAP_DIRECTION_B_TO_A:
 		limit, err := validateExchangeLimitIntString("limit_b_to_a", exchange.GetLimitBToA())
 		if err != nil {
 			return "", "", 0, sdkmath.Int{}, sdkmath.Int{}, err
@@ -248,7 +248,7 @@ func quoteAmountOut(rate sdkmath.LegacyDec, netIn sdkmath.Int) (sdkmath.Int, err
 	return sdkmath.NewIntFromBigInt(out), nil
 }
 
-func (k Keeper) GetCurrentVolumeAmount(ctx context.Context, exchange *bexv1.Exchange, direction bexv1.SwapDirection) (sdkmath.Int, error) {
+func (k Keeper) GetCurrentVolumeAmount(ctx context.Context, exchange *types.Exchange, direction types.SwapDirection) (sdkmath.Int, error) {
 	blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
 	epochSeconds, generation, err := effectiveVolumeWindowIdentity(exchange, blockTime)
 	if err != nil {
@@ -259,7 +259,7 @@ func (k Keeper) GetCurrentVolumeAmount(ctx context.Context, exchange *bexv1.Exch
 	return amount, err
 }
 
-func (k Keeper) RecordVolumeWindow(ctx context.Context, exchangeID uint64, direction bexv1.SwapDirection, amountOut sdkmath.Int) error {
+func (k Keeper) RecordVolumeWindow(ctx context.Context, exchangeID uint64, direction types.SwapDirection, amountOut sdkmath.Int) error {
 	_, err := k.ReserveVolumeWindow(ctx, exchangeID, direction, amountOut)
 	return err
 }
@@ -270,10 +270,10 @@ func (k Keeper) RecordVolumeWindow(ctx context.Context, exchangeID uint64, direc
 func (k Keeper) ReserveVolumeWindow(
 	ctx context.Context,
 	exchangeID uint64,
-	direction bexv1.SwapDirection,
+	direction types.SwapDirection,
 	amountOut sdkmath.Int,
-) (*bexv1.VolumeReservation, error) {
-	var reservation *bexv1.VolumeReservation
+) (*types.VolumeReservation, error) {
+	var reservation *types.VolumeReservation
 	err := executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		var err error
 		reservation, err = k.recordVolumeWindow(cacheCtx, exchangeID, direction, amountOut)
@@ -288,14 +288,14 @@ func (k Keeper) ReserveVolumeWindow(
 func (k Keeper) recordVolumeWindow(
 	ctx context.Context,
 	exchangeID uint64,
-	direction bexv1.SwapDirection,
+	direction types.SwapDirection,
 	amountOut sdkmath.Int,
-) (*bexv1.VolumeReservation, error) {
+) (*types.VolumeReservation, error) {
 	exchange, err := k.GetActiveExchange(ctx, exchangeID)
 	if err != nil {
 		return nil, err
 	}
-	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+	if exchange.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
 		return nil, types.ErrInvalidRoute.Wrap("volume recording requires an active exchange")
 	}
 	if amountOut.IsNil() || !amountOut.IsPositive() {
@@ -346,7 +346,7 @@ func (k Keeper) recordVolumeWindow(
 		intAttr(types.AttributeKeyAmount, amountOut),
 		intAttr(types.AttributeKeyCurrentAmount, next),
 	)
-	return &bexv1.VolumeReservation{
+	return &types.VolumeReservation{
 		ExchangeId:             exchangeID,
 		Direction:              direction,
 		EpochStartUnix:         epochStart,
@@ -359,13 +359,13 @@ func (k Keeper) recordVolumeWindow(
 // ReleaseVolumeWindow removes one previously charged asynchronous output from
 // its original cap window. Missing expired rows are already pruned and are a
 // safe no-op; a missing live row indicates corrupted accounting.
-func (k Keeper) ReleaseVolumeWindow(ctx context.Context, reservation *bexv1.VolumeReservation) error {
+func (k Keeper) ReleaseVolumeWindow(ctx context.Context, reservation *types.VolumeReservation) error {
 	return executeStateTransition(ctx, func(cacheCtx sdk.Context) error {
 		return k.releaseVolumeWindow(cacheCtx, reservation)
 	})
 }
 
-func (k Keeper) releaseVolumeWindow(ctx context.Context, reservation *bexv1.VolumeReservation) error {
+func (k Keeper) releaseVolumeWindow(ctx context.Context, reservation *types.VolumeReservation) error {
 	amount, err := types.ValidateVolumeReservation(reservation)
 	if err != nil {
 		return err
@@ -432,7 +432,7 @@ func (k Keeper) getVolumeWindowAmount(ctx context.Context, key volumeWindowKey) 
 	return amount, true, nil
 }
 
-func effectiveVolumeWindowIdentity(exchange *bexv1.Exchange, blockTime time.Time) (uint32, uint64, error) {
+func effectiveVolumeWindowIdentity(exchange *types.Exchange, blockTime time.Time) (uint32, uint64, error) {
 	if exchange == nil || exchange.GetVolumeWindowGeneration() == 0 {
 		return 0, 0, types.ErrInvariantViolation.Wrap("volume window generation must be non-zero")
 	}
@@ -446,7 +446,7 @@ func effectiveVolumeWindowIdentity(exchange *bexv1.Exchange, blockTime time.Time
 	return exchange.GetPendingVolumeEpochSeconds(), nextGeneration, nil
 }
 
-func pendingVolumeEpochDue(exchange *bexv1.Exchange, blockTime time.Time) bool {
+func pendingVolumeEpochDue(exchange *types.Exchange, blockTime time.Time) bool {
 	if exchange.GetPendingVolumeEpochSeconds() == 0 || exchange.GetPendingVolumeEpochEffectiveAtUnix() == 0 {
 		return false
 	}
@@ -456,7 +456,7 @@ func pendingVolumeEpochDue(exchange *bexv1.Exchange, blockTime time.Time) bool {
 	return uint64(blockTime.Unix()) >= exchange.GetPendingVolumeEpochEffectiveAtUnix()
 }
 
-func (k Keeper) activatePendingVolumeEpoch(ctx context.Context, exchange *bexv1.Exchange) (*bexv1.Exchange, error) {
+func (k Keeper) activatePendingVolumeEpoch(ctx context.Context, exchange *types.Exchange) (*types.Exchange, error) {
 	blockTime := sdk.UnwrapSDKContext(ctx).BlockTime()
 	if !pendingVolumeEpochDue(exchange, blockTime) {
 		return exchange, nil
@@ -523,7 +523,7 @@ func (k Keeper) pruneExpiredVolumeWindows(ctx context.Context, limit int) error 
 
 func volumeWindowKeyFromStart(
 	exchangeID uint64,
-	direction bexv1.SwapDirection,
+	direction types.SwapDirection,
 	epochStart uint64,
 	epochSeconds uint32,
 	generation uint64,
@@ -555,7 +555,7 @@ func volumeWindowGeneration(key volumeWindowKey) uint64 {
 func currentVolumeKey(
 	blockTime time.Time,
 	exchangeID uint64,
-	direction bexv1.SwapDirection,
+	direction types.SwapDirection,
 	epochSeconds uint32,
 	generation uint64,
 ) volumeWindowKey {

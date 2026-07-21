@@ -8,9 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/core/appmodule"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
@@ -18,13 +19,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	gatewayruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestAppModuleServicesAndGateway(t *testing.T) {
@@ -35,15 +35,15 @@ func TestAppModuleServicesAndGateway(t *testing.T) {
 
 	registry := codectypes.NewInterfaceRegistry()
 	am.RegisterInterfaces(registry)
-	require.NoError(t, registry.EnsureRegistered(&bexv1.MsgRegisterAdmin{}))
-	require.NoError(t, registry.EnsureRegistered(&bexv1.MsgRegisterAdminResponse{}))
+	require.NoError(t, registry.EnsureRegistered(&types.MsgRegisterAdmin{}))
+	require.NoError(t, registry.EnsureRegistered(&types.MsgRegisterAdminResponse{}))
 
 	server := grpc.NewServer()
 	require.NoError(t, am.RegisterServices(server))
 
 	am.RegisterGRPCGatewayRoutes(client.Context{}, gatewayruntime.NewServeMux())
 	originalGateway := registerQueryGateway
-	registerQueryGateway = func(context.Context, *gatewayruntime.ServeMux, bexv1.QueryClient) error {
+	registerQueryGateway = func(context.Context, *gatewayruntime.ServeMux, types.QueryClient) error {
 		return errors.New("gateway failed")
 	}
 	t.Cleanup(func() { registerQueryGateway = originalGateway })
@@ -191,13 +191,13 @@ func TestGenesisSemanticValidation(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("valid tombstone and uint64 boundaries", func(t *testing.T) {
-		tombstone := mutateGenesis(valid, func(g *bexv1.GenesisState) {
-			g.Exchanges[0].Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
+		tombstone := mutateGenesis(valid, func(g *types.GenesisState) {
+			g.Exchanges[0].Status = types.ExchangeStatus_EXCHANGE_STATUS_DELETED
 			g.CollectedFees = nil
 			g.LockedFees = nil
 		})
 		require.NoError(t, am.validateGenesisState(ctx, tombstone))
-		require.NoError(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *bexv1.GenesisState) {
+		require.NoError(t, am.validateGenesisState(ctx, mutateGenesis(valid, func(g *types.GenesisState) {
 			g.Exchanges[0].Revision = ^uint64(0)
 			g.NextExchangeId = ^uint64(0)
 		})))
@@ -205,67 +205,69 @@ func TestGenesisSemanticValidation(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		mutate       func(*bexv1.GenesisState)
+		mutate       func(*types.GenesisState)
 		wantAnyError bool
 	}{
-		{name: "invalid admin", mutate: func(g *bexv1.GenesisState) { g.Admins = []string{"bad"} }},
-		{name: "duplicate admin", mutate: func(g *bexv1.GenesisState) { g.Admins = []string{admin, admin} }},
-		{name: "noncanonical admin", mutate: func(g *bexv1.GenesisState) { g.Admins = []string{" " + admin} }},
-		{name: "zero exchange id", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].Id = 0 }},
-		{name: "zero revision", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].Revision = 0 }},
-		{name: "zero volume generation", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].VolumeWindowGeneration = 0 }},
-		{name: "duplicate exchange id", mutate: func(g *bexv1.GenesisState) { g.Exchanges = append(g.Exchanges, cloneExchange(g.Exchanges[0])) }},
-		{name: "reserve address mismatch", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].ReserveAddress = admin }},
-		{name: "invalid exchange admin", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].AdminAddress = "bad" }},
-		{name: "noncanonical exchange admin", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].AdminAddress = " " + g.Exchanges[0].AdminAddress }},
-		{name: "IBC denom mismatch", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].IbcDenomA = "ibc/WRONG" }},
-		{name: "noncanonical route", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].DenomA = " agxn" }},
-		{name: "invalid route denom", mutate: func(g *bexv1.GenesisState) { g.Exchanges[0].DenomA = "bad denom" }, wantAnyError: true},
-		{name: "next id not above maximum", mutate: func(g *bexv1.GenesisState) { g.NextExchangeId = g.Exchanges[0].GetId() }},
-		{name: "collected fees unknown exchange", mutate: func(g *bexv1.GenesisState) { g.CollectedFees[0].ExchangeId = 999 }},
-		{name: "malformed collected amount", mutate: func(g *bexv1.GenesisState) { g.CollectedFees[0].Coins[0].Amount = "bad" }, wantAnyError: true},
-		{name: "unsupported collected denom", mutate: func(g *bexv1.GenesisState) { g.CollectedFees[0].Coins[0].Denom = "unsupported" }},
-		{name: "duplicate collected ledger", mutate: func(g *bexv1.GenesisState) {
+		{name: "invalid admin", mutate: func(g *types.GenesisState) { g.Admins = []string{"bad"} }},
+		{name: "duplicate admin", mutate: func(g *types.GenesisState) { g.Admins = []string{admin, admin} }},
+		{name: "noncanonical admin", mutate: func(g *types.GenesisState) { g.Admins = []string{" " + admin} }},
+		{name: "zero exchange id", mutate: func(g *types.GenesisState) { g.Exchanges[0].Id = 0 }},
+		{name: "zero revision", mutate: func(g *types.GenesisState) { g.Exchanges[0].Revision = 0 }},
+		{name: "zero volume generation", mutate: func(g *types.GenesisState) { g.Exchanges[0].VolumeWindowGeneration = 0 }},
+		{name: "duplicate exchange id", mutate: func(g *types.GenesisState) { g.Exchanges = append(g.Exchanges, cloneExchange(g.Exchanges[0])) }},
+		{name: "reserve address mismatch", mutate: func(g *types.GenesisState) { g.Exchanges[0].ReserveAddress = admin }},
+		{name: "invalid exchange admin", mutate: func(g *types.GenesisState) { g.Exchanges[0].AdminAddress = "bad" }},
+		{name: "noncanonical exchange admin", mutate: func(g *types.GenesisState) { g.Exchanges[0].AdminAddress = " " + g.Exchanges[0].AdminAddress }},
+		{name: "IBC denom mismatch", mutate: func(g *types.GenesisState) { g.Exchanges[0].IbcDenomA = "ibc/WRONG" }},
+		{name: "noncanonical route", mutate: func(g *types.GenesisState) { g.Exchanges[0].DenomA = " agxn" }},
+		{name: "invalid route denom", mutate: func(g *types.GenesisState) { g.Exchanges[0].DenomA = "bad denom" }, wantAnyError: true},
+		{name: "next id not above maximum", mutate: func(g *types.GenesisState) { g.NextExchangeId = g.Exchanges[0].GetId() }},
+		{name: "collected fees unknown exchange", mutate: func(g *types.GenesisState) { g.CollectedFees[0].ExchangeId = 999 }},
+		{name: "malformed collected amount", mutate: func(g *types.GenesisState) { g.CollectedFees[0].Coins[0].Amount = sdkmath.Int{} }, wantAnyError: true},
+		{name: "unsupported collected denom", mutate: func(g *types.GenesisState) { g.CollectedFees[0].Coins[0].Denom = "unsupported" }},
+		{name: "duplicate collected ledger", mutate: func(g *types.GenesisState) {
 			g.CollectedFees = append(g.CollectedFees, cloneFeeGenesis(g.CollectedFees[0]))
 		}},
-		{name: "locked fees unknown exchange", mutate: func(g *bexv1.GenesisState) { g.LockedFees[0].ExchangeId = 999 }},
-		{name: "malformed locked amount", mutate: func(g *bexv1.GenesisState) { g.LockedFees[0].Coins[0].Amount = "bad" }, wantAnyError: true},
-		{name: "locked fees exceed collected", mutate: func(g *bexv1.GenesisState) { g.LockedFees[0].Coins[0].Amount = "11" }},
-		{name: "duplicate locked ledger", mutate: func(g *bexv1.GenesisState) { g.LockedFees = append(g.LockedFees, cloneFeeGenesis(g.LockedFees[0])) }},
-		{name: "deleted exchange has collected fees", mutate: func(g *bexv1.GenesisState) {
-			g.Exchanges[0].Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
+		{name: "locked fees unknown exchange", mutate: func(g *types.GenesisState) { g.LockedFees[0].ExchangeId = 999 }},
+		{name: "malformed locked amount", mutate: func(g *types.GenesisState) { g.LockedFees[0].Coins[0].Amount = sdkmath.Int{} }, wantAnyError: true},
+		{name: "locked fees exceed collected", mutate: func(g *types.GenesisState) { g.LockedFees[0].Coins[0].Amount = sdkmath.NewInt(11) }},
+		{name: "duplicate locked ledger", mutate: func(g *types.GenesisState) { g.LockedFees = append(g.LockedFees, cloneFeeGenesis(g.LockedFees[0])) }},
+		{name: "deleted exchange has collected fees", mutate: func(g *types.GenesisState) {
+			g.Exchanges[0].Status = types.ExchangeStatus_EXCHANGE_STATUS_DELETED
 			g.LockedFees = nil
 		}},
-		{name: "deleted exchange has locked fees", mutate: func(g *bexv1.GenesisState) {
-			g.Exchanges[0].Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED
+		{name: "deleted exchange has locked fees", mutate: func(g *types.GenesisState) {
+			g.Exchanges[0].Status = types.ExchangeStatus_EXCHANGE_STATUS_DELETED
 			g.CollectedFees = nil
 		}},
-		{name: "volume unknown exchange", mutate: func(g *bexv1.GenesisState) { g.VolumeWindows[0].ExchangeId = 999 }},
-		{name: "volume invalid direction", mutate: func(g *bexv1.GenesisState) {
-			g.VolumeWindows[0].Direction = bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED
+		{name: "volume unknown exchange", mutate: func(g *types.GenesisState) { g.VolumeWindows[0].ExchangeId = 999 }},
+		{name: "volume invalid direction", mutate: func(g *types.GenesisState) {
+			g.VolumeWindows[0].Direction = types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED
 		}},
-		{name: "volume invalid epoch", mutate: func(g *bexv1.GenesisState) { g.VolumeWindows[0].EpochSeconds = 1 }, wantAnyError: true},
-		{name: "volume unaligned epoch", mutate: func(g *bexv1.GenesisState) { g.VolumeWindows[0].EpochStartUnix++ }},
-		{name: "volume epoch overflow", mutate: func(g *bexv1.GenesisState) {
+		{name: "volume invalid epoch", mutate: func(g *types.GenesisState) { g.VolumeWindows[0].EpochSeconds = 1 }, wantAnyError: true},
+		{name: "volume unaligned epoch", mutate: func(g *types.GenesisState) { g.VolumeWindows[0].EpochStartUnix++ }},
+		{name: "volume epoch overflow", mutate: func(g *types.GenesisState) {
 			seconds := uint64(g.VolumeWindows[0].GetEpochSeconds())
 			g.VolumeWindows[0].EpochStartUnix = ^uint64(0) / seconds * seconds
 		}},
-		{name: "malformed volume amount", mutate: func(g *bexv1.GenesisState) { g.VolumeWindows[0].Amount = "bad" }, wantAnyError: true},
-		{name: "depositor unknown exchange", mutate: func(g *bexv1.GenesisState) { g.ReserveDepositors[0].ExchangeId = 999 }},
-		{name: "invalid depositor address", mutate: func(g *bexv1.GenesisState) { g.ReserveDepositors[0].DepositorAddress = "bad" }},
-		{name: "noncanonical depositor", mutate: func(g *bexv1.GenesisState) {
+		{name: "malformed volume amount", mutate: func(g *types.GenesisState) { g.VolumeWindows[0].Amount = "bad" }, wantAnyError: true},
+		{name: "depositor unknown exchange", mutate: func(g *types.GenesisState) { g.ReserveDepositors[0].ExchangeId = 999 }},
+		{name: "invalid depositor address", mutate: func(g *types.GenesisState) { g.ReserveDepositors[0].DepositorAddress = "bad" }},
+		{name: "noncanonical depositor", mutate: func(g *types.GenesisState) {
 			g.ReserveDepositors[0].DepositorAddress = " " + g.ReserveDepositors[0].DepositorAddress
 		}},
-		{name: "duplicate depositor", mutate: func(g *bexv1.GenesisState) { g.ReserveDepositors = append(g.ReserveDepositors, g.ReserveDepositors[0]) }},
+		{name: "duplicate depositor", mutate: func(g *types.GenesisState) { g.ReserveDepositors = append(g.ReserveDepositors, g.ReserveDepositors[0]) }},
 		{
 			name: "aggregate collected fee overflow",
-			mutate: func(g *bexv1.GenesisState) {
+			mutate: func(g *types.GenesisState) {
 				second := cloneExchange(g.Exchanges[0])
 				second.Id = 2
 				second.ReserveAddress = secondReserve
 				g.Exchanges = append(g.Exchanges, second)
-				g.CollectedFees[0].Coins[0].Amount = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-				g.CollectedFees = append(g.CollectedFees, &bexv1.FeeGenesis{ExchangeId: 2, Coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "1"}}})
+				maxAmount, ok := sdkmath.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639935")
+				require.True(t, ok)
+				g.CollectedFees[0].Coins[0].Amount = maxAmount
+				g.CollectedFees = append(g.CollectedFees, &types.FeeGenesis{ExchangeId: 2, Coins: sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))})
 				g.NextExchangeId = 3
 			},
 		},
@@ -284,7 +286,7 @@ func TestGenesisSemanticValidation(t *testing.T) {
 
 	t.Run("invalid fee denom returns an error without panic", func(t *testing.T) {
 		require.NotPanics(t, func() {
-			genesis := mutateGenesis(valid, func(g *bexv1.GenesisState) {
+			genesis := mutateGenesis(valid, func(g *types.GenesisState) {
 				g.CollectedFees[0].Coins[0].Denom = "bad denom"
 			})
 			require.Error(t, am.validateGenesisState(ctx, genesis))
@@ -300,6 +302,7 @@ func setupAppModule(t *testing.T) (AppModule, sdk.Context) {
 	testCtx := testutil.DefaultContextWithDB(t, key, transientKey)
 	keeper := bexkeeper.NewKeeper(
 		runtime.NewKVStoreService(key),
+		codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
 		evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr),
 		nil,
 		nil,
@@ -310,7 +313,7 @@ func setupAppModule(t *testing.T) (AppModule, sdk.Context) {
 	return NewAppModule(keeper), testCtx.Ctx
 }
 
-func validGenesisState(t *testing.T, am AppModule, ctx sdk.Context) *bexv1.GenesisState {
+func validGenesisState(t *testing.T, am AppModule, ctx sdk.Context) *types.GenesisState {
 	t.Helper()
 
 	admin := rootAddressString(t, 0x11)
@@ -321,9 +324,9 @@ func validGenesisState(t *testing.T, am AppModule, ctx sdk.Context) *bexv1.Genes
 	require.NoError(t, err)
 	ibcDenomB, err := bexkeeper.ExpectedIBCDenomForGenesis("gxusd", "transwap", "channel-1")
 	require.NoError(t, err)
-	return &bexv1.GenesisState{
+	return &types.GenesisState{
 		Admins: []string{admin},
-		Exchanges: []*bexv1.Exchange{{
+		Exchanges: []*types.Exchange{{
 			Id:                        1,
 			AdminAddress:              admin,
 			ReserveAddress:            reserve,
@@ -345,28 +348,28 @@ func validGenesisState(t *testing.T, am AppModule, ctx sdk.Context) *bexv1.Genes
 			VolumeCapBToA:             "1000",
 			Revision:                  1,
 			VolumeWindowGeneration:    1,
-			Status:                    bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
+			Status:                    types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
 			Metadata:                  map[string]string{"venue": "bex-test"},
 			VolumeEpochSeconds:        86400,
 			MaxOracleStalenessSeconds: 300,
 		}},
-		CollectedFees: []*bexv1.FeeGenesis{{
+		CollectedFees: []*types.FeeGenesis{{
 			ExchangeId: 1,
-			Coins:      []*basev1beta1.Coin{{Denom: "agxn", Amount: "10"}},
+			Coins:      sdk.NewCoins(sdk.NewInt64Coin("agxn", 10)),
 		}},
-		LockedFees: []*bexv1.FeeGenesis{{
+		LockedFees: []*types.FeeGenesis{{
 			ExchangeId: 1,
-			Coins:      []*basev1beta1.Coin{{Denom: "agxn", Amount: "2"}},
+			Coins:      sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)),
 		}},
-		VolumeWindows: []*bexv1.VolumeWindowGenesis{{
+		VolumeWindows: []*types.VolumeWindowGenesis{{
 			ExchangeId:             1,
-			Direction:              bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			Direction:              types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 			EpochStartUnix:         1699920000,
 			EpochSeconds:           86400,
 			Amount:                 "5",
 			VolumeWindowGeneration: 1,
 		}},
-		ReserveDepositors: []*bexv1.ReserveDepositorGenesis{{
+		ReserveDepositors: []*types.ReserveDepositorGenesis{{
 			ExchangeId:       1,
 			DepositorAddress: depositor,
 		}},
@@ -383,20 +386,20 @@ func rootAddressString(t *testing.T, b byte) string {
 	return address
 }
 
-func requireGenesisInvalid(t *testing.T, am AppModule, ctx sdk.Context, genesis *bexv1.GenesisState) {
+func requireGenesisInvalid(t *testing.T, am AppModule, ctx sdk.Context, genesis *types.GenesisState) {
 	t.Helper()
 
 	require.ErrorIs(t, am.validateGenesisState(ctx, genesis), types.ErrInvalidGenesis)
 }
 
-func mutateGenesis(genesis *bexv1.GenesisState, mutate func(*bexv1.GenesisState)) *bexv1.GenesisState {
-	copied := &bexv1.GenesisState{
+func mutateGenesis(genesis *types.GenesisState, mutate func(*types.GenesisState)) *types.GenesisState {
+	copied := &types.GenesisState{
 		Admins:            append([]string(nil), genesis.GetAdmins()...),
-		Exchanges:         make([]*bexv1.Exchange, 0, len(genesis.GetExchanges())),
-		CollectedFees:     make([]*bexv1.FeeGenesis, 0, len(genesis.GetCollectedFees())),
-		LockedFees:        make([]*bexv1.FeeGenesis, 0, len(genesis.GetLockedFees())),
-		VolumeWindows:     make([]*bexv1.VolumeWindowGenesis, 0, len(genesis.GetVolumeWindows())),
-		ReserveDepositors: make([]*bexv1.ReserveDepositorGenesis, 0, len(genesis.GetReserveDepositors())),
+		Exchanges:         make([]*types.Exchange, 0, len(genesis.GetExchanges())),
+		CollectedFees:     make([]*types.FeeGenesis, 0, len(genesis.GetCollectedFees())),
+		LockedFees:        make([]*types.FeeGenesis, 0, len(genesis.GetLockedFees())),
+		VolumeWindows:     make([]*types.VolumeWindowGenesis, 0, len(genesis.GetVolumeWindows())),
+		ReserveDepositors: make([]*types.ReserveDepositorGenesis, 0, len(genesis.GetReserveDepositors())),
 		NextExchangeId:    genesis.GetNextExchangeId(),
 	}
 	for _, exchange := range genesis.GetExchanges() {
@@ -409,21 +412,27 @@ func mutateGenesis(genesis *bexv1.GenesisState, mutate func(*bexv1.GenesisState)
 		copied.LockedFees = append(copied.LockedFees, cloneFeeGenesis(fee))
 	}
 	for _, window := range genesis.GetVolumeWindows() {
-		copied.VolumeWindows = append(copied.VolumeWindows, proto.Clone(window).(*bexv1.VolumeWindowGenesis))
+		copied.VolumeWindows = append(copied.VolumeWindows, types.CloneMessage(window))
 	}
 	for _, depositor := range genesis.GetReserveDepositors() {
-		copied.ReserveDepositors = append(copied.ReserveDepositors, proto.Clone(depositor).(*bexv1.ReserveDepositorGenesis))
+		copied.ReserveDepositors = append(copied.ReserveDepositors, types.CloneMessage(depositor))
 	}
 	mutate(copied)
 	return copied
 }
 
-func cloneExchange(exchange *bexv1.Exchange) *bexv1.Exchange {
-	return proto.Clone(exchange).(*bexv1.Exchange)
+func cloneExchange(exchange *types.Exchange) *types.Exchange {
+	return types.CloneMessage(exchange)
 }
 
-func cloneFeeGenesis(fee *bexv1.FeeGenesis) *bexv1.FeeGenesis {
-	return proto.Clone(fee).(*bexv1.FeeGenesis)
+func cloneFeeGenesis(fee *types.FeeGenesis) *types.FeeGenesis {
+	if fee == nil {
+		return nil
+	}
+	return &types.FeeGenesis{
+		ExchangeId: fee.GetExchangeId(),
+		Coins:      append(sdk.Coins(nil), fee.GetCoins()...),
+	}
 }
 
 func failOpenTarget(field string) appmodule.GenesisTarget {

@@ -9,13 +9,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
 func TestEmitTransferEvent(t *testing.T) {
 	ctx := sdk.Context{}.WithEventManager(sdk.NewEventManager())
-	token := transwapv1.Token{
+	token := types.Token{
 		Denom:  types.NewDenom("uatom"),
 		Amount: "10",
 	}
@@ -25,7 +24,7 @@ func TestEmitTransferEvent(t *testing.T) {
 
 func TestEmitOnRecvPacketEvent(t *testing.T) {
 	ctx := sdk.Context{}.WithEventManager(sdk.NewEventManager())
-	data := types.NewInternalTransferRepresentation("0", &transwapv1.Token{Denom: types.NewDenom("uatom"), Amount: "10"}, "sender", "receiver", "memo")
+	data := types.NewInternalTransferRepresentation("0", &types.Token{Denom: types.NewDenom("uatom"), Amount: "10"}, "sender", "receiver", "memo")
 
 	EmitOnRecvPacketEvent(ctx, &data, nil, nil)
 	require.Len(t, ctx.EventManager().Events(), 2)
@@ -39,7 +38,7 @@ func TestEmitOnRecvPacketEvent(t *testing.T) {
 
 func TestEmitOnAcknowledgementPacketEvent(t *testing.T) {
 	ctx := sdk.Context{}.WithEventManager(sdk.NewEventManager())
-	data := types.NewInternalTransferRepresentation("0", &transwapv1.Token{Denom: types.NewDenom("uatom"), Amount: "10"}, "sender", "receiver", "memo")
+	data := types.NewInternalTransferRepresentation("0", &types.Token{Denom: types.NewDenom("uatom"), Amount: "10"}, "sender", "receiver", "memo")
 
 	resultAck := channeltypes.NewResultAcknowledgement([]byte{1})
 	EmitOnAcknowledgementPacketEvent(ctx, &data, resultAck)
@@ -51,13 +50,48 @@ func TestEmitOnAcknowledgementPacketEvent(t *testing.T) {
 	require.Len(t, errCtx.EventManager().Events(), 3)
 }
 
-func TestEmitOnTimeoutEventAndDenomEvent(t *testing.T) {
-	ctx := sdk.Context{}.WithEventManager(sdk.NewEventManager())
-	data := types.NewInternalTransferRepresentation("0", &transwapv1.Token{Denom: types.NewDenom("uatom"), Amount: "10"}, "sender", "receiver", "memo")
+func TestEmitOnTimeoutEventAndDenomEventPreserveLegacyPulsarJSON(t *testing.T) {
+	tests := []struct {
+		name      string
+		denom     types.Denom
+		tokenJSON string
+		denomJSON string
+	}{
+		{
+			name:      "native denom omits trace",
+			denom:     types.NewDenom("uatom"),
+			tokenJSON: `{"denom":{"base":"uatom"},"amount":"10"}`,
+			denomJSON: `{"base":"uatom"}`,
+		},
+		{
+			name:      "traced denom preserves public field names",
+			denom:     types.NewDenom("uatom", types.NewHop(types.PortID, "channel-7")),
+			tokenJSON: `{"denom":{"base":"uatom","trace":[{"port_id":"transwap","channel_id":"channel-7"}]},"amount":"10"}`,
+			denomJSON: `{"base":"uatom","trace":[{"port_id":"transwap","channel_id":"channel-7"}]}`,
+		},
+	}
 
-	EmitOnTimeoutEvent(ctx, &data)
-	EmitDenomEvent(ctx, data.Token)
-	require.Len(t, ctx.EventManager().Events(), 3)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := sdk.Context{}.WithEventManager(sdk.NewEventManager())
+			data := types.NewInternalTransferRepresentation(
+				"0",
+				&types.Token{Denom: tt.denom, Amount: "10"},
+				"sender",
+				"receiver",
+				"memo",
+			)
+
+			EmitOnTimeoutEvent(ctx, &data)
+			EmitDenomEvent(ctx, data.Token)
+			events := ctx.EventManager().Events()
+			require.Len(t, events, 3)
+			require.Equal(t, types.AttributeKeyRefundTokens, events[0].Attributes[1].Key)
+			require.Equal(t, tt.tokenJSON, events[0].Attributes[1].Value)
+			require.Equal(t, types.AttributeKeyDenom, events[2].Attributes[1].Key)
+			require.Equal(t, tt.denomJSON, events[2].Attributes[1].Value)
+		})
+	}
 }
 
 func TestMustMarshalJSONPanicsOnInvalidType(t *testing.T) {

@@ -1,8 +1,6 @@
 package events
 
 import (
-	"encoding/json"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"strconv"
 
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
@@ -14,7 +12,7 @@ import (
 )
 
 // EmitTransferEvent emits a ibc transfer event on successful transfers.
-func EmitTransferEvent(ctx sdk.Context, sender, receiver string, token *transwapv1.Token, memo string) {
+func EmitTransferEvent(ctx sdk.Context, sender, receiver string, token *types.Token, memo string) {
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeTransfer,
@@ -119,7 +117,7 @@ func EmitOnTimeoutEvent(ctx sdk.Context, packetData *types.InternalTransferRepre
 }
 
 // EmitDenomEvent emits a denomination event in the OnRecv callback.
-func EmitDenomEvent(ctx sdk.Context, token *transwapv1.Token) {
+func EmitDenomEvent(ctx sdk.Context, token *types.Token) {
 	denomStr := mustMarshalJSON(token.Denom)
 
 	ctx.EventManager().EmitEvent(
@@ -140,7 +138,7 @@ func packetTokenAttributes(packetData *types.InternalTransferRepresentation) (st
 
 // mustMarshalJSON json marshals the given type and panics on failure.
 func mustMarshalJSON(v any) string {
-	bz, err := json.Marshal(v)
+	bz, err := types.MarshalLegacyPulsarJSON(v)
 	if err != nil {
 		panic(err)
 	}

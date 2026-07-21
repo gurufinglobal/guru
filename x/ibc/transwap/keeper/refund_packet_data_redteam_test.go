@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
@@ -31,6 +30,6 @@ func TestRedteamDuplicateOriginalErrorAckIsGuardedIfAppCallbackReentered(t *test
 	))
 
 	require.Equal(t, sentCount, scenario.state.ics4.sentCount(scenario.state.ctx))
-	require.True(t, proto.Equal(before, mustRefundRecord(t, scenario.state, scenario.refundID)))
+	require.Equal(t, before, mustRefundRecord(t, scenario.state, scenario.refundID))
 	require.NoError(t, scenario.state.keeper.AssertRefundInvariants(scenario.state.ctx))
 }

@@ -1,6 +1,7 @@
 package pulsarcompat
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -19,8 +20,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	protov2 "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,10 +31,14 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	pulsarbexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	pulsarconstitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	pulsaroraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	pulsartranswapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
@@ -514,4 +521,155 @@ func TestStandardTxConfigDecodesInternalGogoMessagesWithNestedFields(t *testing.
 			t.Fatalf("encode wrapped tx %T: %v", msg, err)
 		}
 	}
+}
+
+func TestStandardTxConfigDecodesPublicPulsarBexAndTransSwapTransactions(t *testing.T) {
+	encodingConfig := appparams.MakeEncodingConfig(
+		appparams.Bech32PrefixAccAddr,
+		appparams.Bech32PrefixValAddr,
+		appparams.Bech32PrefixConsAddr,
+	)
+	bextypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	transwaptypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+
+	authorityBytes := bytes.Repeat([]byte{0x61}, 20)
+	feePayerBytes := bytes.Repeat([]byte{0x62}, 20)
+	addressCodec := encodingConfig.InterfaceRegistry.SigningContext().AddressCodec()
+	authority, err := addressCodec.BytesToString(authorityBytes)
+	if err != nil {
+		t.Fatalf("encode authority address: %v", err)
+	}
+	feePayer, err := addressCodec.BytesToString(feePayerBytes)
+	if err != nil {
+		t.Fatalf("encode fee payer address: %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		message    protov2.Message
+		fullName   protoreflect.FullName
+		assertGogo func(*testing.T, sdk.Msg)
+	}{
+		{
+			name: "BEX map and wrapper fields",
+			message: &pulsarbexv1.MsgUpdateExchange{
+				AdminAddress:     authority,
+				ExchangeId:       7,
+				ExpectedRevision: 3,
+				Patch: &pulsarbexv1.ExchangeUpdatePatch{
+					DenomA:   wrapperspb.String("uatom"),
+					Metadata: map[string]string{"network": "test", "tier": "one"},
+				},
+			},
+			fullName: "guru.bex.v1.MsgUpdateExchange",
+			assertGogo: func(t *testing.T, message sdk.Msg) {
+				t.Helper()
+				msg, ok := message.(*bextypes.MsgUpdateExchange)
+				if !ok {
+					t.Fatalf("decoded BEX message type = %T, want *types.MsgUpdateExchange", message)
+				}
+				if msg.GetPatch().GetDenomA().GetValue() != "uatom" ||
+					msg.GetPatch().GetMetadata()["network"] != "test" ||
+					msg.GetPatch().GetMetadata()["tier"] != "one" {
+					t.Fatalf("decoded BEX message lost public nested fields: %+v", msg.GetPatch())
+				}
+			},
+		},
+		{
+			name: "TransSwap nested params",
+			message: &pulsartranswapv1.MsgUpdateParams{
+				Authority: authority,
+				Params: &pulsartranswapv1.Params{
+					MaxRefundRetries:     3,
+					RefundTimeoutWindow:  60,
+					MinRelaySafetyMargin: 5,
+				},
+			},
+			fullName: "guru.transwap.v1.MsgUpdateParams",
+			assertGogo: func(t *testing.T, message sdk.Msg) {
+				t.Helper()
+				msg, ok := message.(*transwaptypes.MsgUpdateParams)
+				if !ok {
+					t.Fatalf("decoded TransSwap message type = %T, want *types.MsgUpdateParams", message)
+				}
+				if msg.GetParams().GetMaxRefundRetries() != 3 ||
+					msg.GetParams().GetRefundTimeoutWindow() != 60 ||
+					msg.GetParams().GetMinRelaySafetyMargin() != 5 {
+					t.Fatalf("decoded TransSwap message lost public nested params: %+v", msg.GetParams())
+				}
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			txBytes := marshalPublicPulsarTx(t, test.message, feePayer)
+			decoded, err := encodingConfig.TxConfig.TxDecoder()(txBytes)
+			if err != nil {
+				t.Fatalf("decode public Pulsar transaction: %v", err)
+			}
+			messages := decoded.GetMsgs()
+			if len(messages) != 1 {
+				t.Fatalf("decoded message count = %d, want 1", len(messages))
+			}
+			test.assertGogo(t, messages[0])
+
+			messagesV2, err := decoded.GetMsgsV2()
+			if err != nil {
+				t.Fatalf("adapt decoded public message to protobuf v2: %v", err)
+			}
+			if len(messagesV2) != 1 || messagesV2[0].ProtoReflect().Descriptor().FullName() != test.fullName {
+				t.Fatalf("decoded protobuf v2 messages = %+v, want %s", messagesV2, test.fullName)
+			}
+
+			sigTx, ok := decoded.(authsigning.SigVerifiableTx)
+			if !ok {
+				t.Fatalf("decoded transaction %T does not implement SigVerifiableTx", decoded)
+			}
+			signers, err := sigTx.GetSigners()
+			if err != nil {
+				t.Fatalf("extract decoded transaction signers: %v", err)
+			}
+			if len(signers) != 2 || !bytes.Equal(signers[0], authorityBytes) || !bytes.Equal(signers[1], feePayerBytes) {
+				t.Fatalf("decoded signers = %X, want authority=%X fee_payer=%X", signers, authorityBytes, feePayerBytes)
+			}
+
+			wrapped, err := encodingConfig.TxConfig.WrapTxBuilder(decoded)
+			if err != nil {
+				t.Fatalf("wrap decoded standard transaction: %v", err)
+			}
+			reencoded, err := encodingConfig.TxConfig.TxEncoder()(wrapped.GetTx())
+			if err != nil {
+				t.Fatalf("re-encode decoded standard transaction: %v", err)
+			}
+			if !bytes.Equal(reencoded, txBytes) {
+				t.Fatalf("standard re-encoding changed public transaction bytes: got=%X want=%X", reencoded, txBytes)
+			}
+		})
+	}
+}
+
+func marshalPublicPulsarTx(t *testing.T, message protov2.Message, feePayer string) []byte {
+	t.Helper()
+
+	messageBytes, err := (protov2.MarshalOptions{Deterministic: true}).Marshal(message)
+	if err != nil {
+		t.Fatalf("marshal public Pulsar message: %v", err)
+	}
+	bodyBytes, err := (&txtypes.TxBody{Messages: []*codectypes.Any{{
+		TypeUrl: "/" + string(message.ProtoReflect().Descriptor().FullName()),
+		Value:   messageBytes,
+	}}}).Marshal()
+	if err != nil {
+		t.Fatalf("marshal public transaction body: %v", err)
+	}
+	authInfoBytes, err := (&txtypes.AuthInfo{Fee: &txtypes.Fee{Payer: feePayer}}).Marshal()
+	if err != nil {
+		t.Fatalf("marshal public transaction auth info: %v", err)
+	}
+	txBytes, err := (&txtypes.TxRaw{BodyBytes: bodyBytes, AuthInfoBytes: authInfoBytes}).Marshal()
+	if err != nil {
+		t.Fatalf("marshal public TxRaw: %v", err)
+	}
+	return txBytes
 }

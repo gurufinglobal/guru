@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
 )
@@ -16,8 +16,8 @@ import (
 func TestFeeCustodyLifecycleAndSolvency(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	first := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	second := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	first := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	second := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
 
 	collectFee(t, f, first.GetId(), sdk.NewInt64Coin("agxn", 7))
@@ -54,7 +54,7 @@ func TestFeeCustodyLifecycleAndSolvency(t *testing.T) {
 func TestCollectFeeMovesCustodyAndRollsBackOnFailure(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserveAddr := feeReserveAddress(t, f, exchange)
 	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
 	f.bankKeeper.SetBalance(reserveAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 5)))
@@ -77,6 +77,7 @@ func TestCollectFeeMovesCustodyAndRollsBackOnFailure(t *testing.T) {
 	faultErr := errors.New("collected ledger write failed")
 	faulty := NewKeeper(
 		faultStoreService{base: f.storeService, fault: &storeFault{op: "set", prefix: 0x06, err: faultErr}},
+		f.codec,
 		f.accountCodec,
 		f.accountKeeper,
 		f.bankKeeper,
@@ -102,7 +103,7 @@ func TestCollectFeeMovesCustodyAndRollsBackOnFailure(t *testing.T) {
 func TestFeeOperationsRejectUnconfiguredDenoms(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 3))
 	unsupported := sdk.NewInt64Coin("unsupported", 1)
 
@@ -121,7 +122,7 @@ func TestFeeOperationsRejectUnconfiguredDenoms(t *testing.T) {
 func TestWithdrawFeesRespectsSendEnabledPolicy(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 3))
 	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
 	amount := sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))
@@ -142,7 +143,7 @@ func TestStateTransitionPreservesOuterContextValuesThroughFeeFlow(t *testing.T) 
 	type contextKey struct{}
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserveAddr := feeReserveAddress(t, f, exchange)
 	f.bankKeeper.SetBalance(reserveAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1)))
 
@@ -165,7 +166,7 @@ func TestStateTransitionPreservesOuterContextValuesThroughFeeFlow(t *testing.T) 
 func TestCollectAndLockRequireActiveExchange(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	inactive := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	inactive := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	reserveAddr := feeReserveAddress(t, f, inactive)
 	f.bankKeeper.SetBalance(reserveAddr, sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)))
 
@@ -182,7 +183,7 @@ func TestCollectAndLockRequireActiveExchange(t *testing.T) {
 func TestRefundLockedFeeReturnsCustodyAndRejectsAggregateOverConsumption(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserveAddr := feeReserveAddress(t, f, exchange)
 	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
 	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 5))
@@ -206,7 +207,7 @@ func TestRefundLockedFeeReturnsCustodyAndRejectsAggregateOverConsumption(t *test
 func TestRefundLockedFeeRollsBackLedgersWhenBankSendFails(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 3))
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 2)))
 
@@ -226,8 +227,8 @@ func TestRefundLockedFeeRollsBackLedgersWhenBankSendFails(t *testing.T) {
 func TestFeeOutflowCapabilityAndFullAudit(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	first := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	second := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	first := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	second := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	collectFee(t, f, first.GetId(), sdk.NewInt64Coin("agxn", 3))
 	collectFee(t, f, second.GetId(), sdk.NewInt64Coin("agxn", 4))
 	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
@@ -255,7 +256,7 @@ func TestFeeOutflowCapabilityAndFullAudit(t *testing.T) {
 func TestValidateEVMSetBalanceProtectsCustodyAddresses(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
 	reserveAddr := feeReserveAddress(t, f, exchange)
 	normalAddr := sdk.AccAddress(bytesOf(0x41))
@@ -276,6 +277,7 @@ func TestValidateEVMSetBalanceProtectsCustodyAddresses(t *testing.T) {
 	faultErr := errors.New("reserve index lookup failed")
 	faulty := NewKeeper(
 		faultStoreService{base: f.storeService, fault: &storeFault{op: "get", prefix: 0x04, err: faultErr}},
+		f.codec,
 		f.accountCodec,
 		f.accountKeeper,
 		f.bankKeeper,
@@ -286,7 +288,7 @@ func TestValidateEVMSetBalanceProtectsCustodyAddresses(t *testing.T) {
 	require.ErrorIs(t, faulty.ValidateEVMSetBalance(f.ctx, normalAddr, sdk.NewInt64Coin("agxn", 1)), faultErr)
 }
 
-func feeReserveAddress(t *testing.T, f keeperTestFixture, exchange *bexv1.Exchange) sdk.AccAddress {
+func feeReserveAddress(t *testing.T, f keeperTestFixture, exchange *types.Exchange) sdk.AccAddress {
 	t.Helper()
 	reserveBytes, err := f.accountCodec.StringToBytes(exchange.GetReserveAddress())
 	require.NoError(t, err)

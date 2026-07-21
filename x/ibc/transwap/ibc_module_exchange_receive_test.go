@@ -14,8 +14,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
@@ -46,7 +44,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsSuccessAckAndCommitsAccounting(t *t
 	k.SetDenom(ctx, outputDenom)
 	bank.SetBalance(reserve, sdk.NewCoins(sdk.NewCoin(outputIBCDenom, sdkmath.NewInt(1000))))
 
-	packetData := transwapv1.FungibleTokenPacketData{
+	packetData := types.FungibleTokenPacketData{
 		ExchangeId: "7",
 		Denom:      "atgxusd",
 		Amount:     "103",
@@ -89,13 +87,13 @@ func TestIBCModuleOnRecvExchangePacketReturnsSuccessAckAndCommitsAccounting(t *t
 	refund, found, err := k.GetRefundRecord(ctx, refundID)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_PENDING, refund.Status)
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_PENDING, refund.Status)
 	require.Equal(t, sender.String(), refund.Receiver)
 	require.Equal(t, "7", refund.ExchangeId)
 	require.Equal(t, types.PortID, refund.RefundSourcePort)
 	require.Equal(t, "channel-0", refund.RefundSourceChannel)
-	require.Equal(t, inputIBCDenom, refund.GetOriginalFee().GetDenom())
-	require.Equal(t, "3", refund.GetOriginalFee().GetAmount())
+	require.Equal(t, inputIBCDenom, refund.OriginalFee.Denom)
+	require.Equal(t, "3", refund.OriginalFee.Amount.String())
 	require.Equal(t, packet.TimeoutTimestamp, refund.OriginalTimeoutTimestamp)
 	require.Equal(t, packet.TimeoutHeight.RevisionNumber, refund.GetOriginalTimeoutHeight().GetRevisionNumber())
 	require.Equal(t, packet.TimeoutHeight.RevisionHeight, refund.GetOriginalTimeoutHeight().GetRevisionHeight())
@@ -115,7 +113,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsErrorAckForNonNumericExchangeID(t *
 	reserveBalance := sdk.NewCoins(sdk.NewInt64Coin("atgxkrw", 123))
 	bank.SetBalance(reserve, reserveBalance)
 
-	packetData := transwapv1.FungibleTokenPacketData{
+	packetData := types.FungibleTokenPacketData{
 		ExchangeId: "not-a-number",
 		Denom:      "atgxusd",
 		Amount:     "103",
@@ -162,103 +160,103 @@ func TestIBCModuleOnRecvPacketReturnsErrorAckForMalformedSemanticFields(t *testi
 
 	tests := []struct {
 		name            string
-		mutate          func(*transwapv1.FungibleTokenPacketData)
+		mutate          func(*types.FungibleTokenPacketData)
 		wantErrContains string
 	}{
 		{
 			name: "blank denom",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Denom = " "
 			},
 			wantErrContains: "base denomination cannot be blank",
 		},
 		{
 			name: "invalid resolved local bank denom",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Denom = "xswap/channel-1/!"
 			},
 			wantErrContains: "cannot be materialized as a local bank coin",
 		},
 		{
 			name: "invalid hop",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Denom = "bad port/channel-0/ugxusd"
 			},
 			wantErrContains: "invalid hop source port ID",
 		},
 		{
 			name: "zero amount",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Amount = "0"
 			},
 			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "negative amount",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Amount = "-1"
 			},
 			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "non numeric amount",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Amount = "nan"
 			},
 			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "ambiguous leading zero amount",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Amount = "010"
 			},
 			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "explicit plus amount",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Amount = "+10"
 			},
 			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "prefixed amount",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Amount = "0x10"
 			},
 			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "uint256 overflow amount",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Amount = overflowUint256
 			},
 			wantErrContains: "canonical positive uint256 decimal",
 		},
 		{
 			name: "blank sender",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Sender = " "
 			},
 			wantErrContains: "sender address cannot be blank",
 		},
 		{
 			name: "blank receiver",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Receiver = " "
 			},
 			wantErrContains: "receiver address cannot be blank",
 		},
 		{
 			name: "receiver too long",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Receiver = strings.Repeat("r", types.MaximumReceiverLength+1)
 			},
 			wantErrContains: "receiver address must not exceed",
 		},
 		{
 			name: "memo too long",
-			mutate: func(data *transwapv1.FungibleTokenPacketData) {
+			mutate: func(data *types.FungibleTokenPacketData) {
 				data.Memo = strings.Repeat("m", types.MaximumMemoLength+1)
 			},
 			wantErrContains: "memo must not exceed",
@@ -275,7 +273,7 @@ func TestIBCModuleOnRecvPacketReturnsErrorAckForMalformedSemanticFields(t *testi
 			reserveBalance := sdk.NewCoins(sdk.NewInt64Coin("atgxkrw", 123))
 			bank.SetBalance(reserve, reserveBalance)
 
-			packetData := transwapv1.FungibleTokenPacketData{
+			packetData := types.FungibleTokenPacketData{
 				ExchangeId: "7",
 				Denom:      "atgxusd",
 				Amount:     "103",
@@ -330,7 +328,7 @@ func TestIBCModuleOnRecvExchangePacketRejectsExpiredInheritedTimeoutWithoutMutat
 	reserveBalance := sdk.NewCoins(sdk.NewInt64Coin("atgxkrw", 123))
 	bank.SetBalance(reserve, reserveBalance)
 
-	packetData := transwapv1.FungibleTokenPacketData{
+	packetData := types.FungibleTokenPacketData{
 		ExchangeId: "7",
 		Denom:      "atgxusd",
 		Amount:     "103",
@@ -390,7 +388,7 @@ func TestIBCModuleOnRecvExchangePacketReturnsErrorAckWhenRouteResolutionFails(t 
 	reserveBalance := sdk.NewCoins(sdk.NewInt64Coin("atgxkrw", 123))
 	bank.SetBalance(reserve, reserveBalance)
 
-	packetData := transwapv1.FungibleTokenPacketData{
+	packetData := types.FungibleTokenPacketData{
 		ExchangeId: "7",
 		Denom:      "atgxusd",
 		Amount:     "103",
@@ -453,7 +451,7 @@ func TestIBCModuleOnRecvExchangePacketRejectsWrongLocalChannelWithZeroFee(t *tes
 	k.SetDenom(ctx, outputDenom)
 	im := NewIBCModule(k)
 
-	packetData := transwapv1.FungibleTokenPacketData{
+	packetData := types.FungibleTokenPacketData{
 		ExchangeId: "7",
 		Denom:      "atgxusd",
 		Amount:     "103",
@@ -522,25 +520,25 @@ type moduleRecvExchangeBexKeeper struct {
 	recordedVolume sdkmath.Int
 }
 
-func (m *moduleRecvExchangeBexKeeper) ValidateSwapInput(_ context.Context, exchangeID uint64, inputDenom, localInputDenom string) (bexv1.SwapDirection, error) {
+func (m *moduleRecvExchangeBexKeeper) ValidateSwapInput(_ context.Context, exchangeID uint64, inputDenom, localInputDenom string) (bextypes.SwapDirection, error) {
 	if m.resolveErr != nil {
-		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, m.resolveErr
+		return bextypes.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, m.resolveErr
 	}
 	expectedLocal := types.DenomIBCDenom(types.NewDenom("atgxusd", types.NewHop(types.PortID, "channel-0")))
 	if exchangeID != 7 || inputDenom != "atgxusd" || localInputDenom != expectedLocal {
-		return bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, bextypes.ErrInvalidRoute.Wrap("unexpected exchange route")
+		return bextypes.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, bextypes.ErrInvalidRoute.Wrap("unexpected exchange route")
 	}
-	return bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
+	return bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B, nil
 }
 
-func (m *moduleRecvExchangeBexKeeper) QuoteSwap(_ context.Context, req *bexv1.QuoteSwapRequest) (*bexv1.QuoteSwapResponse, error) {
+func (m *moduleRecvExchangeBexKeeper) QuoteSwap(_ context.Context, req *bextypes.QuoteSwapRequest) (*bextypes.QuoteSwapResponse, error) {
 	m.quoteCalls++
 	if req.GetExchangeId() != 7 || req.GetInputDenom() != "atgxusd" || req.GetAmountIn() != "103" {
 		return nil, bextypes.ErrInvalidRoute.Wrap("unexpected exchange quote")
 	}
-	return &bexv1.QuoteSwapResponse{
+	return &bextypes.QuoteSwapResponse{
 		ExchangeId:  req.GetExchangeId(),
-		Direction:   bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		Direction:   bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		InputDenom:  req.GetInputDenom(),
 		OutputDenom: m.outputDenom,
 		AmountIn:    req.GetAmountIn(),
@@ -573,14 +571,14 @@ func (m *moduleRecvExchangeBexKeeper) ClaimRefundFromReserve(ctx context.Context
 func (m *moduleRecvExchangeBexKeeper) ReserveVolumeWindow(
 	_ context.Context,
 	exchangeID uint64,
-	direction bexv1.SwapDirection,
+	direction bextypes.SwapDirection,
 	amountOut sdkmath.Int,
-) (*bexv1.VolumeReservation, error) {
-	if direction != bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B {
+) (*bextypes.VolumeReservation, error) {
+	if direction != bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B {
 		return nil, bextypes.ErrInvalidRoute.Wrap("unexpected volume direction")
 	}
 	m.recordedVolume = m.recordedVolume.Add(amountOut)
-	return &bexv1.VolumeReservation{
+	return &bextypes.VolumeReservation{
 		ExchangeId:             exchangeID,
 		Direction:              direction,
 		EpochSeconds:           bextypes.MinVolumeEpochSeconds,
@@ -589,7 +587,7 @@ func (m *moduleRecvExchangeBexKeeper) ReserveVolumeWindow(
 	}, nil
 }
 
-func (m *moduleRecvExchangeBexKeeper) ReleaseVolumeWindow(_ context.Context, reservation *bexv1.VolumeReservation) error {
+func (m *moduleRecvExchangeBexKeeper) ReleaseVolumeWindow(_ context.Context, reservation *bextypes.VolumeReservation) error {
 	amount, ok := sdkmath.NewIntFromString(reservation.GetAmount())
 	if !ok || m.recordedVolume.LT(amount) {
 		return bextypes.ErrInvariantViolation.Wrap("invalid volume release")

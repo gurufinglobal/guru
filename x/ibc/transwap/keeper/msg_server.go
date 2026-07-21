@@ -2,7 +2,6 @@ package keeper
 
 import (
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -10,7 +9,7 @@ import (
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
-func (k Keeper) transferV1Packet(ctx sdk.Context, sourceChannel string, token *transwapv1.Token, timeoutTimestamp uint64, packetData *transwapv1.FungibleTokenPacketData) (uint64, error) {
+func (k Keeper) transferV1Packet(ctx sdk.Context, sourceChannel string, token *types.Token, timeoutTimestamp uint64, packetData *types.FungibleTokenPacketData) (uint64, error) {
 	if err := k.SendTransfer(ctx, types.PortID, sourceChannel, token, sdk.MustAccAddressFromBech32(packetData.Sender)); err != nil {
 		return 0, err
 	}
@@ -31,9 +30,9 @@ func (k Keeper) transferV1PacketFromReserve(
 	ctx sdk.Context,
 	exchangeID uint64,
 	sourceChannel string,
-	token *transwapv1.Token,
+	token *types.Token,
 	timeoutTimestamp uint64,
-	packetData *transwapv1.FungibleTokenPacketData,
+	packetData *types.FungibleTokenPacketData,
 ) (uint64, error) {
 	if err := k.sendSwapOutputFromReserve(ctx, exchangeID, sourceChannel, token); err != nil {
 		return 0, err

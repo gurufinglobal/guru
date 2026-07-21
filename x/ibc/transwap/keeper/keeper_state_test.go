@@ -16,7 +16,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
@@ -91,7 +91,7 @@ func TestKeeperTotalEscrowedAndInvalidEntries(t *testing.T) {
 	exported := k.ExportGenesis(ctx)
 	require.Len(t, exported.TotalEscrowed, 1)
 	require.Equal(t, "agxn", exported.TotalEscrowed[0].Denom)
-	require.Equal(t, "7", exported.TotalEscrowed[0].Amount)
+	require.Equal(t, "7", exported.TotalEscrowed[0].Amount.String())
 
 	k.SetTotalEscrowForDenom(ctx, sdk.NewCoin("agxn", math.ZeroInt()))
 	all = k.GetAllTotalEscrowed(ctx)
@@ -198,7 +198,7 @@ func TestSendTransferAndTransferV1Packet(t *testing.T) {
 		prefixedDenom := types.DenomIBCDenom(types.NewDenom("uatom", types.NewHop(types.PortID, "channel-0")))
 		bank.SetBalance(sender, sdk.NewCoins(sdk.NewCoin(prefixedDenom, math.NewInt(10))))
 
-		token := transwapv1.Token{
+		token := types.Token{
 			Denom:  types.NewDenom("uatom", types.NewHop(types.PortID, "channel-0")),
 			Amount: "2",
 		}
@@ -215,7 +215,7 @@ func TestSendTransferAndTransferV1Packet(t *testing.T) {
 		bank.SetBalance(sender, sdk.NewCoins(sdk.NewCoin("ubtc", math.NewInt(10))))
 		escrow := types.GetEscrowAddress(types.PortID, "channel-0")
 
-		token := transwapv1.Token{
+		token := types.Token{
 			Denom:  types.NewDenom("ubtc"),
 			Amount: "2",
 		}
@@ -233,7 +233,7 @@ func TestSendTransferAndTransferV1Packet(t *testing.T) {
 		bank.SetBalance(sender, sdk.NewCoins(sdk.NewCoin("uexp", math.NewInt(10))))
 
 		data := types.NewFungibleTokenPacketData("uexp", "2", sender.String(), receiver.String(), "memo")
-		token := transwapv1.Token{Denom: types.NewDenom("uexp"), Amount: "2"}
+		token := types.Token{Denom: types.NewDenom("uexp"), Amount: "2"}
 		sequence, err := k.transferV1Packet(ctx, "channel-0", &token, 1000, data)
 		require.NoError(t, err)
 		require.Equal(t, uint64(88), sequence)
@@ -246,7 +246,7 @@ func TestSendTransferAndTransferV1Packet(t *testing.T) {
 		k, ctx, _, _ := setupKeeperStateTester(t)
 		badPacket := types.NewFungibleTokenPacketData("uexp", "2", "bad-sender", "receiver", "")
 		require.Panics(t, func() {
-			_, _ = k.transferV1Packet(ctx, "channel-0", &transwapv1.Token{
+			_, _ = k.transferV1Packet(ctx, "channel-0", &types.Token{
 				Denom:  types.NewDenom("uexp"),
 				Amount: "2",
 			}, 0, badPacket)
@@ -260,7 +260,7 @@ func TestRefundPacketTokensUsesMintOrUnescrowPath(t *testing.T) {
 	reserve := sdk.AccAddress(bytes.Repeat([]byte{0x66}, 20))
 	escrow := types.GetEscrowAddress(types.PortID, "channel-0")
 
-	mintPathToken := transwapv1.Token{
+	mintPathToken := types.Token{
 		Denom:  types.NewDenom("uatom", types.NewHop(types.PortID, "channel-0")),
 		Amount: "5",
 	}
@@ -268,7 +268,7 @@ func TestRefundPacketTokensUsesMintOrUnescrowPath(t *testing.T) {
 	require.NoError(t, k.refundPacketTokens(ctx, types.PortID, "channel-0", mintData))
 	require.Equal(t, math.NewInt(5), bank.GetAllBalances(ctx, reserve).AmountOf(types.DenomIBCDenom(mintPathToken.Denom)))
 
-	unescrowToken := transwapv1.Token{
+	unescrowToken := types.Token{
 		Denom:  types.NewDenom("uatom"),
 		Amount: "7",
 	}

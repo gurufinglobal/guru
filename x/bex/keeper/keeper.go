@@ -5,14 +5,15 @@ import (
 	"fmt"
 
 	"cosmossdk.io/collections"
+	collectionscodec "cosmossdk.io/collections/codec"
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/log/v2"
-	"github.com/cosmos/cosmos-sdk/codec"
+	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
@@ -34,13 +35,13 @@ type Keeper struct {
 	channelKeeper      ChannelKeeper
 
 	admins             collections.KeySet[string]
-	exchanges          collections.Map[uint64, *bexv1.Exchange]
+	exchanges          collections.Map[uint64, *types.Exchange]
 	exchangesByAdmin   collections.KeySet[collections.Pair[string, uint64]]
 	reserveByAddress   collections.Map[string, uint64]
 	nextExchangeID     collections.Sequence
-	collectedFees      collections.Map[uint64, *bexv1.FeeLedger]
-	lockedFees         collections.Map[uint64, *bexv1.FeeLedger]
-	pendingLiabilities collections.Map[uint64, *bexv1.FeeLedger]
+	collectedFees      collections.Map[uint64, *types.FeeLedger]
+	lockedFees         collections.Map[uint64, *types.FeeLedger]
+	pendingLiabilities collections.Map[uint64, *types.FeeLedger]
 	volumeWindow       collections.Map[volumeWindowKey, string]
 	reserveDepositors  collections.KeySet[collections.Pair[uint64, string]]
 
@@ -49,6 +50,7 @@ type Keeper struct {
 
 func NewKeeper(
 	storeService store.KVStoreService,
+	cdc sdkcodec.BinaryCodec,
 	accountCodec address.Codec,
 	accountKeeper AccountKeeper,
 	bankKeeper BankKeeper,
@@ -67,7 +69,13 @@ func NewKeeper(
 
 	sb := collections.NewSchemaBuilder(storeService)
 	k.admins = collections.NewKeySet(sb, types.AdminsKey, "admins", collections.StringKey)
-	k.exchanges = collections.NewMap(sb, types.ExchangesKey, "exchanges", collections.Uint64Key, codec.CollValueV2[bexv1.Exchange]())
+	k.exchanges = collections.NewMap(
+		sb,
+		types.ExchangesKey,
+		"exchanges",
+		collections.Uint64Key,
+		newPointerValueCodec(sdkcodec.CollValue[types.Exchange](cdc)),
+	)
 	k.exchangesByAdmin = collections.NewKeySet(
 		sb,
 		types.ExchangesByAdminKey,
@@ -76,14 +84,14 @@ func NewKeeper(
 	)
 	k.reserveByAddress = collections.NewMap(sb, types.ReserveByAddressKey, "reserve_by_address", collections.StringKey, collections.Uint64Value)
 	k.nextExchangeID = collections.NewSequence(sb, types.NextExchangeIDKey, "next_exchange_id")
-	k.collectedFees = collections.NewMap(sb, types.CollectedFeesKey, "collected_fees", collections.Uint64Key, codec.CollValueV2[bexv1.FeeLedger]())
-	k.lockedFees = collections.NewMap(sb, types.LockedFeesKey, "locked_fees", collections.Uint64Key, codec.CollValueV2[bexv1.FeeLedger]())
+	k.collectedFees = collections.NewMap(sb, types.CollectedFeesKey, "collected_fees", collections.Uint64Key, newPointerValueCodec(sdkcodec.CollValue[types.FeeLedger](cdc)))
+	k.lockedFees = collections.NewMap(sb, types.LockedFeesKey, "locked_fees", collections.Uint64Key, newPointerValueCodec(sdkcodec.CollValue[types.FeeLedger](cdc)))
 	k.pendingLiabilities = collections.NewMap(
 		sb,
 		types.PendingLiabilitiesKey,
 		"pending_liabilities",
 		collections.Uint64Key,
-		codec.CollValueV2[bexv1.FeeLedger](),
+		newPointerValueCodec(sdkcodec.CollValue[types.FeeLedger](cdc)),
 	)
 	k.volumeWindow = collections.NewMap(
 		sb,
@@ -110,6 +118,58 @@ func NewKeeper(
 	k.schema = schema
 
 	return k
+}
+
+// pointerValueCodec preserves the keeper's nil-aware pointer API while the
+// persisted value is encoded by the application's canonical internal gogo
+// codec. Nil values are never valid collection state.
+type pointerValueCodec[T any] struct {
+	valueCodec collectionscodec.ValueCodec[T]
+}
+
+func newPointerValueCodec[T any](valueCodec collectionscodec.ValueCodec[T]) collectionscodec.ValueCodec[*T] {
+	return pointerValueCodec[T]{valueCodec: valueCodec}
+}
+
+func (c pointerValueCodec[T]) Encode(value *T) ([]byte, error) {
+	if value == nil {
+		return nil, fmt.Errorf("cannot encode nil %s", c.ValueType())
+	}
+	return c.valueCodec.Encode(*value)
+}
+
+func (c pointerValueCodec[T]) Decode(b []byte) (*T, error) {
+	value, err := c.valueCodec.Decode(b)
+	if err != nil {
+		return nil, err
+	}
+	return &value, nil
+}
+
+func (c pointerValueCodec[T]) EncodeJSON(value *T) ([]byte, error) {
+	if value == nil {
+		return nil, fmt.Errorf("cannot encode nil %s", c.ValueType())
+	}
+	return c.valueCodec.EncodeJSON(*value)
+}
+
+func (c pointerValueCodec[T]) DecodeJSON(b []byte) (*T, error) {
+	value, err := c.valueCodec.DecodeJSON(b)
+	if err != nil {
+		return nil, err
+	}
+	return &value, nil
+}
+
+func (c pointerValueCodec[T]) Stringify(value *T) string {
+	if value == nil {
+		return "<nil>"
+	}
+	return c.valueCodec.Stringify(*value)
+}
+
+func (c pointerValueCodec[T]) ValueType() string {
+	return c.valueCodec.ValueType()
 }
 
 func (k Keeper) Logger(ctx context.Context) log.Logger {

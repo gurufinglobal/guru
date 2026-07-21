@@ -14,7 +14,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	bexv1 "github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.

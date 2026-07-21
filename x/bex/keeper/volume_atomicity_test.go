@@ -6,23 +6,21 @@ import (
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestRecordVolumeWindowIsAtomic(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	direction := types.SwapDirection_SWAP_DIRECTION_A_TO_B
 
 	effectiveAt := uint64(f.ctx.BlockTime().Add(time.Second).Unix())
-	pending, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		PendingVolumeEpochSeconds:         wrapperspb.UInt32(minVolumeEpochSecs * 2),
-		PendingVolumeEpochEffectiveAtUnix: wrapperspb.UInt64(effectiveAt),
+	pending, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		PendingVolumeEpochSeconds:         types.NewUInt32Value(minVolumeEpochSecs * 2),
+		PendingVolumeEpochEffectiveAtUnix: types.NewUInt64Value(effectiveAt),
 	})
 	require.NoError(t, err)
 
@@ -51,7 +49,7 @@ func TestRecordVolumeWindowIsAtomic(t *testing.T) {
 
 	afterFailure, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	require.True(t, proto.Equal(pending, afterFailure))
+	require.True(t, types.EqualMessages(pending, afterFailure))
 	value, err := f.keeper.volumeWindow.Get(f.ctx, expiredKey)
 	require.NoError(t, err)
 	require.Equal(t, "7", value)
@@ -77,11 +75,11 @@ func TestRecordVolumeWindowIsAtomic(t *testing.T) {
 func TestRecordVolumeWindowRejectsInactiveExchangeWithoutMutation(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	effectiveAt := uint64(f.ctx.BlockTime().Unix())
-	pending, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		PendingVolumeEpochSeconds:         wrapperspb.UInt32(minVolumeEpochSecs * 2),
-		PendingVolumeEpochEffectiveAtUnix: wrapperspb.UInt64(effectiveAt),
+	pending, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		PendingVolumeEpochSeconds:         types.NewUInt32Value(minVolumeEpochSecs * 2),
+		PendingVolumeEpochEffectiveAtUnix: types.NewUInt64Value(effectiveAt),
 	})
 	require.NoError(t, err)
 	eventCount := len(f.ctx.EventManager().Events())
@@ -89,7 +87,7 @@ func TestRecordVolumeWindowRejectsInactiveExchangeWithoutMutation(t *testing.T) 
 	err = f.keeper.RecordVolumeWindow(
 		f.ctx,
 		exchange.GetId(),
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		sdkmath.OneInt(),
 	)
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
@@ -97,11 +95,11 @@ func TestRecordVolumeWindowRejectsInactiveExchangeWithoutMutation(t *testing.T) 
 
 	persisted, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	require.True(t, proto.Equal(pending, persisted))
+	require.True(t, types.EqualMessages(pending, persisted))
 	key := currentVolumeKey(
 		f.ctx.BlockTime(),
 		exchange.GetId(),
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		pending.GetPendingVolumeEpochSeconds(),
 		pending.GetVolumeWindowGeneration()+1,
 	)

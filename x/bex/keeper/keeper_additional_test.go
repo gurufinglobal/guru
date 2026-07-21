@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/collections"
 	corestore "cosmossdk.io/core/store"
 	sdkmath "cosmossdk.io/math"
@@ -15,15 +13,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestAdminAuthorizationLifecycle(t *testing.T) {
@@ -55,63 +53,63 @@ func TestAdminQueriesUseDistinctRoles(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 	exchangeAdmin, _ := testAddress(t, f.accountCodec, 0x04)
-	msg := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	msg := validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	msg.ExchangeAdminAddress = exchangeAdmin
 	exchange, err := f.keeper.RegisterExchange(f.ctx, msg)
 	require.NoError(t, err)
 
 	q := NewQueryServer(&f.keeper)
-	owned, err := q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+	owned, err := q.ExchangesByExchangeAdmin(f.ctx, &types.QueryExchangesByExchangeAdminRequest{
 		ExchangeAdminAddress: exchangeAdmin,
 	})
 	require.NoError(t, err)
 	require.Len(t, owned.GetExchanges(), 1)
 	require.Equal(t, exchange.GetId(), owned.GetExchanges()[0].GetId())
 
-	registrarOwned, err := q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+	registrarOwned, err := q.ExchangesByExchangeAdmin(f.ctx, &types.QueryExchangesByExchangeAdminRequest{
 		ExchangeAdminAddress: f.admin,
 	})
 	require.NoError(t, err)
 	require.Empty(t, registrarOwned.GetExchanges())
 
-	registrarStatus, err := q.IsBexAdmin(f.ctx, &bexv1.QueryIsBexAdminRequest{BexAdminAddress: f.admin})
+	registrarStatus, err := q.IsBexAdmin(f.ctx, &types.QueryIsBexAdminRequest{BexAdminAddress: f.admin})
 	require.NoError(t, err)
 	require.True(t, registrarStatus.GetIsBexAdmin())
-	ownerStatus, err := q.IsBexAdmin(f.ctx, &bexv1.QueryIsBexAdminRequest{BexAdminAddress: exchangeAdmin})
+	ownerStatus, err := q.IsBexAdmin(f.ctx, &types.QueryIsBexAdminRequest{BexAdminAddress: exchangeAdmin})
 	require.NoError(t, err)
 	require.False(t, ownerStatus.GetIsBexAdmin())
 }
 
 func TestRegisterExchangeDefaultsAndValidation(t *testing.T) {
 	f := setupKeeperFixture(t)
-	_, err := f.keeper.RegisterExchange(f.ctx, validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE))
+	_, err := f.keeper.RegisterExchange(f.ctx, validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE))
 	require.ErrorIs(t, err, types.ErrAdminNotFound)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 
-	defaulted := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_UNSPECIFIED)
+	defaulted := validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_UNSPECIFIED)
 	defaulted.LimitAToB = ""
 	defaulted.VolumeCapBToA = ""
 	defaulted.Metadata = nil
 	exchange, err := f.keeper.RegisterExchange(f.ctx, defaulted)
 	require.NoError(t, err)
-	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE, exchange.GetStatus())
+	require.Equal(t, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE, exchange.GetStatus())
 	require.Equal(t, "0", exchange.GetLimitAToB())
 	require.Equal(t, "0", exchange.GetVolumeCapBToA())
 	require.Nil(t, exchange.GetMetadata())
 
 	cases := []struct {
 		name    string
-		mutate  func(*bexv1.MsgRegisterExchange)
+		mutate  func(*types.MsgRegisterExchange)
 		wantErr error
 	}{
 		{
 			name:    "bad denom",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.DenomA = "bad denom" },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.DenomA = "bad denom" },
 			wantErr: types.ErrInvalidRoute,
 		},
 		{
 			name: "closed active channel",
-			mutate: func(msg *bexv1.MsgRegisterExchange) {
+			mutate: func(msg *types.MsgRegisterExchange) {
 				f.channelKeeper.SetChannel("transwap", "channel-4", channeltypes.CLOSED)
 				msg.ChannelA = "channel-4"
 			},
@@ -119,37 +117,37 @@ func TestRegisterExchangeDefaultsAndValidation(t *testing.T) {
 		},
 		{
 			name:    "same denoms",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.DenomB = msg.DenomA },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.DenomB = msg.DenomA },
 			wantErr: types.ErrInvalidRoute,
 		},
 		{
 			name:    "empty oracle",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.OracleSymbolAToB = " " },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.OracleSymbolAToB = " " },
 			wantErr: types.ErrInvalidOracleRate,
 		},
 		{
 			name:    "fee too high",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.FeeBpsAToB = 10000 },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.FeeBpsAToB = 10000 },
 			wantErr: types.ErrInvalidFeeBps,
 		},
 		{
 			name:    "invalid integer",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.LimitAToB = "nan" },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.LimitAToB = "nan" },
 			wantErr: types.ErrInvalidRequest,
 		},
 		{
 			name:    "noncanonical integer",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.LimitAToB = "010" },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.LimitAToB = "010" },
 			wantErr: types.ErrInvalidRequest,
 		},
 		{
 			name:    "whitespace is not unlimited",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.LimitAToB = " " },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.LimitAToB = " " },
 			wantErr: types.ErrInvalidRequest,
 		},
 		{
 			name: "metadata too many entries",
-			mutate: func(msg *bexv1.MsgRegisterExchange) {
+			mutate: func(msg *types.MsgRegisterExchange) {
 				msg.Metadata = map[string]string{}
 				for i := 0; i <= maxMetadataEntries; i++ {
 					msg.Metadata[fmt.Sprintf("k%d", i)] = "v"
@@ -159,23 +157,23 @@ func TestRegisterExchangeDefaultsAndValidation(t *testing.T) {
 		},
 		{
 			name:    "too short epoch",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.VolumeEpochSeconds = minVolumeEpochSecs - 1 },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.VolumeEpochSeconds = minVolumeEpochSecs - 1 },
 			wantErr: types.ErrInvalidRequest,
 		},
 		{
 			name:    "zero staleness",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.MaxOracleStalenessSeconds = 0 },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.MaxOracleStalenessSeconds = 0 },
 			wantErr: types.ErrInvalidRequest,
 		},
 		{
 			name:    "deleted status",
-			mutate:  func(msg *bexv1.MsgRegisterExchange) { msg.Status = bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED },
+			mutate:  func(msg *types.MsgRegisterExchange) { msg.Status = types.ExchangeStatus_EXCHANGE_STATUS_DELETED },
 			wantErr: types.ErrInvalidRequest,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			msg := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+			msg := validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 			tc.mutate(msg)
 			_, err := f.keeper.RegisterExchange(f.ctx, msg)
 			if tc.wantErr == nil {
@@ -193,29 +191,29 @@ func TestUpdateExchangeFullPatchAndErrors(t *testing.T) {
 	other, _ := testAddress(t, f.accountCodec, 0x05)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, other))
 
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
-	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		DenomA:                            wrapperspb.String("agxn"),
-		PortA:                             wrapperspb.String("transwap"),
-		ChannelA:                          wrapperspb.String("channel-2"),
-		DenomB:                            wrapperspb.String("gxusd"),
-		PortB:                             wrapperspb.String("transwap"),
-		ChannelB:                          wrapperspb.String("channel-3"),
-		OracleSymbolAToB:                  wrapperspb.String("OSMO/ETH"),
-		OracleSymbolBToA:                  wrapperspb.String("ETH/OSMO"),
-		FeeBpsAToB:                        wrapperspb.UInt32(11),
-		FeeBpsBToA:                        wrapperspb.UInt32(12),
-		LimitAToB:                         wrapperspb.String("101"),
-		LimitBToA:                         wrapperspb.String("202"),
-		VolumeCapAToB:                     wrapperspb.String("303"),
-		VolumeCapBToA:                     wrapperspb.String("404"),
-		Status:                            &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
-		ClearMetadata:                     wrapperspb.Bool(true),
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		DenomA:                            types.NewStringValue("agxn"),
+		PortA:                             types.NewStringValue("transwap"),
+		ChannelA:                          types.NewStringValue("channel-2"),
+		DenomB:                            types.NewStringValue("gxusd"),
+		PortB:                             types.NewStringValue("transwap"),
+		ChannelB:                          types.NewStringValue("channel-3"),
+		OracleSymbolAToB:                  types.NewStringValue("OSMO/ETH"),
+		OracleSymbolBToA:                  types.NewStringValue("ETH/OSMO"),
+		FeeBpsAToB:                        types.NewUInt32Value(11),
+		FeeBpsBToA:                        types.NewUInt32Value(12),
+		LimitAToB:                         types.NewStringValue("101"),
+		LimitBToA:                         types.NewStringValue("202"),
+		VolumeCapAToB:                     types.NewStringValue("303"),
+		VolumeCapBToA:                     types.NewStringValue("404"),
+		Status:                            &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+		ClearMetadata:                     types.NewBoolValue(true),
 		Metadata:                          map[string]string{"desk": "one"},
-		VolumeEpochSeconds:                wrapperspb.UInt32(minVolumeEpochSecs * 2),
-		PendingVolumeEpochSeconds:         wrapperspb.UInt32(minVolumeEpochSecs * 3),
-		PendingVolumeEpochEffectiveAtUnix: wrapperspb.UInt64(1_700_000_030),
-		MaxOracleStalenessSeconds:         wrapperspb.UInt32(15),
+		VolumeEpochSeconds:                types.NewUInt32Value(minVolumeEpochSecs * 2),
+		PendingVolumeEpochSeconds:         types.NewUInt32Value(minVolumeEpochSecs * 3),
+		PendingVolumeEpochEffectiveAtUnix: types.NewUInt64Value(1_700_000_030),
+		MaxOracleStalenessSeconds:         types.NewUInt32Value(15),
 	})
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), updated.GetRevision())
@@ -230,57 +228,57 @@ func TestUpdateExchangeFullPatchAndErrors(t *testing.T) {
 	require.Equal(t, uint64(1_700_000_030), updated.GetPendingVolumeEpochEffectiveAtUnix())
 	require.Equal(t, uint32(15), updated.GetMaxOracleStalenessSeconds())
 
-	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
+	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
 	})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
 	f.channelKeeper.SetChannel("transwap", "channel-2", channeltypes.OPEN)
 	f.channelKeeper.SetChannel("transwap", "channel-3", channeltypes.OPEN)
-	updated, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
+	updated, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
 	})
 	require.NoError(t, err)
-	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE, updated.GetStatus())
+	require.Equal(t, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE, updated.GetStatus())
 
-	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED},
+	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_DELETED},
 	})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 
-	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(updated.GetFeeBpsAToB()),
+	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(updated.GetFeeBpsAToB()),
 	})
 	require.ErrorIs(t, err, types.ErrNoOpUpdate)
 
 	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), nil)
 	require.ErrorIs(t, err, types.ErrNoOpUpdate)
 
-	_, err = f.keeper.UpdateExchange(f.ctx, other, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(13),
+	_, err = f.keeper.UpdateExchange(f.ctx, other, updated.GetId(), updated.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(13),
 	})
 	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 
-	badRouteExchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
-	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, badRouteExchange.GetId(), badRouteExchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		DenomA: wrapperspb.String("bad denom"),
+	badRouteExchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, badRouteExchange.GetId(), badRouteExchange.GetRevision(), &types.ExchangeUpdatePatch{
+		DenomA: types.NewStringValue("bad denom"),
 	})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
 
-	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		DenomA: wrapperspb.String("bad denom"),
+	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &types.ExchangeUpdatePatch{
+		DenomA: types.NewStringValue("bad denom"),
 	})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
 
-	cleared, err := f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		ClearMetadata: wrapperspb.Bool(true),
+	cleared, err := f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &types.ExchangeUpdatePatch{
+		ClearMetadata: types.NewBoolValue(true),
 	})
 	require.NoError(t, err)
 	require.Nil(t, cleared.GetMetadata())
 
-	deleted := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	deleted := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, deleted.GetId()))
-	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, deleted.GetId(), deleted.GetRevision()+1, &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(13),
+	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, deleted.GetId(), deleted.GetRevision()+1, &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(13),
 	})
 	require.ErrorIs(t, err, types.ErrExchangeDeleted)
 }
@@ -288,42 +286,42 @@ func TestUpdateExchangeFullPatchAndErrors(t *testing.T) {
 func TestUpdateExchangeRejectsActivationWhenRouteChannelCloses(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 
 	f.channelKeeper.SetChannel(exchange.GetPortA(), exchange.GetChannelA(), channeltypes.CLOSED)
-	_, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
+	_, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
 	})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
 
 	unchanged, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
 	require.Equal(t, exchange.GetRevision(), unchanged.GetRevision())
-	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE, unchanged.GetStatus())
+	require.Equal(t, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE, unchanged.GetStatus())
 
 	f.channelKeeper.SetChannel(exchange.GetPortA(), exchange.GetChannelA(), channeltypes.OPEN)
-	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
+	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
 	})
 	require.NoError(t, err)
-	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE, updated.GetStatus())
+	require.Equal(t, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE, updated.GetStatus())
 }
 
 func TestKeeperEmitsRequiredEvents(t *testing.T) {
 	f := setupKeeperFixture(t)
 
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 
-	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(30),
+	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(30),
 	})
 	require.NoError(t, err)
 	require.NoError(t, f.keeper.DepositReserve(f.ctx, f.admin, updated.GetId(), sdk.NewCoins(sdk.NewInt64Coin("agxn", 25))))
 	require.NoError(t, f.keeper.CollectFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 10)))
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 3)))
-	updated, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+	updated, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
 	})
 	require.NoError(t, err)
 	require.NoError(t, f.keeper.WithdrawReserve(f.ctx, f.admin, updated.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 5))))
@@ -331,14 +329,14 @@ func TestKeeperEmitsRequiredEvents(t *testing.T) {
 	require.NoError(t, f.keeper.RefundLockedFee(f.ctx, updated.GetId(), sdk.NewInt64Coin("agxn", 2)))
 	require.NoError(t, f.keeper.WithdrawFees(f.ctx, f.admin, updated.GetId(), f.recipient, sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))))
 
-	updated, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
+	updated, err = f.keeper.UpdateExchange(f.ctx, f.admin, updated.GetId(), updated.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE},
 	})
 	require.NoError(t, err)
-	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, updated.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)))
-	require.ErrorIs(t, f.keeper.RecordVolumeWindow(f.ctx, updated.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1000)), types.ErrVolumeCapExceeded)
+	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, updated.GetId(), types.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)))
+	require.ErrorIs(t, f.keeper.RecordVolumeWindow(f.ctx, updated.GetId(), types.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1000)), types.ErrVolumeCapExceeded)
 
-	toDelete := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	toDelete := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, toDelete.GetId()))
 	newAdmin, _ := testAddress(t, f.accountCodec, 0x09)
 	require.NoError(t, f.keeper.UpdateAdmin(f.ctx, f.moderator, f.admin, newAdmin))
@@ -366,77 +364,77 @@ func TestKeeperEmitsRequiredEvents(t *testing.T) {
 func TestQuoteSwapErrorPathsAndBToA(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	active := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	inactive := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	active := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	inactive := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 
 	_, err := f.keeper.QuoteSwap(f.ctx, nil)
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: 999, InputDenom: "agxn", AmountIn: "1"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: 999, InputDenom: "agxn", AmountIn: "1"})
 	require.ErrorIs(t, err, types.ErrExchangeNotFound)
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: inactive.GetId(), InputDenom: "agxn", AmountIn: "1"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: inactive.GetId(), InputDenom: "agxn", AmountIn: "1"})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: "agxn", AmountIn: "0"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: "agxn", AmountIn: "0"})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: "ubad", AmountIn: "1"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: "ubad", AmountIn: "1"})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
 	require.ErrorIs(t, err, types.ErrInvalidOracleRate)
 
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "0", f.ctx.BlockTime().Unix())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
 	require.ErrorIs(t, err, types.ErrInvalidOracleRate)
 
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "1", f.ctx.BlockTime().Add(-time.Hour).Unix())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
 	require.ErrorIs(t, err, types.ErrStaleOracleRate)
 
-	active, err = f.keeper.UpdateExchange(f.ctx, f.admin, active.GetId(), active.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(9999),
+	active, err = f.keeper.UpdateExchange(f.ctx, f.admin, active.GetId(), active.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(9999),
 	})
 	require.NoError(t, err)
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "1", f.ctx.BlockTime().Unix())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 
-	active, err = f.keeper.UpdateExchange(f.ctx, f.admin, active.GetId(), active.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(0),
-		LimitAToB:  wrapperspb.String("1"),
+	active, err = f.keeper.UpdateExchange(f.ctx, f.admin, active.GetId(), active.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(0),
+		LimitAToB:  types.NewStringValue("1"),
 	})
 	require.NoError(t, err)
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "2"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "2"})
 	require.ErrorIs(t, err, types.ErrOutputLimitExceeded)
 
-	active, err = f.keeper.UpdateExchange(f.ctx, f.admin, active.GetId(), active.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		LimitAToB: wrapperspb.String("0"),
+	active, err = f.keeper.UpdateExchange(f.ctx, f.admin, active.GetId(), active.GetRevision(), &types.ExchangeUpdatePatch{
+		LimitAToB: types.NewStringValue("0"),
 	})
 	require.NoError(t, err)
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "0.1", f.ctx.BlockTime().Unix())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: "1"})
 	require.ErrorIs(t, err, types.ErrInvalidOracleRate)
 
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", f.ctx.BlockTime().Unix())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: maxUint256String})
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomA(), AmountIn: maxUint256String})
 	require.ErrorIs(t, err, types.ErrInvalidOracleRate)
 
 	f.oracleKeeper.SetValue("GXUSD/AGXN", "3", f.ctx.BlockTime().Unix())
-	quote, err := f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomB(), AmountIn: "10"})
+	quote, err := f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{ExchangeId: active.GetId(), InputDenom: active.GetDenomB(), AmountIn: "10"})
 	require.NoError(t, err)
-	require.Equal(t, bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A, quote.GetDirection())
+	require.Equal(t, types.SwapDirection_SWAP_DIRECTION_B_TO_A, quote.GetDirection())
 	require.Equal(t, active.GetIbcDenomA(), quote.GetOutputDenom())
 }
 
 func TestVolumeWindowAndQueries(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	ex1 := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	ex1 := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	collectFee(t, f, ex1.GetId(), sdk.NewInt64Coin("agxn", 10))
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, ex1.GetId(), sdk.NewInt64Coin("agxn", 3)))
-	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, ex1.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(7)))
+	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, ex1.GetId(), types.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(7)))
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", f.ctx.BlockTime().Unix())
 
-	require.ErrorIs(t, f.keeper.RecordVolumeWindow(f.ctx, ex1.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.ZeroInt()), types.ErrInvalidRequest)
-	require.ErrorIs(t, f.keeper.RecordVolumeWindow(f.ctx, ex1.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, sdkmath.NewInt(1)), types.ErrInvalidRoute)
+	require.ErrorIs(t, f.keeper.RecordVolumeWindow(f.ctx, ex1.GetId(), types.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.ZeroInt()), types.ErrInvalidRequest)
+	require.ErrorIs(t, f.keeper.RecordVolumeWindow(f.ctx, ex1.GetId(), types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED, sdkmath.NewInt(1)), types.ErrInvalidRoute)
 
 	q := NewQueryServer(&f.keeper)
 	for name, call := range map[string]func() error{
@@ -453,36 +451,36 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 		})
 	}
 
-	exResp, err := q.Exchange(f.ctx, &bexv1.QueryExchangeRequest{ExchangeId: ex1.GetId()})
+	exResp, err := q.Exchange(f.ctx, &types.QueryExchangeRequest{ExchangeId: ex1.GetId()})
 	require.NoError(t, err)
 	require.Equal(t, ex1.GetId(), exResp.GetExchange().GetId())
-	_, err = q.Exchange(f.ctx, &bexv1.QueryExchangeRequest{ExchangeId: 999})
+	_, err = q.Exchange(f.ctx, &types.QueryExchangeRequest{ExchangeId: 999})
 	require.ErrorIs(t, err, types.ErrExchangeNotFound)
 
-	byExchangeAdmin, err := q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+	byExchangeAdmin, err := q.ExchangesByExchangeAdmin(f.ctx, &types.QueryExchangesByExchangeAdminRequest{
 		ExchangeAdminAddress: f.admin,
-		Pagination:           &queryv1beta1.PageRequest{Offset: 1, Limit: 1},
+		Pagination:           &sdkquery.PageRequest{Offset: 1, Limit: 1},
 	})
 	require.NoError(t, err)
 	require.Len(t, byExchangeAdmin.GetExchanges(), 1)
-	_, err = q.ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{ExchangeAdminAddress: "bad"})
+	_, err = q.ExchangesByExchangeAdmin(f.ctx, &types.QueryExchangesByExchangeAdminRequest{ExchangeAdminAddress: "bad"})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 
-	isBexAdmin, err := q.IsBexAdmin(f.ctx, &bexv1.QueryIsBexAdminRequest{BexAdminAddress: f.admin})
+	isBexAdmin, err := q.IsBexAdmin(f.ctx, &types.QueryIsBexAdminRequest{BexAdminAddress: f.admin})
 	require.NoError(t, err)
 	require.True(t, isBexAdmin.GetIsBexAdmin())
-	_, err = q.IsBexAdmin(f.ctx, &bexv1.QueryIsBexAdminRequest{BexAdminAddress: "bad"})
+	_, err = q.IsBexAdmin(f.ctx, &types.QueryIsBexAdminRequest{BexAdminAddress: "bad"})
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 
-	for name, call := range map[string]func() (*bexv1.QueryFeesResponse, error){
-		"collected": func() (*bexv1.QueryFeesResponse, error) {
-			return q.CollectedFees(f.ctx, &bexv1.QueryFeesRequest{ExchangeId: ex1.GetId()})
+	for name, call := range map[string]func() (*types.QueryFeesResponse, error){
+		"collected": func() (*types.QueryFeesResponse, error) {
+			return q.CollectedFees(f.ctx, &types.QueryFeesRequest{ExchangeId: ex1.GetId()})
 		},
-		"locked": func() (*bexv1.QueryFeesResponse, error) {
-			return q.LockedFees(f.ctx, &bexv1.QueryFeesRequest{ExchangeId: ex1.GetId()})
+		"locked": func() (*types.QueryFeesResponse, error) {
+			return q.LockedFees(f.ctx, &types.QueryFeesRequest{ExchangeId: ex1.GetId()})
 		},
-		"available": func() (*bexv1.QueryFeesResponse, error) {
-			return q.AvailableFees(f.ctx, &bexv1.QueryFeesRequest{ExchangeId: ex1.GetId()})
+		"available": func() (*types.QueryFeesResponse, error) {
+			return q.AvailableFees(f.ctx, &types.QueryFeesRequest{ExchangeId: ex1.GetId()})
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -491,27 +489,27 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 			require.NotNil(t, resp.GetLedger())
 		})
 	}
-	_, err = q.CollectedFees(f.ctx, &bexv1.QueryFeesRequest{ExchangeId: 999})
+	_, err = q.CollectedFees(f.ctx, &types.QueryFeesRequest{ExchangeId: 999})
 	require.ErrorIs(t, err, types.ErrExchangeNotFound)
 
-	window, err := q.VolumeWindow(f.ctx, &bexv1.QueryVolumeWindowRequest{ExchangeId: ex1.GetId(), Direction: bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B})
+	window, err := q.VolumeWindow(f.ctx, &types.QueryVolumeWindowRequest{ExchangeId: ex1.GetId(), Direction: types.SwapDirection_SWAP_DIRECTION_A_TO_B})
 	require.NoError(t, err)
 	require.Equal(t, "7", window.GetWindow().GetAmount())
 	require.Equal(t, ex1.GetVolumeCapAToB(), window.GetCap())
-	_, err = q.VolumeWindow(f.ctx, &bexv1.QueryVolumeWindowRequest{ExchangeId: ex1.GetId(), Direction: bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED})
+	_, err = q.VolumeWindow(f.ctx, &types.QueryVolumeWindowRequest{ExchangeId: ex1.GetId(), Direction: types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
 	badVolumeKey := currentVolumeKey(
 		f.ctx.BlockTime(),
 		ex1.GetId(),
-		bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED,
+		types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED,
 		ex1.GetVolumeEpochSeconds(),
 		ex1.GetVolumeWindowGeneration(),
 	)
 	require.NoError(t, f.keeper.volumeWindow.Set(f.ctx, badVolumeKey, "bad"))
-	_, err = f.keeper.GetCurrentVolumeAmount(f.ctx, ex1, bexv1.SwapDirection_SWAP_DIRECTION_UNSPECIFIED)
+	_, err = f.keeper.GetCurrentVolumeAmount(f.ctx, ex1, types.SwapDirection_SWAP_DIRECTION_UNSPECIFIED)
 	require.ErrorIs(t, err, types.ErrInvalidRequest)
 
-	quote, err := q.QuoteSwap(f.ctx, &bexv1.QueryQuoteSwapRequest{ExchangeId: ex1.GetId(), InputDenom: ex1.GetDenomA(), AmountIn: "2"})
+	quote, err := q.QuoteSwap(f.ctx, &types.QueryQuoteSwapRequest{ExchangeId: ex1.GetId(), InputDenom: ex1.GetDenomA(), AmountIn: "2"})
 	require.NoError(t, err)
 	require.Equal(t, "2", quote.GetQuote().GetAmountOut())
 	require.Equal(t, ex1.GetRevision(), quote.GetQuote().GetExchangeRevision())
@@ -520,32 +518,32 @@ func TestVolumeWindowAndQueries(t *testing.T) {
 func TestExchangeQueryFiltersTombstonesFromPrimaryState(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	first := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
-	deleted := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
-	last := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	first := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	deleted := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	last := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, deleted.GetId()))
 
 	q := NewQueryServer(&f.keeper)
-	invalidKeyPage, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{Pagination: &queryv1beta1.PageRequest{Key: []byte("bad")}})
+	invalidKeyPage, err := q.Exchanges(f.ctx, &types.QueryExchangesRequest{Pagination: &sdkquery.PageRequest{Key: []byte("bad")}})
 	require.NoError(t, err)
 	require.Empty(t, invalidKeyPage.GetExchanges())
-	firstPage, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
-		Pagination: &queryv1beta1.PageRequest{Limit: 1},
+	firstPage, err := q.Exchanges(f.ctx, &types.QueryExchangesRequest{
+		Pagination: &sdkquery.PageRequest{Limit: 1},
 	})
 	require.NoError(t, err)
 	require.Len(t, firstPage.GetExchanges(), 1)
 	require.Equal(t, first.GetId(), firstPage.GetExchanges()[0].GetId())
 	require.NotEmpty(t, firstPage.GetPagination().GetNextKey())
 
-	secondPage, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
-		Pagination: &queryv1beta1.PageRequest{Key: firstPage.GetPagination().GetNextKey(), Limit: 1},
+	secondPage, err := q.Exchanges(f.ctx, &types.QueryExchangesRequest{
+		Pagination: &sdkquery.PageRequest{Key: firstPage.GetPagination().GetNextKey(), Limit: 1},
 	})
 	require.NoError(t, err)
 	require.Len(t, secondPage.GetExchanges(), 1)
 	require.Equal(t, last.GetId(), secondPage.GetExchanges()[0].GetId())
 
-	reverse, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
-		Pagination: &queryv1beta1.PageRequest{Limit: 2, Reverse: true},
+	reverse, err := q.Exchanges(f.ctx, &types.QueryExchangesRequest{
+		Pagination: &sdkquery.PageRequest{Limit: 2, Reverse: true},
 	})
 	require.NoError(t, err)
 	require.Len(t, reverse.GetExchanges(), 2)
@@ -554,17 +552,17 @@ func TestExchangeQueryFiltersTombstonesFromPrimaryState(t *testing.T) {
 		reverse.GetExchanges()[1].GetId(),
 	})
 
-	all, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{
+	all, err := q.Exchanges(f.ctx, &types.QueryExchangesRequest{
 		IncludeDeleted: true,
-		Pagination:     &queryv1beta1.PageRequest{Limit: 3},
+		Pagination:     &sdkquery.PageRequest{Limit: 3},
 	})
 	require.NoError(t, err)
 	require.Len(t, all.GetExchanges(), 3)
-	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED, all.GetExchanges()[1].GetStatus())
+	require.Equal(t, types.ExchangeStatus_EXCHANGE_STATUS_DELETED, all.GetExchanges()[1].GetStatus())
 
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, first.GetId()))
 	require.NoError(t, f.keeper.DeleteExchange(f.ctx, f.admin, last.GetId()))
-	empty, err := q.Exchanges(f.ctx, &bexv1.QueryExchangesRequest{})
+	empty, err := q.Exchanges(f.ctx, &types.QueryExchangesRequest{})
 	require.NoError(t, err)
 	require.Empty(t, empty.GetExchanges())
 }
@@ -572,8 +570,8 @@ func TestExchangeQueryFiltersTombstonesFromPrimaryState(t *testing.T) {
 func TestImmediateVolumeEpochUpdateStartsNewWindowAndPreservesPendingSchedule(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	direction := types.SwapDirection_SWAP_DIRECTION_A_TO_B
 	oldKey := currentVolumeKey(
 		f.ctx.BlockTime(),
 		exchange.GetId(),
@@ -584,13 +582,13 @@ func TestImmediateVolumeEpochUpdateStartsNewWindowAndPreservesPendingSchedule(t 
 	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), direction, sdkmath.NewInt(10)))
 
 	effectiveAt := uint64(f.ctx.BlockTime().Add(time.Hour).Unix())
-	scheduled, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		PendingVolumeEpochSeconds:         wrapperspb.UInt32(minVolumeEpochSecs * 2),
-		PendingVolumeEpochEffectiveAtUnix: wrapperspb.UInt64(effectiveAt),
+	scheduled, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		PendingVolumeEpochSeconds:         types.NewUInt32Value(minVolumeEpochSecs * 2),
+		PendingVolumeEpochEffectiveAtUnix: types.NewUInt64Value(effectiveAt),
 	})
 	require.NoError(t, err)
-	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), scheduled.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		VolumeEpochSeconds: wrapperspb.UInt32(minVolumeEpochSecs * 2),
+	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), scheduled.GetRevision(), &types.ExchangeUpdatePatch{
+		VolumeEpochSeconds: types.NewUInt32Value(minVolumeEpochSecs * 2),
 	})
 	require.NoError(t, err)
 	require.Equal(t, scheduled.GetPendingVolumeEpochSeconds(), updated.GetPendingVolumeEpochSeconds())
@@ -619,7 +617,7 @@ func TestExchangesByExchangeAdminRejectsCorruptOwnerIndex(t *testing.T) {
 		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 		require.NoError(t, f.keeper.exchangesByAdmin.Set(f.ctx, collections.Join(f.admin, uint64(999))))
 
-		_, err := NewQueryServer(&f.keeper).ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+		_, err := NewQueryServer(&f.keeper).ExchangesByExchangeAdmin(f.ctx, &types.QueryExchangesByExchangeAdminRequest{
 			ExchangeAdminAddress: f.admin,
 		})
 		require.ErrorIs(t, err, types.ErrInvariantViolation)
@@ -628,13 +626,13 @@ func TestExchangesByExchangeAdminRejectsCorruptOwnerIndex(t *testing.T) {
 	t.Run("owner mismatch", func(t *testing.T) {
 		f := setupKeeperFixture(t)
 		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+		exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 		other, _ := testAddress(t, f.accountCodec, 0x29)
 		corrupted := cloneExchange(exchange)
 		corrupted.AdminAddress = other
 		require.NoError(t, f.keeper.exchanges.Set(f.ctx, exchange.GetId(), corrupted))
 
-		_, err := NewQueryServer(&f.keeper).ExchangesByExchangeAdmin(f.ctx, &bexv1.QueryExchangesByExchangeAdminRequest{
+		_, err := NewQueryServer(&f.keeper).ExchangesByExchangeAdmin(f.ctx, &types.QueryExchangesByExchangeAdminRequest{
 			ExchangeAdminAddress: f.admin,
 		})
 		require.ErrorIs(t, err, types.ErrInvariantViolation)
@@ -650,8 +648,8 @@ func TestAuthzDispatchRequiresBexAdminSignerField(t *testing.T) {
 	f.accountKeeper.SetAccount(f.ctx, f.accountKeeper.NewAccountWithAddress(f.ctx, granteeAddr))
 
 	authzKeeper := newBexAuthzKeeper(t, f, authzKey)
-	msgType := sdk.MsgTypeURL(&bexv1.MsgRegisterExchange{})
-	adminMsg := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	msgType := sdk.MsgTypeURL(&types.MsgRegisterExchange{})
+	adminMsg := validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 
 	_, err := authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{adminMsg})
 	require.ErrorIs(t, err, authz.ErrNoAuthorizationFound)
@@ -665,7 +663,7 @@ func TestAuthzDispatchRequiresBexAdminSignerField(t *testing.T) {
 		&expiration,
 	))
 
-	granteeMsg := validRegisterExchangeMsg(grantee, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	granteeMsg := validRegisterExchangeMsg(grantee, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{granteeMsg})
 	require.ErrorIs(t, err, types.ErrAdminNotFound)
 
@@ -701,14 +699,14 @@ func TestAuthzDispatchUsesBexSignerFieldsForReserveAndFeeMessages(t *testing.T) 
 		))
 	}
 
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserveAddr := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
-	amount := []*basev1beta1.Coin{{Denom: "agxn", Amount: "9"}}
+	amount := sdk.NewCoins(sdk.NewInt64Coin("agxn", 9))
 
-	deposit := &bexv1.MsgDepositReserve{Sender: f.admin, ExchangeId: exchange.GetId(), Amount: amount}
+	deposit := &types.MsgDepositReserve{Sender: f.admin, ExchangeId: exchange.GetId(), Amount: amount}
 	grant(deposit)
 	_, err := authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{
-		&bexv1.MsgDepositReserve{Sender: grantee, ExchangeId: exchange.GetId(), Amount: amount},
+		&types.MsgDepositReserve{Sender: grantee, ExchangeId: exchange.GetId(), Amount: amount},
 	})
 	require.ErrorIs(t, err, types.ErrUnauthorizedReserveDepositor)
 	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).IsZero())
@@ -719,17 +717,17 @@ func TestAuthzDispatchUsesBexSignerFieldsForReserveAndFeeMessages(t *testing.T) 
 	require.NoError(t, f.keeper.CollectFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 4)))
 	require.Equal(t, sdkmath.NewInt(5), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
 
-	inactive, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+	inactive, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
 	})
 	require.NoError(t, err)
 	recipient, err := f.accountCodec.BytesToString(f.recipient)
 	require.NoError(t, err)
 
-	withdrawReserve := &bexv1.MsgWithdrawReserve{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "2"}}, Recipient: recipient}
+	withdrawReserve := &types.MsgWithdrawReserve{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)), Recipient: recipient}
 	grant(withdrawReserve)
 	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{
-		&bexv1.MsgWithdrawReserve{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawReserve.GetAmount(), Recipient: recipient},
+		&types.MsgWithdrawReserve{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawReserve.GetAmount(), Recipient: recipient},
 	})
 	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, f.recipient).IsZero())
@@ -740,10 +738,10 @@ func TestAuthzDispatchUsesBexSignerFieldsForReserveAndFeeMessages(t *testing.T) 
 	require.Equal(t, sdkmath.NewInt(2), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
 	require.Equal(t, sdkmath.NewInt(3), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
 
-	withdrawFees := &bexv1.MsgWithdrawFees{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "3"}}, Recipient: recipient}
+	withdrawFees := &types.MsgWithdrawFees{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: sdk.NewCoins(sdk.NewInt64Coin("agxn", 3)), Recipient: recipient}
 	grant(withdrawFees)
 	_, err = authzKeeper.DispatchActions(f.ctx, granteeAddr, []sdk.Msg{
-		&bexv1.MsgWithdrawFees{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawFees.GetAmount(), Recipient: recipient},
+		&types.MsgWithdrawFees{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawFees.GetAmount(), Recipient: recipient},
 	})
 	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	require.Equal(t, sdkmath.NewInt(2), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
@@ -770,7 +768,7 @@ func TestAuthzMsgExecRequiresBexAdminSignerFieldForRegisterExchange(t *testing.T
 
 	authzKeeper := newBexAuthzKeeper(t, f, authzKey)
 	expiration := f.ctx.BlockTime().Add(time.Hour)
-	adminMsg := validRegisterExchangeMsg(f.admin, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	adminMsg := validRegisterExchangeMsg(f.admin, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, authzKeeper.SaveGrant(
 		f.ctx,
 		granteeAddr,
@@ -788,7 +786,7 @@ func TestAuthzMsgExecRequiresBexAdminSignerFieldForRegisterExchange(t *testing.T
 		return err
 	}
 
-	granteeMsg := validRegisterExchangeMsg(grantee, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	granteeMsg := validRegisterExchangeMsg(grantee, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	err := exec(granteeMsg)
 	require.ErrorIs(t, err, types.ErrAdminNotFound)
 	_, err = f.keeper.GetExchange(f.ctx, 1)
@@ -829,13 +827,13 @@ func TestAuthzMsgExecUsesBexSignerFieldsForReserveAndFeeMessages(t *testing.T) {
 		return err
 	}
 
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reserveAddr := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
-	amount := []*basev1beta1.Coin{{Denom: "agxn", Amount: "9"}}
+	amount := sdk.NewCoins(sdk.NewInt64Coin("agxn", 9))
 
-	deposit := &bexv1.MsgDepositReserve{Sender: f.admin, ExchangeId: exchange.GetId(), Amount: amount}
+	deposit := &types.MsgDepositReserve{Sender: f.admin, ExchangeId: exchange.GetId(), Amount: amount}
 	grant(deposit)
-	err := exec(&bexv1.MsgDepositReserve{Sender: grantee, ExchangeId: exchange.GetId(), Amount: amount})
+	err := exec(&types.MsgDepositReserve{Sender: grantee, ExchangeId: exchange.GetId(), Amount: amount})
 	require.ErrorIs(t, err, types.ErrUnauthorizedReserveDepositor)
 	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).IsZero())
 
@@ -844,16 +842,16 @@ func TestAuthzMsgExecUsesBexSignerFieldsForReserveAndFeeMessages(t *testing.T) {
 	require.NoError(t, f.keeper.CollectFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 4)))
 	require.Equal(t, sdkmath.NewInt(5), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
 
-	inactive, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+	inactive, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
 	})
 	require.NoError(t, err)
 	recipient, err := f.accountCodec.BytesToString(f.recipient)
 	require.NoError(t, err)
 
-	withdrawReserve := &bexv1.MsgWithdrawReserve{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "2"}}, Recipient: recipient}
+	withdrawReserve := &types.MsgWithdrawReserve{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: sdk.NewCoins(sdk.NewInt64Coin("agxn", 2)), Recipient: recipient}
 	grant(withdrawReserve)
-	err = exec(&bexv1.MsgWithdrawReserve{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawReserve.GetAmount(), Recipient: recipient})
+	err = exec(&types.MsgWithdrawReserve{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawReserve.GetAmount(), Recipient: recipient})
 	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, f.recipient).IsZero())
 	require.Equal(t, sdkmath.NewInt(5), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
@@ -862,9 +860,9 @@ func TestAuthzMsgExecUsesBexSignerFieldsForReserveAndFeeMessages(t *testing.T) {
 	require.Equal(t, sdkmath.NewInt(2), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
 	require.Equal(t, sdkmath.NewInt(3), f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).AmountOf("agxn"))
 
-	withdrawFees := &bexv1.MsgWithdrawFees{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: []*basev1beta1.Coin{{Denom: "agxn", Amount: "3"}}, Recipient: recipient}
+	withdrawFees := &types.MsgWithdrawFees{AdminAddress: f.admin, ExchangeId: inactive.GetId(), Amount: sdk.NewCoins(sdk.NewInt64Coin("agxn", 3)), Recipient: recipient}
 	grant(withdrawFees)
-	err = exec(&bexv1.MsgWithdrawFees{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawFees.GetAmount(), Recipient: recipient})
+	err = exec(&types.MsgWithdrawFees{AdminAddress: grantee, ExchangeId: inactive.GetId(), Amount: withdrawFees.GetAmount(), Recipient: recipient})
 	require.ErrorIs(t, err, types.ErrWrongExchangeAdmin)
 	require.Equal(t, sdkmath.NewInt(2), f.bankKeeper.GetAllBalances(f.ctx, f.recipient).AmountOf("agxn"))
 	collected, err := f.keeper.GetCollectedFees(f.ctx, inactive.GetId())
@@ -892,7 +890,7 @@ func newBexAuthzKeeper(t *testing.T, f keeperTestFixture, authzKey *storetypes.K
 
 	router := baseapp.NewMsgServiceRouter()
 	router.SetInterfaceRegistry(encoding.InterfaceRegistry)
-	bexv1.RegisterMsgServer(router, NewMsgServer(&f.keeper))
+	types.RegisterMsgServer(router, NewMsgServer(&f.keeper))
 
 	return authzkeeper.NewKeeper(
 		runtime.NewKVStoreService(authzKey),
@@ -905,12 +903,12 @@ func newBexAuthzKeeper(t *testing.T, f keeperTestFixture, authzKey *storetypes.K
 func TestKeeperGenesisExportImportAndInvariants(t *testing.T) {
 	source := setupKeeperFixture(t)
 	require.NoError(t, source.keeper.RegisterAdmin(source.ctx, source.moderator, source.admin))
-	active := registerExchange(t, source, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	deleted := registerExchange(t, source, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	active := registerExchange(t, source, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	deleted := registerExchange(t, source, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	require.NoError(t, source.keeper.DeleteExchange(source.ctx, source.admin, deleted.GetId()))
 	collectFee(t, source, active.GetId(), sdk.NewInt64Coin("agxn", 10))
 	require.NoError(t, source.keeper.LockExchangeFee(source.ctx, active.GetId(), sdk.NewInt64Coin("agxn", 2)))
-	require.NoError(t, source.keeper.RecordVolumeWindow(source.ctx, active.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(5)))
+	require.NoError(t, source.keeper.RecordVolumeWindow(source.ctx, active.GetId(), types.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(5)))
 
 	genesis, err := source.keeper.ExportGenesis(source.ctx)
 	require.NoError(t, err)

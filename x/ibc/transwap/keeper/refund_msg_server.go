@@ -5,14 +5,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
-var _ transwapv1.MsgServer = MsgServer{}
+var _ types.MsgServer = MsgServer{}
 
 type MsgServer struct {
-	transwapv1.UnimplementedMsgServer
+	types.UnimplementedMsgServer
 	keeper *Keeper
 }
 
@@ -22,8 +21,8 @@ func NewMsgServer(keeper *Keeper) MsgServer {
 
 func (m MsgServer) UpdateParams(
 	goCtx context.Context,
-	req *transwapv1.MsgUpdateParams,
-) (*transwapv1.MsgUpdateParamsResponse, error) {
+	req *types.MsgUpdateParams,
+) (*types.MsgUpdateParamsResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParams.Wrap("empty request")
 	}
@@ -34,13 +33,13 @@ func (m MsgServer) UpdateParams(
 	if err := m.keeper.SetParams(ctx, req.GetParams()); err != nil {
 		return nil, err
 	}
-	return &transwapv1.MsgUpdateParamsResponse{}, nil
+	return &types.MsgUpdateParamsResponse{}, nil
 }
 
 func (m MsgServer) RetryRefund(
 	goCtx context.Context,
-	req *transwapv1.MsgRetryRefund,
-) (*transwapv1.MsgRetryRefundResponse, error) {
+	req *types.MsgRetryRefund,
+) (*types.MsgRetryRefundResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRefundState.Wrap("empty request")
 	}
@@ -52,13 +51,13 @@ func (m MsgServer) RetryRefund(
 	if err != nil {
 		return nil, err
 	}
-	return &transwapv1.MsgRetryRefundResponse{Refund: refund}, nil
+	return &types.MsgRetryRefundResponse{Refund: refund}, nil
 }
 
 func (m MsgServer) ClaimRefund(
 	goCtx context.Context,
-	req *transwapv1.MsgClaimRefund,
-) (*transwapv1.MsgClaimRefundResponse, error) {
+	req *types.MsgClaimRefund,
+) (*types.MsgClaimRefundResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRefundState.Wrap("empty request")
 	}
@@ -67,5 +66,5 @@ func (m MsgServer) ClaimRefund(
 	if err != nil {
 		return nil, err
 	}
-	return &transwapv1.MsgClaimRefundResponse{Refund: refund}, nil
+	return &types.MsgClaimRefundResponse{Refund: refund}, nil
 }

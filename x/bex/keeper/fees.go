@@ -7,7 +7,7 @@ import (
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
@@ -18,7 +18,7 @@ func validateFeeCoin(fee sdk.Coin) error {
 	return nil
 }
 
-func validateExchangeFeeDenom(exchange *bexv1.Exchange, denom string) error {
+func validateExchangeFeeDenom(exchange *types.Exchange, denom string) error {
 	if exchange == nil {
 		return types.ErrInvariantViolation.Wrap("exchange is nil")
 	}
@@ -33,7 +33,7 @@ func validateExchangeFeeDenom(exchange *bexv1.Exchange, denom string) error {
 // validateExchangeReserveDenom accepts only the local bank denominations held
 // by the deterministic reserve. Wire denominations are valid quote/fee audit
 // metadata but must never be used as reserve liabilities or outflows.
-func validateExchangeReserveDenom(exchange *bexv1.Exchange, denom string) error {
+func validateExchangeReserveDenom(exchange *types.Exchange, denom string) error {
 	if exchange == nil {
 		return types.ErrInvariantViolation.Wrap("exchange is nil")
 	}
@@ -43,7 +43,7 @@ func validateExchangeReserveDenom(exchange *bexv1.Exchange, denom string) error 
 	return types.ErrInvalidRoute.Wrapf("reserve denom %q is not configured for exchange %d", denom, exchange.GetId())
 }
 
-func validateExchangeFeeCoins(exchange *bexv1.Exchange, coins sdk.Coins) error {
+func validateExchangeFeeCoins(exchange *types.Exchange, coins sdk.Coins) error {
 	for _, coin := range coins {
 		if err := validateExchangeFeeDenom(exchange, coin.Denom); err != nil {
 			return err
@@ -123,7 +123,7 @@ func (k Keeper) CollectFee(ctx context.Context, exchangeID uint64, fee sdk.Coin)
 		if err != nil {
 			return err
 		}
-		if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+		if exchange.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
 			return types.ErrInvalidRoute.Wrap("fee collection requires an active exchange")
 		}
 		if err := validateExchangeFeeDenom(exchange, fee.Denom); err != nil {
@@ -188,7 +188,7 @@ func (k Keeper) LockExchangeFee(ctx context.Context, exchangeID uint64, fee sdk.
 	if err != nil {
 		return err
 	}
-	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+	if exchange.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
 		return types.ErrInvalidRoute.Wrap("fee lock requires an active exchange")
 	}
 	if err := validateExchangeFeeDenom(exchange, fee.Denom); err != nil {

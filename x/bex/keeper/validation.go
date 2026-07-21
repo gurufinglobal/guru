@@ -6,13 +6,12 @@ import (
 	"sort"
 	"strings"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v11/modules/core/24-host"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
@@ -120,21 +119,21 @@ func buildIBCDenom(denom, portID, channelID string) (string, error) {
 	return ibcDenom.IBCDenom(), nil
 }
 
-func validateStatus(status bexv1.ExchangeStatus) error {
+func validateStatus(status types.ExchangeStatus) error {
 	switch status {
-	case bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
-		bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE,
-		bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED:
+	case types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
+		types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE,
+		types.ExchangeStatus_EXCHANGE_STATUS_DELETED:
 		return nil
 	default:
 		return types.ErrInvalidRequest.Wrap("invalid exchange status")
 	}
 }
 
-func validateMutableStatus(status bexv1.ExchangeStatus) error {
+func validateMutableStatus(status types.ExchangeStatus) error {
 	switch status {
-	case bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
-		bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE:
+	case types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
+		types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE:
 		return nil
 	default:
 		return types.ErrInvalidRequest.Wrap("register/update status must be active or inactive")
@@ -158,7 +157,7 @@ func validateOracleStalenessSeconds(seconds uint32) error {
 	return nil
 }
 
-func validateMutableExchangeConfig(exchange *bexv1.Exchange) error {
+func validateMutableExchangeConfig(exchange *types.Exchange) error {
 	if exchange == nil {
 		return types.ErrInvalidRequest.Wrap("exchange cannot be nil")
 	}
@@ -168,7 +167,7 @@ func validateMutableExchangeConfig(exchange *bexv1.Exchange) error {
 	return validateExchangeConfig(exchange)
 }
 
-func validateExchangeConfig(exchange *bexv1.Exchange) error {
+func validateExchangeConfig(exchange *types.Exchange) error {
 	if exchange == nil {
 		return types.ErrInvalidRequest.Wrap("exchange cannot be nil")
 	}
@@ -265,8 +264,8 @@ func validateExchangeConfig(exchange *bexv1.Exchange) error {
 	return nil
 }
 
-func (k Keeper) validateActiveRoutes(ctx context.Context, exchange *bexv1.Exchange) error {
-	if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+func (k Keeper) validateActiveRoutes(ctx context.Context, exchange *types.Exchange) error {
+	if exchange.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
 		return nil
 	}
 	if k.channelKeeper == nil {
@@ -291,21 +290,13 @@ func (k Keeper) validateOpenChannel(ctx context.Context, portID, channelID strin
 	return nil
 }
 
-func protoCoinsToSDK(coins []*basev1beta1.Coin) (sdk.Coins, error) {
+func protoCoinsToSDK(coins sdk.Coins) (sdk.Coins, error) {
 	out := make(sdk.Coins, 0, len(coins))
 	for _, coin := range coins {
-		if coin == nil {
-			return nil, types.ErrInvalidRequest.Wrap("coin cannot be nil")
-		}
-		amount, err := validateRequiredIntString("coin amount", coin.GetAmount())
-		if err != nil {
-			return nil, types.ErrInvalidRequest.Wrapf("invalid coin amount %q: %v", coin.GetAmount(), err)
-		}
-		sdkCoin := sdk.Coin{Denom: coin.GetDenom(), Amount: amount}
-		if err := sdkCoin.Validate(); err != nil {
+		if err := coin.Validate(); err != nil {
 			return nil, types.ErrInvalidRequest.Wrapf("invalid coin: %v", err)
 		}
-		out = append(out, sdkCoin)
+		out = append(out, coin)
 	}
 	out = out.Sort()
 	if !out.IsValid() || !out.IsAllPositive() {
@@ -314,20 +305,15 @@ func protoCoinsToSDK(coins []*basev1beta1.Coin) (sdk.Coins, error) {
 	return out, nil
 }
 
-func sdkCoinsToProto(coins sdk.Coins) []*basev1beta1.Coin {
-	coins = coins.Sort()
-	out := make([]*basev1beta1.Coin, 0, len(coins))
-	for _, coin := range coins {
-		out = append(out, &basev1beta1.Coin{Denom: coin.Denom, Amount: coin.Amount.String()})
-	}
-	return out
+func sdkCoinsToProto(coins sdk.Coins) sdk.Coins {
+	return append(sdk.Coins(nil), coins...).Sort()
 }
 
-func coinsToLedger(coins sdk.Coins) *bexv1.FeeLedger {
-	return &bexv1.FeeLedger{Coins: sdkCoinsToProto(coins)}
+func coinsToLedger(coins sdk.Coins) *types.FeeLedger {
+	return &types.FeeLedger{Coins: sdkCoinsToProto(coins)}
 }
 
-func ledgerToCoins(ledger *bexv1.FeeLedger) (sdk.Coins, error) {
+func ledgerToCoins(ledger *types.FeeLedger) (sdk.Coins, error) {
 	if ledger == nil {
 		return sdk.Coins{}, nil
 	}

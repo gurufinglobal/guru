@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
 )
@@ -17,8 +17,8 @@ type reserveOutflowOuterContextKey struct{}
 func TestReserveOutflowCapabilityRequiresExactScope(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	first := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
-	second := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	first := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+	second := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 	firstReserve := f.keeper.GetReserveAddress(f.ctx, first.GetId())
 	secondReserve := f.keeper.GetReserveAddress(f.ctx, second.GetId())
 	amount := sdk.NewCoins(sdk.NewInt64Coin("agxn", 1))
@@ -118,7 +118,7 @@ func TestReserveOperationsInstallOutflowCapability(t *testing.T) {
 	t.Run("withdraw reserve", func(t *testing.T) {
 		f := setupKeeperFixture(t)
 		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
+		exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE)
 		reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 		deposited := sdk.NewCoins(sdk.NewInt64Coin("agxn", 5))
 		withdrawn := sdk.NewCoins(sdk.NewInt64Coin("agxn", 2))
@@ -138,7 +138,7 @@ func TestReserveOperationsInstallOutflowCapability(t *testing.T) {
 	t.Run("collect fee", func(t *testing.T) {
 		f := setupKeeperFixture(t)
 		require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-		exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+		exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 		reserve := f.keeper.GetReserveAddress(f.ctx, exchange.GetId())
 		moduleAddr := authtypes.NewModuleAddress(types.ModuleName)
 		deposited := sdk.NewCoins(sdk.NewInt64Coin("agxn", 5))

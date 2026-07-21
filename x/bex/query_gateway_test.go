@@ -8,9 +8,8 @@ import (
 	"testing"
 
 	gatewayruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	bexv1 "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestQuoteSwapRESTForwardsSlashDenom(t *testing.T) {
@@ -55,7 +54,7 @@ func (c *quoteGatewayCapture) QuoteSwap(
 	_ context.Context,
 	request *bexv1.QueryQuoteSwapRequest,
 ) (*bexv1.QueryQuoteSwapResponse, error) {
-	c.lastRequest = proto.Clone(request).(*bexv1.QueryQuoteSwapRequest)
+	c.lastRequest = bexv1.CloneMessage(request)
 	return &bexv1.QueryQuoteSwapResponse{
 		Quote: &bexv1.QuoteSwapResponse{
 			ExchangeId:       request.GetExchangeId(),

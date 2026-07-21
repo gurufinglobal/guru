@@ -3,24 +3,18 @@ package types
 import (
 	fmt "fmt"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
-
 	host "github.com/cosmos/ibc-go/v11/modules/core/24-host"
 
 	errorsmod "cosmossdk.io/errors"
 )
 
 // NewHop creates a Hop with the given port ID and channel ID.
-func NewHop(portID, channelID string) *transwapv1.Hop {
-	return &transwapv1.Hop{PortId: portID, ChannelId: channelID}
+func NewHop(portID, channelID string) Hop {
+	return Hop{PortId: portID, ChannelId: channelID}
 }
 
 // ValidateHop performs a basic validation of the Hop fields.
-func ValidateHop(h *transwapv1.Hop) error {
-	if h == nil {
-		return errorsmod.Wrap(ErrInvalidDenomForTransfer, "hop cannot be nil")
-	}
-
+func ValidateHop(h Hop) error {
 	if err := host.PortIdentifierValidator(h.PortId); err != nil {
 		return errorsmod.Wrapf(err, "invalid hop source port ID %s", h.PortId)
 	}
@@ -32,9 +26,12 @@ func ValidateHop(h *transwapv1.Hop) error {
 }
 
 // HopPath returns the Hop in the format: <portID>/<channelID>.
-func HopPath(h *transwapv1.Hop) string {
-	if h == nil {
-		return ""
-	}
+func HopPath(h Hop) string {
+	return h.String()
+}
+
+// String supplies the stringer deliberately disabled in token.proto and is
+// also required for Hop to satisfy the gogo proto message contract.
+func (h Hop) String() string {
 	return fmt.Sprintf("%s/%s", h.PortId, h.ChannelId)
 }

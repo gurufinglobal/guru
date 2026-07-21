@@ -7,7 +7,7 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
@@ -17,13 +17,13 @@ import (
 // refund records.
 func (k Keeper) GetRefundAccountingExchangeIDs(ctx context.Context) ([]uint64, error) {
 	ids := make(map[uint64]struct{})
-	if err := k.pendingLiabilities.Walk(ctx, nil, func(exchangeID uint64, _ *bexv1.FeeLedger) (bool, error) {
+	if err := k.pendingLiabilities.Walk(ctx, nil, func(exchangeID uint64, _ *types.FeeLedger) (bool, error) {
 		ids[exchangeID] = struct{}{}
 		return false, nil
 	}); err != nil {
 		return nil, err
 	}
-	if err := k.lockedFees.Walk(ctx, nil, func(exchangeID uint64, _ *bexv1.FeeLedger) (bool, error) {
+	if err := k.lockedFees.Walk(ctx, nil, func(exchangeID uint64, _ *types.FeeLedger) (bool, error) {
 		ids[exchangeID] = struct{}{}
 		return false, nil
 	}); err != nil {
@@ -60,7 +60,7 @@ func (k Keeper) AddPendingLiability(ctx context.Context, exchangeID uint64, liab
 		if err != nil {
 			return err
 		}
-		if exchange.GetStatus() != bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
+		if exchange.GetStatus() != types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE {
 			return types.ErrInvalidRoute.Wrap("adding pending liability requires an active exchange")
 		}
 		if err := validateExchangeReserveDenom(exchange, liability.Denom); err != nil {

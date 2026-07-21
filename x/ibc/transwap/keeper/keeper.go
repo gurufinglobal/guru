@@ -22,13 +22,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
 // Keeper defines the IBC fungible transfer keeper
 type Keeper struct {
-	transwapv1.UnimplementedQueryServer
+	types.UnimplementedQueryServer
 
 	storeService   corestore.KVStoreService
 	cdc            codec.BinaryCodec
@@ -131,15 +130,15 @@ func (k Keeper) SetPort(ctx sdk.Context, portID string) {
 }
 
 // GetDenom retrieves the denom from store given the hash of the denom.
-func (k Keeper) GetDenom(ctx sdk.Context, denomHash cmtbytes.HexBytes) (*transwapv1.Denom, bool) {
+func (k Keeper) GetDenom(ctx sdk.Context, denomHash cmtbytes.HexBytes) (types.Denom, bool) {
 	store := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), types.DenomKey)
 	bz := store.Get(denomHash)
 	if len(bz) == 0 {
-		return nil, false
+		return types.Denom{}, false
 	}
 
-	denom := &transwapv1.Denom{}
-	k.cdc.MustUnmarshal(bz, denom)
+	var denom types.Denom
+	k.cdc.MustUnmarshal(bz, &denom)
 
 	return denom, true
 }
@@ -152,20 +151,16 @@ func (k Keeper) HasDenom(ctx sdk.Context, denomHash cmtbytes.HexBytes) bool {
 
 // SetDenom sets a new {denom hash -> denom } pair to the store.
 // This allows for reverse lookup of the denom given the hash.
-func (k Keeper) SetDenom(ctx sdk.Context, denom *transwapv1.Denom) {
-	if denom == nil {
-		panic("denom cannot be nil")
-	}
-
+func (k Keeper) SetDenom(ctx sdk.Context, denom types.Denom) {
 	store := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), types.DenomKey)
-	bz := k.cdc.MustMarshal(denom)
+	bz := k.cdc.MustMarshal(&denom)
 	store.Set(types.DenomHash(denom), bz)
 }
 
 // GetAllDenoms returns all the denominations.
 func (k Keeper) GetAllDenoms(ctx sdk.Context) types.Denoms {
 	denoms := types.Denoms{}
-	k.IterateDenoms(ctx, func(denom *transwapv1.Denom) bool {
+	k.IterateDenoms(ctx, func(denom types.Denom) bool {
 		denoms = append(denoms, denom)
 		return false
 	})
@@ -174,14 +169,14 @@ func (k Keeper) GetAllDenoms(ctx sdk.Context) types.Denoms {
 }
 
 // IterateDenoms iterates over the denominations in the store and performs a callback function.
-func (k Keeper) IterateDenoms(ctx sdk.Context, cb func(denom *transwapv1.Denom) bool) {
+func (k Keeper) IterateDenoms(ctx sdk.Context, cb func(denom types.Denom) bool) {
 	store := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	iterator := storetypes.KVStorePrefixIterator(store, types.DenomKey)
 
 	defer sdk.LogDeferred(k.Logger(ctx), func() error { return iterator.Close() })
 	for ; iterator.Valid(); iterator.Next() {
-		denom := &transwapv1.Denom{}
-		k.cdc.MustUnmarshal(iterator.Value(), denom)
+		var denom types.Denom
+		k.cdc.MustUnmarshal(iterator.Value(), &denom)
 
 		if cb(denom) {
 			break
@@ -190,11 +185,7 @@ func (k Keeper) IterateDenoms(ctx sdk.Context, cb func(denom *transwapv1.Denom) 
 }
 
 // SetDenomMetadata sets an IBC token's denomination metadata
-func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom *transwapv1.Denom) {
-	if denom == nil {
-		panic("denom cannot be nil")
-	}
-
+func (k Keeper) SetDenomMetadata(ctx sdk.Context, denom types.Denom) {
 	bankDenom := types.DenomIBCDenom(denom)
 	denomPath := types.DenomPath(denom)
 	aliases := make([]string, 0, 2)

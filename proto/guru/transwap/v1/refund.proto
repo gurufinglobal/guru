@@ -7,7 +7,7 @@ import "gogoproto/gogo.proto";
 import "guru/bex/v1/bex.proto";
 import "guru/transwap/v1/token.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
 
 // RefundStatus is the deterministic lifecycle of one refund obligation.
 enum RefundStatus {

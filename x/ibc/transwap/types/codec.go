@@ -4,9 +4,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/types/tx"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+	legacyproto "github.com/golang/protobuf/proto" //nolint:staticcheck // grpc-gateway v1 requires its legacy enum registry.
 )
+
+const refundStatusProtoName = "guru.transwap.v1.RefundStatus"
+
+//nolint:staticcheck // grpc-gateway v1 resolves query-string enums only through the legacy registry.
+func init() {
+	// grpc-gateway v1 resolves query-string enum names through the legacy
+	// github.com/golang/protobuf registry, while protoc-gen-gogo registers only
+	// with the Cosmos gogo registry. Bridge the generated enum without changing
+	// generated files so REST queries retain symbolic enum support.
+	if legacyproto.EnumValueMap(refundStatusProtoName) == nil {
+		legacyproto.RegisterEnum(refundStatusProtoName, RefundStatus_name, RefundStatus_value)
+	}
+}
 
 // RegisterLegacyAminoCodec registers the necessary x/ibc transfer interfaces and concrete types
 // on the provided LegacyAmino codec. These types are used for Amino JSON serialization.
@@ -18,15 +32,16 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 // Any.
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&transwapv1.MsgUpdateParams{},
-		&transwapv1.MsgRetryRefund{},
-		&transwapv1.MsgClaimRefund{},
+		&MsgUpdateParams{},
+		&MsgRetryRefund{},
+		&MsgClaimRefund{},
 	)
 	registry.RegisterImplementations((*tx.MsgResponse)(nil),
-		&transwapv1.MsgUpdateParamsResponse{},
-		&transwapv1.MsgRetryRefundResponse{},
-		&transwapv1.MsgClaimRefundResponse{},
+		&MsgUpdateParamsResponse{},
+		&MsgRetryRefundResponse{},
+		&MsgClaimRefundResponse{},
 	)
+	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
 // ModuleCdc references the global x/ibc-transfer module codec. Note, the codec

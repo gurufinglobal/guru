@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package guru.transwap.v1;
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
 
 // DenomTrace contains the base denomination for ICS20 fungible tokens and the
 // source tracing information path.

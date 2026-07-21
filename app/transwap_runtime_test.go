@@ -3,10 +3,10 @@ package app
 import (
 	"bytes"
 	"crypto/sha256"
+	"reflect"
 	"testing"
 	"time"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/log/v2"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -18,11 +18,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	transwap "github.com/gurufinglobal/guru/v3/x/ibc/transwap"
@@ -66,46 +62,46 @@ func TestTranswapAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T
 	params := transwaptypes.DefaultParams()
 	params.MaxRefundRetries = 1
 	executedMsgs := map[string]struct{}{}
-	executeTranswapRuntimeMsg(t, testApp, ctx, "UpdateParams", &transwapv1.MsgUpdateParams{
+	executeTranswapRuntimeMsg(t, testApp, ctx, "UpdateParams", &transwaptypes.MsgUpdateParams{
 		Authority: testApp.TranswapKeeper.GetAuthority(),
 		Params:    params,
-	}, &transwapv1.MsgUpdateParamsResponse{}, executedMsgs)
+	}, &transwaptypes.MsgUpdateParamsResponse{}, executedMsgs)
 	storedParams, err := testApp.TranswapKeeper.GetParams(ctx)
 	require.NoError(t, err)
-	require.True(t, proto.Equal(params, storedParams))
+	require.Equal(t, params, storedParams)
 
 	refundReceiver := sdk.AccAddress(bytes.Repeat([]byte{0x71}, 20)).String()
 	retryable := transwapRuntimeRefundRecord(
 		refundReceiver,
-		transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE,
+		transwaptypes.RefundStatus_REFUND_STATUS_RETRYABLE,
 		params.GetMaxRefundRetries(),
 		1,
 	)
 	retryable.NextRetryHeight = uint64(ctx.BlockHeight()) //nolint:gosec // fixed positive test height.
 	require.NoError(t, testApp.TranswapKeeper.SetRefundRecord(ctx, retryable))
-	retryResponse := &transwapv1.MsgRetryRefundResponse{}
-	executeTranswapRuntimeMsg(t, testApp, ctx, "RetryRefund", &transwapv1.MsgRetryRefund{
+	retryResponse := &transwaptypes.MsgRetryRefundResponse{}
+	executeTranswapRuntimeMsg(t, testApp, ctx, "RetryRefund", &transwaptypes.MsgRetryRefund{
 		Signer:   refundReceiver,
 		RefundId: retryable.GetId(),
 	}, retryResponse, executedMsgs)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, retryResponse.GetRefund().GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, retryResponse.GetRefund().GetStatus())
 	require.Zero(t, retryResponse.GetRefund().GetNextRetryHeight())
 
 	claimed := transwapRuntimeRefundRecord(
 		refundReceiver,
-		transwapv1.RefundStatus_REFUND_STATUS_CLAIMED,
+		transwaptypes.RefundStatus_REFUND_STATUS_CLAIMED,
 		params.GetMaxRefundRetries(),
 		2,
 	)
 	require.NoError(t, testApp.TranswapKeeper.SetRefundRecord(ctx, claimed))
-	claimResponse := &transwapv1.MsgClaimRefundResponse{}
-	executeTranswapRuntimeMsg(t, testApp, ctx, "ClaimRefund", &transwapv1.MsgClaimRefund{
+	claimResponse := &transwaptypes.MsgClaimRefundResponse{}
+	executeTranswapRuntimeMsg(t, testApp, ctx, "ClaimRefund", &transwaptypes.MsgClaimRefund{
 		Signer:   refundReceiver,
 		RefundId: claimed.GetId(),
 	}, claimResponse, executedMsgs)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, claimResponse.GetRefund().GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_CLAIMED, claimResponse.GetRefund().GetStatus())
 	require.Equal(t, claimed.GetId(), claimResponse.GetRefund().GetId())
-	requireTranswapServiceMethodsExecuted(t, transwapv1.Msg_ServiceDesc.Methods, executedMsgs)
+	requireTranswapServiceMethodsExecuted(t, reflect.TypeOf((*transwaptypes.MsgServer)(nil)).Elem(), executedMsgs)
 
 	queryDenom := transwaptypes.NewDenom(
 		"uquery",
@@ -115,39 +111,40 @@ func TestTranswapAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T
 	testApp.TranswapKeeper.SetTotalEscrowForDenom(ctx, sdk.NewInt64Coin("uescrow", 77))
 
 	executedQueries := map[string]struct{}{}
-	paramsResponse := &transwapv1.QueryParamsResponse{}
-	executeTranswapRuntimeQuery(t, testApp, ctx, "Params", &transwapv1.QueryParamsRequest{}, paramsResponse, executedQueries)
-	require.True(t, proto.Equal(params, paramsResponse.GetParams()))
+	paramsResponse := &transwaptypes.QueryParamsResponse{}
+	executeTranswapRuntimeQuery(t, testApp, ctx, "Params", &transwaptypes.QueryParamsRequest{}, paramsResponse, executedQueries)
+	require.Equal(t, params, paramsResponse.GetParams())
 
-	refundsResponse := &transwapv1.QueryRefundsResponse{}
-	executeTranswapRuntimeQuery(t, testApp, ctx, "Refunds", &transwapv1.QueryRefundsRequest{}, refundsResponse, executedQueries)
+	refundsResponse := &transwaptypes.QueryRefundsResponse{}
+	executeTranswapRuntimeQuery(t, testApp, ctx, "Refunds", &transwaptypes.QueryRefundsRequest{}, refundsResponse, executedQueries)
 	require.Len(t, refundsResponse.GetRefunds(), 2)
 
-	refundResponse := &transwapv1.QueryRefundResponse{}
-	executeTranswapRuntimeQuery(t, testApp, ctx, "Refund", &transwapv1.QueryRefundRequest{
+	refundResponse := &transwaptypes.QueryRefundResponse{}
+	executeTranswapRuntimeQuery(t, testApp, ctx, "Refund", &transwaptypes.QueryRefundRequest{
 		RefundId: claimed.GetId(),
 	}, refundResponse, executedQueries)
 	require.Equal(t, claimed.GetId(), refundResponse.GetRefund().GetId())
 
-	denomsResponse := &transwapv1.QueryDenomsResponse{}
-	executeTranswapRuntimeQuery(t, testApp, ctx, "Denoms", &transwapv1.QueryDenomsRequest{}, denomsResponse, executedQueries)
+	denomsResponse := &transwaptypes.QueryDenomsResponse{}
+	executeTranswapRuntimeQuery(t, testApp, ctx, "Denoms", &transwaptypes.QueryDenomsRequest{}, denomsResponse, executedQueries)
 	require.Len(t, denomsResponse.GetDenoms(), 1)
 	require.Equal(t, transwaptypes.DenomPath(queryDenom), transwaptypes.DenomPath(denomsResponse.GetDenoms()[0]))
 
-	denomResponse := &transwapv1.QueryDenomResponse{}
-	executeTranswapRuntimeQuery(t, testApp, ctx, "Denom", &transwapv1.QueryDenomRequest{
+	denomResponse := &transwaptypes.QueryDenomResponse{}
+	executeTranswapRuntimeQuery(t, testApp, ctx, "Denom", &transwaptypes.QueryDenomRequest{
 		Hash: transwaptypes.DenomHash(queryDenom).String(),
 	}, denomResponse, executedQueries)
-	require.Equal(t, transwaptypes.DenomPath(queryDenom), transwaptypes.DenomPath(denomResponse.GetDenom()))
+	require.NotNil(t, denomResponse.GetDenom())
+	require.Equal(t, transwaptypes.DenomPath(queryDenom), transwaptypes.DenomPath(*denomResponse.GetDenom()))
 
-	denomHashResponse := &transwapv1.QueryDenomHashResponse{}
-	executeTranswapRuntimeQuery(t, testApp, ctx, "DenomHash", &transwapv1.QueryDenomHashRequest{
+	denomHashResponse := &transwaptypes.QueryDenomHashResponse{}
+	executeTranswapRuntimeQuery(t, testApp, ctx, "DenomHash", &transwaptypes.QueryDenomHashRequest{
 		Trace: transwaptypes.DenomPath(queryDenom),
 	}, denomHashResponse, executedQueries)
 	require.Equal(t, transwaptypes.DenomHash(queryDenom).String(), denomHashResponse.GetHash())
 
-	escrowAddressResponse := &transwapv1.QueryEscrowAddressResponse{}
-	executeTranswapRuntimeQuery(t, testApp, ctx, "EscrowAddress", &transwapv1.QueryEscrowAddressRequest{
+	escrowAddressResponse := &transwaptypes.QueryEscrowAddressResponse{}
+	executeTranswapRuntimeQuery(t, testApp, ctx, "EscrowAddress", &transwaptypes.QueryEscrowAddressRequest{
 		PortId:    transwaptypes.PortID,
 		ChannelId: "channel-0",
 	}, escrowAddressResponse, executedQueries)
@@ -157,35 +154,35 @@ func TestTranswapAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T
 		escrowAddressResponse.GetEscrowAddress(),
 	)
 
-	totalEscrowResponse := &transwapv1.QueryTotalEscrowForDenomResponse{}
-	executeTranswapRuntimeQuery(t, testApp, ctx, "TotalEscrowForDenom", &transwapv1.QueryTotalEscrowForDenomRequest{
+	totalEscrowResponse := &transwaptypes.QueryTotalEscrowForDenomResponse{}
+	executeTranswapRuntimeQuery(t, testApp, ctx, "TotalEscrowForDenom", &transwaptypes.QueryTotalEscrowForDenomRequest{
 		Denom: "uescrow",
 	}, totalEscrowResponse, executedQueries)
-	require.Equal(t, "uescrow", totalEscrowResponse.GetAmount().GetDenom())
-	require.Equal(t, "77", totalEscrowResponse.GetAmount().GetAmount())
-	requireTranswapServiceMethodsExecuted(t, transwapv1.Query_ServiceDesc.Methods, executedQueries)
+	require.Equal(t, "uescrow", totalEscrowResponse.GetAmount().Denom)
+	require.Equal(t, "77", totalEscrowResponse.GetAmount().Amount.String())
+	requireTranswapServiceMethodsExecuted(t, reflect.TypeOf((*transwaptypes.QueryServer)(nil)).Elem(), executedQueries)
 }
 
 func transwapRuntimeRefundRecord(
 	receiver string,
-	status transwapv1.RefundStatus,
+	status transwaptypes.RefundStatus,
 	retryCount uint32,
 	sequence uint64,
-) *transwapv1.RefundRecord {
+) *transwaptypes.RefundRecord {
 	const denom = "urefund"
-	return &transwapv1.RefundRecord{
+	return &transwaptypes.RefundRecord{
 		Id:                       transwaptypes.RefundID(transwaptypes.PortID, "channel-0", sequence),
 		Status:                   status,
 		RefundSourcePort:         transwaptypes.PortID,
 		RefundSourceChannel:      "channel-0",
-		Token:                    &transwapv1.Token{Denom: transwaptypes.NewDenom(denom), Amount: "10"},
+		Token:                    transwaptypes.Token{Denom: transwaptypes.NewDenom(denom), Amount: "10"},
 		Receiver:                 receiver,
 		ClaimAddress:             receiver,
 		Memo:                     "runtime router test",
 		ExchangeId:               "1",
-		OriginalFee:              &basev1beta1.Coin{Denom: denom, Amount: "0"},
+		OriginalFee:              sdk.NewInt64Coin(denom, 0),
 		OriginalTimeoutTimestamp: uint64(time.Unix(1_700_003_600, 0).UnixNano()), //nolint:gosec // fixed positive test time.
-		OriginalTimeoutHeight: &transwapv1.RefundHeight{
+		OriginalTimeoutHeight: &transwaptypes.RefundHeight{
 			RevisionNumber: 1,
 			RevisionHeight: 1,
 		},
@@ -194,9 +191,9 @@ func transwapRuntimeRefundRecord(
 		OriginalOutputSequence:         sequence,
 		RetryCount:                     retryCount,
 		OriginalOutputPacketCommitment: make([]byte, sha256.Size),
-		VolumeReservation: &bexv1.VolumeReservation{
+		VolumeReservation: &bextypes.VolumeReservation{
 			ExchangeId:             1,
-			Direction:              bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			Direction:              bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 			EpochSeconds:           bextypes.MinVolumeEpochSeconds,
 			Amount:                 "1",
 			VolumeWindowGeneration: 1,
@@ -210,7 +207,7 @@ func executeTranswapRuntimeMsg(
 	ctx sdk.Context,
 	method string,
 	request sdk.Msg,
-	response proto.Message,
+	response gogoRuntimeMessage,
 	executed map[string]struct{},
 ) {
 	t.Helper()
@@ -222,7 +219,7 @@ func executeTranswapRuntimeMsg(
 	require.NotNil(t, result)
 	require.Len(t, result.MsgResponses, 1)
 	require.Equal(t, "/guru.transwap.v1.Msg"+method+"Response", result.MsgResponses[0].TypeUrl)
-	require.NoError(t, proto.Unmarshal(result.Data, response))
+	require.NoError(t, response.Unmarshal(result.Data))
 	executed[method] = struct{}{}
 	t.Logf("runtime Msg/%s => %v", method, response)
 }
@@ -232,29 +229,29 @@ func executeTranswapRuntimeQuery(
 	testApp *App,
 	ctx sdk.Context,
 	method string,
-	request proto.Message,
-	response proto.Message,
+	request gogoRuntimeMessage,
+	response gogoRuntimeMessage,
 	executed map[string]struct{},
 ) {
 	t.Helper()
 	require.NotContains(t, executed, method, "TransSwap Query RPC executed more than once")
 	handler := testApp.GRPCQueryRouter().Route("/guru.transwap.v1.Query/" + method)
 	require.NotNil(t, handler, "TransSwap Query RPC %s is not registered", method)
-	requestBytes, err := proto.Marshal(request)
+	requestBytes, err := request.Marshal()
 	require.NoError(t, err)
 	queryResult, err := handler(ctx, &abci.RequestQuery{Data: requestBytes, Height: ctx.BlockHeight()})
 	require.NoError(t, err)
 	require.NotNil(t, queryResult)
 	require.Equal(t, ctx.BlockHeight(), queryResult.Height)
-	require.NoError(t, proto.Unmarshal(queryResult.Value, response))
+	require.NoError(t, response.Unmarshal(queryResult.Value))
 	executed[method] = struct{}{}
 	t.Logf("runtime Query/%s => %v", method, response)
 }
 
-func requireTranswapServiceMethodsExecuted(t *testing.T, methods []grpc.MethodDesc, executed map[string]struct{}) {
+func requireTranswapServiceMethodsExecuted(t *testing.T, service reflect.Type, executed map[string]struct{}) {
 	t.Helper()
-	require.Len(t, executed, len(methods))
-	for _, method := range methods {
-		require.Contains(t, executed, method.MethodName, "runtime RPC coverage must track the TransSwap service descriptor")
+	require.Len(t, executed, service.NumMethod())
+	for i := 0; i < service.NumMethod(); i++ {
+		require.Contains(t, executed, service.Method(i).Name, "runtime RPC coverage must track the generated TransSwap service interface")
 	}
 }

@@ -1,23 +1,25 @@
 package cli
 
 import (
+	"encoding/json"
+	"fmt"
 	"strconv"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
 var (
 	getClientTxContext       = client.GetClientTxContext
 	generateOrBroadcastTxCLI = tx.GenerateOrBroadcastTxCLI
+	bexJSONCodec             = newBEXJSONCodec()
 )
 
 func GetTxCmd() *cobra.Command {
@@ -49,7 +51,7 @@ func CmdAddReserveDepositor() *cobra.Command {
 		"add-reserve-depositor [exchange-id] [depositor]",
 		"Allow an address to deposit into a BEX reserve",
 		func(admin string, exchangeID uint64, depositor string) sdk.Msg {
-			return &bexv1.MsgAddReserveDepositor{
+			return &types.MsgAddReserveDepositor{
 				AdminAddress:     admin,
 				ExchangeId:       exchangeID,
 				DepositorAddress: depositor,
@@ -63,7 +65,7 @@ func CmdRemoveReserveDepositor() *cobra.Command {
 		"remove-reserve-depositor [exchange-id] [depositor]",
 		"Revoke an address's BEX reserve deposit permission",
 		func(admin string, exchangeID uint64, depositor string) sdk.Msg {
-			return &bexv1.MsgRemoveReserveDepositor{
+			return &types.MsgRemoveReserveDepositor{
 				AdminAddress:     admin,
 				ExchangeId:       exchangeID,
 				DepositorAddress: depositor,
@@ -107,7 +109,7 @@ func CmdRegisterAdmin() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgRegisterAdmin{
+			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &types.MsgRegisterAdmin{
 				Moderator:    clientCtx.GetFromAddress().String(),
 				AdminAddress: args[0],
 			})
@@ -127,7 +129,7 @@ func CmdRemoveAdmin() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgRemoveAdmin{
+			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &types.MsgRemoveAdmin{
 				Moderator:    clientCtx.GetFromAddress().String(),
 				AdminAddress: args[0],
 			})
@@ -147,7 +149,7 @@ func CmdUpdateAdmin() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgUpdateAdmin{
+			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &types.MsgUpdateAdmin{
 				Moderator:       clientCtx.GetFromAddress().String(),
 				OldAdminAddress: args[0],
 				NewAdminAddress: args[1],
@@ -168,7 +170,7 @@ func CmdRegisterExchange() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			msg := &bexv1.MsgRegisterExchange{}
+			msg := &types.MsgRegisterExchange{}
 			if err := decodeStrictJSON(args[0], msg); err != nil {
 				return err
 			}
@@ -198,11 +200,11 @@ func CmdUpdateExchange() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			patch := &bexv1.ExchangeUpdatePatch{}
+			patch := &types.ExchangeUpdatePatch{}
 			if err := decodeStrictJSON(args[1], patch); err != nil {
 				return err
 			}
-			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgUpdateExchange{
+			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &types.MsgUpdateExchange{
 				AdminAddress:     clientCtx.GetFromAddress().String(),
 				ExchangeId:       exchangeID,
 				Patch:            patch,
@@ -228,7 +230,7 @@ func CmdDeleteExchange() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgDeleteExchange{
+			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &types.MsgDeleteExchange{
 				AdminAddress: clientCtx.GetFromAddress().String(),
 				ExchangeId:   exchangeID,
 			})
@@ -252,7 +254,7 @@ func CmdDepositReserve() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgDepositReserve{
+			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &types.MsgDepositReserve{
 				Sender:     clientCtx.GetFromAddress().String(),
 				ExchangeId: exchangeID,
 				Amount:     amount,
@@ -277,7 +279,7 @@ func CmdWithdrawReserve() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgWithdrawReserve{
+			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &types.MsgWithdrawReserve{
 				AdminAddress: clientCtx.GetFromAddress().String(),
 				ExchangeId:   exchangeID,
 				Amount:       amount,
@@ -303,7 +305,7 @@ func CmdWithdrawFees() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &bexv1.MsgWithdrawFees{
+			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &types.MsgWithdrawFees{
 				AdminAddress: clientCtx.GetFromAddress().String(),
 				ExchangeId:   exchangeID,
 				Recipient:    args[1],
@@ -315,7 +317,7 @@ func CmdWithdrawFees() *cobra.Command {
 	return cmd
 }
 
-func parseExchangeIDAndCoins(idRaw, coinsRaw string) (uint64, []*basev1beta1.Coin, error) {
+func parseExchangeIDAndCoins(idRaw, coinsRaw string) (uint64, sdk.Coins, error) {
 	exchangeID, err := strconv.ParseUint(idRaw, 10, 64)
 	if err != nil {
 		return 0, nil, err
@@ -324,13 +326,18 @@ func parseExchangeIDAndCoins(idRaw, coinsRaw string) (uint64, []*basev1beta1.Coi
 	if err != nil {
 		return 0, nil, err
 	}
-	out := make([]*basev1beta1.Coin, 0, len(coins))
-	for _, coin := range coins {
-		out = append(out, &basev1beta1.Coin{Denom: coin.Denom, Amount: coin.Amount.String()})
-	}
-	return exchangeID, out, nil
+	return exchangeID, coins, nil
 }
 
-func decodeStrictJSON(raw string, target proto.Message) error {
-	return (protojson.UnmarshalOptions{DiscardUnknown: false}).Unmarshal([]byte(raw), target)
+func newBEXJSONCodec() codec.JSONCodec {
+	registry := codectypes.NewInterfaceRegistry()
+	types.RegisterInterfaces(registry)
+	return codec.NewProtoCodec(registry)
+}
+
+func decodeStrictJSON(raw string, target printableProto) error {
+	if !json.Valid([]byte(raw)) {
+		return fmt.Errorf("invalid JSON document")
+	}
+	return bexJSONCodec.UnmarshalJSON([]byte(raw), target)
 }

@@ -7,7 +7,7 @@ import "cosmos_proto/cosmos.proto";
 import "guru/transwap/v1/params.proto";
 import "guru/transwap/v1/refund.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1;transwapv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
 
 // Msg exposes governance configuration and refund recovery operations.
 service Msg {

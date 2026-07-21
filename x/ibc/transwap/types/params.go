@@ -2,8 +2,6 @@ package types
 
 import (
 	"time"
-
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 )
 
 const (
@@ -17,15 +15,15 @@ const (
 	MaxRefundRetryDispatchesPerBlock        = 10
 )
 
-func DefaultParams() *transwapv1.Params {
-	return &transwapv1.Params{
+func DefaultParams() *Params {
+	return &Params{
 		MaxRefundRetries:     DefaultMaxRefundRetries,
 		RefundTimeoutWindow:  uint64(DefaultRefundTimeoutWindow),
 		MinRelaySafetyMargin: uint64(DefaultMinRelaySafetyMargin),
 	}
 }
 
-func ValidateParams(params *transwapv1.Params) error {
+func ValidateParams(params *Params) error {
 	if params == nil {
 		return ErrInvalidParams.Wrap("params cannot be nil")
 	}

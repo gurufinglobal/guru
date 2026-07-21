@@ -3,9 +3,10 @@ package guru.bex.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
 import "guru/bex/v1/bex.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/bex/v1;bexv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/bex/types";
 
 // GenesisState defines BEX genesis state.
 message GenesisState {
@@ -24,7 +25,10 @@ message GenesisState {
 // FeeGenesis stores one exchange fee ledger at genesis.
 message FeeGenesis {
   uint64 exchange_id = 1;
-  repeated cosmos.base.v1beta1.Coin coins = 2;
+  repeated cosmos.base.v1beta1.Coin coins = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // VolumeWindowGenesis stores one volume window row at genesis.

@@ -3,7 +3,6 @@ package keeper
 import (
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	ibcerrors "github.com/cosmos/ibc-go/v11/modules/core/errors"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -63,7 +62,7 @@ func (k Keeper) OnRecvTransferPacket(
 	} else {
 		// sender chain is the source, mint vouchers
 		// since SendPacket did not prefix the denomination, we must add the destination port and channel to the trace
-		trace := []*transwapv1.Hop{types.NewHop(destPort, destChannel)}
+		trace := []types.Hop{types.NewHop(destPort, destChannel)}
 		token.Denom.Trace = append(trace, token.Denom.Trace...)
 		if !k.HasDenom(ctx, types.DenomHash(token.Denom)) {
 			k.SetDenom(ctx, token.Denom)

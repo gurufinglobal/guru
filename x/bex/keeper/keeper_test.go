@@ -11,6 +11,8 @@ import (
 	"cosmossdk.io/core/address"
 	corestore "cosmossdk.io/core/store"
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -19,12 +21,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type keeperTestFixture struct {
@@ -41,6 +42,7 @@ type keeperTestFixture struct {
 	admin              string
 	adminAddr          sdk.AccAddress
 	recipient          sdk.AccAddress
+	codec              codec.BinaryCodec
 }
 
 func setupKeeperFixture(t *testing.T) keeperTestFixture {
@@ -75,8 +77,10 @@ func setupKeeperFixtureWithExtraKVStoreKeys(t *testing.T, extraKeys map[string]*
 	channelKeeper.SetChannel("transwap", "channel-1", channeltypes.OPEN)
 
 	storeService := runtime.NewKVStoreService(key)
+	c := codec.NewProtoCodec(codectypes.NewInterfaceRegistry())
 	keeper := NewKeeper(
 		storeService,
+		c,
 		accountCodec,
 		accountKeeper,
 		bankKeeper,
@@ -103,6 +107,7 @@ func setupKeeperFixtureWithExtraKVStoreKeys(t *testing.T, extraKeys map[string]*
 		admin:              admin,
 		adminAddr:          adminAddr,
 		recipient:          recipient,
+		codec:              c,
 	}
 }
 
@@ -116,6 +121,7 @@ func TestNewKeeperPanicsOnDuplicateSchemaPrefix(t *testing.T) {
 	require.Panics(t, func() {
 		NewKeeper(
 			runtime.NewKVStoreService(key),
+			codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
 			accountCodec,
 			newMockAccountKeeper(),
 			newMockBankKeeper(),
@@ -130,7 +136,7 @@ func TestRegisterExchangeCreatesReserveAndBlocksDirectTransfers(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
 
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	expectedReserve, err := f.keeper.GetReserveAddressString(f.ctx, exchange.GetId())
 	require.NoError(t, err)
 	require.Equal(t, expectedReserve, exchange.GetReserveAddress())
@@ -160,21 +166,21 @@ func TestRegisterExchangeCreatesReserveAndBlocksDirectTransfers(t *testing.T) {
 func TestUpdateExchangeRequiresRevisionAndBlocksActiveRouteChanges(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 
-	_, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), 0, &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(30),
+	_, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), 0, &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(30),
 	})
 	require.ErrorIs(t, err, types.ErrRevisionConflict)
 
-	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		DenomA: wrapperspb.String("agxn"),
+	_, err = f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		DenomA: types.NewStringValue("agxn"),
 	})
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
 
-	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(30),
-		LimitAToB:  wrapperspb.String("900"),
+	updated, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(30),
+		LimitAToB:  types.NewStringValue("900"),
 	})
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), updated.GetRevision())
@@ -185,7 +191,7 @@ func TestUpdateExchangeRequiresRevisionAndBlocksActiveRouteChanges(t *testing.T)
 func TestUpdateExchangeRequiresFeeSettlementBeforeRouteChange(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 3))
 	require.NoError(t, f.keeper.LockExchangeFee(f.ctx, exchange.GetId(), sdk.NewInt64Coin("agxn", 1)))
 
@@ -194,7 +200,7 @@ func TestUpdateExchangeRequiresFeeSettlementBeforeRouteChange(t *testing.T) {
 		f.admin,
 		exchange.GetId(),
 		exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE}},
+		&types.ExchangeUpdatePatch{Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE}},
 	)
 	require.NoError(t, err)
 	_, err = f.keeper.UpdateExchange(
@@ -202,7 +208,7 @@ func TestUpdateExchangeRequiresFeeSettlementBeforeRouteChange(t *testing.T) {
 		f.admin,
 		inactive.GetId(),
 		inactive.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{DenomA: wrapperspb.String("uatom")},
+		&types.ExchangeUpdatePatch{DenomA: types.NewStringValue("uatom")},
 	)
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
 	unchanged, err := f.keeper.GetExchange(f.ctx, inactive.GetId())
@@ -223,7 +229,7 @@ func TestUpdateExchangeRequiresFeeSettlementBeforeRouteChange(t *testing.T) {
 		f.admin,
 		inactive.GetId(),
 		inactive.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{DenomA: wrapperspb.String("uatom")},
+		&types.ExchangeUpdatePatch{DenomA: types.NewStringValue("uatom")},
 	)
 	require.NoError(t, err)
 	require.Equal(t, "uatom", updated.GetDenomA())
@@ -233,16 +239,16 @@ func TestUpdateExchangeRequiresFeeSettlementBeforeRouteChange(t *testing.T) {
 func TestQuoteSwapUsesDirectionOracleCeilFeeAndVolumeCap(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", f.ctx.BlockTime().Unix())
 
-	quote, err := f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	quote, err := f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "101",
 	})
 	require.NoError(t, err)
-	require.Equal(t, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, quote.GetDirection())
+	require.Equal(t, types.SwapDirection_SWAP_DIRECTION_A_TO_B, quote.GetDirection())
 	require.Equal(t, exchange.GetIbcDenomB(), quote.GetOutputDenom())
 	require.Equal(t, "1", quote.GetFeeAmount())
 	require.Equal(t, "100", quote.GetNetAmountIn())
@@ -250,7 +256,7 @@ func TestQuoteSwapUsesDirectionOracleCeilFeeAndVolumeCap(t *testing.T) {
 	require.Equal(t, exchange.GetRevision(), quote.GetExchangeRevision())
 
 	f.channelKeeper.SetChannel("transwap", "channel-0", channeltypes.CLOSED)
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "101",
@@ -261,8 +267,8 @@ func TestQuoteSwapUsesDirectionOracleCeilFeeAndVolumeCap(t *testing.T) {
 	_, err = f.keeper.ResolveSwapDirection(f.ctx, exchange.GetId(), exchange.GetIbcDenomA())
 	require.ErrorIs(t, err, types.ErrInvalidRoute)
 
-	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(900)))
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), types.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(900)))
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "101",
@@ -273,16 +279,16 @@ func TestQuoteSwapUsesDirectionOracleCeilFeeAndVolumeCap(t *testing.T) {
 func TestQuoteSwapOracleMutationAndRoundingBoundaries(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 
-	exchange, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB:    wrapperspb.UInt32(25),
-		LimitAToB:     wrapperspb.String("0"),
-		VolumeCapAToB: wrapperspb.String("0"),
+	exchange, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB:    types.NewUInt32Value(25),
+		LimitAToB:     types.NewStringValue("0"),
+		VolumeCapAToB: types.NewStringValue("0"),
 	})
 	require.NoError(t, err)
 
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "10000",
@@ -290,7 +296,7 @@ func TestQuoteSwapOracleMutationAndRoundingBoundaries(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrInvalidOracleRate)
 
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "0", f.ctx.BlockTime().Unix())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "10000",
@@ -298,7 +304,7 @@ func TestQuoteSwapOracleMutationAndRoundingBoundaries(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrInvalidOracleRate)
 
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "-1", f.ctx.BlockTime().Unix())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "10000",
@@ -306,7 +312,7 @@ func TestQuoteSwapOracleMutationAndRoundingBoundaries(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrInvalidOracleRate)
 
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "not-a-decimal", f.ctx.BlockTime().Unix())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "10000",
@@ -314,7 +320,7 @@ func TestQuoteSwapOracleMutationAndRoundingBoundaries(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrInvalidOracleRate)
 
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", f.ctx.BlockTime().Add(-300*time.Second).Unix())
-	quote, err := f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	quote, err := f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "10000",
@@ -325,7 +331,7 @@ func TestQuoteSwapOracleMutationAndRoundingBoundaries(t *testing.T) {
 	require.Equal(t, "19950", quote.GetAmountOut())
 
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "2", f.ctx.BlockTime().Add(-301*time.Second).Unix())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "10000",
@@ -333,7 +339,7 @@ func TestQuoteSwapOracleMutationAndRoundingBoundaries(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrStaleOracleRate)
 
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "3", f.ctx.BlockTime().Unix())
-	quote, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	quote, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "10000",
@@ -346,12 +352,12 @@ func TestQuoteSwapOracleMutationAndRoundingBoundaries(t *testing.T) {
 	require.Equal(t, sdkmath.NewInt(26), ceilFee(sdkmath.NewInt(10001), 25))
 	require.Equal(t, sdkmath.NewInt(308642), ceilFee(sdkmath.NewInt(123456789), 25))
 
-	exchange, err = f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB: wrapperspb.UInt32(0),
+	exchange, err = f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB: types.NewUInt32Value(0),
 	})
 	require.NoError(t, err)
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "1.5", f.ctx.BlockTime().Unix())
-	quote, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	quote, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "3",
@@ -363,17 +369,17 @@ func TestQuoteSwapOracleMutationAndRoundingBoundaries(t *testing.T) {
 func TestQuoteSwapLimitAndVolumeCapBoundaries(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "1", f.ctx.BlockTime().Unix())
 
-	exchange, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB:    wrapperspb.UInt32(0),
-		LimitAToB:     wrapperspb.String("100"),
-		VolumeCapAToB: wrapperspb.String("0"),
+	exchange, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB:    types.NewUInt32Value(0),
+		LimitAToB:     types.NewStringValue("100"),
+		VolumeCapAToB: types.NewStringValue("0"),
 	})
 	require.NoError(t, err)
 
-	quote, err := f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	quote, err := f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "99",
@@ -381,7 +387,7 @@ func TestQuoteSwapLimitAndVolumeCapBoundaries(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "99", quote.GetAmountOut())
 
-	quote, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	quote, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "100",
@@ -389,20 +395,20 @@ func TestQuoteSwapLimitAndVolumeCapBoundaries(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "100", quote.GetAmountOut())
 
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "101",
 	})
 	require.ErrorIs(t, err, types.ErrOutputLimitExceeded)
 
-	exchange, err = f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		LimitAToB:     wrapperspb.String("0"),
-		VolumeCapAToB: wrapperspb.String("150"),
+	exchange, err = f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		LimitAToB:     types.NewStringValue("0"),
+		VolumeCapAToB: types.NewStringValue("150"),
 	})
 	require.NoError(t, err)
 
-	quote, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	quote, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "150",
@@ -410,15 +416,15 @@ func TestQuoteSwapLimitAndVolumeCapBoundaries(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "150", quote.GetAmountOut())
 
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "151",
 	})
 	require.ErrorIs(t, err, types.ErrVolumeCapExceeded)
 
-	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(50)))
-	quote, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), types.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(50)))
+	quote, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "100",
@@ -427,31 +433,31 @@ func TestQuoteSwapLimitAndVolumeCapBoundaries(t *testing.T) {
 	require.Equal(t, "50", quote.GetVolumeUsed())
 	require.Equal(t, "150", quote.GetVolumeCap())
 
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "101",
 	})
 	require.ErrorIs(t, err, types.ErrVolumeCapExceeded)
 
-	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(100)))
-	used, err := f.keeper.GetCurrentVolumeAmount(f.ctx, exchange, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B)
+	require.NoError(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), types.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(100)))
+	used, err := f.keeper.GetCurrentVolumeAmount(f.ctx, exchange, types.SwapDirection_SWAP_DIRECTION_A_TO_B)
 	require.NoError(t, err)
 	require.Equal(t, "150", used.String())
-	require.ErrorIs(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)), types.ErrVolumeCapExceeded)
+	require.ErrorIs(t, f.keeper.RecordVolumeWindow(f.ctx, exchange.GetId(), types.SwapDirection_SWAP_DIRECTION_A_TO_B, sdkmath.NewInt(1)), types.ErrVolumeCapExceeded)
 }
 
 func TestQuoteAndRecordUsePendingEpochWindowConsistently(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	direction := types.SwapDirection_SWAP_DIRECTION_A_TO_B
 	f.oracleKeeper.SetValue("AGXN/GXUSD", "1", f.ctx.BlockTime().Unix())
 
-	exchange, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		FeeBpsAToB:    wrapperspb.UInt32(0),
-		LimitAToB:     wrapperspb.String("0"),
-		VolumeCapAToB: wrapperspb.String("100"),
+	exchange, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		FeeBpsAToB:    types.NewUInt32Value(0),
+		LimitAToB:     types.NewStringValue("0"),
+		VolumeCapAToB: types.NewStringValue("100"),
 	})
 	require.NoError(t, err)
 
@@ -468,13 +474,13 @@ func TestQuoteAndRecordUsePendingEpochWindowConsistently(t *testing.T) {
 	require.Equal(t, "90", oldValue)
 
 	effectiveAt := uint64(f.ctx.BlockTime().Add(time.Second).Unix())
-	exchange, err = f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		PendingVolumeEpochSeconds:         wrapperspb.UInt32(minVolumeEpochSecs * 2),
-		PendingVolumeEpochEffectiveAtUnix: wrapperspb.UInt64(effectiveAt),
+	exchange, err = f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		PendingVolumeEpochSeconds:         types.NewUInt32Value(minVolumeEpochSecs * 2),
+		PendingVolumeEpochEffectiveAtUnix: types.NewUInt64Value(effectiveAt),
 	})
 	require.NoError(t, err)
 
-	quote, err := f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	quote, err := f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "10",
@@ -483,7 +489,7 @@ func TestQuoteAndRecordUsePendingEpochWindowConsistently(t *testing.T) {
 	require.Equal(t, "90", quote.GetVolumeUsed())
 	require.Equal(t, "10", quote.GetAmountOut())
 
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "11",
@@ -491,7 +497,7 @@ func TestQuoteAndRecordUsePendingEpochWindowConsistently(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrVolumeCapExceeded)
 
 	futureCtx := f.ctx.WithBlockTime(time.Unix(int64(effectiveAt), 0))
-	quote, err = f.keeper.QuoteSwap(futureCtx, &bexv1.QuoteSwapRequest{
+	quote, err = f.keeper.QuoteSwap(futureCtx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "100",
@@ -501,7 +507,7 @@ func TestQuoteAndRecordUsePendingEpochWindowConsistently(t *testing.T) {
 	require.Equal(t, "100", quote.GetAmountOut())
 
 	queryServer := NewQueryServer(&f.keeper)
-	window, err := queryServer.VolumeWindow(futureCtx, &bexv1.QueryVolumeWindowRequest{
+	window, err := queryServer.VolumeWindow(futureCtx, &types.QueryVolumeWindowRequest{
 		ExchangeId: exchange.GetId(),
 		Direction:  direction,
 	})
@@ -543,10 +549,10 @@ func TestQuoteAndRecordUsePendingEpochWindowConsistently(t *testing.T) {
 func TestDeleteExchangeRequiresInactiveZeroReserveAndZeroFees(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	collectFee(t, f, exchange.GetId(), sdk.NewInt64Coin("agxn", 1))
-	exchange, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &bexv1.ExchangeUpdatePatch{
-		Status: &bexv1.ExchangeStatusPatch{Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
+	exchange, err := f.keeper.UpdateExchange(f.ctx, f.admin, exchange.GetId(), exchange.GetRevision(), &types.ExchangeUpdatePatch{
+		Status: &types.ExchangeStatusPatch{Status: types.ExchangeStatus_EXCHANGE_STATUS_INACTIVE},
 	})
 	require.NoError(t, err)
 	reserveBytes, err := f.accountCodec.StringToBytes(exchange.GetReserveAddress())
@@ -570,8 +576,8 @@ func TestDeleteExchangeRequiresInactiveZeroReserveAndZeroFees(t *testing.T) {
 
 	deleted, err := f.keeper.GetExchange(f.ctx, exchange.GetId())
 	require.NoError(t, err)
-	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED, deleted.GetStatus())
-	_, err = f.keeper.QuoteSwap(f.ctx, &bexv1.QuoteSwapRequest{
+	require.Equal(t, types.ExchangeStatus_EXCHANGE_STATUS_DELETED, deleted.GetStatus())
+	_, err = f.keeper.QuoteSwap(f.ctx, &types.QuoteSwapRequest{
 		ExchangeId: exchange.GetId(),
 		InputDenom: exchange.GetDenomA(),
 		AmountIn:   "1",
@@ -586,7 +592,7 @@ func TestDeleteExchangeRequiresInactiveZeroReserveAndZeroFees(t *testing.T) {
 	require.True(t, f.bankKeeper.GetAllBalances(f.ctx, reserveAddr).IsZero())
 }
 
-func registerExchange(t *testing.T, f keeperTestFixture, status bexv1.ExchangeStatus) *bexv1.Exchange {
+func registerExchange(t *testing.T, f keeperTestFixture, status types.ExchangeStatus) *types.Exchange {
 	t.Helper()
 
 	exchange, err := f.keeper.RegisterExchange(f.ctx, validRegisterExchangeMsg(f.admin, status))
@@ -606,8 +612,8 @@ func collectFee(t *testing.T, f keeperTestFixture, exchangeID uint64, fee sdk.Co
 	require.NoError(t, f.keeper.CollectFee(f.ctx, exchangeID, fee))
 }
 
-func validRegisterExchangeMsg(admin string, status bexv1.ExchangeStatus) *bexv1.MsgRegisterExchange {
-	return &bexv1.MsgRegisterExchange{
+func validRegisterExchangeMsg(admin string, status types.ExchangeStatus) *types.MsgRegisterExchange {
+	return &types.MsgRegisterExchange{
 		BexAdminAddress:           admin,
 		ExchangeAdminAddress:      admin,
 		DenomA:                    "agxn",

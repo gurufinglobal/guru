@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
 )
@@ -13,11 +13,11 @@ import (
 func TestExportGenesisRejectsCorruptFeeState(t *testing.T) {
 	tests := []struct {
 		name    string
-		corrupt func(t *testing.T, f keeperTestFixture, exchange *bexv1.Exchange)
+		corrupt func(t *testing.T, f keeperTestFixture, exchange *types.Exchange)
 	}{
 		{
 			name: "fee custody is under-backed",
-			corrupt: func(t *testing.T, f keeperTestFixture, exchange *bexv1.Exchange) {
+			corrupt: func(t *testing.T, f keeperTestFixture, exchange *types.Exchange) {
 				fee := sdk.NewInt64Coin(exchange.GetDenomA(), 10)
 				collectFee(t, f, exchange.GetId(), fee)
 				f.bankKeeper.SetBalance(
@@ -28,7 +28,7 @@ func TestExportGenesisRejectsCorruptFeeState(t *testing.T) {
 		},
 		{
 			name: "locked fee exceeds collected fee",
-			corrupt: func(t *testing.T, f keeperTestFixture, exchange *bexv1.Exchange) {
+			corrupt: func(t *testing.T, f keeperTestFixture, exchange *types.Exchange) {
 				fee := sdk.NewInt64Coin(exchange.GetDenomA(), 10)
 				collectFee(t, f, exchange.GetId(), fee)
 				require.NoError(t, f.keeper.lockedFees.Set(
@@ -44,7 +44,7 @@ func TestExportGenesisRejectsCorruptFeeState(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			f := setupKeeperFixture(t)
 			require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-			exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+			exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 			tc.corrupt(t, f, exchange)
 
 			genesis, err := f.keeper.ExportGenesis(f.ctx)

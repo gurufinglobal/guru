@@ -3,9 +3,11 @@ package guru.bex.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
 import "google/protobuf/wrappers.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/bex/v1;bexv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/bex/types";
+option (gogoproto.stable_marshaler_all) = true;
 
 // ExchangeStatus is the lifecycle state of a BEX exchange.
 enum ExchangeStatus {
@@ -121,7 +123,10 @@ message ExchangeStatusPatch {
 
 // FeeLedger stores canonical coins for collected or locked fees.
 message FeeLedger {
-  repeated cosmos.base.v1beta1.Coin coins = 1;
+  repeated cosmos.base.v1beta1.Coin coins = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // VolumeWindow stores output exposure for one exchange direction and epoch.

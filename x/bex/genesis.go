@@ -10,7 +10,7 @@ import (
 	"cosmossdk.io/core/appmodule"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
@@ -49,11 +49,11 @@ func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisT
 	return writeGenesisState(target, genesis)
 }
 
-func (am AppModule) defaultGenesisState() *bexv1.GenesisState {
-	return &bexv1.GenesisState{NextExchangeId: bexkeeper.DefaultNextExchangeID}
+func (am AppModule) defaultGenesisState() *types.GenesisState {
+	return &types.GenesisState{NextExchangeId: bexkeeper.DefaultNextExchangeID}
 }
 
-func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.GenesisState) error {
+func (am AppModule) validateGenesisState(ctx context.Context, genesis *types.GenesisState) error {
 	if genesis == nil {
 		return types.ErrInvalidGenesis.Wrap("genesis state cannot be nil")
 	}
@@ -72,7 +72,7 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		seenAdmins[canonical] = struct{}{}
 	}
 	maxID := uint64(0)
-	exchangeIDs := map[uint64]*bexv1.Exchange{}
+	exchangeIDs := map[uint64]*types.Exchange{}
 	for _, exchange := range genesis.GetExchanges() {
 		if exchange.GetId() == 0 {
 			return types.ErrInvalidGenesis.Wrap("exchange id cannot be zero")
@@ -166,7 +166,7 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		if err != nil {
 			return err
 		}
-		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !coins.IsZero() {
+		if exchange.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_DELETED && !coins.IsZero() {
 			return types.ErrInvalidGenesis.Wrapf("deleted exchange %d has collected fees", fee.GetExchangeId())
 		}
 		for _, coin := range coins {
@@ -201,7 +201,7 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		if err != nil {
 			return err
 		}
-		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !locked.IsZero() {
+		if exchange.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_DELETED && !locked.IsZero() {
 			return types.ErrInvalidGenesis.Wrapf("deleted exchange %d has locked fees", fee.GetExchangeId())
 		}
 		for _, coin := range locked {
@@ -227,7 +227,7 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		if err != nil {
 			return err
 		}
-		if exchange.GetStatus() == bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED && !pending.IsZero() {
+		if exchange.GetStatus() == types.ExchangeStatus_EXCHANGE_STATUS_DELETED && !pending.IsZero() {
 			return types.ErrInvalidGenesis.Wrapf("deleted exchange %d has pending liabilities", liability.GetExchangeId())
 		}
 		for _, coin := range pending {
@@ -242,8 +242,8 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 		if !ok {
 			return types.ErrInvalidGenesis.Wrapf("volume window references unknown exchange %d", window.GetExchangeId())
 		}
-		if window.GetDirection() != bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B &&
-			window.GetDirection() != bexv1.SwapDirection_SWAP_DIRECTION_B_TO_A {
+		if window.GetDirection() != types.SwapDirection_SWAP_DIRECTION_A_TO_B &&
+			window.GetDirection() != types.SwapDirection_SWAP_DIRECTION_B_TO_A {
 			return types.ErrInvalidGenesis.Wrap("invalid volume window")
 		}
 		key := fmt.Sprintf(
@@ -298,8 +298,8 @@ func (am AppModule) validateGenesisState(ctx context.Context, genesis *bexv1.Gen
 	return nil
 }
 
-func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisState) (*bexv1.GenesisState, error) {
-	genesis := &bexv1.GenesisState{NextExchangeId: defaults.GetNextExchangeId()}
+func readGenesisState(source appmodule.GenesisSource, defaults *types.GenesisState) (*types.GenesisState, error) {
+	genesis := &types.GenesisState{NextExchangeId: defaults.GetNextExchangeId()}
 
 	admins := []string{}
 	found, err := readGenesisField(source, "admins", &admins)
@@ -310,7 +310,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 		genesis.Admins = admins
 	}
 
-	exchanges := []*bexv1.Exchange{}
+	exchanges := []*types.Exchange{}
 	found, err = readGenesisField(source, "exchanges", &exchanges)
 	if err != nil {
 		return nil, err
@@ -319,7 +319,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 		genesis.Exchanges = exchanges
 	}
 
-	collectedFees := []*bexv1.FeeGenesis{}
+	collectedFees := []*types.FeeGenesis{}
 	found, err = readGenesisField(source, "collected_fees", &collectedFees)
 	if err != nil {
 		return nil, err
@@ -328,7 +328,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 		genesis.CollectedFees = collectedFees
 	}
 
-	lockedFees := []*bexv1.FeeGenesis{}
+	lockedFees := []*types.FeeGenesis{}
 	found, err = readGenesisField(source, "locked_fees", &lockedFees)
 	if err != nil {
 		return nil, err
@@ -337,7 +337,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 		genesis.LockedFees = lockedFees
 	}
 
-	pendingLiabilities := []*bexv1.FeeGenesis{}
+	pendingLiabilities := []*types.FeeGenesis{}
 	found, err = readGenesisField(source, "pending_liabilities", &pendingLiabilities)
 	if err != nil {
 		return nil, err
@@ -346,7 +346,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 		genesis.PendingLiabilities = pendingLiabilities
 	}
 
-	volumeWindows := []*bexv1.VolumeWindowGenesis{}
+	volumeWindows := []*types.VolumeWindowGenesis{}
 	found, err = readGenesisField(source, "volume_windows", &volumeWindows)
 	if err != nil {
 		return nil, err
@@ -355,7 +355,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 		genesis.VolumeWindows = volumeWindows
 	}
 
-	reserveDepositors := []*bexv1.ReserveDepositorGenesis{}
+	reserveDepositors := []*types.ReserveDepositorGenesis{}
 	found, err = readGenesisField(source, "reserve_depositors", &reserveDepositors)
 	if err != nil {
 		return nil, err
@@ -376,7 +376,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *bexv1.GenesisSta
 	return genesis, nil
 }
 
-func writeGenesisState(target appmodule.GenesisTarget, genesis *bexv1.GenesisState) error {
+func writeGenesisState(target appmodule.GenesisTarget, genesis *types.GenesisState) error {
 	if genesis == nil {
 		return types.ErrInvalidGenesis.Wrap("genesis state cannot be nil")
 	}

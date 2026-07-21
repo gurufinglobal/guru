@@ -8,7 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
@@ -37,7 +37,7 @@ func hasFeeOutflowAllowance(ctx context.Context, recipient sdk.AccAddress, amoun
 
 func (k Keeper) sumCollectedFees(ctx context.Context) (sdk.Coins, error) {
 	totals := map[string]sdkmath.Int{}
-	err := k.collectedFees.Walk(ctx, nil, func(_ uint64, ledger *bexv1.FeeLedger) (bool, error) {
+	err := k.collectedFees.Walk(ctx, nil, func(_ uint64, ledger *types.FeeLedger) (bool, error) {
 		coins, err := ledgerToCoins(ledger)
 		if err != nil {
 			return true, err

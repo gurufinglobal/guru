@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
@@ -27,7 +27,7 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/ethereum/go-ethereum/common"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bexmodule "github.com/gurufinglobal/guru/v3/x/bex"
 	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
@@ -35,8 +35,6 @@ import (
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 )
 
 var configureBexEVMOnce sync.Once
@@ -88,18 +86,18 @@ func TestBexAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T) {
 	require.NoError(t, testApp.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, depositor, funding))
 
 	executedMsgs := map[string]struct{}{}
-	executeBexRuntimeMsg(t, testApp, ctx, "RegisterAdmin", &bexv1.MsgRegisterAdmin{
+	executeBexRuntimeMsg(t, testApp, ctx, "RegisterAdmin", &bextypes.MsgRegisterAdmin{
 		Moderator:    moderator,
 		AdminAddress: oldBexAdmin,
-	}, &bexv1.MsgRegisterAdminResponse{}, executedMsgs)
-	executeBexRuntimeMsg(t, testApp, ctx, "UpdateAdmin", &bexv1.MsgUpdateAdmin{
+	}, &bextypes.MsgRegisterAdminResponse{}, executedMsgs)
+	executeBexRuntimeMsg(t, testApp, ctx, "UpdateAdmin", &bextypes.MsgUpdateAdmin{
 		Moderator:       moderator,
 		OldAdminAddress: oldBexAdmin,
 		NewAdminAddress: newBexAdmin,
-	}, &bexv1.MsgUpdateAdminResponse{}, executedMsgs)
+	}, &bextypes.MsgUpdateAdminResponse{}, executedMsgs)
 
-	registerResponse := &bexv1.MsgRegisterExchangeResponse{}
-	executeBexRuntimeMsg(t, testApp, ctx, "RegisterExchange", &bexv1.MsgRegisterExchange{
+	registerResponse := &bextypes.MsgRegisterExchangeResponse{}
+	executeBexRuntimeMsg(t, testApp, ctx, "RegisterExchange", &bextypes.MsgRegisterExchange{
 		BexAdminAddress:           newBexAdmin,
 		ExchangeAdminAddress:      exchangeAdmin,
 		DenomA:                    appparams.BaseDenom,
@@ -116,7 +114,7 @@ func TestBexAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T) {
 		LimitBToA:                 "1000",
 		VolumeCapAToB:             "1000",
 		VolumeCapBToA:             "1000",
-		Status:                    bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
+		Status:                    bextypes.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
 		Metadata:                  map[string]string{"venue": "runtime-router-test"},
 		VolumeEpochSeconds:        86_400,
 		MaxOracleStalenessSeconds: 60,
@@ -125,16 +123,16 @@ func TestBexAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T) {
 	require.NotEmpty(t, registerResponse.GetReserveAddress())
 	exchangeID := registerResponse.GetExchangeId()
 
-	executeBexRuntimeMsg(t, testApp, ctx, "AddReserveDepositor", &bexv1.MsgAddReserveDepositor{
+	executeBexRuntimeMsg(t, testApp, ctx, "AddReserveDepositor", &bextypes.MsgAddReserveDepositor{
 		AdminAddress:     exchangeAdmin,
 		ExchangeId:       exchangeID,
 		DepositorAddress: depositorString,
-	}, &bexv1.MsgAddReserveDepositorResponse{}, executedMsgs)
-	executeBexRuntimeMsg(t, testApp, ctx, "DepositReserve", &bexv1.MsgDepositReserve{
+	}, &bextypes.MsgAddReserveDepositorResponse{}, executedMsgs)
+	executeBexRuntimeMsg(t, testApp, ctx, "DepositReserve", &bextypes.MsgDepositReserve{
 		Sender:     depositorString,
 		ExchangeId: exchangeID,
-		Amount:     []*basev1beta1.Coin{{Denom: appparams.BaseDenom, Amount: "10"}},
-	}, &bexv1.MsgDepositReserveResponse{}, executedMsgs)
+		Amount:     sdk.NewCoins(sdk.NewInt64Coin(appparams.BaseDenom, 10)),
+	}, &bextypes.MsgDepositReserveResponse{}, executedMsgs)
 
 	require.NoError(t, testApp.OracleKeeper.SetLatestValue(ctx, &oracletypes.OracleValue{
 		Symbol:        "AGXN/GXUSD",
@@ -148,128 +146,128 @@ func TestBexAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T) {
 	require.NoError(t, testApp.BexKeeper.RecordVolumeWindow(
 		ctx,
 		exchangeID,
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		sdkmath.NewInt(7),
 	))
 
 	executedQueries := map[string]struct{}{}
-	exchangeResponse := &bexv1.QueryExchangeResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "Exchange", &bexv1.QueryExchangeRequest{ExchangeId: exchangeID}, exchangeResponse, executedQueries)
+	exchangeResponse := &bextypes.QueryExchangeResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "Exchange", &bextypes.QueryExchangeRequest{ExchangeId: exchangeID}, exchangeResponse, executedQueries)
 	require.Equal(t, exchangeID, exchangeResponse.GetExchange().GetId())
-	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE, exchangeResponse.GetExchange().GetStatus())
+	require.Equal(t, bextypes.ExchangeStatus_EXCHANGE_STATUS_ACTIVE, exchangeResponse.GetExchange().GetStatus())
 
-	exchangesResponse := &bexv1.QueryExchangesResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "Exchanges", &bexv1.QueryExchangesRequest{}, exchangesResponse, executedQueries)
+	exchangesResponse := &bextypes.QueryExchangesResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "Exchanges", &bextypes.QueryExchangesRequest{}, exchangesResponse, executedQueries)
 	require.Len(t, exchangesResponse.GetExchanges(), 1)
 	require.Equal(t, exchangeID, exchangesResponse.GetExchanges()[0].GetId())
 
-	adminExchangesResponse := &bexv1.QueryExchangesByExchangeAdminResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "ExchangesByExchangeAdmin", &bexv1.QueryExchangesByExchangeAdminRequest{
+	adminExchangesResponse := &bextypes.QueryExchangesByExchangeAdminResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "ExchangesByExchangeAdmin", &bextypes.QueryExchangesByExchangeAdminRequest{
 		ExchangeAdminAddress: exchangeAdmin,
 	}, adminExchangesResponse, executedQueries)
 	require.Len(t, adminExchangesResponse.GetExchanges(), 1)
 	require.Equal(t, exchangeID, adminExchangesResponse.GetExchanges()[0].GetId())
 
-	isBexAdminResponse := &bexv1.QueryIsBexAdminResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "IsBexAdmin", &bexv1.QueryIsBexAdminRequest{
+	isBexAdminResponse := &bextypes.QueryIsBexAdminResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "IsBexAdmin", &bextypes.QueryIsBexAdminRequest{
 		BexAdminAddress: newBexAdmin,
 	}, isBexAdminResponse, executedQueries)
 	require.True(t, isBexAdminResponse.GetIsBexAdmin())
 
-	depositorsResponse := &bexv1.QueryReserveDepositorsResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "ReserveDepositors", &bexv1.QueryReserveDepositorsRequest{
+	depositorsResponse := &bextypes.QueryReserveDepositorsResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "ReserveDepositors", &bextypes.QueryReserveDepositorsRequest{
 		ExchangeId: exchangeID,
 	}, depositorsResponse, executedQueries)
 	require.Equal(t, []string{depositorString}, depositorsResponse.GetDepositors())
 
-	isDepositorResponse := &bexv1.QueryIsReserveDepositorResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "IsReserveDepositor", &bexv1.QueryIsReserveDepositorRequest{
+	isDepositorResponse := &bextypes.QueryIsReserveDepositorResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "IsReserveDepositor", &bextypes.QueryIsReserveDepositorRequest{
 		ExchangeId:       exchangeID,
 		DepositorAddress: depositorString,
 	}, isDepositorResponse, executedQueries)
 	require.True(t, isDepositorResponse.GetIsReserveDepositor())
 
-	collectedResponse := &bexv1.QueryFeesResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "CollectedFees", &bexv1.QueryFeesRequest{ExchangeId: exchangeID}, collectedResponse, executedQueries)
+	collectedResponse := &bextypes.QueryFeesResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "CollectedFees", &bextypes.QueryFeesRequest{ExchangeId: exchangeID}, collectedResponse, executedQueries)
 	requireBexLedgerCoin(t, collectedResponse.GetLedger(), appparams.BaseDenom, "4")
 
-	lockedResponse := &bexv1.QueryFeesResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "LockedFees", &bexv1.QueryFeesRequest{ExchangeId: exchangeID}, lockedResponse, executedQueries)
+	lockedResponse := &bextypes.QueryFeesResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "LockedFees", &bextypes.QueryFeesRequest{ExchangeId: exchangeID}, lockedResponse, executedQueries)
 	requireBexLedgerCoin(t, lockedResponse.GetLedger(), appparams.BaseDenom, "1")
 
-	availableResponse := &bexv1.QueryFeesResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "AvailableFees", &bexv1.QueryFeesRequest{ExchangeId: exchangeID}, availableResponse, executedQueries)
+	availableResponse := &bextypes.QueryFeesResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "AvailableFees", &bextypes.QueryFeesRequest{ExchangeId: exchangeID}, availableResponse, executedQueries)
 	requireBexLedgerCoin(t, availableResponse.GetLedger(), appparams.BaseDenom, "3")
 
-	pendingLiabilitiesResponse := &bexv1.QueryPendingLiabilitiesResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "PendingLiabilities", &bexv1.QueryPendingLiabilitiesRequest{
+	pendingLiabilitiesResponse := &bextypes.QueryPendingLiabilitiesResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "PendingLiabilities", &bextypes.QueryPendingLiabilitiesRequest{
 		ExchangeId: exchangeID,
 	}, pendingLiabilitiesResponse, executedQueries)
 	require.NotNil(t, pendingLiabilitiesResponse.GetLedger())
 	require.Empty(t, pendingLiabilitiesResponse.GetLedger().GetCoins())
 
-	volumeResponse := &bexv1.QueryVolumeWindowResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "VolumeWindow", &bexv1.QueryVolumeWindowRequest{
+	volumeResponse := &bextypes.QueryVolumeWindowResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "VolumeWindow", &bextypes.QueryVolumeWindowRequest{
 		ExchangeId: exchangeID,
-		Direction:  bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		Direction:  bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 	}, volumeResponse, executedQueries)
 	require.Equal(t, "7", volumeResponse.GetWindow().GetAmount())
 	require.Equal(t, "1000", volumeResponse.GetCap())
 
-	quoteResponse := &bexv1.QueryQuoteSwapResponse{}
-	executeBexRuntimeQuery(t, testApp, ctx, "QuoteSwap", &bexv1.QueryQuoteSwapRequest{
+	quoteResponse := &bextypes.QueryQuoteSwapResponse{}
+	executeBexRuntimeQuery(t, testApp, ctx, "QuoteSwap", &bextypes.QueryQuoteSwapRequest{
 		ExchangeId: exchangeID,
 		InputDenom: appparams.BaseDenom,
 		AmountIn:   "101",
 	}, quoteResponse, executedQueries)
-	require.Equal(t, bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B, quoteResponse.GetQuote().GetDirection())
+	require.Equal(t, bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B, quoteResponse.GetQuote().GetDirection())
 	require.Equal(t, "1", quoteResponse.GetQuote().GetFeeAmount())
 	require.Equal(t, "100", quoteResponse.GetQuote().GetNetAmountIn())
 	require.Equal(t, "200", quoteResponse.GetQuote().GetAmountOut())
 	require.Equal(t, "7", quoteResponse.GetQuote().GetVolumeUsed())
 
 	require.NoError(t, testApp.BexKeeper.ReleaseExchangeFee(ctx, exchangeID, sdk.NewInt64Coin(appparams.BaseDenom, 1)))
-	executeBexRuntimeMsg(t, testApp, ctx, "WithdrawFees", &bexv1.MsgWithdrawFees{
+	executeBexRuntimeMsg(t, testApp, ctx, "WithdrawFees", &bextypes.MsgWithdrawFees{
 		AdminAddress: exchangeAdmin,
 		ExchangeId:   exchangeID,
-		Amount:       []*basev1beta1.Coin{{Denom: appparams.BaseDenom, Amount: "4"}},
+		Amount:       sdk.NewCoins(sdk.NewInt64Coin(appparams.BaseDenom, 4)),
 		Recipient:    recipientString,
-	}, &bexv1.MsgWithdrawFeesResponse{}, executedMsgs)
+	}, &bextypes.MsgWithdrawFeesResponse{}, executedMsgs)
 
-	updateResponse := &bexv1.MsgUpdateExchangeResponse{}
-	executeBexRuntimeMsg(t, testApp, ctx, "UpdateExchange", &bexv1.MsgUpdateExchange{
+	updateResponse := &bextypes.MsgUpdateExchangeResponse{}
+	executeBexRuntimeMsg(t, testApp, ctx, "UpdateExchange", &bextypes.MsgUpdateExchange{
 		AdminAddress:     exchangeAdmin,
 		ExchangeId:       exchangeID,
 		ExpectedRevision: 1,
-		Patch: &bexv1.ExchangeUpdatePatch{Status: &bexv1.ExchangeStatusPatch{
-			Status: bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE,
+		Patch: &bextypes.ExchangeUpdatePatch{Status: &bextypes.ExchangeStatusPatch{
+			Status: bextypes.ExchangeStatus_EXCHANGE_STATUS_INACTIVE,
 		}},
 	}, updateResponse, executedMsgs)
 	require.Equal(t, uint64(2), updateResponse.GetRevision())
 
-	executeBexRuntimeMsg(t, testApp, ctx, "RemoveReserveDepositor", &bexv1.MsgRemoveReserveDepositor{
+	executeBexRuntimeMsg(t, testApp, ctx, "RemoveReserveDepositor", &bextypes.MsgRemoveReserveDepositor{
 		AdminAddress:     exchangeAdmin,
 		ExchangeId:       exchangeID,
 		DepositorAddress: depositorString,
-	}, &bexv1.MsgRemoveReserveDepositorResponse{}, executedMsgs)
-	executeBexRuntimeMsg(t, testApp, ctx, "WithdrawReserve", &bexv1.MsgWithdrawReserve{
+	}, &bextypes.MsgRemoveReserveDepositorResponse{}, executedMsgs)
+	executeBexRuntimeMsg(t, testApp, ctx, "WithdrawReserve", &bextypes.MsgWithdrawReserve{
 		AdminAddress: exchangeAdmin,
 		ExchangeId:   exchangeID,
-		Amount:       []*basev1beta1.Coin{{Denom: appparams.BaseDenom, Amount: "6"}},
+		Amount:       sdk.NewCoins(sdk.NewInt64Coin(appparams.BaseDenom, 6)),
 		Recipient:    recipientString,
-	}, &bexv1.MsgWithdrawReserveResponse{}, executedMsgs)
-	executeBexRuntimeMsg(t, testApp, ctx, "DeleteExchange", &bexv1.MsgDeleteExchange{
+	}, &bextypes.MsgWithdrawReserveResponse{}, executedMsgs)
+	executeBexRuntimeMsg(t, testApp, ctx, "DeleteExchange", &bextypes.MsgDeleteExchange{
 		AdminAddress: exchangeAdmin,
 		ExchangeId:   exchangeID,
-	}, &bexv1.MsgDeleteExchangeResponse{}, executedMsgs)
-	executeBexRuntimeMsg(t, testApp, ctx, "RemoveAdmin", &bexv1.MsgRemoveAdmin{
+	}, &bextypes.MsgDeleteExchangeResponse{}, executedMsgs)
+	executeBexRuntimeMsg(t, testApp, ctx, "RemoveAdmin", &bextypes.MsgRemoveAdmin{
 		Moderator:    moderator,
 		AdminAddress: newBexAdmin,
-	}, &bexv1.MsgRemoveAdminResponse{}, executedMsgs)
+	}, &bextypes.MsgRemoveAdminResponse{}, executedMsgs)
 
 	deletedExchange, err := testApp.BexKeeper.GetExchange(ctx, exchangeID)
 	require.NoError(t, err)
-	require.Equal(t, bexv1.ExchangeStatus_EXCHANGE_STATUS_DELETED, deletedExchange.GetStatus())
+	require.Equal(t, bextypes.ExchangeStatus_EXCHANGE_STATUS_DELETED, deletedExchange.GetStatus())
 	isOldBexAdmin, err := testApp.BexKeeper.IsAdmin(ctx, oldBexAdmin)
 	require.NoError(t, err)
 	require.False(t, isOldBexAdmin)
@@ -282,8 +280,8 @@ func TestBexAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T) {
 	require.Equal(t, int64(10), testApp.BankKeeper.GetBalance(ctx, recipient, appparams.BaseDenom).Amount.Int64())
 	require.NoError(t, testApp.BexKeeper.AssertInvariants(ctx))
 	require.NoError(t, testApp.BexKeeper.AssertFeeSolvency(ctx))
-	requireBexServiceMethodsExecuted(t, bexv1.Msg_ServiceDesc.Methods, executedMsgs)
-	requireBexServiceMethodsExecuted(t, bexv1.Query_ServiceDesc.Methods, executedQueries)
+	requireBexServiceMethodsExecuted(t, reflect.TypeOf((*bextypes.MsgServer)(nil)).Elem(), executedMsgs)
+	requireBexServiceMethodsExecuted(t, reflect.TypeOf((*bextypes.QueryServer)(nil)).Elem(), executedQueries)
 }
 
 func TestBexReserveRestrictionIsWiredAcrossBankAndEVM(t *testing.T) {
@@ -314,7 +312,7 @@ func TestBexReserveRestrictionIsWiredAcrossBankAndEVM(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, testApp.BexKeeper.RegisterAdmin(ctx, moderator, adminString))
 
-	exchange, err := testApp.BexKeeper.RegisterExchange(ctx, &bexv1.MsgRegisterExchange{
+	exchange, err := testApp.BexKeeper.RegisterExchange(ctx, &bextypes.MsgRegisterExchange{
 		BexAdminAddress:           adminString,
 		ExchangeAdminAddress:      adminString,
 		DenomA:                    "asset-a",
@@ -325,7 +323,7 @@ func TestBexReserveRestrictionIsWiredAcrossBankAndEVM(t *testing.T) {
 		ChannelB:                  "channel-1",
 		OracleSymbolAToB:          "ASSET-A/ASSET-B",
 		OracleSymbolBToA:          "ASSET-B/ASSET-A",
-		Status:                    bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE,
+		Status:                    bextypes.ExchangeStatus_EXCHANGE_STATUS_INACTIVE,
 		VolumeEpochSeconds:        86_400,
 		MaxOracleStalenessSeconds: 60,
 	})
@@ -445,7 +443,7 @@ func TestBexRegistrationReclaimsPrecreatedKeylessVestingReserve(t *testing.T) {
 	_, isBaseBefore := testApp.AccountKeeper.GetAccount(ctx, prospectiveReserve).(*authtypes.BaseAccount)
 	require.False(t, isBaseBefore)
 
-	exchange, err := testApp.BexKeeper.RegisterExchange(ctx, &bexv1.MsgRegisterExchange{
+	exchange, err := testApp.BexKeeper.RegisterExchange(ctx, &bextypes.MsgRegisterExchange{
 		BexAdminAddress:           adminString,
 		ExchangeAdminAddress:      adminString,
 		DenomA:                    "asset-a",
@@ -456,7 +454,7 @@ func TestBexRegistrationReclaimsPrecreatedKeylessVestingReserve(t *testing.T) {
 		ChannelB:                  "channel-1",
 		OracleSymbolAToB:          "ASSET-A/ASSET-B",
 		OracleSymbolBToA:          "ASSET-B/ASSET-A",
-		Status:                    bexv1.ExchangeStatus_EXCHANGE_STATUS_INACTIVE,
+		Status:                    bextypes.ExchangeStatus_EXCHANGE_STATUS_INACTIVE,
 		VolumeEpochSeconds:        86_400,
 		MaxOracleStalenessSeconds: 60,
 	})
@@ -512,9 +510,9 @@ func TestBexFeeCustodyBoundariesAcrossBankAndEVM(t *testing.T) {
 		admin,
 		funding,
 	))
-	require.NoError(t, testApp.BexKeeper.ImportGenesis(ctx, &bexv1.GenesisState{
+	require.NoError(t, testApp.BexKeeper.ImportGenesis(ctx, &bextypes.GenesisState{
 		Admins: []string{adminString},
-		Exchanges: []*bexv1.Exchange{{
+		Exchanges: []*bextypes.Exchange{{
 			Id:                        1,
 			AdminAddress:              adminString,
 			ReserveAddress:            reserveString,
@@ -534,7 +532,7 @@ func TestBexFeeCustodyBoundariesAcrossBankAndEVM(t *testing.T) {
 			LimitBToA:                 "1000",
 			VolumeCapAToB:             "1000",
 			VolumeCapBToA:             "1000",
-			Status:                    bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
+			Status:                    bextypes.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
 			Revision:                  1,
 			VolumeEpochSeconds:        86_400,
 			MaxOracleStalenessSeconds: 60,
@@ -716,9 +714,9 @@ func TestBexInitGenesisAuditsActualBankBacking(t *testing.T) {
 			require.NoError(t, err)
 			ibcDenomB, err := bexkeeper.ExpectedIBCDenomForGenesis("gxusd", "transwap", "channel-1")
 			require.NoError(t, err)
-			genesis := &bexv1.GenesisState{
+			genesis := &bextypes.GenesisState{
 				Admins: []string{adminString},
-				Exchanges: []*bexv1.Exchange{{
+				Exchanges: []*bextypes.Exchange{{
 					Id:                        1,
 					AdminAddress:              adminString,
 					ReserveAddress:            reserveString,
@@ -740,16 +738,13 @@ func TestBexInitGenesisAuditsActualBankBacking(t *testing.T) {
 					VolumeCapBToA:             "1000",
 					Revision:                  1,
 					VolumeWindowGeneration:    1,
-					Status:                    bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
+					Status:                    bextypes.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
 					VolumeEpochSeconds:        86_400,
 					MaxOracleStalenessSeconds: 60,
 				}},
-				CollectedFees: []*bexv1.FeeGenesis{{
+				CollectedFees: []*bextypes.FeeGenesis{{
 					ExchangeId: 1,
-					Coins: []*basev1beta1.Coin{{
-						Denom:  appparams.BaseDenom,
-						Amount: "1",
-					}},
+					Coins:      sdk.NewCoins(sdk.NewInt64Coin(appparams.BaseDenom, 1)),
 				}},
 				NextExchangeId: 2,
 			}
@@ -781,7 +776,7 @@ func TestBexInitGenesisAuditsActualBankBacking(t *testing.T) {
 	}
 }
 
-func bexGenesisSource(t *testing.T, genesis *bexv1.GenesisState) appmodule.GenesisSource {
+func bexGenesisSource(t *testing.T, genesis *bextypes.GenesisState) appmodule.GenesisSource {
 	t.Helper()
 	fields := map[string]any{
 		"admins":             genesis.GetAdmins(),
@@ -807,13 +802,18 @@ func bexGenesisSource(t *testing.T, genesis *bexv1.GenesisState) appmodule.Genes
 	}
 }
 
+type gogoRuntimeMessage interface {
+	Marshal() ([]byte, error)
+	Unmarshal([]byte) error
+}
+
 func executeBexRuntimeMsg(
 	t *testing.T,
 	testApp *App,
 	ctx sdk.Context,
 	method string,
 	request sdk.Msg,
-	response proto.Message,
+	response gogoRuntimeMessage,
 	executed map[string]struct{},
 ) {
 	t.Helper()
@@ -825,7 +825,7 @@ func executeBexRuntimeMsg(
 	require.NotNil(t, result)
 	require.Len(t, result.MsgResponses, 1)
 	require.Equal(t, "/guru.bex.v1.Msg"+method+"Response", result.MsgResponses[0].TypeUrl)
-	require.NoError(t, proto.Unmarshal(result.Data, response))
+	require.NoError(t, response.Unmarshal(result.Data))
 	executed[method] = struct{}{}
 	t.Logf("runtime Msg/%s => %v", method, response)
 }
@@ -835,38 +835,38 @@ func executeBexRuntimeQuery(
 	testApp *App,
 	ctx sdk.Context,
 	method string,
-	request proto.Message,
-	response proto.Message,
+	request gogoRuntimeMessage,
+	response gogoRuntimeMessage,
 	executed map[string]struct{},
 ) {
 	t.Helper()
 	require.NotContains(t, executed, method, "BEX Query RPC executed more than once")
 	handler := testApp.GRPCQueryRouter().Route("/guru.bex.v1.Query/" + method)
 	require.NotNil(t, handler, "BEX Query RPC %s is not registered", method)
-	requestBytes, err := proto.Marshal(request)
+	requestBytes, err := request.Marshal()
 	require.NoError(t, err)
 	queryResult, err := handler(ctx, &abci.RequestQuery{Data: requestBytes, Height: ctx.BlockHeight()})
 	require.NoError(t, err)
 	require.NotNil(t, queryResult)
 	require.Equal(t, ctx.BlockHeight(), queryResult.Height)
-	require.NoError(t, proto.Unmarshal(queryResult.Value, response))
+	require.NoError(t, response.Unmarshal(queryResult.Value))
 	executed[method] = struct{}{}
 	t.Logf("runtime Query/%s => %v", method, response)
 }
 
-func requireBexLedgerCoin(t *testing.T, ledger *bexv1.FeeLedger, denom, amount string) {
+func requireBexLedgerCoin(t *testing.T, ledger *bextypes.FeeLedger, denom, amount string) {
 	t.Helper()
 	require.NotNil(t, ledger)
 	require.Len(t, ledger.GetCoins(), 1)
 	require.Equal(t, denom, ledger.GetCoins()[0].GetDenom())
-	require.Equal(t, amount, ledger.GetCoins()[0].GetAmount())
+	require.Equal(t, amount, ledger.GetCoins()[0].Amount.String())
 }
 
-func requireBexServiceMethodsExecuted(t *testing.T, methods []grpc.MethodDesc, executed map[string]struct{}) {
+func requireBexServiceMethodsExecuted(t *testing.T, service reflect.Type, executed map[string]struct{}) {
 	t.Helper()
-	require.Len(t, executed, len(methods))
-	for _, method := range methods {
-		require.Contains(t, executed, method.MethodName, "runtime RPC coverage must track the service descriptor")
+	require.Len(t, executed, service.NumMethod())
+	for i := 0; i < service.NumMethod(); i++ {
+		require.Contains(t, executed, service.Method(i).Name, "runtime RPC coverage must track the generated service interface")
 	}
 }
 

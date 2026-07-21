@@ -3,7 +3,6 @@ package telemetry
 import (
 	"fmt"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	uint256decimal "github.com/gurufinglobal/guru/v3/internal/uint256"
 
 	"github.com/hashicorp/go-metrics"
@@ -13,7 +12,7 @@ import (
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
-func ReportTransfer(sourcePort, sourceChannel, destinationPort, destinationChannel string, token *transwapv1.Token) {
+func ReportTransfer(sourcePort, sourceChannel, destinationPort, destinationChannel string, token *types.Token) {
 	labels := []metrics.Label{
 		{Name: coremetrics.LabelDestinationPort, Value: destinationPort},
 		{Name: coremetrics.LabelDestinationChannel, Value: destinationChannel},
@@ -40,7 +39,7 @@ func ReportTransfer(sourcePort, sourceChannel, destinationPort, destinationChann
 	)
 }
 
-func ReportOnRecvPacket(sourcePort, sourceChannel, destinationPort, destinationChannel string, token *transwapv1.Token) {
+func ReportOnRecvPacket(sourcePort, sourceChannel, destinationPort, destinationChannel string, token *types.Token) {
 	token = types.CloneToken(token)
 	if token == nil {
 		return
@@ -55,7 +54,7 @@ func ReportOnRecvPacket(sourcePort, sourceChannel, destinationPort, destinationC
 	if types.DenomHasPrefix(token.Denom, sourcePort, sourceChannel) {
 		token.Denom.Trace = token.Denom.Trace[1:]
 	} else {
-		trace := []*transwapv1.Hop{types.NewHop(destinationPort, destinationChannel)}
+		trace := []types.Hop{types.NewHop(destinationPort, destinationChannel)}
 		token.Denom.Trace = append(trace, token.Denom.Trace...)
 	}
 

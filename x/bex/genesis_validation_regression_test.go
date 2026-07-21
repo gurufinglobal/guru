@@ -4,8 +4,9 @@ import (
 	"math"
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
@@ -15,11 +16,11 @@ func TestGenesisRejectsCrossRouteDenomCollisions(t *testing.T) {
 	am, ctx := setupAppModule(t)
 	tests := []struct {
 		name   string
-		mutate func(t *testing.T, exchange *bexv1.Exchange)
+		mutate func(t *testing.T, exchange *types.Exchange)
 	}{
 		{
 			name: "denom_a_matches_derived_ibc_denom_b",
-			mutate: func(t *testing.T, exchange *bexv1.Exchange) {
+			mutate: func(t *testing.T, exchange *types.Exchange) {
 				t.Helper()
 				exchange.DenomA = exchange.GetIbcDenomB()
 				ibcDenomA, err := bexkeeper.ExpectedIBCDenomForGenesis(
@@ -33,7 +34,7 @@ func TestGenesisRejectsCrossRouteDenomCollisions(t *testing.T) {
 		},
 		{
 			name: "denom_b_matches_derived_ibc_denom_a",
-			mutate: func(t *testing.T, exchange *bexv1.Exchange) {
+			mutate: func(t *testing.T, exchange *types.Exchange) {
 				t.Helper()
 				exchange.DenomB = exchange.GetIbcDenomA()
 				ibcDenomB, err := bexkeeper.ExpectedIBCDenomForGenesis(
@@ -69,60 +70,60 @@ func TestGenesisRejectsNonCanonicalFeeCoinLists(t *testing.T) {
 	am, ctx := setupAppModule(t)
 	tests := []struct {
 		name   string
-		coins  []*basev1beta1.Coin
-		mutate func(*bexv1.GenesisState, []*basev1beta1.Coin)
+		coins  sdk.Coins
+		mutate func(*types.GenesisState, sdk.Coins)
 	}{
 		{
 			name: "unsorted_collected",
-			coins: []*basev1beta1.Coin{
-				{Denom: "gxusd", Amount: "1"},
-				{Denom: "agxn", Amount: "10"},
+			coins: sdk.Coins{
+				sdk.NewInt64Coin("gxusd", 1),
+				sdk.NewInt64Coin("agxn", 10),
 			},
-			mutate: func(genesis *bexv1.GenesisState, coins []*basev1beta1.Coin) {
+			mutate: func(genesis *types.GenesisState, coins sdk.Coins) {
 				genesis.CollectedFees[0].Coins = coins
 			},
 		},
 		{
 			name: "duplicate_collected",
-			coins: []*basev1beta1.Coin{
-				{Denom: "agxn", Amount: "5"},
-				{Denom: "agxn", Amount: "5"},
+			coins: sdk.Coins{
+				sdk.NewInt64Coin("agxn", 5),
+				sdk.NewInt64Coin("agxn", 5),
 			},
-			mutate: func(genesis *bexv1.GenesisState, coins []*basev1beta1.Coin) {
+			mutate: func(genesis *types.GenesisState, coins sdk.Coins) {
 				genesis.CollectedFees[0].Coins = coins
 			},
 		},
 		{
-			name:  "noncanonical_collected_amount",
-			coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "010"}},
-			mutate: func(genesis *bexv1.GenesisState, coins []*basev1beta1.Coin) {
+			name:  "zero_collected_amount",
+			coins: sdk.Coins{{Denom: "agxn", Amount: sdkmath.ZeroInt()}},
+			mutate: func(genesis *types.GenesisState, coins sdk.Coins) {
 				genesis.CollectedFees[0].Coins = coins
 			},
 		},
 		{
 			name: "unsorted_locked",
-			coins: []*basev1beta1.Coin{
-				{Denom: "gxusd", Amount: "1"},
-				{Denom: "agxn", Amount: "2"},
+			coins: sdk.Coins{
+				sdk.NewInt64Coin("gxusd", 1),
+				sdk.NewInt64Coin("agxn", 2),
 			},
-			mutate: func(genesis *bexv1.GenesisState, coins []*basev1beta1.Coin) {
+			mutate: func(genesis *types.GenesisState, coins sdk.Coins) {
 				genesis.LockedFees[0].Coins = coins
 			},
 		},
 		{
 			name: "duplicate_locked",
-			coins: []*basev1beta1.Coin{
-				{Denom: "agxn", Amount: "1"},
-				{Denom: "agxn", Amount: "1"},
+			coins: sdk.Coins{
+				sdk.NewInt64Coin("agxn", 1),
+				sdk.NewInt64Coin("agxn", 1),
 			},
-			mutate: func(genesis *bexv1.GenesisState, coins []*basev1beta1.Coin) {
+			mutate: func(genesis *types.GenesisState, coins sdk.Coins) {
 				genesis.LockedFees[0].Coins = coins
 			},
 		},
 		{
-			name:  "noncanonical_locked_amount",
-			coins: []*basev1beta1.Coin{{Denom: "agxn", Amount: "02"}},
-			mutate: func(genesis *bexv1.GenesisState, coins []*basev1beta1.Coin) {
+			name:  "zero_locked_amount",
+			coins: sdk.Coins{{Denom: "agxn", Amount: sdkmath.ZeroInt()}},
+			mutate: func(genesis *types.GenesisState, coins sdk.Coins) {
 				genesis.LockedFees[0].Coins = coins
 			},
 		},

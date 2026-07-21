@@ -3,14 +3,13 @@ package keeper
 import (
 	"context"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
-var _ bexv1.MsgServer = MsgServer{}
+var _ types.MsgServer = MsgServer{}
 
 type MsgServer struct {
-	bexv1.UnimplementedMsgServer
+	types.UnimplementedMsgServer
 	keeper *Keeper
 }
 
@@ -18,31 +17,31 @@ func NewMsgServer(keeper *Keeper) MsgServer {
 	return MsgServer{keeper: keeper}
 }
 
-func (m MsgServer) RegisterAdmin(ctx context.Context, req *bexv1.MsgRegisterAdmin) (*bexv1.MsgRegisterAdminResponse, error) {
+func (m MsgServer) RegisterAdmin(ctx context.Context, req *types.MsgRegisterAdmin) (*types.MsgRegisterAdminResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
-	return &bexv1.MsgRegisterAdminResponse{}, m.keeper.RegisterAdmin(ctx, req.GetModerator(), req.GetAdminAddress())
+	return &types.MsgRegisterAdminResponse{}, m.keeper.RegisterAdmin(ctx, req.GetModerator(), req.GetAdminAddress())
 }
 
-func (m MsgServer) UpdateAdmin(ctx context.Context, req *bexv1.MsgUpdateAdmin) (*bexv1.MsgUpdateAdminResponse, error) {
+func (m MsgServer) UpdateAdmin(ctx context.Context, req *types.MsgUpdateAdmin) (*types.MsgUpdateAdminResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
 	if err := m.keeper.UpdateAdmin(ctx, req.GetModerator(), req.GetOldAdminAddress(), req.GetNewAdminAddress()); err != nil {
 		return nil, err
 	}
-	return &bexv1.MsgUpdateAdminResponse{}, nil
+	return &types.MsgUpdateAdminResponse{}, nil
 }
 
-func (m MsgServer) RemoveAdmin(ctx context.Context, req *bexv1.MsgRemoveAdmin) (*bexv1.MsgRemoveAdminResponse, error) {
+func (m MsgServer) RemoveAdmin(ctx context.Context, req *types.MsgRemoveAdmin) (*types.MsgRemoveAdminResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
-	return &bexv1.MsgRemoveAdminResponse{}, m.keeper.RemoveAdmin(ctx, req.GetModerator(), req.GetAdminAddress())
+	return &types.MsgRemoveAdminResponse{}, m.keeper.RemoveAdmin(ctx, req.GetModerator(), req.GetAdminAddress())
 }
 
-func (m MsgServer) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterExchange) (*bexv1.MsgRegisterExchangeResponse, error) {
+func (m MsgServer) RegisterExchange(ctx context.Context, req *types.MsgRegisterExchange) (*types.MsgRegisterExchangeResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -50,13 +49,13 @@ func (m MsgServer) RegisterExchange(ctx context.Context, req *bexv1.MsgRegisterE
 	if err != nil {
 		return nil, err
 	}
-	return &bexv1.MsgRegisterExchangeResponse{
+	return &types.MsgRegisterExchangeResponse{
 		ExchangeId:     exchange.GetId(),
 		ReserveAddress: exchange.GetReserveAddress(),
 	}, nil
 }
 
-func (m MsgServer) UpdateExchange(ctx context.Context, req *bexv1.MsgUpdateExchange) (*bexv1.MsgUpdateExchangeResponse, error) {
+func (m MsgServer) UpdateExchange(ctx context.Context, req *types.MsgUpdateExchange) (*types.MsgUpdateExchangeResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -64,37 +63,37 @@ func (m MsgServer) UpdateExchange(ctx context.Context, req *bexv1.MsgUpdateExcha
 	if err != nil {
 		return nil, err
 	}
-	return &bexv1.MsgUpdateExchangeResponse{Revision: exchange.GetRevision()}, nil
+	return &types.MsgUpdateExchangeResponse{Revision: exchange.GetRevision()}, nil
 }
 
-func (m MsgServer) DeleteExchange(ctx context.Context, req *bexv1.MsgDeleteExchange) (*bexv1.MsgDeleteExchangeResponse, error) {
+func (m MsgServer) DeleteExchange(ctx context.Context, req *types.MsgDeleteExchange) (*types.MsgDeleteExchangeResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
-	return &bexv1.MsgDeleteExchangeResponse{}, m.keeper.DeleteExchange(ctx, req.GetAdminAddress(), req.GetExchangeId())
+	return &types.MsgDeleteExchangeResponse{}, m.keeper.DeleteExchange(ctx, req.GetAdminAddress(), req.GetExchangeId())
 }
 
-func (m MsgServer) AddReserveDepositor(ctx context.Context, req *bexv1.MsgAddReserveDepositor) (*bexv1.MsgAddReserveDepositorResponse, error) {
+func (m MsgServer) AddReserveDepositor(ctx context.Context, req *types.MsgAddReserveDepositor) (*types.MsgAddReserveDepositorResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
 	if err := m.keeper.AddReserveDepositor(ctx, req.GetAdminAddress(), req.GetExchangeId(), req.GetDepositorAddress()); err != nil {
 		return nil, err
 	}
-	return &bexv1.MsgAddReserveDepositorResponse{}, nil
+	return &types.MsgAddReserveDepositorResponse{}, nil
 }
 
-func (m MsgServer) RemoveReserveDepositor(ctx context.Context, req *bexv1.MsgRemoveReserveDepositor) (*bexv1.MsgRemoveReserveDepositorResponse, error) {
+func (m MsgServer) RemoveReserveDepositor(ctx context.Context, req *types.MsgRemoveReserveDepositor) (*types.MsgRemoveReserveDepositorResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
 	if err := m.keeper.RemoveReserveDepositor(ctx, req.GetAdminAddress(), req.GetExchangeId(), req.GetDepositorAddress()); err != nil {
 		return nil, err
 	}
-	return &bexv1.MsgRemoveReserveDepositorResponse{}, nil
+	return &types.MsgRemoveReserveDepositorResponse{}, nil
 }
 
-func (m MsgServer) DepositReserve(ctx context.Context, req *bexv1.MsgDepositReserve) (*bexv1.MsgDepositReserveResponse, error) {
+func (m MsgServer) DepositReserve(ctx context.Context, req *types.MsgDepositReserve) (*types.MsgDepositReserveResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -102,10 +101,10 @@ func (m MsgServer) DepositReserve(ctx context.Context, req *bexv1.MsgDepositRese
 	if err != nil {
 		return nil, err
 	}
-	return &bexv1.MsgDepositReserveResponse{}, m.keeper.DepositReserve(ctx, req.GetSender(), req.GetExchangeId(), amount)
+	return &types.MsgDepositReserveResponse{}, m.keeper.DepositReserve(ctx, req.GetSender(), req.GetExchangeId(), amount)
 }
 
-func (m MsgServer) WithdrawReserve(ctx context.Context, req *bexv1.MsgWithdrawReserve) (*bexv1.MsgWithdrawReserveResponse, error) {
+func (m MsgServer) WithdrawReserve(ctx context.Context, req *types.MsgWithdrawReserve) (*types.MsgWithdrawReserveResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -117,10 +116,10 @@ func (m MsgServer) WithdrawReserve(ctx context.Context, req *bexv1.MsgWithdrawRe
 	if err != nil {
 		return nil, types.ErrInvalidRequest.Wrapf("invalid recipient: %v", err)
 	}
-	return &bexv1.MsgWithdrawReserveResponse{}, m.keeper.WithdrawReserve(ctx, req.GetAdminAddress(), req.GetExchangeId(), recipient, amount)
+	return &types.MsgWithdrawReserveResponse{}, m.keeper.WithdrawReserve(ctx, req.GetAdminAddress(), req.GetExchangeId(), recipient, amount)
 }
 
-func (m MsgServer) WithdrawFees(ctx context.Context, req *bexv1.MsgWithdrawFees) (*bexv1.MsgWithdrawFeesResponse, error) {
+func (m MsgServer) WithdrawFees(ctx context.Context, req *types.MsgWithdrawFees) (*types.MsgWithdrawFeesResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -135,5 +134,5 @@ func (m MsgServer) WithdrawFees(ctx context.Context, req *bexv1.MsgWithdrawFees)
 	if err := m.keeper.WithdrawFees(ctx, req.GetAdminAddress(), req.GetExchangeId(), recipient, amount); err != nil {
 		return nil, err
 	}
-	return &bexv1.MsgWithdrawFeesResponse{}, nil
+	return &types.MsgWithdrawFeesResponse{}, nil
 }

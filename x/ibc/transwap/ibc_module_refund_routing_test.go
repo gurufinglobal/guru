@@ -13,8 +13,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	keeperpkg "github.com/gurufinglobal/guru/v3/x/ibc/transwap/keeper"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
@@ -248,8 +246,8 @@ type ibcModuleRefundBoundaryScenario struct {
 	im             *IBCModule
 	reserve        sdk.AccAddress
 	originalSender sdk.AccAddress
-	inputDenom     *transwapv1.Denom
-	outputDenom    *transwapv1.Denom
+	inputDenom     types.Denom
+	outputDenom    types.Denom
 	inputIBCDenom  string
 	outputIBCDenom string
 	refundID       string
@@ -301,12 +299,12 @@ func setupIBCModuleRefundBoundaryScenario(t *testing.T) ibcModuleRefundBoundaryS
 	ics4.recordPacketCommitment(originalPacket)
 
 	refundID := types.RefundID(types.PortID, "channel-7", moduleRefundBoundarySequence)
-	record := &transwapv1.RefundRecord{
+	record := &types.RefundRecord{
 		Id:                             refundID,
-		Status:                         transwapv1.RefundStatus_REFUND_STATUS_PENDING,
+		Status:                         types.RefundStatus_REFUND_STATUS_PENDING,
 		RefundSourcePort:               types.PortID,
 		RefundSourceChannel:            "channel-0",
-		Token:                          &transwapv1.Token{Denom: inputDenom, Amount: grossRefund.Amount.String()},
+		Token:                          types.Token{Denom: inputDenom, Amount: grossRefund.Amount.String()},
 		Receiver:                       originalSender.String(),
 		ClaimAddress:                   originalSender.String(),
 		Memo:                           "refund original input",
@@ -317,9 +315,9 @@ func setupIBCModuleRefundBoundaryScenario(t *testing.T) ibcModuleRefundBoundaryS
 		OriginalOutputChannel:          "channel-7",
 		OriginalOutputSequence:         moduleRefundBoundarySequence,
 		OriginalOutputPacketCommitment: channeltypes.CommitPacket(originalPacket),
-		VolumeReservation: &bexv1.VolumeReservation{
+		VolumeReservation: &bextypes.VolumeReservation{
 			ExchangeId:             7,
-			Direction:              bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+			Direction:              bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 			EpochSeconds:           bextypes.MinVolumeEpochSeconds,
 			Amount:                 "100",
 			VolumeWindowGeneration: 1,
@@ -383,7 +381,7 @@ func (s ibcModuleRefundBoundaryScenario) requireActiveRefund(t *testing.T, sentI
 	sent := s.ics4.sent[sentIndex]
 	record, err := s.k.MustGetRefundRecord(s.ctx, s.refundID)
 	require.NoError(t, err)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, record.GetStatus())
+	require.Equal(t, types.RefundStatus_REFUND_STATUS_IN_FLIGHT, record.GetStatus())
 	require.Equal(t, retryCount, record.GetRetryCount())
 	require.Equal(t, sent.sequence, record.GetActivePacketSequence())
 	require.Equal(t, sent.timeoutTimestamp, record.GetActiveTimeoutTimestamp())

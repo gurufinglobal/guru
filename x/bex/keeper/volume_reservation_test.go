@@ -7,17 +7,15 @@ import (
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
 )
 
 func TestVolumeReservationReleasesExactOriginalWindow(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
-	direction := bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	direction := types.SwapDirection_SWAP_DIRECTION_A_TO_B
 
 	reservation, err := f.keeper.ReserveVolumeWindow(f.ctx, exchange.GetId(), direction, sdkmath.NewInt(17))
 	require.NoError(t, err)
@@ -40,7 +38,7 @@ func TestVolumeReservationReleasesExactOriginalWindow(t *testing.T) {
 		f.admin,
 		exchange.GetId(),
 		exchange.GetRevision(),
-		&bexv1.ExchangeUpdatePatch{VolumeEpochSeconds: wrapperspb.UInt32(minVolumeEpochSecs * 2)},
+		&types.ExchangeUpdatePatch{VolumeEpochSeconds: types.NewUInt32Value(minVolumeEpochSecs * 2)},
 	)
 	require.NoError(t, err)
 	require.NotEqual(t, reservation.GetVolumeWindowGeneration(), updated.GetVolumeWindowGeneration())
@@ -56,11 +54,11 @@ func TestVolumeReservationReleasesExactOriginalWindow(t *testing.T) {
 func TestVolumeReservationReleaseRejectsLiveAccountingCorruption(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reservation, err := f.keeper.ReserveVolumeWindow(
 		f.ctx,
 		exchange.GetId(),
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		sdkmath.NewInt(9),
 	)
 	require.NoError(t, err)
@@ -80,11 +78,11 @@ func TestVolumeReservationReleaseRejectsLiveAccountingCorruption(t *testing.T) {
 func TestVolumeReservationReleaseAllowsAlreadyPrunedExpiredWindow(t *testing.T) {
 	f := setupKeeperFixture(t)
 	require.NoError(t, f.keeper.RegisterAdmin(f.ctx, f.moderator, f.admin))
-	exchange := registerExchange(t, f, bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
+	exchange := registerExchange(t, f, types.ExchangeStatus_EXCHANGE_STATUS_ACTIVE)
 	reservation, err := f.keeper.ReserveVolumeWindow(
 		f.ctx,
 		exchange.GetId(),
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		types.SwapDirection_SWAP_DIRECTION_A_TO_B,
 		sdkmath.NewInt(5),
 	)
 	require.NoError(t, err)

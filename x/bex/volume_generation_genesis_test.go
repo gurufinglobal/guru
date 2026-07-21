@@ -3,9 +3,8 @@ package bex
 import (
 	"testing"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	bexv1 "github.com/gurufinglobal/guru/v3/x/bex/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestVolumeGenerationGenesisValidationAndRoundTrip(t *testing.T) {
@@ -15,7 +14,7 @@ func TestVolumeGenerationGenesisValidationAndRoundTrip(t *testing.T) {
 	t.Run("same epoch identity with distinct generations round trips", func(t *testing.T) {
 		genesis := mutateGenesis(valid, func(g *bexv1.GenesisState) {
 			g.Exchanges[0].VolumeWindowGeneration = 2
-			secondGeneration := proto.Clone(g.VolumeWindows[0]).(*bexv1.VolumeWindowGenesis)
+			secondGeneration := bexv1.CloneMessage(g.VolumeWindows[0])
 			secondGeneration.VolumeWindowGeneration = 2
 			secondGeneration.Amount = "7"
 			g.VolumeWindows = append(g.VolumeWindows, secondGeneration)
@@ -44,7 +43,7 @@ func TestVolumeGenerationGenesisValidationAndRoundTrip(t *testing.T) {
 		duplicate := mutateGenesis(valid, func(g *bexv1.GenesisState) {
 			g.VolumeWindows = append(
 				g.VolumeWindows,
-				proto.Clone(g.VolumeWindows[0]).(*bexv1.VolumeWindowGenesis),
+				bexv1.CloneMessage(g.VolumeWindows[0]),
 			)
 		})
 		requireGenesisInvalid(t, am, ctx, duplicate)

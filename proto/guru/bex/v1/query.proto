@@ -7,7 +7,7 @@ import "cosmos_proto/cosmos.proto";
 import "google/api/annotations.proto";
 import "guru/bex/v1/bex.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/bex/v1;bexv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/bex/types";
 
 // Query exposes read-only BEX state.
 service Query {

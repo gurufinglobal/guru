@@ -11,7 +11,6 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -19,13 +18,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
 
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
-var _ transwapv1.QueryServer = (*Keeper)(nil)
+var _ types.QueryServer = (*Keeper)(nil)
 
-func (k Keeper) Params(goCtx context.Context, req *transwapv1.QueryParamsRequest) (*transwapv1.QueryParamsResponse, error) {
+func (k Keeper) Params(goCtx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -33,10 +31,10 @@ func (k Keeper) Params(goCtx context.Context, req *transwapv1.QueryParamsRequest
 	if err != nil {
 		return nil, err
 	}
-	return &transwapv1.QueryParamsResponse{Params: params}, nil
+	return &types.QueryParamsResponse{Params: params}, nil
 }
 
-func (k Keeper) Refund(goCtx context.Context, req *transwapv1.QueryRefundRequest) (*transwapv1.QueryRefundResponse, error) {
+func (k Keeper) Refund(goCtx context.Context, req *types.QueryRefundRequest) (*types.QueryRefundResponse, error) {
 	if req == nil || strings.TrimSpace(req.GetRefundId()) == "" {
 		return nil, status.Error(codes.InvalidArgument, "refund id is required")
 	}
@@ -48,13 +46,13 @@ func (k Keeper) Refund(goCtx context.Context, req *transwapv1.QueryRefundRequest
 	if !found {
 		return nil, status.Error(codes.NotFound, types.ErrRefundNotFound.Wrap(req.GetRefundId()).Error())
 	}
-	return &transwapv1.QueryRefundResponse{Refund: refund}, nil
+	return &types.QueryRefundResponse{Refund: refund}, nil
 }
 
 // Refunds returns refund records in stable store-key order. Filtering is
 // applied before pagination, so count_total and next_key describe the filtered
 // result set rather than all refund records.
-func (k Keeper) Refunds(goCtx context.Context, req *transwapv1.QueryRefundsRequest) (*transwapv1.QueryRefundsResponse, error) {
+func (k Keeper) Refunds(goCtx context.Context, req *types.QueryRefundsRequest) (*types.QueryRefundsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -74,16 +72,16 @@ func (k Keeper) Refunds(goCtx context.Context, req *transwapv1.QueryRefundsReque
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	refunds := make([]*transwapv1.RefundRecord, 0)
+	refunds := make([]*types.RefundRecord, 0)
 	pageRes, err := sdkquery.FilteredPaginate(
 		k.refundRecordStore(ctx),
-		pulsarPageRequestToSDK(req.GetPagination()),
+		req.GetPagination(),
 		func(_, value []byte, accumulate bool) (bool, error) {
-			record := &transwapv1.RefundRecord{}
+			record := &types.RefundRecord{}
 			if err := k.cdc.Unmarshal(value, record); err != nil {
 				return false, err
 			}
-			if req.GetStatus() != transwapv1.RefundStatus_REFUND_STATUS_UNSPECIFIED &&
+			if req.GetStatus() != types.RefundStatus_REFUND_STATUS_UNSPECIFIED &&
 				record.GetStatus() != req.GetStatus() {
 				return false, nil
 			}
@@ -100,21 +98,21 @@ func (k Keeper) Refunds(goCtx context.Context, req *transwapv1.QueryRefundsReque
 		return nil, err
 	}
 
-	return &transwapv1.QueryRefundsResponse{
+	return &types.QueryRefundsResponse{
 		Refunds:    refunds,
-		Pagination: sdkPageResponseToPulsar(pageRes),
+		Pagination: pageRes,
 	}, nil
 }
 
-func validRefundStatusFilter(refundStatus transwapv1.RefundStatus) bool {
+func validRefundStatusFilter(refundStatus types.RefundStatus) bool {
 	switch refundStatus {
-	case transwapv1.RefundStatus_REFUND_STATUS_UNSPECIFIED,
-		transwapv1.RefundStatus_REFUND_STATUS_PENDING,
-		transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT,
-		transwapv1.RefundStatus_REFUND_STATUS_RETRYABLE,
-		transwapv1.RefundStatus_REFUND_STATUS_COMPLETED,
-		transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE,
-		transwapv1.RefundStatus_REFUND_STATUS_CLAIMED:
+	case types.RefundStatus_REFUND_STATUS_UNSPECIFIED,
+		types.RefundStatus_REFUND_STATUS_PENDING,
+		types.RefundStatus_REFUND_STATUS_IN_FLIGHT,
+		types.RefundStatus_REFUND_STATUS_RETRYABLE,
+		types.RefundStatus_REFUND_STATUS_COMPLETED,
+		types.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE,
+		types.RefundStatus_REFUND_STATUS_CLAIMED:
 		return true
 	default:
 		return false
@@ -122,7 +120,7 @@ func validRefundStatusFilter(refundStatus transwapv1.RefundStatus) bool {
 }
 
 // Denom implements the Query/Denom gRPC method
-func (k Keeper) Denom(goCtx context.Context, req *transwapv1.QueryDenomRequest) (*transwapv1.QueryDenomResponse, error) {
+func (k Keeper) Denom(goCtx context.Context, req *types.QueryDenomRequest) (*types.QueryDenomResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -142,13 +140,13 @@ func (k Keeper) Denom(goCtx context.Context, req *transwapv1.QueryDenomRequest) 
 		)
 	}
 
-	return &transwapv1.QueryDenomResponse{
-		Denom: denom,
+	return &types.QueryDenomResponse{
+		Denom: &denom,
 	}, nil
 }
 
 // Denoms implements the Query/Denoms gRPC method
-func (k Keeper) Denoms(ctx context.Context, req *transwapv1.QueryDenomsRequest) (*transwapv1.QueryDenomsResponse, error) {
+func (k Keeper) Denoms(ctx context.Context, req *types.QueryDenomsRequest) (*types.QueryDenomsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -156,9 +154,9 @@ func (k Keeper) Denoms(ctx context.Context, req *transwapv1.QueryDenomsRequest) 
 	var denoms types.Denoms
 	store := prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx)), types.DenomKey)
 
-	pageRes, err := sdkquery.Paginate(store, pulsarPageRequestToSDK(req.Pagination), func(_, value []byte) error {
-		denom := &transwapv1.Denom{}
-		if err := k.cdc.Unmarshal(value, denom); err != nil {
+	pageRes, err := sdkquery.Paginate(store, req.Pagination, func(_, value []byte) error {
+		var denom types.Denom
+		if err := k.cdc.Unmarshal(value, &denom); err != nil {
 			return err
 		}
 
@@ -169,14 +167,14 @@ func (k Keeper) Denoms(ctx context.Context, req *transwapv1.QueryDenomsRequest) 
 		return nil, err
 	}
 
-	return &transwapv1.QueryDenomsResponse{
+	return &types.QueryDenomsResponse{
 		Denoms:     denoms.Sort(),
-		Pagination: sdkPageResponseToPulsar(pageRes),
+		Pagination: pageRes,
 	}, nil
 }
 
 // DenomHash implements the Query/DenomHash gRPC method
-func (k Keeper) DenomHash(goCtx context.Context, req *transwapv1.QueryDenomHashRequest) (*transwapv1.QueryDenomHashResponse, error) {
+func (k Keeper) DenomHash(goCtx context.Context, req *types.QueryDenomHashRequest) (*types.QueryDenomHashResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -198,13 +196,13 @@ func (k Keeper) DenomHash(goCtx context.Context, req *transwapv1.QueryDenomHashR
 		)
 	}
 
-	return &transwapv1.QueryDenomHashResponse{
+	return &types.QueryDenomHashResponse{
 		Hash: denomHash.String(),
 	}, nil
 }
 
 // EscrowAddress implements the EscrowAddress gRPC method
-func (k Keeper) EscrowAddress(goCtx context.Context, req *transwapv1.QueryEscrowAddressRequest) (*transwapv1.QueryEscrowAddressResponse, error) {
+func (k Keeper) EscrowAddress(goCtx context.Context, req *types.QueryEscrowAddressRequest) (*types.QueryEscrowAddressResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -224,13 +222,13 @@ func (k Keeper) EscrowAddress(goCtx context.Context, req *transwapv1.QueryEscrow
 		)
 	}
 
-	return &transwapv1.QueryEscrowAddressResponse{
+	return &types.QueryEscrowAddressResponse{
 		EscrowAddress: addr.String(),
 	}, nil
 }
 
 // TotalEscrowForDenom implements the TotalEscrowForDenom gRPC method.
-func (k Keeper) TotalEscrowForDenom(goCtx context.Context, req *transwapv1.QueryTotalEscrowForDenomRequest) (*transwapv1.QueryTotalEscrowForDenomResponse, error) {
+func (k Keeper) TotalEscrowForDenom(goCtx context.Context, req *types.QueryTotalEscrowForDenomRequest) (*types.QueryTotalEscrowForDenomResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -243,32 +241,5 @@ func (k Keeper) TotalEscrowForDenom(goCtx context.Context, req *transwapv1.Query
 
 	amount := k.GetTotalEscrowForDenom(ctx, req.Denom)
 
-	return &transwapv1.QueryTotalEscrowForDenomResponse{
-		Amount: types.SDKCoinToProto(amount),
-	}, nil
-}
-
-func pulsarPageRequestToSDK(pageReq *queryv1beta1.PageRequest) *sdkquery.PageRequest {
-	if pageReq == nil {
-		return nil
-	}
-
-	return &sdkquery.PageRequest{
-		Key:        pageReq.GetKey(),
-		Offset:     pageReq.GetOffset(),
-		Limit:      pageReq.GetLimit(),
-		CountTotal: pageReq.GetCountTotal(),
-		Reverse:    pageReq.GetReverse(),
-	}
-}
-
-func sdkPageResponseToPulsar(pageRes *sdkquery.PageResponse) *queryv1beta1.PageResponse {
-	if pageRes == nil {
-		return nil
-	}
-
-	return &queryv1beta1.PageResponse{
-		NextKey: pageRes.GetNextKey(),
-		Total:   pageRes.GetTotal(),
-	}
+	return &types.QueryTotalEscrowForDenomResponse{Amount: amount}, nil
 }

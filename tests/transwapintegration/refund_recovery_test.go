@@ -31,9 +31,8 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 
-	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
+
 	guruapp "github.com/gurufinglobal/guru/v3/app"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
@@ -41,7 +40,6 @@ import (
 	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -72,9 +70,9 @@ type appScenario struct {
 	exchangeID     uint64
 	user           sdk.AccAddress
 	userString     string
-	inputTrace     *transwapv1.Denom
+	inputTrace     transwaptypes.Denom
 	inputIBCDenom  string
-	outputTrace    *transwapv1.Denom
+	outputTrace    transwaptypes.Denom
 	outputIBCDenom string
 }
 
@@ -103,7 +101,7 @@ func TestFreshGenesisAppRefundRecoveryAccounting(t *testing.T) {
 
 	firstAttempt, originalPacket := s.timeoutOriginalOutput(first)
 	s.requireVolumeAmount(0)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, firstAttempt.GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_IN_FLIGHT, firstAttempt.GetStatus())
 	require.Equal(t, uint32(1), firstAttempt.GetRetryCount())
 	require.Equal(t, originalTimeout, firstAttempt.GetOriginalTimeoutTimestamp())
 	require.Equal(t, originalHeight, firstAttempt.GetOriginalTimeoutHeight())
@@ -116,7 +114,7 @@ func TestFreshGenesisAppRefundRecoveryAccounting(t *testing.T) {
 
 	firstAttemptPacket := s.activePacket(firstAttempt)
 	secondAttempt := s.timeoutActive(firstAttemptPacket)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_IN_FLIGHT, secondAttempt.GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_IN_FLIGHT, secondAttempt.GetStatus())
 	require.Equal(t, uint32(2), secondAttempt.GetRetryCount())
 	require.NotEqual(t, firstAttempt.GetActivePacketSequence(), secondAttempt.GetActivePacketSequence())
 	require.Greater(t, secondAttempt.GetActiveTimeoutTimestamp(), firstAttempt.GetActiveTimeoutTimestamp())
@@ -183,7 +181,7 @@ func TestFreshGenesisAppRefundRecoveryAccounting(t *testing.T) {
 	require.Equal(t, uint32(1), manualAttempt.GetRetryCount())
 	manualPacket := s.activePacket(manualAttempt)
 	claimable := s.timeoutActive(manualPacket)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, claimable.GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE, claimable.GetStatus())
 	require.Equal(t, uint32(1), claimable.GetRetryCount())
 	require.Zero(t, claimable.GetActivePacketSequence())
 	require.Zero(t, claimable.GetActiveTimeoutTimestamp())
@@ -198,7 +196,7 @@ func TestFreshGenesisAppRefundRecoveryAccounting(t *testing.T) {
 	userBeforeClaim := s.app.BankKeeper.GetBalance(s.ctx, s.user, s.inputIBCDenom)
 	claimed, err := s.app.TranswapKeeper.ClaimRefund(s.ctx, claimable.GetId(), s.userString)
 	require.NoError(t, err)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, claimed.GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_CLAIMED, claimed.GetStatus())
 	userAfterClaim := s.app.BankKeeper.GetBalance(s.ctx, s.user, s.inputIBCDenom)
 	require.Equal(t, userBeforeClaim.Amount.AddRaw(inputAmount), userAfterClaim.Amount)
 	s.requireAccounting(claimed, sdk.NewCoins(), sdk.NewCoins())
@@ -207,7 +205,7 @@ func TestFreshGenesisAppRefundRecoveryAccounting(t *testing.T) {
 
 	claimedAgain, err := s.app.TranswapKeeper.ClaimRefund(s.ctx, claimable.GetId(), s.userString)
 	require.NoError(t, err)
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, claimedAgain.GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_CLAIMED, claimedAgain.GetStatus())
 	require.Equal(t, userAfterClaim.Amount, s.app.BankKeeper.GetBalance(s.ctx, s.user, s.inputIBCDenom).Amount)
 
 	// The packet already timed out before claimability. A late or duplicate
@@ -220,7 +218,7 @@ func TestFreshGenesisAppRefundRecoveryAccounting(t *testing.T) {
 		s.packetData(manualPacket),
 		channeltypes.NewResultAcknowledgement([]byte{1}),
 	))
-	require.Equal(t, transwapv1.RefundStatus_REFUND_STATUS_CLAIMED, s.mustRefund(claimable.GetId()).GetStatus())
+	require.Equal(t, transwaptypes.RefundStatus_REFUND_STATUS_CLAIMED, s.mustRefund(claimable.GetId()).GetStatus())
 	require.Equal(t, userAfterClaim.Amount, s.app.BankKeeper.GetBalance(s.ctx, s.user, s.inputIBCDenom).Amount)
 	require.NoError(t, s.app.TranswapKeeper.AssertRefundInvariants(s.ctx))
 	require.NoError(t, s.app.BexKeeper.AssertInvariants(s.ctx))
@@ -353,7 +351,7 @@ func runFreshGenesisImportChild(t *testing.T) {
 
 	records := application.TranswapKeeper.GetAllRefundRecords(ctx)
 	require.Len(t, records, 1)
-	statuses := make(map[transwapv1.RefundStatus]int, 1)
+	statuses := make(map[transwaptypes.RefundStatus]int, 1)
 	for _, record := range records {
 		statuses[record.GetStatus()]++
 		require.NotZero(t, record.GetOriginalTimeoutTimestamp())
@@ -361,7 +359,7 @@ func runFreshGenesisImportChild(t *testing.T) {
 		require.Zero(t, record.GetActivePacketSequence())
 		require.Zero(t, record.GetActiveTimeoutTimestamp())
 	}
-	require.Equal(t, 1, statuses[transwapv1.RefundStatus_REFUND_STATUS_CLAIMED])
+	require.Equal(t, 1, statuses[transwaptypes.RefundStatus_REFUND_STATUS_CLAIMED])
 	params, err := application.TranswapKeeper.GetParams(ctx)
 	require.NoError(t, err)
 	require.Equal(t, uint32(1), params.GetMaxRefundRetries())
@@ -400,15 +398,28 @@ func runFreshGenesisImportChild(t *testing.T) {
 	application.AppCodec().MustUnmarshalJSON(actualModules[banktypes.ModuleName], actualBank)
 	require.Equal(t, expectedBank, actualBank, "bank genesis changed across fresh import/export")
 
-	expectedBex := &bexv1.GenesisState{}
+	expectedBex := &bextypes.GenesisState{}
 	application.AppCodec().MustUnmarshalJSON(genesis[bextypes.ModuleName], expectedBex)
 	actualBex, err := application.BexKeeper.ExportGenesis(ctx)
 	require.NoError(t, err)
-	require.True(t, proto.Equal(expectedBex, actualBex))
-	expectedTranswap := &transwapv1.GenesisState{}
+	requireEqualGogoMessage(t, expectedBex, actualBex)
+	expectedTranswap := &transwaptypes.GenesisState{}
 	application.AppCodec().MustUnmarshalJSON(genesis[transwaptypes.ModuleName], expectedTranswap)
 	actualTranswap := application.TranswapKeeper.ExportGenesis(ctx)
-	require.True(t, proto.Equal(expectedTranswap, actualTranswap))
+	requireEqualGogoMessage(t, expectedTranswap, actualTranswap)
+}
+
+type gogoMarshaler interface {
+	Marshal() ([]byte, error)
+}
+
+func requireEqualGogoMessage(t *testing.T, expected, actual gogoMarshaler) {
+	t.Helper()
+	expectedBytes, err := expected.Marshal()
+	require.NoError(t, err)
+	actualBytes, err := actual.Marshal()
+	require.NoError(t, err)
+	require.Equal(t, expectedBytes, actualBytes)
 }
 
 func newFreshGenesisScenario(t *testing.T) *appScenario {
@@ -519,7 +530,7 @@ func (s *appScenario) configureExchangeAndLiquidity() {
 	admin := appAddress(s.t, s.app, 0x52)
 	require.NoError(s.t, s.app.BexKeeper.RegisterAdmin(s.ctx, moderator, admin))
 
-	exchange, err := s.app.BexKeeper.RegisterExchange(s.ctx, &bexv1.MsgRegisterExchange{
+	exchange, err := s.app.BexKeeper.RegisterExchange(s.ctx, &bextypes.MsgRegisterExchange{
 		BexAdminAddress:           admin,
 		ExchangeAdminAddress:      admin,
 		DenomA:                    inputDenom,
@@ -536,7 +547,7 @@ func (s *appScenario) configureExchangeAndLiquidity() {
 		LimitBToA:                 "1000000",
 		VolumeCapAToB:             "1000000",
 		VolumeCapBToA:             "1000000",
-		Status:                    bexv1.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
+		Status:                    bextypes.ExchangeStatus_EXCHANGE_STATUS_ACTIVE,
 		Metadata:                  map[string]string{"test": "fresh-genesis-refund-recovery"},
 		VolumeEpochSeconds:        86_400,
 		MaxOracleStalenessSeconds: 3_600,
@@ -561,7 +572,7 @@ func (s *appScenario) configureExchangeAndLiquidity() {
 	require.NoError(s.t, s.app.BexKeeper.AssertInvariants(s.ctx))
 }
 
-func (s *appScenario) receiveSwap() *transwapv1.RefundRecord {
+func (s *appScenario) receiveSwap() *transwaptypes.RefundRecord {
 	s.t.Helper()
 
 	before, found := s.app.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.ctx, transwaptypes.PortID, localChannelID)
@@ -570,7 +581,7 @@ func (s *appScenario) receiveSwap() *transwapv1.RefundRecord {
 	originalHeight := clienttypes.NewHeight(7, 42)
 	data := transwaptypes.NewInternalTransferRepresentation(
 		strconv.FormatUint(s.exchangeID, 10),
-		&transwapv1.Token{Denom: transwaptypes.NewDenom(inputDenom), Amount: strconv.FormatInt(inputAmount, 10)},
+		&transwaptypes.Token{Denom: transwaptypes.NewDenom(inputDenom), Amount: strconv.FormatInt(inputAmount, 10)},
 		s.userString,
 		s.userString,
 		`{"transwap":{"min_amount_out":"101","expected_exchange_revision":"1"}}`,
@@ -593,10 +604,10 @@ func (s *appScenario) receiveSwap() *transwapv1.RefundRecord {
 	return s.mustRefund(refundID)
 }
 
-func (s *appScenario) assertPending(record *transwapv1.RefundRecord) {
+func (s *appScenario) assertPending(record *transwaptypes.RefundRecord) {
 	s.t.Helper()
 
-	require.Equal(s.t, transwapv1.RefundStatus_REFUND_STATUS_PENDING, record.GetStatus())
+	require.Equal(s.t, transwaptypes.RefundStatus_REFUND_STATUS_PENDING, record.GetStatus())
 	require.Equal(s.t, uint32(0), record.GetRetryCount())
 	require.Equal(s.t, uint64(7), record.GetOriginalTimeoutHeight().GetRevisionNumber())
 	require.Equal(s.t, uint64(42), record.GetOriginalTimeoutHeight().GetRevisionHeight())
@@ -618,7 +629,7 @@ func (s *appScenario) assertPending(record *transwapv1.RefundRecord) {
 	require.NoError(s.t, s.app.BexKeeper.AssertInvariants(s.ctx))
 }
 
-func (s *appScenario) timeoutOriginalOutput(record *transwapv1.RefundRecord) (*transwapv1.RefundRecord, channeltypes.Packet) {
+func (s *appScenario) timeoutOriginalOutput(record *transwaptypes.RefundRecord) (*transwaptypes.RefundRecord, channeltypes.Packet) {
 	s.t.Helper()
 
 	packet := s.originalOutputPacket(record)
@@ -626,7 +637,7 @@ func (s *appScenario) timeoutOriginalOutput(record *transwapv1.RefundRecord) (*t
 	return s.mustRefund(record.GetId()), packet
 }
 
-func (s *appScenario) timeoutActive(packet channeltypes.Packet) *transwapv1.RefundRecord {
+func (s *appScenario) timeoutActive(packet channeltypes.Packet) *transwaptypes.RefundRecord {
 	s.t.Helper()
 	s.timeoutPacket(packet)
 	records := s.app.TranswapKeeper.GetAllRefundRecords(s.ctx)
@@ -635,7 +646,7 @@ func (s *appScenario) timeoutActive(packet channeltypes.Packet) *transwapv1.Refu
 			record.GetRefundSourceChannel() == packet.SourceChannel &&
 			record.GetOriginalOutputSequence() <= packet.Sequence &&
 			(record.GetActivePacketSequence() != 0 ||
-				record.GetStatus() == transwapv1.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE) {
+				record.GetStatus() == transwaptypes.RefundStatus_REFUND_STATUS_MANUAL_CLAIMABLE) {
 			return record
 		}
 	}
@@ -671,7 +682,7 @@ func (s *appScenario) acknowledgeSuccess(packet channeltypes.Packet) {
 	))
 }
 
-func (s *appScenario) originalOutputPacket(record *transwapv1.RefundRecord) channeltypes.Packet {
+func (s *appScenario) originalOutputPacket(record *transwaptypes.RefundRecord) channeltypes.Packet {
 	s.t.Helper()
 	reserveString, err := s.app.AccountKeeper.AddressCodec().BytesToString(s.reserveAddress())
 	require.NoError(s.t, err)
@@ -694,13 +705,14 @@ func (s *appScenario) originalOutputPacket(record *transwapv1.RefundRecord) chan
 	)
 }
 
-func (s *appScenario) activePacket(record *transwapv1.RefundRecord) channeltypes.Packet {
+func (s *appScenario) activePacket(record *transwaptypes.RefundRecord) channeltypes.Packet {
 	s.t.Helper()
 	reserveString, err := s.app.AccountKeeper.AddressCodec().BytesToString(s.reserveAddress())
 	require.NoError(s.t, err)
+	token := record.GetToken()
 	data := transwaptypes.NewFungibleTokenPacketData(
-		transwaptypes.DenomPath(record.GetToken().GetDenom()),
-		record.GetToken().GetAmount(),
+		transwaptypes.DenomPath(token.GetDenom()),
+		token.GetAmount(),
 		reserveString,
 		record.GetReceiver(),
 		record.GetMemo(),
@@ -730,7 +742,7 @@ func (s *appScenario) packetData(packet channeltypes.Packet) transwaptypes.Inter
 	return data
 }
 
-func (s *appScenario) mustRefund(refundID string) *transwapv1.RefundRecord {
+func (s *appScenario) mustRefund(refundID string) *transwaptypes.RefundRecord {
 	s.t.Helper()
 	record, found, err := s.app.TranswapKeeper.GetRefundRecord(s.ctx, refundID)
 	require.NoError(s.t, err)
@@ -796,7 +808,7 @@ func (s *appScenario) deletePacketCommitment(packet channeltypes.Packet) {
 	require.Empty(s.t, s.packetCommitment(packet))
 }
 
-func (s *appScenario) requireAccounting(record *transwapv1.RefundRecord, pending, locked sdk.Coins) {
+func (s *appScenario) requireAccounting(record *transwaptypes.RefundRecord, pending, locked sdk.Coins) {
 	s.t.Helper()
 	actualPending, err := s.app.BexKeeper.GetPendingLiabilities(s.ctx, s.exchangeID)
 	require.NoError(s.t, err)
@@ -822,7 +834,7 @@ func (s *appScenario) requireVolumeAmount(amount int64) {
 	used, err := s.app.BexKeeper.GetCurrentVolumeAmount(
 		s.ctx,
 		exchange,
-		bexv1.SwapDirection_SWAP_DIRECTION_A_TO_B,
+		bextypes.SwapDirection_SWAP_DIRECTION_A_TO_B,
 	)
 	require.NoError(s.t, err)
 	require.Equal(s.t, sdkmath.NewInt(amount), used)
