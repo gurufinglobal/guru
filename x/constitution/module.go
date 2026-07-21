@@ -9,19 +9,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 // ConsensusVersion defines the current x/constitution module consensus version.
-const ConsensusVersion = 1
+const ConsensusVersion = 2
 
 var (
 	_ appmodule.AppModule       = AppModule{}
 	_ appmodule.HasServices     = AppModule{}
 	_ appmodule.HasGenesis      = AppModule{}
 	_ appmodule.HasBeginBlocker = AppModule{}
+	_ appmodule.HasEndBlocker   = AppModule{}
 )
 
 // AppModule implements x/constitution using the core appmodule extension interfaces.
@@ -54,21 +54,30 @@ func (AppModule) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 
 // RegisterGRPCGatewayRoutes wires constitution query routes into grpc-gateway.
 func (AppModule) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	if err := constitutionv1.RegisterQueryHandlerClient(context.Background(), mux, constitutionv1.NewQueryClient(clientCtx)); err != nil {
+	if err := constitutiontypes.RegisterQueryHandlerClient(context.Background(), mux, constitutiontypes.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
 
 // RegisterServices registers Msg and Query gRPC services.
 func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
-	constitutionv1.RegisterMsgServer(registrar, constitutionkeeper.NewMsgServer(&am.keeper))
-	constitutionv1.RegisterQueryServer(registrar, constitutionkeeper.NewQueryServer(&am.keeper))
+	constitutiontypes.RegisterMsgServer(registrar, constitutionkeeper.NewMsgServer(&am.keeper))
+	constitutiontypes.RegisterQueryServer(registrar, constitutionkeeper.NewQueryServer(&am.keeper))
 	return nil
 }
 
-// BeginBlock executes constitution separation before other dependent begin blockers.
+// BeginBlock executes fee separation before distribution observes the fee
+// collector. This keeps the chain policy module as the source of truth for
+// base/burn/validator fee routing.
 func (am AppModule) BeginBlock(ctx context.Context) error {
 	return am.keeper.ExecuteSeparation(ctx)
+}
+
+// EndBlock applies a due oracle-driven minimum gas price schedule after normal
+// tx execution. The updated feemarket parameter is therefore a next-block
+// admission rule, which avoids changing the fee rule mid-block.
+func (am AppModule) EndBlock(ctx context.Context) error {
+	return am.keeper.ApplyDueMinGasPriceSchedule(ctx)
 }
 
 // ConsensusVersion returns the x/constitution consensus version.

@@ -1,10 +1,9 @@
 package cli
 
 import (
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	querytypes "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/spf13/cobra"
 )
@@ -42,8 +41,8 @@ func CmdQueryParams() *cobra.Command {
 				return err
 			}
 
-			queryClient := oraclev1.NewQueryClient(clientCtx)
-			resp, err := queryClient.Params(cmd.Context(), &oraclev1.QueryParamsRequest{})
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
@@ -66,13 +65,13 @@ func CmdQueryActiveTasks() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pageReq, err := readPulsarPageRequest(cmd)
+			pageReq, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
 
-			queryClient := oraclev1.NewQueryClient(clientCtx)
-			resp, err := queryClient.ActiveTasks(cmd.Context(), &oraclev1.QueryActiveTasksRequest{Pagination: pageReq})
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.ActiveTasks(cmd.Context(), &types.QueryActiveTasksRequest{Pagination: pageReq})
 			if err != nil {
 				return err
 			}
@@ -97,8 +96,8 @@ func CmdQueryTask() *cobra.Command {
 				return err
 			}
 
-			queryClient := oraclev1.NewQueryClient(clientCtx)
-			resp, err := queryClient.Task(cmd.Context(), &oraclev1.QueryTaskRequest{Symbol: args[0]})
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.Task(cmd.Context(), &types.QueryTaskRequest{Symbol: args[0]})
 			if err != nil {
 				return err
 			}
@@ -122,8 +121,8 @@ func CmdQueryLatestValue() *cobra.Command {
 				return err
 			}
 
-			queryClient := oraclev1.NewQueryClient(clientCtx)
-			resp, err := queryClient.LatestValue(cmd.Context(), &oraclev1.QueryLatestValueRequest{Symbol: args[0]})
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.LatestValue(cmd.Context(), &types.QueryLatestValueRequest{Symbol: args[0]})
 			if err != nil {
 				return err
 			}
@@ -146,13 +145,13 @@ func CmdQueryLatestValues() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pageReq, err := readPulsarPageRequest(cmd)
+			pageReq, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
 
-			queryClient := oraclev1.NewQueryClient(clientCtx)
-			resp, err := queryClient.LatestValues(cmd.Context(), &oraclev1.QueryLatestValuesRequest{Pagination: pageReq})
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.LatestValues(cmd.Context(), &types.QueryLatestValuesRequest{Pagination: pageReq})
 			if err != nil {
 				return err
 			}
@@ -176,13 +175,13 @@ func CmdQueryHistory() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pageReq, err := readPulsarPageRequest(cmd)
+			pageReq, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
 
-			queryClient := oraclev1.NewQueryClient(clientCtx)
-			resp, err := queryClient.History(cmd.Context(), &oraclev1.QueryHistoryRequest{
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.History(cmd.Context(), &types.QueryHistoryRequest{
 				Symbol:     args[0],
 				Pagination: pageReq,
 			})
@@ -199,7 +198,7 @@ func CmdQueryHistory() *cobra.Command {
 	return cmd
 }
 
-func readPulsarPageRequest(cmd *cobra.Command) (*queryv1beta1.PageRequest, error) {
+func readPageRequest(cmd *cobra.Command) (*querytypes.PageRequest, error) {
 	flagSet, err := client.FlagSetWithPageKeyDecoded(cmd.Flags())
 	if err != nil {
 		return nil, err
@@ -209,7 +208,7 @@ func readPulsarPageRequest(cmd *cobra.Command) (*queryv1beta1.PageRequest, error
 		return nil, err
 	}
 
-	return &queryv1beta1.PageRequest{
+	return &querytypes.PageRequest{
 		Key:        pageReq.GetKey(),
 		Offset:     pageReq.GetOffset(),
 		Limit:      pageReq.GetLimit(),

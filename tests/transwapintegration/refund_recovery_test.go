@@ -33,7 +33,6 @@ import (
 
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	guruapp "github.com/gurufinglobal/guru/v3/app"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
@@ -745,9 +744,9 @@ func (s *appScenario) reserveAddress() sdk.AccAddress {
 
 func (s *appScenario) refreshOracle() {
 	s.t.Helper()
-	require.NoError(s.t, s.app.OracleKeeper.SetLatestValue(s.ctx, &oraclev1.OracleValue{
+	require.NoError(s.t, s.app.OracleKeeper.SetLatestValue(s.ctx, &oracletypes.OracleValue{
 		Symbol:        "FOO/BAR",
-		ValueType:     oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		ValueType:     oracletypes.ValueType_VALUE_TYPE_NUMERIC,
 		Value:         "1",
 		BlockHeight:   s.ctx.BlockHeight(),
 		BlockTimeUnix: s.ctx.BlockTime().Unix(),

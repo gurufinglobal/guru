@@ -26,7 +26,7 @@ const (
 func main() {
 	rootCmd := newRootCmd()
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(rootCmd.ErrOrStderr(), err)
+		_, _ = fmt.Fprintln(rootCmd.ErrOrStderr(), err)
 		os.Exit(1)
 	}
 }
@@ -80,17 +80,12 @@ func startCommand() *cobra.Command {
 			runCtx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			tasks, err := oracle.EnsureNodeTasksConfigured(runCtx, cfg)
+			sidecar, err := oracle.NewSidecar(cfg)
 			if err != nil {
 				return err
 			}
 
-			sidecar, err := oracle.NewSidecar(cfg, tasks)
-			if err != nil {
-				return err
-			}
-
-			err = oracle.Start(runCtx, sidecar)
+			err = oracle.Start(runCtx, sidecar, oracle.NewNodeTaskPreflight(cfg, sidecar))
 			if errors.Is(err, context.Canceled) {
 				return nil
 			}

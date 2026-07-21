@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 import "guru/oracle/v1/oracle.proto";
 import "guru/oracle/v1/params.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/oracle/types";
 
 // Query exposes read-only oracle state.
 service Query {

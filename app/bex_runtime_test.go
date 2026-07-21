@@ -28,11 +28,11 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/ethereum/go-ethereum/common"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bexmodule "github.com/gurufinglobal/guru/v3/x/bex"
 	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
+	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -136,9 +136,9 @@ func TestBexAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T) {
 		Amount:     []*basev1beta1.Coin{{Denom: appparams.BaseDenom, Amount: "10"}},
 	}, &bexv1.MsgDepositReserveResponse{}, executedMsgs)
 
-	require.NoError(t, testApp.OracleKeeper.SetLatestValue(ctx, &oraclev1.OracleValue{
+	require.NoError(t, testApp.OracleKeeper.SetLatestValue(ctx, &oracletypes.OracleValue{
 		Symbol:        "AGXN/GXUSD",
-		ValueType:     oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		ValueType:     oracletypes.ValueType_VALUE_TYPE_NUMERIC,
 		Value:         "2",
 		BlockHeight:   ctx.BlockHeight(),
 		BlockTimeUnix: ctx.BlockTime().Unix(),

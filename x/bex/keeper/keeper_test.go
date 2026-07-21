@@ -20,9 +20,9 @@ import (
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	"github.com/gurufinglobal/guru/v3/x/bex/types"
+	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -758,24 +758,24 @@ func (m *mockBankKeeper) SendCoinsFromModuleToAccount(ctx context.Context, sende
 }
 
 type mockOracleKeeper struct {
-	values map[string]*oraclev1.OracleValue
+	values map[string]*oracletypes.OracleValue
 }
 
 func newMockOracleKeeper() *mockOracleKeeper {
-	return &mockOracleKeeper{values: map[string]*oraclev1.OracleValue{}}
+	return &mockOracleKeeper{values: map[string]*oracletypes.OracleValue{}}
 }
 
 func (m *mockOracleKeeper) SetValue(symbol, value string, blockTimeUnix int64) {
-	m.values[symbol] = &oraclev1.OracleValue{
+	m.values[symbol] = &oracletypes.OracleValue{
 		Symbol:        symbol,
-		ValueType:     oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		ValueType:     oracletypes.ValueType_VALUE_TYPE_NUMERIC,
 		Value:         value,
 		BlockHeight:   1,
 		BlockTimeUnix: blockTimeUnix,
 	}
 }
 
-func (m *mockOracleKeeper) GetLatestValue(_ context.Context, symbol string) (*oraclev1.OracleValue, error) {
+func (m *mockOracleKeeper) GetLatestValue(_ context.Context, symbol string) (*oracletypes.OracleValue, error) {
 	value, ok := m.values[symbol]
 	if !ok {
 		return nil, fmt.Errorf("oracle value %s not found", symbol)

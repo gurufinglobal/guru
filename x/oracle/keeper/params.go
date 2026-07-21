@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	"github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
@@ -13,30 +12,35 @@ const (
 	DefaultHistoryLimit  uint32 = 100
 )
 
-func DefaultParams() *oraclev1.Params {
-	return &oraclev1.Params{
+func DefaultParams() *types.Params {
+	return &types.Params{
 		MinValidators: DefaultMinValidators,
 		MinSources:    DefaultMinSources,
 		HistoryLimit:  DefaultHistoryLimit,
 	}
 }
 
-func (k Keeper) GetParams(ctx context.Context) (*oraclev1.Params, error) {
-	return k.params.Get(ctx)
+func (k Keeper) GetParams(ctx context.Context) (*types.Params, error) {
+	params, err := k.params.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &params, nil
 }
 
-func (k Keeper) SetParams(ctx context.Context, params *oraclev1.Params) error {
+func (k Keeper) SetParams(ctx context.Context, params *types.Params) error {
 	if err := ValidateParams(params); err != nil {
 		return err
 	}
-	return k.params.Set(ctx, params)
+	return k.params.Set(ctx, *params)
 }
 
-func (k Keeper) UpdateParams(ctx context.Context, params *oraclev1.Params) error {
+func (k Keeper) UpdateParams(ctx context.Context, params *types.Params) error {
 	return k.SetParams(ctx, params)
 }
 
-func ValidateParams(params *oraclev1.Params) error {
+func ValidateParams(params *types.Params) error {
 	if params == nil {
 		return types.ErrInvalidParams.Wrap("params cannot be nil")
 	}

@@ -39,7 +39,7 @@ to_addr_var="AGENT_ADDR_$recipient_index"
 to_addr="${!to_addr_var}"
 
 amount_base="${TX_AMOUNT_BASE:-1000}"
-fee="${TX_FEE:-1000000agxn}"
+fee="${TX_FEE:-500000000000000000agxn}"
 gas="${TX_GAS:-250000}"
 log_dir="$BASE/logs/tx-workers"
 mkdir -p "$log_dir"

@@ -2,11 +2,9 @@ package keepers
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -43,8 +41,6 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
-	"github.com/ethereum/go-ethereum/common"
-	corevm "github.com/ethereum/go-ethereum/core/vm"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
@@ -134,27 +130,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		authority,
 	)
 
-	blockedAddrs := make(map[string]bool)
-	modules := make([]string, 0, len(moduleAccountPerms))
-	for module := range moduleAccountPerms {
-		modules = append(modules, module)
-	}
-	sort.Strings(modules)
-
-	for _, module := range modules {
-		moduleAddress := authtypes.NewModuleAddress(module)
-		blockedAddrs[moduleAddress.String()] = true
-	}
-
-	blockedPrecompilesHex := append([]string{}, evmtypes.AvailableStaticPrecompiles...)
-	for _, addr := range corevm.PrecompiledAddressesPrague {
-		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
-	}
-
-	for _, precompile := range blockedPrecompilesHex {
-		precompileAddress := common.HexToAddress(precompile)
-		blockedAddrs[sdk.AccAddress(precompileAddress.Bytes()).String()] = true
-	}
+	blockedAddrs := blockedBankAddresses(moduleAccountPerms, addressCodec)
 
 	appKeepers.BankKeeper = bankkeeper.NewBaseKeeper(
 		cfg.AppCodec,
@@ -179,11 +155,13 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	appKeepers.ConstitutionKeeper = constitutionkeeper.NewKeeper(
 		govAddress,
 		runtime.NewKVStoreService(appKeepers.kvKeys[constitutiontypes.StoreKey]),
+		cfg.AppCodec,
 		appKeepers.AccountKeeper.AddressCodec(),
 		appKeepers.BankKeeper,
 	)
 	appKeepers.OracleKeeper = oraclekeeper.NewKeeper(
 		runtime.NewKVStoreService(appKeepers.kvKeys[oracletypes.StoreKey]),
+		cfg.AppCodec,
 		appKeepers.AccountKeeper.AddressCodec(),
 		&appKeepers.ConstitutionKeeper,
 	)
@@ -295,6 +273,8 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		appKeepers.kvKeys[feemarkettypes.StoreKey],
 	)
+	appKeepers.ConstitutionKeeper.SetFeeMarketKeeper(appKeepers.FeeMarketKeeper)
+	appKeepers.OracleKeeper.SetHooks(oracletypes.NewMultiOracleHooks(&appKeepers.ConstitutionKeeper))
 
 	appKeepers.TransferKeeper = transferkeeper.NewKeeper(
 		cfg.AppCodec,

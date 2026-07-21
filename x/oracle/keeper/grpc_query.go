@@ -4,17 +4,16 @@ import (
 	"context"
 	"strconv"
 
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	querytypes "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
-var _ oraclev1.QueryServer = QueryServer{}
+var _ types.QueryServer = QueryServer{}
 
 const DefaultQueryPageLimit uint64 = 30
 
 type QueryServer struct {
-	oraclev1.UnimplementedQueryServer
+	types.UnimplementedQueryServer
 	keeper *Keeper
 }
 
@@ -22,7 +21,7 @@ func NewQueryServer(keeper *Keeper) QueryServer {
 	return QueryServer{keeper: keeper}
 }
 
-func (q QueryServer) Params(ctx context.Context, req *oraclev1.QueryParamsRequest) (*oraclev1.QueryParamsResponse, error) {
+func (q QueryServer) Params(ctx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -31,10 +30,10 @@ func (q QueryServer) Params(ctx context.Context, req *oraclev1.QueryParamsReques
 		return nil, err
 	}
 
-	return &oraclev1.QueryParamsResponse{Params: params}, nil
+	return &types.QueryParamsResponse{Params: params}, nil
 }
 
-func (q QueryServer) ActiveTasks(ctx context.Context, req *oraclev1.QueryActiveTasksRequest) (*oraclev1.QueryActiveTasksResponse, error) {
+func (q QueryServer) ActiveTasks(ctx context.Context, req *types.QueryActiveTasksRequest) (*types.QueryActiveTasksResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -47,10 +46,10 @@ func (q QueryServer) ActiveTasks(ctx context.Context, req *oraclev1.QueryActiveT
 		return nil, err
 	}
 
-	return &oraclev1.QueryActiveTasksResponse{Tasks: tasks, Pagination: pagination}, nil
+	return &types.QueryActiveTasksResponse{Tasks: tasks, Pagination: pagination}, nil
 }
 
-func (q QueryServer) Task(ctx context.Context, req *oraclev1.QueryTaskRequest) (*oraclev1.QueryTaskResponse, error) {
+func (q QueryServer) Task(ctx context.Context, req *types.QueryTaskRequest) (*types.QueryTaskResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -59,10 +58,10 @@ func (q QueryServer) Task(ctx context.Context, req *oraclev1.QueryTaskRequest) (
 		return nil, err
 	}
 
-	return &oraclev1.QueryTaskResponse{Task: task}, nil
+	return &types.QueryTaskResponse{Task: task}, nil
 }
 
-func (q QueryServer) LatestValue(ctx context.Context, req *oraclev1.QueryLatestValueRequest) (*oraclev1.QueryLatestValueResponse, error) {
+func (q QueryServer) LatestValue(ctx context.Context, req *types.QueryLatestValueRequest) (*types.QueryLatestValueResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -71,10 +70,10 @@ func (q QueryServer) LatestValue(ctx context.Context, req *oraclev1.QueryLatestV
 		return nil, err
 	}
 
-	return &oraclev1.QueryLatestValueResponse{Value: value}, nil
+	return &types.QueryLatestValueResponse{Value: value}, nil
 }
 
-func (q QueryServer) LatestValues(ctx context.Context, req *oraclev1.QueryLatestValuesRequest) (*oraclev1.QueryLatestValuesResponse, error) {
+func (q QueryServer) LatestValues(ctx context.Context, req *types.QueryLatestValuesRequest) (*types.QueryLatestValuesResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -87,10 +86,10 @@ func (q QueryServer) LatestValues(ctx context.Context, req *oraclev1.QueryLatest
 		return nil, err
 	}
 
-	return &oraclev1.QueryLatestValuesResponse{Values: values, Pagination: pagination}, nil
+	return &types.QueryLatestValuesResponse{Values: values, Pagination: pagination}, nil
 }
 
-func (q QueryServer) History(ctx context.Context, req *oraclev1.QueryHistoryRequest) (*oraclev1.QueryHistoryResponse, error) {
+func (q QueryServer) History(ctx context.Context, req *types.QueryHistoryRequest) (*types.QueryHistoryResponse, error) {
 	if req == nil {
 		return nil, types.ErrInvalidRequest.Wrap("empty request")
 	}
@@ -102,15 +101,15 @@ func (q QueryServer) History(ctx context.Context, req *oraclev1.QueryHistoryRequ
 	if err != nil {
 		return nil, err
 	}
-	history = &oraclev1.OracleHistory{
+	history = &types.OracleHistory{
 		Symbol: history.GetSymbol(),
 		Values: values,
 	}
 
-	return &oraclev1.QueryHistoryResponse{History: history, Pagination: pagination}, nil
+	return &types.QueryHistoryResponse{History: history, Pagination: pagination}, nil
 }
 
-func paginateResults[T any](items []T, pageReq *queryv1beta1.PageRequest) ([]T, *queryv1beta1.PageResponse, error) {
+func paginateResults[T any](items []T, pageReq *querytypes.PageRequest) ([]T, *querytypes.PageResponse, error) {
 	total := uint64(len(items))
 	offset := uint64(0)
 	limit := DefaultQueryPageLimit
@@ -141,7 +140,7 @@ func paginateResults[T any](items []T, pageReq *queryv1beta1.PageRequest) ([]T, 
 	}
 
 	if offset >= total {
-		return items[:0], &queryv1beta1.PageResponse{Total: total}, nil
+		return items[:0], &querytypes.PageResponse{Total: total}, nil
 	}
 
 	end := offset + limit
@@ -154,7 +153,7 @@ func paginateResults[T any](items []T, pageReq *queryv1beta1.PageRequest) ([]T, 
 		nextKey = []byte(strconv.FormatUint(end, 10))
 	}
 
-	return items[offset:end], &queryv1beta1.PageResponse{
+	return items[offset:end], &querytypes.PageResponse{
 		NextKey: nextKey,
 		Total:   total,
 	}, nil

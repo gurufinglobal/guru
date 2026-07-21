@@ -3,6 +3,8 @@ package guru.constitution.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/constitution/types";
 
-message Params { cosmos.base.v1beta1.Coin min_validator_bond_amount = 1; }
+message Params {
+  cosmos.base.v1beta1.Coin min_validator_bond_amount = 1;
+}

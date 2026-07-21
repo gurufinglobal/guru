@@ -12,10 +12,8 @@ import (
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
@@ -40,7 +38,7 @@ func (c pulsarQueryClient) Block(_ context.Context, height *int64) (*coretypes.R
 	return c.block, nil
 }
 
-func TestPulsarDecodedTxSupportsJSONAndQueryTxRepresentation(t *testing.T) {
+func TestStandardTxConfigSupportsJSONAndQueryTxRepresentation(t *testing.T) {
 	configureSDKBech32ForTest()
 
 	encoding := MakeEncodingConfig(Bech32PrefixAccAddr, Bech32PrefixValAddr, Bech32PrefixConsAddr)
@@ -53,11 +51,11 @@ func TestPulsarDecodedTxSupportsJSONAndQueryTxRepresentation(t *testing.T) {
 	}
 
 	builder := encoding.TxConfig.NewTxBuilder()
-	if err := builder.SetMsgs(&oraclev1.MsgUpsertTask{
+	if err := builder.SetMsgs(&oracletypes.MsgUpsertTask{
 		Moderator: moderator,
-		Task: &oraclev1.OracleTask{
+		Task: &oracletypes.OracleTask{
 			Symbol:             "BTC/USD",
-			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			ValueType:          oracletypes.ValueType_VALUE_TYPE_NUMERIC,
 			Enabled:            true,
 			SubmissionInterval: 5,
 		},
@@ -78,8 +76,12 @@ func TestPulsarDecodedTxSupportsJSONAndQueryTxRepresentation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode tx: %v", err)
 	}
-	if _, ok := decoded.(*pulsarDecodedTx); !ok {
-		t.Fatalf("decoded tx type = %T, want *pulsarDecodedTx", decoded)
+	if len(decoded.GetMsgs()) != 1 {
+		t.Fatalf("decoded tx message count = %d, want 1", len(decoded.GetMsgs()))
+	}
+	decodedMsg, ok := decoded.GetMsgs()[0].(*oracletypes.MsgUpsertTask)
+	if !ok || decodedMsg.GetTask().GetSymbol() != "BTC/USD" {
+		t.Fatalf("decoded tx lost Oracle task: %#v", decoded.GetMsgs()[0])
 	}
 
 	jsonTx, err := encoding.TxConfig.TxJSONEncoder()(decoded)
@@ -135,16 +137,5 @@ func TestPulsarDecodedTxSupportsJSONAndQueryTxRepresentation(t *testing.T) {
 	}
 	if !json.Valid(output.Bytes()) || !bytes.Contains(output.Bytes(), []byte(`"symbol":"BTC/USD"`)) {
 		t.Fatalf("query tx JSON lost nested message data: %s", output.Bytes())
-	}
-}
-
-func TestPulsarTxJSONEncoderRejectsNilDecodedTx(t *testing.T) {
-	encoding := MakeEncodingConfig(Bech32PrefixAccAddr, Bech32PrefixValAddr, Bech32PrefixConsAddr)
-	encoder := encoding.TxConfig.TxJSONEncoder()
-
-	for _, tx := range []sdk.Tx{(*pulsarDecodedTx)(nil), &pulsarDecodedTx{}} {
-		if _, err := encoder(tx); err == nil {
-			t.Fatalf("JSON encode nil Pulsar tx %T: expected error", tx)
-		}
 	}
 }

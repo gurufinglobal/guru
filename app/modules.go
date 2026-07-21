@@ -76,7 +76,8 @@ var (
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
 
-		// constitution separation must run before distribution.
+		// x/constitution splits and burns collected fees before distribution
+		// calculates validator rewards from the remaining fee collector balance.
 		constitutiontypes.ModuleName,
 
 		// no-op and legacy begin blockers
@@ -105,6 +106,9 @@ var (
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
+		// x/constitution updates feemarket MinGasPrice in EndBlock so the new
+		// value is visible to the next block's ante checks, not the current one.
+		constitutiontypes.ModuleName,
 
 		// IBC applications and legacy end blockers; TransSwap drains its bounded refund queue.
 		ibcexported.ModuleName,
@@ -125,6 +129,8 @@ var (
 	initGenesisOrder = []string{
 		authtypes.ModuleName,
 		banktypes.ModuleName,
+		// x/constitution must load policy before staking validates genesis
+		// validator self-bond amounts against the configured minimum.
 		constitutiontypes.ModuleName,
 		oracletypes.ModuleName,
 		bextypes.ModuleName,

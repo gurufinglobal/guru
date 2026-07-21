@@ -11,9 +11,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc"
@@ -24,18 +23,16 @@ import (
 type Sidecar struct {
 	oraclev1.UnimplementedOracleSidecarServer
 
-	config      Config
-	client      *HTTPSourceClient
-	activeTasks []*oraclev1.OracleTask
+	config Config
+	client *HTTPSourceClient
+
+	tasksMu         sync.Mutex
+	tasksConfigured bool
+	tasksReady      chan []*oraclev1.OracleTask
 
 	cacheMu     sync.RWMutex
 	sourceCache map[string]cachedSample
 	fetchGroup  singleflight.Group
-}
-
-type cachedSample struct {
-	sample    *oraclev1.OracleSample
-	fetchedAt time.Time
 }
 
 func NewSidecar(config Config, activeTasks ...[]*oraclev1.OracleTask) (*Sidecar, error) {
@@ -44,17 +41,39 @@ func NewSidecar(config Config, activeTasks ...[]*oraclev1.OracleTask) (*Sidecar,
 		return nil, err
 	}
 
-	tasks := []*oraclev1.OracleTask{}
-	if len(activeTasks) > 0 {
-		tasks = normalizedTasks(activeTasks[0])
-	}
-
-	return &Sidecar{
+	sidecar := &Sidecar{
 		config:      config,
 		client:      NewHTTPSourceClient(),
-		activeTasks: tasks,
+		tasksReady:  make(chan []*oraclev1.OracleTask, 1),
 		sourceCache: map[string]cachedSample{},
-	}, nil
+	}
+	if len(activeTasks) > 0 {
+		if err := sidecar.ConfigureActiveTasks(activeTasks[0]); err != nil {
+			return nil, err
+		}
+	}
+
+	return sidecar, nil
+}
+
+// ConfigureActiveTasks enables interval pollers after the node preflight has
+// confirmed that the local sources satisfy the active on-chain Oracle tasks.
+// Request-carried tasks remain usable before this transition.
+func (s *Sidecar) ConfigureActiveTasks(tasks []*oraclev1.OracleTask) error {
+	tasks = normalizedTasks(tasks)
+	if len(tasks) == 0 {
+		return fmt.Errorf("active tasks are required")
+	}
+
+	s.tasksMu.Lock()
+	defer s.tasksMu.Unlock()
+	if s.tasksConfigured {
+		return fmt.Errorf("active tasks are already configured")
+	}
+	s.tasksConfigured = true
+	s.tasksReady <- tasks
+
+	return nil
 }
 
 func (s *Sidecar) Run(ctx context.Context) error {
@@ -73,14 +92,13 @@ func (s *Sidecar) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 
 	server := grpc.NewServer()
 	oraclev1.RegisterOracleSidecarServer(server, s)
 	log.Printf(
-		"oracle sidecar serving socket=%q active_tasks=%d configured_sources=%d",
+		"oracle sidecar state=serving socket=%q configured_sources=%d",
 		socketPath,
-		len(s.activeTasks),
 		len(s.config.Sources),
 	)
 
@@ -97,11 +115,15 @@ func (s *Sidecar) Run(ctx context.Context) error {
 
 		return nil
 	})
-	if len(s.activeTasks) != 0 {
-		group.Go(func() error {
-			return s.runSourcePollers(runCtx)
-		})
-	}
+	group.Go(func() error {
+		select {
+		case tasks := <-s.tasksReady:
+			log.Printf("oracle sidecar state=ready active_tasks=%d", len(tasks))
+			return s.runSourcePollers(runCtx, tasks)
+		case <-runCtx.Done():
+			return nil
+		}
+	})
 
 	return group.Wait()
 }
@@ -207,138 +229,6 @@ func (s *Sidecar) GetSamples(ctx context.Context, req *oraclev1.GetSamplesReques
 
 func (s *Sidecar) matchingSources(task *oraclev1.OracleTask) []SourceConfig {
 	return MatchingSourcesForTasks(s.config.Sources, []*oraclev1.OracleTask{task})
-}
-
-func (s *Sidecar) runSourcePollers(ctx context.Context) error {
-	sourceTimeout, err := s.config.SourceTimeoutDuration()
-	if err != nil {
-		return err
-	}
-
-	group, pollCtx := errgroup.WithContext(ctx)
-	pollers := 0
-	for _, task := range s.activeTasks {
-		for _, source := range s.matchingSources(task) {
-			if _, ok, err := source.IntervalDuration(); err != nil {
-				return err
-			} else if !ok {
-				continue
-			}
-
-			task := task
-			source := source
-			group.Go(func() error {
-				return s.pollSource(pollCtx, source, task, sourceTimeout)
-			})
-			pollers++
-		}
-	}
-	log.Printf("oracle sidecar source pollers started count=%d", pollers)
-
-	return group.Wait()
-}
-
-func (s *Sidecar) pollSource(ctx context.Context, source SourceConfig, task *oraclev1.OracleTask, sourceTimeout time.Duration) error {
-	interval, ok, err := source.IntervalDuration()
-	if err != nil || !ok {
-		return err
-	}
-	log.Printf(
-		"oracle sidecar source poller started symbol=%q source=%q interval=%s",
-		normalizeSymbol(task.GetSymbol()),
-		strings.TrimSpace(source.Name),
-		interval,
-	)
-
-	timer := time.NewTimer(0)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-timer.C:
-			sample, err := s.fetchAndCache(ctx, source, task, sourceTimeout)
-			if err != nil {
-				log.Printf(
-					"oracle sidecar source poll failed symbol=%q source=%q err=%v",
-					normalizeSymbol(task.GetSymbol()),
-					strings.TrimSpace(source.Name),
-					err,
-				)
-			} else {
-				log.Printf(
-					"oracle sidecar source polled symbol=%q source=%q value=%q",
-					normalizeSymbol(task.GetSymbol()),
-					sample.GetSource(),
-					sample.GetValue(),
-				)
-			}
-			timer.Reset(interval)
-		}
-	}
-}
-
-func (s *Sidecar) sampleForSource(ctx context.Context, source SourceConfig, task *oraclev1.OracleTask, sourceTimeout time.Duration) (*oraclev1.OracleSample, error) {
-	interval, ok, err := source.IntervalDuration()
-	if err != nil {
-		return nil, err
-	}
-	if ok {
-		if sample, found := s.cachedSourceSample(source, task, interval); found {
-			return sample, nil
-		}
-
-		return s.fetchAndCache(ctx, source, task, sourceTimeout)
-	}
-
-	return s.client.Fetch(ctx, source, task, sourceTimeout)
-}
-
-func (s *Sidecar) cachedSourceSample(source SourceConfig, task *oraclev1.OracleTask, interval time.Duration) (*oraclev1.OracleSample, bool) {
-	key := sourceCacheKey(source, task)
-	now := s.client.now()
-
-	s.cacheMu.RLock()
-	cached, found := s.sourceCache[key]
-	s.cacheMu.RUnlock()
-	if !found || now.Sub(cached.fetchedAt) > interval {
-		return nil, false
-	}
-
-	return cloneOracleSample(cached.sample), true
-}
-
-func (s *Sidecar) fetchAndCache(ctx context.Context, source SourceConfig, task *oraclev1.OracleTask, sourceTimeout time.Duration) (*oraclev1.OracleSample, error) {
-	key := sourceCacheKey(source, task)
-	result, err, _ := s.fetchGroup.Do(key, func() (any, error) {
-		return s.client.Fetch(ctx, source, task, sourceTimeout)
-	})
-	if err != nil {
-		return nil, err
-	}
-	sample := result.(*oraclev1.OracleSample)
-
-	s.cacheMu.Lock()
-	s.sourceCache[key] = cachedSample{
-		sample:    cloneOracleSample(sample),
-		fetchedAt: s.client.now(),
-	}
-	s.cacheMu.Unlock()
-
-	return cloneOracleSample(sample), nil
-}
-
-func sourceCacheKey(source SourceConfig, task *oraclev1.OracleTask) string {
-	return normalizeSymbol(task.GetSymbol()) + "\x00" + strings.TrimSpace(source.Name)
-}
-
-func cloneOracleSample(sample *oraclev1.OracleSample) *oraclev1.OracleSample {
-	if sample == nil {
-		return nil
-	}
-
-	cloned := *sample
-	return &cloned
 }
 
 func SocketPath(socket string) string {

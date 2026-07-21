@@ -7,6 +7,7 @@ import (
 
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
 )
@@ -14,6 +15,12 @@ import (
 func patchExportCommand(rootCmd *cobra.Command) {
 	for _, cmd := range rootCmd.Commands() {
 		if cmd.Name() == "export" {
+			if err := cmd.Flags().MarkHidden(sdkserver.FlagForZeroHeight); err != nil {
+				panic(err)
+			}
+			if err := cmd.Flags().MarkHidden(sdkserver.FlagJailAllowedAddrs); err != nil {
+				panic(err)
+			}
 			patchExportRunE(cmd)
 			return
 		}

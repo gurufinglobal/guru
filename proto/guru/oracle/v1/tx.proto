@@ -6,7 +6,7 @@ import "cosmos_proto/cosmos.proto";
 import "guru/oracle/v1/oracle.proto";
 import "guru/oracle/v1/params.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/oracle/types";
 
 // Msg exposes moderator-controlled oracle mutations.
 service Msg {

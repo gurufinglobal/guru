@@ -11,7 +11,9 @@ import (
 	sdkbech32 "github.com/cosmos/cosmos-sdk/types/bech32"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
+	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
 func TestShouldUsePulsarFallbackOnlyForGuruNestedMessageLookup(t *testing.T) {
@@ -43,6 +45,67 @@ func TestShouldUsePulsarFallbackOnlyForGuruNestedMessageLookup(t *testing.T) {
 				t.Fatalf("shouldUsePulsarFallback() = %t, want %t", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestTranswapUpdateParamsRoundTripsThroughPulsarFallback(t *testing.T) {
+	configureSDKBech32ForTest()
+
+	encoding := MakeEncodingConfig(Bech32PrefixAccAddr, Bech32PrefixValAddr, Bech32PrefixConsAddr)
+	transwaptypes.RegisterInterfaces(encoding.InterfaceRegistry)
+
+	authorityBytes := bytes.Repeat([]byte{0x41}, 20)
+	feePayerBytes := bytes.Repeat([]byte{0x42}, 20)
+	authority, err := sdkbech32.ConvertAndEncode(Bech32PrefixAccAddr, authorityBytes)
+	if err != nil {
+		t.Fatalf("authority address: %v", err)
+	}
+
+	builder := encoding.TxConfig.NewTxBuilder()
+	msg := &transwapv1.MsgUpdateParams{
+		Authority: authority,
+		Params:    transwaptypes.DefaultParams(),
+	}
+	if err := builder.SetMsgs(msg); err != nil {
+		t.Fatalf("set TransSwap update params: %v", err)
+	}
+	builder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("agxn", sdkmath.NewInt(10))))
+	builder.SetFeePayer(feePayerBytes)
+
+	txBytes, err := encoding.TxConfig.TxEncoder()(builder.GetTx())
+	if err != nil {
+		t.Fatalf("encode tx: %v", err)
+	}
+	decodedTx, err := encoding.TxConfig.TxDecoder()(txBytes)
+	if err != nil {
+		t.Fatalf("decode tx: %v", err)
+	}
+	if _, ok := decodedTx.(*pulsarDecodedTx); !ok {
+		t.Fatalf("decoded nested TransSwap tx %T did not use Pulsar fallback", decodedTx)
+	}
+
+	decodedMsgs := decodedTx.GetMsgs()
+	if len(decodedMsgs) != 1 {
+		t.Fatalf("unexpected decoded message count: %d", len(decodedMsgs))
+	}
+	decodedMsg, ok := decodedMsgs[0].(*transwapv1.MsgUpdateParams)
+	if !ok {
+		t.Fatalf("unexpected decoded message type: %T", decodedMsgs[0])
+	}
+	if decodedMsg.GetAuthority() != authority || decodedMsg.GetParams() == nil {
+		t.Fatalf("unexpected decoded TransSwap update params: %+v", decodedMsg)
+	}
+
+	sigTx, ok := decodedTx.(authsigning.SigVerifiableTx)
+	if !ok {
+		t.Fatalf("decoded tx %T does not implement SigVerifiableTx", decodedTx)
+	}
+	signers, err := sigTx.GetSigners()
+	if err != nil {
+		t.Fatalf("get signers: %v", err)
+	}
+	if len(signers) != 2 || !bytes.Equal(signers[0], authorityBytes) || !bytes.Equal(signers[1], feePayerBytes) {
+		t.Fatalf("unexpected signers: got=%X want authority=%X fee_payer=%X", signers, authorityBytes, feePayerBytes)
 	}
 }
 

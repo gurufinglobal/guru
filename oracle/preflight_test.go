@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	querytypes "github.com/cosmos/cosmos-sdk/types/query"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
@@ -200,7 +200,7 @@ func startOracleQueryServer(t *testing.T, params *oraclev1.Params, tasks []*orac
 	require.NoError(t, err)
 
 	server := grpc.NewServer()
-	oraclev1.RegisterQueryServer(server, fakeOracleQueryServer{
+	oraclev1.RegisterQueryServer(server, &fakeOracleQueryServer{
 		params: params,
 		tasks:  tasks,
 	})
@@ -249,7 +249,7 @@ func (f fakeOracleQueryServer) ActiveTasks(_ context.Context, req *oraclev1.Quer
 	total := uint64(len(f.tasks))
 	if offset >= total {
 		return &oraclev1.QueryActiveTasksResponse{
-			Pagination: &queryv1beta1.PageResponse{Total: total},
+			Pagination: &querytypes.PageResponse{Total: total},
 		}, nil
 	}
 
@@ -265,7 +265,7 @@ func (f fakeOracleQueryServer) ActiveTasks(_ context.Context, req *oraclev1.Quer
 
 	return &oraclev1.QueryActiveTasksResponse{
 		Tasks: f.tasks[offset:end],
-		Pagination: &queryv1beta1.PageResponse{
+		Pagination: &querytypes.PageResponse{
 			NextKey: nextKey,
 			Total:   total,
 		},

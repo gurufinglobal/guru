@@ -14,6 +14,7 @@ func TestOracleCLICommandsAreRegistered(t *testing.T) {
 	}{
 		{name: "tx oracle", cmd: txCommand, args: []string{"oracle"}},
 		{name: "query oracle", cmd: queryCommand, args: []string{"oracle"}},
+		{name: "query constitution min gas price", cmd: queryCommand, args: []string{"constitution", "min-gas-price"}},
 	}
 
 	for _, tc := range tests {

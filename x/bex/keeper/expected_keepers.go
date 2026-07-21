@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 type AccountKeeper interface {
@@ -27,7 +27,7 @@ type BankKeeper interface {
 }
 
 type OracleKeeper interface {
-	GetLatestValue(ctx context.Context, symbol string) (*oraclev1.OracleValue, error)
+	GetLatestValue(ctx context.Context, symbol string) (*oracletypes.OracleValue, error)
 }
 
 type ConstitutionKeeper interface {

@@ -8,9 +8,9 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestValidatorResultsFromSamplesComputesMedian(t *testing.T) {
@@ -95,12 +95,12 @@ func TestVerifyVoteExtensionAcceptsEmptyAndRejectsMalformed(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, abcitypes.ResponseVerifyVoteExtension_REJECT, malformed.Status)
 
-	validBz, err := proto.Marshal(&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
+	validBz, err := (&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
 		Symbol:      "BTC/USD",
 		ValueType:   oraclev1.ValueType_VALUE_TYPE_NUMERIC,
 		Value:       "1.0",
 		SourceCount: 3,
-	}}})
+	}}}).Marshal()
 	require.NoError(t, err)
 	valid, err := handler.VerifyVoteExtension(sdk.Context{}, &abcitypes.RequestVerifyVoteExtension{VoteExtension: validBz})
 	require.NoError(t, err)
@@ -141,6 +141,31 @@ func TestAggregateValuesUsesUnweightedMedianOfValidatorMedians(t *testing.T) {
 	require.Equal(t, "1.500000000000000000", values[0].GetValue())
 	require.Equal(t, int64(12), values[0].GetBlockHeight())
 	require.Equal(t, int64(99), values[0].GetBlockTimeUnix())
+}
+
+func TestAggregateValuesSkipsNonPositiveMinGasPriceTarget(t *testing.T) {
+	voteA := mustVoteExtensionBz(t, appparams.MinGasPriceOracleSymbol, "0")
+	voteB := mustVoteExtensionBz(t, appparams.MinGasPriceOracleSymbol, "-1.0")
+
+	ctx := sdk.Context{}.WithBlockTime(time.Unix(99, 0))
+	aggregator := Aggregator{keeper: fakeKeeper{
+		params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+		tasks: []*oraclev1.OracleTask{{
+			Symbol:             appparams.MinGasPriceOracleSymbol,
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
+		}},
+	}}
+
+	values, err := aggregator.aggregateValues(ctx, 12, abcitypes.ExtendedCommitInfo{
+		Votes: []abcitypes.ExtendedVoteInfo{
+			{BlockIdFlag: cmtproto.BlockIDFlagCommit, VoteExtension: voteA},
+			{BlockIdFlag: cmtproto.BlockIDFlagCommit, VoteExtension: voteB},
+		},
+	})
+	require.NoError(t, err)
+	require.Empty(t, values)
 }
 
 func TestAggregateValuesUsesOnlyDueTasksForPreviousHeight(t *testing.T) {
@@ -197,12 +222,12 @@ func TestOraclePayloadExpectedRequiresDueTasks(t *testing.T) {
 func mustVoteExtensionBz(t *testing.T, symbol string, value string) []byte {
 	t.Helper()
 
-	bz, err := proto.Marshal(&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
+	bz, err := (&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
 		Symbol:      symbol,
 		ValueType:   oraclev1.ValueType_VALUE_TYPE_NUMERIC,
 		Value:       value,
 		SourceCount: 3,
-	}}})
+	}}}).Marshal()
 	require.NoError(t, err)
 	return bz
 }

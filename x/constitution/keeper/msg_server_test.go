@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +12,7 @@ func TestMsgServerUpdateParams(t *testing.T) {
 	tests := []struct {
 		name          string
 		withInitParam bool
-		request       *constitutionv1.MsgUpdateParams
+		request       *constitutiontypes.MsgUpdateParams
 		shouldErr     bool
 	}{
 		{
@@ -25,7 +24,7 @@ func TestMsgServerUpdateParams(t *testing.T) {
 		{
 			name:          "fails on invalid authority",
 			withInitParam: true,
-			request: &constitutionv1.MsgUpdateParams{
+			request: &constitutiontypes.MsgUpdateParams{
 				Authority: "invalid-authority",
 				Params:    testParams("12"),
 			},
@@ -34,7 +33,7 @@ func TestMsgServerUpdateParams(t *testing.T) {
 		{
 			name:          "fails on invalid params",
 			withInitParam: true,
-			request: &constitutionv1.MsgUpdateParams{
+			request: &constitutiontypes.MsgUpdateParams{
 				Params: testParams("0"),
 			},
 			shouldErr: true,
@@ -42,7 +41,7 @@ func TestMsgServerUpdateParams(t *testing.T) {
 		{
 			name:          "updates params even when current params are missing",
 			withInitParam: false,
-			request: &constitutionv1.MsgUpdateParams{
+			request: &constitutiontypes.MsgUpdateParams{
 				Params: testParams("12"),
 			},
 			shouldErr: false,
@@ -50,7 +49,7 @@ func TestMsgServerUpdateParams(t *testing.T) {
 		{
 			name:          "updates params successfully",
 			withInitParam: true,
-			request: &constitutionv1.MsgUpdateParams{
+			request: &constitutiontypes.MsgUpdateParams{
 				Params: testParams("12"),
 			},
 			shouldErr: false,
@@ -66,9 +65,9 @@ func TestMsgServerUpdateParams(t *testing.T) {
 				f = setupKeeperFixtureWithoutParams(t)
 			}
 
-			var req *constitutionv1.MsgUpdateParams
+			var req *constitutiontypes.MsgUpdateParams
 			if tc.request != nil {
-				req = &constitutionv1.MsgUpdateParams{
+				req = &constitutiontypes.MsgUpdateParams{
 					Authority: tc.request.Authority,
 					Params:    tc.request.Params,
 				}
@@ -87,7 +86,7 @@ func TestMsgServerUpdateParams(t *testing.T) {
 
 			params, err := f.keeper.GetParams(f.ctx)
 			require.NoError(t, err)
-			require.Equal(t, "12", params.GetMinValidatorBondAmount().Amount)
+			require.Equal(t, "12", params.GetMinValidatorBondAmount().Amount.String())
 		})
 	}
 }
@@ -100,14 +99,14 @@ func TestMsgServerUpdateParamsIgnoresConsensusParamsAuthority(t *testing.T) {
 	})
 	msgServer := NewMsgServer(&f.keeper)
 
-	_, err := msgServer.UpdateParams(f.ctx, &constitutionv1.MsgUpdateParams{
+	_, err := msgServer.UpdateParams(f.ctx, &constitutiontypes.MsgUpdateParams{
 		Authority: consensusAuthority,
 		Params:    testParams("12"),
 	})
 	require.Error(t, err)
 	require.ErrorIs(t, err, constitutiontypes.ErrInvalidAuthority)
 
-	_, err = msgServer.UpdateParams(f.ctx, &constitutionv1.MsgUpdateParams{
+	_, err = msgServer.UpdateParams(f.ctx, &constitutiontypes.MsgUpdateParams{
 		Authority: f.authority,
 		Params:    testParams("12"),
 	})
@@ -118,7 +117,7 @@ func TestMsgServerUpdateParamsAcceptsAuthorityHexEquivalent(t *testing.T) {
 	f := setupKeeperFixture(t)
 	msgServer := NewMsgServer(&f.keeper)
 
-	_, err := msgServer.UpdateParams(f.ctx, &constitutionv1.MsgUpdateParams{
+	_, err := msgServer.UpdateParams(f.ctx, &constitutiontypes.MsgUpdateParams{
 		Authority: testHexAddress(0x01),
 		Params:    testParams("12"),
 	})
@@ -128,7 +127,7 @@ func TestMsgServerUpdateParamsAcceptsAuthorityHexEquivalent(t *testing.T) {
 func TestMsgServerUpdateBaseAddress(t *testing.T) {
 	tests := []struct {
 		name      string
-		request   *constitutionv1.MsgUpdateBaseAddress
+		request   *constitutiontypes.MsgUpdateBaseAddress
 		shouldErr bool
 	}{
 		{
@@ -138,7 +137,7 @@ func TestMsgServerUpdateBaseAddress(t *testing.T) {
 		},
 		{
 			name: "fails on invalid moderator",
-			request: &constitutionv1.MsgUpdateBaseAddress{
+			request: &constitutiontypes.MsgUpdateBaseAddress{
 				Moderator:   "invalid-moderator",
 				BaseAddress: "invalid-base",
 			},
@@ -146,21 +145,21 @@ func TestMsgServerUpdateBaseAddress(t *testing.T) {
 		},
 		{
 			name: "fails on invalid base address",
-			request: &constitutionv1.MsgUpdateBaseAddress{
+			request: &constitutiontypes.MsgUpdateBaseAddress{
 				BaseAddress: "invalid-base",
 			},
 			shouldErr: true,
 		},
 		{
 			name: "fails when base address equals authority",
-			request: &constitutionv1.MsgUpdateBaseAddress{
+			request: &constitutiontypes.MsgUpdateBaseAddress{
 				BaseAddress: "",
 			},
 			shouldErr: true,
 		},
 		{
 			name: "updates base address successfully",
-			request: &constitutionv1.MsgUpdateBaseAddress{
+			request: &constitutiontypes.MsgUpdateBaseAddress{
 				BaseAddress: "",
 			},
 			shouldErr: false,
@@ -172,9 +171,9 @@ func TestMsgServerUpdateBaseAddress(t *testing.T) {
 			f := setupKeeperFixture(t)
 			msgServer := NewMsgServer(&f.keeper)
 
-			var req *constitutionv1.MsgUpdateBaseAddress
+			var req *constitutiontypes.MsgUpdateBaseAddress
 			if tc.request != nil {
-				req = &constitutionv1.MsgUpdateBaseAddress{
+				req = &constitutiontypes.MsgUpdateBaseAddress{
 					Moderator:   tc.request.Moderator,
 					BaseAddress: tc.request.BaseAddress,
 				}
@@ -212,7 +211,7 @@ func TestMsgServerModeratorMessagesIgnoreConsensusParamsAuthority(t *testing.T) 
 		{
 			name: "update base address",
 			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
-				_, err := msgServer.UpdateBaseAddress(f.ctx, &constitutionv1.MsgUpdateBaseAddress{
+				_, err := msgServer.UpdateBaseAddress(f.ctx, &constitutiontypes.MsgUpdateBaseAddress{
 					Moderator:   moderator,
 					BaseAddress: testAddress(t, f.keeper.accountCodec, 0x09),
 				})
@@ -222,7 +221,7 @@ func TestMsgServerModeratorMessagesIgnoreConsensusParamsAuthority(t *testing.T) 
 		{
 			name: "update moderator address",
 			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
-				_, err := msgServer.UpdateModeratorAddress(f.ctx, &constitutionv1.MsgUpdateModeratorAddress{
+				_, err := msgServer.UpdateModeratorAddress(f.ctx, &constitutiontypes.MsgUpdateModeratorAddress{
 					Moderator:        moderator,
 					ModeratorAddress: testAddress(t, f.keeper.accountCodec, 0x0a),
 				})
@@ -232,7 +231,7 @@ func TestMsgServerModeratorMessagesIgnoreConsensusParamsAuthority(t *testing.T) 
 		{
 			name: "update separation ratio",
 			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
-				_, err := msgServer.UpdateSeparationRatio(f.ctx, &constitutionv1.MsgUpdateSeparationRatio{
+				_, err := msgServer.UpdateSeparationRatio(f.ctx, &constitutiontypes.MsgUpdateSeparationRatio{
 					Moderator:       moderator,
 					SeparationRatio: testSeparationRatio(100_000, 200_000, 700_000),
 				})
@@ -268,7 +267,7 @@ func TestMsgServerModeratorMessagesAcceptModeratorHexEquivalent(t *testing.T) {
 		{
 			name: "update base address",
 			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
-				_, err := msgServer.UpdateBaseAddress(f.ctx, &constitutionv1.MsgUpdateBaseAddress{
+				_, err := msgServer.UpdateBaseAddress(f.ctx, &constitutiontypes.MsgUpdateBaseAddress{
 					Moderator:   moderator,
 					BaseAddress: testAddress(t, f.keeper.accountCodec, 0x0c),
 				})
@@ -278,7 +277,7 @@ func TestMsgServerModeratorMessagesAcceptModeratorHexEquivalent(t *testing.T) {
 		{
 			name: "update moderator address",
 			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
-				_, err := msgServer.UpdateModeratorAddress(f.ctx, &constitutionv1.MsgUpdateModeratorAddress{
+				_, err := msgServer.UpdateModeratorAddress(f.ctx, &constitutiontypes.MsgUpdateModeratorAddress{
 					Moderator:        moderator,
 					ModeratorAddress: testAddress(t, f.keeper.accountCodec, 0x0d),
 				})
@@ -288,7 +287,7 @@ func TestMsgServerModeratorMessagesAcceptModeratorHexEquivalent(t *testing.T) {
 		{
 			name: "update separation ratio",
 			run: func(msgServer MsgServer, f keeperTestFixture, moderator string) error {
-				_, err := msgServer.UpdateSeparationRatio(f.ctx, &constitutionv1.MsgUpdateSeparationRatio{
+				_, err := msgServer.UpdateSeparationRatio(f.ctx, &constitutiontypes.MsgUpdateSeparationRatio{
 					Moderator:       moderator,
 					SeparationRatio: testSeparationRatio(100_000, 200_000, 700_000),
 				})
@@ -314,7 +313,7 @@ func TestMsgServerUpdateBaseAddressRejectsBlockedAddressHexEquivalent(t *testing
 	f.bankKeeper.SetBlockedAddressString(blockedAddress, true)
 	msgServer := NewMsgServer(&f.keeper)
 
-	_, err := msgServer.UpdateBaseAddress(f.ctx, &constitutionv1.MsgUpdateBaseAddress{
+	_, err := msgServer.UpdateBaseAddress(f.ctx, &constitutiontypes.MsgUpdateBaseAddress{
 		Moderator:   f.moderatorAddress,
 		BaseAddress: testHexAddress(0x0e),
 	})
@@ -325,7 +324,7 @@ func TestMsgServerUpdateBaseAddressRejectsBlockedAddressHexEquivalent(t *testing
 func TestMsgServerUpdateModeratorAddress(t *testing.T) {
 	tests := []struct {
 		name      string
-		request   *constitutionv1.MsgUpdateModeratorAddress
+		request   *constitutiontypes.MsgUpdateModeratorAddress
 		shouldErr bool
 	}{
 		{
@@ -335,7 +334,7 @@ func TestMsgServerUpdateModeratorAddress(t *testing.T) {
 		},
 		{
 			name: "fails on invalid moderator",
-			request: &constitutionv1.MsgUpdateModeratorAddress{
+			request: &constitutiontypes.MsgUpdateModeratorAddress{
 				Moderator:        "invalid-moderator",
 				ModeratorAddress: "invalid-address",
 			},
@@ -343,21 +342,21 @@ func TestMsgServerUpdateModeratorAddress(t *testing.T) {
 		},
 		{
 			name: "fails on invalid new moderator address",
-			request: &constitutionv1.MsgUpdateModeratorAddress{
+			request: &constitutiontypes.MsgUpdateModeratorAddress{
 				ModeratorAddress: "invalid-address",
 			},
 			shouldErr: true,
 		},
 		{
 			name: "fails when moderator address equals authority",
-			request: &constitutionv1.MsgUpdateModeratorAddress{
+			request: &constitutiontypes.MsgUpdateModeratorAddress{
 				ModeratorAddress: "",
 			},
 			shouldErr: true,
 		},
 		{
 			name: "updates moderator address successfully",
-			request: &constitutionv1.MsgUpdateModeratorAddress{
+			request: &constitutiontypes.MsgUpdateModeratorAddress{
 				ModeratorAddress: "",
 			},
 			shouldErr: false,
@@ -369,9 +368,9 @@ func TestMsgServerUpdateModeratorAddress(t *testing.T) {
 			f := setupKeeperFixture(t)
 			msgServer := NewMsgServer(&f.keeper)
 
-			var req *constitutionv1.MsgUpdateModeratorAddress
+			var req *constitutiontypes.MsgUpdateModeratorAddress
 			if tc.request != nil {
-				req = &constitutionv1.MsgUpdateModeratorAddress{
+				req = &constitutiontypes.MsgUpdateModeratorAddress{
 					Moderator:        tc.request.Moderator,
 					ModeratorAddress: tc.request.ModeratorAddress,
 				}
@@ -406,19 +405,19 @@ func TestMsgServerUpdateModeratorAddressReplacesSigner(t *testing.T) {
 	msgServer := NewMsgServer(&f.keeper)
 
 	newModerator := testAddress(t, f.keeper.accountCodec, 0x06)
-	_, err := msgServer.UpdateModeratorAddress(f.ctx, &constitutionv1.MsgUpdateModeratorAddress{
+	_, err := msgServer.UpdateModeratorAddress(f.ctx, &constitutiontypes.MsgUpdateModeratorAddress{
 		Moderator:        f.moderatorAddress,
 		ModeratorAddress: newModerator,
 	})
 	require.NoError(t, err)
 
-	_, err = msgServer.UpdateBaseAddress(f.ctx, &constitutionv1.MsgUpdateBaseAddress{
+	_, err = msgServer.UpdateBaseAddress(f.ctx, &constitutiontypes.MsgUpdateBaseAddress{
 		Moderator:   f.moderatorAddress,
 		BaseAddress: testAddress(t, f.keeper.accountCodec, 0x07),
 	})
 	require.Error(t, err)
 
-	_, err = msgServer.UpdateBaseAddress(f.ctx, &constitutionv1.MsgUpdateBaseAddress{
+	_, err = msgServer.UpdateBaseAddress(f.ctx, &constitutiontypes.MsgUpdateBaseAddress{
 		Moderator:   newModerator,
 		BaseAddress: testAddress(t, f.keeper.accountCodec, 0x07),
 	})
@@ -428,7 +427,7 @@ func TestMsgServerUpdateModeratorAddressReplacesSigner(t *testing.T) {
 func TestMsgServerUpdateSeparationRatio(t *testing.T) {
 	tests := []struct {
 		name      string
-		request   *constitutionv1.MsgUpdateSeparationRatio
+		request   *constitutiontypes.MsgUpdateSeparationRatio
 		shouldErr bool
 	}{
 		{
@@ -438,7 +437,7 @@ func TestMsgServerUpdateSeparationRatio(t *testing.T) {
 		},
 		{
 			name: "fails on invalid moderator",
-			request: &constitutionv1.MsgUpdateSeparationRatio{
+			request: &constitutiontypes.MsgUpdateSeparationRatio{
 				Moderator:       "invalid-moderator",
 				SeparationRatio: testSeparationRatio(200_000, 300_000, 500_000),
 			},
@@ -446,14 +445,14 @@ func TestMsgServerUpdateSeparationRatio(t *testing.T) {
 		},
 		{
 			name: "fails on invalid separation ratio",
-			request: &constitutionv1.MsgUpdateSeparationRatio{
+			request: &constitutiontypes.MsgUpdateSeparationRatio{
 				SeparationRatio: testSeparationRatio(200_000, 300_000, 400_000),
 			},
 			shouldErr: true,
 		},
 		{
 			name: "updates separation ratio successfully",
-			request: &constitutionv1.MsgUpdateSeparationRatio{
+			request: &constitutiontypes.MsgUpdateSeparationRatio{
 				SeparationRatio: testSeparationRatio(100_000, 200_000, 700_000),
 			},
 			shouldErr: false,
@@ -465,9 +464,9 @@ func TestMsgServerUpdateSeparationRatio(t *testing.T) {
 			f := setupKeeperFixture(t)
 			msgServer := NewMsgServer(&f.keeper)
 
-			var req *constitutionv1.MsgUpdateSeparationRatio
+			var req *constitutiontypes.MsgUpdateSeparationRatio
 			if tc.request != nil {
-				req = &constitutionv1.MsgUpdateSeparationRatio{
+				req = &constitutiontypes.MsgUpdateSeparationRatio{
 					Moderator:       tc.request.Moderator,
 					SeparationRatio: tc.request.SeparationRatio,
 				}

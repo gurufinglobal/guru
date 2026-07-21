@@ -8,14 +8,13 @@ import (
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
-var _ constitutionv1.MsgServer = MsgServer{}
+var _ constitutiontypes.MsgServer = MsgServer{}
 
 type MsgServer struct {
-	constitutionv1.UnimplementedMsgServer
+	constitutiontypes.UnimplementedMsgServer
 
 	keeper *Keeper
 }
@@ -24,7 +23,7 @@ func NewMsgServer(keeper *Keeper) MsgServer {
 	return MsgServer{keeper: keeper}
 }
 
-func (m MsgServer) UpdateParams(goCtx context.Context, req *constitutionv1.MsgUpdateParams) (*constitutionv1.MsgUpdateParamsResponse, error) {
+func (m MsgServer) UpdateParams(goCtx context.Context, req *constitutiontypes.MsgUpdateParams) (*constitutiontypes.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if req == nil {
 		return nil, constitutiontypes.ErrInvalidRequest.Wrap("empty request")
@@ -36,10 +35,10 @@ func (m MsgServer) UpdateParams(goCtx context.Context, req *constitutionv1.MsgUp
 		return nil, err
 	}
 
-	return &constitutionv1.MsgUpdateParamsResponse{}, nil
+	return &constitutiontypes.MsgUpdateParamsResponse{}, nil
 }
 
-func (m MsgServer) UpdateBaseAddress(goCtx context.Context, req *constitutionv1.MsgUpdateBaseAddress) (*constitutionv1.MsgUpdateBaseAddressResponse, error) {
+func (m MsgServer) UpdateBaseAddress(goCtx context.Context, req *constitutiontypes.MsgUpdateBaseAddress) (*constitutiontypes.MsgUpdateBaseAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if req == nil {
 		return nil, constitutiontypes.ErrInvalidRequest.Wrap("empty request")
@@ -51,10 +50,10 @@ func (m MsgServer) UpdateBaseAddress(goCtx context.Context, req *constitutionv1.
 		return nil, err
 	}
 
-	return &constitutionv1.MsgUpdateBaseAddressResponse{}, nil
+	return &constitutiontypes.MsgUpdateBaseAddressResponse{}, nil
 }
 
-func (m MsgServer) UpdateModeratorAddress(goCtx context.Context, req *constitutionv1.MsgUpdateModeratorAddress) (*constitutionv1.MsgUpdateModeratorAddressResponse, error) {
+func (m MsgServer) UpdateModeratorAddress(goCtx context.Context, req *constitutiontypes.MsgUpdateModeratorAddress) (*constitutiontypes.MsgUpdateModeratorAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if req == nil {
 		return nil, constitutiontypes.ErrInvalidRequest.Wrap("empty request")
@@ -66,10 +65,10 @@ func (m MsgServer) UpdateModeratorAddress(goCtx context.Context, req *constituti
 		return nil, err
 	}
 
-	return &constitutionv1.MsgUpdateModeratorAddressResponse{}, nil
+	return &constitutiontypes.MsgUpdateModeratorAddressResponse{}, nil
 }
 
-func (m MsgServer) UpdateSeparationRatio(goCtx context.Context, req *constitutionv1.MsgUpdateSeparationRatio) (*constitutionv1.MsgUpdateSeparationRatioResponse, error) {
+func (m MsgServer) UpdateSeparationRatio(goCtx context.Context, req *constitutiontypes.MsgUpdateSeparationRatio) (*constitutiontypes.MsgUpdateSeparationRatioResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if req == nil {
 		return nil, constitutiontypes.ErrInvalidRequest.Wrap("empty request")
@@ -81,7 +80,7 @@ func (m MsgServer) UpdateSeparationRatio(goCtx context.Context, req *constitutio
 		return nil, err
 	}
 
-	return &constitutionv1.MsgUpdateSeparationRatioResponse{}, nil
+	return &constitutiontypes.MsgUpdateSeparationRatioResponse{}, nil
 }
 
 func (m MsgServer) validateAuthority(authority string) error {

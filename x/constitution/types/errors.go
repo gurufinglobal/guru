@@ -16,4 +16,6 @@ var (
 	ErrNilGenesisTargetWriter  = errors.Register(ModuleName, 10, "genesis target field writer is nil")
 	ErrEncodeGenesisField      = errors.Register(ModuleName, 11, "failed to encode genesis field")
 	ErrCloseGenesisFieldWriter = errors.Register(ModuleName, 12, "failed to close genesis field writer")
+	ErrInvalidMinGasPrice      = errors.Register(ModuleName, 13, "invalid min gas price")
+	ErrFeeMarketKeeperMissing  = errors.Register(ModuleName, 14, "feemarket keeper is missing")
 )

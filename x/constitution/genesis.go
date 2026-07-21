@@ -1,14 +1,15 @@
 package constitution
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/appmodule"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/jsonpb"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
@@ -46,6 +47,11 @@ func (am AppModule) InitGenesis(ctx context.Context, source appmodule.GenesisSou
 	if err := am.keeper.SetModeratorAddress(ctx, genesis.ModeratorAddress); err != nil {
 		return err
 	}
+	if genesis.PendingMinGasPrice != nil {
+		if err := am.keeper.SetMinGasPriceSchedule(ctx, genesis.PendingMinGasPrice); err != nil {
+			return err
+		}
+	}
 
 	return am.keeper.SetSeparationRatio(ctx, genesis.SeparationRatio)
 }
@@ -80,26 +86,33 @@ func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisT
 		separationRatio = defaults.SeparationRatio
 	}
 
-	return writeGenesisState(target, &constitutionv1.GenesisState{
-		Params:           params,
-		BaseAddress:      baseAddress,
-		ModeratorAddress: moderatorAddress,
-		SeparationRatio:  separationRatio,
+	pendingMinGasPrice, err := am.keeper.GetMinGasPriceSchedule(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return err
+		}
+	}
+
+	return writeGenesisState(target, &constitutiontypes.GenesisState{
+		Params:             params,
+		BaseAddress:        baseAddress,
+		ModeratorAddress:   moderatorAddress,
+		SeparationRatio:    separationRatio,
+		PendingMinGasPrice: pendingMinGasPrice,
 	})
 }
 
-func (am AppModule) defaultGenesisState() *constitutionv1.GenesisState {
-	return &constitutionv1.GenesisState{
-		Params: &constitutionv1.Params{
-			MinValidatorBondAmount: &basev1beta1.Coin{
-				Denom:  appparams.BaseDenom,
-				Amount: "10",
-			},
+func (am AppModule) defaultGenesisState() *constitutiontypes.GenesisState {
+	minValidatorBond := sdk.NewInt64Coin(appparams.BaseDenom, 10)
+
+	return &constitutiontypes.GenesisState{
+		Params: &constitutiontypes.Params{
+			MinValidatorBondAmount: &minValidatorBond,
 		},
 		// base_address and moderator_address must be explicitly configured in genesis.
 		BaseAddress:      "",
 		ModeratorAddress: "",
-		SeparationRatio: &constitutionv1.SeparationRatio{
+		SeparationRatio: &constitutiontypes.SeparationRatio{
 			BasePpm:       0,
 			BurnPpm:       0,
 			ValidatorsPpm: constitutiontypes.SeparationRatioScalePPM,
@@ -107,7 +120,7 @@ func (am AppModule) defaultGenesisState() *constitutionv1.GenesisState {
 	}
 }
 
-func (am AppModule) validateGenesisState(data *constitutionv1.GenesisState) error {
+func (am AppModule) validateGenesisState(data *constitutiontypes.GenesisState) error {
 	if data == nil {
 		return constitutiontypes.ErrInvalidParams.Wrap("genesis state cannot be nil")
 	}
@@ -121,19 +134,25 @@ func (am AppModule) validateGenesisState(data *constitutionv1.GenesisState) erro
 	if err := am.keeper.ValidateModeratorAddress(data.GetModeratorAddress()); err != nil {
 		return err
 	}
+	if data.PendingMinGasPrice != nil {
+		if err := am.keeper.ValidateMinGasPriceSchedule(data.PendingMinGasPrice); err != nil {
+			return err
+		}
+	}
 
 	return constitutionkeeper.ValidateSeparationRatio(data.GetSeparationRatio())
 }
 
-func readGenesisState(source appmodule.GenesisSource, defaults *constitutionv1.GenesisState) (*constitutionv1.GenesisState, error) {
-	genesis := &constitutionv1.GenesisState{
-		Params:           defaults.Params,
-		BaseAddress:      defaults.BaseAddress,
-		ModeratorAddress: defaults.ModeratorAddress,
-		SeparationRatio:  defaults.SeparationRatio,
+func readGenesisState(source appmodule.GenesisSource, defaults *constitutiontypes.GenesisState) (*constitutiontypes.GenesisState, error) {
+	genesis := &constitutiontypes.GenesisState{
+		Params:             defaults.Params,
+		BaseAddress:        defaults.BaseAddress,
+		ModeratorAddress:   defaults.ModeratorAddress,
+		SeparationRatio:    defaults.SeparationRatio,
+		PendingMinGasPrice: defaults.PendingMinGasPrice,
 	}
 
-	params := &constitutionv1.Params{}
+	params := &constitutiontypes.Params{}
 	found, err := readGenesisField(source, "params", params)
 	if err != nil {
 		return nil, err
@@ -154,7 +173,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *constitutionv1.G
 	}
 	genesis.ModeratorAddress = moderatorAddress
 
-	separationRatio := &constitutionv1.SeparationRatio{}
+	separationRatio := &constitutiontypes.SeparationRatio{}
 	found, err = readGenesisField(source, "separation_ratio", separationRatio)
 	if err != nil {
 		return nil, err
@@ -163,10 +182,19 @@ func readGenesisState(source appmodule.GenesisSource, defaults *constitutionv1.G
 		genesis.SeparationRatio = separationRatio
 	}
 
+	pendingMinGasPrice := &constitutiontypes.MinGasPriceSchedule{}
+	found, err = readGenesisField(source, "pending_min_gas_price", pendingMinGasPrice)
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		genesis.PendingMinGasPrice = pendingMinGasPrice
+	}
+
 	return genesis, nil
 }
 
-func writeGenesisState(target appmodule.GenesisTarget, genesis *constitutionv1.GenesisState) error {
+func writeGenesisState(target appmodule.GenesisTarget, genesis *constitutiontypes.GenesisState) error {
 	if genesis == nil {
 		return constitutiontypes.ErrInvalidParams.Wrap("genesis state cannot be nil")
 	}
@@ -181,7 +209,14 @@ func writeGenesisState(target appmodule.GenesisTarget, genesis *constitutionv1.G
 		return err
 	}
 
-	return writeGenesisField(target, "separation_ratio", genesis.SeparationRatio)
+	if err := writeGenesisField(target, "separation_ratio", genesis.SeparationRatio); err != nil {
+		return err
+	}
+	if genesis.PendingMinGasPrice != nil {
+		return writeGenesisField(target, "pending_min_gas_price", genesis.PendingMinGasPrice)
+	}
+
+	return nil
 }
 
 func readGenesisField(source appmodule.GenesisSource, fieldName string, value any) (bool, error) {
@@ -192,9 +227,33 @@ func readGenesisField(source appmodule.GenesisSource, fieldName string, value an
 	if reader == nil {
 		return false, nil
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
-	if err := json.NewDecoder(reader).Decode(value); err != nil {
+	var raw json.RawMessage
+	if err := json.NewDecoder(reader).Decode(&raw); err != nil {
+		return false, constitutiontypes.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+	if len(raw) == 0 || string(raw) == "null" {
+		return false, nil
+	}
+	switch message := value.(type) {
+	case *constitutiontypes.Params:
+		if err := jsonpb.Unmarshal(bytes.NewReader(raw), message); err != nil {
+			return false, constitutiontypes.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+		}
+		return true, nil
+	case *constitutiontypes.SeparationRatio:
+		if err := jsonpb.Unmarshal(bytes.NewReader(raw), message); err != nil {
+			return false, constitutiontypes.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+		}
+		return true, nil
+	case *constitutiontypes.MinGasPriceSchedule:
+		if err := jsonpb.Unmarshal(bytes.NewReader(raw), message); err != nil {
+			return false, constitutiontypes.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+		}
+		return true, nil
+	}
+	if err := json.Unmarshal(raw, value); err != nil {
 		return false, constitutiontypes.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
 	}
 

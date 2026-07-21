@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -43,7 +41,7 @@ func CmdUpdateBaseAddress() *cobra.Command {
 				return err
 			}
 
-			msg := &constitutionv1.MsgUpdateBaseAddress{
+			msg := &constitutiontypes.MsgUpdateBaseAddress{
 				Moderator:   clientCtx.GetFromAddress().String(),
 				BaseAddress: args[0],
 			}
@@ -67,7 +65,7 @@ func CmdUpdateModeratorAddress() *cobra.Command {
 				return err
 			}
 
-			msg := &constitutionv1.MsgUpdateModeratorAddress{
+			msg := &constitutiontypes.MsgUpdateModeratorAddress{
 				Moderator:        clientCtx.GetFromAddress().String(),
 				ModeratorAddress: args[0],
 			}
@@ -104,9 +102,9 @@ func CmdUpdateSeparationRatio() *cobra.Command {
 				return err
 			}
 
-			msg := &constitutionv1.MsgUpdateSeparationRatio{
+			msg := &constitutiontypes.MsgUpdateSeparationRatio{
 				Moderator: clientCtx.GetFromAddress().String(),
-				SeparationRatio: &constitutionv1.SeparationRatio{
+				SeparationRatio: &constitutiontypes.SeparationRatio{
 					BasePpm:       basePpm,
 					BurnPpm:       burnPpm,
 					ValidatorsPpm: validatorsPpm,

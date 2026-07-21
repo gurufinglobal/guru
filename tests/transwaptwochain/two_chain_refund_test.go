@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"cosmossdk.io/log/v2"
+	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -30,12 +31,12 @@ import (
 
 	bexv1 "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	transwapv1 "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	guruapp "github.com/gurufinglobal/guru/v3/app"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
+	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 const (
@@ -143,6 +144,20 @@ func TestProofRelayedRefundTimeoutRetryAndAcknowledgement(t *testing.T) {
 		require.NoError(t, sourceApp.Close())
 		require.NoError(t, hubApp.Close())
 	})
+	// Keep Guru's positive minimum gas price in genesis so the production
+	// invariant is exercised. After initialization, disable the global-fee ante
+	// check only in this in-process harness: ibc-go's generic coordinator signs
+	// its client/connection/channel setup transactions with a fixed zero fee.
+	for _, chainApp := range []struct {
+		chain *ibctesting.TestChain
+		app   *guruapp.App
+	}{{chainA, sourceApp}, {chainB, hubApp}} {
+		params := chainApp.app.FeeMarketKeeper.GetParams(chainApp.chain.GetContext())
+		params.MinGasPrice = sdkmath.LegacyZeroDec()
+		require.NoError(t, chainApp.app.FeeMarketKeeper.SetParams(chainApp.chain.GetContext(), params))
+	}
+	coordinator.CommitBlock(chainA, chainB)
+
 	path := ibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig.PortID = transwaptypes.PortID
 	path.EndpointB.ChannelConfig.PortID = transwaptypes.PortID
@@ -182,9 +197,9 @@ func TestProofRelayedRefundTimeoutRetryAndAcknowledgement(t *testing.T) {
 		MaxOracleStalenessSeconds: 3_600,
 	})
 	require.NoError(t, err)
-	require.NoError(t, hubApp.OracleKeeper.SetLatestValue(hubCtx, &oraclev1.OracleValue{
+	require.NoError(t, hubApp.OracleKeeper.SetLatestValue(hubCtx, &oracletypes.OracleValue{
 		Symbol:        "FOO/BAR",
-		ValueType:     oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		ValueType:     oracletypes.ValueType_VALUE_TYPE_NUMERIC,
 		Value:         "1",
 		BlockHeight:   hubCtx.BlockHeight(),
 		BlockTimeUnix: hubCtx.BlockTime().Unix(),

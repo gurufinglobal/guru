@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/spf13/viper"
 )
 

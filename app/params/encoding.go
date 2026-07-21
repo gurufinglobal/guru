@@ -5,7 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
-	sdkregistry "github.com/cosmos/cosmos-sdk/types/registry"
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	txsigning "github.com/cosmos/cosmos-sdk/x/tx/signing"
@@ -14,6 +13,7 @@ import (
 	"github.com/cosmos/evm/ethereum/eip712"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	gogoproto "github.com/cosmos/gogoproto/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -24,7 +24,7 @@ type EncodingConfig struct {
 }
 
 func MakeEncodingConfig(accountPrefix, validatorPrefix, consensusPrefix string) EncodingConfig {
-	// SDK v0.53 txsigning.Options has no ConsensusAddressCodec field.
+	// SDK v0.54.3 txsigning.Options has no ConsensusAddressCodec field.
 	// Keep the consensus prefix in the signature for forward compatibility
 	// and to make all address prefixes explicit at call sites.
 	_ = evmaddress.NewEvmCodec(consensusPrefix)
@@ -35,8 +35,9 @@ func MakeEncodingConfig(accountPrefix, validatorPrefix, consensusPrefix string) 
 		CustomGetSigners:      customGetSigners(),
 	}
 
+	// HybridResolver is the pinned SDK/EVM boundary that resolves both SDK Pulsar descriptors and Guru's internal gogo descriptors.
 	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
-		ProtoFiles:     sdkregistry.MergedProtoRegistry(),
+		ProtoFiles:     gogoproto.HybridResolver,
 		SigningOptions: *signingOptions,
 	})
 	if err != nil {
@@ -65,7 +66,6 @@ func MakeEncodingConfig(accountPrefix, validatorPrefix, consensusPrefix string) 
 	if err != nil {
 		panic(err)
 	}
-
 	return EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Codec:             appCodec,

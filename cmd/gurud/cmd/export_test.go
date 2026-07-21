@@ -21,10 +21,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	guruapp "github.com/gurufinglobal/guru/v3/app"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 )
@@ -36,14 +36,14 @@ func TestAppExportLatestHeightLoadsApplication(t *testing.T) {
 	logger := log.NewNopLogger()
 	db := dbm.NewMemDB()
 	appOpts := viper.New()
-	appOpts.Set(flags.FlagHome, t.TempDir())
+	appOpts.Set(flags.FlagHome, writeChainIDGenesis(t, chainID))
 	appOpts.Set(flags.FlagChainID, chainID)
 	appOpts.Set("oracle.enabled", false)
 	appOpts.Set(sdkserver.FlagMempoolMaxTxs, -1)
 
 	seedApp := guruapp.NewApp(logger, db, true, appOpts, baseapp.SetChainID(chainID))
 	genesis := seedApp.BuildChainDefaultGenesis()
-	constitutionGenesis := &constitutionv1.GenesisState{}
+	constitutionGenesis := &constitutiontypes.GenesisState{}
 	seedApp.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
 	addressCodec := seedApp.InterfaceRegistry().SigningContext().AddressCodec()
 	baseAddress, err := addressCodec.BytesToString(bytes.Repeat([]byte{0x11}, 20))
@@ -89,7 +89,7 @@ func TestAppExportClosesApplicationWhenLoadHeightFails(t *testing.T) {
 	configureExportTestBech32Prefixes(t)
 
 	appOpts := viper.New()
-	appOpts.Set(flags.FlagHome, t.TempDir())
+	appOpts.Set(flags.FlagHome, writeChainIDGenesis(t, chainID))
 	appOpts.Set(flags.FlagChainID, chainID)
 	appOpts.Set("oracle.enabled", false)
 	appOpts.Set(sdkserver.FlagMempoolMaxTxs, -1)
@@ -174,6 +174,18 @@ func configureExportTestValidator(t *testing.T, app *guruapp.App, genesis map[st
 		Coins:   sdk.NewCoins(sdk.NewCoin(stakingGenesis.Params.BondDenom, bond)),
 	})
 	genesis[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
+}
+
+func TestPatchExportCommandHidesUnsupportedZeroHeightFlags(t *testing.T) {
+	rootCmd := &cobra.Command{Use: "gurud"}
+	exportCmd := sdkserver.ExportCmd(nil, t.TempDir())
+	rootCmd.AddCommand(exportCmd)
+
+	patchExportCommand(rootCmd)
+
+	require.True(t, exportCmd.Flags().Lookup(sdkserver.FlagForZeroHeight).Hidden)
+	require.True(t, exportCmd.Flags().Lookup(sdkserver.FlagJailAllowedAddrs).Hidden)
+	require.False(t, exportCmd.Flags().Lookup(sdkserver.FlagHeight).Hidden)
 }
 
 func TestPatchExportedGenesisBytesEnablesVoteExtensions(t *testing.T) {
