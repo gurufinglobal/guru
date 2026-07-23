@@ -6,32 +6,31 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
-func (k Keeper) GetSeparationRatio(ctx context.Context) (*constitutionv1.SeparationRatio, error) {
+func (k Keeper) GetSeparationRatio(ctx context.Context) (*constitutiontypes.SeparationRatio, error) {
 	ratio, err := k.separationRatio.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return ratio, nil
+	return &ratio, nil
 }
 
-func (k Keeper) SetSeparationRatio(ctx context.Context, ratio *constitutionv1.SeparationRatio) error {
+func (k Keeper) SetSeparationRatio(ctx context.Context, ratio *constitutiontypes.SeparationRatio) error {
 	if err := ValidateSeparationRatio(ratio); err != nil {
 		return err
 	}
 
-	return k.separationRatio.Set(ctx, ratio)
+	return k.separationRatio.Set(ctx, *ratio)
 }
 
-func (k Keeper) UpdateSeparationRatio(ctx context.Context, ratio *constitutionv1.SeparationRatio) error {
+func (k Keeper) UpdateSeparationRatio(ctx context.Context, ratio *constitutiontypes.SeparationRatio) error {
 	return k.SetSeparationRatio(ctx, ratio)
 }
 
-func ValidateSeparationRatio(ratio *constitutionv1.SeparationRatio) error {
+func ValidateSeparationRatio(ratio *constitutiontypes.SeparationRatio) error {
 	if ratio == nil {
 		return constitutiontypes.ErrInvalidParams.Wrap("separation_ratio cannot be nil")
 	}
@@ -131,7 +130,7 @@ func (k Keeper) ExecuteSeparation(ctx context.Context) error {
 	return nil
 }
 
-func splitSeparationCoins(balances sdk.Coins, ratio *constitutionv1.SeparationRatio) (sdk.Coins, sdk.Coins) {
+func splitSeparationCoins(balances sdk.Coins, ratio *constitutiontypes.SeparationRatio) (sdk.Coins, sdk.Coins) {
 	baseCoins := sdk.NewCoins()
 	burnCoins := sdk.NewCoins()
 

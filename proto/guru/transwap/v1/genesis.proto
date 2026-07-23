@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package guru.transwap.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "guru/transwap/v1/params.proto";
+import "guru/transwap/v1/refund.proto";
+import "guru/transwap/v1/token.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
+
+// GenesisState defines the ibc-transfer genesis state
+message GenesisState {
+  reserved 4;
+  reserved "pending_refunds";
+
+  string port_id = 1;
+  repeated Denom denoms = 2 [
+    (gogoproto.castrepeated) = "Denoms",
+    (gogoproto.nullable) = false
+  ];
+  // total_escrowed contains the total amount of tokens escrowed
+  // by the transfer module
+  repeated cosmos.base.v1beta1.Coin total_escrowed = 3 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable) = false
+  ];
+  Params params = 5;
+  repeated RefundRecord refunds = 6;
+}

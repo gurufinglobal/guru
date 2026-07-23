@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	bexcli "github.com/gurufinglobal/guru/v3/x/bex/client/cli"
 	constitutioncli "github.com/gurufinglobal/guru/v3/x/constitution/client/cli"
 	oraclecli "github.com/gurufinglobal/guru/v3/x/oracle/client/cli"
 	"github.com/spf13/cobra"
@@ -28,6 +29,7 @@ func queryCommand() *cobra.Command {
 		authcmd.QueryTxCmd(),
 		sdkserver.QueryBlockCmd(),
 		sdkserver.QueryBlockResultsCmd(),
+		bexcli.GetQueryCmd(),
 		constitutioncli.GetQueryCmd(),
 		oraclecli.GetQueryCmd(),
 	)

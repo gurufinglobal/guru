@@ -11,6 +11,7 @@ BASE_ADDR="${BASE_ADDR:-guru1yysjzgfpyysjzgfpyysjzgfpyysjzgfp8756qs}"
 MOD_ADDR="${MOD_ADDR:-guru1yg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zk6jltx}"
 BALANCE="${BALANCE:-100000000000000000000agxn}"
 STAKE="${STAKE:-10000000000000000000agxn}"
+GENTX_FEE="${GENTX_FEE:-10000000000000000000agxn}"
 PRICE_URL="${PRICE_URL:-https://api.coinbase.com/v2/prices/BTC-USD/spot}"
 
 mkdir -p "$BASE/logs"
@@ -114,6 +115,7 @@ for i in 1 2 3 4; do
 		--chain-id "$CHAIN_ID" \
 		--keyring-backend test \
 		--home "${HOMES[$i]}" \
+		--fees "$GENTX_FEE" \
 		>"$BASE/logs/gentx-$i.log" 2>&1
 done
 

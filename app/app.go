@@ -6,10 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	goruntime "runtime"
 
-	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
-	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log/v2"
@@ -19,7 +16,6 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/baseapp/txnrunner"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
@@ -32,12 +28,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
-	sdkregistry "github.com/cosmos/cosmos-sdk/types/registry"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -46,16 +40,7 @@ import (
 	cosmosevmserver "github.com/cosmos/evm/server"
 	srvflags "github.com/cosmos/evm/server/flags"
 	evmutils "github.com/cosmos/evm/utils"
-	"github.com/cosmos/evm/x/erc20"
-	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
-	vmrunner "github.com/cosmos/evm/x/vm/runner"
-	ibccallbacks "github.com/cosmos/ibc-go/v11/modules/apps/callbacks"
-	transfer "github.com/cosmos/ibc-go/v11/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
-	transferv2 "github.com/cosmos/ibc-go/v11/modules/apps/transfer/v2"
-	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
-	ibcapi "github.com/cosmos/ibc-go/v11/modules/core/api"
-	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
+	gogoproto "github.com/cosmos/gogoproto/proto"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 	appkeepers "github.com/gurufinglobal/guru/v3/app/keepers"
@@ -81,7 +66,6 @@ type App struct {
 	appCodec          codec.Codec
 	interfaceRegistry codectypes.InterfaceRegistry
 	txConfig          client.TxConfig
-	clientCtx         client.Context
 
 	pendingTxListeners []evmante.PendingTxListener
 
@@ -177,93 +161,12 @@ func NewApp(
 		interfaceRegistry: encodingConfig.InterfaceRegistry,
 		AppKeepers:        appKeepers,
 	}
-	oracleEnabled := true
-	if value := appOpts.Get("oracle.enabled"); value != nil {
-		oracleEnabled = cast.ToBool(value)
-	}
-	oracleVoteHandler := oracleabci.NewVoteExtensionHandler(
-		app.OracleKeeper,
-		oracleEnabled,
-		cast.ToString(appOpts.Get("oracle.sidecar_socket")),
-		cast.ToDuration(appOpts.Get("oracle.sidecar_timeout")),
-	)
-	app.SetExtendVoteHandler(oracleVoteHandler.ExtendVote)
-	app.SetVerifyVoteExtensionHandler(oracleVoteHandler.VerifyVoteExtension)
+	app.configureOracleVoteExtensions(appOpts)
+	tmLightClientModule := app.configureIBCRouters()
+	modules := app.configureModuleManager(tmLightClientModule)
+	app.mountStoresAndSetABCIHandlers()
 
-	var transferStack porttypes.IBCModule
-
-	transferStack = transfer.NewIBCModule(app.TransferKeeper)
-	maxCallbackGas := uint64(1_000_000)
-	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
-	callbacksMiddleware := ibccallbacks.NewIBCMiddleware(app.CallbackKeeper, maxCallbackGas)
-	callbacksMiddleware.SetICS4Wrapper(app.IBCKeeper.ChannelKeeper)
-	callbacksMiddleware.SetUnderlyingApplication(transferStack)
-	transferStack = callbacksMiddleware
-
-	var transferStackV2 ibcapi.IBCModule
-	transferStackV2 = transferv2.NewIBCModule(app.TransferKeeper)
-	transferStackV2 = erc20v2.NewIBCMiddleware(transferStackV2, app.Erc20Keeper)
-
-	// Create static IBC router, add transfer route, then set and seal it
-	ibcRouter := porttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
-	ibcRouterV2 := ibcapi.NewRouter()
-	ibcRouterV2.AddRoute(ibctransfertypes.ModuleName, transferStackV2)
-
-	app.IBCKeeper.SetRouter(ibcRouter)
-	app.IBCKeeper.SetRouterV2(ibcRouterV2)
-
-	clientKeeper := app.IBCKeeper.ClientKeeper
-	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()
-	tmLightClientModule := ibctm.NewLightClientModule(app.appCodec, storeProvider)
-	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
-
-	modules := appModules(app, app.appCodec, app.txConfig, tmLightClientModule)
-	app.ModuleManager = module.NewManagerFromMap(
-		moduleManagerMap(modules.modules),
-	)
-	app.BasicModuleManager = newBasicManagerFromManager(app)
-
-	app.ModuleManager.SetOrderPreBlockers(ModuleOrderPreBlockers()...)
-	app.ModuleManager.SetOrderBeginBlockers(ModuleOrderBeginBlockers()...)
-	app.ModuleManager.SetOrderEndBlockers(ModuleOrderEndBlockers()...)
-	genesisModuleOrder := ModuleOrderInitGenesis()
-	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
-	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
-
-	// Uncomment if you want to set a custom migration order here.
-	// app.ModuleManager.SetOrderMigrations(custom order)
-
-	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	if err := app.ModuleManager.RegisterServices(app.configurator); err != nil {
-		panic(fmt.Sprintf("failed to register services in module manager: %s", err.Error()))
-	}
-
-	// RegisterUpgradeHandlers is used for registering any on-chain upgrades.
-	// Make sure it's called after `app.ModuleManager` and `app.configurator` are set.
-	app.RegisterUpgradeHandlers()
-
-	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
-
-	reflectionSvc, err := runtimeservices.NewReflectionService()
-	if err != nil {
-		panic(err)
-	}
-	reflectionv1.RegisterReflectionServiceServer(app.GRPCQueryRouter(), reflectionSvc)
-
-	// 1. 스토어 마운트
-	app.MountKVStores(app.GetKVStoreKeys())
-	app.MountTransientStores(app.GetTransientStoreKeys())
-	app.MountObjectStores(app.GetObjectStoreKeys())
-
-	// 2. 가스 제한 및 ABCI 라이프사이클 연결
 	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
-	app.SetInitChainer(app.InitChainer)
-	app.SetPreBlocker(app.PreBlocker)
-	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetEndBlocker(app.EndBlocker)
-
-	// 3. 트랜잭션 문지기 및 멤풀 연결
 	if err := app.setAnteHandler(app.txConfig, maxGasWanted); err != nil {
 		panic(fmt.Sprintf("failed to configure ante handler: %s", err.Error()))
 	}
@@ -272,12 +175,11 @@ func NewApp(
 	}
 	app.setPostHandler()
 
-	// 4. Protobuf 검증 (선택적이지만 권장)
-	if err := msgservice.ValidateProtoAnnotations(sdkregistry.MergedProtoRegistry()); err != nil {
+	// Validate protobuf annotations after all modules are registered.
+	if err := msgservice.ValidateProtoAnnotations(gogoproto.HybridResolver); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 	}
 
-	// 5. 체인 부팅 완료
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			logger.Error("error on loading last version", "err", err)
@@ -291,21 +193,7 @@ func NewApp(
 		}))
 	}
 
-	vmrunner.SetRunner(bApp, oracleabci.NewPayloadSkippingTxRunner(txnrunner.NewSTMRunner(
-		encodingConfig.TxConfig.TxDecoder(),
-		appKeepers.GetNonTransientKeys(),
-		min(goruntime.GOMAXPROCS(0), goruntime.NumCPU()),
-		true,
-		func(ms storetypes.MultiStore) string {
-			denom := app.EVMKeeper.GetParams(
-				sdk.NewContext(ms, cmtproto.Header{}, false, log.NewNopLogger()),
-			).EvmDenom
-			if denom == "" {
-				return appparams.BaseDenom
-			}
-			return denom
-		},
-	)))
+	app.configureVMRunner(bApp, encodingConfig.TxConfig.TxDecoder(), appKeepers.GetNonTransientKeys())
 
 	return app
 }
@@ -434,7 +322,7 @@ func (app *App) AutoCliOpts() autocli.AppOptions {
 	return autocli.AppOptions{
 		Modules:       modules,
 		ModuleOptions: runtimeservices.ExtractAutoCLIOptions(app.ModuleManager.Modules),
-		// sdk.GetConfig()를 완전히 제거하고 Guru 상수를 직접 주입합니다.
+		// Keep CLI address codecs explicit instead of relying on global SDK config.
 		AddressCodec:          evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr),
 		ValidatorAddressCodec: evmaddress.NewEvmCodec(appparams.Bech32PrefixValAddr),
 		ConsensusAddressCodec: evmaddress.NewEvmCodec(appparams.Bech32PrefixConsAddr),

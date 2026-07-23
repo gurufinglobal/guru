@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"os/exec"
@@ -12,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -34,6 +36,8 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 
 	home := filepath.Join(t.TempDir(), "node-a")
 	bootstrapSingleValidatorGenesis(t, repoRoot, bin, home)
+	seedStateSyncCustomGenesis(t, home)
+	runCmd(t, repoRoot, bin, "genesis", "validate-genesis", "--home", home)
 
 	rpcPort := pickTCPPort(t)
 	p2pPort := pickTCPPort(t)
@@ -48,7 +52,8 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 	waitForBlockHeight(t, repoRoot, bin, home, rpcAddr, 4, 40*time.Second)
 
 	t.Run("ibc transfer query works", func(t *testing.T) {
-		out := runCmd(t, repoRoot, bin,
+		out := runCmd(
+			t, repoRoot, bin,
 			"query", "ibc-transfer", "params",
 			"--node", rpcAddr,
 			"--home", home,
@@ -69,7 +74,8 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 	})
 
 	t.Run("upgrade query works", func(t *testing.T) {
-		out := runCmd(t, repoRoot, bin,
+		out := runCmd(
+			t, repoRoot, bin,
 			"query", "upgrade", "module-versions",
 			"--node", rpcAddr,
 			"--home", home,
@@ -100,7 +106,8 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 			t.Fatalf("expected module versions to include upgrade and ibc; got: %+v", versions.ModuleVersions)
 		}
 
-		authorityOut := runCmd(t, repoRoot, bin,
+		authorityOut := runCmd(
+			t, repoRoot, bin,
 			"query", "upgrade", "authority",
 			"--node", rpcAddr,
 			"--home", home,
@@ -133,7 +140,8 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 		format := matches[0][2]
 		archive := filepath.Join(t.TempDir(), "snapshot.tar.gz")
 
-		runCmd(t, repoRoot, bin,
+		runCmd(
+			t, repoRoot, bin,
 			"snapshots", "dump", height, format,
 			"--home", home,
 			"--output", archive,
@@ -149,6 +157,14 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 		}
 
 		runCmd(t, repoRoot, bin, "snapshots", "restore", height, format, "--home", restoreHome)
+
+		exportedPath := filepath.Join(t.TempDir(), "restored-genesis.json")
+		runCmd(t, repoRoot, bin, "export", "--height", height, "--home", restoreHome, "--output-document", exportedPath)
+		exported, err := os.ReadFile(exportedPath)
+		if err != nil {
+			t.Fatalf("read restored snapshot export: %v", err)
+		}
+		assertRestoredSnapshotCustomState(t, exported)
 	})
 }
 
@@ -169,7 +185,20 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	oldJSONWSRPCPort := pickTCPPort(t)
 	oldRPCAddr := fmt.Sprintf("tcp://127.0.0.1:%d", oldRPCPort)
 
-	oldNode := startNode(t, repoRoot, bin, home, oldRPCPort, oldP2PPort, oldPProfPort, oldGRPCPort, oldJSONRPCPort, oldJSONWSRPCPort)
+	oldNode := startNodeWithOptions(
+		t,
+		repoRoot,
+		bin,
+		home,
+		oldRPCPort,
+		oldP2PPort,
+		oldPProfPort,
+		oldGRPCPort,
+		oldJSONRPCPort,
+		oldJSONWSRPCPort,
+		nil,
+		map[string]string{envEnableUpgradeHandlerV1: "0"},
+	)
 	defer stopNode(t, oldNode)
 	waitForBlockHeight(t, repoRoot, bin, home, oldRPCAddr, 6, 45*time.Second)
 
@@ -198,6 +227,15 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	}
 	stopNode(t, oldNode)
 
+	// Both phases use the current test binary, so BEX and transwap have existed
+	// in this fresh database since genesis. The missing-store loader path is
+	// covered by TestV1StoreLoaderAddsBEXAndTranswapToLegacyDatabase; this E2E isolates the on-chain
+	// halt, handler, migration, and resume path without adding BEX twice.
+	upgradeInfoPath := filepath.Join(home, "data", "upgrade-info.json")
+	if err := os.Remove(upgradeInfoPath); err != nil {
+		t.Fatalf("remove same-binary upgrade info %s: %v", upgradeInfoPath, err)
+	}
+
 	// new binary enables handler and resumes from upgrade height
 	newRPCPort := pickTCPPort(t)
 	newP2PPort := pickTCPPort(t)
@@ -222,6 +260,11 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 		map[string]string{envEnableUpgradeHandlerV1: "1"},
 	)
 	defer stopNode(t, newNode)
+	defer func() {
+		if t.Failed() {
+			t.Logf("new node logs:\n%s", newNode.logBuf.String())
+		}
+	}()
 
 	waitForBlockHeight(t, repoRoot, bin, home, newRPCAddr, upgradeHeight+2, 90*time.Second)
 	appliedHeight := queryAppliedUpgradeHeight(t, repoRoot, bin, home, newRPCAddr, e2eUpgradeNameV1)
@@ -236,6 +279,8 @@ func TestE2ECometStateSyncFromPeerSnapshot(t *testing.T) {
 
 	homeA := filepath.Join(t.TempDir(), "node-a")
 	bootstrapSingleValidatorGenesis(t, repoRoot, bin, homeA)
+	seedStateSyncCustomGenesis(t, homeA)
+	runCmd(t, repoRoot, bin, "genesis", "validate-genesis", "--home", homeA)
 
 	rpcPortA := pickTCPPort(t)
 	p2pPortA := pickTCPPort(t)
@@ -269,6 +314,8 @@ func TestE2ECometStateSyncFromPeerSnapshot(t *testing.T) {
 	receiverAddr := strings.TrimSpace(runCmd(t, repoRoot, bin, "keys", "show", "receiver", "-a", "--keyring-backend", "test", "--home", homeA))
 	seedChainWithBankSend(t, repoRoot, bin, homeA, rpcAddrA, receiverAddr)
 	waitForBlockHeight(t, repoRoot, bin, homeA, rpcAddrA, 60, 90*time.Second)
+	sourceCustomState := queryStateSyncCustomState(t, repoRoot, bin, homeA, rpcAddrA)
+	assertSeededStateSyncCustomState(t, sourceCustomState)
 
 	statusA := mustNodeStatus(t, repoRoot, bin, homeA, rpcAddrA)
 	latestA := mustParseInt64(t, statusA.SyncInfo.LatestBlockHeight)
@@ -328,11 +375,181 @@ func TestE2ECometStateSyncFromPeerSnapshot(t *testing.T) {
 	if earliestB <= 1 {
 		t.Fatalf("expected statesync node to have truncated history; earliest height=%d status=%+v", earliestB, statusB.SyncInfo)
 	}
+	targetCustomState := queryStateSyncCustomState(t, repoRoot, bin, homeB, rpcAddrB)
+	if !maps.Equal(sourceCustomState, targetCustomState) {
+		t.Fatalf("custom module state differs after state sync:\nsource=%v\ntarget=%v", sourceCustomState, targetCustomState)
+	}
+}
+
+func seedStateSyncCustomGenesis(t *testing.T, home string) {
+	t.Helper()
+
+	genesisPath := filepath.Join(home, "config", "genesis.json")
+	bz, err := os.ReadFile(genesisPath)
+	if err != nil {
+		t.Fatalf("read state-sync genesis: %v", err)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(bz, &doc); err != nil {
+		t.Fatalf("decode state-sync genesis: %v", err)
+	}
+	appState := mustJSONMap(t, doc, "app_state")
+	constitutionState := mustJSONMap(t, appState, "constitution")
+	constitutionState["separation_ratio"] = map[string]any{
+		"base_ppm":       111_111,
+		"burn_ppm":       222_222,
+		"validators_ppm": 666_667,
+	}
+
+	oracleState := mustJSONMap(t, appState, "oracle")
+	oracleState["params"] = map[string]any{
+		"min_validators": 2,
+		"min_sources":    4,
+		"history_limit":  7,
+	}
+	oracleState["tasks"] = []any{map[string]any{
+		"symbol":              "STATE/SYNC",
+		"value_type":          "VALUE_TYPE_NUMERIC",
+		"enabled":             false,
+		"submission_interval": 13,
+	}}
+	oracleState["task_schedule"] = []any{}
+	value := map[string]any{
+		"symbol":          "STATE/SYNC",
+		"value_type":      "VALUE_TYPE_NUMERIC",
+		"value":           "631.125",
+		"block_height":    "7",
+		"block_time_unix": "70",
+	}
+	oracleState["latest_values"] = []any{value}
+	oracleState["history"] = []any{map[string]any{
+		"symbol": "STATE/SYNC",
+		"values": []any{value},
+	}}
+
+	out, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		t.Fatalf("encode state-sync genesis: %v", err)
+	}
+	if err := os.WriteFile(genesisPath, out, 0o644); err != nil {
+		t.Fatalf("write state-sync genesis: %v", err)
+	}
+}
+
+func queryStateSyncCustomState(t *testing.T, repoRoot, bin, home, rpcAddr string) map[string]string {
+	t.Helper()
+
+	queries := map[string][]string{
+		"constitution_ratio": {"query", "constitution", "separation-ratio"},
+		"oracle_params":      {"query", "oracle", "params"},
+		"oracle_task":        {"query", "oracle", "task", "STATE/SYNC"},
+		"oracle_latest":      {"query", "oracle", "latest-value", "STATE/SYNC"},
+		"oracle_history":     {"query", "oracle", "history", "STATE/SYNC", "--limit", "20"},
+	}
+	state := make(map[string]string, len(queries))
+	for name, args := range queries {
+		args = append(args,
+			"--node", rpcAddr,
+			"--home", home,
+			"--chain-id", e2eChainID,
+			"--output", "json",
+		)
+		out := runCmd(t, repoRoot, bin, args...)
+		var payload any
+		decoder := json.NewDecoder(strings.NewReader(out))
+		decoder.UseNumber()
+		if err := decoder.Decode(&payload); err != nil {
+			t.Fatalf("decode %s query: %v\n%s", name, err, out)
+		}
+		canonical, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatalf("canonicalize %s query: %v", name, err)
+		}
+		state[name] = string(canonical)
+	}
+	return state
+}
+
+func assertSeededStateSyncCustomState(t *testing.T, state map[string]string) {
+	t.Helper()
+
+	expectedFragments := map[string][]string{
+		"constitution_ratio": {`"base_ppm":111111`, `"burn_ppm":222222`, `"validators_ppm":666667`},
+		"oracle_params":      {`"min_validators":2`, `"min_sources":4`, `"history_limit":7`},
+		"oracle_task":        {`"symbol":"STATE/SYNC"`, `"submission_interval":13`},
+		"oracle_latest":      {`"symbol":"STATE/SYNC"`, `"value":"631.125"`},
+		"oracle_history":     {`"symbol":"STATE/SYNC"`, `"value":"631.125"`},
+	}
+	for name, fragments := range expectedFragments {
+		for _, fragment := range fragments {
+			if !strings.Contains(state[name], fragment) {
+				t.Fatalf("%s query is missing %s: %s", name, fragment, state[name])
+			}
+		}
+	}
+	if strings.Contains(state["oracle_task"], `"enabled":true`) {
+		t.Fatalf("state-sync oracle task unexpectedly enabled: %s", state["oracle_task"])
+	}
+	for _, name := range []string{"oracle_latest", "oracle_history"} {
+		if !strings.Contains(state[name], `"block_height":7`) && !strings.Contains(state[name], `"block_height":"7"`) {
+			t.Fatalf("%s query has unexpected block height: %s", name, state[name])
+		}
+	}
+}
+
+func assertRestoredSnapshotCustomState(t *testing.T, exported []byte) {
+	t.Helper()
+
+	var doc map[string]any
+	decoder := json.NewDecoder(bytes.NewReader(exported))
+	decoder.UseNumber()
+	if err := decoder.Decode(&doc); err != nil {
+		t.Fatalf("decode restored snapshot export: %v", err)
+	}
+	appState := mustJSONMap(t, doc, "app_state")
+	constitutionState := mustJSONMap(t, appState, "constitution")
+	oracleState := mustJSONMap(t, appState, "oracle")
+	state := map[string]string{
+		"constitution_ratio": canonicalJSONValue(t, constitutionState["separation_ratio"]),
+		"oracle_params":      canonicalJSONValue(t, oracleState["params"]),
+		"oracle_task":        canonicalJSONValue(t, oracleState["tasks"]),
+		"oracle_latest":      canonicalJSONValue(t, oracleState["latest_values"]),
+		"oracle_history":     canonicalJSONValue(t, oracleState["history"]),
+	}
+	assertSeededStateSyncCustomState(t, state)
+}
+
+func canonicalJSONValue(t *testing.T, value any) string {
+	t.Helper()
+	bz, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("canonicalize JSON value: %v", err)
+	}
+	return string(bz)
 }
 
 type runningNode struct {
 	cmd    *exec.Cmd
-	logBuf *bytes.Buffer
+	logBuf *synchronizedBuffer
+}
+
+// synchronizedBuffer allows diagnostics to snapshot process output while the
+// os/exec copy goroutines are still writing to it.
+type synchronizedBuffer struct {
+	mu  sync.RWMutex
+	buf bytes.Buffer
+}
+
+func (b *synchronizedBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *synchronizedBuffer) String() string {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.buf.String()
 }
 
 type nodeStatus struct {
@@ -378,10 +595,41 @@ func startNodeWithOptions(
 ) *runningNode {
 	t.Helper()
 
+	return startNodeWithChainIDOption(
+		t,
+		repoRoot,
+		bin,
+		home,
+		rpcPort,
+		p2pPort,
+		pprofPort,
+		grpcPort,
+		jsonRPCPort,
+		jsonWSRPCPort,
+		true,
+		extraArgs,
+		extraEnv,
+	)
+}
+
+func startNodeWithChainIDOption(
+	t *testing.T,
+	repoRoot, bin, home string,
+	rpcPort, p2pPort, pprofPort, grpcPort, jsonRPCPort, jsonWSRPCPort int,
+	includeChainID bool,
+	extraArgs []string,
+	extraEnv map[string]string,
+) *runningNode {
+	t.Helper()
+
 	args := []string{
 		"start",
 		"--home", home,
-		"--chain-id", e2eChainID,
+	}
+	if includeChainID {
+		args = append(args, "--chain-id", e2eChainID)
+	}
+	args = append(args,
 		"--minimum-gas-prices", "0agxn",
 		"--log_level", "error",
 		"--app-db-backend", e2eAppDBBackend,
@@ -393,10 +641,10 @@ func startNodeWithOptions(
 		"--json-rpc.ws-address", fmt.Sprintf("127.0.0.1:%d", jsonWSRPCPort),
 		"--state-sync.snapshot-interval", "2",
 		"--state-sync.snapshot-keep-recent", "2",
-	}
+	)
 	args = append(args, extraArgs...)
 
-	logBuf := &bytes.Buffer{}
+	logBuf := &synchronizedBuffer{}
 	cmd := exec.Command(bin, args...)
 	cmd.Dir = repoRoot
 	cmd.Stdout = logBuf
@@ -575,7 +823,7 @@ func bootstrapSingleValidatorGenesis(t *testing.T, repoRoot, bin, home string) {
 	runInitWithConstitutionAddresses(t, repoRoot, bin, "e2e", home)
 	runCmd(t, repoRoot, bin, "keys", "add", "validator", "--keyring-backend", "test", "--home", home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", "validator", "100000000000000000000agxn", "--keyring-backend", "test", "--home", home)
-	runCmd(t, repoRoot, bin, "genesis", "gentx", "validator", "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", home)
+	runCmd(t, repoRoot, bin, "genesis", "gentx", "validator", "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", home, "--fees", highFeeAGXN)
 	runCmd(t, repoRoot, bin, "genesis", "collect-gentxs", "--home", home)
 }
 
@@ -1028,6 +1276,6 @@ func pickTCPPort(t *testing.T) int {
 	if err != nil {
 		t.Fatalf("pick tcp port: %v", err)
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port
 }

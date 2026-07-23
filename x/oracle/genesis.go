@@ -1,11 +1,12 @@
 package oracle
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 
 	"cosmossdk.io/core/appmodule"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	"github.com/cosmos/gogoproto/jsonpb"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
@@ -79,7 +80,7 @@ func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisT
 		return err
 	}
 
-	return writeGenesisState(target, &oraclev1.GenesisState{
+	return writeGenesisState(target, &oracletypes.GenesisState{
 		Params:       params,
 		Tasks:        tasks,
 		TaskSchedule: taskSchedule,
@@ -88,13 +89,13 @@ func (am AppModule) ExportGenesis(ctx context.Context, target appmodule.GenesisT
 	})
 }
 
-func (am AppModule) defaultGenesisState() *oraclev1.GenesisState {
-	return &oraclev1.GenesisState{
+func (am AppModule) defaultGenesisState() *oracletypes.GenesisState {
+	return &oracletypes.GenesisState{
 		Params: oraclekeeper.DefaultParams(),
 	}
 }
 
-func (am AppModule) validateGenesisState(data *oraclev1.GenesisState) error {
+func (am AppModule) validateGenesisState(data *oracletypes.GenesisState) error {
 	if data == nil {
 		return oracletypes.ErrInvalidParams.Wrap("genesis state cannot be nil")
 	}
@@ -102,7 +103,7 @@ func (am AppModule) validateGenesisState(data *oraclev1.GenesisState) error {
 		return err
 	}
 
-	seenTasks := map[string]*oraclev1.OracleTask{}
+	seenTasks := map[string]*oracletypes.OracleTask{}
 	scheduledTaskCounts := map[string]int{}
 	schedulePhase := map[string]int64{}
 	for _, task := range data.GetTasks() {
@@ -190,8 +191,8 @@ func (am AppModule) validateGenesisState(data *oraclev1.GenesisState) error {
 	return nil
 }
 
-func readGenesisState(source appmodule.GenesisSource, defaults *oraclev1.GenesisState) (*oraclev1.GenesisState, error) {
-	genesis := &oraclev1.GenesisState{
+func readGenesisState(source appmodule.GenesisSource, defaults *oracletypes.GenesisState) (*oracletypes.GenesisState, error) {
+	genesis := &oracletypes.GenesisState{
 		Params:       defaults.Params,
 		Tasks:        defaults.Tasks,
 		TaskSchedule: defaults.TaskSchedule,
@@ -199,7 +200,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *oraclev1.Genesis
 		History:      defaults.History,
 	}
 
-	params := &oraclev1.Params{}
+	params := &oracletypes.Params{}
 	found, err := readGenesisField(source, "params", params)
 	if err != nil {
 		return nil, err
@@ -208,7 +209,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *oraclev1.Genesis
 		genesis.Params = params
 	}
 
-	tasks := []*oraclev1.OracleTask{}
+	tasks := []*oracletypes.OracleTask{}
 	found, err = readGenesisField(source, "tasks", &tasks)
 	if err != nil {
 		return nil, err
@@ -217,7 +218,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *oraclev1.Genesis
 		genesis.Tasks = tasks
 	}
 
-	taskSchedule := []*oraclev1.OracleTaskScheduleEntry{}
+	taskSchedule := []*oracletypes.OracleTaskScheduleEntry{}
 	found, err = readGenesisField(source, "task_schedule", &taskSchedule)
 	if err != nil {
 		return nil, err
@@ -226,7 +227,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *oraclev1.Genesis
 		genesis.TaskSchedule = taskSchedule
 	}
 
-	latestValues := []*oraclev1.OracleValue{}
+	latestValues := []*oracletypes.OracleValue{}
 	found, err = readGenesisField(source, "latest_values", &latestValues)
 	if err != nil {
 		return nil, err
@@ -235,7 +236,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *oraclev1.Genesis
 		genesis.LatestValues = latestValues
 	}
 
-	history := []*oraclev1.OracleHistory{}
+	history := []*oracletypes.OracleHistory{}
 	found, err = readGenesisField(source, "history", &history)
 	if err != nil {
 		return nil, err
@@ -247,7 +248,7 @@ func readGenesisState(source appmodule.GenesisSource, defaults *oraclev1.Genesis
 	return genesis, nil
 }
 
-func writeGenesisState(target appmodule.GenesisTarget, genesis *oraclev1.GenesisState) error {
+func writeGenesisState(target appmodule.GenesisTarget, genesis *oracletypes.GenesisState) error {
 	if genesis == nil {
 		return oracletypes.ErrInvalidParams.Wrap("genesis state cannot be nil")
 	}
@@ -276,10 +277,41 @@ func readGenesisField(source appmodule.GenesisSource, fieldName string, value an
 	if reader == nil {
 		return false, nil
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
-	if err := json.NewDecoder(reader).Decode(value); err != nil {
+	var raw json.RawMessage
+	if err := json.NewDecoder(reader).Decode(&raw); err != nil {
 		return false, oracletypes.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+	if len(raw) == 0 || string(raw) == "null" {
+		return false, nil
+	}
+
+	wrapped, err := json.Marshal(map[string]json.RawMessage{fieldName: raw})
+	if err != nil {
+		return false, oracletypes.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+	decoded := &oracletypes.GenesisState{}
+	if err := jsonpb.Unmarshal(bytes.NewReader(wrapped), decoded); err != nil {
+		return false, oracletypes.ErrDecodeGenesisField.Wrapf("%s: %v", fieldName, err)
+	}
+
+	switch target := value.(type) {
+	case *oracletypes.Params:
+		if decoded.Params == nil {
+			return false, oracletypes.ErrDecodeGenesisField.Wrapf("%s: decoded value is nil", fieldName)
+		}
+		*target = *decoded.Params
+	case *[]*oracletypes.OracleTask:
+		*target = decoded.Tasks
+	case *[]*oracletypes.OracleTaskScheduleEntry:
+		*target = decoded.TaskSchedule
+	case *[]*oracletypes.OracleValue:
+		*target = decoded.LatestValues
+	case *[]*oracletypes.OracleHistory:
+		*target = decoded.History
+	default:
+		return false, oracletypes.ErrDecodeGenesisField.Wrapf("%s: unsupported field type %T", fieldName, value)
 	}
 
 	return true, nil

@@ -1,8 +1,6 @@
 package cli
 
 import (
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
@@ -24,6 +22,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryBaseAddress(),
 		CmdQueryModeratorAddress(),
 		CmdQuerySeparationRatio(),
+		CmdQueryMinGasPrice(),
 	)
 
 	return cmd
@@ -40,8 +39,8 @@ func CmdQueryParams() *cobra.Command {
 				return err
 			}
 
-			queryClient := constitutionv1.NewQueryClient(clientCtx)
-			resp, err := queryClient.Params(cmd.Context(), &constitutionv1.QueryParamsRequest{})
+			queryClient := constitutiontypes.NewQueryClient(clientCtx)
+			resp, err := queryClient.Params(cmd.Context(), &constitutiontypes.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
@@ -65,8 +64,8 @@ func CmdQueryBaseAddress() *cobra.Command {
 				return err
 			}
 
-			queryClient := constitutionv1.NewQueryClient(clientCtx)
-			resp, err := queryClient.BaseAddress(cmd.Context(), &constitutionv1.QueryBaseAddressRequest{})
+			queryClient := constitutiontypes.NewQueryClient(clientCtx)
+			resp, err := queryClient.BaseAddress(cmd.Context(), &constitutiontypes.QueryBaseAddressRequest{})
 			if err != nil {
 				return err
 			}
@@ -90,8 +89,8 @@ func CmdQueryModeratorAddress() *cobra.Command {
 				return err
 			}
 
-			queryClient := constitutionv1.NewQueryClient(clientCtx)
-			resp, err := queryClient.ModeratorAddress(cmd.Context(), &constitutionv1.QueryModeratorAddressRequest{})
+			queryClient := constitutiontypes.NewQueryClient(clientCtx)
+			resp, err := queryClient.ModeratorAddress(cmd.Context(), &constitutiontypes.QueryModeratorAddressRequest{})
 			if err != nil {
 				return err
 			}
@@ -115,8 +114,33 @@ func CmdQuerySeparationRatio() *cobra.Command {
 				return err
 			}
 
-			queryClient := constitutionv1.NewQueryClient(clientCtx)
-			resp, err := queryClient.SeparationRatio(cmd.Context(), &constitutionv1.QuerySeparationRatioRequest{})
+			queryClient := constitutiontypes.NewQueryClient(clientCtx)
+			resp, err := queryClient.SeparationRatio(cmd.Context(), &constitutiontypes.QuerySeparationRatioRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryMinGasPrice() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "min-gas-price",
+		Short: "Query the current and pending minimum gas price",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := constitutiontypes.NewQueryClient(clientCtx)
+			resp, err := queryClient.MinGasPrice(cmd.Context(), &constitutiontypes.QueryMinGasPriceRequest{})
 			if err != nil {
 				return err
 			}

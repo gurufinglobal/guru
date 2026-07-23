@@ -7,15 +7,20 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/cosmos/evm/crypto/hd"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	"github.com/stretchr/testify/require"
 )
 
-func TestInitCmdEnablesVoteExtensionsAtHeightOne(t *testing.T) {
+func TestRootCmdUsesEthereumCoinTypeAndEnablesVoteExtensionsAtHeightOne(t *testing.T) {
 	home := t.TempDir()
 	rootCmd := NewRootCmd()
+	require.Equal(t, uint32(sdk.Purpose), sdk.GetConfig().GetPurpose())
+	require.Equal(t, hd.Bip44CoinType, sdk.GetConfig().GetCoinType())
+	require.Equal(t, "m/44'/60'/0'/0/0", sdk.GetConfig().GetFullBIP44Path())
 	rootCmd.SetOut(io.Discard)
 	rootCmd.SetErr(io.Discard)
 	rootCmd.SetArgs([]string{

@@ -2,6 +2,10 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"cosmossdk.io/log/v2"
@@ -15,9 +19,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/v2"
 	snapshottypes "github.com/cosmos/cosmos-sdk/store/v2/snapshots/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	cosmosevmserver "github.com/cosmos/evm/server"
 	cosmosevmserverconfig "github.com/cosmos/evm/server/config"
-	"github.com/cosmos/evm/utils"
 	"github.com/gurufinglobal/guru/v3/app"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	"github.com/spf13/cast"
@@ -57,10 +61,15 @@ func defaultAppToml() (string, any) {
 
 	cfg := cosmosevmserverconfig.DefaultConfig()
 	cfg.MinGasPrices = "0" + appparams.BaseDenom
+	// The local oracle sidecar discovers active tasks through the node's gRPC
+	// query service. Keep it enabled in generated Guru node configuration.
+	cfg.GRPC.Enable = true
 	cfg.EVM.EVMChainID = appparams.EVMChainID
 	cfg.API.Enable = true
 	cfg.JSONRPC.Enable = true
 	cfg.JSONRPC.Address = "0.0.0.0:8545"
+	// Never permit personal account unlocking from JSON-RPC by default.
+	cfg.JSONRPC.AllowInsecureUnlock = false
 
 	return template, guruConfig{
 		Config: *cfg,
@@ -143,17 +152,26 @@ func appExport(
 	jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
-) (servertypes.ExportedApp, error) {
-	var emptyApp *app.App
+) (exported servertypes.ExportedApp, err error) {
+	viperAppOpts, ok := appOpts.(*viper.Viper)
+	if !ok {
+		return servertypes.ExportedApp{}, errors.New("appOpts is not viper.Viper")
+	}
+	// ExportCmd writes the genesis document to stdout. Cosmos SDK constructs
+	// its server logger on that same writer, so module initialization logs would
+	// otherwise corrupt the JSON stream. Preserve the configured format/level
+	// while routing only export-time application logs to stderr.
+	logger, err = sdkserver.CreateSDKLogger(
+		sdkserver.NewContext(viperAppOpts, cmtcfg.DefaultConfig(), logger),
+		os.Stderr,
+	)
+	if err != nil {
+		return servertypes.ExportedApp{}, err
+	}
 
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home not set")
-	}
-
-	viperAppOpts, ok := appOpts.(*viper.Viper)
-	if !ok {
-		return servertypes.ExportedApp{}, errors.New("appOpts is not viper.Viper")
 	}
 
 	// overwrite the FlagInvCheckPeriod
@@ -166,29 +184,46 @@ func appExport(
 		return servertypes.ExportedApp{}, err
 	}
 
-	if height != -1 {
-		emptyApp = app.NewApp(logger, db, false, appOpts, baseapp.SetChainID(chainID))
+	emptyApp := app.NewApp(logger, db, false, appOpts, baseapp.SetChainID(chainID))
+	defer func() {
+		err = errors.Join(err, emptyApp.Close())
+	}()
 
+	if height != -1 {
 		if err := emptyApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
+	} else if err := emptyApp.LoadLatestVersion(); err != nil {
+		return servertypes.ExportedApp{}, err
 	}
 
 	return emptyApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
-
 }
 
 func getChainIDFromOpts(appOpts servertypes.AppOptions) (chainID string, err error) {
-	// Get the chain Id from appOpts
-	chainID = cast.ToString(appOpts.Get(flags.FlagChainID))
-	if chainID == "" {
-		// If not available load from home
-		homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
-		chainID, err = utils.GetChainIDFromHome(homeDir)
-		if err != nil {
-			return "", err
-		}
+	homeDir := strings.TrimSpace(cast.ToString(appOpts.Get(flags.FlagHome)))
+	if homeDir == "" {
+		return "", errors.New("application home not set")
 	}
 
-	return chainID, err
+	genesisPath := filepath.Join(homeDir, "config", "genesis.json")
+	genesis, err := genutiltypes.AppGenesisFromFile(genesisPath)
+	if err != nil {
+		return "", fmt.Errorf("load chain ID from genesis: %w", err)
+	}
+	genesisChainID := strings.TrimSpace(genesis.ChainID)
+	if genesisChainID == "" {
+		return "", fmt.Errorf("genesis at %s has an empty chain ID", genesisPath)
+	}
+
+	configuredChainID := strings.TrimSpace(cast.ToString(appOpts.Get(flags.FlagChainID)))
+	if configuredChainID != "" && configuredChainID != genesisChainID {
+		return "", fmt.Errorf(
+			"configured chain ID %q does not match genesis chain ID %q",
+			configuredChainID,
+			genesisChainID,
+		)
+	}
+
+	return genesisChainID, nil
 }

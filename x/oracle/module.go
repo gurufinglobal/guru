@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
@@ -46,14 +45,14 @@ func (AppModule) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 }
 
 func (AppModule) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	if err := oraclev1.RegisterQueryHandlerClient(context.Background(), mux, oraclev1.NewQueryClient(clientCtx)); err != nil {
+	if err := oracletypes.RegisterQueryHandlerClient(context.Background(), mux, oracletypes.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
 
 func (am AppModule) RegisterServices(registrar grpc.ServiceRegistrar) error {
-	oraclev1.RegisterMsgServer(registrar, oraclekeeper.NewMsgServer(&am.keeper))
-	oraclev1.RegisterQueryServer(registrar, oraclekeeper.NewQueryServer(&am.keeper))
+	oracletypes.RegisterMsgServer(registrar, oraclekeeper.NewMsgServer(&am.keeper))
+	oracletypes.RegisterQueryServer(registrar, oraclekeeper.NewQueryServer(&am.keeper))
 	return nil
 }
 

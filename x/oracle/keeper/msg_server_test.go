@@ -4,19 +4,18 @@ import (
 	"bytes"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMsgServerAllowsModeratorToUpdateParamsAndTasks(t *testing.T) {
 	f := setupKeeperFixture(t)
 	msgServer := NewMsgServer(&f.keeper)
-	goCtx := sdk.WrapSDKContext(f.ctx)
+	goCtx := f.ctx
 
 	params := &oraclev1.Params{
 		MinValidators: 2,
@@ -60,7 +59,7 @@ func TestMsgServerAllowsModeratorToUpdateParamsAndTasks(t *testing.T) {
 func TestMsgServerRejectsGovAndArbitraryAuthorities(t *testing.T) {
 	f := setupKeeperFixture(t)
 	msgServer := NewMsgServer(&f.keeper)
-	goCtx := sdk.WrapSDKContext(f.ctx)
+	goCtx := f.ctx
 
 	for _, authority := range []string{
 		testGovAddress(t),

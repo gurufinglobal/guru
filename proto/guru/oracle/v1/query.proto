@@ -7,7 +7,7 @@ import "google/api/annotations.proto";
 import "guru/oracle/v1/oracle.proto";
 import "guru/oracle/v1/params.proto";
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1;oraclev1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/oracle/types";
 
 // Query exposes read-only oracle state.
 service Query {
@@ -25,13 +25,13 @@ service Query {
 
   // Task returns a configured numeric oracle task by symbol.
   rpc Task(QueryTaskRequest) returns (QueryTaskResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/tasks/{symbol}";
+    option (google.api.http).get = "/guru/oracle/v1/task";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
   // LatestValue returns the latest accepted oracle value for a symbol.
   rpc LatestValue(QueryLatestValueRequest) returns (QueryLatestValueResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/values/{symbol}";
+    option (google.api.http).get = "/guru/oracle/v1/value";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 
@@ -43,7 +43,7 @@ service Query {
 
   // History returns bounded oracle value history for a symbol.
   rpc History(QueryHistoryRequest) returns (QueryHistoryResponse) {
-    option (google.api.http).get = "/guru/oracle/v1/history/{symbol}";
+    option (google.api.http).get = "/guru/oracle/v1/history";
     option (cosmos.query.v1.module_query_safe) = true;
   }
 }

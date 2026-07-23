@@ -23,6 +23,7 @@ const (
 	Query_BaseAddress_FullMethodName      = "/guru.constitution.v1.Query/BaseAddress"
 	Query_ModeratorAddress_FullMethodName = "/guru.constitution.v1.Query/ModeratorAddress"
 	Query_SeparationRatio_FullMethodName  = "/guru.constitution.v1.Query/SeparationRatio"
+	Query_MinGasPrice_FullMethodName      = "/guru.constitution.v1.Query/MinGasPrice"
 )
 
 // QueryClient is the client API for Query service.
@@ -39,6 +40,9 @@ type QueryClient interface {
 	ModeratorAddress(ctx context.Context, in *QueryModeratorAddressRequest, opts ...grpc.CallOption) (*QueryModeratorAddressResponse, error)
 	// SeparationRatio returns the current fee separation ratio.
 	SeparationRatio(ctx context.Context, in *QuerySeparationRatioRequest, opts ...grpc.CallOption) (*QuerySeparationRatioResponse, error)
+	// MinGasPrice returns the current feemarket minimum gas price and any
+	// pending constitution-scheduled update.
+	MinGasPrice(ctx context.Context, in *QueryMinGasPriceRequest, opts ...grpc.CallOption) (*QueryMinGasPriceResponse, error)
 }
 
 type queryClient struct {
@@ -89,6 +93,16 @@ func (c *queryClient) SeparationRatio(ctx context.Context, in *QuerySeparationRa
 	return out, nil
 }
 
+func (c *queryClient) MinGasPrice(ctx context.Context, in *QueryMinGasPriceRequest, opts ...grpc.CallOption) (*QueryMinGasPriceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryMinGasPriceResponse)
+	err := c.cc.Invoke(ctx, Query_MinGasPrice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility.
@@ -103,6 +117,9 @@ type QueryServer interface {
 	ModeratorAddress(context.Context, *QueryModeratorAddressRequest) (*QueryModeratorAddressResponse, error)
 	// SeparationRatio returns the current fee separation ratio.
 	SeparationRatio(context.Context, *QuerySeparationRatioRequest) (*QuerySeparationRatioResponse, error)
+	// MinGasPrice returns the current feemarket minimum gas price and any
+	// pending constitution-scheduled update.
+	MinGasPrice(context.Context, *QueryMinGasPriceRequest) (*QueryMinGasPriceResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -124,6 +141,9 @@ func (UnimplementedQueryServer) ModeratorAddress(context.Context, *QueryModerato
 }
 func (UnimplementedQueryServer) SeparationRatio(context.Context, *QuerySeparationRatioRequest) (*QuerySeparationRatioResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SeparationRatio not implemented")
+}
+func (UnimplementedQueryServer) MinGasPrice(context.Context, *QueryMinGasPriceRequest) (*QueryMinGasPriceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MinGasPrice not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 func (UnimplementedQueryServer) testEmbeddedByValue()               {}
@@ -218,6 +238,24 @@ func _Query_SeparationRatio_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_MinGasPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryMinGasPriceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).MinGasPrice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_MinGasPrice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).MinGasPrice(ctx, req.(*QueryMinGasPriceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -240,6 +278,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SeparationRatio",
 			Handler:    _Query_SeparationRatio_Handler,
+		},
+		{
+			MethodName: "MinGasPrice",
+			Handler:    _Query_MinGasPrice_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

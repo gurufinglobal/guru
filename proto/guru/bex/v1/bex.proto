@@ -1,0 +1,179 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/bex/types";
+option (gogoproto.stable_marshaler_all) = true;
+
+// ExchangeStatus is the lifecycle state of a BEX exchange.
+enum ExchangeStatus {
+  // EXCHANGE_STATUS_UNSPECIFIED defaults to inactive on registration.
+  EXCHANGE_STATUS_UNSPECIFIED = 0;
+  // EXCHANGE_STATUS_ACTIVE allows quote and swap flows.
+  EXCHANGE_STATUS_ACTIVE = 1;
+  // EXCHANGE_STATUS_INACTIVE retains configuration while blocking swaps.
+  EXCHANGE_STATUS_INACTIVE = 2;
+  // EXCHANGE_STATUS_DELETED is a permanent logical-delete tombstone that
+  // retains the exchange's fully validated configuration.
+  EXCHANGE_STATUS_DELETED = 3;
+}
+
+// SwapDirection identifies the configured quote direction.
+enum SwapDirection {
+  // SWAP_DIRECTION_UNSPECIFIED is not a valid quote direction.
+  SWAP_DIRECTION_UNSPECIFIED = 0;
+  // SWAP_DIRECTION_A_TO_B converts denom A into denom B.
+  SWAP_DIRECTION_A_TO_B = 1;
+  // SWAP_DIRECTION_B_TO_A converts denom B into denom A.
+  SWAP_DIRECTION_B_TO_A = 2;
+}
+
+// Exchange is the BEX v3 exchange registry entry.
+message Exchange {
+  uint64 id = 1;
+  string admin_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string reserve_address = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  string denom_a = 4;
+  string port_a = 5;
+  string channel_a = 6;
+  string ibc_denom_a = 7;
+
+  string denom_b = 8;
+  string port_b = 9;
+  string channel_b = 10;
+  string ibc_denom_b = 11;
+
+  string oracle_symbol_a_to_b = 12;
+  string oracle_symbol_b_to_a = 13;
+
+  uint32 fee_bps_a_to_b = 14;
+  uint32 fee_bps_b_to_a = 15;
+
+  // Empty or omitted means unlimited.
+  string limit_a_to_b = 16 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string limit_b_to_a = 17 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string volume_cap_a_to_b = 18 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // Empty or omitted means unlimited.
+  string volume_cap_b_to_a = 19 [(cosmos_proto.scalar) = "cosmos.Int"];
+
+  uint64 revision = 20;
+  ExchangeStatus status = 21;
+  map<string, string> metadata = 22;
+
+  // Current volume-window duration. Updating this value directly takes effect
+  // immediately, does not carry usage from the previous window key, and does
+  // not alter an existing pending schedule.
+  uint32 volume_epoch_seconds = 23;
+  // Scheduled volume-window duration. Use this with
+  // pending_volume_epoch_effective_at_unix to avoid an immediate reset. Both
+  // pending values are non-zero when scheduled and zero when no schedule exists.
+  uint32 pending_volume_epoch_seconds = 24;
+  // Unix time at which pending_volume_epoch_seconds becomes current.
+  uint64 pending_volume_epoch_effective_at_unix = 25;
+  uint32 max_oracle_staleness_seconds = 26;
+  // Keeper-managed identity for the current volume-accounting configuration.
+  // It changes only when a new logical accounting window must not inherit
+  // usage from an earlier configuration.
+  uint64 volume_window_generation = 27;
+}
+
+// ExchangeUpdatePatch is a typed atomic update patch for an exchange.
+message ExchangeUpdatePatch {
+  google.protobuf.StringValue denom_a = 1;
+  google.protobuf.StringValue port_a = 2;
+  google.protobuf.StringValue channel_a = 3;
+  google.protobuf.StringValue denom_b = 4;
+  google.protobuf.StringValue port_b = 5;
+  google.protobuf.StringValue channel_b = 6;
+  google.protobuf.StringValue oracle_symbol_a_to_b = 7;
+  google.protobuf.StringValue oracle_symbol_b_to_a = 8;
+  google.protobuf.UInt32Value fee_bps_a_to_b = 9;
+  google.protobuf.UInt32Value fee_bps_b_to_a = 10;
+  google.protobuf.StringValue limit_a_to_b = 11 [(cosmos_proto.scalar) = "cosmos.Int"];
+  google.protobuf.StringValue limit_b_to_a = 12 [(cosmos_proto.scalar) = "cosmos.Int"];
+  google.protobuf.StringValue volume_cap_a_to_b = 13 [(cosmos_proto.scalar) = "cosmos.Int"];
+  google.protobuf.StringValue volume_cap_b_to_a = 14 [(cosmos_proto.scalar) = "cosmos.Int"];
+  ExchangeStatusPatch status = 15;
+  map<string, string> metadata = 16;
+  google.protobuf.BoolValue clear_metadata = 17;
+  // Applies immediately and starts accounting under a new volume-window key;
+  // existing usage is not carried and an existing pending schedule is unchanged.
+  // Use the pending fields for a scheduled change.
+  google.protobuf.UInt32Value volume_epoch_seconds = 18;
+  // Schedules a new duration and must be paired with an effective Unix time.
+  // Set both pending fields to zero in one patch to clear a schedule.
+  google.protobuf.UInt32Value pending_volume_epoch_seconds = 19;
+  // Unix time at which the pending duration becomes current.
+  google.protobuf.UInt64Value pending_volume_epoch_effective_at_unix = 20;
+  google.protobuf.UInt32Value max_oracle_staleness_seconds = 21;
+  google.protobuf.StringValue new_admin_address = 22 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// ExchangeStatusPatch gives ExchangeUpdatePatch presence for enum updates.
+message ExchangeStatusPatch {
+  ExchangeStatus status = 1;
+}
+
+// FeeLedger stores canonical coins for collected or locked fees.
+message FeeLedger {
+  repeated cosmos.base.v1beta1.Coin coins = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// VolumeWindow stores output exposure for one exchange direction and epoch.
+message VolumeWindow {
+  uint64 exchange_id = 1;
+  SwapDirection direction = 2;
+  uint64 epoch_start_unix = 3;
+  uint32 epoch_seconds = 4;
+  string amount = 5 [(cosmos_proto.scalar) = "cosmos.Int"];
+  uint64 volume_window_generation = 6;
+}
+
+// VolumeReservation identifies the exact cap window charged by one in-flight
+// swap output. It is persisted by TransSwap so a failed output can release the
+// same window even after the active exchange configuration or epoch changes.
+message VolumeReservation {
+  uint64 exchange_id = 1;
+  SwapDirection direction = 2;
+  uint64 epoch_start_unix = 3;
+  uint32 epoch_seconds = 4;
+  string amount = 5 [(cosmos_proto.scalar) = "cosmos.Int"];
+  uint64 volume_window_generation = 6;
+}
+
+// QuoteSwapRequest is the keeper-level quote request.
+message QuoteSwapRequest {
+  uint64 exchange_id = 1;
+  string input_denom = 2;
+  string amount_in = 3 [(cosmos_proto.scalar) = "cosmos.Int"];
+}
+
+// QuoteSwapResponse is the deterministic quote result.
+message QuoteSwapResponse {
+  uint64 exchange_id = 1;
+  SwapDirection direction = 2;
+  string input_denom = 3;
+  string output_denom = 4;
+  string oracle_symbol = 5;
+  string oracle_rate = 6;
+  string amount_in = 7 [(cosmos_proto.scalar) = "cosmos.Int"];
+  string fee_amount = 8 [(cosmos_proto.scalar) = "cosmos.Int"];
+  string net_amount_in = 9 [(cosmos_proto.scalar) = "cosmos.Int"];
+  string amount_out = 10 [(cosmos_proto.scalar) = "cosmos.Int"];
+  string output_limit = 11 [(cosmos_proto.scalar) = "cosmos.Int"];
+  string volume_cap = 12 [(cosmos_proto.scalar) = "cosmos.Int"];
+  string volume_used = 13 [(cosmos_proto.scalar) = "cosmos.Int"];
+  string min_amount_in = 14 [(cosmos_proto.scalar) = "cosmos.Int"];
+  // exchange_revision is the configuration revision used by this quote.
+  uint64 exchange_revision = 15;
+}

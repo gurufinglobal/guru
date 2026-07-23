@@ -1,7 +1,7 @@
 syntax = "proto3";
 package guru.constitution.v1;
 
-option go_package = "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1;constitutionv1";
+option go_package = "github.com/gurufinglobal/guru/v3/x/constitution/types";
 
 // SeparationRatio values are expressed in parts per million (ppm).
 // The _ppm suffix means 1,000,000 ppm is exactly 100%.
@@ -10,4 +10,21 @@ message SeparationRatio {
   uint32 base_ppm = 1;
   uint32 burn_ppm = 2;
   uint32 validators_ppm = 3;
+}
+
+// MinGasPriceSchedule is the single pending chain-wide minimum gas price
+// update derived from an accepted oracle value.
+message MinGasPriceSchedule {
+  int64 effective_height = 1;
+  string scheduled_min_gas_price = 2;
+  string source_symbol = 3;
+  string source_value = 4;
+  int64 source_oracle_height = 5;
+  uint32 source_submission_interval_blocks = 6;
+  uint32 pending_delay_blocks = 7;
+  uint32 pending_delay_cap_blocks = 8;
+  string raw_min_gas_price = 9;
+  string previous_min_gas_price = 10;
+  reserved 11;
+  reserved "clamped_min_gas_price";
 }

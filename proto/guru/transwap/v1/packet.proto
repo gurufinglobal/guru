@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package guru.transwap.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
+
+// FungibleTokenPacketData defines a struct for the packet payload
+// See FungibleTokenPacketData spec:
+// https://github.com/cosmos/ibc/tree/master/spec/app/ics-020-fungible-token-transfer#data-structures
+message FungibleTokenPacketData {
+  // the packet type defines whether it is transfer packet or exchange
+  string exchange_id = 1;
+  // the token denomination to be transferred
+  string denom = 2;
+  // the token amount to be transferred
+  string amount = 3;
+  // the sender address
+  string sender = 4;
+  // the recipient address on the destination chain
+  string receiver = 5;
+  // optional memo
+  string memo = 6;
+}

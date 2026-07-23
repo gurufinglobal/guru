@@ -1,11 +1,12 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
-	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	querytypes "github.com/cosmos/cosmos-sdk/types/query"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -105,6 +106,32 @@ func TestTaskScheduleIndexesDueTasksByHeight(t *testing.T) {
 	require.Empty(t, due)
 }
 
+func TestSetTaskDefinitionDoesNotSeedSchedule(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(100)
+
+	require.NoError(t, f.keeper.SetTaskDefinition(ctx, &oraclev1.OracleTask{
+		Symbol:             "BTC/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 5,
+	}))
+
+	schedule, err := f.keeper.ListTaskSchedule(ctx)
+	require.NoError(t, err)
+	require.Empty(t, schedule)
+
+	require.NoError(t, f.keeper.SetTaskSchedule(ctx, &oraclev1.OracleTaskScheduleEntry{Symbol: "btc/usd", Height: 105}))
+	require.NoError(t, f.keeper.SetTaskSchedule(ctx, &oraclev1.OracleTaskScheduleEntry{Symbol: "BTC/USD", Height: 110}))
+
+	schedule, err = f.keeper.ListTaskSchedule(ctx)
+	require.NoError(t, err)
+	require.Equal(t, []*oraclev1.OracleTaskScheduleEntry{
+		{Symbol: "BTC/USD", Height: 105},
+		{Symbol: "BTC/USD", Height: 110},
+	}, schedule)
+}
+
 func TestDueTasksForVoteExtensionIncludesExactAndMissedButExcludesPipelineHeight(t *testing.T) {
 	f := setupKeeperFixture(t)
 	ctx := f.ctx.WithBlockHeight(0)
@@ -176,6 +203,40 @@ func TestApplyOracleValuesUpdatesLatestAndBoundsHistory(t *testing.T) {
 	require.Equal(t, "BTC/USD", history.GetSymbol())
 	require.Equal(t, int64(11), history.GetValues()[0].GetBlockHeight())
 	require.Equal(t, int64(12), history.GetValues()[1].GetBlockHeight())
+}
+
+func TestApplyOracleValuesCallsHooksWithTaskSubmissionInterval(t *testing.T) {
+	f := setupKeeperFixture(t)
+	require.NoError(t, f.keeper.SetTask(f.ctx, &oraclev1.OracleTask{
+		Symbol:             "TRX/USD",
+		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 7,
+	}))
+
+	hook := &recordingOracleHook{}
+	f.keeper.SetHooks(hook)
+
+	require.NoError(t, f.keeper.ApplyOracleValues(f.ctx, []*oraclev1.OracleValue{
+		testValue("trx/usd", "1.0", 10),
+	}))
+	require.Len(t, hook.values, 1)
+	require.Equal(t, "TRX/USD", hook.values[0].GetSymbol())
+	require.Equal(t, []uint32{7}, hook.sourceSubmissionIntervals)
+}
+
+func TestApplyOracleValuesCallsHooksWithZeroIntervalForUnknownTask(t *testing.T) {
+	f := setupKeeperFixture(t)
+	hook := &recordingOracleHook{}
+	f.keeper.SetHooks(hook)
+
+	require.NoError(t, f.keeper.ApplyOracleValues(f.ctx, []*oraclev1.OracleValue{
+		testValue("TRX/USD", "1.0", 10),
+	}))
+
+	require.Len(t, hook.values, 1)
+	require.Equal(t, "TRX/USD", hook.values[0].GetSymbol())
+	require.Equal(t, []uint32{0}, hook.sourceSubmissionIntervals)
 }
 
 func TestTaskStateRejectsInvalidTasks(t *testing.T) {
@@ -303,7 +364,7 @@ func TestQueryServerPaginatesLargeResponses(t *testing.T) {
 	require.Equal(t, []byte("30"), tasksResp.GetPagination().GetNextKey())
 
 	nextTasksResp, err := queryServer.ActiveTasks(f.ctx, &oraclev1.QueryActiveTasksRequest{
-		Pagination: &queryv1beta1.PageRequest{
+		Pagination: &querytypes.PageRequest{
 			Key:   tasksResp.GetPagination().GetNextKey(),
 			Limit: 3,
 		},
@@ -314,7 +375,7 @@ func TestQueryServerPaginatesLargeResponses(t *testing.T) {
 	require.Equal(t, []byte("33"), nextTasksResp.GetPagination().GetNextKey())
 
 	latestResp, err := queryServer.LatestValues(f.ctx, &oraclev1.QueryLatestValuesRequest{
-		Pagination: &queryv1beta1.PageRequest{Limit: 10},
+		Pagination: &querytypes.PageRequest{Limit: 10},
 	})
 	require.NoError(t, err)
 	require.Len(t, latestResp.GetValues(), 10)
@@ -329,7 +390,7 @@ func TestQueryServerPaginatesLargeResponses(t *testing.T) {
 
 	historyTailResp, err := queryServer.History(f.ctx, &oraclev1.QueryHistoryRequest{
 		Symbol:     "BTC/USD",
-		Pagination: &queryv1beta1.PageRequest{Offset: 30, Limit: 10},
+		Pagination: &querytypes.PageRequest{Offset: 30, Limit: 10},
 	})
 	require.NoError(t, err)
 	require.Len(t, historyTailResp.GetHistory().GetValues(), 5)
@@ -353,4 +414,15 @@ func taskSymbols(tasks []*oraclev1.OracleTask) []string {
 		symbols = append(symbols, task.GetSymbol())
 	}
 	return symbols
+}
+
+type recordingOracleHook struct {
+	values                    []*oraclev1.OracleValue
+	sourceSubmissionIntervals []uint32
+}
+
+func (h *recordingOracleHook) AfterOracleValueApplied(_ context.Context, value *oraclev1.OracleValue, sourceSubmissionInterval uint32) error {
+	h.values = append(h.values, value)
+	h.sourceSubmissionIntervals = append(h.sourceSubmissionIntervals, sourceSubmissionInterval)
+	return nil
 }

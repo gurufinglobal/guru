@@ -188,7 +188,7 @@ func (f validatorSetFixture) deleteValidatorPowerIndexEntries(t *testing.T, valA
 		storetypes.PrefixEndBytes(stakingtypes.ValidatorsByPowerIndexKey),
 	)
 	require.NoError(t, err)
-	defer iterator.Close()
+	defer func() { require.NoError(t, iterator.Close()) }()
 
 	for ; iterator.Valid(); iterator.Next() {
 		indexedValAddr := stakingtypes.ParseValidatorPowerRankKey(iterator.Key())

@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	"cosmossdk.io/collections"
+	constitutionv1 "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
 var _ constitutionv1.QueryServer = QueryServer{}
@@ -51,4 +53,24 @@ func (q QueryServer) SeparationRatio(ctx context.Context, req *constitutionv1.Qu
 	}
 
 	return &constitutionv1.QuerySeparationRatioResponse{SeparationRatio: separationRatio}, nil
+}
+
+func (q QueryServer) MinGasPrice(ctx context.Context, req *constitutionv1.QueryMinGasPriceRequest) (*constitutionv1.QueryMinGasPriceResponse, error) {
+	currentMinGasPrice, err := q.keeper.GetCurrentMinGasPrice(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pending, err := q.keeper.GetMinGasPriceSchedule(ctx)
+	if err != nil {
+		if !errors.Is(err, collections.ErrNotFound) {
+			return nil, err
+		}
+		pending = nil
+	}
+
+	return &constitutionv1.QueryMinGasPriceResponse{
+		CurrentMinGasPrice: currentMinGasPrice.String(),
+		Pending:            pending,
+	}, nil
 }

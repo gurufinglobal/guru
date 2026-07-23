@@ -10,11 +10,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/proto"
 )
 
 type VoteExtensionHandler struct {
@@ -53,6 +52,8 @@ func (h VoteExtensionHandler) ExtendVote(ctx sdk.Context, req *abcitypes.Request
 
 	response, err := h.fetchSamples(ctx.Context(), tasks, req.Height)
 	if err != nil {
+		// Local sidecar failure must not stop consensus. Missing validator
+		// samples simply reduce oracle quorum for this height.
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
@@ -61,7 +62,7 @@ func (h VoteExtensionHandler) ExtendVote(ctx sdk.Context, req *abcitypes.Request
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 
-	bz, err := proto.Marshal(&oraclev1.OracleVoteExtension{Results: results})
+	bz, err := (&oraclev1.OracleVoteExtension{Results: results}).Marshal()
 	if err != nil {
 		return &abcitypes.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
@@ -93,7 +94,7 @@ func (h VoteExtensionHandler) fetchSamples(ctx context.Context, tasks []*oraclev
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	client := oraclev1.NewOracleSidecarClient(conn)
 	return client.GetSamples(callCtx, &oraclev1.GetSamplesRequest{

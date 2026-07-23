@@ -1,0 +1,201 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+import "guru/bex/v1/bex.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/bex/types";
+
+// Query exposes read-only BEX state.
+service Query {
+  // Exchange returns one exchange, including deleted tombstones.
+  rpc Exchange(QueryExchangeRequest) returns (QueryExchangeResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // Exchanges returns exchanges by status-filtered pagination.
+  rpc Exchanges(QueryExchangesRequest) returns (QueryExchangesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // ExchangesByExchangeAdmin returns non-deleted exchanges owned by one exchange admin.
+  rpc ExchangesByExchangeAdmin(QueryExchangesByExchangeAdminRequest) returns (QueryExchangesByExchangeAdminResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchange-admins/{exchange_admin_address}/exchanges";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // IsBexAdmin returns whether an address is a registered BEX admin.
+  rpc IsBexAdmin(QueryIsBexAdminRequest) returns (QueryIsBexAdminResponse) {
+    option (google.api.http).get = "/guru/bex/v1/bex-admins/{bex_admin_address}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // ReserveDepositors returns the allowlisted depositors for one exchange.
+  rpc ReserveDepositors(QueryReserveDepositorsRequest) returns (QueryReserveDepositorsResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/reserve-depositors";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // IsReserveDepositor checks one address's reserve deposit permission.
+  rpc IsReserveDepositor(QueryIsReserveDepositorRequest) returns (QueryIsReserveDepositorResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/reserve-depositors/{depositor_address}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // CollectedFees returns collected fees for an exchange.
+  rpc CollectedFees(QueryFeesRequest) returns (QueryFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/fees/collected";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // LockedFees returns locked fees for an exchange.
+  rpc LockedFees(QueryFeesRequest) returns (QueryFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/fees/locked";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // AvailableFees returns collected minus locked fees.
+  rpc AvailableFees(QueryFeesRequest) returns (QueryFeesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/fees/available";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // PendingLiabilities returns aggregate unresolved refund obligations for an
+  // exchange.
+  rpc PendingLiabilities(QueryPendingLiabilitiesRequest) returns (QueryPendingLiabilitiesResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/pending-liabilities";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // VolumeWindow returns current volume window state.
+  rpc VolumeWindow(QueryVolumeWindowRequest) returns (QueryVolumeWindowResponse) {
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/volume/{direction}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // QuoteSwap returns a deterministic dry-run quote.
+  rpc QuoteSwap(QueryQuoteSwapRequest) returns (QueryQuoteSwapResponse) {
+    // input_denom and amount_in remain query parameters so slash-bearing
+    // Cosmos denoms such as ibc/... and factory/.../... are representable.
+    option (google.api.http).get = "/guru/bex/v1/exchanges/{exchange_id}/quote";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+}
+
+// QueryExchangeRequest requests one exchange.
+message QueryExchangeRequest {
+  uint64 exchange_id = 1;
+}
+
+// QueryExchangeResponse returns one exchange.
+message QueryExchangeResponse {
+  Exchange exchange = 1;
+}
+
+// QueryExchangesRequest requests exchanges.
+message QueryExchangesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  bool include_deleted = 2;
+}
+
+// QueryExchangesResponse returns exchanges.
+message QueryExchangesResponse {
+  repeated Exchange exchanges = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryExchangesByExchangeAdminRequest requests exchanges owned by one exchange admin.
+message QueryExchangesByExchangeAdminRequest {
+  string exchange_admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryExchangesByExchangeAdminResponse returns exchanges owned by one exchange admin.
+message QueryExchangesByExchangeAdminResponse {
+  repeated Exchange exchanges = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryIsBexAdminRequest checks BEX admin registration status.
+message QueryIsBexAdminRequest {
+  string bex_admin_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// QueryIsBexAdminResponse returns BEX admin registration status.
+message QueryIsBexAdminResponse {
+  bool is_bex_admin = 1;
+}
+
+// QueryReserveDepositorsRequest requests an exchange's reserve depositors.
+message QueryReserveDepositorsRequest {
+  uint64 exchange_id = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryReserveDepositorsResponse returns canonical depositor addresses.
+message QueryReserveDepositorsResponse {
+  repeated string depositors = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryIsReserveDepositorRequest checks one depositor address.
+message QueryIsReserveDepositorRequest {
+  uint64 exchange_id = 1;
+  string depositor_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// QueryIsReserveDepositorResponse returns reserve deposit permission.
+message QueryIsReserveDepositorResponse {
+  bool is_reserve_depositor = 1;
+}
+
+// QueryFeesRequest requests fee ledger state.
+message QueryFeesRequest {
+  uint64 exchange_id = 1;
+}
+
+// QueryFeesResponse returns fee ledger state.
+message QueryFeesResponse {
+  FeeLedger ledger = 1;
+}
+
+// QueryPendingLiabilitiesRequest requests aggregate unresolved refund
+// obligations for one exchange.
+message QueryPendingLiabilitiesRequest {
+  uint64 exchange_id = 1;
+}
+
+// QueryPendingLiabilitiesResponse returns an exchange-scoped aggregate coin
+// ledger. An empty ledger means no unresolved refund obligation exists.
+message QueryPendingLiabilitiesResponse {
+  FeeLedger ledger = 1;
+}
+
+// QueryVolumeWindowRequest requests current volume state.
+message QueryVolumeWindowRequest {
+  uint64 exchange_id = 1;
+  SwapDirection direction = 2;
+}
+
+// QueryVolumeWindowResponse returns current volume state.
+message QueryVolumeWindowResponse {
+  VolumeWindow window = 1;
+  string cap = 2;
+}
+
+// QueryQuoteSwapRequest requests a dry-run quote.
+message QueryQuoteSwapRequest {
+  uint64 exchange_id = 1;
+  string input_denom = 2;
+  string amount_in = 3;
+}
+
+// QueryQuoteSwapResponse returns a dry-run quote.
+message QueryQuoteSwapResponse {
+  QuoteSwapResponse quote = 1;
+}

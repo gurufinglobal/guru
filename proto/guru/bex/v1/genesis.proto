@@ -1,0 +1,49 @@
+syntax = "proto3";
+package guru.bex.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "guru/bex/v1/bex.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/bex/types";
+
+// GenesisState defines BEX genesis state.
+message GenesisState {
+  repeated string admins = 1;
+  repeated Exchange exchanges = 2;
+  repeated FeeGenesis collected_fees = 3;
+  repeated FeeGenesis locked_fees = 4;
+  repeated VolumeWindowGenesis volume_windows = 5;
+  uint64 next_exchange_id = 6;
+  repeated ReserveDepositorGenesis reserve_depositors = 7;
+  // pending_liabilities records gross refund obligations until output/refund
+  // acknowledgement success or a local manual claim.
+  repeated FeeGenesis pending_liabilities = 8;
+}
+
+// FeeGenesis stores one exchange fee ledger at genesis.
+message FeeGenesis {
+  uint64 exchange_id = 1;
+  repeated cosmos.base.v1beta1.Coin coins = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// VolumeWindowGenesis stores one volume window row at genesis.
+message VolumeWindowGenesis {
+  uint64 exchange_id = 1;
+  SwapDirection direction = 2;
+  // Start of the window, aligned to epoch_seconds from the Unix epoch.
+  uint64 epoch_start_unix = 3;
+  uint32 epoch_seconds = 4;
+  string amount = 5;
+  uint64 volume_window_generation = 6;
+}
+
+// ReserveDepositorGenesis stores one exchange-scoped reserve depositor.
+message ReserveDepositorGenesis {
+  uint64 exchange_id = 1;
+  string depositor_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}

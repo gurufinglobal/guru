@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/snapshot"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -19,6 +20,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	cosmosevmcmd "github.com/cosmos/evm/client"
 	evmdebug "github.com/cosmos/evm/client/debug"
+	evmcryptocodec "github.com/cosmos/evm/crypto/codec"
 	"github.com/cosmos/evm/crypto/hd"
 	cosmosevmserver "github.com/cosmos/evm/server"
 	srvflags "github.com/cosmos/evm/server/flags"
@@ -32,7 +34,10 @@ func NewRootCmd() *cobra.Command {
 	sdkCfg.SetBech32PrefixForAccount(appparams.Bech32PrefixAccAddr, appparams.Bech32PrefixAccPub)
 	sdkCfg.SetBech32PrefixForValidator(appparams.Bech32PrefixValAddr, appparams.Bech32PrefixValPub)
 	sdkCfg.SetBech32PrefixForConsensusNode(appparams.Bech32PrefixConsAddr, appparams.Bech32PrefixConsPub)
+	sdkCfg.SetPurpose(sdk.Purpose)
+	sdkCfg.SetCoinType(hd.Bip44CoinType)
 	sdkCfg.Seal()
+	initCryptoKeyArmorCodec()
 
 	nodeHome := appparams.MustDefaultHomeDir()
 
@@ -125,4 +130,13 @@ func NewRootCmd() *cobra.Command {
 	patchEVMSendCommand(rootCmd)
 
 	return rootCmd
+}
+
+// initCryptoKeyArmorCodec configures the SDK's legacy key armor boundary for
+// local secp256k1 and eth_secp256k1 key import/export. It is intentionally not
+// attached to the app or TxConfig, which remain protobuf-only.
+func initCryptoKeyArmorCodec() {
+	cryptoAmino := codec.NewLegacyAmino()
+	evmcryptocodec.RegisterCrypto(cryptoAmino)
+	cryptoAmino.Seal()
 }

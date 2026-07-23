@@ -5,6 +5,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -34,6 +36,7 @@ func setupKeeperFixture(t *testing.T) keeperTestFixture {
 
 	keeper := NewKeeper(
 		runtime.NewKVStoreService(key),
+		codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
 		accountCodec,
 		mockConstitutionKeeper{moderator: moderator},
 	)

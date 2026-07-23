@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -56,7 +56,7 @@ func TestSidecarServesConfiguredSourcesOverUnixSocket(t *testing.T) {
 
 	conn, err := grpc.NewClient("unix://"+socketPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	client := oraclev1.NewOracleSidecarClient(conn)
 	response, err := client.GetSamples(context.Background(), &oraclev1.GetSamplesRequest{
@@ -110,6 +110,43 @@ func TestSidecarReusesFreshIntervalCache(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, first.GetValue(), second.GetValue())
+	require.Equal(t, int32(1), requests.Load())
+}
+
+func TestSidecarCacheReturnsClonedSamples(t *testing.T) {
+	var requests atomic.Int32
+	httpServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		_, _ = w.Write([]byte(`{"data":{"price":"10.5"}}`))
+	}))
+	defer httpServer.Close()
+
+	sidecar, err := NewSidecar(Config{
+		Socket:         "/tmp/guru-oracle-test.sock",
+		RequestTimeout: "2s",
+		SourceTimeout:  "1s",
+		Sources: []SourceConfig{{
+			Name:         "a",
+			Symbol:       "BTC/USD",
+			URL:          httpServer.URL,
+			ResponsePath: "data.price",
+			Interval:     "1h",
+		}},
+	})
+	require.NoError(t, err)
+
+	source := sidecar.config.Sources[0]
+	task := &oraclev1.OracleTask{Symbol: "BTC/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 1}
+	first, err := sidecar.sampleForSource(context.Background(), source, task, time.Second)
+	require.NoError(t, err)
+	first.Value = "mutated"
+	first.Source = "mutated-source"
+
+	second, err := sidecar.sampleForSource(context.Background(), source, task, time.Second)
+	require.NoError(t, err)
+
+	require.Equal(t, "10.5", second.GetValue())
+	require.Equal(t, "a", second.GetSource())
 	require.Equal(t, int32(1), requests.Load())
 }
 

@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package guru.transwap.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "guru/bex/v1/bex.proto";
+import "guru/transwap/v1/token.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
+
+// RefundStatus is the deterministic lifecycle of one refund obligation.
+enum RefundStatus {
+  // REFUND_STATUS_UNSPECIFIED is invalid persisted state.
+  REFUND_STATUS_UNSPECIFIED = 0;
+  // REFUND_STATUS_PENDING waits for the original swap output packet result.
+  REFUND_STATUS_PENDING = 1;
+  // REFUND_STATUS_IN_FLIGHT has exactly one active IBC refund packet.
+  REFUND_STATUS_IN_FLIGHT = 2;
+  // REFUND_STATUS_RETRYABLE holds funds in the BEX reserve before another attempt.
+  REFUND_STATUS_RETRYABLE = 3;
+  // REFUND_STATUS_COMPLETED is the terminal successful transport state.
+  REFUND_STATUS_COMPLETED = 4;
+  // REFUND_STATUS_MANUAL_CLAIMABLE permits the receiver to claim from the BEX reserve.
+  REFUND_STATUS_MANUAL_CLAIMABLE = 5;
+  // REFUND_STATUS_CLAIMED is the terminal successful manual-claim state.
+  REFUND_STATUS_CLAIMED = 6;
+}
+
+// RefundHeight preserves the original exchange packet timeout height as
+// immutable business/audit metadata. It is never used for refund transport.
+message RefundHeight {
+  uint64 revision_number = 1;
+  uint64 revision_height = 2;
+}
+
+// RefundRecord is the stable state-machine record for one refund obligation.
+// Packet indexes are stored separately and always point back to this stable id.
+message RefundRecord {
+  reserved 11, 12, 21;
+  reserved "pending_liability", "bex_custody_released", "escrow_address";
+
+  string id = 1;
+  RefundStatus status = 2;
+
+  // Refund packets travel back through this source port and channel.
+  string refund_source_port = 3;
+  string refund_source_channel = 4;
+  // token is the immutable gross refund obligation and packet template.
+  Token token = 5 [(gogoproto.nullable) = false];
+  string receiver = 6;
+  string claim_address = 7;
+  string memo = 8;
+  string exchange_id = 9;
+
+  // The original fee is retained for audit and remains locked only while the
+  // original swap output is pending.
+  cosmos.base.v1beta1.Coin original_fee = 10 [(gogoproto.nullable) = false];
+
+  // Immutable swap execution deadline metadata. These values MUST NOT be used
+  // as a refund packet timeout.
+  uint64 original_timeout_timestamp = 13;
+  RefundHeight original_timeout_height = 14;
+
+  // The original swap output packet resolves REFUND_PENDING.
+  string original_output_port = 15;
+  string original_output_channel = 16;
+  uint64 original_output_sequence = 17;
+
+  // Exactly one active refund packet may exist while REFUND_IN_FLIGHT.
+  uint64 active_packet_sequence = 18;
+  uint64 active_timeout_timestamp = 19;
+  uint32 retry_count = 20;
+
+  // Immutable commitment of the original swap output packet. It allows
+  // genesis/export audits to prove that REFUND_PENDING still has an IBC
+  // packet capable of resolving the obligation.
+  bytes original_output_packet_commitment = 22;
+
+  // next_retry_height schedules a RETRYABLE dispatch for a later block. It is
+  // zero in every other state and prevents local transport failures from
+  // consuming all attempts in one callback.
+  uint64 next_retry_height = 23;
+
+  // Exact BEX volume-cap reservation charged when the original swap output
+  // was dispatched. It is released only if that output fails or times out.
+  guru.bex.v1.VolumeReservation volume_reservation = 24;
+}

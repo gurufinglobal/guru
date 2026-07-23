@@ -12,7 +12,7 @@ import (
 )
 
 const envDistributionStakingStress = "GURU_E2E_DISTRIBUTION_STAKING_STRESS"
-const distributionStakingStressTxFee = "1agxn"
+const distributionStakingStressTxFee = highFeeAGXN
 
 func TestE2EDistributionStakingConcurrentRewardStress(t *testing.T) {
 	if os.Getenv(envDistributionStakingStress) != "1" {
@@ -62,7 +62,7 @@ func TestE2EDistributionStakingConcurrentRewardStress(t *testing.T) {
 		}
 		args := append([]string{"tx", "bank", "multi-send", "validator"}, addresses[start:end]...)
 		args = append(args,
-			"1000000000000000agxn",
+			"10000000000000000000000agxn",
 			"--from", "validator",
 			"--keyring-backend", "test",
 			"--home", home,
@@ -139,7 +139,7 @@ func bootstrapDistributionStakingStressGenesis(t *testing.T, repoRoot, bin, home
 	runInitWithConstitutionAddresses(t, repoRoot, bin, "e2e", home)
 	runCmd(t, repoRoot, bin, "keys", "add", "validator", "--keyring-backend", "test", "--home", home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", "validator", "1000000000000000000000000000000agxn", "--keyring-backend", "test", "--home", home)
-	runCmd(t, repoRoot, bin, "genesis", "gentx", "validator", "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", home)
+	runCmd(t, repoRoot, bin, "genesis", "gentx", "validator", "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", home, "--fees", highFeeAGXN)
 	runCmd(t, repoRoot, bin, "genesis", "collect-gentxs", "--home", home)
 }
 

@@ -13,7 +13,9 @@ import (
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
 
 type KeepersInitConfig struct {
@@ -33,9 +35,11 @@ type KeepersInitConfig struct {
 func DefaultModuleAccountPermissions() map[string][]string {
 	return map[string][]string{
 		authtypes.FeeCollectorName:     nil,
+		bextypes.ModuleName:            nil,
 		constitutiontypes.ModuleName:   {authtypes.Burner},
 		distrtypes.ModuleName:          nil,
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		transwaptypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
 		minttypes.ModuleName:           {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},

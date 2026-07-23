@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,18 +17,24 @@ import (
 	"testing"
 	"time"
 
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	"github.com/gurufinglobal/guru/v3/oracle"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 const (
-	envOracleSoak          = "GURU_E2E_SOAK"
-	envOracleTxSmoke       = "GURU_E2E_ORACLE_TX_SMOKE"
-	oracleSoakHeight       = int64(100)
-	oracleSoakWorkloadStep = int64(5)
-	oracleSoakImportBlocks = int64(20)
-	oracleSoakTimeout      = 25 * time.Minute
-	oracleSoakTxFee        = highFeeAGXN
+	envOracleSoak           = "GURU_E2E_SOAK"
+	envOracleTxSmoke        = "GURU_E2E_ORACLE_TX_SMOKE"
+	oracleSoakBlocks        = int64(1_000)
+	oracleSoakWorkloadStep  = int64(5)
+	oracleSoakImportBlocks  = int64(20)
+	oracleSoakTimeout       = 25 * time.Minute
+	oracleSoakTxFee         = highFeeAGXN
+	oracleSoakValidatorFund = "1000000000000000000000agxn"
+	oracleSoakOperatorFund  = "3000000000000000000000agxn"
+	oracleSoakInitialMinGas = "630000000000.000000000000000000"
+	// 630000000000 min gas price * 250000 gas. It is valid at genesis but
+	// must be rejected after the oracle raises the chain-wide minimum.
+	oracleSoakGenesisFeeAt250KGas = "157500000000000000agxn"
 )
 
 func TestE2EOracleSyncTxSmoke(t *testing.T) {
@@ -52,7 +61,8 @@ func TestE2EOracleSyncTxSmoke(t *testing.T) {
 
 	waitForOracleSoakNodeHeight(t, repoRoot, bin, node, 3, 90*time.Second)
 	beforeSeq := queryAccountSequence(t, repoRoot, bin, node.home, node.rpcAddr, accounts.moderator)
-	txHash := submitOracleSyncTxWithDiagnostics(t, repoRoot, bin, node, beforeSeq,
+	txHash := submitOracleSyncTxWithDiagnostics(
+		t, repoRoot, bin, node, beforeSeq,
 		"tx", "oracle", "upsert-task", "SMOKE/TX", "11",
 		"--enabled=false",
 		"--from", "moderator",
@@ -78,6 +88,9 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 	if os.Getenv(envOracleSoak) != "1" {
 		t.Skipf("set %s=1 to run the 4-validator oracle soak", envOracleSoak)
 	}
+	previousLogOutput := log.Writer()
+	log.SetOutput(io.Discard)
+	defer log.SetOutput(previousLogOutput)
 
 	repoRoot := projectRootFromTestFile(t)
 	bin := buildGurudBinary(t, repoRoot)
@@ -92,15 +105,67 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, 15, 2*time.Minute)
 	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", 3, 90*time.Second)
+	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "TRX/USD", 3, 90*time.Second)
+	t.Logf("four-validator checkpoint=baseline height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
+	updatedMinGasPrice := waitForMinGasPriceAbove(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, oracleSoakInitialMinGas, 2*time.Minute)
+	t.Logf("oracle-driven min gas price update observed current_min_gas_price=%s", updatedMinGasPrice)
+	assertUpdatedMinGasPriceRejectsGenesisFee(t, repoRoot, bin, nodes[0], accounts)
 
 	runOracleSoakTxMix(t, repoRoot, bin, nodes[0], accounts)
+
+	for index := range nodes {
+		assertNoOracleVoteExtensionValidationFailures(t, nodes)
+		heightBeforeRestart := latestOracleSoakHeight(t, repoRoot, bin, nodes)
+		latestBeforeRestart := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
+		restartOracleSoakNode(t, repoRoot, bin, nodes, index)
+		waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, heightBeforeRestart+5, 2*time.Minute)
+		waitForOracleLatestHeight(
+			t,
+			repoRoot,
+			bin,
+			nodes[0].home,
+			nodes[0].rpcAddr,
+			"BTC/USD",
+			latestBeforeRestart.BlockHeight+1,
+			90*time.Second,
+		)
+		t.Logf(
+			"four-validator checkpoint=node-restart validator=%d height=%d",
+			index,
+			latestOracleSoakHeight(t, repoRoot, bin, nodes),
+		)
+	}
+	for index := range nodes {
+		heightBeforeRestart := latestOracleSoakHeight(t, repoRoot, bin, nodes)
+		latestBeforeRestart := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
+		stopOracleSidecar(t, nodes[index])
+		startOracleSidecar(t, nodes[index], sourceServer.URL)
+		waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, heightBeforeRestart+5, 90*time.Second)
+		waitForOracleLatestHeight(
+			t,
+			repoRoot,
+			bin,
+			nodes[0].home,
+			nodes[0].rpcAddr,
+			"BTC/USD",
+			latestBeforeRestart.BlockHeight+1,
+			90*time.Second,
+		)
+		t.Logf(
+			"four-validator checkpoint=sidecar-restart validator=%d height=%d",
+			index,
+			latestOracleSoakHeight(t, repoRoot, bin, nodes),
+		)
+	}
 
 	heightBeforeStop := latestOracleSoakHeight(t, repoRoot, bin, nodes[:3])
 	stopNode(t, nodes[3].node)
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes[:3], heightBeforeStop+10, 2*time.Minute)
+	t.Logf("four-validator checkpoint=one-validator-offline height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes[:3]))
 
 	restartOracleSoakNode(t, repoRoot, bin, nodes, 3)
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, heightBeforeStop+20, 3*time.Minute)
+	t.Logf("four-validator checkpoint=one-validator-recovered height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 
 	latestWithAllSidecars := waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", 3, 90*time.Second)
 	stopOracleSidecar(t, nodes[3])
@@ -117,26 +182,45 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 	if latestDuringOracleQuorumLoss.BlockHeight != latestBeforeOracleQuorumLoss.BlockHeight {
 		t.Fatalf("oracle value advanced without min_validators quorum: before=%+v after=%+v", latestBeforeOracleQuorumLoss, latestDuringOracleQuorumLoss)
 	}
+	t.Logf(
+		"four-validator checkpoint=oracle-quorum-lost chain_height=%d oracle_height=%d",
+		latestOracleSoakHeight(t, repoRoot, bin, nodes),
+		latestDuringOracleQuorumLoss.BlockHeight,
+	)
 	startOracleSidecar(t, nodes[1], sourceServer.URL)
 	startOracleSidecar(t, nodes[2], sourceServer.URL)
 	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", latestBeforeOracleQuorumLoss.BlockHeight+1, 90*time.Second)
+	t.Logf("four-validator checkpoint=oracle-quorum-recovered height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 
 	heightBeforeValidatorQuorumLoss := latestOracleSoakHeight(t, repoRoot, bin, nodes)
 	stopNode(t, nodes[2].node)
 	stopNode(t, nodes[3].node)
 	assertOracleSoakHalted(t, repoRoot, bin, nodes[0], 6*time.Second)
+	t.Logf("four-validator checkpoint=consensus-quorum-halted height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes[:2]))
 	restartOracleSoakNode(t, repoRoot, bin, nodes, 2)
 	restartOracleSoakNode(t, repoRoot, bin, nodes, 3)
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, heightBeforeValidatorQuorumLoss, 2*time.Minute)
+	t.Logf("four-validator checkpoint=consensus-quorum-recovered height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 
-	runOracleSoakWorkloadUntilHeight(t, repoRoot, bin, nodes, accounts, oracleSoakHeight)
-	assertCommonOracleSoakBlock(t, repoRoot, bin, nodes, oracleSoakHeight)
+	oracleSoakStartHeight := latestOracleSoakHeight(t, repoRoot, bin, nodes)
+	oracleSoakTargetHeight := oracleSoakStartHeight + oracleSoakBlocks
+	t.Logf(
+		"four-validator checkpoint=soak-start height=%d target=%d additional=%d",
+		oracleSoakStartHeight,
+		oracleSoakTargetHeight,
+		oracleSoakBlocks,
+	)
+	runOracleSoakWorkloadUntilHeight(t, repoRoot, bin, nodes, accounts, oracleSoakTargetHeight)
+	assertNoOracleVoteExtensionValidationFailures(t, nodes)
+	assertCommonOracleSoakBlock(t, repoRoot, bin, nodes, oracleSoakTargetHeight)
 	assertOracleHistory(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
+	t.Logf("four-validator checkpoint=soak-complete height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 
 	exportHeight := latestOracleSoakHeight(t, repoRoot, bin, nodes)
 	latestBTCBeforeExport := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
 	latestETHBeforeExport := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "ETH/USD")
 	stopOracleSoakNodes(t, nodes)
+	assertZeroHeightExportRejected(t, repoRoot, bin, nodes[0].home, exportHeight)
 	exportedGenesis := exportOracleSoakGenesis(t, repoRoot, bin, nodes[0].home, exportHeight)
 	assertExportedOracleState(t, exportedGenesis, exportHeight)
 	stopOracleSidecars(t, nodes)
@@ -152,6 +236,11 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 	waitForOracleLatestHeight(t, repoRoot, bin, importedNodes[0].home, importedNodes[0].rpcAddr, "BTC/USD", latestBTCBeforeExport.BlockHeight+1, 2*time.Minute)
 	waitForOracleLatestHeight(t, repoRoot, bin, importedNodes[0].home, importedNodes[0].rpcAddr, "ETH/USD", latestETHBeforeExport.BlockHeight+1, 2*time.Minute)
 	assertCommonOracleSoakBlock(t, repoRoot, bin, importedNodes, importTargetHeight)
+	t.Logf(
+		"four-validator checkpoint=export-import export_height=%d imported_height=%d",
+		exportHeight,
+		latestOracleSoakHeight(t, repoRoot, bin, importedNodes),
+	)
 }
 
 type oracleSoakNode struct {
@@ -215,7 +304,7 @@ func bootstrapOracleTxSmokeNetwork(t *testing.T, repoRoot, bin, baseDir string) 
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", validatorAddr, "100000000000000000000agxn", "--home", node.home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.moderator, "50000000000000000000agxn", "--home", node.home)
 	patchConstitutionModeratorGenesis(t, node.home, accounts.moderator)
-	runCmd(t, repoRoot, bin, "genesis", "gentx", node.keyName, "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", node.home)
+	runCmd(t, repoRoot, bin, "genesis", "gentx", node.keyName, "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", node.home, "--fees", highFeeAGXN)
 	runCmd(t, repoRoot, bin, "genesis", "collect-gentxs", "--home", node.home)
 	patchConstitutionModeratorGenesis(t, node.home, accounts.moderator)
 	runCmd(t, repoRoot, bin, "genesis", "validate-genesis", "--home", node.home)
@@ -247,10 +336,10 @@ func bootstrapOracleSoakNetwork(t *testing.T, repoRoot, bin, baseDir, sourceURL 
 
 	for _, node := range nodes {
 		addr := keyAddress(t, repoRoot, bin, node.home, node.keyName)
-		runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", addr, "200000000000000000000agxn", "--home", nodes[0].home)
+		runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", addr, oracleSoakValidatorFund, "--home", nodes[0].home)
 	}
-	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.moderator, "500000000000000000000agxn", "--home", nodes[0].home)
-	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.user, "500000000000000000000agxn", "--home", nodes[0].home)
+	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.moderator, oracleSoakOperatorFund, "--home", nodes[0].home)
+	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.user, oracleSoakOperatorFund, "--home", nodes[0].home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.receiver, "1000000000000000000agxn", "--home", nodes[0].home)
 	runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", accounts.poor, "1agxn", "--home", nodes[0].home)
 
@@ -260,7 +349,7 @@ func bootstrapOracleSoakNetwork(t *testing.T, repoRoot, bin, baseDir, sourceURL 
 	}
 
 	for _, node := range nodes {
-		runCmd(t, repoRoot, bin, "genesis", "gentx", node.keyName, "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", node.home)
+		runCmd(t, repoRoot, bin, "genesis", "gentx", node.keyName, "10000000000000000000agxn", "--chain-id", e2eChainID, "--keyring-backend", "test", "--home", node.home, "--fees", highFeeAGXN)
 		if node.index != 0 {
 			copyGentxFiles(t, node.home, nodes[0].home)
 		}
@@ -379,12 +468,15 @@ func patchOracleSoakGenesis(t *testing.T, home, moderatorAddress string) {
 	oracleState["tasks"] = []any{
 		map[string]any{"symbol": "BTC/USD", "value_type": 1, "enabled": true, "submission_interval": 5},
 		map[string]any{"symbol": "ETH/USD", "value_type": 1, "enabled": true, "submission_interval": 7},
+		map[string]any{"symbol": "TRX/USD", "value_type": 1, "enabled": true, "submission_interval": 5},
 	}
 	oracleState["task_schedule"] = []any{
 		map[string]any{"symbol": "BTC/USD", "height": 3},
 		map[string]any{"symbol": "BTC/USD", "height": 8},
 		map[string]any{"symbol": "ETH/USD", "height": 4},
 		map[string]any{"symbol": "ETH/USD", "height": 11},
+		map[string]any{"symbol": "TRX/USD", "height": 3},
+		map[string]any{"symbol": "TRX/USD", "height": 8},
 	}
 
 	out, err := json.MarshalIndent(doc, "", "  ")
@@ -445,6 +537,7 @@ func startOracleSoakNodes(t *testing.T, repoRoot, bin string, nodes []*oracleSoa
 			node.jsonWSRPCPort,
 			[]string{
 				"--p2p.persistent_peers", persistentPeersFor(node, nodes),
+				"--state-sync.snapshot-interval", "0",
 			},
 			nil,
 		)
@@ -467,6 +560,7 @@ func restartOracleSoakNode(t *testing.T, repoRoot, bin string, nodes []*oracleSo
 		nodes[index].jsonWSRPCPort,
 		[]string{
 			"--p2p.persistent_peers", persistentPeersFor(nodes[index], nodes),
+			"--state-sync.snapshot-interval", "0",
 		},
 		nil,
 	)
@@ -565,6 +659,7 @@ func oracleSoakTasks() []*oraclev1.OracleTask {
 	return []*oraclev1.OracleTask{
 		{Symbol: "BTC/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 5},
 		{Symbol: "ETH/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 7},
+		{Symbol: "TRX/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 5},
 	}
 }
 
@@ -578,6 +673,9 @@ func oracleSoakSources(baseURL string) []oracle.SourceConfig {
 		{Name: "eth-b", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=202.0", ResponsePath: "data.price"},
 		{Name: "eth-c", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=203.0", ResponsePath: "data.price"},
 		{Name: "eth-nonnumeric", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&nonnumeric=1", ResponsePath: "data.price"},
+		{Name: "trx-a", Symbol: "TRX/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=0.10345", ResponsePath: "data.price"},
+		{Name: "trx-b", Symbol: "TRX/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=0.10345", ResponsePath: "data.price"},
+		{Name: "trx-c", Symbol: "TRX/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=0.10345", ResponsePath: "data.price"},
 	}
 }
 
@@ -604,7 +702,8 @@ func startOracleSoakSourceServer(t *testing.T) *httptest.Server {
 func runOracleSoakTxMix(t *testing.T, repoRoot, bin string, node *oracleSoakNode, accounts oracleSoakAccounts) {
 	t.Helper()
 
-	successTx(t, repoRoot, bin, node.home, node.rpcAddr,
+	successTx(
+		t, repoRoot, bin, node.home, node.rpcAddr,
 		"tx", "bank", "send", "user", accounts.receiver, "1000000000000000000agxn",
 		"--from", "user",
 		"--keyring-backend", "test",
@@ -617,7 +716,8 @@ func runOracleSoakTxMix(t *testing.T, repoRoot, bin string, node *oracleSoakNode
 		"--yes",
 		"--output", "json",
 	)
-	successTx(t, repoRoot, bin, node.home, node.rpcAddr,
+	successTx(
+		t, repoRoot, bin, node.home, node.rpcAddr,
 		"tx", "staking", "delegate", accounts.valoper0, "1000000000000000000agxn",
 		"--from", "user",
 		"--keyring-backend", "test",
@@ -630,7 +730,8 @@ func runOracleSoakTxMix(t *testing.T, repoRoot, bin string, node *oracleSoakNode
 		"--yes",
 		"--output", "json",
 	)
-	if out, err := runOracleSoakCmdE(repoRoot, bin, 30*time.Second,
+	if out, err := runOracleSoakCmdE(
+		repoRoot, bin, 30*time.Second,
 		"tx", "oracle", "update-params", "3", "3", "100",
 		"--from", "moderator",
 		"--keyring-backend", "test",
@@ -643,7 +744,8 @@ func runOracleSoakTxMix(t *testing.T, repoRoot, bin string, node *oracleSoakNode
 		t.Fatalf("oracle generate-only command failed: %v\noutput:\n%s", err, out)
 	}
 
-	expectSyncFailure(t, repoRoot, bin,
+	expectSyncFailure(
+		t, repoRoot, bin,
 		"tx", "bank", "send", "user", accounts.receiver, "1agxn",
 		"--from", "user",
 		"--keyring-backend", "test",
@@ -656,7 +758,8 @@ func runOracleSoakTxMix(t *testing.T, repoRoot, bin string, node *oracleSoakNode
 		"--yes",
 		"--output", "json",
 	)
-	expectDeliverFailure(t, repoRoot, bin, node.home, node.rpcAddr,
+	expectDeliverFailure(
+		t, repoRoot, bin, node.home, node.rpcAddr,
 		"tx", "gov", "vote", "999999", "yes",
 		"--from", "user",
 		"--keyring-backend", "test",
@@ -669,7 +772,8 @@ func runOracleSoakTxMix(t *testing.T, repoRoot, bin string, node *oracleSoakNode
 		"--yes",
 		"--output", "json",
 	)
-	expectCLIFailure(t, repoRoot, bin,
+	expectCLIFailure(
+		t, repoRoot, bin,
 		"tx", "oracle", "update-params", "0", "3", "100",
 		"--from", "moderator",
 		"--keyring-backend", "test",
@@ -685,6 +789,30 @@ func runOracleSoakTxMix(t *testing.T, repoRoot, bin string, node *oracleSoakNode
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, []*oracleSoakNode{node}, latestOracleSoakHeight(t, repoRoot, bin, []*oracleSoakNode{node})+10, 60*time.Second)
 }
 
+func assertUpdatedMinGasPriceRejectsGenesisFee(
+	t *testing.T,
+	repoRoot, bin string,
+	node *oracleSoakNode,
+	accounts oracleSoakAccounts,
+) {
+	t.Helper()
+
+	expectSyncFailureContaining(
+		t, repoRoot, bin, "minimum global fee",
+		"tx", "bank", "send", "user", accounts.receiver, "1agxn",
+		"--from", "user",
+		"--keyring-backend", "test",
+		"--home", node.home,
+		"--chain-id", e2eChainID,
+		"--node", node.rpcAddr,
+		"--gas", "250000",
+		"--fees", oracleSoakGenesisFeeAt250KGas,
+		"--broadcast-mode", "sync",
+		"--yes",
+		"--output", "json",
+	)
+}
+
 func runOracleSoakWorkloadUntilHeight(
 	t *testing.T,
 	repoRoot, bin string,
@@ -696,7 +824,6 @@ func runOracleSoakWorkloadUntilHeight(
 
 	currentHeight := latestOracleSoakHeight(t, repoRoot, bin, nodes)
 	latestBTC := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
-	latestETH := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "ETH/USD")
 	round := 0
 	deadline := time.Now().Add(oracleSoakTimeout)
 	for currentHeight < targetHeight {
@@ -706,7 +833,8 @@ func runOracleSoakWorkloadUntilHeight(
 		round++
 		txNode := nodes[round%len(nodes)]
 
-		successTx(t, repoRoot, bin, txNode.home, txNode.rpcAddr,
+		successTx(
+			t, repoRoot, bin, txNode.home, txNode.rpcAddr,
 			"tx", "bank", "send", txNode.keyName, accounts.receiver, strconv.FormatInt(int64(round), 10)+"agxn",
 			"--from", txNode.keyName,
 			"--keyring-backend", "test",
@@ -721,7 +849,8 @@ func runOracleSoakWorkloadUntilHeight(
 		)
 
 		if round%2 == 0 {
-			successTx(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr,
+			successTx(
+				t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr,
 				"tx", "staking", "delegate", accounts.valoper0, "1000000000000000agxn",
 				"--from", "user",
 				"--keyring-backend", "test",
@@ -737,7 +866,8 @@ func runOracleSoakWorkloadUntilHeight(
 		}
 
 		if round%3 == 0 {
-			successTx(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr,
+			successTx(
+				t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr,
 				"tx", "constitution", "update-separation-ratio", "100000", "200000", "700000",
 				"--from", "moderator",
 				"--keyring-backend", "test",
@@ -752,7 +882,8 @@ func runOracleSoakWorkloadUntilHeight(
 			)
 		}
 
-		if out, err := runOracleSoakCmdE(repoRoot, bin, 30*time.Second,
+		if out, err := runOracleSoakCmdE(
+			repoRoot, bin, 30*time.Second,
 			"tx", "oracle", "upsert-task", fmt.Sprintf("LOAD/%d", round), "11",
 			"--enabled=false",
 			"--from", "moderator",
@@ -766,7 +897,8 @@ func runOracleSoakWorkloadUntilHeight(
 			t.Fatalf("oracle workload generate-only command failed: %v\noutput:\n%s", err, out)
 		}
 		if round%2 == 0 {
-			successTx(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr,
+			successTx(
+				t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr,
 				"tx", "oracle", "upsert-task", fmt.Sprintf("LOAD/%d", round), "11",
 				"--enabled=false",
 				"--from", "moderator",
@@ -782,9 +914,10 @@ func runOracleSoakWorkloadUntilHeight(
 			)
 		}
 
-		switch {
-		case round%4 == 0:
-			expectDeliverFailure(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr,
+		switch round % 4 {
+		case 0:
+			expectDeliverFailure(
+				t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr,
 				"tx", "gov", "vote", "999999", "yes",
 				"--from", "user",
 				"--keyring-backend", "test",
@@ -798,7 +931,8 @@ func runOracleSoakWorkloadUntilHeight(
 				"--output", "json",
 			)
 		default:
-			expectSyncFailure(t, repoRoot, bin,
+			expectSyncFailure(
+				t, repoRoot, bin,
 				"tx", "bank", "send", txNode.keyName, accounts.receiver, "1agxn",
 				"--from", txNode.keyName,
 				"--keyring-backend", "test",
@@ -820,7 +954,7 @@ func runOracleSoakWorkloadUntilHeight(
 		waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, nextHeight, 2*time.Minute)
 		latestBTC = waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", latestBTC.BlockHeight+1, 90*time.Second)
 		assertOracleLatestFresh(t, "BTC/USD", latestBTC, nextHeight, 10)
-		latestETH = queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "ETH/USD")
+		latestETH := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "ETH/USD")
 		assertOracleLatestFresh(t, "ETH/USD", latestETH, nextHeight, 14)
 		assertCommonOracleSoakBlock(t, repoRoot, bin, nodes, nextHeight)
 		currentHeight = latestOracleSoakHeight(t, repoRoot, bin, nodes)
@@ -907,18 +1041,18 @@ func submitOracleSyncTxWithDiagnostics(
 	}
 	t.Logf("oracle sync tx wait-tx output: %s", waitOut)
 	if queryErr != nil {
-		t.Logf(
-			"oracle sync tx query tx diagnostic failed hash=%s sequence_before=%d error=%v\nbroadcast_output:\n%s\nwait_tx_output:\n%s\nnode_logs:\n%s",
+		t.Fatalf(
+			"oracle sync tx query tx diagnostic failed hash=%s sequence_before=%d error=%v\nbroadcast_output:\n%s\nwait_tx_output:\n%s\nquery_tx_output:\n%s\nnode_logs:\n%s",
 			txHash,
 			sequenceBefore,
 			queryErr,
 			broadcastOut,
 			waitOut,
+			queryOut,
 			oracleSoakNodeLogs(node),
 		)
-	} else {
-		t.Logf("oracle sync tx query tx output: %s", queryOut)
 	}
+	t.Logf("oracle sync tx query tx output: %s", queryOut)
 
 	code, ok := txResponseCode(waitOut)
 	if !ok || code != 0 {
@@ -948,6 +1082,18 @@ func expectSyncFailure(t *testing.T, repoRoot, bin string, args ...string) {
 		return
 	}
 	t.Fatalf("expected sync tx failure, got err=%v output=%s", err, out)
+}
+
+func expectSyncFailureContaining(t *testing.T, repoRoot, bin, expected string, args ...string) {
+	t.Helper()
+	out, err := runOracleSoakCmdE(repoRoot, bin, 30*time.Second, args...)
+	code, hasCode := txResponseCode(out)
+	if err == nil && (!hasCode || code == 0) {
+		t.Fatalf("expected sync tx failure, got err=%v output=%s", err, out)
+	}
+	if !strings.Contains(out, expected) {
+		t.Fatalf("expected sync tx failure containing %q, got err=%v output=%s", expected, err, out)
+	}
 }
 
 func expectCLIFailure(t *testing.T, repoRoot, bin string, args ...string) {
@@ -1121,6 +1267,20 @@ func oracleSoakNodeLogs(node *oracleSoakNode) string {
 	return node.node.logBuf.String()
 }
 
+func assertNoOracleVoteExtensionValidationFailures(t *testing.T, nodes []*oracleSoakNode) {
+	t.Helper()
+	for _, node := range nodes {
+		if count := oracleValidationErrorCount(oracleSoakNodeLogs(node)); count != 0 {
+			t.Fatalf(
+				"node %d logged %d oracle vote-extension validation errors:\n%s",
+				node.index,
+				count,
+				oracleSoakNodeLogs(node),
+			)
+		}
+	}
+}
+
 func waitForAllOracleSoakNodesHeight(t *testing.T, repoRoot, bin string, nodes []*oracleSoakNode, minHeight int64, timeout time.Duration) {
 	t.Helper()
 	for _, node := range nodes {
@@ -1242,6 +1402,58 @@ func queryOracleLatestE(repoRoot, bin, home, rpcAddr, symbol string) (oracleLate
 	}, nil
 }
 
+func waitForMinGasPriceAbove(t *testing.T, repoRoot, bin, home, rpcAddr, floor string, timeout time.Duration) string {
+	t.Helper()
+
+	deadline := time.Now().Add(timeout)
+	lastValue := ""
+	var lastErr error
+	for time.Now().Before(deadline) {
+		current, err := queryCurrentMinGasPriceE(repoRoot, bin, home, rpcAddr)
+		if err == nil {
+			lastValue = current
+			if decimalStringGreater(current, floor) {
+				return current
+			}
+		} else {
+			lastErr = err
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	t.Fatalf("min gas price did not rise above %s within %s: last_value=%q last_err=%v", floor, timeout, lastValue, lastErr)
+	return ""
+}
+
+func queryCurrentMinGasPriceE(repoRoot, bin, home, rpcAddr string) (string, error) {
+	out, err := runCmdE(nil, repoRoot, bin, "query", "constitution", "min-gas-price", "--node", rpcAddr, "--home", home, "--chain-id", e2eChainID, "--output", "json")
+	if err != nil {
+		return "", err
+	}
+	var payload map[string]any
+	decoder := json.NewDecoder(strings.NewReader(out))
+	decoder.UseNumber()
+	if err := decoder.Decode(&payload); err != nil {
+		return "", err
+	}
+	current, ok := payload["current_min_gas_price"].(string)
+	if !ok || strings.TrimSpace(current) == "" {
+		return "", fmt.Errorf("missing current_min_gas_price in %s", out)
+	}
+	return current, nil
+}
+
+func decimalStringGreater(value, floor string) bool {
+	valueRat, ok := new(big.Rat).SetString(value)
+	if !ok {
+		return false
+	}
+	floorRat, ok := new(big.Rat).SetString(floor)
+	if !ok {
+		return false
+	}
+	return valueRat.Cmp(floorRat) > 0
+}
+
 func assertOracleHistory(t *testing.T, repoRoot, bin, home, rpcAddr, symbol string) {
 	t.Helper()
 	out := runCmd(t, repoRoot, bin, "query", "oracle", "history", symbol, "--node", rpcAddr, "--home", home, "--chain-id", e2eChainID, "--output", "json", "--limit", "200")
@@ -1318,6 +1530,25 @@ func exportOracleSoakGenesis(t *testing.T, repoRoot, bin, home string, height in
 		t.Fatalf("read exported genesis: %v", err)
 	}
 	return string(bz)
+}
+
+func assertZeroHeightExportRejected(t *testing.T, repoRoot, bin, home string, height int64) {
+	t.Helper()
+	out, err := runOracleSoakCmdE(
+		repoRoot,
+		bin,
+		30*time.Second,
+		"export",
+		"--height", strconv.FormatInt(height, 10),
+		"--for-zero-height",
+		"--home", home,
+	)
+	if err == nil {
+		t.Fatalf("expected zero-height export to fail, output=%s", out)
+	}
+	if !strings.Contains(out, "zero-height export is not supported") {
+		t.Fatalf("unexpected zero-height export failure: %v\noutput:\n%s", err, out)
+	}
 }
 
 func assertExportedOracleState(t *testing.T, exportedGenesis string, exportHeight int64) {

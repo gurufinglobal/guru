@@ -1,0 +1,100 @@
+package keeper
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
+)
+
+func TestParseExchangeIDRequiresPositiveNumericID(t *testing.T) {
+	for _, raw := range []string{"", "0", "abc", "-1"} {
+		t.Run(raw, func(t *testing.T) {
+			_, err := parseExchangeID(raw)
+			require.Error(t, err)
+		})
+	}
+
+	id, err := parseExchangeID("42")
+	require.NoError(t, err)
+	require.Equal(t, uint64(42), id)
+}
+
+func TestOutboundChannelFromTokenValidatesTraceRoute(t *testing.T) {
+	tests := []struct {
+		name  string
+		token *types.Token
+	}{
+		{"nil denom", &types.Token{Amount: "1"}},
+		{"native output", &types.Token{Denom: types.NewDenom("ugxkrw"), Amount: "1"}},
+		{"empty first hop", &types.Token{Denom: types.NewDenom("ugxkrw", types.Hop{}), Amount: "1"}},
+		{"wrong port", &types.Token{Denom: types.NewDenom("ugxkrw", types.NewHop("transfer", "channel-0")), Amount: "1"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := outboundChannelFromToken(tt.token)
+			require.Error(t, err)
+		})
+	}
+
+	channel, err := outboundChannelFromToken(&types.Token{
+		Denom:  types.NewDenom("ugxkrw", types.NewHop(types.PortID, "channel-7")),
+		Amount: "1",
+	})
+	require.NoError(t, err)
+	require.Equal(t, "channel-7", channel)
+}
+
+func TestLocalReceivedCoinUsesSourceSinkPathWithoutMutatingPacketDenom(t *testing.T) {
+	sourceDenom := types.NewDenom("ugxusd")
+	sourceData := types.NewInternalTransferRepresentation("7", &types.Token{Denom: sourceDenom, Amount: "12"}, "sender", "receiver", "")
+
+	sourceCoin, err := localReceivedCoin(sourceData, types.PortID, "channel-0", types.PortID, "channel-9")
+	require.NoError(t, err)
+	require.Equal(t, sdk.NewCoin(types.DenomIBCDenom(types.NewDenom("ugxusd", types.NewHop(types.PortID, "channel-9"))), sdkmath.NewInt(12)), sourceCoin)
+	require.Empty(t, sourceDenom.Trace)
+
+	sinkDenom := types.NewDenom("ugxusd", types.NewHop(types.PortID, "channel-0"), types.NewHop("transfer", "channel-2"))
+	sinkData := types.NewInternalTransferRepresentation("7", &types.Token{Denom: sinkDenom, Amount: "5"}, "sender", "receiver", "")
+
+	sinkCoin, err := localReceivedCoin(sinkData, types.PortID, "channel-0", types.PortID, "channel-9")
+	require.NoError(t, err)
+	expected := types.NewDenom("ugxusd", types.NewHop("transfer", "channel-2"))
+	require.Equal(t, sdk.NewCoin(types.DenomIBCDenom(expected), sdkmath.NewInt(5)), sinkCoin)
+	require.Equal(t, "channel-0", sinkDenom.Trace[0].ChannelId)
+	require.Len(t, sinkDenom.Trace, 2)
+}
+
+func TestLocalReceivedCoinValidatesOnlyResolvedLocalBankDenom(t *testing.T) {
+	invalidNative := types.NewInternalTransferRepresentation(
+		"7",
+		&types.Token{
+			Denom:  types.NewDenom("!", types.NewHop("xswap", "channel-1")),
+			Amount: "5",
+		},
+		"sender",
+		"receiver",
+		"",
+	)
+	_, err := localReceivedCoin(invalidNative, "xswap", "channel-1", types.PortID, "channel-0")
+	require.ErrorIs(t, err, types.ErrInvalidDenomForTransfer)
+
+	remoteBase := types.NewDenom("!")
+	remoteSource := types.NewInternalTransferRepresentation(
+		"7",
+		&types.Token{Denom: remoteBase, Amount: "5"},
+		"sender",
+		"receiver",
+		"",
+	)
+	coin, err := localReceivedCoin(remoteSource, "xswap", "channel-1", types.PortID, "channel-0")
+	require.NoError(t, err)
+	require.True(t, strings.HasPrefix(coin.Denom, types.DenomPrefix+"/"))
+	require.Empty(t, remoteBase.Trace)
+}

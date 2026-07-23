@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
 	dbm "github.com/cosmos/cosmos-db"
@@ -13,23 +12,60 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
-func TestConstitutionModuleHasNoEndBlockerOrderEntry(t *testing.T) {
+func TestInitGenesisOrderIsUniqueAndRefundDependenciesAreOrdered(t *testing.T) {
+	order := ModuleOrderInitGenesis()
+	seen := make(map[string]struct{}, len(order))
+	for _, moduleName := range order {
+		_, duplicate := seen[moduleName]
+		require.False(t, duplicate, "module %s appears more than once in init genesis order", moduleName)
+		seen[moduleName] = struct{}{}
+	}
+
+	bankIndex := indexOf(order, banktypes.ModuleName)
+	bexIndex := indexOf(order, bextypes.ModuleName)
+	ibcIndex := indexOf(order, ibcexported.ModuleName)
+	transwapIndex := indexOf(order, transwaptypes.ModuleName)
+	for name, index := range map[string]int{
+		banktypes.ModuleName:     bankIndex,
+		bextypes.ModuleName:      bexIndex,
+		ibcexported.ModuleName:   ibcIndex,
+		transwaptypes.ModuleName: transwapIndex,
+	} {
+		require.NotEqual(t, -1, index, "module %s must be initialized", name)
+	}
+	require.Less(t, bankIndex, bexIndex)
+	require.Less(t, bexIndex, transwapIndex)
+	require.Less(t, ibcIndex, transwapIndex)
+}
+
+func TestTransSwapRefundRetryEndBlockerIsScheduled(t *testing.T) {
+	order := ModuleOrderEndBlockers()
+	require.Contains(t, order, transwaptypes.ModuleName)
+	require.Less(t, indexOf(order, banktypes.ModuleName), indexOf(order, transwaptypes.ModuleName))
+}
+
+func TestConstitutionModuleRunsAfterFeeMarketEndBlocker(t *testing.T) {
 	order := ModuleOrderEndBlockers()
 
 	constitutionIndex := indexOf(order, constitutiontypes.ModuleName)
-	require.Equal(t, -1, constitutionIndex, "constitution module should not be in endblocker order")
+	feeMarketIndex := indexOf(order, feemarkettypes.ModuleName)
+	require.NotEqual(t, -1, constitutionIndex, "constitution module must be in endblocker order")
+	require.NotEqual(t, -1, feeMarketIndex, "feemarket module must be in endblocker order")
+	require.Greater(t, constitutionIndex, feeMarketIndex, "constitution must run after feemarket in endblocker")
 }
 
 func TestConstitutionModuleIsInGenesisOrder(t *testing.T) {
@@ -69,6 +105,46 @@ func TestDefaultGenesisDisablesFeeMarketBaseFee(t *testing.T) {
 
 	require.True(t, feeMarketGenesis.Params.NoBaseFee, "feemarket no_base_fee default must be true")
 	require.True(t, feeMarketGenesis.Params.BaseFee.IsZero(), "feemarket base_fee default must be zero")
+	require.Equal(t, constitutiontypes.MinGasPriceScaleFactor, feeMarketGenesis.Params.MinGasPrice.TruncateInt().String())
+}
+
+func TestValidateChainGenesisRejectsZeroFeeMarketMinGasPrice(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
+
+	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
+	testApp.AppCodec().MustUnmarshalJSON(genesis[feemarkettypes.ModuleName], feeMarketGenesis)
+	feeMarketGenesis.Params.MinGasPrice = sdkmath.LegacyZeroDec()
+	genesis[feemarkettypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(feeMarketGenesis)
+
+	err := testApp.ValidateChainGenesis(genesis)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "feemarket min_gas_price must be positive")
+}
+
+func TestValidateChainGenesisAllowsPendingMinGasPricePreviousMismatch(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
+
+	constitutionGenesis := &constitutiontypes.GenesisState{}
+	testApp.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
+	constitutionGenesis.PendingMinGasPrice = &constitutiontypes.MinGasPriceSchedule{
+		EffectiveHeight:                15,
+		ScheduledMinGasPrice:           "1.1",
+		SourceSymbol:                   appparams.MinGasPriceOracleSymbol,
+		SourceValue:                    "1.0",
+		SourceOracleHeight:             10,
+		SourceSubmissionIntervalBlocks: 5,
+		PendingDelayBlocks:             5,
+		PendingDelayCapBlocks:          constitutiontypes.MinGasPricePendingDelayCap,
+		RawMinGasPrice:                 constitutiontypes.MinGasPriceScaleFactor,
+		PreviousMinGasPrice:            "1",
+	}
+	genesis[constitutiontypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(constitutionGenesis)
+
+	require.NoError(t, testApp.ValidateChainGenesis(genesis))
 }
 
 func TestValidateChainGenesisRejectsInvalidConstitutionSeparationRatio(t *testing.T) {
@@ -76,9 +152,9 @@ func TestValidateChainGenesisRejectsInvalidConstitutionSeparationRatio(t *testin
 	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
 	require.NoError(t, testApp.ValidateChainGenesis(genesis))
 
-	constitutionGenesis := &constitutionv1.GenesisState{}
+	constitutionGenesis := &constitutiontypes.GenesisState{}
 	testApp.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
-	constitutionGenesis.SeparationRatio = &constitutionv1.SeparationRatio{
+	constitutionGenesis.SeparationRatio = &constitutiontypes.SeparationRatio{
 		BasePpm:       200_000,
 		BurnPpm:       300_000,
 		ValidatorsPpm: 400_000,
@@ -94,7 +170,7 @@ func TestValidateChainGenesisRejectsBlockedConstitutionBaseAddress(t *testing.T)
 	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
 	genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
 
-	constitutionGenesis := &constitutionv1.GenesisState{}
+	constitutionGenesis := &constitutiontypes.GenesisState{}
 	testApp.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
 	constitutionGenesis.BaseAddress = "0x0000000000000000000000000000000000000001"
 	genesis[constitutiontypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(constitutionGenesis)
@@ -216,7 +292,7 @@ func TestOracleModuleWiringAndAppBoot(t *testing.T) {
 	require.NotNil(t, app.OracleProposalHandler)
 
 	genesis := app.BuildChainDefaultGenesis()
-	var oracleGenesis oraclev1.GenesisState
+	var oracleGenesis oracletypes.GenesisState
 	require.NoError(t, app.AppCodec().UnmarshalJSON(genesis[oracletypes.ModuleName], &oracleGenesis))
 	require.Equal(t, uint32(1), oracleGenesis.GetParams().GetMinValidators())
 	require.Equal(t, uint32(3), oracleGenesis.GetParams().GetMinSources())
@@ -260,7 +336,7 @@ func defaultGenesisWithConstitutionAddresses(t *testing.T, testApp *App) map[str
 func setWiringConstitutionGenesisAddresses(t *testing.T, app *App, genesis map[string]json.RawMessage) {
 	t.Helper()
 
-	constitutionGenesis := &constitutionv1.GenesisState{}
+	constitutionGenesis := &constitutiontypes.GenesisState{}
 	app.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
 	constitutionGenesis.BaseAddress = wiringAddress(t, 0x21)
 	constitutionGenesis.ModeratorAddress = wiringAddress(t, 0x22)
@@ -281,11 +357,13 @@ func removeWiringConstitutionParams(t *testing.T, genesis map[string]json.RawMes
 func setWiringMinValidatorBond(t *testing.T, app *App, genesis map[string]json.RawMessage, amount string) {
 	t.Helper()
 
-	constitutionGenesis := &constitutionv1.GenesisState{}
+	constitutionGenesis := &constitutiontypes.GenesisState{}
 	app.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
-	constitutionGenesis.Params.MinValidatorBondAmount = &basev1beta1.Coin{
+	minBond, ok := sdkmath.NewIntFromString(amount)
+	require.True(t, ok)
+	constitutionGenesis.Params.MinValidatorBondAmount = &sdk.Coin{
 		Denom:  appparams.BaseDenom,
-		Amount: amount,
+		Amount: minBond,
 	}
 	genesis[constitutiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(constitutionGenesis)
 }

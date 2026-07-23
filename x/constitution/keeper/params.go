@@ -3,38 +3,36 @@ package keeper
 import (
 	"context"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
-	"github.com/gurufinglobal/guru/v3/x/constitution/types"
+	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 )
 
-func (k Keeper) GetParams(ctx context.Context) (*constitutionv1.Params, error) {
+func (k Keeper) GetParams(ctx context.Context) (*constitutiontypes.Params, error) {
 	params, err := k.params.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return params, nil
+	return &params, nil
 }
 
-func (k Keeper) SetParams(ctx context.Context, params *constitutionv1.Params) error {
+func (k Keeper) SetParams(ctx context.Context, params *constitutiontypes.Params) error {
 	if err := ValidateParams(params); err != nil {
 		return err
 	}
-	return k.params.Set(ctx, params)
+	return k.params.Set(ctx, *params)
 }
 
-func (k Keeper) UpdateParams(ctx context.Context, params *constitutionv1.Params) error {
+func (k Keeper) UpdateParams(ctx context.Context, params *constitutiontypes.Params) error {
 	if err := ValidateParams(params); err != nil {
 		return err
 	}
 
-	return k.params.Set(ctx, params)
+	return k.params.Set(ctx, *params)
 }
 
-func ValidateParams(params *constitutionv1.Params) error {
+func ValidateParams(params *constitutiontypes.Params) error {
 	if _, err := validateAndGetMinValidatorBondAmount(params); err != nil {
 		return err
 	}
@@ -42,51 +40,47 @@ func ValidateParams(params *constitutionv1.Params) error {
 	return nil
 }
 
-func MinValidatorBondAmount(params *constitutionv1.Params) (math.Int, error) {
+func MinValidatorBondAmount(params *constitutiontypes.Params) (math.Int, error) {
 	return validateAndGetMinValidatorBondAmount(params)
 }
 
-func validateAndGetMinValidatorBondAmount(params *constitutionv1.Params) (math.Int, error) {
+func validateAndGetMinValidatorBondAmount(params *constitutiontypes.Params) (math.Int, error) {
 	if params == nil {
-		return math.Int{}, types.ErrInvalidParams.Wrap("params cannot be nil")
+		return math.Int{}, constitutiontypes.ErrInvalidParams.Wrap("params cannot be nil")
 	}
 
 	return ValidateMinValidatorBondAmount(params.GetMinValidatorBondAmount())
 }
 
-func ValidateMinValidatorBondAmount(minBond *basev1beta1.Coin) (math.Int, error) {
+func ValidateMinValidatorBondAmount(minBond *sdk.Coin) (math.Int, error) {
 	if minBond == nil {
-		return math.Int{}, types.ErrInvalidParams.Wrap("min_validator_bond_amount cannot be nil")
+		return math.Int{}, constitutiontypes.ErrInvalidParams.Wrap("min_validator_bond_amount cannot be nil")
 	}
 	if err := sdk.ValidateDenom(minBond.Denom); err != nil {
-		return math.Int{}, types.ErrInvalidParams.Wrapf("invalid min_validator_bond_amount denom: %v", err)
+		return math.Int{}, constitutiontypes.ErrInvalidParams.Wrapf("invalid min_validator_bond_amount denom: %v", err)
 	}
 	if minBond.Denom != appparams.BaseDenom {
-		return math.Int{}, types.ErrInvalidParams.Wrapf(
+		return math.Int{}, constitutiontypes.ErrInvalidParams.Wrapf(
 			"min_validator_bond_amount denom must be %q, got %q",
 			appparams.BaseDenom,
 			minBond.Denom,
 		)
 	}
 
-	amount, ok := math.NewIntFromString(minBond.Amount)
-	if !ok {
-		return math.Int{}, types.ErrInvalidParams.Wrapf(
-			"invalid min_validator_bond_amount amount %q: must be an integer string",
-			minBond.Amount,
-		)
+	if minBond.Amount.IsNil() {
+		return math.Int{}, constitutiontypes.ErrInvalidParams.Wrap("min_validator_bond_amount amount cannot be nil")
 	}
-	if !amount.IsPositive() {
-		return math.Int{}, types.ErrInvalidParams.Wrapf(
+	if !minBond.Amount.IsPositive() {
+		return math.Int{}, constitutiontypes.ErrInvalidParams.Wrapf(
 			"min_validator_bond_amount amount must be positive, got %s",
-			minBond.Amount,
+			minBond.Amount.String(),
 		)
 	}
 
-	return amount, nil
+	return minBond.Amount, nil
 }
 
-func (k Keeper) GetMinValidatorBondAmountCoin(ctx context.Context) (*basev1beta1.Coin, error) {
+func (k Keeper) GetMinValidatorBondAmountCoin(ctx context.Context) (*sdk.Coin, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		return nil, err
@@ -109,7 +103,7 @@ func (k Keeper) GetMinValidatorBondAmount(ctx context.Context) (math.Int, error)
 	return amount, nil
 }
 
-func (k Keeper) SetMinValidatorBondAmount(ctx context.Context, minBond *basev1beta1.Coin) error {
+func (k Keeper) SetMinValidatorBondAmount(ctx context.Context, minBond *sdk.Coin) error {
 	if _, err := ValidateMinValidatorBondAmount(minBond); err != nil {
 		return err
 	}

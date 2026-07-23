@@ -4,24 +4,21 @@ import (
 	"encoding/json"
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestApplyConstitutionGenesisAddresses(t *testing.T) {
-	initialState := &constitutionv1.GenesisState{
-		Params: &constitutionv1.Params{
-			MinValidatorBondAmount: &basev1beta1.Coin{
-				Denom:  appparams.BaseDenom,
-				Amount: "10",
-			},
+	minValidatorBond := sdk.NewInt64Coin(appparams.BaseDenom, 10)
+	initialState := &constitutiontypes.GenesisState{
+		Params: &constitutiontypes.Params{
+			MinValidatorBondAmount: &minValidatorBond,
 		},
 		BaseAddress:      "",
 		ModeratorAddress: "",
-		SeparationRatio: &constitutionv1.SeparationRatio{
+		SeparationRatio: &constitutiontypes.SeparationRatio{
 			BasePpm:       100_000,
 			BurnPpm:       200_000,
 			ValidatorsPpm: 700_000,
@@ -93,7 +90,7 @@ func TestApplyConstitutionGenesisAddresses(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			var updated constitutionv1.GenesisState
+			var updated constitutiontypes.GenesisState
 			require.NoError(t, json.Unmarshal(genesis[constitutiontypes.ModuleName], &updated))
 			require.Equal(t, tc.baseAddress, updated.GetBaseAddress())
 			require.Equal(t, tc.moderatorAddr, updated.GetModeratorAddress())

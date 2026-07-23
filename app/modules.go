@@ -45,8 +45,12 @@ import (
 	ibc "github.com/cosmos/ibc-go/v11/modules/core"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
+	bex "github.com/gurufinglobal/guru/v3/x/bex"
+	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitution "github.com/gurufinglobal/guru/v3/x/constitution"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	transwap "github.com/gurufinglobal/guru/v3/x/ibc/transwap"
+	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracle "github.com/gurufinglobal/guru/v3/x/oracle"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	customstaking "github.com/gurufinglobal/guru/v3/x/staking"
@@ -65,16 +69,19 @@ var (
 		// IBC modules
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
+		transwaptypes.ModuleName,
 
 		// Cosmos EVM BeginBlockers
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
 
-		// constitution separation must run before distribution.
+		// x/constitution splits and burns collected fees before distribution
+		// calculates validator rewards from the remaining fee collector balance.
 		constitutiontypes.ModuleName,
 
-		// no-op and legacy blockers
+		// no-op and legacy begin blockers
+		bextypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -99,10 +106,14 @@ var (
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
+		// x/constitution updates feemarket MinGasPrice in EndBlock so the new
+		// value is visible to the next block's ante checks, not the current one.
+		constitutiontypes.ModuleName,
 
-		// no-op and legacy blockers
+		// IBC applications and legacy end blockers; TransSwap drains its bounded refund queue.
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
+		transwaptypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		minttypes.ModuleName,
@@ -118,14 +129,18 @@ var (
 	initGenesisOrder = []string{
 		authtypes.ModuleName,
 		banktypes.ModuleName,
+		// x/constitution must load policy before staking validates genesis
+		// validator self-bond amounts against the configured minimum.
 		constitutiontypes.ModuleName,
 		oracletypes.ModuleName,
+		bextypes.ModuleName,
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,
 		ibcexported.ModuleName,
+		transwaptypes.ModuleName,
 
 		// Cosmos EVM modules
 		// NOTE: feemarket module needs to be initialized before genutil module:
@@ -161,6 +176,7 @@ func appModules(
 			gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
 			constitution.NewAppModule(app.ConstitutionKeeper),
 			oracle.NewAppModule(app.OracleKeeper),
+			bex.NewAppModule(app.BexKeeper),
 			mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 			slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 			distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
@@ -177,6 +193,7 @@ func appModules(
 			ibc.NewAppModule(app.IBCKeeper),
 			ibctm.NewAppModule(tmLightClientModule),
 			transfer.NewAppModule(app.TransferKeeper),
+			transwap.NewAppModule(app.TranswapKeeper),
 			// Cosmos EVM modules
 			vmModule,
 			feemarket.NewAppModule(app.FeeMarketKeeper),
@@ -220,6 +237,7 @@ func newBasicManagerFromManager(app *App) module.BasicManager {
 			stakingtypes.ModuleName:     sdkstaking.AppModuleBasic{},
 			govtypes.ModuleName:         gov.NewAppModuleBasic(nil),
 			ibctransfertypes.ModuleName: transfer.AppModuleBasic{},
+			transwaptypes.ModuleName:    transwap.AppModuleBasic{},
 		},
 	)
 	basicManager.RegisterInterfaces(app.interfaceRegistry)

@@ -136,7 +136,7 @@ func (k *Keeper) excludeValidatorsBelowMinSelfBondFromPowerIndex(ctx context.Con
 	iteratorClosed := false
 	defer func() {
 		if !iteratorClosed {
-			iterator.Close()
+			_ = iterator.Close()
 		}
 	}()
 
@@ -156,7 +156,7 @@ func (k *Keeper) excludeValidatorsBelowMinSelfBondFromPowerIndex(ctx context.Con
 			validatorsToRemove = append(validatorsToRemove, validator)
 		}
 	}
-	iterator.Close()
+	_ = iterator.Close()
 	iteratorClosed = true
 
 	for _, validator := range validatorsToRemove {

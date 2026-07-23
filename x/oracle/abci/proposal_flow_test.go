@@ -15,12 +15,14 @@ import (
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	evmaddress "github.com/cosmos/evm/encoding/address"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
@@ -35,14 +37,17 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
 	aggregator := Aggregator{
 		keeper: fakeKeeper{
-			params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			params: &oracletypes.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
 			tasks:  oracleTestTasks(),
 		},
 		validatorStore: oracleValidatorStoreFor(validator),
 	}
 
-	injectedPayloadTx, err := EncodeProposalTx(&oraclev1.OracleProposalPayload{Height: 99})
+	injectedPayloadTx, err := EncodeProposalTx(&oracletypes.OracleProposalPayload{Height: 99})
 	require.NoError(t, err)
+	malformedPayloadTx := mutateProposalTx(t, injectedPayloadTx, func(_ *txtypes.TxRaw, body *txtypes.TxBody, _ *txtypes.AuthInfo) {
+		body.Memo = "user-injected"
+	})(t)
 	normalA := []byte("normal-a")
 	normalB := []byte("normal-b")
 	prepareCalled := false
@@ -52,7 +57,7 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 			prepareCalled = true
 			require.Equal(t, [][]byte{normalA, normalB}, req.Txs)
 			return &abcitypes.ResponsePrepareProposal{
-				Txs: [][]byte{normalB, injectedPayloadTx},
+				Txs: [][]byte{normalB, injectedPayloadTx, malformedPayloadTx},
 			}, nil
 		},
 		nil,
@@ -62,7 +67,7 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 		Height:          3,
 		MaxTxBytes:      1_000_000,
 		LocalLastCommit: extCommit,
-		Txs:             [][]byte{normalA, injectedPayloadTx, normalB},
+		Txs:             [][]byte{normalA, injectedPayloadTx, malformedPayloadTx, normalB},
 	})
 	require.NoError(t, err)
 	require.True(t, prepareCalled)
@@ -79,13 +84,37 @@ func TestPrepareProposalPrependsOneOraclePayloadAndStripsInjectedPayloads(t *tes
 	require.Equal(t, "BTC/USD", payload.GetValues()[0].GetSymbol())
 }
 
+func TestPrepareProposalWithoutExpectedPayloadStripsInnerOracleCandidates(t *testing.T) {
+	payloadTx, err := EncodeProposalTx(&oracletypes.OracleProposalPayload{Height: 99})
+	require.NoError(t, err)
+	malformedPayloadTx := mutateProposalTx(t, payloadTx, func(_ *txtypes.TxRaw, body *txtypes.TxBody, _ *txtypes.AuthInfo) {
+		body.NonCriticalExtensionOptions = body.ExtensionOptions
+		body.ExtensionOptions = nil
+	})(t)
+	normalTx := []byte("normal")
+
+	handler := NewProposalHandler(
+		Aggregator{},
+		func(_ sdk.Context, req *abcitypes.RequestPrepareProposal) (*abcitypes.ResponsePrepareProposal, error) {
+			require.Equal(t, [][]byte{normalTx}, req.Txs)
+			return &abcitypes.ResponsePrepareProposal{Txs: [][]byte{payloadTx, malformedPayloadTx, normalTx}}, nil
+		},
+		nil,
+	)
+	resp, err := handler.PrepareProposal(sdk.Context{}, &abcitypes.RequestPrepareProposal{
+		Txs: [][]byte{payloadTx, malformedPayloadTx, normalTx},
+	})
+	require.NoError(t, err)
+	require.Equal(t, [][]byte{normalTx}, resp.Txs)
+}
+
 func TestPrepareProposalDoesNotIncludeNormalTxWhenPayloadUsesMaxTxBytes(t *testing.T) {
 	validator := newOracleTestValidator()
 	extCommit := signedOracleExtCommit(t, 3, validator, "1.0")
 	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
 	aggregator := Aggregator{
 		keeper: fakeKeeper{
-			params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			params: &oracletypes.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
 			tasks:  oracleTestTasks(),
 		},
 		validatorStore: oracleValidatorStoreFor(validator),
@@ -124,7 +153,7 @@ func TestPrepareProposalTrimsNormalTxsToRemainingMaxTxBytes(t *testing.T) {
 	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
 	aggregator := Aggregator{
 		keeper: fakeKeeper{
-			params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			params: &oracletypes.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
 			tasks:  oracleTestTasks(),
 		},
 		validatorStore: oracleValidatorStoreFor(validator),
@@ -167,7 +196,7 @@ func TestProcessProposalAcceptsRecomputedPayloadAndRejectsMismatch(t *testing.T)
 	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
 	aggregator := Aggregator{
 		keeper: fakeKeeper{
-			params: &oraclev1.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			params: &oracletypes.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
 			tasks:  oracleTestTasks(),
 		},
 		validatorStore: oracleValidatorStoreFor(validator),
@@ -197,15 +226,18 @@ func TestProcessProposalAcceptsRecomputedPayloadAndRejectsMismatch(t *testing.T)
 	require.True(t, processCalled)
 	require.Equal(t, abcitypes.ResponseProcessProposal_ACCEPT, resp.Status)
 
-	mismatchedPayload := *payload
-	mismatchedPayload.Values = []*oraclev1.OracleValue{{
+	payloadBz, err := payload.Marshal()
+	require.NoError(t, err)
+	mismatchedPayload := &oracletypes.OracleProposalPayload{}
+	require.NoError(t, mismatchedPayload.Unmarshal(payloadBz))
+	mismatchedPayload.Values = []*oracletypes.OracleValue{{
 		Symbol:        "BTC/USD",
-		ValueType:     oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		ValueType:     oracletypes.ValueType_VALUE_TYPE_NUMERIC,
 		Value:         "9.0",
 		BlockHeight:   3,
 		BlockTimeUnix: 30,
 	}}
-	mismatchedPayloadTx, err := EncodeProposalTx(&mismatchedPayload)
+	mismatchedPayloadTx, err := EncodeProposalTx(mismatchedPayload)
 	require.NoError(t, err)
 
 	processCalled = false
@@ -215,6 +247,118 @@ func TestProcessProposalAcceptsRecomputedPayloadAndRejectsMismatch(t *testing.T)
 	require.NoError(t, err)
 	require.False(t, processCalled)
 	require.Equal(t, abcitypes.ResponseProcessProposal_REJECT, mismatchedResp.Status)
+}
+
+func TestProcessProposalRejectsMissingUnexpectedAndMalformedOraclePayloads(t *testing.T) {
+	validator := newOracleTestValidator()
+	extCommit := signedOracleExtCommit(t, 3, validator, "1.0")
+	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
+	aggregator := Aggregator{
+		keeper: fakeKeeper{
+			params: &oracletypes.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+			tasks:  oracleTestTasks(),
+		},
+		validatorStore: oracleValidatorStoreFor(validator),
+	}
+	payload, err := aggregator.BuildPayload(ctx, 3, extCommit)
+	require.NoError(t, err)
+	payloadTx, err := EncodeProposalTx(payload)
+	require.NoError(t, err)
+	malformedPayloadTx := mutateProposalTx(t, payloadTx, func(_ *txtypes.TxRaw, body *txtypes.TxBody, _ *txtypes.AuthInfo) {
+		body.Memo = "not canonical"
+	})(t)
+	normalTx := []byte("normal")
+
+	tests := []struct {
+		name string
+		ctx  sdk.Context
+		txs  [][]byte
+	}{
+		{
+			name: "expected payload absent",
+			ctx:  ctx,
+			txs:  [][]byte{normalTx},
+		},
+		{
+			name: "payload present when not expected",
+			ctx:  sdk.Context{},
+			txs:  [][]byte{payloadTx, normalTx},
+		},
+		{
+			name: "malformed payload first",
+			ctx:  ctx,
+			txs:  [][]byte{malformedPayloadTx, normalTx},
+		},
+		{
+			name: "malformed payload after first",
+			ctx:  ctx,
+			txs:  [][]byte{payloadTx, malformedPayloadTx, normalTx},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			processCalled := false
+			handler := NewProposalHandler(
+				aggregator,
+				nil,
+				func(sdk.Context, *abcitypes.RequestProcessProposal) (*abcitypes.ResponseProcessProposal, error) {
+					processCalled = true
+					return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_ACCEPT}, nil
+				},
+			)
+			resp, err := handler.ProcessProposal(tc.ctx, &abcitypes.RequestProcessProposal{Txs: tc.txs})
+			require.NoError(t, err)
+			require.False(t, processCalled)
+			require.Equal(t, abcitypes.ResponseProcessProposal_REJECT, resp.Status)
+		})
+	}
+}
+
+func TestApplyProposalPayloadRejectsMalformedOracleCandidates(t *testing.T) {
+	payloadTx, err := EncodeProposalTx(&oracletypes.OracleProposalPayload{Height: 3})
+	require.NoError(t, err)
+	malformedPayloadTx := mutateProposalTx(t, payloadTx, func(_ *txtypes.TxRaw, body *txtypes.TxBody, _ *txtypes.AuthInfo) {
+		body.Memo = "not canonical"
+	})(t)
+
+	for _, tc := range []struct {
+		name string
+		txs  [][]byte
+	}{
+		{name: "malformed payload first", txs: [][]byte{malformedPayloadTx}},
+		{name: "malformed payload after first", txs: [][]byte{[]byte("normal"), malformedPayloadTx}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := (ProposalHandler{}).ApplyProposalPayload(sdk.Context{}, &abcitypes.RequestFinalizeBlock{Txs: tc.txs})
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestApplyProposalPayloadRejectsMissingAndUnexpectedOraclePayloads(t *testing.T) {
+	validator := newOracleTestValidator()
+	extCommit := signedOracleExtCommit(t, 3, validator, "1.0")
+	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
+	handler := NewProposalHandler(
+		Aggregator{
+			keeper: fakeKeeper{
+				params: &oracletypes.Params{MinValidators: 1, MinSources: 3, HistoryLimit: 100},
+				tasks:  oracleTestTasks(),
+			},
+			validatorStore: oracleValidatorStoreFor(validator),
+		},
+		nil,
+		nil,
+	)
+
+	err := handler.ApplyProposalPayload(ctx, &abcitypes.RequestFinalizeBlock{Txs: [][]byte{[]byte("normal")}})
+	require.ErrorContains(t, err, "missing oracle proposal payload")
+
+	payloadTx, err := EncodeProposalTx(&oracletypes.OracleProposalPayload{Height: 3})
+	require.NoError(t, err)
+	err = (ProposalHandler{}).ApplyProposalPayload(sdk.Context{}, &abcitypes.RequestFinalizeBlock{Txs: [][]byte{payloadTx}})
+	require.ErrorContains(t, err, "unexpected oracle proposal payload")
 }
 
 func TestProcessProposalRejectsPayloadWithMutatedBlockIDFlag(t *testing.T) {
@@ -228,7 +372,7 @@ func TestProcessProposalRejectsPayloadWithMutatedBlockIDFlag(t *testing.T) {
 	ctx := withOracleProposalContext(sdk.Context{}, 3, time.Unix(30, 0), extCommit)
 	aggregator := Aggregator{
 		keeper: fakeKeeper{
-			params: &oraclev1.Params{MinValidators: 3, MinSources: 3, HistoryLimit: 100},
+			params: &oracletypes.Params{MinValidators: 3, MinSources: 3, HistoryLimit: 100},
 			tasks:  oracleTestTasks(),
 		},
 		validatorStore: oracleValidatorStoreFor(validators...),
@@ -245,7 +389,7 @@ func TestProcessProposalRejectsPayloadWithMutatedBlockIDFlag(t *testing.T) {
 	require.Len(t, mutatedValues, 1)
 	require.NotEqual(t, honestPayload.GetValues()[0].GetValue(), mutatedValues[0].GetValue())
 
-	mutatedPayloadTx, err := EncodeProposalTx(&oraclev1.OracleProposalPayload{
+	mutatedPayloadTx, err := EncodeProposalTx(&oracletypes.OracleProposalPayload{
 		Height:         3,
 		VoteExtensions: signedVoteExtensionsFromExtendedCommit(mutatedCommit),
 		Values:         mutatedValues,
@@ -271,14 +415,14 @@ func TestProcessProposalRejectsPayloadWithMutatedBlockIDFlag(t *testing.T) {
 }
 
 func TestApplyProposalPayloadPersistsLatestValueAndBoundedHistory(t *testing.T) {
-	baseCtx, keeper := setupOracleABCIKeeper(t, &oraclev1.Params{
+	baseCtx, keeper := setupOracleABCIKeeper(t, &oracletypes.Params{
 		MinValidators: 1,
 		MinSources:    3,
 		HistoryLimit:  2,
 	})
 	require.NoError(t, keeper.SetTask(baseCtx, oracleTestTasks()[0]))
 	require.NoError(t, keeper.AdvanceTaskSchedule(baseCtx, 1))
-	require.NoError(t, keeper.ApplyOracleValues(baseCtx, []*oraclev1.OracleValue{oracleValue("BTC/USD", "0.5", 2, 20)}))
+	require.NoError(t, keeper.ApplyOracleValues(baseCtx, []*oracletypes.OracleValue{oracleValue("BTC/USD", "0.5", 2, 20)}))
 
 	validator := newOracleTestValidator()
 	aggregator := NewAggregator(keeper, oracleValidatorStoreFor(validator))
@@ -316,14 +460,14 @@ func TestApplyProposalPayloadPersistsLatestValueAndBoundedHistory(t *testing.T) 
 }
 
 func TestQuorumFailureLeavesLatestValueUnchanged(t *testing.T) {
-	baseCtx, keeper := setupOracleABCIKeeper(t, &oraclev1.Params{
+	baseCtx, keeper := setupOracleABCIKeeper(t, &oracletypes.Params{
 		MinValidators: 2,
 		MinSources:    3,
 		HistoryLimit:  10,
 	})
 	require.NoError(t, keeper.SetTask(baseCtx, oracleTestTasks()[0]))
 	require.NoError(t, keeper.AdvanceTaskSchedule(baseCtx, 1))
-	require.NoError(t, keeper.ApplyOracleValues(baseCtx, []*oraclev1.OracleValue{oracleValue("BTC/USD", "10.0", 2, 20)}))
+	require.NoError(t, keeper.ApplyOracleValues(baseCtx, []*oracletypes.OracleValue{oracleValue("BTC/USD", "10.0", 2, 20)}))
 
 	validator := newOracleTestValidator()
 	extCommit := signedOracleExtCommit(t, 3, validator, "1.0")
@@ -347,18 +491,18 @@ func TestQuorumFailureLeavesLatestValueUnchanged(t *testing.T) {
 }
 
 func TestQuorumFailureAdvancesIntervalScheduleWithoutEveryBlockRetry(t *testing.T) {
-	baseCtx, keeper := setupOracleABCIKeeper(t, &oraclev1.Params{
+	baseCtx, keeper := setupOracleABCIKeeper(t, &oracletypes.Params{
 		MinValidators: 2,
 		MinSources:    3,
 		HistoryLimit:  10,
 	})
-	require.NoError(t, keeper.SetTask(baseCtx.WithBlockHeight(0), &oraclev1.OracleTask{
+	require.NoError(t, keeper.SetTask(baseCtx.WithBlockHeight(0), &oracletypes.OracleTask{
 		Symbol:             "BTC/USD",
-		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		ValueType:          oracletypes.ValueType_VALUE_TYPE_NUMERIC,
 		Enabled:            true,
 		SubmissionInterval: 5,
 	}))
-	require.NoError(t, keeper.ApplyOracleValues(baseCtx, []*oraclev1.OracleValue{oracleValue("BTC/USD", "10.0", 4, 40)}))
+	require.NoError(t, keeper.ApplyOracleValues(baseCtx, []*oracletypes.OracleValue{oracleValue("BTC/USD", "10.0", 4, 40)}))
 
 	validator := newOracleTestValidator()
 	extCommit := signedOracleExtCommit(t, 6, validator, "1.0")
@@ -390,7 +534,7 @@ func TestQuorumFailureAdvancesIntervalScheduleWithoutEveryBlockRetry(t *testing.
 	require.Equal(t, "BTC/USD", due[0].GetSymbol())
 }
 
-func setupOracleABCIKeeper(t *testing.T, params *oraclev1.Params) (sdk.Context, oraclekeeper.Keeper) {
+func setupOracleABCIKeeper(t *testing.T, params *oracletypes.Params) (sdk.Context, oraclekeeper.Keeper) {
 	t.Helper()
 
 	key := storetypes.NewKVStoreKey(oracletypes.StoreKey)
@@ -398,6 +542,7 @@ func setupOracleABCIKeeper(t *testing.T, params *oraclev1.Params) (sdk.Context, 
 	testCtx := testutil.DefaultContextWithDB(t, key, transientKey)
 	keeper := oraclekeeper.NewKeeper(
 		runtime.NewKVStoreService(key),
+		codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
 		evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr),
 		abciConstitutionKeeper{},
 	)
@@ -412,19 +557,19 @@ func (abciConstitutionKeeper) GetModeratorAddress(context.Context) (string, erro
 	return "", nil
 }
 
-func oracleTestTasks() []*oraclev1.OracleTask {
-	return []*oraclev1.OracleTask{{
+func oracleTestTasks() []*oracletypes.OracleTask {
+	return []*oracletypes.OracleTask{{
 		Symbol:             "BTC/USD",
-		ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		ValueType:          oracletypes.ValueType_VALUE_TYPE_NUMERIC,
 		Enabled:            true,
 		SubmissionInterval: 1,
 	}}
 }
 
-func oracleValue(symbol string, value string, height int64, blockTimeUnix int64) *oraclev1.OracleValue {
-	return &oraclev1.OracleValue{
+func oracleValue(symbol string, value string, height int64, blockTimeUnix int64) *oracletypes.OracleValue {
+	return &oracletypes.OracleValue{
 		Symbol:        symbol,
-		ValueType:     oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+		ValueType:     oracletypes.ValueType_VALUE_TYPE_NUMERIC,
 		Value:         value,
 		BlockHeight:   height,
 		BlockTimeUnix: blockTimeUnix,

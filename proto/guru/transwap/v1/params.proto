@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package guru.transwap.v1;
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types";
+
+// Params controls the bounded automatic refund retry policy. Duration fields
+// are expressed in nanoseconds because IBC packet timestamps use Unix nanos.
+message Params {
+  // max_refund_retries is the maximum number of automatic dispatch attempts,
+  // including transport-preparation and SendPacket failures scheduled through
+  // the bounded retry queue, for one refund obligation.
+  uint32 max_refund_retries = 1;
+  // refund_timeout_window is added to the greater of local block time and the
+  // destination light client's latest timestamp for every new refund packet.
+  uint64 refund_timeout_window = 2;
+  // min_relay_safety_margin requires a refund timeout to remain strictly after
+  // the destination light-client timestamp plus this margin.
+  uint64 min_relay_safety_margin = 3;
+}

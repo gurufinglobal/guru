@@ -11,7 +11,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 type HTTPSourceClient struct {
@@ -55,7 +55,7 @@ func (c *HTTPSourceClient) Fetch(
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return nil, fmt.Errorf("unexpected HTTP status %d", response.StatusCode)

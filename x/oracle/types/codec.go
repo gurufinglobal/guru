@@ -3,22 +3,21 @@ package types
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	"github.com/cosmos/cosmos-sdk/types/msgservice"
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 )
 
-// RegisterInterfaces registers oracle Msg/MsgResponse types without relying on
-// msgservice.RegisterMsgServiceDesc, which expects gogo descriptor metadata.
+const ProposalPayloadTypeURL = "/guru.oracle.v1.OracleProposalPayload"
+
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&oraclev1.MsgUpdateParams{},
-		&oraclev1.MsgUpsertTask{},
-		&oraclev1.MsgRemoveTask{},
+		&MsgUpdateParams{},
+		&MsgUpsertTask{},
+		&MsgRemoveTask{},
+	)
+	registry.RegisterImplementations((*txtypes.TxExtensionOptionI)(nil),
+		&OracleProposalPayload{},
 	)
 
-	registry.RegisterImplementations((*tx.MsgResponse)(nil),
-		&oraclev1.MsgUpdateParamsResponse{},
-		&oraclev1.MsgUpsertTaskResponse{},
-		&oraclev1.MsgRemoveTaskResponse{},
-	)
+	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

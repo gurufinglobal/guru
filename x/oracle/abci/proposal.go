@@ -6,7 +6,7 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
+	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 type ProposalHandler struct {
@@ -33,6 +33,9 @@ func (h ProposalHandler) PrepareProposal(ctx sdk.Context, req *abcitypes.Request
 		return nil, err
 	}
 
+	// Oracle payloads are consensus data, not user transactions. The proposer
+	// owns Txs[0] for this payload and strips any user-injected payload txs
+	// before handing the remaining mempool txs to the normal proposal handler.
 	innerReq := *req
 	innerReq.Txs = stripPayloadTxs(req.Txs)
 	payloadTx := []byte(nil)
@@ -48,13 +51,14 @@ func (h ProposalHandler) PrepareProposal(ctx sdk.Context, req *abcitypes.Request
 	if err != nil {
 		return nil, err
 	}
+	resp.Txs = stripPayloadTxs(resp.Txs)
 	if payloadTx == nil {
 		return resp, nil
 	}
 
 	txs := make([][]byte, 0, len(resp.Txs)+1)
 	txs = append(txs, payloadTx)
-	txs = append(txs, trimTxsToMaxBytes(stripPayloadTxs(resp.Txs), innerReq.MaxTxBytes)...)
+	txs = append(txs, trimTxsToMaxBytes(resp.Txs, innerReq.MaxTxBytes)...)
 	resp.Txs = txs
 	return resp, nil
 }
@@ -64,6 +68,8 @@ func (h ProposalHandler) ProcessProposal(ctx sdk.Context, req *abcitypes.Request
 		return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_REJECT}, nil
 	}
 
+	// Validators recompute whether a payload is expected and verify its exact
+	// content before normal tx verification runs on the payload-stripped list.
 	payload, hasPayload, err := firstPayload(req.Txs)
 	if err != nil {
 		return &abcitypes.ResponseProcessProposal{Status: abcitypes.ResponseProcessProposal_REJECT}, nil
@@ -112,12 +118,11 @@ func (h ProposalHandler) ApplyProposalPayload(ctx sdk.Context, req *abcitypes.Re
 }
 
 func firstPayload(txs [][]byte) (payload *oraclev1.OracleProposalPayload, hasPayload bool, err error) {
-	if len(txs) == 0 || !IsProposalTx(txs[0]) {
+	if len(txs) == 0 {
 		return nil, false, nil
 	}
 
-	payload, _, err = DecodeProposalTx(txs[0])
-	return payload, true, err
+	return DecodeProposalTx(txs[0])
 }
 
 func remainingMaxTxBytes(maxTxBytes int64, reservedTxs [][]byte) int64 {

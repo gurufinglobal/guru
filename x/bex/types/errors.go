@@ -1,0 +1,33 @@
+package types
+
+import "cosmossdk.io/errors"
+
+var (
+	ErrInvalidModerator             = errors.Register(ModuleName, 2, "invalid moderator")
+	ErrAdminNotFound                = errors.Register(ModuleName, 3, "admin not found")
+	ErrExchangeNotFound             = errors.Register(ModuleName, 4, "exchange not found")
+	ErrExchangeDeleted              = errors.Register(ModuleName, 5, "exchange deleted")
+	ErrWrongExchangeAdmin           = errors.Register(ModuleName, 6, "wrong exchange admin")
+	ErrRevisionConflict             = errors.Register(ModuleName, 7, "revision conflict")
+	ErrNoOpUpdate                   = errors.Register(ModuleName, 8, "no-op update")
+	ErrInvalidRoute                 = errors.Register(ModuleName, 9, "invalid route")
+	ErrInvalidOracleRate            = errors.Register(ModuleName, 10, "invalid oracle rate")
+	ErrStaleOracleRate              = errors.Register(ModuleName, 11, "stale oracle rate")
+	ErrInvalidFeeBps                = errors.Register(ModuleName, 12, "invalid fee bps")
+	ErrOutputLimitExceeded          = errors.Register(ModuleName, 13, "output limit exceeded")
+	ErrVolumeCapExceeded            = errors.Register(ModuleName, 14, "volume cap exceeded")
+	ErrDirectReserveTransfer        = errors.Register(ModuleName, 15, "direct reserve transfer")
+	ErrInsufficientReserve          = errors.Register(ModuleName, 16, "insufficient reserve")
+	ErrInsufficientAvailableFees    = errors.Register(ModuleName, 17, "insufficient available fees")
+	ErrInvariantViolation           = errors.Register(ModuleName, 18, "invariant violation")
+	ErrInvalidRequest               = errors.Register(ModuleName, 19, "invalid request")
+	ErrInvalidGenesis               = errors.Register(ModuleName, 20, "invalid genesis")
+	ErrReadGenesisField             = errors.Register(ModuleName, 21, "failed to read genesis field")
+	ErrDecodeGenesisField           = errors.Register(ModuleName, 22, "failed to decode genesis field")
+	ErrOpenGenesisTargetField       = errors.Register(ModuleName, 23, "failed to open genesis target field")
+	ErrNilGenesisTargetWriter       = errors.Register(ModuleName, 24, "genesis target field writer is nil")
+	ErrEncodeGenesisField           = errors.Register(ModuleName, 25, "failed to encode genesis field")
+	ErrCloseGenesisFieldWriter      = errors.Register(ModuleName, 26, "failed to close genesis field writer")
+	ErrUnauthorizedReserveDepositor = errors.Register(ModuleName, 27, "unauthorized reserve depositor")
+	ErrInsufficientLockedFees       = errors.Register(ModuleName, 28, "insufficient locked fees")
+)

@@ -6,16 +6,16 @@ import (
 	"io"
 	"testing"
 
-	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/core/appmodule"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
-	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
@@ -40,7 +40,7 @@ func setupGenesisTestFixture(t *testing.T) genesisTestFixture {
 
 	accountCodec := evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr)
 	authorityBytes := sdk.AccAddress(bytes.Repeat([]byte{0x01}, 20))
-	keeper := constitutionkeeper.NewKeeper(authorityBytes, runtime.NewKVStoreService(key), accountCodec, nil)
+	keeper := constitutionkeeper.NewKeeper(authorityBytes, runtime.NewKVStoreService(key), codec.NewProtoCodec(codectypes.NewInterfaceRegistry()), accountCodec, nil)
 	module := NewAppModule(keeper)
 
 	authorityAddress, err := keeper.AuthorityAddressString()
@@ -64,17 +64,14 @@ func testGenesisAddress(t *testing.T, accountCodec address.Codec, b byte) string
 	return address
 }
 
-func validGenesisState(f genesisTestFixture) *constitutionv1.GenesisState {
-	return &constitutionv1.GenesisState{
-		Params: &constitutionv1.Params{
-			MinValidatorBondAmount: &basev1beta1.Coin{
-				Denom:  appparams.BaseDenom,
-				Amount: "10",
-			},
+func validGenesisState(f genesisTestFixture) *constitutiontypes.GenesisState {
+	return &constitutiontypes.GenesisState{
+		Params: &constitutiontypes.Params{
+			MinValidatorBondAmount: testGenesisMinBond(10),
 		},
 		BaseAddress:      f.baseAddress,
 		ModeratorAddress: f.moderatorAddress,
-		SeparationRatio: &constitutionv1.SeparationRatio{
+		SeparationRatio: &constitutiontypes.SeparationRatio{
 			BasePpm:       200_000,
 			BurnPpm:       300_000,
 			ValidatorsPpm: 500_000,
@@ -82,7 +79,27 @@ func validGenesisState(f genesisTestFixture) *constitutionv1.GenesisState {
 	}
 }
 
-func mustGenesisFieldsFromState(t *testing.T, state *constitutionv1.GenesisState) map[string]json.RawMessage {
+func testGenesisMinBond(amount int64) *sdk.Coin {
+	coin := sdk.NewInt64Coin(appparams.BaseDenom, amount)
+	return &coin
+}
+
+func validPendingMinGasPriceSchedule() *constitutiontypes.MinGasPriceSchedule {
+	return &constitutiontypes.MinGasPriceSchedule{
+		EffectiveHeight:                15,
+		ScheduledMinGasPrice:           "630000000000.000000000000000000",
+		SourceSymbol:                   appparams.MinGasPriceOracleSymbol,
+		SourceValue:                    "1.0",
+		SourceOracleHeight:             10,
+		SourceSubmissionIntervalBlocks: 5,
+		PendingDelayBlocks:             5,
+		PendingDelayCapBlocks:          constitutiontypes.MinGasPricePendingDelayCap,
+		RawMinGasPrice:                 constitutiontypes.MinGasPriceScaleFactor,
+		PreviousMinGasPrice:            "630000000000.000000000000000000",
+	}
+}
+
+func mustGenesisFieldsFromState(t *testing.T, state *constitutiontypes.GenesisState) map[string]json.RawMessage {
 	t.Helper()
 
 	fields := make(map[string]json.RawMessage)
@@ -179,11 +196,11 @@ func TestValidateGenesisRejectsAuthorityAddressForBaseAndModerator(t *testing.T)
 
 	tests := []struct {
 		name  string
-		state *constitutionv1.GenesisState
+		state *constitutiontypes.GenesisState
 	}{
 		{
 			name: "fails when base_address equals authority",
-			state: &constitutionv1.GenesisState{
+			state: &constitutiontypes.GenesisState{
 				Params:           validGenesisState(f).GetParams(),
 				BaseAddress:      f.authorityAddress,
 				ModeratorAddress: f.moderatorAddress,
@@ -192,7 +209,7 @@ func TestValidateGenesisRejectsAuthorityAddressForBaseAndModerator(t *testing.T)
 		},
 		{
 			name: "fails when moderator_address equals authority",
-			state: &constitutionv1.GenesisState{
+			state: &constitutiontypes.GenesisState{
 				Params:           validGenesisState(f).GetParams(),
 				BaseAddress:      f.baseAddress,
 				ModeratorAddress: f.authorityAddress,
@@ -213,7 +230,7 @@ func TestValidateGenesisRejectsAuthorityAddressForBaseAndModerator(t *testing.T)
 func TestValidateGenesisRejectsInvalidSeparationRatio(t *testing.T) {
 	f := setupGenesisTestFixture(t)
 	state := validGenesisState(f)
-	state.SeparationRatio = &constitutionv1.SeparationRatio{
+	state.SeparationRatio = &constitutiontypes.SeparationRatio{
 		BasePpm:       200_000,
 		BurnPpm:       300_000,
 		ValidatorsPpm: 400_000,
@@ -224,26 +241,35 @@ func TestValidateGenesisRejectsInvalidSeparationRatio(t *testing.T) {
 	require.ErrorContains(t, err, "separation_ratio total must be exactly")
 }
 
+func TestValidateGenesisRejectsInvalidPendingMinGasPrice(t *testing.T) {
+	f := setupGenesisTestFixture(t)
+	state := validGenesisState(f)
+	state.PendingMinGasPrice = validPendingMinGasPriceSchedule()
+	state.PendingMinGasPrice.RawMinGasPrice = "1"
+
+	err := f.module.ValidateGenesis(newGenesisSource(mustGenesisFieldsFromState(t, state)))
+	require.Error(t, err)
+	require.ErrorContains(t, err, "raw_min_gas_price does not match")
+}
+
 func TestInitGenesisAndExportGenesisRoundTrip(t *testing.T) {
 	f := setupGenesisTestFixture(t)
 	state := validGenesisState(f)
-	state.Params = &constitutionv1.Params{
-		MinValidatorBondAmount: &basev1beta1.Coin{
-			Denom:  appparams.BaseDenom,
-			Amount: "15",
-		},
+	state.Params = &constitutiontypes.Params{
+		MinValidatorBondAmount: testGenesisMinBond(15),
 	}
-	state.SeparationRatio = &constitutionv1.SeparationRatio{
+	state.SeparationRatio = &constitutiontypes.SeparationRatio{
 		BasePpm:       250_000,
 		BurnPpm:       250_000,
 		ValidatorsPpm: 500_000,
 	}
+	state.PendingMinGasPrice = validPendingMinGasPriceSchedule()
 
 	require.NoError(t, f.module.InitGenesis(f.ctx, newGenesisSource(mustGenesisFieldsFromState(t, state))))
 
 	params, err := f.keeper.GetParams(f.ctx)
 	require.NoError(t, err)
-	require.Equal(t, "15", params.GetMinValidatorBondAmount().GetAmount())
+	require.Equal(t, "15", params.GetMinValidatorBondAmount().Amount.String())
 
 	baseAddress, err := f.keeper.GetBaseAddress(f.ctx)
 	require.NoError(t, err)
@@ -259,6 +285,10 @@ func TestInitGenesisAndExportGenesisRoundTrip(t *testing.T) {
 	require.Equal(t, state.GetSeparationRatio().GetBurnPpm(), separationRatio.GetBurnPpm())
 	require.Equal(t, state.GetSeparationRatio().GetValidatorsPpm(), separationRatio.GetValidatorsPpm())
 
+	pendingMinGasPrice, err := f.keeper.GetMinGasPriceSchedule(f.ctx)
+	require.NoError(t, err)
+	require.Equal(t, state.GetPendingMinGasPrice(), pendingMinGasPrice)
+
 	exportedFields := make(map[string]json.RawMessage)
 	require.NoError(t, f.module.ExportGenesis(f.ctx, newGenesisTarget(exportedFields)))
 
@@ -266,10 +296,11 @@ func TestInitGenesisAndExportGenesisRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, state.GetBaseAddress(), exportedGenesis.GetBaseAddress())
 	require.Equal(t, state.GetModeratorAddress(), exportedGenesis.GetModeratorAddress())
-	require.Equal(t, state.GetParams().GetMinValidatorBondAmount().GetAmount(), exportedGenesis.GetParams().GetMinValidatorBondAmount().GetAmount())
+	require.Equal(t, state.GetParams().GetMinValidatorBondAmount().Amount, exportedGenesis.GetParams().GetMinValidatorBondAmount().Amount)
 	require.Equal(t, state.GetSeparationRatio().GetBasePpm(), exportedGenesis.GetSeparationRatio().GetBasePpm())
 	require.Equal(t, state.GetSeparationRatio().GetBurnPpm(), exportedGenesis.GetSeparationRatio().GetBurnPpm())
 	require.Equal(t, state.GetSeparationRatio().GetValidatorsPpm(), exportedGenesis.GetSeparationRatio().GetValidatorsPpm())
+	require.Equal(t, state.GetPendingMinGasPrice(), exportedGenesis.GetPendingMinGasPrice())
 }
 
 func TestExportGenesisFailsWhenBaseOrModeratorAddressMissing(t *testing.T) {
