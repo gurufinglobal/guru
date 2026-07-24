@@ -111,17 +111,21 @@ func TestInternalAndPublicGatewayPatternsMatch(t *testing.T) {
 	modules := []struct {
 		name         string
 		internalPath string
+		gatewayFiles []string
 	}{
-		{name: "bex", internalPath: filepath.Join("x", "bex", "types")},
-		{name: "constitution", internalPath: filepath.Join("x", "constitution", "types")},
-		{name: "oracle", internalPath: filepath.Join("x", "oracle", "types")},
-		{name: "transwap", internalPath: filepath.Join("x", "ibc", "transwap", "types")},
+		{name: "bex", internalPath: filepath.Join("x", "bex", "types"), gatewayFiles: []string{"query.pb.gw.go"}},
+		{name: "constitution", internalPath: filepath.Join("x", "constitution", "types"), gatewayFiles: []string{"query.pb.gw.go"}},
+		{name: "feepolicy", internalPath: filepath.Join("x", "feepolicy", "types"), gatewayFiles: []string{"query.pb.gw.go", "tx.pb.gw.go"}},
+		{name: "oracle", internalPath: filepath.Join("x", "oracle", "types"), gatewayFiles: []string{"query.pb.gw.go"}},
+		{name: "transwap", internalPath: filepath.Join("x", "ibc", "transwap", "types"), gatewayFiles: []string{"query.pb.gw.go"}},
 	}
 	for _, module := range modules {
-		internal := gatewayPatternLines(t, filepath.Join(repoRoot, module.internalPath, "query.pb.gw.go"))
-		public := gatewayPatternLines(t, filepath.Join(repoRoot, "api", "guru", module.name, "v1", "query.pb.gw.go"))
-		if strings.Join(internal, "\n") != strings.Join(public, "\n") {
-			t.Fatalf("%s internal and public gateway patterns differ:\ninternal=%s\npublic=%s", module.name, internal, public)
+		for _, gatewayFile := range module.gatewayFiles {
+			internal := gatewayPatternLines(t, filepath.Join(repoRoot, module.internalPath, gatewayFile))
+			public := gatewayPatternLines(t, filepath.Join(repoRoot, "api", "guru", module.name, "v1", gatewayFile))
+			if strings.Join(internal, "\n") != strings.Join(public, "\n") {
+				t.Fatalf("%s %s internal and public gateway patterns differ:\ninternal=%s\npublic=%s", module.name, gatewayFile, internal, public)
+			}
 		}
 	}
 }
@@ -373,7 +377,7 @@ func gatewayPatternLines(t *testing.T, path string) []string {
 	}
 	var patterns []string
 	for _, line := range strings.Split(string(contents), "\n") {
-		if strings.Contains(line, "pattern_Query_") {
+		if strings.Contains(line, "pattern_Query_") || strings.Contains(line, "pattern_Msg_") {
 			patterns = append(patterns, strings.TrimSpace(line))
 		}
 	}

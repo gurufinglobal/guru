@@ -16,20 +16,23 @@ func (app *App) onPendingTx(hash common.Hash) {
 }
 
 func (app *App) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) error {
-	options := evmante.HandlerOptions{
-		Cdc:                    app.appCodec,
-		AccountKeeper:          app.AccountKeeper,
-		BankKeeper:             app.BankKeeper,
-		ExtensionOptionChecker: antetypes.HasDynamicFeeExtensionOption,
-		EvmKeeper:              app.EVMKeeper,
-		FeegrantKeeper:         app.FeeGrantKeeper,
-		IBCKeeper:              app.IBCKeeper,
-		FeeMarketKeeper:        app.FeeMarketKeeper,
-		SignModeHandler:        txConfig.SignModeHandler(),
-		SigGasConsumer:         evmante.SigVerificationGasConsumer,
-		MaxTxGasWanted:         maxGasWanted,
-		DynamicFeeChecker:      true,
-		PendingTxListener:      app.onPendingTx,
+	options := appante.HandlerOptions{
+		EVMOptions: evmante.HandlerOptions{
+			Cdc:                    app.appCodec,
+			AccountKeeper:          app.AccountKeeper,
+			BankKeeper:             app.BankKeeper,
+			ExtensionOptionChecker: antetypes.HasDynamicFeeExtensionOption,
+			EvmKeeper:              app.EVMKeeper,
+			FeegrantKeeper:         app.FeeGrantKeeper,
+			IBCKeeper:              app.IBCKeeper,
+			FeeMarketKeeper:        app.FeeMarketKeeper,
+			SignModeHandler:        txConfig.SignModeHandler(),
+			SigGasConsumer:         evmante.SigVerificationGasConsumer,
+			MaxTxGasWanted:         maxGasWanted,
+			DynamicFeeChecker:      true,
+			PendingTxListener:      app.onPendingTx,
+		},
+		FeePolicyKeeper: app.FeePolicyKeeper,
 	}
 
 	anteHandler, err := appante.NewAnteHandler(options)

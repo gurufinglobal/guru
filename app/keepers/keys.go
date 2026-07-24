@@ -24,6 +24,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	feepolicytypes "github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
@@ -53,6 +54,7 @@ func (ak *AppKeepers) GenerateKeys() {
 		constitutiontypes.StoreKey,
 		oracletypes.StoreKey,
 		bextypes.StoreKey,
+		feepolicytypes.StoreKey,
 	)
 	ak.objKeys = storetypes.NewObjectStoreKeys(
 		banktypes.ObjectStoreKey,

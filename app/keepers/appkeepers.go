@@ -46,6 +46,8 @@ import (
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutionkeeper "github.com/gurufinglobal/guru/v3/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	feepolicykeeper "github.com/gurufinglobal/guru/v3/x/feepolicy/keeper"
+	feepolicytypes "github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 	transwapkeeper "github.com/gurufinglobal/guru/v3/x/ibc/transwap/keeper"
 	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oraclekeeper "github.com/gurufinglobal/guru/v3/x/oracle/keeper"
@@ -87,6 +89,7 @@ type AppKeepers struct {
 	// guru keepers
 	ConstitutionKeeper constitutionkeeper.Keeper
 	OracleKeeper       oraclekeeper.Keeper
+	FeePolicyKeeper    feepolicykeeper.Keeper
 	BexKeeper          bexkeeper.Keeper
 }
 
@@ -158,6 +161,13 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		cfg.AppCodec,
 		appKeepers.AccountKeeper.AddressCodec(),
 		appKeepers.BankKeeper,
+	)
+	appKeepers.FeePolicyKeeper = feepolicykeeper.NewKeeper(
+		runtime.NewKVStoreService(appKeepers.kvKeys[feepolicytypes.StoreKey]),
+		cfg.AppCodec,
+		appKeepers.AccountKeeper.AddressCodec(),
+		nil,
+		&appKeepers.ConstitutionKeeper,
 	)
 	appKeepers.OracleKeeper = oraclekeeper.NewKeeper(
 		runtime.NewKVStoreService(appKeepers.kvKeys[oracletypes.StoreKey]),

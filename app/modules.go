@@ -49,6 +49,8 @@ import (
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitution "github.com/gurufinglobal/guru/v3/x/constitution"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	feepolicy "github.com/gurufinglobal/guru/v3/x/feepolicy"
+	feepolicytypes "github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 	transwap "github.com/gurufinglobal/guru/v3/x/ibc/transwap"
 	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracle "github.com/gurufinglobal/guru/v3/x/oracle"
@@ -133,6 +135,7 @@ var (
 		// validator self-bond amounts against the configured minimum.
 		constitutiontypes.ModuleName,
 		oracletypes.ModuleName,
+		feepolicytypes.ModuleName,
 		bextypes.ModuleName,
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
@@ -176,6 +179,7 @@ func appModules(
 			gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
 			constitution.NewAppModule(app.ConstitutionKeeper),
 			oracle.NewAppModule(app.OracleKeeper),
+			feepolicy.NewAppModule(app.FeePolicyKeeper),
 			bex.NewAppModule(app.BexKeeper),
 			mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil),
 			slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),

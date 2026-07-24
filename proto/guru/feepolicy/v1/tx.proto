@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "guru/feepolicy/v1/feepolicy.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/feepolicy/types";
+
+// Msg defines the feepolicy Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // RegisterDiscounts registers or replaces discounts for one or more accounts.
+  rpc RegisterDiscounts(MsgRegisterDiscounts) returns (MsgRegisterDiscountsResponse) {
+    option (google.api.http) = {
+      post: "/guru/feepolicy/v1/register_discounts"
+      body: "*"
+    };
+  }
+
+  // RemoveDiscounts removes discount configuration for an account/module/message type.
+  rpc RemoveDiscounts(MsgRemoveDiscounts) returns (MsgRemoveDiscountsResponse) {
+    option (google.api.http) = {
+      post: "/guru/feepolicy/v1/remove_discounts"
+      body: "*"
+    };
+  }
+
+  // ChangeModerator proxies the legacy API to Constitution's moderator state.
+  rpc ChangeModerator(MsgChangeModerator) returns (MsgChangeModeratorResponse) {
+    option (google.api.http) = {
+      post: "/guru/feepolicy/v1/change_moderator"
+      body: "*"
+    };
+  }
+}
+
+message MsgRegisterDiscounts {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  repeated AccountDiscount discounts = 2 [(gogoproto.nullable) = false];
+}
+
+message MsgRegisterDiscountsResponse {}
+
+message MsgRemoveDiscounts {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string address = 2;
+  string module = 3;
+  string msg_type = 4;
+}
+
+message MsgRemoveDiscountsResponse {}
+
+message MsgChangeModerator {
+  option (cosmos.msg.v1.signer) = "moderator_address";
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string moderator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string new_moderator_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message MsgChangeModeratorResponse {}
