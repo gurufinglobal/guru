@@ -93,30 +93,49 @@ func NewRegisterDiscountsTxCmd() *cobra.Command {
 
 func NewRemoveDiscountsTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove_discounts [discount_address] [module] --from [moderator_address]",
-		Short: "Remove discounts for an address and optional module",
-		Args:  cobra.RangeArgs(1, 2),
+		Use:   "remove_discounts [discount_address|global] [module] [msg_type] --from [moderator_address]",
+		Short: "Remove discounts for an address or the global policy",
+		Long: "Remove an entire policy, one module, or one message-type rule. " +
+			"When msg_type is supplied, the non-empty module argument selects the legacy message-removal branch; " +
+			"that branch removes the first matching message type from every module.",
+		Example: "gurud tx feepolicy remove_discounts global --from moderator\n" +
+			"gurud tx feepolicy remove_discounts guru1... bank /cosmos.bank.v1beta1.MsgSend --from moderator",
+		Args: cobra.RangeArgs(1, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := validateCLIAddressText(args[0]); err != nil {
-				return err
+			address, global := parsePolicyAddress(args[0])
+			if !global {
+				if err := validateCLIAddressText(address); err != nil {
+					return err
+				}
+			}
+			if len(args) >= 2 && args[1] == "" {
+				return sdkerrors.ErrInvalidRequest.Wrap("module cannot be empty when provided")
+			}
+			if len(args) == 3 && args[2] == "" {
+				return sdkerrors.ErrInvalidRequest.Wrap("msg type cannot be empty when provided")
 			}
 			clientCtx, err := getClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			accountCodec, err := signingAddressCodec(clientCtx)
-			if err != nil {
-				return err
-			}
-			if err := validateCLIAccountAddress(accountCodec, args[0]); err != nil {
-				return err
+			if !global {
+				accountCodec, err := signingAddressCodec(clientCtx)
+				if err != nil {
+					return err
+				}
+				if err := validateCLIAccountAddress(accountCodec, address); err != nil {
+					return err
+				}
 			}
 			msg := &types.MsgRemoveDiscounts{
 				ModeratorAddress: clientCtx.GetFromAddress().String(),
-				Address:          args[0],
+				Address:          address,
 			}
-			if len(args) == 2 {
+			if len(args) >= 2 {
 				msg.Module = args[1]
+			}
+			if len(args) == 3 {
+				msg.MsgType = args[2]
 			}
 			return generateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

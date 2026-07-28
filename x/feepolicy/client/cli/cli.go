@@ -9,6 +9,15 @@ import (
 	"github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 )
 
+const globalPolicySelector = "global"
+
+func parsePolicyAddress(raw string) (string, bool) {
+	if raw == globalPolicySelector {
+		return "", true
+	}
+	return raw, false
+}
+
 func GetQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,

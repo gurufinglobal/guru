@@ -16,14 +16,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/evm/x/erc20"
-	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
 	vmrunner "github.com/cosmos/evm/x/vm/runner"
 	ibccallbacks "github.com/cosmos/ibc-go/v11/modules/apps/callbacks"
 	transfer "github.com/cosmos/ibc-go/v11/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
-	transferv2 "github.com/cosmos/ibc-go/v11/modules/apps/transfer/v2"
 	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
-	ibcapi "github.com/cosmos/ibc-go/v11/modules/core/api"
 	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	transwap "github.com/gurufinglobal/guru/v3/x/ibc/transwap"
@@ -61,19 +58,6 @@ func (app *App) configureIBCRouters() ibctm.LightClientModule {
 	ibcRouter.AddRoute(transwaptypes.ModuleName, transwapStack)
 
 	app.IBCKeeper.SetRouter(ibcRouter)
-
-	// IBC-Go v11 transfer selects the v2 channel path when the CLI supplies a
-	// client ID. The v1 port router above does not initialize that independent
-	// API router, so register the transfer v2 application route explicitly. Keep the
-	// Cosmos EVM middleware in this stack so receive, acknowledgement, and
-	// timeout paths preserve automatic Cosmos coin/ERC20 conversion semantics.
-	var transferStackV2 ibcapi.IBCModule
-	transferStackV2 = transferv2.NewIBCModule(app.TransferKeeper)
-	transferStackV2 = erc20v2.NewIBCMiddleware(transferStackV2, app.Erc20Keeper)
-
-	ibcRouterV2 := ibcapi.NewRouter()
-	ibcRouterV2.AddRoute(ibctransfertypes.PortID, transferStackV2)
-	app.IBCKeeper.SetRouterV2(ibcRouterV2)
 
 	clientKeeper := app.IBCKeeper.ClientKeeper
 	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()

@@ -461,8 +461,8 @@ func TestMsgServerCRUDOverwriteGlobalRemoveAndEvents(t *testing.T) {
 	require.Len(t, stored.Modules[0].Discounts, 1)
 	require.Empty(t, stored.Modules[1].Discounts)
 
-	// Empty module removes the whole global record. This wire/API capability is
-	// retained even though the CLI intentionally has no global-delete command.
+	// Empty module removes the whole global record. The explicit global CLI
+	// selector exposes this retained wire/API capability.
 	_, err = server.RemoveDiscounts(f.ctx, &types.MsgRemoveDiscounts{
 		ModeratorAddress: moderatorHex,
 		Address:          "",
@@ -494,12 +494,26 @@ func TestQueryCompatibilityBehavior(t *testing.T) {
 	require.NoError(t, f.keeper.SetAccountDiscounts(f.ctx, testPolicy(f.account, "bank", percentRule(msg, "25"))))
 	require.NoError(t, f.keeper.SetAccountDiscounts(f.ctx, testPolicy("", "bank", fixedRule(msg, "3"))))
 
-	// The v2 query ignores caller pagination and uses its default first page.
-	response, err := server.Discounts(f.ctx, &types.QueryDiscountsRequest{
-		Pagination: &query.PageRequest{Limit: 1},
+	firstPage, err := server.Discounts(f.ctx, &types.QueryDiscountsRequest{
+		Pagination: &query.PageRequest{Limit: 1, CountTotal: true},
 	})
 	require.NoError(t, err)
-	require.Len(t, response.Discounts, 2)
+	require.Len(t, firstPage.Discounts, 1)
+	require.Equal(t, uint64(2), firstPage.Pagination.Total)
+	require.NotEmpty(t, firstPage.Pagination.NextKey)
+
+	secondPage, err := server.Discounts(f.ctx, &types.QueryDiscountsRequest{
+		Pagination: &query.PageRequest{Key: firstPage.Pagination.NextKey, Limit: 1},
+	})
+	require.NoError(t, err)
+	require.Len(t, secondPage.Discounts, 1)
+	require.Empty(t, secondPage.Pagination.NextKey)
+	require.ElementsMatch(t,
+		[]string{"", f.account},
+		[]string{firstPage.Discounts[0].Address, secondPage.Discounts[0].Address},
+	)
+	_, err = server.Discounts(f.ctx, nil)
+	require.Error(t, err)
 
 	global, err := server.Discount(f.ctx, &types.QueryDiscountRequest{Address: ""})
 	require.NoError(t, err)

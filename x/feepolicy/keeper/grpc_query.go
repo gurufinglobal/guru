@@ -6,7 +6,6 @@ import (
 
 	"cosmossdk.io/collections"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 )
@@ -42,11 +41,12 @@ func (s *QueryServer) ModeratorAddress(
 
 func (s *QueryServer) Discounts(
 	ctx context.Context,
-	_ *types.QueryDiscountsRequest,
+	req *types.QueryDiscountsRequest,
 ) (*types.QueryDiscountsResponse, error) {
-	// Deliberately preserve v2 behavior: the request pagination is ignored
-	// and the collection's default first page is returned.
-	discounts, pageResponse, err := s.keeper.GetPaginatedDiscounts(ctx, &query.PageRequest{})
+	if req == nil {
+		return nil, sdkerrors.ErrInvalidRequest.Wrap("request cannot be nil")
+	}
+	discounts, pageResponse, err := s.keeper.GetPaginatedDiscounts(ctx, req.GetPagination())
 	if err != nil {
 		return nil, err
 	}

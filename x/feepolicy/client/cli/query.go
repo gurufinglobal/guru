@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	querytypes "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
@@ -52,18 +53,19 @@ func GetCmdQueryModeratorAddress() *cobra.Command {
 
 func GetCmdQueryDiscount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "discount [address]",
-		Short:   "Query the discounts for an address",
-		Example: fmt.Sprintf("%s query feepolicy discount [address]", version.AppName),
+		Use:     "discount [address|global]",
+		Short:   "Query the discounts for an address or the global policy",
+		Example: fmt.Sprintf("%s query feepolicy discount global", version.AppName),
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := getClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
+			address, _ := parsePolicyAddress(args[0])
 			response, err := newQueryClient(clientCtx).Discount(
 				cmd.Context(),
-				&types.QueryDiscountRequest{Address: args[0]},
+				&types.QueryDiscountRequest{Address: address},
 			)
 			if err != nil {
 				return err
@@ -86,7 +88,7 @@ func GetCmdQueryDiscounts() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			pageRequest, err := client.ReadPageRequest(cmd.Flags())
+			pageRequest, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
@@ -103,4 +105,12 @@ func GetCmdQueryDiscounts() *cobra.Command {
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "discounts")
 	return cmd
+}
+
+func readPageRequest(cmd *cobra.Command) (*querytypes.PageRequest, error) {
+	flagSet, err := client.FlagSetWithPageKeyDecoded(cmd.Flags())
+	if err != nil {
+		return nil, err
+	}
+	return client.ReadPageRequest(flagSet)
 }
