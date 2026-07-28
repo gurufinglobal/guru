@@ -1,17 +1,21 @@
 package pulsarcompat
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	queryv1beta1 "cosmossdk.io/api/cosmos/base/query/v1beta1"
 	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
+	sdkmath "cosmossdk.io/math"
 	gogogateway "github.com/cosmos/gogogateway"
 	legacyproto "github.com/golang/protobuf/proto" //nolint:staticcheck // This test intentionally exercises legacy protobuf wire compatibility.
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -33,7 +37,9 @@ import (
 	pulsaroraclev1 "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	feepolicytypes "github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
+	"github.com/stretchr/testify/require"
 )
 
 var _ legacyproto.Message = (*pulsaroraclev1.QueryParamsResponse)(nil)
@@ -675,4 +681,231 @@ func TestStandardTxConfigDecodesInternalGogoMessagesWithNestedFields(t *testing.
 			t.Fatalf("encode wrapped tx %T: %v", msg, err)
 		}
 	}
+}
+
+const (
+	feePolicyCanonicalAmount = "25.125000000000000000"
+	feePolicyMsgType         = "/cosmos.bank.v1beta1.MsgSend"
+)
+
+func TestFeePolicyInternalPBInterfaceRegistryAndTxConfigCompatibility(t *testing.T) {
+	encoding := appparams.MakeEncodingConfig(
+		appparams.Bech32PrefixAccAddr,
+		appparams.Bech32PrefixValAddr,
+		appparams.Bech32PrefixConsAddr,
+	)
+	feepolicytypes.RegisterInterfaces(encoding.InterfaceRegistry)
+
+	moderatorBytes := bytes.Repeat([]byte{0x41}, 20)
+	moderator, err := encoding.InterfaceRegistry.SigningContext().AddressCodec().BytesToString(moderatorBytes)
+	require.NoError(t, err)
+	newModerator, err := encoding.InterfaceRegistry.SigningContext().AddressCodec().BytesToString(bytes.Repeat([]byte{0x42}, 20))
+	require.NoError(t, err)
+
+	messages := []sdk.Msg{
+		&feepolicytypes.MsgRegisterDiscounts{
+			ModeratorAddress: moderator,
+			Discounts:        []feepolicytypes.AccountDiscount{feePolicyInternalAccountDiscount()},
+		},
+		&feepolicytypes.MsgRemoveDiscounts{
+			ModeratorAddress: moderator,
+			Module:           "bank",
+			MsgType:          feePolicyMsgType,
+		},
+		&feepolicytypes.MsgChangeModerator{
+			ModeratorAddress:    moderator,
+			NewModeratorAddress: newModerator,
+		},
+	}
+
+	for _, msg := range messages {
+		t.Run(sdk.MsgTypeURL(msg), func(t *testing.T) {
+			typeURL := sdk.MsgTypeURL(msg)
+			packed, err := codectypes.NewAnyWithValue(msg)
+			require.NoError(t, err)
+			require.Equal(t, typeURL, packed.TypeUrl)
+
+			var unpacked sdk.Msg
+			require.NoError(t, encoding.InterfaceRegistry.UnpackAny(packed, &unpacked))
+			require.IsType(t, msg, unpacked)
+
+			builder := encoding.TxConfig.NewTxBuilder()
+			require.NoError(t, builder.SetMsgs(msg))
+			encoded, err := encoding.TxConfig.TxEncoder()(builder.GetTx())
+			require.NoError(t, err)
+
+			decoded, err := encoding.TxConfig.TxDecoder()(encoded)
+			require.NoError(t, err)
+			require.Len(t, decoded.GetMsgs(), 1)
+			require.IsType(t, msg, decoded.GetMsgs()[0])
+
+			msgsV2, err := decoded.GetMsgsV2()
+			require.NoError(t, err)
+			require.Len(t, msgsV2, 1)
+			require.Equal(t, strings.TrimPrefix(typeURL, "/"), string(msgsV2[0].ProtoReflect().Descriptor().FullName()))
+
+			sigTx, ok := decoded.(authsigning.SigVerifiableTx)
+			require.True(t, ok)
+			signers, err := sigTx.GetSigners()
+			require.NoError(t, err)
+			require.Equal(t, [][]byte{moderatorBytes}, signers)
+
+			wrapped, err := encoding.TxConfig.WrapTxBuilder(decoded)
+			require.NoError(t, err)
+			reencoded, err := encoding.TxConfig.TxEncoder()(wrapped.GetTx())
+			require.NoError(t, err)
+			require.Equal(t, encoded, reencoded)
+		})
+	}
+
+	responseAny, err := codectypes.NewAnyWithValue(&feepolicytypes.MsgRegisterDiscountsResponse{})
+	require.NoError(t, err)
+	var response txtypes.MsgResponse
+	require.NoError(t, encoding.InterfaceRegistry.UnpackAny(responseAny, &response))
+	require.IsType(t, &feepolicytypes.MsgRegisterDiscountsResponse{}, response)
+}
+
+func TestFeePolicyInternalPBRESTGatewayCompatibility(t *testing.T) {
+	marshaler := &gogogateway.JSONPb{EmitDefaults: true, OrigName: true}
+	mux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, marshaler))
+	queryServer := feePolicyGatewayQueryServer{}
+	msgServer := &feePolicyGatewayMsgServer{}
+	require.NoError(t, feepolicytypes.RegisterQueryHandlerServer(context.Background(), mux, queryServer))
+	require.NoError(t, feepolicytypes.RegisterMsgHandlerServer(context.Background(), mux, msgServer))
+
+	moderatorResponse := serveFeePolicyGateway(t, mux, http.MethodGet, "/guru/feepolicy/v1/moderator_address", "")
+	require.Equal(t, http.StatusOK, moderatorResponse.Code, moderatorResponse.Body.String())
+	require.JSONEq(t, `{"moderator_address":"guru1moderator"}`, moderatorResponse.Body.String())
+
+	discountsResponse := serveFeePolicyGateway(t, mux, http.MethodGet, "/guru/feepolicy/v1/discounts", "")
+	require.Equal(t, http.StatusOK, discountsResponse.Code, discountsResponse.Body.String())
+
+	discountResponse := serveFeePolicyGateway(t, mux, http.MethodGet, "/guru/feepolicy/v1/discounts/guru1account", "")
+	require.Equal(t, http.StatusOK, discountResponse.Code, discountResponse.Body.String())
+	require.JSONEq(t, `{
+		"discount": {
+			"address": "guru1account",
+			"modules": [{
+				"module": "bank",
+				"discounts": [{
+					"discount_type": "percent",
+					"msg_type": "/cosmos.bank.v1beta1.MsgSend",
+					"amount": "25.125000000000000000"
+				}]
+			}]
+		}
+	}`, discountResponse.Body.String())
+
+	registerResponse := serveFeePolicyGateway(t, mux, http.MethodPost, "/guru/feepolicy/v1/register_discounts", `{
+		"moderator_address":"guru1moderator",
+		"discounts":[{
+			"address":"guru1account",
+			"modules":[{
+				"module":"bank",
+				"discounts":[{
+					"discount_type":"percent",
+					"msg_type":"/cosmos.bank.v1beta1.MsgSend",
+					"amount":"25.125000000000000000"
+				}]
+			}]
+		}]
+	}`)
+	require.Equal(t, http.StatusOK, registerResponse.Code, registerResponse.Body.String())
+
+	removeResponse := serveFeePolicyGateway(t, mux, http.MethodPost, "/guru/feepolicy/v1/remove_discounts", `{
+		"moderator_address":"guru1moderator",
+		"address":"guru1account",
+		"module":"bank",
+		"msg_type":"/cosmos.bank.v1beta1.MsgSend"
+	}`)
+	require.Equal(t, http.StatusOK, removeResponse.Code, removeResponse.Body.String())
+
+	changeResponse := serveFeePolicyGateway(t, mux, http.MethodPost, "/guru/feepolicy/v1/change_moderator", `{
+		"moderator_address":"guru1moderator",
+		"new_moderator_address":"guru1newmoderator"
+	}`)
+	require.Equal(t, http.StatusOK, changeResponse.Code, changeResponse.Body.String())
+	require.Equal(t, 1, msgServer.registerCalls)
+	require.Equal(t, 1, msgServer.removeCalls)
+	require.Equal(t, 1, msgServer.changeCalls)
+}
+
+func feePolicyInternalAccountDiscount() feepolicytypes.AccountDiscount {
+	return feepolicytypes.AccountDiscount{
+		Address: "guru1account",
+		Modules: []feepolicytypes.ModuleDiscount{{
+			Module: "bank",
+			Discounts: []feepolicytypes.Discount{{
+				DiscountType: "percent",
+				MsgType:      feePolicyMsgType,
+				Amount:       sdkmath.LegacyMustNewDecFromStr(feePolicyCanonicalAmount),
+			}},
+		}},
+	}
+}
+
+type feePolicyGatewayQueryServer struct {
+	feepolicytypes.UnimplementedQueryServer
+}
+
+func (feePolicyGatewayQueryServer) ModeratorAddress(context.Context, *feepolicytypes.QueryModeratorAddressRequest) (*feepolicytypes.QueryModeratorAddressResponse, error) {
+	return &feepolicytypes.QueryModeratorAddressResponse{ModeratorAddress: "guru1moderator"}, nil
+}
+
+func (feePolicyGatewayQueryServer) Discounts(context.Context, *feepolicytypes.QueryDiscountsRequest) (*feepolicytypes.QueryDiscountsResponse, error) {
+	return &feepolicytypes.QueryDiscountsResponse{
+		Discounts: []feepolicytypes.AccountDiscount{feePolicyInternalAccountDiscount()},
+	}, nil
+}
+
+func (feePolicyGatewayQueryServer) Discount(_ context.Context, request *feepolicytypes.QueryDiscountRequest) (*feepolicytypes.QueryDiscountResponse, error) {
+	if request.GetAddress() != "guru1account" {
+		return nil, fmt.Errorf("unexpected discount address %q", request.GetAddress())
+	}
+	return &feepolicytypes.QueryDiscountResponse{Discount: feePolicyInternalAccountDiscount()}, nil
+}
+
+type feePolicyGatewayMsgServer struct {
+	feepolicytypes.UnimplementedMsgServer
+	registerCalls int
+	removeCalls   int
+	changeCalls   int
+}
+
+func (server *feePolicyGatewayMsgServer) RegisterDiscounts(_ context.Context, request *feepolicytypes.MsgRegisterDiscounts) (*feepolicytypes.MsgRegisterDiscountsResponse, error) {
+	if request.ModeratorAddress != "guru1moderator" || len(request.Discounts) != 1 || len(request.Discounts[0].Modules) != 1 || len(request.Discounts[0].Modules[0].Discounts) != 1 {
+		return nil, fmt.Errorf("unexpected register request: %+v", request)
+	}
+	if !request.Discounts[0].Modules[0].Discounts[0].Amount.Equal(sdkmath.LegacyMustNewDecFromStr(feePolicyCanonicalAmount)) {
+		return nil, fmt.Errorf("unexpected LegacyDec amount: %s", request.Discounts[0].Modules[0].Discounts[0].Amount)
+	}
+	server.registerCalls++
+	return &feepolicytypes.MsgRegisterDiscountsResponse{}, nil
+}
+
+func (server *feePolicyGatewayMsgServer) RemoveDiscounts(_ context.Context, request *feepolicytypes.MsgRemoveDiscounts) (*feepolicytypes.MsgRemoveDiscountsResponse, error) {
+	if request.ModeratorAddress != "guru1moderator" || request.Address != "guru1account" || request.Module != "bank" || request.MsgType != feePolicyMsgType {
+		return nil, fmt.Errorf("unexpected remove request: %+v", request)
+	}
+	server.removeCalls++
+	return &feepolicytypes.MsgRemoveDiscountsResponse{}, nil
+}
+
+func (server *feePolicyGatewayMsgServer) ChangeModerator(_ context.Context, request *feepolicytypes.MsgChangeModerator) (*feepolicytypes.MsgChangeModeratorResponse, error) {
+	if request.ModeratorAddress != "guru1moderator" || request.NewModeratorAddress != "guru1newmoderator" {
+		return nil, fmt.Errorf("unexpected change-moderator request: %+v", request)
+	}
+	server.changeCalls++
+	return &feepolicytypes.MsgChangeModeratorResponse{}, nil
+}
+
+func serveFeePolicyGateway(t *testing.T, mux *runtime.ServeMux, method, path, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	request := httptest.NewRequest(method, path, strings.NewReader(body))
+	if body != "" {
+		request.Header.Set("Content-Type", "application/json")
+	}
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	return response
 }

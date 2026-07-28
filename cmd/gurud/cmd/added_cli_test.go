@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func TestOracleCLICommandsAreRegistered(t *testing.T) {
+func TestAddedCLICommandsAreRegistered(t *testing.T) {
 	tests := []struct {
 		name string
 		cmd  func() *cobra.Command
@@ -15,6 +15,8 @@ func TestOracleCLICommandsAreRegistered(t *testing.T) {
 		{name: "tx oracle", cmd: txCommand, args: []string{"oracle"}},
 		{name: "query oracle", cmd: queryCommand, args: []string{"oracle"}},
 		{name: "query constitution min gas price", cmd: queryCommand, args: []string{"constitution", "min-gas-price"}},
+		{name: "tx feepolicy", cmd: txCommand, args: []string{"feepolicy"}},
+		{name: "query feepolicy", cmd: queryCommand, args: []string{"feepolicy"}},
 	}
 
 	for _, tc := range tests {

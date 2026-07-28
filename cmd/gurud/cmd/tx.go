@@ -6,6 +6,7 @@ import (
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	bexcli "github.com/gurufinglobal/guru/v3/x/bex/client/cli"
 	constitutioncli "github.com/gurufinglobal/guru/v3/x/constitution/client/cli"
+	feepolicycli "github.com/gurufinglobal/guru/v3/x/feepolicy/client/cli"
 	oraclecli "github.com/gurufinglobal/guru/v3/x/oracle/client/cli"
 	"github.com/spf13/cobra"
 )
@@ -31,6 +32,7 @@ func txCommand() *cobra.Command {
 		authcmd.GetSimulateCmd(),
 		bexcli.GetTxCmd(),
 		constitutioncli.GetTxCmd(),
+		feepolicycli.GetTxCmd(),
 		oraclecli.GetTxCmd(),
 	)
 

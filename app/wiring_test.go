@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"cosmossdk.io/log/v2"
@@ -21,6 +22,7 @@ import (
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	feepolicytypes "github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
@@ -37,17 +39,23 @@ func TestInitGenesisOrderIsUniqueAndRefundDependenciesAreOrdered(t *testing.T) {
 
 	bankIndex := indexOf(order, banktypes.ModuleName)
 	bexIndex := indexOf(order, bextypes.ModuleName)
+	constitutionIndex := indexOf(order, constitutiontypes.ModuleName)
+	feePolicyIndex := indexOf(order, feepolicytypes.ModuleName)
 	ibcIndex := indexOf(order, ibcexported.ModuleName)
 	transwapIndex := indexOf(order, transwaptypes.ModuleName)
 	for name, index := range map[string]int{
-		banktypes.ModuleName:     bankIndex,
-		bextypes.ModuleName:      bexIndex,
-		ibcexported.ModuleName:   ibcIndex,
-		transwaptypes.ModuleName: transwapIndex,
+		banktypes.ModuleName:         bankIndex,
+		bextypes.ModuleName:          bexIndex,
+		constitutiontypes.ModuleName: constitutionIndex,
+		feepolicytypes.ModuleName:    feePolicyIndex,
+		ibcexported.ModuleName:       ibcIndex,
+		transwaptypes.ModuleName:     transwapIndex,
 	} {
 		require.NotEqual(t, -1, index, "module %s must be initialized", name)
 	}
 	require.Less(t, bankIndex, bexIndex)
+	require.Less(t, constitutionIndex, feePolicyIndex)
+	require.Less(t, feePolicyIndex, bexIndex)
 	require.Less(t, bexIndex, transwapIndex)
 	require.Less(t, ibcIndex, transwapIndex)
 }
@@ -71,10 +79,84 @@ func TestConstitutionModuleRunsAfterFeeMarketEndBlocker(t *testing.T) {
 func TestConstitutionModuleIsInGenesisOrder(t *testing.T) {
 	order := ModuleOrderInitGenesis()
 	constitutionIndex := indexOf(order, constitutiontypes.ModuleName)
+	feePolicyIndex := indexOf(order, feepolicytypes.ModuleName)
 	stakingIndex := indexOf(order, stakingtypes.ModuleName)
 	require.NotEqual(t, -1, constitutionIndex, "constitution module must be initialized in genesis")
+	require.NotEqual(t, -1, feePolicyIndex, "feepolicy module must be initialized in genesis")
 	require.NotEqual(t, -1, stakingIndex, "staking module must be initialized in genesis")
+	require.Less(t, constitutionIndex, feePolicyIndex, "Constitution must initialize before feepolicy")
 	require.Less(t, constitutionIndex, stakingIndex, "constitution must initialize before staking")
+}
+
+func TestValidateChainGenesisFeePolicyModeratorMirrorsConstitution(t *testing.T) {
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	t.Cleanup(func() { require.NoError(t, testApp.Close()) })
+
+	seedGenesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+	constitutionGenesis := &constitutiontypes.GenesisState{}
+	testApp.AppCodec().MustUnmarshalJSON(seedGenesis[constitutiontypes.ModuleName], constitutionGenesis)
+	constitutionModeratorBytes, err := testApp.AccountKeeper.AddressCodec().StringToBytes(
+		constitutionGenesis.GetModeratorAddress(),
+	)
+	require.NoError(t, err)
+	matchingHexAlias := fmt.Sprintf("0x%X", constitutionModeratorBytes)
+	require.NotEqual(t, constitutionGenesis.GetModeratorAddress(), matchingHexAlias)
+
+	tests := []struct {
+		name               string
+		feePolicyModerator string
+		expectedError      string
+	}{
+		{name: "empty legacy field inherits Constitution moderator"},
+		{
+			name:               "nonempty hex alias matches Constitution by decoded bytes",
+			feePolicyModerator: matchingHexAlias,
+		},
+		{
+			name:               "different decoded address is rejected",
+			feePolicyModerator: fmt.Sprintf("0x%X", bytes.Repeat([]byte{0x23}, 20)),
+			expectedError:      "does not match Constitution moderator",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			genesis := defaultGenesisWithConstitutionAddresses(t, testApp)
+			feePolicyGenesis := &feepolicytypes.GenesisState{}
+			testApp.AppCodec().MustUnmarshalJSON(genesis[feepolicytypes.ModuleName], feePolicyGenesis)
+			feePolicyGenesis.ModeratorAddress = test.feePolicyModerator
+			genesis[feepolicytypes.ModuleName] = testApp.AppCodec().MustMarshalJSON(feePolicyGenesis)
+
+			err := testApp.ValidateChainGenesis(genesis)
+			if test.expectedError != "" {
+				require.ErrorContains(t, err, test.expectedError)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestFeePolicyStoreKeyWiring(t *testing.T) {
+	configureFeePolicyTestBech32Prefixes(t, true)
+	testApp := NewApp(log.NewNopLogger(), dbm.NewMemDB(), false, simtestutil.EmptyAppOptions{})
+	t.Cleanup(func() { require.NoError(t, testApp.Close()) })
+
+	feePolicyKey := testApp.GetKVStoreKey(feepolicytypes.StoreKey)
+	require.NotNil(t, feePolicyKey)
+	var occurrences int
+	for _, key := range testApp.GetNonTransientKeys() {
+		if key.Name() == feepolicytypes.StoreKey {
+			occurrences++
+			require.Same(t, feePolicyKey, key)
+		}
+	}
+	require.Equal(t, 1, occurrences)
+	require.Nil(t, testApp.GetTransientStoreKey(feepolicytypes.StoreKey))
+
+	evmKey, ok := testApp.EVMKeeper.KVStoreKeys()[feepolicytypes.StoreKey]
+	require.True(t, ok)
+	require.Same(t, feePolicyKey, evmKey)
 }
 
 func TestConstitutionModuleRunsBeforeDistributionBeginBlocker(t *testing.T) {

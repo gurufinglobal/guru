@@ -15,6 +15,7 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	feepolicytypes "github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 )
 
 // ValidateChainGenesis validates chain-level and cross-module invariants only.
@@ -60,6 +61,34 @@ func (app *App) ValidateChainGenesis(genesis map[string]json.RawMessage) error {
 	}
 	if err := app.validateGenesisValidatorSelfBonds(stakingGenesis, constitutionGenesis); err != nil {
 		return err
+	}
+
+	feePolicyGenesis := &feepolicytypes.GenesisState{}
+	if bz, ok := genesis[feepolicytypes.ModuleName]; ok {
+		if err := app.appCodec.UnmarshalJSON(bz, feePolicyGenesis); err != nil {
+			return fmt.Errorf("failed to decode feepolicy genesis: %w", err)
+		}
+	}
+	if feePolicyModerator := feePolicyGenesis.GetModeratorAddress(); feePolicyModerator != "" {
+		constitutionModerator := constitutionGenesis.GetModeratorAddress()
+		if constitutionModerator == "" {
+			return fmt.Errorf("feepolicy moderator is set while Constitution moderator is empty")
+		}
+		feePolicyAddress, err := app.AccountKeeper.AddressCodec().StringToBytes(feePolicyModerator)
+		if err != nil {
+			return fmt.Errorf("invalid feepolicy genesis moderator address: %w", err)
+		}
+		constitutionAddress, err := app.AccountKeeper.AddressCodec().StringToBytes(constitutionModerator)
+		if err != nil {
+			return fmt.Errorf("invalid Constitution genesis moderator address: %w", err)
+		}
+		if !bytes.Equal(feePolicyAddress, constitutionAddress) {
+			return fmt.Errorf(
+				"feepolicy moderator %q does not match Constitution moderator %q",
+				feePolicyModerator,
+				constitutionModerator,
+			)
+		}
 	}
 
 	mintGenesis := minttypes.DefaultGenesisState()

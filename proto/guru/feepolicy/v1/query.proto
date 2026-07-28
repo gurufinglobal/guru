@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "guru/feepolicy/v1/feepolicy.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/feepolicy/types";
+
+// Query defines the feepolicy query service.
+service Query {
+  // ModeratorAddress returns Constitution's current moderator address.
+  rpc ModeratorAddress(QueryModeratorAddressRequest) returns (QueryModeratorAddressResponse) {
+    option (google.api.http).get = "/guru/feepolicy/v1/moderator_address";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // Discounts returns all account and global discount records.
+  rpc Discounts(QueryDiscountsRequest) returns (QueryDiscountsResponse) {
+    option (google.api.http).get = "/guru/feepolicy/v1/discounts";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // Discount returns the discount record for an address.
+  rpc Discount(QueryDiscountRequest) returns (QueryDiscountResponse) {
+    option (google.api.http).get = "/guru/feepolicy/v1/discounts/{address}";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+}
+
+// QueryModeratorAddressRequest is the request for Query/ModeratorAddress.
+message QueryModeratorAddressRequest {}
+
+// QueryModeratorAddressResponse is the response for Query/ModeratorAddress.
+message QueryModeratorAddressResponse {
+  string moderator_address = 1;
+}
+
+// QueryDiscountsRequest is the request for Query/Discounts.
+message QueryDiscountsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryDiscountsResponse is the response for Query/Discounts.
+message QueryDiscountsResponse {
+  repeated AccountDiscount discounts = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryDiscountRequest is the request for Query/Discount.
+message QueryDiscountRequest {
+  string address = 1;
+}
+
+// QueryDiscountResponse is the response for Query/Discount.
+message QueryDiscountResponse {
+  AccountDiscount discount = 1 [(gogoproto.nullable) = false];
+}

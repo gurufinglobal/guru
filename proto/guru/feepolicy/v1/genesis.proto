@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+import "gogoproto/gogo.proto";
+import "guru/feepolicy/v1/feepolicy.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/feepolicy/types";
+
+// GenesisState defines the feepolicy genesis state.
+message GenesisState {
+  // moderator_address is a compatibility assertion/mirror. An empty value
+  // inherits Constitution; a non-empty value must identify the same account.
+  string moderator_address = 1;
+  repeated AccountDiscount discounts = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.moretags) = "yaml:\"discounts\""
+  ];
+}

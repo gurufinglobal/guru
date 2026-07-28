@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package guru.feepolicy.v1;
+
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v3/x/feepolicy/types";
+
+message Discount {
+  string discount_type = 1;
+  string msg_type = 2;
+  string amount = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (amino.dont_omitempty) = true,
+    (gogoproto.nullable) = false
+  ];
+}
+
+message ModuleDiscount {
+  string module = 1;
+  repeated Discount discounts = 2 [(gogoproto.nullable) = false];
+}
+
+message AccountDiscount {
+  string address = 1;
+  repeated ModuleDiscount modules = 2 [(gogoproto.nullable) = false];
+}
+
+message AccountDiscounts {
+  repeated AccountDiscount discounts = 1 [(gogoproto.nullable) = false];
+}
+
+// Moderator is retained for wire compatibility. Runtime moderator state is
+// owned by the Constitution module.
+message Moderator {
+  string address = 1;
+}

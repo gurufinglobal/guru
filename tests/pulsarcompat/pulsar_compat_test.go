@@ -7,15 +7,18 @@ import (
 	"testing"
 
 	basev1beta1 "cosmossdk.io/api/cosmos/base/v1beta1"
+	sdkmath "cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogoproto "github.com/cosmos/gogoproto/proto"
 	pulsarbex "github.com/gurufinglobal/guru/v3/api/guru/bex/v1"
 	pulsarconstitution "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
+	pulsarfeepolicy "github.com/gurufinglobal/guru/v3/api/guru/feepolicy/v1"
 	pulsaroracle "github.com/gurufinglobal/guru/v3/api/guru/oracle/v1"
 	pulsartranswap "github.com/gurufinglobal/guru/v3/api/guru/transwap/v1"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
+	feepolicytypes "github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	protov2 "google.golang.org/protobuf/proto"
@@ -37,6 +40,7 @@ type gogoWireMessage interface {
 
 func TestInternalGogoAndPublicPulsarWireParity(t *testing.T) {
 	minBond := sdk.NewInt64Coin("agxn", 10)
+	discountAmount := sdkmath.LegacyMustNewDecFromStr("25.125")
 
 	tests := []struct {
 		name      string
@@ -93,6 +97,56 @@ func TestInternalGogoAndPublicPulsarWireParity(t *testing.T) {
 			newGogo:   func() gogoWireMessage { return &constitutiontypes.MinGasPriceSchedule{} },
 			pulsar:    &pulsarconstitution.MinGasPriceSchedule{EffectiveHeight: 25, ScheduledMinGasPrice: "630000000000", SourceSymbol: "GURU/USD", SourceValue: "1.0", SourceOracleHeight: 20, SourceSubmissionIntervalBlocks: 5, PendingDelayBlocks: 5, PendingDelayCapBlocks: 10, RawMinGasPrice: "630000000000", PreviousMinGasPrice: "630000000000"},
 			newPulsar: func() protov2.Message { return &pulsarconstitution.MinGasPriceSchedule{} },
+		},
+		{
+			name: "feepolicy discount", fullName: "guru.feepolicy.v1.Discount",
+			gogo: &feepolicytypes.Discount{
+				DiscountType: "percent",
+				MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+				Amount:       discountAmount,
+			},
+			newGogo: func() gogoWireMessage { return &feepolicytypes.Discount{} },
+			// LegacyDec's gogo custom type encodes its 10^18-scaled integer as
+			// the protobuf string. Pulsar exposes that exact wire value.
+			pulsar: &pulsarfeepolicy.Discount{
+				DiscountType: "percent",
+				MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+				Amount:       discountAmount.BigInt().String(),
+			},
+			newPulsar: func() protov2.Message { return &pulsarfeepolicy.Discount{} },
+		},
+		{
+			name: "feepolicy nested register msg", fullName: "guru.feepolicy.v1.MsgRegisterDiscounts",
+			gogo: &feepolicytypes.MsgRegisterDiscounts{
+				ModeratorAddress: "guru1moderator",
+				Discounts: []feepolicytypes.AccountDiscount{{
+					Address: "guru1account",
+					Modules: []feepolicytypes.ModuleDiscount{{
+						Module: "bank",
+						Discounts: []feepolicytypes.Discount{{
+							DiscountType: "percent",
+							MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+							Amount:       discountAmount,
+						}},
+					}},
+				}},
+			},
+			newGogo: func() gogoWireMessage { return &feepolicytypes.MsgRegisterDiscounts{} },
+			pulsar: &pulsarfeepolicy.MsgRegisterDiscounts{
+				ModeratorAddress: "guru1moderator",
+				Discounts: []*pulsarfeepolicy.AccountDiscount{{
+					Address: "guru1account",
+					Modules: []*pulsarfeepolicy.ModuleDiscount{{
+						Module: "bank",
+						Discounts: []*pulsarfeepolicy.Discount{{
+							DiscountType: "percent",
+							MsgType:      "/cosmos.bank.v1beta1.MsgSend",
+							Amount:       discountAmount.BigInt().String(),
+						}},
+					}},
+				}},
+			},
+			newPulsar: func() protov2.Message { return &pulsarfeepolicy.MsgRegisterDiscounts{} },
 		},
 		{
 			name: "oracle task", fullName: "guru.oracle.v1.OracleTask",
@@ -208,6 +262,10 @@ func TestInternalGogoAndPublicPulsarDescriptorsMatch(t *testing.T) {
 		"guru/constitution/v1/query.proto",
 		"guru/constitution/v1/tx.proto",
 		"guru/constitution/v1/types.proto",
+		"guru/feepolicy/v1/feepolicy.proto",
+		"guru/feepolicy/v1/genesis.proto",
+		"guru/feepolicy/v1/query.proto",
+		"guru/feepolicy/v1/tx.proto",
 		"guru/oracle/v1/daemon.proto",
 		"guru/oracle/v1/genesis.proto",
 		"guru/oracle/v1/oracle.proto",
