@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"reflect"
-	"sync"
 	"testing"
 	"time"
 
@@ -23,8 +22,6 @@ import (
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	evmmodule "github.com/cosmos/evm/x/vm"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -36,19 +33,6 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/require"
 )
-
-var configureBexEVMOnce sync.Once
-
-func configureBexEVM() {
-	configureBexEVMOnce.Do(func() {
-		evmmodule.SetGlobalConfigVariables(evmtypes.EvmCoinInfo{
-			Denom:         appparams.BaseDenom,
-			ExtendedDenom: appparams.BaseDenom,
-			DisplayDenom:  appparams.DisplayDenom,
-			Decimals:      18,
-		})
-	})
-}
 
 func TestBexAllMsgAndQueryServicesExecuteThroughRuntimeRouters(t *testing.T) {
 	testApp := NewApp(
@@ -296,7 +280,7 @@ func TestBexReserveRestrictionIsWiredAcrossBankAndEVM(t *testing.T) {
 
 	require.Contains(t, testApp.ModuleManager.Modules, bextypes.ModuleName)
 	require.NotNil(t, testApp.EVMKeeper)
-	configureBexEVM()
+	configureTestEVM()
 
 	ctx := testApp.NewNextBlockContext(cmtproto.Header{
 		ChainID: appparams.SDKChainID,
@@ -472,7 +456,7 @@ func TestBexRegistrationReclaimsPrecreatedKeylessVestingReserve(t *testing.T) {
 }
 
 func TestBexFeeCustodyBoundariesAcrossBankAndEVM(t *testing.T) {
-	configureBexEVM()
+	configureTestEVM()
 	testApp := NewApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
@@ -637,8 +621,10 @@ func TestBexFeeCustodyBoundariesAcrossBankAndEVM(t *testing.T) {
 	require.Equal(t, int64(2), testApp.BankKeeper.GetBalance(ctx, moduleAddr, appparams.BaseDenom).Amount.Int64())
 	require.Equal(t, int64(2), testApp.BankKeeper.GetBalance(ctx, recipient, appparams.BaseDenom).Amount.Int64())
 
+	// Cosmos EVM v0.7.1 rejects every module-account balance change before the
+	// bank adapter; both decreases and increases must therefore be unauthorized.
 	err = testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(moduleAddr), uint256.NewInt(1))
-	require.ErrorIs(t, err, bextypes.ErrInvariantViolation)
+	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
 	require.Equal(t, int64(2), testApp.BankKeeper.GetBalance(ctx, moduleAddr, appparams.BaseDenom).Amount.Int64())
 	err = testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(moduleAddr), uint256.NewInt(3))
 	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
@@ -878,12 +864,4 @@ func requireEventType(t *testing.T, events sdk.Events, eventType string) {
 		}
 	}
 	require.Failf(t, "missing event", "event type %q was not emitted", eventType)
-}
-
-func repeatedByteAddress(value byte) []byte {
-	address := make([]byte, 20)
-	for i := range address {
-		address[i] = value
-	}
-	return address
 }
