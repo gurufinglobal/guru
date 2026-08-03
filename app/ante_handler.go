@@ -27,7 +27,7 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) er
 			IBCKeeper:              app.IBCKeeper,
 			FeeMarketKeeper:        app.FeeMarketKeeper,
 			SignModeHandler:        txConfig.SignModeHandler(),
-			SigGasConsumer:         evmante.SigVerificationGasConsumer,
+			SigGasConsumer:         appante.SigVerificationGasConsumer,
 			MaxTxGasWanted:         maxGasWanted,
 			DynamicFeeChecker:      true,
 			PendingTxListener:      app.onPendingTx,

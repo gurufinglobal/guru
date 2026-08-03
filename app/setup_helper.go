@@ -2,15 +2,15 @@ package app
 
 import (
 	"fmt"
-	goruntime "runtime"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/log/v2"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/baseapp/txnrunner"
+	"github.com/cosmos/cosmos-sdk/baseapp/blockexec"
 	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
+	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -119,14 +119,15 @@ func (app *App) configureOracleVoteExtensions(appOpts servertypes.AppOptions) {
 
 func (app *App) configureVMRunner(
 	bApp *baseapp.BaseApp,
+	appOpts servertypes.AppOptions,
 	txDecoder sdk.TxDecoder,
 	nonTransientKeys []storetypes.StoreKey,
 ) {
-	vmrunner.SetRunner(bApp, oracleabci.NewPayloadSkippingTxRunner(txnrunner.NewSTMRunner(
-		txDecoder,
+	blockexec.Apply(
+		bApp,
+		appOpts,
 		nonTransientKeys,
-		min(goruntime.GOMAXPROCS(0), goruntime.NumCPU()),
-		true,
+		txDecoder,
 		func(ms storetypes.MultiStore) string {
 			denom := app.EVMKeeper.GetParams(
 				sdk.NewContext(ms, cmtproto.Header{}, false, log.NewNopLogger()),
@@ -136,5 +137,28 @@ func (app *App) configureVMRunner(
 			}
 			return denom
 		},
-	)))
+		blockexec.WithDefaultExecutor(serverconfig.BlockExecutorBlockSTM),
+		blockexec.WithDefaultPreEstimate(true),
+		blockexec.WithRunnerWrap(wrapGuruTxRunner),
+	)
+}
+
+// wrapGuruTxRunner preserves the block-wide EVM result patch outside the
+// oracle payload filter while exposing the selected executor to SDK safety
+// checks through Unwrap.
+func wrapGuruTxRunner(inner sdk.TxRunner) sdk.TxRunner {
+	oracleRunner := oracleabci.NewPayloadSkippingTxRunner(inner)
+	return transparentVMRunner{
+		TxRunner: vmrunner.Wrap(oracleRunner),
+		inner:    oracleRunner,
+	}
+}
+
+type transparentVMRunner struct {
+	sdk.TxRunner
+	inner sdk.TxRunner
+}
+
+func (r transparentVMRunner) Unwrap() sdk.TxRunner {
+	return r.inner
 }

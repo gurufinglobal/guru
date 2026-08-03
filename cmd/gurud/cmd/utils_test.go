@@ -1,14 +1,20 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdkserver "github.com/cosmos/cosmos-sdk/server"
+	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	cosmosevmserver "github.com/cosmos/evm/server"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,6 +73,96 @@ func TestDefaultAppTomlDisablesInsecureJSONRPCUnlock(t *testing.T) {
 	config, ok := rawConfig.(guruConfig)
 	require.True(t, ok)
 	require.False(t, config.JSONRPC.AllowInsecureUnlock)
+}
+
+func TestDefaultAppTomlUsesBlockSTMDefaults(t *testing.T) {
+	_, rawConfig := defaultAppToml()
+	config, ok := rawConfig.(guruConfig)
+	require.True(t, ok)
+
+	require.Equal(t, serverconfig.BlockExecutorBlockSTM, config.BlockExecutor)
+	require.Zero(t, config.BlockSTMWorkers)
+	require.True(t, config.BlockSTMPreEstimate)
+}
+
+func TestAddModuleInitFlagsUsesGuruBlockSTMDefaults(t *testing.T) {
+	cmd := &cobra.Command{}
+	addModuleInitFlags(cmd)
+
+	executor, err := cmd.Flags().GetString(sdkserver.FlagBlockExecutor)
+	require.NoError(t, err)
+	require.Equal(t, serverconfig.BlockExecutorBlockSTM, executor)
+
+	workers, err := cmd.Flags().GetInt(sdkserver.FlagBlockSTMWorkers)
+	require.NoError(t, err)
+	require.Zero(t, workers)
+
+	preEstimate, err := cmd.Flags().GetBool(sdkserver.FlagBlockSTMPreEstimate)
+	require.NoError(t, err)
+	require.True(t, preEstimate)
+}
+
+func TestAddModuleInitFlagsRejectsInvalidExecutorBeforeRun(t *testing.T) {
+	cmd := &cobra.Command{}
+	addModuleInitFlags(cmd)
+
+	serverCtx := sdkserver.NewDefaultContext()
+	serverCtx.Viper.Set(sdkserver.FlagMinGasPrices, "0uguru")
+	serverCtx.Viper.Set(sdkserver.FlagBlockExecutor, "invalid")
+	cmd.SetContext(context.WithValue(context.Background(), sdkserver.ServerContextKey, serverCtx))
+
+	err := cmd.PreRunE(cmd, nil)
+	require.ErrorContains(t, err, `invalid block executor "invalid"`)
+}
+
+func TestAddModuleInitFlagsPreservesExistingPreRunE(t *testing.T) {
+	expectedErr := errors.New("existing pre-run failed")
+	called := false
+	cmd := &cobra.Command{
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			called = true
+			return expectedErr
+		},
+	}
+	addModuleInitFlags(cmd)
+
+	err := cmd.PreRunE(cmd, nil)
+	require.ErrorIs(t, err, expectedErr)
+	require.True(t, called)
+}
+
+func TestAddModuleInitFlagsRejectsNegativeWorkersBeforeRun(t *testing.T) {
+	cmd := &cobra.Command{}
+	addModuleInitFlags(cmd)
+
+	serverCtx := sdkserver.NewDefaultContext()
+	serverCtx.Viper.Set(sdkserver.FlagMinGasPrices, "0uguru")
+	serverCtx.Viper.Set(sdkserver.FlagBlockExecutor, serverconfig.BlockExecutorBlockSTM)
+	serverCtx.Viper.Set(sdkserver.FlagBlockSTMWorkers, -1)
+	cmd.SetContext(context.WithValue(context.Background(), sdkserver.ServerContextKey, serverCtx))
+
+	err := cmd.PreRunE(cmd, nil)
+	require.ErrorContains(t, err, "invalid block-stm-workers -1")
+}
+
+func TestStartRejectsInvalidBlockExecutorWithoutPanic(t *testing.T) {
+	cmd := cosmosevmserver.StartCmd(cosmosevmserver.StartOptions{})
+	addModuleInitFlags(cmd)
+
+	runCalled := false
+	cmd.RunE = func(_ *cobra.Command, _ []string) error {
+		runCalled = true
+		return nil
+	}
+
+	serverCtx := sdkserver.NewDefaultContext()
+	serverCtx.Viper.Set(sdkserver.FlagMinGasPrices, "0uguru")
+	ctx := context.WithValue(context.Background(), sdkserver.ServerContextKey, serverCtx)
+	cmd.SetArgs([]string{"--" + sdkserver.FlagBlockExecutor, "invalid"})
+
+	err := cmd.ExecuteContext(ctx)
+	require.ErrorContains(t, err, "invalid block executor")
+	require.False(t, runCalled)
 }
 
 func writeChainIDGenesis(t *testing.T, chainID string) string {

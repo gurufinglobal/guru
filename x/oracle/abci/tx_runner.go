@@ -16,6 +16,10 @@ func NewPayloadSkippingTxRunner(inner sdk.TxRunner) PayloadSkippingTxRunner {
 	return PayloadSkippingTxRunner{inner: inner}
 }
 
+func (r PayloadSkippingTxRunner) Unwrap() sdk.TxRunner {
+	return r.inner
+}
+
 func (r PayloadSkippingTxRunner) Run(
 	ctx context.Context,
 	ms storetypes.MultiStore,
