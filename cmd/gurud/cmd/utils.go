@@ -97,8 +97,8 @@ func defaultAppToml() (string, any) {
 	cfg.BlockExecutor = serverconfig.BlockExecutorBlockSTM
 	cfg.BlockSTMWorkers = 0
 	cfg.BlockSTMPreEstimate = true
-	// The local oracle sidecar discovers active tasks through the node's gRPC
-	// query service. Keep it enabled in generated Guru node configuration.
+	// The operator-run oracle reconcile command compares configured feeds with
+	// active tasks through the node's gRPC query service.
 	cfg.GRPC.Enable = true
 	cfg.EVM.EVMChainID = appparams.EVMChainID
 	cfg.API.Enable = true
