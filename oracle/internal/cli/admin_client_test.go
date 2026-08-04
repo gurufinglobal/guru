@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"os"
@@ -78,6 +80,72 @@ func TestAdminConnectionFailureRemainsDaemonUnavailable(t *testing.T) {
 	}
 	if code := adminFailureCode(err); code != "daemon_unavailable" {
 		t.Fatalf("failure code = %q", code)
+	}
+}
+
+func TestFetchAdminClassifiesOnlyDefinitePostConnectTransportFailures(t *testing.T) {
+	tests := []struct {
+		name          string
+		response      string
+		wantTransport bool
+	}{
+		{name: "closed without response", wantTransport: true},
+		{name: "malformed HTTP", response: "NOT HTTP\r\n\r\n", wantTransport: false},
+		{name: "malformed HTTP containing sentinel text", response: "server closed idle connection\r\n\r\n", wantTransport: false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			socket := shortAdminSocket(t)
+			listener, err := net.Listen("unix", socket)
+			if err != nil {
+				t.Fatal(err)
+			}
+			done := make(chan error, 1)
+			go func() {
+				connection, acceptErr := listener.Accept()
+				if acceptErr != nil {
+					done <- acceptErr
+					return
+				}
+				request, readErr := http.ReadRequest(bufio.NewReader(connection))
+				if request != nil {
+					_ = request.Body.Close()
+				}
+				if readErr == nil && test.response != "" {
+					_, acceptErr = connection.Write([]byte(test.response))
+				}
+				closeErr := connection.Close()
+				done <- errors.Join(readErr, acceptErr, closeErr)
+			}()
+
+			_, _, fetchErr := fetchAdmin(context.Background(), socket, "/v1/status")
+			_ = listener.Close()
+			if serverErr := <-done; serverErr != nil {
+				t.Fatalf("raw server: %v", serverErr)
+			}
+			if fetchErr == nil {
+				t.Fatal("fetchAdmin unexpectedly succeeded")
+			}
+			if got := isAdminTransportError(fetchErr); got != test.wantTransport {
+				t.Fatalf("transport classification = %t, want %t: %v", got, test.wantTransport, fetchErr)
+			}
+			wantCode := "protocol_error"
+			if test.wantTransport {
+				wantCode = "daemon_unavailable"
+			}
+			if got := adminFailureCode(fetchErr); got != wantCode {
+				t.Fatalf("failure code = %q, want %q: %v", got, wantCode, fetchErr)
+			}
+		})
+	}
+}
+
+func TestFetchAdminCancellationDoesNotEnableOfflineFallback(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, _, err := fetchAdmin(ctx, filepath.Join(shortAdminDirectory(t), "missing.sock"), "/v1/status")
+	if !errors.Is(err, context.Canceled) || isAdminTransportError(err) {
+		t.Fatalf("cancellation classification = %v", err)
 	}
 }
 

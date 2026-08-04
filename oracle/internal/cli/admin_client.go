@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gurufinglobal/guru/oracle/internal/service"
@@ -36,12 +37,35 @@ func isAdminProtocolError(err error) bool {
 	return errors.As(err, &protocolError)
 }
 
+type adminTransportError struct {
+	err error
+}
+
+func (e *adminTransportError) Error() string { return e.err.Error() }
+func (e *adminTransportError) Unwrap() error { return e.err }
+
+func asAdminTransportError(err error) error {
+	return &adminTransportError{err: err}
+}
+
+func isAdminTransportError(err error) bool {
+	var transportError *adminTransportError
+	return errors.As(err, &transportError)
+}
+
 func fetchAdmin(ctx context.Context, socketPath, requestPath string) ([]byte, int, error) {
 	transport := &http.Transport{
 		Proxy: nil,
 		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
 			var dialer net.Dialer
-			return dialer.DialContext(ctx, "unix", socketPath)
+			connection, err := dialer.DialContext(ctx, "unix", socketPath)
+			if err != nil {
+				if errors.Is(err, context.Canceled) {
+					return nil, err
+				}
+				return nil, asAdminTransportError(err)
+			}
+			return connection, nil
 		},
 		DisableKeepAlives:      true,
 		MaxResponseHeaderBytes: adminHeaderLimit,
@@ -57,7 +81,20 @@ func fetchAdmin(ctx context.Context, socketPath, requestPath string) ([]byte, in
 		if strings.Contains(err.Error(), "server response headers exceeded") {
 			return nil, 0, asAdminProtocolError(errors.New("admin response headers exceed limit"))
 		}
-		return nil, 0, err
+		if errors.Is(err, context.Canceled) {
+			return nil, 0, err
+		}
+		var networkError net.Error
+		if errors.As(err, &networkError) && networkError.Timeout() {
+			return nil, 0, asAdminTransportError(err)
+		}
+		if isDefiniteAdminTransportFailure(err) {
+			return nil, 0, asAdminTransportError(err)
+		}
+		// Only positively identified transport failures permit offline fallback.
+		// Every other HTTP client failure is a protocol error so malformed or
+		// truncated responses fail closed.
+		return nil, 0, asAdminProtocolError(err)
 	}
 	defer func() { _ = response.Body.Close() }()
 	if !service.ValidateAdminContentType(response.Header.Get("Content-Type")) {
@@ -74,6 +111,26 @@ func fetchAdmin(ctx context.Context, socketPath, requestPath string) ([]byte, in
 		return nil, response.StatusCode, asAdminProtocolError(errors.New("admin response is empty"))
 	}
 	return body, response.StatusCode, nil
+}
+
+func isDefiniteAdminTransportFailure(err error) bool {
+	if errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) {
+		return true
+	}
+	if errorChainContainsExact(err, "http: server closed idle connection") {
+		return true
+	}
+	var operationError *net.OpError
+	return errors.As(err, &operationError)
+}
+
+func errorChainContainsExact(err error, message string) bool {
+	for current := err; current != nil; current = errors.Unwrap(current) {
+		if current.Error() == message {
+			return true
+		}
+	}
+	return false
 }
 
 func decodeSuccess[T any](body []byte, command string) (service.SuccessEnvelope[T], error) {
