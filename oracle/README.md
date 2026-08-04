@@ -56,7 +56,8 @@ Initialize a fresh unpublished sidecar home:
 oracled --home /srv/guru/oracle init
 ```
 
-Validate and start it:
+The command reports the initialized feed and source counts and prints the exact
+validate and start commands for that home. Validate and start it:
 
 ```sh
 oracled --home /srv/guru/oracle validate
@@ -64,14 +65,16 @@ oracled --home /srv/guru/oracle start
 ```
 
 `start` stays in the foreground and immediately begins collecting the default
-BTC/USD, ETH/USD, and SOL/USD feeds. In another terminal, poll `status` until
-the initial collection is fresh, then inspect the local result or compare live
-contribution readiness with a node:
+BTC/USD, ETH/USD, and SOL/USD feeds. Its ready message prints the commands to
+run from another terminal. Poll `status` until the initial collection is fresh,
+then inspect the all-feed summary, one symbol, or live contribution readiness:
 
 ```sh
 oracled --home /srv/guru/oracle status
-oracled --home /srv/guru/oracle history BTC/USD
-oracled --home /srv/guru/oracle reconcile --node-grpc 127.0.0.1:9090
+oracled --home /srv/guru/oracle status btc-usd
+oracled --home /srv/guru/oracle history
+oracled --home /srv/guru/oracle history btc-usd
+oracled --home /srv/guru/oracle reconcile
 ```
 
 A service manager owns restarts, output capture, and rotation. The six product
@@ -80,12 +83,13 @@ commands are:
 - `init`
 - `validate`
 - `start`
-- `status [--format text|json]`
-- `history <SYMBOL> [--page-size 1..50] [--page-key TOKEN] [--offline]`
-- `reconcile --node-grpc HOST:PORT [--format text|json]`
+- `status [SYMBOL] [--format text|json]`
+- `history [SYMBOL] [--page-size 1..50] [--page-key TOKEN] [--offline]`
+- `reconcile [--node-grpc HOST:PORT] [--format text|json]`
 
 Only `reconcile` connects to a Guru node. Long-running collection and both
-local services start without node gRPC.
+local services start without node gRPC. Reconciliation defaults to the local
+node endpoint `127.0.0.1:9090`; `--node-grpc` overrides it.
 
 Each validator operates its own sidecar and selects its own source providers,
 topology, feed intervals, and freshness policy. Guru does not require or compare
@@ -149,6 +153,11 @@ format = "text"
 The request and response limits are fixed protocol envelopes, not tuning
 knobs. The ownership lock is likewise fixed at `run/oracled.lock` so mutable
 configuration cannot create two lock domains for one home.
+
+Text logging is intended for an operator and uses readable ready, quorum,
+recovery, omission, and graceful-shutdown messages. JSON logging retains the
+stable event records for machine consumers. Both modes remain foreground-only;
+a service manager owns process lifecycle and log rotation.
 
 `init` writes working bootstrap feeds for BTC/USD, ETH/USD, and SOL/USD. Each
 uses a 10-second interval, a 20-second stale boundary, and Coinbase, Kraken,
@@ -248,16 +257,36 @@ successful aggregate values and bounded provenance. Page tokens are
 authenticated, snapshot high/low water, and expire after daemon restart or
 retention movement.
 
-Live history is the default. `history --offline` explicitly acquires the same
-exclusive home lock, proves no writer is active, verifies the full database,
-reads one page, and closes it. It never silently falls back from live access.
+Human `status` and `history` use summary views when no symbol is
+provided and detail views when one is provided. CLI symbol input is matched
+against configured symbols: case differences and `/`, `-`, or `_` separators are
+accepted only when the result is unique. Internal, stored, and node-facing
+symbols remain canonical.
+
+Human history detail remains bounded by page size and prints a copyable command
+when another page exists. Human decimals remove only insignificant trailing
+fractional zeroes; values are never converted through floating point.
+
+Live admin access is attempted first. If the daemon is unavailable at the Unix
+transport boundary, human status and history may acquire the canonical
+exclusive home lock, reload the published pair, verify the database read-only,
+and show a clearly labelled stopped/offline view. Lock contention, an HTTP or
+admin protocol error, and a transitioning live owner fail closed without
+opening storage. `history --offline` requests this same lock-protected path
+explicitly.
+
+Machine behavior remains narrow: JSON status has no symbol selector, JSON
+history requires a symbol, and automatic offline success is text-only. Explicit
+`history SYMBOL --offline --format json` retains the existing bounded history
+envelope.
 
 `reconcile` is a one-shot, read-only comparison with node `Params` and all
 paginated `ActiveTasks`. It checks active-symbol coverage and the running
 sidecar's live contribution readiness, including configured and successful
 source counts, freshness, current aggregate availability, and whether the
-running process uses the currently published local configuration pair. Exit
-codes are:
+running process uses the currently published local configuration pair. Human
+output starts with `Ready to contribute` or `Action required` and follows
+with operator actions. Exit codes are:
 
 - `0`: authoritative report with no blocking readiness mismatch
 - `1`: authoritative report with one or more blocking mismatches
