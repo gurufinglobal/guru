@@ -60,6 +60,8 @@ type AppKeepers struct {
 	tKeys   map[string]*storetypes.TransientStoreKey
 	objKeys map[string]*storetypes.ObjectStoreKey
 
+	cosmosVirtualFeeCollection bool
+
 	// cosmos sdk keepers
 	AccountKeeper         authkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
@@ -144,6 +146,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		cfg.Logger,
 	)
 	appKeepers.BankKeeper = appKeepers.BankKeeper.WithObjStoreKey(appKeepers.objKeys[banktypes.ObjectStoreKey])
+	appKeepers.EnableCosmosVirtualFeeCollection()
 
 	appKeepers.StakingKeeper = stakingkeeper.NewKeeper(
 		cfg.AppCodec,
@@ -367,4 +370,21 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	)
 
 	return appKeepers
+}
+
+// EnableCosmosVirtualFeeCollection switches only the Cosmos ante fee path to
+// virtual bank collection. EVM fee collection is configured independently on
+// the EVM keeper. Call this only during single-threaded application assembly;
+// the ante handler snapshots the value before transaction execution starts.
+func (appKeepers *AppKeepers) EnableCosmosVirtualFeeCollection() {
+	if appKeepers.BankKeeper == nil {
+		panic("bank keeper must be initialized before enabling Cosmos virtual fee collection")
+	}
+	appKeepers.cosmosVirtualFeeCollection = true
+}
+
+// CosmosVirtualFeeCollectionEnabled reports the binary-selected Cosmos fee
+// policy used when the application constructs its ante handler.
+func (appKeepers *AppKeepers) CosmosVirtualFeeCollectionEnabled() bool {
+	return appKeepers.cosmosVirtualFeeCollection
 }

@@ -24,10 +24,12 @@ type FeePolicyKeeper interface {
 }
 
 // HandlerOptions combines the complete upstream Cosmos EVM options with the
-// one dependency used only by Guru's Cosmos transaction path.
+// dependencies and immutable mode selection used only by Guru's Cosmos path.
 type HandlerOptions struct {
-	EVMOptions      evmante.HandlerOptions
-	FeePolicyKeeper FeePolicyKeeper
+	EVMOptions                 evmante.HandlerOptions
+	CosmosFeeBankKeeper        CosmosFeeBankKeeper
+	CosmosVirtualFeeCollection bool
+	FeePolicyKeeper            FeePolicyKeeper
 }
 
 // Validate checks all dependencies used by both routed ante handlers.
@@ -38,6 +40,9 @@ func (options HandlerOptions) Validate() error {
 	if options.FeePolicyKeeper == nil {
 		return errorsmod.Wrap(sdkerrors.ErrLogic, "fee policy keeper is required for AnteHandler")
 	}
+	if options.CosmosFeeBankKeeper == nil {
+		return errorsmod.Wrap(sdkerrors.ErrLogic, "Cosmos fee bank keeper is required for AnteHandler")
+	}
 
 	return nil
 }
@@ -47,6 +52,13 @@ func (options HandlerOptions) Validate() error {
 // transactions to Guru's fee-policy-aware Cosmos chain.
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	if err := options.Validate(); err != nil {
+		return nil, err
+	}
+	feeCollector, err := selectCosmosFeeCollector(
+		options.CosmosFeeBankKeeper,
+		options.CosmosVirtualFeeCollection,
+	)
+	if err != nil {
 		return nil, err
 	}
 
@@ -65,7 +77,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 					// pending transaction listener behavior from Cosmos EVM v0.7.
 					return upstreamHandler(ctx, tx, simulate)
 				case dynamicFeeExtension:
-					return newCosmosAnteHandler(ctx, options)(ctx, tx, simulate)
+					return newCosmosAnteHandler(ctx, options, feeCollector)(ctx, tx, simulate)
 				default:
 					// Let upstream produce the canonical unsupported-extension
 					// error and preserve its routing semantics.
@@ -78,6 +90,28 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 			return upstreamHandler(ctx, tx, simulate)
 		}
 
-		return newCosmosAnteHandler(ctx, options)(ctx, tx, simulate)
+		return newCosmosAnteHandler(ctx, options, feeCollector)(ctx, tx, simulate)
 	}, nil
+}
+
+// selectCosmosFeeCollector snapshots the binary-selected Cosmos collection
+// mode into an immutable method value. EVM virtual fee configuration is neither
+// read nor changed here.
+func selectCosmosFeeCollector(
+	bankKeeper CosmosFeeBankKeeper,
+	virtualFeeCollection bool,
+) (CosmosFeeCollector, error) {
+	if !virtualFeeCollection {
+		return bankKeeper.SendCoinsFromAccountToModule, nil
+	}
+
+	virtualFeeBankKeeper, ok := bankKeeper.(VirtualFeeBankKeeper)
+	if !ok {
+		return nil, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"bank keeper must support virtual Cosmos fee collection",
+		)
+	}
+
+	return virtualFeeBankKeeper.SendCoinsFromAccountToModuleVirtual, nil
 }

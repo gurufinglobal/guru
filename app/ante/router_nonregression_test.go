@@ -3,6 +3,7 @@ package ante
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -87,27 +88,32 @@ func TestAnteRouterEthereumDelegatesToUpstreamWithoutPolicyResolution(t *testing
 	ethereumOption, err := codectypes.NewAnyWithValue(&evmtypes.ExtensionOptionsEthereumTx{})
 	require.NoError(t, err)
 
-	options, policy, evmKeeper, feeMarketKeeper := newRouterHandlerOptions()
-	handler, err := NewAnteHandler(options)
-	require.NoError(t, err)
+	for _, cosmosVirtual := range []bool{false, true} {
+		t.Run(fmt.Sprintf("Cosmos virtual=%t", cosmosVirtual), func(t *testing.T) {
+			options, policy, evmKeeper, feeMarketKeeper := newRouterHandlerOptions()
+			options.CosmosVirtualFeeCollection = cosmosVirtual
+			handler, err := NewAnteHandler(options)
+			require.NoError(t, err)
 
-	// This deliberately is not a ProtoTxProvider. The important observable is
-	// that Guru returns the exact upstream mono-ante error before fee policy is
-	// consulted, while still entering the upstream EVM keeper/fee-market path.
-	tx := routerTestTx{
-		msgs:       []sdk.Msg{&evmtypes.MsgEthereumTx{}},
-		gas:        1_000_000,
-		extensions: []*codectypes.Any{ethereumOption},
+			// This deliberately is not a ProtoTxProvider. The important observable is
+			// that Guru returns the exact upstream mono-ante error before fee policy is
+			// consulted, while still entering the upstream EVM keeper/fee-market path.
+			tx := routerTestTx{
+				msgs:       []sdk.Msg{&evmtypes.MsgEthereumTx{}},
+				gas:        1_000_000,
+				extensions: []*codectypes.Any{ethereumOption},
+			}
+			_, localErr := handler(routerContext(false), tx, false)
+			require.Error(t, localErr)
+			require.Zero(t, policy.calls)
+			require.Equal(t, 1, evmKeeper.paramsCalls)
+			require.Equal(t, 1, feeMarketKeeper.paramsCalls)
+
+			_, upstreamErr := evmante.NewAnteHandler(options.EVMOptions)(routerContext(false), tx, false)
+			require.EqualError(t, localErr, upstreamErr.Error())
+			require.ErrorIs(t, localErr, sdkerrors.ErrUnknownRequest)
+		})
 	}
-	_, localErr := handler(routerContext(false), tx, false)
-	require.Error(t, localErr)
-	require.Zero(t, policy.calls)
-	require.Equal(t, 1, evmKeeper.paramsCalls)
-	require.Equal(t, 1, feeMarketKeeper.paramsCalls)
-
-	_, upstreamErr := evmante.NewAnteHandler(options.EVMOptions)(routerContext(false), tx, false)
-	require.EqualError(t, localErr, upstreamErr.Error())
-	require.ErrorIs(t, localErr, sdkerrors.ErrUnknownRequest)
 }
 
 func TestAnteRouterReadsFeeMarketParamsForEveryCosmosTransaction(t *testing.T) {
@@ -163,6 +169,59 @@ func TestAnteRouterHandlerOptionsValidation(t *testing.T) {
 		require.ErrorIs(t, err, sdkerrors.ErrLogic)
 		require.ErrorContains(t, err, "fee policy keeper is required for AnteHandler")
 	})
+
+	t.Run("Cosmos fee bank dependency", func(t *testing.T) {
+		options, _, _, _ := newRouterHandlerOptions()
+		options.CosmosFeeBankKeeper = nil
+		_, err := NewAnteHandler(options)
+		require.ErrorIs(t, err, sdkerrors.ErrLogic)
+		require.ErrorContains(t, err, "Cosmos fee bank keeper is required for AnteHandler")
+	})
+
+	t.Run("virtual Cosmos fee collection capability", func(t *testing.T) {
+		options, _, _, _ := newRouterHandlerOptions()
+		options.CosmosFeeBankKeeper = &routerBankKeeperWithoutVirtual{}
+		_, err := NewAnteHandler(options)
+		require.ErrorIs(t, err, sdkerrors.ErrLogic)
+		require.ErrorContains(t, err, "bank keeper must support virtual Cosmos fee collection")
+	})
+
+	t.Run("normal Cosmos collection does not require virtual capability", func(t *testing.T) {
+		options, _, _, _ := newRouterHandlerOptions()
+		options.CosmosVirtualFeeCollection = false
+		options.CosmosFeeBankKeeper = &routerBankKeeperWithoutVirtual{}
+		_, err := NewAnteHandler(options)
+		require.NoError(t, err)
+	})
+}
+
+func TestSelectCosmosFeeCollectorSnapshotsIndependentMode(t *testing.T) {
+	payer := sdk.AccAddress(strings.Repeat("p", 20))
+	fee := sdk.NewCoins(sdk.NewInt64Coin("aguru", 7))
+
+	t.Run("normal", func(t *testing.T) {
+		keeper := &routerBankKeeper{}
+		collector, err := selectCosmosFeeCollector(keeper, false)
+		require.NoError(t, err)
+		require.NoError(t, collector(context.Background(), payer, authtypes.FeeCollectorName, fee))
+		require.Equal(t, 1, keeper.normalCalls)
+		require.Zero(t, keeper.virtualCalls)
+	})
+
+	t.Run("virtual snapshot", func(t *testing.T) {
+		keeper := &routerBankKeeper{}
+		virtualEnabled := true
+		collector, err := selectCosmosFeeCollector(keeper, virtualEnabled)
+		require.NoError(t, err)
+
+		// Changing the source option after construction cannot alter the selected
+		// transaction path.
+		virtualEnabled = false
+		require.False(t, virtualEnabled)
+		require.NoError(t, collector(context.Background(), payer, authtypes.FeeCollectorName, fee))
+		require.Zero(t, keeper.normalCalls)
+		require.Equal(t, 1, keeper.virtualCalls)
+	})
 }
 
 func configureRouterEVM(t *testing.T) {
@@ -206,7 +265,9 @@ func newRouterHandlerOptions() (HandlerOptions, *routerPolicyKeeper, *routerEVMK
 			},
 			PendingTxListener: func(common.Hash) {},
 		},
-		FeePolicyKeeper: policy,
+		CosmosFeeBankKeeper:        &routerBankKeeper{},
+		CosmosVirtualFeeCollection: true,
+		FeePolicyKeeper:            policy,
 	}, policy, evmKeeper, feeMarketKeeper
 }
 
@@ -249,6 +310,41 @@ func (keeper *routerAccountKeeper) AddressCodec() coreaddress.Codec {
 
 type routerBankKeeper struct {
 	anteinterfaces.BankKeeper
+	normalCalls  int
+	virtualCalls int
+}
+
+func (keeper *routerBankKeeper) SendCoinsFromAccountToModule(
+	context.Context,
+	sdk.AccAddress,
+	string,
+	sdk.Coins,
+) error {
+	keeper.normalCalls++
+	return nil
+}
+
+func (keeper *routerBankKeeper) SendCoinsFromAccountToModuleVirtual(
+	context.Context,
+	sdk.AccAddress,
+	string,
+	sdk.Coins,
+) error {
+	keeper.virtualCalls++
+	return nil
+}
+
+type routerBankKeeperWithoutVirtual struct {
+	anteinterfaces.BankKeeper
+}
+
+func (*routerBankKeeperWithoutVirtual) SendCoinsFromAccountToModule(
+	context.Context,
+	sdk.AccAddress,
+	string,
+	sdk.Coins,
+) error {
+	return nil
 }
 
 type routerEVMKeeper struct {
