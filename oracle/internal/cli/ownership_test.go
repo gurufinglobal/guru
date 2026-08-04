@@ -157,7 +157,9 @@ func TestInitRefusesHeldHomeLockBeforePublication(t *testing.T) {
 	if code := Run([]string{"--home", home, "init"}, &stdout, &stderr); code != 1 {
 		t.Fatalf("init exit=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
 	}
-	if stdout.Len() != 0 || !strings.Contains(stderr.String(), storage.ErrHomeLocked.Error()) {
+	if stdout.Len() != 0 ||
+		!strings.Contains(stderr.String(), "The daemon may be running, starting, or stopping.") ||
+		strings.Contains(stderr.String(), storage.ErrHomeLocked.Error()) {
 		t.Fatalf("held-lock init output stdout=%q stderr=%q", stdout.String(), stderr.String())
 	}
 	assertInitPublicationAbsent(t, home)

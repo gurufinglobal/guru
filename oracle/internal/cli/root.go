@@ -7,16 +7,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
-	"sort"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/gurufinglobal/guru/oracle/internal/config"
-	"github.com/gurufinglobal/guru/oracle/internal/domain"
 	"github.com/gurufinglobal/guru/oracle/internal/service"
 	"github.com/gurufinglobal/guru/oracle/internal/storage"
 	"github.com/gurufinglobal/guru/oracle/internal/version"
@@ -44,7 +41,7 @@ type execution struct {
 func Run(args []string, stdout, stderr io.Writer) int {
 	defaultHome, err := config.DefaultHome()
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "Error: %s\n", boundedMessage(err))
+		_ = printHumanError(stderr, "", "internal", "", err)
 		return 1
 	}
 	exec := &execution{stdout: stdout, stderr: stderr, home: defaultHome, format: "text"}
@@ -79,20 +76,24 @@ func Run(args []string, stdout, stderr io.Writer) int {
 			_, _ = fmt.Fprintf(stderr, "%s\n", encoded)
 		}
 	} else {
-		_, _ = fmt.Fprintf(stderr, "Error: %s\n", boundedMessage(failure.err))
+		_ = printHumanError(stderr, exec.command, failure.code, exec.home, failure.err)
 	}
 	return failure.exitCode
 }
 
 func (e *execution) rootCommand() *cobra.Command {
 	root := &cobra.Command{
-		Use:           "oracled",
-		Short:         "Guru validator-local oracle sidecar",
+		Use:   "oracled",
+		Short: "Guru validator-local oracle sidecar",
+		Long: "Guru validator-local oracle sidecar.\n\n" +
+			"Start with 'oracled init', then run 'oracled start' in the foreground. " +
+			"Use status, history, and reconcile from another terminal.",
 		Version:       version.Version + " (" + version.Commit + ")",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
 	root.PersistentFlags().StringVar(&e.home, "home", e.home, "application home directory")
+	root.PersistentFlags().Lookup("home").DefValue = printableASCII(e.home)
 	root.CompletionOptions.DisableDefaultCmd = true
 	root.AddCommand(
 		e.initCommand(),
@@ -136,11 +137,11 @@ func (e *execution) initCommand() *cobra.Command {
 			if err := storage.Initialize(paths.Database, paths.Marker); err != nil {
 				return fail(1, "storage_error", err)
 			}
-			if _, err := config.Load(absoluteHome); err != nil {
+			pair, err := config.Load(absoluteHome)
+			if err != nil {
 				return fail(1, "invalid_config", err)
 			}
-			_, err = fmt.Fprintf(e.stdout, "Initialized oracled home at %s\n", paths.Home)
-			if err != nil {
+			if err := printInitialized(e.stdout, pair); err != nil {
 				return fail(1, "internal", err)
 			}
 			return nil
@@ -155,10 +156,11 @@ func (e *execution) validateCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			e.command = "validate"
-			if _, err := config.Load(e.home); err != nil {
+			pair, err := config.Load(e.home)
+			if err != nil {
 				return fail(1, "invalid_config", err)
 			}
-			if _, err := fmt.Fprintln(e.stdout, "Configuration is valid."); err != nil {
+			if err := printValidated(e.stdout, pair); err != nil {
 				return fail(1, "internal", err)
 			}
 			return nil
@@ -204,6 +206,11 @@ func (e *execution) startCommand() *cobra.Command {
 			if err := errors.Join(runErr, closeErr); err != nil {
 				return fail(1, startFailureCode(err), err)
 			}
+			if pair.Config.Logging.Format == "text" {
+				if _, err := fmt.Fprintln(e.stdout, "Oracle daemon stopped."); err != nil {
+					return fail(1, "internal", err)
+				}
+			}
 			return nil
 		},
 	}
@@ -212,22 +219,50 @@ func (e *execution) startCommand() *cobra.Command {
 func (e *execution) statusCommand() *cobra.Command {
 	var format string
 	command := &cobra.Command{
-		Use:   "status",
-		Short: "Inspect live sidecar status",
-		Args:  cobra.NoArgs,
+		Use:   "status [symbol]",
+		Short: "Show daemon health or one configured feed",
+		Long: "Show a live summary for every configured feed, or details for one symbol.\n\n" +
+			"Friendly symbol forms such as btc-usd are accepted when they match exactly one configured feed. " +
+			"In text mode, a stopped daemon is reported from lock-protected local storage.",
+		Example: "  oracled status\n" +
+			"  oracled status btc-usd\n" +
+			"  oracled status --format json",
+		Args: cobra.MaximumNArgs(1),
 		PreRun: func(_ *cobra.Command, _ []string) {
 			e.command, e.format = "status", format
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if format != "text" && format != "json" {
 				return fail(1, "invalid_arguments", errors.New("--format must be text or json"))
+			}
+			if len(args) == 1 && format == "json" {
+				return fail(1, "invalid_arguments", errors.New("JSON status does not accept a symbol"))
 			}
 			pair, err := config.Load(e.home)
 			if err != nil {
 				return fail(1, "invalid_config", err)
 			}
-			body, statusCode, err := fetchAdmin(context.Background(), pair.Paths.AdminSocket, "/v1/status")
+			rawSymbol := ""
+			symbol := ""
+			if len(args) == 1 {
+				rawSymbol = args[0]
+				symbol, err = resolveConfiguredSymbol(rawSymbol, pair.Feeds)
+				if err != nil {
+					return fail(1, "invalid_arguments", err)
+				}
+			}
+			body, statusCode, err := fetchAdmin(command.Context(), pair.Paths.AdminSocket, "/v1/status")
 			if err != nil {
+				if format == "text" && isAdminTransportError(err) {
+					view, selected, offlineErr := offlineStatus(e.home, rawSymbol)
+					if offlineErr != nil {
+						return commandFailureForOffline(1, offlineErr)
+					}
+					if err := printOfflineStatus(e.stdout, view, selected, time.Now()); err != nil {
+						return fail(1, "internal", err)
+					}
+					return nil
+				}
 				return fail(1, adminFailureCode(err), err)
 			}
 			if statusCode != http.StatusOK {
@@ -240,7 +275,14 @@ func (e *execution) statusCommand() *cobra.Command {
 			if format == "json" {
 				return writeRawJSON(e.stdout, body)
 			}
-			if err := printStatus(e.stdout, envelope.Data); err != nil {
+			if err := validateHumanStatusData(envelope.Data); err != nil {
+				return fail(1, "protocol_error", err)
+			}
+			selected, err := selectLiveFeed(envelope.Data, symbol)
+			if err != nil {
+				return fail(1, "protocol_error", err)
+			}
+			if err := printLiveStatus(e.stdout, pair.Paths.Home, envelope.Data, selected, time.Now()); err != nil {
 				return fail(1, "internal", err)
 			}
 			return nil
@@ -258,75 +300,144 @@ func (e *execution) historyCommand() *cobra.Command {
 		offline  bool
 	)
 	command := &cobra.Command{
-		Use:   "history <symbol>",
-		Short: "Inspect bounded aggregate history",
-		Args:  cobra.ExactArgs(1),
+		Use:   "history [symbol]",
+		Short: "Show stored aggregates or one symbol's records",
+		Long: "Show the latest stored aggregate for every configured feed, or bounded history for one symbol.\n\n" +
+			"Friendly symbol forms such as btc-usd are accepted when unique. Text mode automatically uses " +
+			"lock-protected local storage when the daemon is stopped.",
+		Example: "  oracled history\n" +
+			"  oracled history btc-usd\n" +
+			"  oracled history BTC/USD --page-size 10",
+		Args: cobra.MaximumNArgs(1),
 		PreRun: func(_ *cobra.Command, _ []string) {
 			e.command, e.format = "history", format
 		},
-		RunE: func(_ *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if format != "text" && format != "json" {
 				return fail(1, "invalid_arguments", errors.New("--format must be text or json"))
 			}
 			if pageSize < storage.MinHistoryPageSize || pageSize > storage.MaxHistoryPageSize {
 				return fail(1, "invalid_arguments", errors.New("--page-size must be from 1 to 50"))
 			}
-			symbol, err := domain.NormalizeSymbol(args[0])
-			if err != nil || symbol != args[0] {
-				return fail(1, "invalid_arguments", errors.New("history symbol must be canonical"))
-			}
-			if _, err := storage.DecodePageKey(pageKey); err != nil {
-				return fail(1, "invalid_arguments", errors.New("--page-key is invalid"))
-			}
-			var body []byte
-			if offline {
-				lockPath, lockErr := config.CanonicalHomeLockPath(e.home)
-				if lockErr != nil {
-					return fail(1, "invalid_config", lockErr)
+			if len(args) == 0 {
+				if format == "json" {
+					return fail(1, "invalid_arguments", errors.New("JSON history requires a symbol"))
 				}
-				lock, lockErr := storage.AcquireHomeLock(lockPath)
-				if lockErr != nil {
-					return fail(1, homeLockFailureCode(lockErr), lockErr)
+				if command.Flags().Changed("page-size") || command.Flags().Changed("page-key") {
+					return fail(1, "invalid_arguments", errors.New("history summary does not accept pagination flags"))
 				}
-				pair, loadErr := config.Load(e.home)
-				if loadErr != nil {
-					return fail(1, "invalid_config", errors.Join(loadErr, lock.Close()))
+				if offline {
+					view, err := offlineHistorySummary(e.home)
+					if err != nil {
+						return commandFailureForOffline(1, err)
+					}
+					if err := printHistorySummary(e.stdout, view, time.Now()); err != nil {
+						return fail(1, "internal", err)
+					}
+					return nil
 				}
-				body, err = offlineHistory(pair, symbol, pageSize, pageKey)
+				pair, err := config.Load(e.home)
 				if err != nil {
-					return fail(1, "storage_error", errors.Join(err, lock.Close()))
+					return fail(1, "invalid_config", err)
 				}
-				if err := lock.Close(); err != nil {
-					return fail(1, "storage_error", err)
-				}
-			} else {
-				pair, loadErr := config.Load(e.home)
-				if loadErr != nil {
-					return fail(1, "invalid_config", loadErr)
-				}
-				query := url.Values{}
-				query.Set("symbol", symbol)
-				query.Set("page_size", fmt.Sprintf("%d", pageSize))
-				if pageKey != "" {
-					query.Set("page_key", pageKey)
-				}
-				statusCode := 0
-				body, statusCode, err = fetchAdmin(context.Background(), pair.Paths.AdminSocket, "/v1/history?"+query.Encode())
+				view, err := liveHistorySummary(command.Context(), pair)
 				if err != nil {
+					if isAdminTransportError(err) {
+						view, offlineErr := offlineHistorySummary(e.home)
+						if offlineErr != nil {
+							return commandFailureForOffline(1, offlineErr)
+						}
+						if err := printHistorySummary(e.stdout, view, time.Now()); err != nil {
+							return fail(1, "internal", err)
+						}
+						return nil
+					}
 					return fail(1, adminFailureCode(err), err)
 				}
-				if statusCode != http.StatusOK {
-					return fail(1, "protocol_error", decodeAdminError(body))
+				if err := printHistorySummary(e.stdout, view, time.Now()); err != nil {
+					return fail(1, "internal", err)
 				}
+				return nil
 			}
-			envelope, err := decodeSuccess[service.HistoryData](body, "history")
+			if err := ensureHistoryPageKey(pageKey); err != nil {
+				return fail(1, "invalid_arguments", errors.New("--page-key is invalid"))
+			}
+			if offline {
+				data, resolvedHome, err := offlineHistoryDetail(
+					e.home,
+					args[0],
+					pageSize,
+					pageKey,
+					format == "text",
+				)
+				if err != nil {
+					return commandFailureForOffline(1, err)
+				}
+				if format == "json" {
+					envelope := service.SuccessEnvelope[service.HistoryData]{
+						SchemaVersion: 1,
+						Command:       "history",
+						GeneratedAt:   time.Now().UTC().Format(time.RFC3339Nano),
+						Data:          data,
+					}
+					encoded, err := json.Marshal(envelope)
+					if err != nil {
+						return fail(1, "internal", err)
+					}
+					return writeRawJSON(e.stdout, encoded)
+				}
+				if err := printHistoryDetail(e.stdout, resolvedHome, "offline", data, pageSize, true, time.Now()); err != nil {
+					return fail(1, "internal", err)
+				}
+				return nil
+			}
+			pair, err := config.Load(e.home)
 			if err != nil {
-				return fail(1, "protocol_error", err)
+				return fail(1, "invalid_config", err)
+			}
+			symbol, err := resolveConfiguredSymbol(args[0], pair.Feeds)
+			if err != nil {
+				return fail(1, "invalid_arguments", err)
+			}
+			body, data, err := fetchHistory(
+				command.Context(),
+				pair.Paths.AdminSocket,
+				symbol,
+				pageSize,
+				pageKey,
+				format == "text",
+			)
+			if err != nil {
+				if format == "text" && isAdminTransportError(err) {
+					offlineData, resolvedHome, offlineErr := offlineHistoryDetail(
+						e.home,
+						args[0],
+						pageSize,
+						pageKey,
+						true,
+					)
+					if offlineErr != nil {
+						return commandFailureForOffline(1, offlineErr)
+					}
+					if err := printHistoryDetail(
+						e.stdout,
+						resolvedHome,
+						"offline",
+						offlineData,
+						pageSize,
+						true,
+						time.Now(),
+					); err != nil {
+						return fail(1, "internal", err)
+					}
+					return nil
+				}
+				return fail(1, adminFailureCode(err), err)
 			}
 			if format == "json" {
 				return writeRawJSON(e.stdout, body)
 			}
-			if err := printHistory(e.stdout, envelope.Data); err != nil {
+			if err := printHistoryDetail(e.stdout, pair.Paths.Home, "live", data, pageSize, false, time.Now()); err != nil {
 				return fail(1, "internal", err)
 			}
 			return nil
@@ -347,22 +458,28 @@ func (e *execution) reconcileCommand() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "reconcile",
 		Short: "Compare live sidecar readiness with one node",
-		Args:  cobra.NoArgs,
+		Long: "Compare the running sidecar with active Oracle tasks from a Guru node.\n\n" +
+			"The command is read-only. It reports whether this validator is ready to contribute and lists " +
+			"operator actions for any mismatch.",
+		Example: "  oracled reconcile\n" +
+			"  oracled reconcile --node-grpc 127.0.0.1:9090\n" +
+			"  oracled reconcile --format json",
+		Args: cobra.NoArgs,
 		PreRun: func(_ *cobra.Command, _ []string) {
 			e.command, e.format = "reconcile", format
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(command *cobra.Command, _ []string) error {
 			if format != "text" && format != "json" {
 				return fail(2, "invalid_arguments", errors.New("--format must be text or json"))
 			}
 			if strings.TrimSpace(nodeGRPC) == "" {
-				return fail(2, "invalid_arguments", errors.New("--node-grpc is required"))
+				return fail(2, "invalid_arguments", errors.New("--node-grpc must not be empty"))
 			}
 			pair, err := config.Load(e.home)
 			if err != nil {
 				return fail(2, "invalid_config", err)
 			}
-			body, statusCode, err := fetchAdmin(context.Background(), pair.Paths.AdminSocket, "/v1/status")
+			body, statusCode, err := fetchAdmin(command.Context(), pair.Paths.AdminSocket, "/v1/status")
 			if err != nil {
 				return fail(2, adminFailureCode(err), err)
 			}
@@ -373,8 +490,13 @@ func (e *execution) reconcileCommand() *cobra.Command {
 			if err != nil {
 				return fail(2, "protocol_error", err)
 			}
+			if format == "text" {
+				if err := validateHumanStatusData(statusEnvelope.Data); err != nil {
+					return fail(2, "protocol_error", err)
+				}
+			}
 			data, err := reconcile(
-				context.Background(),
+				command.Context(),
 				nodeGRPC,
 				statusEnvelope.Data,
 				pair.Config.PublicationRevision,
@@ -402,7 +524,7 @@ func (e *execution) reconcileCommand() *cobra.Command {
 					return fail(2, "internal", err)
 				}
 			} else {
-				if err := printReconcile(e.stdout, data); err != nil {
+				if err := printReconcile(e.stdout, statusEnvelope.Data, data); err != nil {
 					return fail(2, "internal", err)
 				}
 			}
@@ -415,34 +537,8 @@ func (e *execution) reconcileCommand() *cobra.Command {
 		},
 	}
 	command.Flags().StringVar(&format, "format", "text", "output format: text or json")
-	command.Flags().StringVar(&nodeGRPC, "node-grpc", "", "Guru node gRPC endpoint")
+	command.Flags().StringVar(&nodeGRPC, "node-grpc", "127.0.0.1:9090", "Guru node gRPC endpoint")
 	return command
-}
-
-func offlineHistory(pair *config.Pair, symbol string, pageSize uint32, pageKey string) (body []byte, err error) {
-	store, err := storage.Open(pair.Paths.Database, pair.Paths.Marker, true)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		err = errors.Join(err, store.Close())
-	}()
-	token, err := storage.DecodePageKey(pageKey)
-	if err != nil {
-		return nil, err
-	}
-	page, err := store.History(symbol, pageSize, token)
-	if err != nil {
-		return nil, err
-	}
-	now := time.Now()
-	envelope := service.SuccessEnvelope[service.HistoryData]{
-		SchemaVersion: 1,
-		Command:       "history",
-		GeneratedAt:   now.UTC().Format(time.RFC3339Nano),
-		Data:          service.BuildHistoryData(page, store.Catalog()),
-	}
-	return json.Marshal(envelope)
 }
 
 func fail(exit int, code string, err error) error {
@@ -492,59 +588,4 @@ func inferCommandFormat(args []string) (string, string) {
 		}
 	}
 	return command, format
-}
-
-func printStatus(output io.Writer, data service.StatusData) error {
-	if _, err := fmt.Fprintf(output, "Health: %s\nGeneration: %s\n", data.Health, data.ActivationGeneration); err != nil {
-		return err
-	}
-	for _, feed := range data.Feeds {
-		if _, err := fmt.Fprintf(output, "%s  %s  %s  sources=%d\n", feed.Symbol, feed.Health, feed.Freshness, feed.ConfiguredSourceCount); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func printHistory(output io.Writer, data service.HistoryData) error {
-	if _, err := fmt.Fprintf(output, "History for %s (high water %s)\n", data.Symbol, data.HighWaterSequence); err != nil {
-		return err
-	}
-	for _, record := range data.Records {
-		if _, err := fmt.Fprintf(output, "%s  %s  sources=%d  %s\n", record.Sequence, record.Value, record.SuccessfulSourceCount, record.CollectedAt); err != nil {
-			return err
-		}
-	}
-	if data.NextPageKey != nil {
-		if _, err := fmt.Fprintf(output, "Next page key: %s\n", *data.NextPageKey); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func printReconcile(output io.Writer, data ReconcileData) error {
-	if _, err := fmt.Fprintf(output, "Node: %s\nActive tasks: %d\nMinimum sources: %d\n", data.NodeGRPC, data.ActiveTaskCount, data.MinSources); err != nil {
-		return err
-	}
-	if len(data.Findings) == 0 {
-		_, err := fmt.Fprintln(output, "Ready: no mismatches found.")
-		return err
-	}
-	findings := append([]Finding(nil), data.Findings...)
-	sort.SliceStable(findings, func(i, j int) bool { return findings[i].Code < findings[j].Code })
-	for _, finding := range findings {
-		severity := "info"
-		if finding.Blocking {
-			severity = "blocking"
-		}
-		symbol := "-"
-		if finding.Symbol != nil {
-			symbol = *finding.Symbol
-		}
-		if _, err := fmt.Fprintf(output, "%s  %s  %s  %s\n", severity, finding.Code, symbol, finding.Message); err != nil {
-			return err
-		}
-	}
-	return nil
 }
