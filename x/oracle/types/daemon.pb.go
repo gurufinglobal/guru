@@ -27,23 +27,22 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type GetSamplesRequest struct {
-	Tasks  []*OracleTask `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
-	Height int64         `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+type GetAggregatesRequest struct {
+	Symbols []string `protobuf:"bytes,1,rep,name=symbols,proto3" json:"symbols,omitempty"`
 }
 
-func (m *GetSamplesRequest) Reset()         { *m = GetSamplesRequest{} }
-func (m *GetSamplesRequest) String() string { return proto.CompactTextString(m) }
-func (*GetSamplesRequest) ProtoMessage()    {}
-func (*GetSamplesRequest) Descriptor() ([]byte, []int) {
+func (m *GetAggregatesRequest) Reset()         { *m = GetAggregatesRequest{} }
+func (m *GetAggregatesRequest) String() string { return proto.CompactTextString(m) }
+func (*GetAggregatesRequest) ProtoMessage()    {}
+func (*GetAggregatesRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_546e05bd213112bc, []int{0}
 }
-func (m *GetSamplesRequest) XXX_Unmarshal(b []byte) error {
+func (m *GetAggregatesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *GetSamplesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *GetAggregatesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_GetSamplesRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_GetAggregatesRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -53,103 +52,95 @@ func (m *GetSamplesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
-func (m *GetSamplesRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetSamplesRequest.Merge(m, src)
+func (m *GetAggregatesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAggregatesRequest.Merge(m, src)
 }
-func (m *GetSamplesRequest) XXX_Size() int {
+func (m *GetAggregatesRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *GetSamplesRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetSamplesRequest.DiscardUnknown(m)
+func (m *GetAggregatesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAggregatesRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetSamplesRequest proto.InternalMessageInfo
+var xxx_messageInfo_GetAggregatesRequest proto.InternalMessageInfo
 
-func (m *GetSamplesRequest) GetTasks() []*OracleTask {
-	if m != nil {
-		return m.Tasks
-	}
-	return nil
-}
-
-func (m *GetSamplesRequest) GetHeight() int64 {
-	if m != nil {
-		return m.Height
-	}
-	return 0
-}
-
-type GetSamplesResponse struct {
-	Symbols []*OracleSymbolSamples `protobuf:"bytes,1,rep,name=symbols,proto3" json:"symbols,omitempty"`
-}
-
-func (m *GetSamplesResponse) Reset()         { *m = GetSamplesResponse{} }
-func (m *GetSamplesResponse) String() string { return proto.CompactTextString(m) }
-func (*GetSamplesResponse) ProtoMessage()    {}
-func (*GetSamplesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_546e05bd213112bc, []int{1}
-}
-func (m *GetSamplesResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *GetSamplesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_GetSamplesResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *GetSamplesResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetSamplesResponse.Merge(m, src)
-}
-func (m *GetSamplesResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *GetSamplesResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetSamplesResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GetSamplesResponse proto.InternalMessageInfo
-
-func (m *GetSamplesResponse) GetSymbols() []*OracleSymbolSamples {
+func (m *GetAggregatesRequest) GetSymbols() []string {
 	if m != nil {
 		return m.Symbols
 	}
 	return nil
 }
 
+type GetAggregatesResponse struct {
+	Results []*AggregatedResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+}
+
+func (m *GetAggregatesResponse) Reset()         { *m = GetAggregatesResponse{} }
+func (m *GetAggregatesResponse) String() string { return proto.CompactTextString(m) }
+func (*GetAggregatesResponse) ProtoMessage()    {}
+func (*GetAggregatesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_546e05bd213112bc, []int{1}
+}
+func (m *GetAggregatesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GetAggregatesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GetAggregatesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GetAggregatesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAggregatesResponse.Merge(m, src)
+}
+func (m *GetAggregatesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *GetAggregatesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAggregatesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAggregatesResponse proto.InternalMessageInfo
+
+func (m *GetAggregatesResponse) GetResults() []*AggregatedResult {
+	if m != nil {
+		return m.Results
+	}
+	return nil
+}
+
 func init() {
-	proto.RegisterType((*GetSamplesRequest)(nil), "guru.oracle.v1.GetSamplesRequest")
-	proto.RegisterType((*GetSamplesResponse)(nil), "guru.oracle.v1.GetSamplesResponse")
+	proto.RegisterType((*GetAggregatesRequest)(nil), "guru.oracle.v1.GetAggregatesRequest")
+	proto.RegisterType((*GetAggregatesResponse)(nil), "guru.oracle.v1.GetAggregatesResponse")
 }
 
 func init() { proto.RegisterFile("guru/oracle/v1/daemon.proto", fileDescriptor_546e05bd213112bc) }
 
 var fileDescriptor_546e05bd213112bc = []byte{
-	// 278 bytes of a gzipped FileDescriptorProto
+	// 259 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4e, 0x2f, 0x2d, 0x2a,
 	0xd5, 0xcf, 0x2f, 0x4a, 0x4c, 0xce, 0x49, 0xd5, 0x2f, 0x33, 0xd4, 0x4f, 0x49, 0x4c, 0xcd, 0xcd,
 	0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x03, 0x49, 0xea, 0x41, 0x24, 0xf5, 0xca,
-	0x0c, 0xa5, 0xd0, 0x15, 0x43, 0x65, 0xc0, 0x8a, 0x95, 0x62, 0xb9, 0x04, 0xdd, 0x53, 0x4b, 0x82,
-	0x13, 0x73, 0x0b, 0x72, 0x52, 0x8b, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b, 0x84, 0x0c, 0xb8,
-	0x58, 0x4b, 0x12, 0x8b, 0xb3, 0x8b, 0x25, 0x18, 0x15, 0x98, 0x35, 0xb8, 0x8d, 0xa4, 0xf4, 0x50,
-	0x4d, 0xd4, 0xf3, 0x07, 0xb3, 0x42, 0x12, 0x8b, 0xb3, 0x83, 0x20, 0x0a, 0x85, 0xc4, 0xb8, 0xd8,
-	0x32, 0x52, 0x33, 0xd3, 0x33, 0x4a, 0x24, 0x98, 0x14, 0x18, 0x35, 0x98, 0x83, 0xa0, 0x3c, 0xa5,
-	0x60, 0x2e, 0x21, 0x64, 0xe3, 0x8b, 0x0b, 0xf2, 0xf3, 0x8a, 0x53, 0x85, 0x6c, 0xb9, 0xd8, 0x8b,
-	0x2b, 0x73, 0x93, 0xf2, 0x73, 0x60, 0x36, 0x28, 0x63, 0xb7, 0x21, 0x18, 0xac, 0x08, 0xa6, 0x1b,
-	0xa6, 0xc7, 0x28, 0x85, 0x8b, 0x17, 0x2a, 0x9f, 0x99, 0x92, 0x9a, 0x9c, 0x58, 0x24, 0x14, 0xcc,
-	0xc5, 0x85, 0xb0, 0x45, 0x48, 0x11, 0xdd, 0x30, 0x0c, 0x0f, 0x4a, 0x29, 0xe1, 0x53, 0x02, 0x71,
-	0xa4, 0x93, 0xe7, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38,
-	0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0xe9, 0xa7, 0x67,
-	0x96, 0x64, 0x94, 0x26, 0xe9, 0x25, 0xe7, 0xe7, 0xea, 0x83, 0xcc, 0x49, 0xcb, 0xcc, 0x4b, 0xcf,
-	0xc9, 0x4f, 0x4a, 0xcc, 0x01, 0xf3, 0xf4, 0xcb, 0x8c, 0xf5, 0x2b, 0x60, 0xc1, 0x5d, 0x52, 0x59,
-	0x90, 0x5a, 0x9c, 0xc4, 0x06, 0x0e, 0x6b, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0x45, 0x56,
-	0x74, 0x24, 0xb7, 0x01, 0x00, 0x00,
+	0x0c, 0xa5, 0xd0, 0x15, 0x43, 0x65, 0xc0, 0x8a, 0x95, 0x0c, 0xb8, 0x44, 0xdc, 0x53, 0x4b, 0x1c,
+	0xd3, 0xd3, 0x8b, 0x52, 0xd3, 0x13, 0x4b, 0x52, 0x8b, 0x83, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b,
+	0x84, 0x24, 0xb8, 0xd8, 0x8b, 0x2b, 0x73, 0x93, 0xf2, 0x73, 0x8a, 0x25, 0x18, 0x15, 0x98, 0x35,
+	0x38, 0x83, 0x60, 0x5c, 0xa5, 0x60, 0x2e, 0x51, 0x34, 0x1d, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9,
+	0x42, 0x56, 0x5c, 0xec, 0x45, 0xa9, 0xc5, 0xa5, 0x39, 0x25, 0x10, 0x2d, 0xdc, 0x46, 0x0a, 0x7a,
+	0xa8, 0x2e, 0xd1, 0x83, 0x6b, 0x4a, 0x09, 0x02, 0x2b, 0x0c, 0x82, 0x69, 0x30, 0xca, 0xe5, 0xe2,
+	0xf5, 0x07, 0x2b, 0x0b, 0xce, 0x4c, 0x49, 0x4d, 0x4e, 0x2c, 0x12, 0x8a, 0xe1, 0xe2, 0x45, 0xb1,
+	0x45, 0x48, 0x05, 0xdd, 0x30, 0x6c, 0xce, 0x96, 0x52, 0x25, 0xa0, 0x0a, 0xe2, 0x54, 0x27, 0xcf,
+	0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39,
+	0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0xd2, 0x4f, 0xcf, 0x2c, 0xc9, 0x28,
+	0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x07, 0x19, 0x95, 0x96, 0x99, 0x97, 0x9e, 0x93, 0x9f, 0x94,
+	0x98, 0x03, 0xe6, 0xe9, 0x97, 0x19, 0xeb, 0x57, 0xc0, 0x82, 0xb2, 0xa4, 0xb2, 0x20, 0xb5, 0x38,
+	0x89, 0x0d, 0x1c, 0x8e, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x78, 0x2b, 0xc7, 0x56, 0x93,
+	0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -164,8 +155,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type OracleSidecarClient interface {
-	// GetSamples returns source-level samples grouped by oracle symbol.
-	GetSamples(ctx context.Context, in *GetSamplesRequest, opts ...grpc.CallOption) (*GetSamplesResponse, error)
+	// GetAggregates returns fresh aggregate results for requested symbols.
+	GetAggregates(ctx context.Context, in *GetAggregatesRequest, opts ...grpc.CallOption) (*GetAggregatesResponse, error)
 }
 
 type oracleSidecarClient struct {
@@ -176,9 +167,9 @@ func NewOracleSidecarClient(cc grpc1.ClientConn) OracleSidecarClient {
 	return &oracleSidecarClient{cc}
 }
 
-func (c *oracleSidecarClient) GetSamples(ctx context.Context, in *GetSamplesRequest, opts ...grpc.CallOption) (*GetSamplesResponse, error) {
-	out := new(GetSamplesResponse)
-	err := c.cc.Invoke(ctx, "/guru.oracle.v1.OracleSidecar/GetSamples", in, out, opts...)
+func (c *oracleSidecarClient) GetAggregates(ctx context.Context, in *GetAggregatesRequest, opts ...grpc.CallOption) (*GetAggregatesResponse, error) {
+	out := new(GetAggregatesResponse)
+	err := c.cc.Invoke(ctx, "/guru.oracle.v1.OracleSidecar/GetAggregates", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -187,36 +178,36 @@ func (c *oracleSidecarClient) GetSamples(ctx context.Context, in *GetSamplesRequ
 
 // OracleSidecarServer is the server API for OracleSidecar service.
 type OracleSidecarServer interface {
-	// GetSamples returns source-level samples grouped by oracle symbol.
-	GetSamples(context.Context, *GetSamplesRequest) (*GetSamplesResponse, error)
+	// GetAggregates returns fresh aggregate results for requested symbols.
+	GetAggregates(context.Context, *GetAggregatesRequest) (*GetAggregatesResponse, error)
 }
 
 // UnimplementedOracleSidecarServer can be embedded to have forward compatible implementations.
 type UnimplementedOracleSidecarServer struct {
 }
 
-func (*UnimplementedOracleSidecarServer) GetSamples(ctx context.Context, req *GetSamplesRequest) (*GetSamplesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSamples not implemented")
+func (*UnimplementedOracleSidecarServer) GetAggregates(ctx context.Context, req *GetAggregatesRequest) (*GetAggregatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAggregates not implemented")
 }
 
 func RegisterOracleSidecarServer(s grpc1.Server, srv OracleSidecarServer) {
 	s.RegisterService(&_OracleSidecar_serviceDesc, srv)
 }
 
-func _OracleSidecar_GetSamples_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSamplesRequest)
+func _OracleSidecar_GetAggregates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAggregatesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OracleSidecarServer).GetSamples(ctx, in)
+		return srv.(OracleSidecarServer).GetAggregates(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/guru.oracle.v1.OracleSidecar/GetSamples",
+		FullMethod: "/guru.oracle.v1.OracleSidecar/GetAggregates",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OracleSidecarServer).GetSamples(ctx, req.(*GetSamplesRequest))
+		return srv.(OracleSidecarServer).GetAggregates(ctx, req.(*GetAggregatesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -227,15 +218,15 @@ var _OracleSidecar_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*OracleSidecarServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetSamples",
-			Handler:    _OracleSidecar_GetSamples_Handler,
+			MethodName: "GetAggregates",
+			Handler:    _OracleSidecar_GetAggregates_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "guru/oracle/v1/daemon.proto",
 }
 
-func (m *GetSamplesRequest) Marshal() (dAtA []byte, err error) {
+func (m *GetAggregatesRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -245,31 +236,21 @@ func (m *GetSamplesRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *GetSamplesRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *GetAggregatesRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *GetSamplesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *GetAggregatesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Height != 0 {
-		i = encodeVarintDaemon(dAtA, i, uint64(m.Height))
-		i--
-		dAtA[i] = 0x10
-	}
-	if len(m.Tasks) > 0 {
-		for iNdEx := len(m.Tasks) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Tasks[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintDaemon(dAtA, i, uint64(size))
-			}
+	if len(m.Symbols) > 0 {
+		for iNdEx := len(m.Symbols) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Symbols[iNdEx])
+			copy(dAtA[i:], m.Symbols[iNdEx])
+			i = encodeVarintDaemon(dAtA, i, uint64(len(m.Symbols[iNdEx])))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -277,7 +258,7 @@ func (m *GetSamplesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *GetSamplesResponse) Marshal() (dAtA []byte, err error) {
+func (m *GetAggregatesResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -287,20 +268,20 @@ func (m *GetSamplesResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *GetSamplesResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *GetAggregatesResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *GetSamplesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *GetAggregatesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Symbols) > 0 {
-		for iNdEx := len(m.Symbols) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Results) > 0 {
+		for iNdEx := len(m.Results) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Symbols[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Results[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -325,32 +306,29 @@ func encodeVarintDaemon(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *GetSamplesRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Tasks) > 0 {
-		for _, e := range m.Tasks {
-			l = e.Size()
-			n += 1 + l + sovDaemon(uint64(l))
-		}
-	}
-	if m.Height != 0 {
-		n += 1 + sovDaemon(uint64(m.Height))
-	}
-	return n
-}
-
-func (m *GetSamplesResponse) Size() (n int) {
+func (m *GetAggregatesRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
 	if len(m.Symbols) > 0 {
-		for _, e := range m.Symbols {
+		for _, s := range m.Symbols {
+			l = len(s)
+			n += 1 + l + sovDaemon(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *GetAggregatesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Results) > 0 {
+		for _, e := range m.Results {
 			l = e.Size()
 			n += 1 + l + sovDaemon(uint64(l))
 		}
@@ -364,7 +342,7 @@ func sovDaemon(x uint64) (n int) {
 func sozDaemon(x uint64) (n int) {
 	return sovDaemon(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *GetSamplesRequest) Unmarshal(dAtA []byte) error {
+func (m *GetAggregatesRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -387,17 +365,17 @@ func (m *GetSamplesRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetSamplesRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetAggregatesRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetSamplesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetAggregatesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Tasks", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbols", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowDaemon
@@ -407,45 +385,24 @@ func (m *GetSamplesRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthDaemon
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthDaemon
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Tasks = append(m.Tasks, &OracleTask{})
-			if err := m.Tasks[len(m.Tasks)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.Symbols = append(m.Symbols, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
-			}
-			m.Height = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowDaemon
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Height |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipDaemon(dAtA[iNdEx:])
@@ -467,7 +424,7 @@ func (m *GetSamplesRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *GetSamplesResponse) Unmarshal(dAtA []byte) error {
+func (m *GetAggregatesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -490,15 +447,15 @@ func (m *GetSamplesResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetSamplesResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetAggregatesResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetSamplesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetAggregatesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Symbols", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Results", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -525,8 +482,8 @@ func (m *GetSamplesResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Symbols = append(m.Symbols, &OracleSymbolSamples{})
-			if err := m.Symbols[len(m.Symbols)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Results = append(m.Results, &AggregatedResult{})
+			if err := m.Results[len(m.Results)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

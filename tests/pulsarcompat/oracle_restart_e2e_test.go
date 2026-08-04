@@ -1,8 +1,14 @@
 package pulsarcompat
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -36,14 +42,12 @@ func TestE2ESingleValidatorOracleRestartReproduction(t *testing.T) {
 	setOracleNodeCometConfig(t, node.home)
 	runCmd(t, repoRoot, bin, "genesis", "validate-genesis", "--home", node.home)
 
-	sidecar := startOracleProcess(t, repoRoot, oracledBin, node, sourceServer.URL)
+	sidecar := startOracleProcess(t, repoRoot, oracledBin, node, sourceServer)
 	defer func() { stopOracleProcess(t, sidecar, syscall.SIGTERM) }()
-	waitForOracleProcessLog(t, sidecar, "node_preflight=degraded", 5*time.Second)
 	node.node = startOracleRestartNode(t, repoRoot, bin, node, nil)
 	defer func() { stopNode(t, node.node) }()
 
 	waitForOracleSoakNodeHeight(t, repoRoot, bin, node, 20, 90*time.Second)
-	waitForOracleProcessLog(t, sidecar, "node_preflight=ready", 10*time.Second)
 	latestBeforeRestart := waitForOracleLatestHeight(
 		t,
 		repoRoot,
@@ -78,8 +82,7 @@ func TestE2ESingleValidatorOracleRestartReproduction(t *testing.T) {
 
 	heightBeforeSidecarRestart := latestOracleSoakHeight(t, repoRoot, bin, []*oracleSoakNode{node})
 	stopOracleProcess(t, sidecar, syscall.SIGTERM)
-	sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer.URL)
-	waitForOracleProcessLog(t, sidecar, "node_preflight=ready", 10*time.Second)
+	sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer)
 	waitForOracleSoakNodeHeight(t, repoRoot, bin, node, heightBeforeSidecarRestart+20, 90*time.Second)
 	waitForOracleLatestHeight(
 		t,
@@ -101,10 +104,8 @@ func TestE2ESingleValidatorOracleRestartReproduction(t *testing.T) {
 	killNodeProcess(t, node.node)
 	stopOracleProcess(t, sidecar, syscall.SIGKILL)
 
-	sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer.URL)
-	waitForOracleProcessLog(t, sidecar, "node_preflight=degraded", 5*time.Second)
+	sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer)
 	node.node = startOracleRestartNode(t, repoRoot, bin, node, nil)
-	waitForOracleProcessLog(t, sidecar, "node_preflight=ready", 10*time.Second)
 	waitForOracleSoakNodeHeight(t, repoRoot, bin, node, heightBeforeForcedRestart+23, 90*time.Second)
 
 	if logs := oracleSoakNodeLogs(node); strings.Contains(logs, "failed to verify validator") {
@@ -163,7 +164,20 @@ func buildOracledBinary(t *testing.T, repoRoot string) string {
 	t.Helper()
 
 	bin := filepath.Join(t.TempDir(), "oracled")
-	runCmd(t, repoRoot, "go", "build", "-o", bin, "./cmd/oracled")
+	cmd := exec.Command(
+		"go",
+		"-C", "oracle",
+		"build",
+		"-mod=readonly",
+		"-o", bin,
+		"./cmd/oracled",
+	)
+	cmd.Dir = repoRoot
+	cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "GOWORK=off")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("build standalone oracled: %v\n%s", err, output)
+	}
 
 	return bin
 }
@@ -172,15 +186,15 @@ func startOracleProcess(
 	t *testing.T,
 	repoRoot, bin string,
 	node *oracleSoakNode,
-	sourceURL string,
+	sourceServer *oracleTestHTTPSServer,
 ) *runningOracleProcess {
 	t.Helper()
 
-	configPath := filepath.Join(node.home, "config", "oracled.toml")
-	writeOracleProcessConfig(t, configPath, node, sourceURL)
+	initializeOracleProcessHome(t, repoRoot, bin, node, sourceServer.URL)
 	logs := &synchronizedBuffer{}
-	cmd := exec.Command(bin, "start", "--config", configPath)
+	cmd := exec.Command(bin, "--home", node.oracleHome, "start")
 	cmd.Dir = repoRoot
+	cmd.Env = append(os.Environ(), "SSL_CERT_FILE="+sourceServer.certFile)
 	cmd.Stdout = logs
 	cmd.Stderr = logs
 	if err := cmd.Start(); err != nil {
@@ -191,80 +205,115 @@ func startOracleProcess(
 		done <- cmd.Wait()
 	}()
 	process := &runningOracleProcess{cmd: cmd, done: done, logs: logs}
-	waitForOracleProcessSocket(t, process, node.oracleSocket, 5*time.Second)
-	waitForOracleProcessLog(t, process, "state=serving", 5*time.Second)
+	waitForOracleProcessReady(t, process, node.oracleSocket, node.oracleAdminSocket, 5*time.Second)
 
 	return process
 }
 
-func writeOracleProcessConfig(t *testing.T, path string, node *oracleSoakNode, sourceURL string) {
+func initializeOracleProcessHome(
+	t *testing.T,
+	repoRoot, bin string,
+	node *oracleSoakNode,
+	sourceURL string,
+) {
 	t.Helper()
 
-	var content strings.Builder
-	_, _ = fmt.Fprintf(
-		&content,
-		"socket = %q\nrequest_timeout = %q\nsource_timeout = %q\nnode_grpc = %q\nnode_query_timeout = %q\n",
-		node.oracleSocket,
-		"2s",
-		"500ms",
-		node.grpcAddr,
-		"100ms",
-	)
-	for _, source := range oracleSoakSources(sourceURL) {
-		_, _ = fmt.Fprintf(
-			&content,
-			"\n[[sources]]\nname = %q\nsymbol = %q\nvalue_type = %q\nurl = %q\nresponse_path = %q\n",
-			source.Name,
-			source.Symbol,
-			"numeric",
-			source.URL,
-			source.ResponsePath,
-		)
+	configPath := filepath.Join(node.oracleHome, "config.toml")
+	if _, err := os.Stat(configPath); err == nil {
+		return
+	} else if !os.IsNotExist(err) {
+		t.Fatalf("inspect oracled config: %v", err)
 	}
-	if err := os.WriteFile(path, []byte(content.String()), 0o600); err != nil {
+
+	runCmd(t, repoRoot, bin, "--home", node.oracleHome, "init")
+	sources := renderOracleSourcesConfig(sourceURL)
+	digest := sha256.Sum256(sources)
+	config := fmt.Sprintf(`schema_version = 1
+publication_revision = "e2e-v1"
+sources_sha256 = %q
+
+[server]
+consumer_socket = "run/oracle.sock"
+admin_socket = "run/admin.sock"
+max_request_bytes = 65536
+max_response_bytes = 1048576
+
+[collector]
+max_concurrency = 32
+source_response_bytes = 1048576
+max_redirects = 3
+max_attempts = 3
+request_timeout = "2s"
+connect_timeout = "1s"
+tls_handshake_timeout = "1s"
+response_header_timeout = "1s"
+retry_initial_backoff = "10ms"
+retry_max_backoff = "100ms"
+
+[storage]
+database = "data/oracle.db"
+marker = "data/storage.meta"
+lock = "run/oracled.lock"
+history_retention = 30
+
+[runtime]
+shutdown_timeout = "5s"
+
+[logging]
+level = "info"
+format = "text"
+`, hex.EncodeToString(digest[:]))
+	if err := os.WriteFile(filepath.Join(node.oracleHome, "sources.toml"), sources, 0o600); err != nil {
+		t.Fatalf("write oracled sources: %v", err)
+	}
+	if err := os.WriteFile(configPath, []byte(config), 0o600); err != nil {
 		t.Fatalf("write oracled config: %v", err)
 	}
+	runCmd(t, repoRoot, bin, "--home", node.oracleHome, "validate")
 }
 
-func waitForOracleProcessSocket(
+func waitForOracleProcessReady(
 	t *testing.T,
 	process *runningOracleProcess,
-	socketPath string,
+	consumerSocket, adminSocket string,
 	timeout time.Duration,
 ) {
 	t.Helper()
 
+	transport := &http.Transport{
+		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			return (&net.Dialer{}).DialContext(ctx, "unix", adminSocket)
+		},
+	}
+	defer transport.CloseIdleConnections()
+	client := &http.Client{Transport: transport, Timeout: 500 * time.Millisecond}
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		select {
 		case err := <-process.done:
-			t.Fatalf("oracled exited before socket was ready: %v\nlogs:\n%s", err, process.logs.String())
+			t.Fatalf("oracled exited before services were ready: %v\nlogs:\n%s", err, process.logs.String())
 		default:
 		}
-		if info, err := os.Stat(socketPath); err == nil && info.Mode()&os.ModeSocket != 0 {
-			return
+		consumerInfo, consumerErr := os.Stat(consumerSocket)
+		adminInfo, adminErr := os.Stat(adminSocket)
+		if consumerErr == nil && consumerInfo.Mode()&os.ModeSocket != 0 &&
+			adminErr == nil && adminInfo.Mode()&os.ModeSocket != 0 {
+			response, err := client.Get("http://unix/v1/status")
+			if err == nil {
+				_, readErr := io.Copy(io.Discard, io.LimitReader(response.Body, 1<<20))
+				closeErr := response.Body.Close()
+				if response.StatusCode == http.StatusOK && readErr == nil && closeErr == nil {
+					return
+				}
+			}
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
-	t.Fatalf("oracled socket was not ready within %s; logs:\n%s", timeout, process.logs.String())
-}
-
-func waitForOracleProcessLog(t *testing.T, process *runningOracleProcess, marker string, timeout time.Duration) {
-	t.Helper()
-
-	deadline := time.Now().Add(timeout)
-	for time.Now().Before(deadline) {
-		if strings.Contains(process.logs.String(), marker) {
-			return
-		}
-		select {
-		case err := <-process.done:
-			t.Fatalf("oracled exited while waiting for %q: %v\nlogs:\n%s", marker, err, process.logs.String())
-		default:
-		}
-		time.Sleep(20 * time.Millisecond)
-	}
-	t.Fatalf("oracled did not log %q within %s; logs:\n%s", marker, timeout, process.logs.String())
+	t.Fatalf(
+		"oracled consumer/admin services were not ready within %s; logs:\n%s",
+		timeout,
+		process.logs.String(),
+	)
 }
 
 func assertOracleProcessRunning(t *testing.T, process *runningOracleProcess) {

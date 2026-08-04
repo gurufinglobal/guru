@@ -5,9 +5,9 @@ option go_package = "github.com/gurufinglobal/guru/v3/x/oracle/types";
 
 // ValueType classifies the string-encoded oracle value.
 //
-// Guru oracle v1 only supports VALUE_TYPE_NUMERIC for configured tasks,
-// accepted values, samples, and validator results. Non-numeric enum values are
-// reserved for future use and are rejected by current validation.
+// Guru oracle v1 only supports VALUE_TYPE_NUMERIC for configured tasks and
+// accepted values. Sidecar aggregates and validator results omit the redundant
+// type and are valid only for numeric tasks. Other enum values are reserved.
 enum ValueType {
   // VALUE_TYPE_UNSPECIFIED is invalid for configured tasks and results.
   VALUE_TYPE_UNSPECIFIED = 0;
@@ -36,23 +36,18 @@ message OracleValue {
   int64 block_time_unix = 5;
 }
 
-message OracleSample {
-  string source = 1;
-  // value_type must be VALUE_TYPE_NUMERIC in oracle v1.
-  ValueType value_type = 2;
-  string value = 3;
-  int64 sample_time_unix = 4;
-}
-
-message OracleSymbolSamples {
+// AggregatedResult is a sidecar-produced strict-majority aggregate.
+message AggregatedResult {
   string symbol = 1;
-  repeated OracleSample samples = 2;
+  string value = 2;
+  uint32 source_count = 3;
 }
 
 message OracleValidatorResult {
+  reserved 2;
+  reserved "value_type";
+
   string symbol = 1;
-  // value_type must be VALUE_TYPE_NUMERIC in oracle v1.
-  ValueType value_type = 2;
   string value = 3;
   uint32 source_count = 4;
 }

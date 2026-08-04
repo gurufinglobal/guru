@@ -107,12 +107,16 @@ func (app *App) configureOracleVoteExtensions(appOpts servertypes.AppOptions) {
 		oracleEnabled = cast.ToBool(value)
 	}
 
-	oracleVoteHandler := oracleabci.NewVoteExtensionHandler(
+	oracleVoteHandler, err := oracleabci.NewVoteExtensionHandler(
 		app.OracleKeeper,
 		oracleEnabled,
 		cast.ToString(appOpts.Get("oracle.sidecar_socket")),
 		cast.ToDuration(appOpts.Get("oracle.sidecar_timeout")),
 	)
+	if err != nil {
+		panic(fmt.Sprintf("failed to configure oracle vote extension handler: %s", err))
+	}
+	app.oracleVoteHandler = oracleVoteHandler
 	app.SetExtendVoteHandler(oracleVoteHandler.ExtendVote)
 	app.SetVerifyVoteExtensionHandler(oracleVoteHandler.VerifyVoteExtension)
 }

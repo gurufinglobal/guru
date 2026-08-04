@@ -24,6 +24,9 @@ func ValidateVoteExtension(extension *oraclev1.OracleVoteExtension) error {
 	if extension == nil {
 		return fmt.Errorf("oracle vote extension cannot be nil")
 	}
+	if len(extension.GetResults()) > maxSidecarSymbols {
+		return fmt.Errorf("oracle vote extension has too many results")
+	}
 
 	seen := map[string]struct{}{}
 	for _, result := range extension.GetResults() {
@@ -31,25 +34,29 @@ func ValidateVoteExtension(extension *oraclev1.OracleVoteExtension) error {
 		if symbol == "" {
 			return fmt.Errorf("oracle vote extension result symbol cannot be empty")
 		}
+		if result.GetSymbol() != symbol || len(symbol) > maxSidecarSymbolBytes {
+			return fmt.Errorf("oracle vote extension result symbol is not canonical")
+		}
 		if _, ok := seen[symbol]; ok {
 			return fmt.Errorf("duplicate oracle vote extension result for %q", symbol)
 		}
 		seen[symbol] = struct{}{}
 
-		if result.GetValueType() == oraclev1.ValueType_VALUE_TYPE_UNSPECIFIED {
-			return fmt.Errorf("oracle vote extension result value_type cannot be unspecified")
-		}
-		if result.GetValueType() != oraclev1.ValueType_VALUE_TYPE_NUMERIC {
-			return fmt.Errorf("oracle vote extension result non-numeric value_type is not supported")
-		}
 		if result.GetValue() == "" {
 			return fmt.Errorf("oracle vote extension result value cannot be empty")
+		}
+		if len(result.GetValue()) > maxSidecarValueBytes {
+			return fmt.Errorf("oracle vote extension result value is too long")
 		}
 		if result.GetSourceCount() == 0 {
 			return fmt.Errorf("oracle vote extension result source_count must be positive")
 		}
-		if _, err := sdkmath.LegacyNewDecFromStr(result.GetValue()); err != nil {
+		value, err := sdkmath.LegacyNewDecFromStr(result.GetValue())
+		if err != nil {
 			return fmt.Errorf("invalid oracle vote extension numeric value: %w", err)
+		}
+		if value.String() != result.GetValue() {
+			return fmt.Errorf("oracle vote extension numeric value is not canonical")
 		}
 	}
 

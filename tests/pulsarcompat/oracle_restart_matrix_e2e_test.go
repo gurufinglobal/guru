@@ -65,12 +65,11 @@ func TestE2ESingleValidatorOracleRestartMatrix(t *testing.T) {
 	setOracleNodeCometConfig(t, node.home)
 	runCmd(t, repoRoot, bin, "genesis", "validate-genesis", "--home", node.home)
 
-	sidecar := startOracleProcess(t, repoRoot, oracledBin, node, sourceServer.URL)
+	sidecar := startOracleProcess(t, repoRoot, oracledBin, node, sourceServer)
 	defer func() { stopOracleProcess(t, sidecar, syscall.SIGTERM) }()
 	node.node = startOracleRestartDebugNode(t, repoRoot, bin, node)
 	defer func() { stopNode(t, node.node) }()
 	waitForOracleSoakNodeHeight(t, repoRoot, bin, node, 20, 90*time.Second)
-	waitForOracleProcessLog(t, sidecar, "node_preflight=ready", 10*time.Second)
 
 	latest := waitForOracleLatestHeight(
 		t,
@@ -125,19 +124,17 @@ func TestE2ESingleValidatorOracleRestartMatrix(t *testing.T) {
 
 		switch testCase.startupOrder {
 		case "sidecar-first":
-			sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer.URL)
-			waitForOracleProcessLog(t, sidecar, "node_preflight=degraded", 5*time.Second)
+			sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer)
 			node.node = startOracleRestartDebugNode(t, repoRoot, bin, node)
 		case "node-first":
 			node.node = startOracleRestartDebugNode(t, repoRoot, bin, node)
-			sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer.URL)
+			sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer)
 		default:
 			t.Fatalf("unsupported startup order %q", testCase.startupOrder)
 		}
 
 		targetHeight := interruptHeight + 20
 		waitForOracleSoakNodeHeight(t, repoRoot, bin, node, targetHeight, 90*time.Second)
-		waitForOracleProcessLog(t, sidecar, "node_preflight=ready", 10*time.Second)
 		latestAfter := waitForOracleLatestHeight(
 			t,
 			repoRoot,

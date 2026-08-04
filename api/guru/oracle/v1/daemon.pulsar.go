@@ -12,79 +12,72 @@ import (
 	sync "sync"
 )
 
-var _ protoreflect.List = (*_GetSamplesRequest_1_list)(nil)
+var _ protoreflect.List = (*_GetAggregatesRequest_1_list)(nil)
 
-type _GetSamplesRequest_1_list struct {
-	list *[]*OracleTask
+type _GetAggregatesRequest_1_list struct {
+	list *[]string
 }
 
-func (x *_GetSamplesRequest_1_list) Len() int {
+func (x *_GetAggregatesRequest_1_list) Len() int {
 	if x.list == nil {
 		return 0
 	}
 	return len(*x.list)
 }
 
-func (x *_GetSamplesRequest_1_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+func (x *_GetAggregatesRequest_1_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfString((*x.list)[i])
 }
 
-func (x *_GetSamplesRequest_1_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleTask)
+func (x *_GetAggregatesRequest_1_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.String()
+	concreteValue := valueUnwrapped
 	(*x.list)[i] = concreteValue
 }
 
-func (x *_GetSamplesRequest_1_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleTask)
+func (x *_GetAggregatesRequest_1_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.String()
+	concreteValue := valueUnwrapped
 	*x.list = append(*x.list, concreteValue)
 }
 
-func (x *_GetSamplesRequest_1_list) AppendMutable() protoreflect.Value {
-	v := new(OracleTask)
-	*x.list = append(*x.list, v)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
+func (x *_GetAggregatesRequest_1_list) AppendMutable() protoreflect.Value {
+	panic(fmt.Errorf("AppendMutable can not be called on message GetAggregatesRequest at list field Symbols as it is not of Message kind"))
 }
 
-func (x *_GetSamplesRequest_1_list) Truncate(n int) {
-	for i := n; i < len(*x.list); i++ {
-		(*x.list)[i] = nil
-	}
+func (x *_GetAggregatesRequest_1_list) Truncate(n int) {
 	*x.list = (*x.list)[:n]
 }
 
-func (x *_GetSamplesRequest_1_list) NewElement() protoreflect.Value {
-	v := new(OracleTask)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
+func (x *_GetAggregatesRequest_1_list) NewElement() protoreflect.Value {
+	v := ""
+	return protoreflect.ValueOfString(v)
 }
 
-func (x *_GetSamplesRequest_1_list) IsValid() bool {
+func (x *_GetAggregatesRequest_1_list) IsValid() bool {
 	return x.list != nil
 }
 
 var (
-	md_GetSamplesRequest        protoreflect.MessageDescriptor
-	fd_GetSamplesRequest_tasks  protoreflect.FieldDescriptor
-	fd_GetSamplesRequest_height protoreflect.FieldDescriptor
+	md_GetAggregatesRequest         protoreflect.MessageDescriptor
+	fd_GetAggregatesRequest_symbols protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_daemon_proto_init()
-	md_GetSamplesRequest = File_guru_oracle_v1_daemon_proto.Messages().ByName("GetSamplesRequest")
-	fd_GetSamplesRequest_tasks = md_GetSamplesRequest.Fields().ByName("tasks")
-	fd_GetSamplesRequest_height = md_GetSamplesRequest.Fields().ByName("height")
+	md_GetAggregatesRequest = File_guru_oracle_v1_daemon_proto.Messages().ByName("GetAggregatesRequest")
+	fd_GetAggregatesRequest_symbols = md_GetAggregatesRequest.Fields().ByName("symbols")
 }
 
-var _ protoreflect.Message = (*fastReflection_GetSamplesRequest)(nil)
+var _ protoreflect.Message = (*fastReflection_GetAggregatesRequest)(nil)
 
-type fastReflection_GetSamplesRequest GetSamplesRequest
+type fastReflection_GetAggregatesRequest GetAggregatesRequest
 
-func (x *GetSamplesRequest) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_GetSamplesRequest)(x)
+func (x *GetAggregatesRequest) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_GetAggregatesRequest)(x)
 }
 
-func (x *GetSamplesRequest) slowProtoReflect() protoreflect.Message {
+func (x *GetAggregatesRequest) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_daemon_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -96,43 +89,43 @@ func (x *GetSamplesRequest) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_GetSamplesRequest_messageType fastReflection_GetSamplesRequest_messageType
-var _ protoreflect.MessageType = fastReflection_GetSamplesRequest_messageType{}
+var _fastReflection_GetAggregatesRequest_messageType fastReflection_GetAggregatesRequest_messageType
+var _ protoreflect.MessageType = fastReflection_GetAggregatesRequest_messageType{}
 
-type fastReflection_GetSamplesRequest_messageType struct{}
+type fastReflection_GetAggregatesRequest_messageType struct{}
 
-func (x fastReflection_GetSamplesRequest_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_GetSamplesRequest)(nil)
+func (x fastReflection_GetAggregatesRequest_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_GetAggregatesRequest)(nil)
 }
-func (x fastReflection_GetSamplesRequest_messageType) New() protoreflect.Message {
-	return new(fastReflection_GetSamplesRequest)
+func (x fastReflection_GetAggregatesRequest_messageType) New() protoreflect.Message {
+	return new(fastReflection_GetAggregatesRequest)
 }
-func (x fastReflection_GetSamplesRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_GetSamplesRequest
+func (x fastReflection_GetAggregatesRequest_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_GetAggregatesRequest
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_GetSamplesRequest) Descriptor() protoreflect.MessageDescriptor {
-	return md_GetSamplesRequest
+func (x *fastReflection_GetAggregatesRequest) Descriptor() protoreflect.MessageDescriptor {
+	return md_GetAggregatesRequest
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_GetSamplesRequest) Type() protoreflect.MessageType {
-	return _fastReflection_GetSamplesRequest_messageType
+func (x *fastReflection_GetAggregatesRequest) Type() protoreflect.MessageType {
+	return _fastReflection_GetAggregatesRequest_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_GetSamplesRequest) New() protoreflect.Message {
-	return new(fastReflection_GetSamplesRequest)
+func (x *fastReflection_GetAggregatesRequest) New() protoreflect.Message {
+	return new(fastReflection_GetAggregatesRequest)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_GetSamplesRequest) Interface() protoreflect.ProtoMessage {
-	return (*GetSamplesRequest)(x)
+func (x *fastReflection_GetAggregatesRequest) Interface() protoreflect.ProtoMessage {
+	return (*GetAggregatesRequest)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -140,16 +133,10 @@ func (x *fastReflection_GetSamplesRequest) Interface() protoreflect.ProtoMessage
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_GetSamplesRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if len(x.Tasks) != 0 {
-		value := protoreflect.ValueOfList(&_GetSamplesRequest_1_list{list: &x.Tasks})
-		if !f(fd_GetSamplesRequest_tasks, value) {
-			return
-		}
-	}
-	if x.Height != int64(0) {
-		value := protoreflect.ValueOfInt64(x.Height)
-		if !f(fd_GetSamplesRequest_height, value) {
+func (x *fastReflection_GetAggregatesRequest) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if len(x.Symbols) != 0 {
+		value := protoreflect.ValueOfList(&_GetAggregatesRequest_1_list{list: &x.Symbols})
+		if !f(fd_GetAggregatesRequest_symbols, value) {
 			return
 		}
 	}
@@ -166,17 +153,15 @@ func (x *fastReflection_GetSamplesRequest) Range(f func(protoreflect.FieldDescri
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_GetSamplesRequest) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_GetAggregatesRequest) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesRequest.tasks":
-		return len(x.Tasks) != 0
-	case "guru.oracle.v1.GetSamplesRequest.height":
-		return x.Height != int64(0)
+	case "guru.oracle.v1.GetAggregatesRequest.symbols":
+		return len(x.Symbols) != 0
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -186,17 +171,15 @@ func (x *fastReflection_GetSamplesRequest) Has(fd protoreflect.FieldDescriptor) 
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetSamplesRequest) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_GetAggregatesRequest) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesRequest.tasks":
-		x.Tasks = nil
-	case "guru.oracle.v1.GetSamplesRequest.height":
-		x.Height = int64(0)
+	case "guru.oracle.v1.GetAggregatesRequest.symbols":
+		x.Symbols = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -206,22 +189,19 @@ func (x *fastReflection_GetSamplesRequest) Clear(fd protoreflect.FieldDescriptor
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_GetSamplesRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetAggregatesRequest) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.GetSamplesRequest.tasks":
-		if len(x.Tasks) == 0 {
-			return protoreflect.ValueOfList(&_GetSamplesRequest_1_list{})
+	case "guru.oracle.v1.GetAggregatesRequest.symbols":
+		if len(x.Symbols) == 0 {
+			return protoreflect.ValueOfList(&_GetAggregatesRequest_1_list{})
 		}
-		listValue := &_GetSamplesRequest_1_list{list: &x.Tasks}
+		listValue := &_GetAggregatesRequest_1_list{list: &x.Symbols}
 		return protoreflect.ValueOfList(listValue)
-	case "guru.oracle.v1.GetSamplesRequest.height":
-		value := x.Height
-		return protoreflect.ValueOfInt64(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesRequest does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesRequest does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -235,19 +215,17 @@ func (x *fastReflection_GetSamplesRequest) Get(descriptor protoreflect.FieldDesc
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetSamplesRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_GetAggregatesRequest) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesRequest.tasks":
+	case "guru.oracle.v1.GetAggregatesRequest.symbols":
 		lv := value.List()
-		clv := lv.(*_GetSamplesRequest_1_list)
-		x.Tasks = *clv.list
-	case "guru.oracle.v1.GetSamplesRequest.height":
-		x.Height = value.Int()
+		clv := lv.(*_GetAggregatesRequest_1_list)
+		x.Symbols = *clv.list
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -261,49 +239,45 @@ func (x *fastReflection_GetSamplesRequest) Set(fd protoreflect.FieldDescriptor, 
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetSamplesRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetAggregatesRequest) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesRequest.tasks":
-		if x.Tasks == nil {
-			x.Tasks = []*OracleTask{}
+	case "guru.oracle.v1.GetAggregatesRequest.symbols":
+		if x.Symbols == nil {
+			x.Symbols = []string{}
 		}
-		value := &_GetSamplesRequest_1_list{list: &x.Tasks}
+		value := &_GetAggregatesRequest_1_list{list: &x.Symbols}
 		return protoreflect.ValueOfList(value)
-	case "guru.oracle.v1.GetSamplesRequest.height":
-		panic(fmt.Errorf("field height of message guru.oracle.v1.GetSamplesRequest is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_GetSamplesRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetAggregatesRequest) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesRequest.tasks":
-		list := []*OracleTask{}
-		return protoreflect.ValueOfList(&_GetSamplesRequest_1_list{list: &list})
-	case "guru.oracle.v1.GetSamplesRequest.height":
-		return protoreflect.ValueOfInt64(int64(0))
+	case "guru.oracle.v1.GetAggregatesRequest.symbols":
+		list := []string{}
+		return protoreflect.ValueOfList(&_GetAggregatesRequest_1_list{list: &list})
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesRequest"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesRequest"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesRequest does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesRequest does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_GetSamplesRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_GetAggregatesRequest) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.GetSamplesRequest", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.GetAggregatesRequest", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -311,7 +285,7 @@ func (x *fastReflection_GetSamplesRequest) WhichOneof(d protoreflect.OneofDescri
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_GetSamplesRequest) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_GetAggregatesRequest) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -322,7 +296,7 @@ func (x *fastReflection_GetSamplesRequest) GetUnknown() protoreflect.RawFields {
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetSamplesRequest) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_GetAggregatesRequest) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -334,7 +308,7 @@ func (x *fastReflection_GetSamplesRequest) SetUnknown(fields protoreflect.RawFie
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_GetSamplesRequest) IsValid() bool {
+func (x *fastReflection_GetAggregatesRequest) IsValid() bool {
 	return x != nil
 }
 
@@ -344,9 +318,9 @@ func (x *fastReflection_GetSamplesRequest) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_GetSamplesRequest) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_GetAggregatesRequest) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*GetSamplesRequest)
+		x := input.Message.Interface().(*GetAggregatesRequest)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -358,14 +332,11 @@ func (x *fastReflection_GetSamplesRequest) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		if len(x.Tasks) > 0 {
-			for _, e := range x.Tasks {
-				l = options.Size(e)
+		if len(x.Symbols) > 0 {
+			for _, s := range x.Symbols {
+				l = len(s)
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
-		}
-		if x.Height != 0 {
-			n += 1 + runtime.Sov(uint64(x.Height))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -377,7 +348,7 @@ func (x *fastReflection_GetSamplesRequest) ProtoMethods() *protoiface.Methods {
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*GetSamplesRequest)
+		x := input.Message.Interface().(*GetAggregatesRequest)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -396,23 +367,11 @@ func (x *fastReflection_GetSamplesRequest) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if x.Height != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.Height))
-			i--
-			dAtA[i] = 0x10
-		}
-		if len(x.Tasks) > 0 {
-			for iNdEx := len(x.Tasks) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.Tasks[iNdEx])
-				if err != nil {
-					return protoiface.MarshalOutput{
-						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-						Buf:               input.Buf,
-					}, err
-				}
-				i -= len(encoded)
-				copy(dAtA[i:], encoded)
-				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+		if len(x.Symbols) > 0 {
+			for iNdEx := len(x.Symbols) - 1; iNdEx >= 0; iNdEx-- {
+				i -= len(x.Symbols[iNdEx])
+				copy(dAtA[i:], x.Symbols[iNdEx])
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Symbols[iNdEx])))
 				i--
 				dAtA[i] = 0xa
 			}
@@ -428,7 +387,7 @@ func (x *fastReflection_GetSamplesRequest) ProtoMethods() *protoiface.Methods {
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*GetSamplesRequest)
+		x := input.Message.Interface().(*GetAggregatesRequest)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -460,17 +419,17 @@ func (x *fastReflection_GetSamplesRequest) ProtoMethods() *protoiface.Methods {
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetSamplesRequest: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetAggregatesRequest: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetSamplesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetAggregatesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Tasks", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Symbols", wireType)
 				}
-				var msglen int
+				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -480,45 +439,24 @@ func (x *fastReflection_GetSamplesRequest) ProtoMethods() *protoiface.Methods {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					msglen |= int(b&0x7F) << shift
+					stringLen |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				if msglen < 0 {
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
-				postIndex := iNdEx + msglen
+				postIndex := iNdEx + intStringLen
 				if postIndex < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Tasks = append(x.Tasks, &OracleTask{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Tasks[len(x.Tasks)-1]); err != nil {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
-				}
+				x.Symbols = append(x.Symbols, string(dAtA[iNdEx:postIndex]))
 				iNdEx = postIndex
-			case 2:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
-				}
-				x.Height = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.Height |= int64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -554,77 +492,77 @@ func (x *fastReflection_GetSamplesRequest) ProtoMethods() *protoiface.Methods {
 	}
 }
 
-var _ protoreflect.List = (*_GetSamplesResponse_1_list)(nil)
+var _ protoreflect.List = (*_GetAggregatesResponse_1_list)(nil)
 
-type _GetSamplesResponse_1_list struct {
-	list *[]*OracleSymbolSamples
+type _GetAggregatesResponse_1_list struct {
+	list *[]*AggregatedResult
 }
 
-func (x *_GetSamplesResponse_1_list) Len() int {
+func (x *_GetAggregatesResponse_1_list) Len() int {
 	if x.list == nil {
 		return 0
 	}
 	return len(*x.list)
 }
 
-func (x *_GetSamplesResponse_1_list) Get(i int) protoreflect.Value {
+func (x *_GetAggregatesResponse_1_list) Get(i int) protoreflect.Value {
 	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
 }
 
-func (x *_GetSamplesResponse_1_list) Set(i int, value protoreflect.Value) {
+func (x *_GetAggregatesResponse_1_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleSymbolSamples)
+	concreteValue := valueUnwrapped.Interface().(*AggregatedResult)
 	(*x.list)[i] = concreteValue
 }
 
-func (x *_GetSamplesResponse_1_list) Append(value protoreflect.Value) {
+func (x *_GetAggregatesResponse_1_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleSymbolSamples)
+	concreteValue := valueUnwrapped.Interface().(*AggregatedResult)
 	*x.list = append(*x.list, concreteValue)
 }
 
-func (x *_GetSamplesResponse_1_list) AppendMutable() protoreflect.Value {
-	v := new(OracleSymbolSamples)
+func (x *_GetAggregatesResponse_1_list) AppendMutable() protoreflect.Value {
+	v := new(AggregatedResult)
 	*x.list = append(*x.list, v)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_GetSamplesResponse_1_list) Truncate(n int) {
+func (x *_GetAggregatesResponse_1_list) Truncate(n int) {
 	for i := n; i < len(*x.list); i++ {
 		(*x.list)[i] = nil
 	}
 	*x.list = (*x.list)[:n]
 }
 
-func (x *_GetSamplesResponse_1_list) NewElement() protoreflect.Value {
-	v := new(OracleSymbolSamples)
+func (x *_GetAggregatesResponse_1_list) NewElement() protoreflect.Value {
+	v := new(AggregatedResult)
 	return protoreflect.ValueOfMessage(v.ProtoReflect())
 }
 
-func (x *_GetSamplesResponse_1_list) IsValid() bool {
+func (x *_GetAggregatesResponse_1_list) IsValid() bool {
 	return x.list != nil
 }
 
 var (
-	md_GetSamplesResponse         protoreflect.MessageDescriptor
-	fd_GetSamplesResponse_symbols protoreflect.FieldDescriptor
+	md_GetAggregatesResponse         protoreflect.MessageDescriptor
+	fd_GetAggregatesResponse_results protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_daemon_proto_init()
-	md_GetSamplesResponse = File_guru_oracle_v1_daemon_proto.Messages().ByName("GetSamplesResponse")
-	fd_GetSamplesResponse_symbols = md_GetSamplesResponse.Fields().ByName("symbols")
+	md_GetAggregatesResponse = File_guru_oracle_v1_daemon_proto.Messages().ByName("GetAggregatesResponse")
+	fd_GetAggregatesResponse_results = md_GetAggregatesResponse.Fields().ByName("results")
 }
 
-var _ protoreflect.Message = (*fastReflection_GetSamplesResponse)(nil)
+var _ protoreflect.Message = (*fastReflection_GetAggregatesResponse)(nil)
 
-type fastReflection_GetSamplesResponse GetSamplesResponse
+type fastReflection_GetAggregatesResponse GetAggregatesResponse
 
-func (x *GetSamplesResponse) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_GetSamplesResponse)(x)
+func (x *GetAggregatesResponse) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_GetAggregatesResponse)(x)
 }
 
-func (x *GetSamplesResponse) slowProtoReflect() protoreflect.Message {
+func (x *GetAggregatesResponse) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_daemon_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -636,43 +574,43 @@ func (x *GetSamplesResponse) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_GetSamplesResponse_messageType fastReflection_GetSamplesResponse_messageType
-var _ protoreflect.MessageType = fastReflection_GetSamplesResponse_messageType{}
+var _fastReflection_GetAggregatesResponse_messageType fastReflection_GetAggregatesResponse_messageType
+var _ protoreflect.MessageType = fastReflection_GetAggregatesResponse_messageType{}
 
-type fastReflection_GetSamplesResponse_messageType struct{}
+type fastReflection_GetAggregatesResponse_messageType struct{}
 
-func (x fastReflection_GetSamplesResponse_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_GetSamplesResponse)(nil)
+func (x fastReflection_GetAggregatesResponse_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_GetAggregatesResponse)(nil)
 }
-func (x fastReflection_GetSamplesResponse_messageType) New() protoreflect.Message {
-	return new(fastReflection_GetSamplesResponse)
+func (x fastReflection_GetAggregatesResponse_messageType) New() protoreflect.Message {
+	return new(fastReflection_GetAggregatesResponse)
 }
-func (x fastReflection_GetSamplesResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_GetSamplesResponse
+func (x fastReflection_GetAggregatesResponse_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_GetAggregatesResponse
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_GetSamplesResponse) Descriptor() protoreflect.MessageDescriptor {
-	return md_GetSamplesResponse
+func (x *fastReflection_GetAggregatesResponse) Descriptor() protoreflect.MessageDescriptor {
+	return md_GetAggregatesResponse
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_GetSamplesResponse) Type() protoreflect.MessageType {
-	return _fastReflection_GetSamplesResponse_messageType
+func (x *fastReflection_GetAggregatesResponse) Type() protoreflect.MessageType {
+	return _fastReflection_GetAggregatesResponse_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_GetSamplesResponse) New() protoreflect.Message {
-	return new(fastReflection_GetSamplesResponse)
+func (x *fastReflection_GetAggregatesResponse) New() protoreflect.Message {
+	return new(fastReflection_GetAggregatesResponse)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_GetSamplesResponse) Interface() protoreflect.ProtoMessage {
-	return (*GetSamplesResponse)(x)
+func (x *fastReflection_GetAggregatesResponse) Interface() protoreflect.ProtoMessage {
+	return (*GetAggregatesResponse)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -680,10 +618,10 @@ func (x *fastReflection_GetSamplesResponse) Interface() protoreflect.ProtoMessag
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_GetSamplesResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if len(x.Symbols) != 0 {
-		value := protoreflect.ValueOfList(&_GetSamplesResponse_1_list{list: &x.Symbols})
-		if !f(fd_GetSamplesResponse_symbols, value) {
+func (x *fastReflection_GetAggregatesResponse) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if len(x.Results) != 0 {
+		value := protoreflect.ValueOfList(&_GetAggregatesResponse_1_list{list: &x.Results})
+		if !f(fd_GetAggregatesResponse_results, value) {
 			return
 		}
 	}
@@ -700,15 +638,15 @@ func (x *fastReflection_GetSamplesResponse) Range(f func(protoreflect.FieldDescr
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_GetSamplesResponse) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_GetAggregatesResponse) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesResponse.symbols":
-		return len(x.Symbols) != 0
+	case "guru.oracle.v1.GetAggregatesResponse.results":
+		return len(x.Results) != 0
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -718,15 +656,15 @@ func (x *fastReflection_GetSamplesResponse) Has(fd protoreflect.FieldDescriptor)
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetSamplesResponse) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_GetAggregatesResponse) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesResponse.symbols":
-		x.Symbols = nil
+	case "guru.oracle.v1.GetAggregatesResponse.results":
+		x.Results = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -736,19 +674,19 @@ func (x *fastReflection_GetSamplesResponse) Clear(fd protoreflect.FieldDescripto
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_GetSamplesResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetAggregatesResponse) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.GetSamplesResponse.symbols":
-		if len(x.Symbols) == 0 {
-			return protoreflect.ValueOfList(&_GetSamplesResponse_1_list{})
+	case "guru.oracle.v1.GetAggregatesResponse.results":
+		if len(x.Results) == 0 {
+			return protoreflect.ValueOfList(&_GetAggregatesResponse_1_list{})
 		}
-		listValue := &_GetSamplesResponse_1_list{list: &x.Symbols}
+		listValue := &_GetAggregatesResponse_1_list{list: &x.Results}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesResponse does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesResponse does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -762,17 +700,17 @@ func (x *fastReflection_GetSamplesResponse) Get(descriptor protoreflect.FieldDes
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetSamplesResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_GetAggregatesResponse) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesResponse.symbols":
+	case "guru.oracle.v1.GetAggregatesResponse.results":
 		lv := value.List()
-		clv := lv.(*_GetSamplesResponse_1_list)
-		x.Symbols = *clv.list
+		clv := lv.(*_GetAggregatesResponse_1_list)
+		x.Results = *clv.list
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -786,45 +724,45 @@ func (x *fastReflection_GetSamplesResponse) Set(fd protoreflect.FieldDescriptor,
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetSamplesResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetAggregatesResponse) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesResponse.symbols":
-		if x.Symbols == nil {
-			x.Symbols = []*OracleSymbolSamples{}
+	case "guru.oracle.v1.GetAggregatesResponse.results":
+		if x.Results == nil {
+			x.Results = []*AggregatedResult{}
 		}
-		value := &_GetSamplesResponse_1_list{list: &x.Symbols}
+		value := &_GetAggregatesResponse_1_list{list: &x.Results}
 		return protoreflect.ValueOfList(value)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_GetSamplesResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_GetAggregatesResponse) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.GetSamplesResponse.symbols":
-		list := []*OracleSymbolSamples{}
-		return protoreflect.ValueOfList(&_GetSamplesResponse_1_list{list: &list})
+	case "guru.oracle.v1.GetAggregatesResponse.results":
+		list := []*AggregatedResult{}
+		return protoreflect.ValueOfList(&_GetAggregatesResponse_1_list{list: &list})
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetSamplesResponse"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.GetAggregatesResponse"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.GetSamplesResponse does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.GetAggregatesResponse does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_GetSamplesResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_GetAggregatesResponse) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.GetSamplesResponse", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.GetAggregatesResponse", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -832,7 +770,7 @@ func (x *fastReflection_GetSamplesResponse) WhichOneof(d protoreflect.OneofDescr
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_GetSamplesResponse) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_GetAggregatesResponse) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -843,7 +781,7 @@ func (x *fastReflection_GetSamplesResponse) GetUnknown() protoreflect.RawFields 
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_GetSamplesResponse) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_GetAggregatesResponse) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -855,7 +793,7 @@ func (x *fastReflection_GetSamplesResponse) SetUnknown(fields protoreflect.RawFi
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_GetSamplesResponse) IsValid() bool {
+func (x *fastReflection_GetAggregatesResponse) IsValid() bool {
 	return x != nil
 }
 
@@ -865,9 +803,9 @@ func (x *fastReflection_GetSamplesResponse) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_GetSamplesResponse) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_GetAggregatesResponse) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*GetSamplesResponse)
+		x := input.Message.Interface().(*GetAggregatesResponse)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -879,8 +817,8 @@ func (x *fastReflection_GetSamplesResponse) ProtoMethods() *protoiface.Methods {
 		var n int
 		var l int
 		_ = l
-		if len(x.Symbols) > 0 {
-			for _, e := range x.Symbols {
+		if len(x.Results) > 0 {
+			for _, e := range x.Results {
 				l = options.Size(e)
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
@@ -895,7 +833,7 @@ func (x *fastReflection_GetSamplesResponse) ProtoMethods() *protoiface.Methods {
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*GetSamplesResponse)
+		x := input.Message.Interface().(*GetAggregatesResponse)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -914,9 +852,9 @@ func (x *fastReflection_GetSamplesResponse) ProtoMethods() *protoiface.Methods {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.Symbols) > 0 {
-			for iNdEx := len(x.Symbols) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.Symbols[iNdEx])
+		if len(x.Results) > 0 {
+			for iNdEx := len(x.Results) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.Results[iNdEx])
 				if err != nil {
 					return protoiface.MarshalOutput{
 						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -941,7 +879,7 @@ func (x *fastReflection_GetSamplesResponse) ProtoMethods() *protoiface.Methods {
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*GetSamplesResponse)
+		x := input.Message.Interface().(*GetAggregatesResponse)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -973,15 +911,15 @@ func (x *fastReflection_GetSamplesResponse) ProtoMethods() *protoiface.Methods {
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetSamplesResponse: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetAggregatesResponse: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetSamplesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: GetAggregatesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Symbols", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Results", wireType)
 				}
 				var msglen int
 				for shift := uint(0); ; shift += 7 {
@@ -1008,8 +946,8 @@ func (x *fastReflection_GetSamplesResponse) ProtoMethods() *protoiface.Methods {
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Symbols = append(x.Symbols, &OracleSymbolSamples{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Symbols[len(x.Symbols)-1]); err != nil {
+				x.Results = append(x.Results, &AggregatedResult{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Results[len(x.Results)-1]); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -1061,17 +999,16 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetSamplesRequest struct {
+type GetAggregatesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Tasks  []*OracleTask `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
-	Height int64         `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	Symbols []string `protobuf:"bytes,1,rep,name=symbols,proto3" json:"symbols,omitempty"`
 }
 
-func (x *GetSamplesRequest) Reset() {
-	*x = GetSamplesRequest{}
+func (x *GetAggregatesRequest) Reset() {
+	*x = GetAggregatesRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_daemon_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1079,41 +1016,34 @@ func (x *GetSamplesRequest) Reset() {
 	}
 }
 
-func (x *GetSamplesRequest) String() string {
+func (x *GetAggregatesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetSamplesRequest) ProtoMessage() {}
+func (*GetAggregatesRequest) ProtoMessage() {}
 
-// Deprecated: Use GetSamplesRequest.ProtoReflect.Descriptor instead.
-func (*GetSamplesRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetAggregatesRequest.ProtoReflect.Descriptor instead.
+func (*GetAggregatesRequest) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_daemon_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetSamplesRequest) GetTasks() []*OracleTask {
+func (x *GetAggregatesRequest) GetSymbols() []string {
 	if x != nil {
-		return x.Tasks
+		return x.Symbols
 	}
 	return nil
 }
 
-func (x *GetSamplesRequest) GetHeight() int64 {
-	if x != nil {
-		return x.Height
-	}
-	return 0
-}
-
-type GetSamplesResponse struct {
+type GetAggregatesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Symbols []*OracleSymbolSamples `protobuf:"bytes,1,rep,name=symbols,proto3" json:"symbols,omitempty"`
+	Results []*AggregatedResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
 }
 
-func (x *GetSamplesResponse) Reset() {
-	*x = GetSamplesResponse{}
+func (x *GetAggregatesResponse) Reset() {
+	*x = GetAggregatesResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_daemon_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1121,20 +1051,20 @@ func (x *GetSamplesResponse) Reset() {
 	}
 }
 
-func (x *GetSamplesResponse) String() string {
+func (x *GetAggregatesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetSamplesResponse) ProtoMessage() {}
+func (*GetAggregatesResponse) ProtoMessage() {}
 
-// Deprecated: Use GetSamplesResponse.ProtoReflect.Descriptor instead.
-func (*GetSamplesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetAggregatesResponse.ProtoReflect.Descriptor instead.
+func (*GetAggregatesResponse) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_daemon_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetSamplesResponse) GetSymbols() []*OracleSymbolSamples {
+func (x *GetAggregatesResponse) GetResults() []*AggregatedResult {
 	if x != nil {
-		return x.Symbols
+		return x.Results
 	}
 	return nil
 }
@@ -1146,37 +1076,35 @@ var file_guru_oracle_v1_daemon_proto_rawDesc = []byte{
 	0x2f, 0x64, 0x61, 0x65, 0x6d, 0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0e, 0x67,
 	0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x1a, 0x1b, 0x67,
 	0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x6f, 0x72,
-	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x5d, 0x0a, 0x11, 0x47, 0x65,
-	0x74, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x30, 0x0a, 0x05, 0x74, 0x61, 0x73, 0x6b, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a,
-	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e,
-	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x05, 0x74, 0x61, 0x73, 0x6b,
-	0x73, 0x12, 0x16, 0x0a, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x03, 0x52, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x22, 0x53, 0x0a, 0x12, 0x47, 0x65, 0x74,
-	0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x3d, 0x0a, 0x07, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
-	0x32, 0x23, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76,
-	0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x53, 0x61,
-	0x6d, 0x70, 0x6c, 0x65, 0x73, 0x52, 0x07, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x73, 0x32, 0x64,
-	0x0a, 0x0d, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x64, 0x65, 0x63, 0x61, 0x72, 0x12,
-	0x53, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x73, 0x12, 0x21, 0x2e,
-	0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47,
-	0x65, 0x74, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x22, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76,
-	0x31, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x42, 0xb9, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72,
-	0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b, 0x44, 0x61, 0x65,
-	0x6d, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c,
-	0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69,
-	0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b,
-	0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02,
-	0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca,
-	0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31,
-	0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56,
-	0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10,
-	0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x30, 0x0a, 0x14, 0x47, 0x65,
+	0x74, 0x41, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61, 0x74, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x09, 0x52, 0x07, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x73, 0x22, 0x53, 0x0a, 0x15,
+	0x47, 0x65, 0x74, 0x41, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61, 0x74, 0x65, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3a, 0x0a, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61, 0x74,
+	0x65, 0x64, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x73, 0x32, 0x6d, 0x0a, 0x0d, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x64, 0x65, 0x63,
+	0x61, 0x72, 0x12, 0x5c, 0x0a, 0x0d, 0x47, 0x65, 0x74, 0x41, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61,
+	0x74, 0x65, 0x73, 0x12, 0x24, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61, 0x74,
+	0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x67, 0x75, 0x72, 0x75,
+	0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x67,
+	0x67, 0x72, 0x65, 0x67, 0x61, 0x74, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x42, 0xb9, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72,
+	0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b, 0x44, 0x61, 0x65, 0x6d, 0x6f, 0x6e, 0x50,
+	0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c,
+	0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72,
+	0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63,
+	0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72,
+	0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75,
+	0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47,
+	0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50,
+	0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75,
+	0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1193,21 +1121,19 @@ func file_guru_oracle_v1_daemon_proto_rawDescGZIP() []byte {
 
 var file_guru_oracle_v1_daemon_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_guru_oracle_v1_daemon_proto_goTypes = []interface{}{
-	(*GetSamplesRequest)(nil),   // 0: guru.oracle.v1.GetSamplesRequest
-	(*GetSamplesResponse)(nil),  // 1: guru.oracle.v1.GetSamplesResponse
-	(*OracleTask)(nil),          // 2: guru.oracle.v1.OracleTask
-	(*OracleSymbolSamples)(nil), // 3: guru.oracle.v1.OracleSymbolSamples
+	(*GetAggregatesRequest)(nil),  // 0: guru.oracle.v1.GetAggregatesRequest
+	(*GetAggregatesResponse)(nil), // 1: guru.oracle.v1.GetAggregatesResponse
+	(*AggregatedResult)(nil),      // 2: guru.oracle.v1.AggregatedResult
 }
 var file_guru_oracle_v1_daemon_proto_depIdxs = []int32{
-	2, // 0: guru.oracle.v1.GetSamplesRequest.tasks:type_name -> guru.oracle.v1.OracleTask
-	3, // 1: guru.oracle.v1.GetSamplesResponse.symbols:type_name -> guru.oracle.v1.OracleSymbolSamples
-	0, // 2: guru.oracle.v1.OracleSidecar.GetSamples:input_type -> guru.oracle.v1.GetSamplesRequest
-	1, // 3: guru.oracle.v1.OracleSidecar.GetSamples:output_type -> guru.oracle.v1.GetSamplesResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2, // 0: guru.oracle.v1.GetAggregatesResponse.results:type_name -> guru.oracle.v1.AggregatedResult
+	0, // 1: guru.oracle.v1.OracleSidecar.GetAggregates:input_type -> guru.oracle.v1.GetAggregatesRequest
+	1, // 2: guru.oracle.v1.OracleSidecar.GetAggregates:output_type -> guru.oracle.v1.GetAggregatesResponse
+	2, // [2:3] is the sub-list for method output_type
+	1, // [1:2] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_guru_oracle_v1_daemon_proto_init() }
@@ -1218,7 +1144,7 @@ func file_guru_oracle_v1_daemon_proto_init() {
 	file_guru_oracle_v1_oracle_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_guru_oracle_v1_daemon_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSamplesRequest); i {
+			switch v := v.(*GetAggregatesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1230,7 +1156,7 @@ func file_guru_oracle_v1_daemon_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_daemon_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSamplesResponse); i {
+			switch v := v.(*GetAggregatesResponse); i {
 			case 0:
 				return &v.state
 			case 1:

@@ -73,6 +73,7 @@ type App struct {
 
 	EVMMempool            sdkmempool.ExtMempool
 	OracleProposalHandler *oracleabci.ProposalHandler
+	oracleVoteHandler     *oracleabci.VoteExtensionHandler
 
 	*appkeepers.AppKeepers
 
@@ -298,6 +299,9 @@ func (app *App) RegisterNodeService(clientCtx client.Context, cfg config.Config)
 func (app *App) Close() error {
 	var err error
 	msg := "Application gracefully shutdown"
+	if app.oracleVoteHandler != nil {
+		err = errors.Join(err, app.oracleVoteHandler.Close())
+	}
 	if m, ok := app.EVMMempool.(io.Closer); ok && m != nil {
 		err = errors.Join(err, m.Close())
 	}

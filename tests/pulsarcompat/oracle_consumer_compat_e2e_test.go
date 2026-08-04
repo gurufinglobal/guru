@@ -27,7 +27,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
-	"github.com/gurufinglobal/guru/v3/oracle"
 	oracleabci "github.com/gurufinglobal/guru/v3/x/oracle/abci"
 	oracletypes "github.com/gurufinglobal/guru/v3/x/oracle/types"
 	"github.com/stretchr/testify/require"
@@ -54,6 +53,7 @@ func TestE2EOracleProposalConsumerCompatibilityGoLevelDBIndexerPersistence(t *te
 func runE2EOracleProposalConsumerCompatibility(t *testing.T, appDBBackend string, requireIndexerPersistence bool) {
 	repoRoot := projectRootFromTestFile(t)
 	bin := buildGurudBinary(t, repoRoot)
+	oracledBin := buildOracledBinary(t, repoRoot)
 	privateKey, err := crypto.HexToECDSA("0000000000000000000000000000000000000000000000000000000000000001")
 	require.NoError(t, err)
 	evmAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
@@ -68,7 +68,7 @@ func runE2EOracleProposalConsumerCompatibility(t *testing.T, appDBBackend string
 
 	sourceServer := startOracleSoakSourceServer(t)
 	defer sourceServer.Close()
-	startOracleConsumerSidecar(t, node, sourceServer.URL)
+	startOracleConsumerSidecar(t, repoRoot, oracledBin, node, sourceServer)
 	defer stopOracleSidecar(t, node)
 
 	node.node = startOracleConsumerNode(t, repoRoot, bin, node, appDBBackend)
@@ -275,33 +275,14 @@ func setOracleConsumerAppDBBackend(t *testing.T, home, backend string) {
 	require.NoError(t, os.WriteFile(appTomlPath, []byte(content), 0o644))
 }
 
-func startOracleConsumerSidecar(t *testing.T, node *oracleSoakNode, sourceURL string) {
+func startOracleConsumerSidecar(
+	t *testing.T,
+	repoRoot, oracledBin string,
+	node *oracleSoakNode,
+	sourceServer *oracleTestHTTPSServer,
+) {
 	t.Helper()
-
-	cfg := oracle.Config{
-		Socket:           node.oracleSocket,
-		RequestTimeout:   "2s",
-		SourceTimeout:    "500ms",
-		NodeGRPC:         node.grpcAddr,
-		NodeQueryTimeout: "2s",
-		Sources: []oracle.SourceConfig{
-			{Name: "btc-a", Symbol: "BTC/USD", ValueType: "numeric", URL: sourceURL + "/price?symbol={symbol}&price=101.0", ResponsePath: "data.price"},
-			{Name: "btc-b", Symbol: "BTC/USD", ValueType: "numeric", URL: sourceURL + "/price?symbol={symbol}&price=102.0", ResponsePath: "data.price"},
-			{Name: "btc-c", Symbol: "BTC/USD", ValueType: "numeric", URL: sourceURL + "/price?symbol={symbol}&price=103.0", ResponsePath: "data.price"},
-		},
-	}
-	sidecar, err := oracle.NewSidecar(cfg, []*oracletypes.OracleTask{{
-		Symbol:             "BTC/USD",
-		ValueType:          oracletypes.ValueType_VALUE_TYPE_NUMERIC,
-		Enabled:            true,
-		SubmissionInterval: 1,
-	}})
-	require.NoError(t, err)
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan error, 1)
-	go func() { done <- sidecar.Run(ctx) }()
-	node.sidecar = &oracleSoakSidecar{cancel: cancel, done: done}
-	waitForOracleSocket(t, node.oracleSocket, done, 5*time.Second)
+	node.sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer)
 }
 
 func startOracleConsumerNode(t *testing.T, repoRoot, bin string, node *oracleSoakNode, appDBBackend string) *runningNode {

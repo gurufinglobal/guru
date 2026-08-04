@@ -24,9 +24,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // ValueType classifies the string-encoded oracle value.
 //
-// Guru oracle v1 only supports VALUE_TYPE_NUMERIC for configured tasks,
-// accepted values, samples, and validator results. Non-numeric enum values are
-// reserved for future use and are rejected by current validation.
+// Guru oracle v1 only supports VALUE_TYPE_NUMERIC for configured tasks and
+// accepted values. Sidecar aggregates and validator results omit the redundant
+// type and are valid only for numeric tasks. Other enum values are reserved.
 type ValueType int32
 
 const (
@@ -208,26 +208,25 @@ func (m *OracleValue) GetBlockTimeUnix() int64 {
 	return 0
 }
 
-type OracleSample struct {
-	Source string `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
-	ValueType      ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
-	Value          string    `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	SampleTimeUnix int64     `protobuf:"varint,4,opt,name=sample_time_unix,json=sampleTimeUnix,proto3" json:"sample_time_unix,omitempty"`
+// AggregatedResult is a sidecar-produced strict-majority aggregate.
+type AggregatedResult struct {
+	Symbol      string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Value       string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	SourceCount uint32 `protobuf:"varint,3,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
 }
 
-func (m *OracleSample) Reset()         { *m = OracleSample{} }
-func (m *OracleSample) String() string { return proto.CompactTextString(m) }
-func (*OracleSample) ProtoMessage()    {}
-func (*OracleSample) Descriptor() ([]byte, []int) {
+func (m *AggregatedResult) Reset()         { *m = AggregatedResult{} }
+func (m *AggregatedResult) String() string { return proto.CompactTextString(m) }
+func (*AggregatedResult) ProtoMessage()    {}
+func (*AggregatedResult) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f372f15f6da5f250, []int{2}
 }
-func (m *OracleSample) XXX_Unmarshal(b []byte) error {
+func (m *AggregatedResult) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *OracleSample) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *AggregatedResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_OracleSample.Marshal(b, m, deterministic)
+		return xxx_messageInfo_AggregatedResult.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -237,111 +236,50 @@ func (m *OracleSample) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *OracleSample) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OracleSample.Merge(m, src)
+func (m *AggregatedResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AggregatedResult.Merge(m, src)
 }
-func (m *OracleSample) XXX_Size() int {
+func (m *AggregatedResult) XXX_Size() int {
 	return m.Size()
 }
-func (m *OracleSample) XXX_DiscardUnknown() {
-	xxx_messageInfo_OracleSample.DiscardUnknown(m)
+func (m *AggregatedResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_AggregatedResult.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_OracleSample proto.InternalMessageInfo
+var xxx_messageInfo_AggregatedResult proto.InternalMessageInfo
 
-func (m *OracleSample) GetSource() string {
-	if m != nil {
-		return m.Source
-	}
-	return ""
-}
-
-func (m *OracleSample) GetValueType() ValueType {
-	if m != nil {
-		return m.ValueType
-	}
-	return ValueType_VALUE_TYPE_UNSPECIFIED
-}
-
-func (m *OracleSample) GetValue() string {
-	if m != nil {
-		return m.Value
-	}
-	return ""
-}
-
-func (m *OracleSample) GetSampleTimeUnix() int64 {
-	if m != nil {
-		return m.SampleTimeUnix
-	}
-	return 0
-}
-
-type OracleSymbolSamples struct {
-	Symbol  string          `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Samples []*OracleSample `protobuf:"bytes,2,rep,name=samples,proto3" json:"samples,omitempty"`
-}
-
-func (m *OracleSymbolSamples) Reset()         { *m = OracleSymbolSamples{} }
-func (m *OracleSymbolSamples) String() string { return proto.CompactTextString(m) }
-func (*OracleSymbolSamples) ProtoMessage()    {}
-func (*OracleSymbolSamples) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{3}
-}
-func (m *OracleSymbolSamples) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *OracleSymbolSamples) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_OracleSymbolSamples.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *OracleSymbolSamples) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OracleSymbolSamples.Merge(m, src)
-}
-func (m *OracleSymbolSamples) XXX_Size() int {
-	return m.Size()
-}
-func (m *OracleSymbolSamples) XXX_DiscardUnknown() {
-	xxx_messageInfo_OracleSymbolSamples.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_OracleSymbolSamples proto.InternalMessageInfo
-
-func (m *OracleSymbolSamples) GetSymbol() string {
+func (m *AggregatedResult) GetSymbol() string {
 	if m != nil {
 		return m.Symbol
 	}
 	return ""
 }
 
-func (m *OracleSymbolSamples) GetSamples() []*OracleSample {
+func (m *AggregatedResult) GetValue() string {
 	if m != nil {
-		return m.Samples
+		return m.Value
 	}
-	return nil
+	return ""
+}
+
+func (m *AggregatedResult) GetSourceCount() uint32 {
+	if m != nil {
+		return m.SourceCount
+	}
+	return 0
 }
 
 type OracleValidatorResult struct {
-	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
-	ValueType   ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
-	Value       string    `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	SourceCount uint32    `protobuf:"varint,4,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
+	Symbol      string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Value       string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	SourceCount uint32 `protobuf:"varint,4,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
 }
 
 func (m *OracleValidatorResult) Reset()         { *m = OracleValidatorResult{} }
 func (m *OracleValidatorResult) String() string { return proto.CompactTextString(m) }
 func (*OracleValidatorResult) ProtoMessage()    {}
 func (*OracleValidatorResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{4}
+	return fileDescriptor_f372f15f6da5f250, []int{3}
 }
 func (m *OracleValidatorResult) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -377,13 +315,6 @@ func (m *OracleValidatorResult) GetSymbol() string {
 	return ""
 }
 
-func (m *OracleValidatorResult) GetValueType() ValueType {
-	if m != nil {
-		return m.ValueType
-	}
-	return ValueType_VALUE_TYPE_UNSPECIFIED
-}
-
 func (m *OracleValidatorResult) GetValue() string {
 	if m != nil {
 		return m.Value
@@ -410,7 +341,7 @@ func (m *OracleSignedVoteExtension) Reset()         { *m = OracleSignedVoteExten
 func (m *OracleSignedVoteExtension) String() string { return proto.CompactTextString(m) }
 func (*OracleSignedVoteExtension) ProtoMessage()    {}
 func (*OracleSignedVoteExtension) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{5}
+	return fileDescriptor_f372f15f6da5f250, []int{4}
 }
 func (m *OracleSignedVoteExtension) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -483,7 +414,7 @@ func (m *OracleSignedVoteExtensions) Reset()         { *m = OracleSignedVoteExte
 func (m *OracleSignedVoteExtensions) String() string { return proto.CompactTextString(m) }
 func (*OracleSignedVoteExtensions) ProtoMessage()    {}
 func (*OracleSignedVoteExtensions) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{6}
+	return fileDescriptor_f372f15f6da5f250, []int{5}
 }
 func (m *OracleSignedVoteExtensions) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -536,7 +467,7 @@ func (m *OracleProposalPayload) Reset()         { *m = OracleProposalPayload{} }
 func (m *OracleProposalPayload) String() string { return proto.CompactTextString(m) }
 func (*OracleProposalPayload) ProtoMessage()    {}
 func (*OracleProposalPayload) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{7}
+	return fileDescriptor_f372f15f6da5f250, []int{6}
 }
 func (m *OracleProposalPayload) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -595,7 +526,7 @@ func (m *OracleHistory) Reset()         { *m = OracleHistory{} }
 func (m *OracleHistory) String() string { return proto.CompactTextString(m) }
 func (*OracleHistory) ProtoMessage()    {}
 func (*OracleHistory) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{8}
+	return fileDescriptor_f372f15f6da5f250, []int{7}
 }
 func (m *OracleHistory) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -642,8 +573,7 @@ func init() {
 	proto.RegisterEnum("guru.oracle.v1.ValueType", ValueType_name, ValueType_value)
 	proto.RegisterType((*OracleTask)(nil), "guru.oracle.v1.OracleTask")
 	proto.RegisterType((*OracleValue)(nil), "guru.oracle.v1.OracleValue")
-	proto.RegisterType((*OracleSample)(nil), "guru.oracle.v1.OracleSample")
-	proto.RegisterType((*OracleSymbolSamples)(nil), "guru.oracle.v1.OracleSymbolSamples")
+	proto.RegisterType((*AggregatedResult)(nil), "guru.oracle.v1.AggregatedResult")
 	proto.RegisterType((*OracleValidatorResult)(nil), "guru.oracle.v1.OracleValidatorResult")
 	proto.RegisterType((*OracleSignedVoteExtension)(nil), "guru.oracle.v1.OracleSignedVoteExtension")
 	proto.RegisterType((*OracleSignedVoteExtensions)(nil), "guru.oracle.v1.OracleSignedVoteExtensions")
@@ -654,54 +584,52 @@ func init() {
 func init() { proto.RegisterFile("guru/oracle/v1/oracle.proto", fileDescriptor_f372f15f6da5f250) }
 
 var fileDescriptor_f372f15f6da5f250 = []byte{
-	// 737 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x55, 0x4d, 0x6f, 0xd3, 0x4a,
-	0x14, 0x8d, 0x93, 0x97, 0xf6, 0xe5, 0xe6, 0xb3, 0x93, 0xd7, 0xca, 0x6d, 0x9f, 0xa2, 0x3c, 0x4b,
-	0x0f, 0x42, 0x91, 0x62, 0xb5, 0x95, 0x10, 0x3b, 0xd4, 0x96, 0x94, 0x46, 0x2a, 0x6d, 0x34, 0x49,
-	0x2a, 0x81, 0x90, 0x2c, 0x27, 0x9e, 0xba, 0x56, 0x1d, 0x4f, 0xe4, 0xb1, 0x4d, 0xf2, 0x2f, 0xf8,
-	0x09, 0x88, 0x1d, 0x3f, 0x81, 0x1d, 0x4b, 0x96, 0x5d, 0xb2, 0x44, 0xed, 0x9a, 0xff, 0x80, 0x3c,
-	0x63, 0xbb, 0x09, 0x10, 0xa9, 0x0b, 0x60, 0xe7, 0x73, 0xee, 0xf5, 0x9d, 0x73, 0xee, 0x1c, 0xcb,
-	0xb0, 0x69, 0xfa, 0xae, 0xaf, 0x52, 0x57, 0x1f, 0xda, 0x44, 0x0d, 0xb6, 0xa3, 0xa7, 0xe6, 0xd8,
-	0xa5, 0x1e, 0x45, 0xa5, 0xb0, 0xd8, 0x8c, 0xa8, 0x60, 0x5b, 0x79, 0x2f, 0x01, 0x9c, 0x72, 0xd4,
-	0xd3, 0xd9, 0x25, 0x5a, 0x83, 0x25, 0x36, 0x1d, 0x0d, 0xa8, 0x2d, 0x4b, 0x75, 0xa9, 0x91, 0xc3,
-	0x11, 0x42, 0x8f, 0x01, 0x02, 0xdd, 0xf6, 0x89, 0xe6, 0x4d, 0xc7, 0x44, 0x4e, 0xd7, 0xa5, 0x46,
-	0x69, 0x67, 0xbd, 0x39, 0x3f, 0xab, 0x79, 0x16, 0x76, 0xf4, 0xa6, 0x63, 0x82, 0x73, 0x41, 0xfc,
-	0x88, 0x64, 0x58, 0x26, 0x8e, 0x3e, 0xb0, 0x89, 0x21, 0x67, 0xea, 0x52, 0xe3, 0x6f, 0x1c, 0x43,
-	0xa4, 0x42, 0x95, 0xf9, 0x83, 0x91, 0xc5, 0x98, 0x45, 0x1d, 0xcd, 0x72, 0x3c, 0xe2, 0x06, 0xba,
-	0x2d, 0xff, 0x55, 0x97, 0x1a, 0x45, 0x8c, 0x6e, 0x4b, 0xed, 0xa8, 0xa2, 0x7c, 0x94, 0x20, 0x2f,
-	0xb4, 0xf2, 0x93, 0x7e, 0x83, 0xd8, 0x7f, 0x20, 0xcb, 0x01, 0x97, 0x9a, 0xc3, 0x02, 0xa0, 0xff,
-	0xa0, 0x30, 0xb0, 0xe9, 0xf0, 0x52, 0xbb, 0x20, 0x96, 0x79, 0xe1, 0x71, 0x85, 0x19, 0x9c, 0xe7,
-	0xdc, 0x11, 0xa7, 0xd0, 0x3d, 0x28, 0x8b, 0x16, 0xcf, 0x1a, 0x11, 0xcd, 0x77, 0xac, 0x89, 0x9c,
-	0xe5, 0x5d, 0x45, 0x4e, 0xf7, 0xac, 0x11, 0xe9, 0x3b, 0xd6, 0x44, 0x79, 0x2b, 0x41, 0x41, 0x58,
-	0xe8, 0xea, 0xa3, 0xb1, 0x2d, 0x3c, 0x50, 0xdf, 0x1d, 0x92, 0xc4, 0x03, 0x47, 0xbf, 0xdc, 0x43,
-	0x03, 0x2a, 0x8c, 0x9f, 0x38, 0xa3, 0x50, 0xf8, 0x28, 0x09, 0x3e, 0x91, 0x48, 0xa0, 0x1a, 0x29,
-	0xe4, 0xdb, 0x14, 0x3a, 0xd9, 0xc2, 0x65, 0x3f, 0x82, 0x65, 0x31, 0x80, 0xc9, 0xe9, 0x7a, 0xa6,
-	0x91, 0xdf, 0xf9, 0xf7, 0x7b, 0x95, 0xb3, 0x7e, 0x71, 0xdc, 0xac, 0xbc, 0x93, 0x60, 0x35, 0xb9,
-	0x4c, 0xcb, 0xd0, 0x3d, 0xea, 0x62, 0xc2, 0x7c, 0xdb, 0xfb, 0x93, 0xd7, 0x2a, 0x96, 0xad, 0x0d,
-	0xa9, 0xef, 0x78, 0x51, 0xf0, 0xf2, 0x82, 0x3b, 0x08, 0x29, 0xe5, 0xab, 0x04, 0xeb, 0x91, 0x7c,
-	0xcb, 0x74, 0x88, 0x71, 0x46, 0x3d, 0xd2, 0x9a, 0x78, 0xc4, 0x09, 0x73, 0x89, 0x1e, 0xc2, 0x4a,
-	0x10, 0x6b, 0xd7, 0x74, 0xc3, 0x70, 0x09, 0x63, 0x5c, 0x73, 0x01, 0x57, 0x92, 0xc2, 0x9e, 0xe0,
-	0xd1, 0x7d, 0x28, 0xdf, 0x36, 0x8f, 0xe9, 0x6b, 0xe2, 0x72, 0x0b, 0x19, 0x5c, 0x4a, 0xe8, 0x4e,
-	0xc8, 0x22, 0x05, 0x44, 0x66, 0x34, 0xcb, 0xd0, 0xce, 0x6d, 0xdd, 0xe4, 0xa2, 0xb3, 0x51, 0xdc,
-	0xda, 0xc6, 0xa1, 0xad, 0x9b, 0xe8, 0x7f, 0x28, 0x05, 0xd4, 0x23, 0x1a, 0x89, 0xb5, 0x70, 0xf1,
-	0x05, 0x5c, 0x0c, 0xe6, 0x04, 0xaa, 0x50, 0x4d, 0x3a, 0x34, 0x66, 0x99, 0x8e, 0xee, 0xf9, 0x2e,
-	0xe1, 0xc9, 0x2c, 0x60, 0x94, 0x94, 0xba, 0x71, 0x45, 0x61, 0xb0, 0xb1, 0xd0, 0x2e, 0x0b, 0xd7,
-	0xe8, 0x52, 0xdf, 0x31, 0xb8, 0xc7, 0x2c, 0x16, 0x00, 0x3d, 0x81, 0x6c, 0x78, 0x6a, 0x7c, 0xfd,
-	0x0f, 0x16, 0x5c, 0xff, 0x8f, 0x03, 0xb1, 0x78, 0x4f, 0xf9, 0x90, 0x24, 0xa1, 0xe3, 0xd2, 0x31,
-	0x65, 0xba, 0xdd, 0xd1, 0xa7, 0x36, 0xd5, 0x8d, 0x30, 0x09, 0xd1, 0x27, 0x27, 0xf1, 0x55, 0x45,
-	0x08, 0x75, 0xa1, 0x3c, 0x6f, 0x9f, 0xf1, 0x5d, 0xe6, 0x77, 0xb6, 0xee, 0x7c, 0x38, 0xc3, 0xa5,
-	0x60, 0xde, 0xdd, 0x2e, 0x2c, 0xf1, 0x5c, 0x30, 0x39, 0xc3, 0x8d, 0x6c, 0xfe, 0x7c, 0x16, 0x0f,
-	0x18, 0x8e, 0x5a, 0x95, 0x57, 0x50, 0x14, 0xf4, 0x91, 0xc5, 0x3c, 0xea, 0x4e, 0x17, 0x86, 0xf7,
-	0x76, 0x7a, 0xfa, 0xce, 0xd3, 0xb7, 0x2e, 0x21, 0x97, 0xe4, 0x19, 0x6d, 0xc0, 0xda, 0xd9, 0xde,
-	0x71, 0xbf, 0xa5, 0xf5, 0x5e, 0x74, 0x5a, 0x5a, 0xff, 0xa4, 0xdb, 0x69, 0x1d, 0xb4, 0x0f, 0xdb,
-	0xad, 0xa7, 0x95, 0x14, 0x5a, 0x03, 0x34, 0x53, 0x3b, 0xe9, 0x3f, 0x6f, 0xe1, 0xf6, 0x41, 0x45,
-	0x42, 0xab, 0xb0, 0x32, 0xc3, 0x77, 0x7b, 0xb8, 0x7d, 0xf2, 0xac, 0x92, 0x46, 0x55, 0x28, 0xcf,
-	0xd0, 0xfb, 0xa7, 0xa7, 0xc7, 0x95, 0xcc, 0x7e, 0xfb, 0xd3, 0x75, 0x4d, 0xba, 0xba, 0xae, 0x49,
-	0x5f, 0xae, 0x6b, 0xd2, 0x9b, 0x9b, 0x5a, 0xea, 0xea, 0xa6, 0x96, 0xfa, 0x7c, 0x53, 0x4b, 0xbd,
-	0x54, 0x4d, 0xcb, 0xbb, 0xf0, 0x07, 0xcd, 0x21, 0x1d, 0xa9, 0xa1, 0xea, 0x73, 0xcb, 0x31, 0x6d,
-	0x3a, 0xd0, 0x6d, 0x8e, 0xd4, 0x60, 0x57, 0x9d, 0xc4, 0xbf, 0x9b, 0xf0, 0xd3, 0x64, 0x83, 0x25,
-	0xfe, 0xaf, 0xd9, 0xfd, 0x16, 0x00, 0x00, 0xff, 0xff, 0x1c, 0x78, 0x03, 0x51, 0x8a, 0x06, 0x00,
-	0x00,
+	// 711 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0xcd, 0x4e, 0xdb, 0x4a,
+	0x14, 0x8e, 0x63, 0xc2, 0x25, 0x27, 0xbf, 0x0c, 0x17, 0x64, 0x40, 0x8a, 0x72, 0x2d, 0xdd, 0x7b,
+	0x73, 0xb9, 0x52, 0x2c, 0x60, 0xd3, 0x5d, 0x05, 0x34, 0x94, 0x54, 0x14, 0xa2, 0x49, 0x82, 0xd4,
+	0xaa, 0x92, 0xe5, 0xc4, 0x83, 0x19, 0xe1, 0x78, 0x22, 0xcf, 0xd8, 0x4d, 0xfa, 0x14, 0x7d, 0x8d,
+	0x3e, 0x42, 0x77, 0x5d, 0x76, 0xc9, 0xb2, 0xcb, 0x0a, 0xd6, 0x7d, 0x87, 0xca, 0x63, 0x27, 0x24,
+	0xb4, 0xa9, 0xd8, 0x74, 0xe7, 0xef, 0x3b, 0xc7, 0xe7, 0x7c, 0xdf, 0x39, 0x33, 0x03, 0xdb, 0x4e,
+	0xe0, 0x07, 0x06, 0xf3, 0xad, 0xbe, 0x4b, 0x8c, 0x70, 0x37, 0xf9, 0xaa, 0x0f, 0x7d, 0x26, 0x18,
+	0x2a, 0x46, 0xc1, 0x7a, 0x42, 0x85, 0xbb, 0xfa, 0x07, 0x05, 0xe0, 0x5c, 0xa2, 0x8e, 0xc5, 0xaf,
+	0xd1, 0x06, 0x2c, 0xf3, 0xf1, 0xa0, 0xc7, 0x5c, 0x4d, 0xa9, 0x2a, 0xb5, 0x2c, 0x4e, 0x10, 0x7a,
+	0x02, 0x10, 0x5a, 0x6e, 0x40, 0x4c, 0x31, 0x1e, 0x12, 0x2d, 0x5d, 0x55, 0x6a, 0xc5, 0xbd, 0xcd,
+	0xfa, 0x7c, 0xad, 0xfa, 0x45, 0x94, 0xd1, 0x19, 0x0f, 0x09, 0xce, 0x86, 0x93, 0x4f, 0xa4, 0xc1,
+	0x1f, 0xc4, 0xb3, 0x7a, 0x2e, 0xb1, 0x35, 0xb5, 0xaa, 0xd4, 0x56, 0xf0, 0x04, 0x22, 0x03, 0xd6,
+	0x78, 0xd0, 0x1b, 0x50, 0xce, 0x29, 0xf3, 0x4c, 0xea, 0x09, 0xe2, 0x87, 0x96, 0xab, 0x2d, 0x55,
+	0x95, 0x5a, 0x01, 0xa3, 0xfb, 0x50, 0x33, 0x89, 0xe8, 0x9f, 0x14, 0xc8, 0xc5, 0x5a, 0x65, 0xa7,
+	0xdf, 0x20, 0xf6, 0x4f, 0xc8, 0x48, 0x20, 0xa5, 0x66, 0x71, 0x0c, 0xd0, 0x5f, 0x90, 0xef, 0xb9,
+	0xac, 0x7f, 0x6d, 0x5e, 0x11, 0xea, 0x5c, 0x09, 0xa9, 0x50, 0xc5, 0x39, 0xc9, 0x9d, 0x48, 0x0a,
+	0xfd, 0x03, 0xa5, 0x38, 0x45, 0xd0, 0x01, 0x31, 0x03, 0x8f, 0x8e, 0xb4, 0x8c, 0xcc, 0x2a, 0x48,
+	0xba, 0x43, 0x07, 0xa4, 0xeb, 0xd1, 0x91, 0xde, 0x87, 0xf2, 0x81, 0xe3, 0xf8, 0xc4, 0xb1, 0x04,
+	0xb1, 0x31, 0xe1, 0x81, 0x2b, 0x16, 0xda, 0x98, 0x8a, 0x49, 0x3f, 0x10, 0xc3, 0x59, 0xe0, 0xf7,
+	0x89, 0xd9, 0x67, 0x81, 0x27, 0xa4, 0xd2, 0x02, 0xce, 0xc5, 0xdc, 0x51, 0x44, 0xe9, 0xef, 0x60,
+	0x7d, 0x3a, 0x26, 0x6a, 0x5b, 0x82, 0xf9, 0x8f, 0xed, 0xa4, 0xfe, 0xaa, 0xd3, 0xd2, 0x0f, 0x9d,
+	0x5e, 0x2c, 0xad, 0xa4, 0xcb, 0x2a, 0x9e, 0x99, 0xb6, 0xfe, 0x4d, 0x81, 0xcd, 0xb8, 0x79, 0x9b,
+	0x3a, 0x1e, 0xb1, 0x2f, 0x98, 0x20, 0x8d, 0x91, 0x20, 0x5e, 0xb4, 0x49, 0xf4, 0x3f, 0xac, 0x86,
+	0x13, 0x4d, 0xa6, 0x65, 0xdb, 0x3e, 0xe1, 0x5c, 0x6a, 0xc9, 0xe3, 0xf2, 0x34, 0x70, 0x10, 0xf3,
+	0xe8, 0x5f, 0x28, 0xdd, 0x27, 0x0f, 0xd9, 0x5b, 0xe2, 0xcb, 0x49, 0xa8, 0xb8, 0x38, 0xa5, 0x5b,
+	0x11, 0x8b, 0x74, 0x88, 0xa7, 0x6c, 0x52, 0xdb, 0xbc, 0x74, 0x2d, 0x47, 0xda, 0xc8, 0x24, 0x0b,
+	0x6a, 0xda, 0xc7, 0xae, 0xe5, 0xa0, 0xbf, 0xa1, 0x18, 0x32, 0x41, 0x4c, 0x32, 0xd1, 0x22, 0xed,
+	0xe4, 0x71, 0x21, 0x9c, 0x13, 0x68, 0xc0, 0xda, 0x34, 0xc3, 0xe4, 0xd4, 0xf1, 0x2c, 0x11, 0xf8,
+	0x44, 0xee, 0x32, 0x8f, 0xd1, 0x34, 0xd4, 0x9e, 0x44, 0x74, 0x0e, 0x5b, 0x0b, 0xed, 0xf2, 0x68,
+	0xb0, 0x3e, 0x0b, 0x3c, 0x5b, 0x7a, 0xcc, 0xe0, 0x18, 0xa0, 0xa7, 0x90, 0x89, 0xba, 0x72, 0x2d,
+	0x5d, 0x55, 0x6b, 0xb9, 0xbd, 0xff, 0x1e, 0x1e, 0xcd, 0x85, 0x05, 0x71, 0xfc, 0x9f, 0xfe, 0x51,
+	0x99, 0x6c, 0xb8, 0xe5, 0xb3, 0x21, 0xe3, 0x96, 0xdb, 0xb2, 0xc6, 0x2e, 0xb3, 0xec, 0x68, 0xc3,
+	0xc9, 0x21, 0x55, 0xe4, 0xa8, 0x12, 0x84, 0xda, 0x50, 0x9a, 0xb7, 0xcf, 0xe5, 0x2c, 0x73, 0x7b,
+	0x3b, 0x8f, 0x6e, 0xce, 0x71, 0x31, 0x9c, 0x77, 0xb7, 0x0f, 0xcb, 0x72, 0xf3, 0x5c, 0x53, 0xa5,
+	0x91, 0xed, 0x9f, 0xd7, 0x92, 0x37, 0x0d, 0x27, 0xa9, 0xfa, 0x1b, 0x28, 0xc4, 0xf4, 0x09, 0xe5,
+	0x82, 0xf9, 0xe3, 0x85, 0x87, 0xf2, 0xbe, 0x7a, 0xfa, 0xd1, 0xd5, 0x77, 0xae, 0x21, 0x3b, 0xbd,
+	0xd8, 0x68, 0x0b, 0x36, 0x2e, 0x0e, 0x4e, 0xbb, 0x0d, 0xb3, 0xf3, 0xaa, 0xd5, 0x30, 0xbb, 0x67,
+	0xed, 0x56, 0xe3, 0xa8, 0x79, 0xdc, 0x6c, 0x3c, 0x2b, 0xa7, 0xd0, 0x06, 0xa0, 0x99, 0xd8, 0x59,
+	0xf7, 0x65, 0x03, 0x37, 0x8f, 0xca, 0x0a, 0x5a, 0x87, 0xd5, 0x19, 0xbe, 0xdd, 0xc1, 0xcd, 0xb3,
+	0xe7, 0xe5, 0x34, 0x5a, 0x83, 0xd2, 0x0c, 0x7d, 0x78, 0x7e, 0x7e, 0x5a, 0x56, 0x0f, 0x9b, 0x9f,
+	0x6f, 0x2b, 0xca, 0xcd, 0x6d, 0x45, 0xf9, 0x7a, 0x5b, 0x51, 0xde, 0xdf, 0x55, 0x52, 0x37, 0x77,
+	0x95, 0xd4, 0x97, 0xbb, 0x4a, 0xea, 0xb5, 0xe1, 0x50, 0x71, 0x15, 0xf4, 0xea, 0x7d, 0x36, 0x30,
+	0x22, 0xd5, 0x97, 0xd4, 0x73, 0x5c, 0xd6, 0xb3, 0x5c, 0x89, 0x8c, 0x70, 0xdf, 0x18, 0x4d, 0x1e,
+	0xe8, 0xe8, 0xd6, 0xf0, 0xde, 0xb2, 0x7c, 0x9d, 0xf7, 0xbf, 0x07, 0x00, 0x00, 0xff, 0xff, 0xfd,
+	0x76, 0x88, 0x34, 0xbc, 0x05, 0x00, 0x00,
 }
 
 func (m *OracleTask) Marshal() (dAtA []byte, err error) {
@@ -806,7 +734,7 @@ func (m *OracleValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *OracleSample) Marshal() (dAtA []byte, err error) {
+func (m *AggregatedResult) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -816,76 +744,27 @@ func (m *OracleSample) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *OracleSample) MarshalTo(dAtA []byte) (int, error) {
+func (m *AggregatedResult) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *OracleSample) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *AggregatedResult) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.SampleTimeUnix != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.SampleTimeUnix))
+	if m.SourceCount != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.SourceCount))
 		i--
-		dAtA[i] = 0x20
+		dAtA[i] = 0x18
 	}
 	if len(m.Value) > 0 {
 		i -= len(m.Value)
 		copy(dAtA[i:], m.Value)
 		i = encodeVarintOracle(dAtA, i, uint64(len(m.Value)))
 		i--
-		dAtA[i] = 0x1a
-	}
-	if m.ValueType != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.ValueType))
-		i--
-		dAtA[i] = 0x10
-	}
-	if len(m.Source) > 0 {
-		i -= len(m.Source)
-		copy(dAtA[i:], m.Source)
-		i = encodeVarintOracle(dAtA, i, uint64(len(m.Source)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *OracleSymbolSamples) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *OracleSymbolSamples) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *OracleSymbolSamples) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Samples) > 0 {
-		for iNdEx := len(m.Samples) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Samples[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintOracle(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x12
-		}
+		dAtA[i] = 0x12
 	}
 	if len(m.Symbol) > 0 {
 		i -= len(m.Symbol)
@@ -928,11 +807,6 @@ func (m *OracleValidatorResult) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i = encodeVarintOracle(dAtA, i, uint64(len(m.Value)))
 		i--
 		dAtA[i] = 0x1a
-	}
-	if m.ValueType != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.ValueType))
-		i--
-		dAtA[i] = 0x10
 	}
 	if len(m.Symbol) > 0 {
 		i -= len(m.Symbol)
@@ -1197,30 +1071,7 @@ func (m *OracleValue) Size() (n int) {
 	return n
 }
 
-func (m *OracleSample) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Source)
-	if l > 0 {
-		n += 1 + l + sovOracle(uint64(l))
-	}
-	if m.ValueType != 0 {
-		n += 1 + sovOracle(uint64(m.ValueType))
-	}
-	l = len(m.Value)
-	if l > 0 {
-		n += 1 + l + sovOracle(uint64(l))
-	}
-	if m.SampleTimeUnix != 0 {
-		n += 1 + sovOracle(uint64(m.SampleTimeUnix))
-	}
-	return n
-}
-
-func (m *OracleSymbolSamples) Size() (n int) {
+func (m *AggregatedResult) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1230,11 +1081,12 @@ func (m *OracleSymbolSamples) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovOracle(uint64(l))
 	}
-	if len(m.Samples) > 0 {
-		for _, e := range m.Samples {
-			l = e.Size()
-			n += 1 + l + sovOracle(uint64(l))
-		}
+	l = len(m.Value)
+	if l > 0 {
+		n += 1 + l + sovOracle(uint64(l))
+	}
+	if m.SourceCount != 0 {
+		n += 1 + sovOracle(uint64(m.SourceCount))
 	}
 	return n
 }
@@ -1248,9 +1100,6 @@ func (m *OracleValidatorResult) Size() (n int) {
 	l = len(m.Symbol)
 	if l > 0 {
 		n += 1 + l + sovOracle(uint64(l))
-	}
-	if m.ValueType != 0 {
-		n += 1 + sovOracle(uint64(m.ValueType))
 	}
 	l = len(m.Value)
 	if l > 0 {
@@ -1665,7 +1514,7 @@ func (m *OracleValue) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *OracleSample) Unmarshal(dAtA []byte) error {
+func (m *AggregatedResult) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1688,162 +1537,10 @@ func (m *OracleSample) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: OracleSample: wiretype end group for non-group")
+			return fmt.Errorf("proto: AggregatedResult: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OracleSample: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthOracle
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthOracle
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Source = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValueType", wireType)
-			}
-			m.ValueType = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.ValueType |= ValueType(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthOracle
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthOracle
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Value = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SampleTimeUnix", wireType)
-			}
-			m.SampleTimeUnix = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.SampleTimeUnix |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipOracle(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthOracle
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *OracleSymbolSamples) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowOracle
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: OracleSymbolSamples: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OracleSymbolSamples: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: AggregatedResult: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1880,9 +1577,9 @@ func (m *OracleSymbolSamples) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Samples", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOracle
@@ -1892,26 +1589,43 @@ func (m *OracleSymbolSamples) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthOracle
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthOracle
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Samples = append(m.Samples, &OracleSample{})
-			if err := m.Samples[len(m.Samples)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.Value = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SourceCount", wireType)
+			}
+			m.SourceCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SourceCount |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipOracle(dAtA[iNdEx:])
@@ -1994,25 +1708,6 @@ func (m *OracleValidatorResult) Unmarshal(dAtA []byte) error {
 			}
 			m.Symbol = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValueType", wireType)
-			}
-			m.ValueType = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.ValueType |= ValueType(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)

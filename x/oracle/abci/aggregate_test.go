@@ -2,9 +2,12 @@ package abci
 
 import (
 	"context"
+	"math/big"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,79 +16,83 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidatorResultsFromSamplesComputesMedian(t *testing.T) {
-	results := validatorResultsFromSamples(
-		[]*oraclev1.OracleTask{{
-			Symbol:             "BTC/USD",
-			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:            true,
-			SubmissionInterval: 1,
-		}},
-		[]*oraclev1.OracleSymbolSamples{{
-			Symbol: "BTC/USD",
-			Samples: []*oraclev1.OracleSample{
-				{Source: "a", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "1.0"},
-				{Source: "b", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "2.0"},
-				{Source: "c", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "100.0"},
-			},
-		}},
-		3,
+func TestMedianUsesOverflowSafeIntegerAtoms(t *testing.T) {
+	scale := new(big.Int).Exp(big.NewInt(10), big.NewInt(sdkmath.LegacyPrecision), nil)
+	maxAtoms := new(big.Int).Sub(
+		new(big.Int).Mul(new(big.Int).Lsh(big.NewInt(1), 256), scale),
+		big.NewInt(1),
 	)
-
-	require.Len(t, results, 1)
-	require.Equal(t, "BTC/USD", results[0].GetSymbol())
-	require.Equal(t, "2.000000000000000000", results[0].GetValue())
-	require.Equal(t, uint32(3), results[0].GetSourceCount())
-}
-
-func TestValidatorResultsFromSamplesAveragesEvenMedian(t *testing.T) {
-	results := validatorResultsFromSamples(
-		[]*oraclev1.OracleTask{{
-			Symbol:             "BTC/USD",
-			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:            true,
-			SubmissionInterval: 1,
-		}},
-		[]*oraclev1.OracleSymbolSamples{{
-			Symbol: "BTC/USD",
-			Samples: []*oraclev1.OracleSample{
-				{Source: "a", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "1.0"},
-				{Source: "b", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "2.0"},
-			},
-		}},
-		2,
+	maxValue := sdkmath.LegacyNewDecFromBigIntWithPrec(maxAtoms, sdkmath.LegacyPrecision)
+	nearMaxValue := sdkmath.LegacyNewDecFromBigIntWithPrec(
+		new(big.Int).Sub(new(big.Int).Set(maxAtoms), big.NewInt(1)),
+		sdkmath.LegacyPrecision,
 	)
+	atto := sdkmath.LegacySmallestDec()
 
-	require.Len(t, results, 1)
-	require.Equal(t, "1.500000000000000000", results[0].GetValue())
-}
-
-func TestValidatorResultsFromSamplesNormalizesMixedCaseSymbols(t *testing.T) {
-	results := validatorResultsFromSamples(
-		[]*oraclev1.OracleTask{{
-			Symbol:             " btc/usd ",
-			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:            true,
-			SubmissionInterval: 1,
-		}},
-		[]*oraclev1.OracleSymbolSamples{{
-			Symbol: "BTC/USD",
-			Samples: []*oraclev1.OracleSample{
-				{Source: "a", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "1.0"},
-				{Source: "b", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "2.0"},
-				{Source: "c", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Value: "3.0"},
+	tests := []struct {
+		name   string
+		values []sdkmath.LegacyDec
+		want   sdkmath.LegacyDec
+	}{
+		{
+			name: "odd sorts before selecting",
+			values: []sdkmath.LegacyDec{
+				sdkmath.LegacyMustNewDecFromStr("100"),
+				sdkmath.LegacyMustNewDecFromStr("1"),
+				sdkmath.LegacyMustNewDecFromStr("2"),
 			},
-		}},
-		3,
-	)
+			want: sdkmath.LegacyMustNewDecFromStr("2"),
+		},
+		{
+			name: "even ordinary values",
+			values: []sdkmath.LegacyDec{
+				sdkmath.LegacyMustNewDecFromStr("2"),
+				sdkmath.LegacyMustNewDecFromStr("1"),
+			},
+			want: sdkmath.LegacyMustNewDecFromStr("1.5"),
+		},
+		{
+			name:   "positive half atto truncates toward zero",
+			values: []sdkmath.LegacyDec{sdkmath.LegacyZeroDec(), atto},
+			want:   sdkmath.LegacyZeroDec(),
+		},
+		{
+			name:   "negative half atto truncates toward zero",
+			values: []sdkmath.LegacyDec{atto.Neg(), sdkmath.LegacyZeroDec()},
+			want:   sdkmath.LegacyZeroDec(),
+		},
+		{
+			name:   "opposite full-range values",
+			values: []sdkmath.LegacyDec{maxValue.Neg(), maxValue},
+			want:   sdkmath.LegacyZeroDec(),
+		},
+		{
+			name:   "full-range equal values avoid intermediate overflow",
+			values: []sdkmath.LegacyDec{maxValue, maxValue},
+			want:   maxValue,
+		},
+		{
+			name:   "positive midpoint avoids intermediate overflow",
+			values: []sdkmath.LegacyDec{nearMaxValue, maxValue},
+			want:   nearMaxValue,
+		},
+		{
+			name:   "negative midpoint avoids intermediate overflow",
+			values: []sdkmath.LegacyDec{maxValue.Neg(), nearMaxValue.Neg()},
+			want:   nearMaxValue.Neg(),
+		},
+	}
 
-	require.Len(t, results, 1)
-	require.Equal(t, "BTC/USD", results[0].GetSymbol())
-	require.Equal(t, "2.000000000000000000", results[0].GetValue())
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := median(append([]sdkmath.LegacyDec(nil), tc.values...))
+			require.True(t, got.Equal(tc.want), "got %s, want %s", got, tc.want)
+		})
+	}
 }
 
 func TestVerifyVoteExtensionAcceptsEmptyAndRejectsMalformed(t *testing.T) {
-	handler := NewVoteExtensionHandler(nil, true, "", 0)
+	handler := mustNewVoteExtensionHandler(t, nil, true, "", 0)
 
 	empty, err := handler.VerifyVoteExtension(sdk.Context{}, &abcitypes.RequestVerifyVoteExtension{VoteExtension: nil})
 	require.NoError(t, err)
@@ -97,8 +104,7 @@ func TestVerifyVoteExtensionAcceptsEmptyAndRejectsMalformed(t *testing.T) {
 
 	validBz, err := (&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
 		Symbol:      "BTC/USD",
-		ValueType:   oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-		Value:       "1.0",
+		Value:       "1.000000000000000000",
 		SourceCount: 3,
 	}}}).Marshal()
 	require.NoError(t, err)
@@ -108,7 +114,7 @@ func TestVerifyVoteExtensionAcceptsEmptyAndRejectsMalformed(t *testing.T) {
 }
 
 func TestExtendVoteReturnsEmptyWhenLocalOracleDisabled(t *testing.T) {
-	handler := NewVoteExtensionHandler(nil, false, "/tmp/oracle.sock", time.Second)
+	handler := mustNewVoteExtensionHandler(t, nil, false, "/tmp/oracle.sock", time.Second)
 
 	resp, err := handler.ExtendVote(sdk.Context{}, &abcitypes.RequestExtendVote{Height: 12})
 	require.NoError(t, err)
@@ -222,10 +228,10 @@ func TestOraclePayloadExpectedRequiresDueTasks(t *testing.T) {
 func mustVoteExtensionBz(t *testing.T, symbol string, value string) []byte {
 	t.Helper()
 
+	canonicalValue := sdkmath.LegacyMustNewDecFromStr(value).String()
 	bz, err := (&oraclev1.OracleVoteExtension{Results: []*oraclev1.OracleValidatorResult{{
 		Symbol:      symbol,
-		ValueType:   oraclev1.ValueType_VALUE_TYPE_NUMERIC,
-		Value:       value,
+		Value:       canonicalValue,
 		SourceCount: 3,
 	}}}).Marshal()
 	require.NoError(t, err)
@@ -233,12 +239,16 @@ func mustVoteExtensionBz(t *testing.T, symbol string, value string) []byte {
 }
 
 type fakeKeeper struct {
-	params    *oraclev1.Params
-	tasks     []*oraclev1.OracleTask
-	dueHeight int64
+	params      *oraclev1.Params
+	tasks       []*oraclev1.OracleTask
+	dueHeight   int64
+	paramsCalls *atomic.Int32
 }
 
 func (f fakeKeeper) GetParams(context.Context) (*oraclev1.Params, error) {
+	if f.paramsCalls != nil {
+		f.paramsCalls.Add(1)
+	}
 	return f.params, nil
 }
 

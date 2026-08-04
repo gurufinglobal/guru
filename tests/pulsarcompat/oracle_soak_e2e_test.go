@@ -2,23 +2,30 @@ package pulsarcompat
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"log"
 	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
-
-	"github.com/gurufinglobal/guru/v3/oracle"
-	oraclev1 "github.com/gurufinglobal/guru/v3/x/oracle/types"
 )
 
 const (
@@ -94,11 +101,12 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 
 	repoRoot := projectRootFromTestFile(t)
 	bin := buildGurudBinary(t, repoRoot)
+	oracledBin := buildOracledBinary(t, repoRoot)
 	sourceServer := startOracleSoakSourceServer(t)
 	defer sourceServer.Close()
 
 	nodes, accounts := bootstrapOracleSoakNetwork(t, repoRoot, bin, t.TempDir(), sourceServer.URL)
-	startOracleSidecars(t, nodes, sourceServer.URL)
+	startOracleSidecars(t, repoRoot, oracledBin, nodes, sourceServer)
 	defer stopOracleSidecars(t, nodes)
 	startOracleSoakNodes(t, repoRoot, bin, nodes)
 	defer stopOracleSoakNodes(t, nodes)
@@ -139,7 +147,7 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 		heightBeforeRestart := latestOracleSoakHeight(t, repoRoot, bin, nodes)
 		latestBeforeRestart := queryOracleLatest(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD")
 		stopOracleSidecar(t, nodes[index])
-		startOracleSidecar(t, nodes[index], sourceServer.URL)
+		startOracleSidecar(t, repoRoot, oracledBin, nodes[index], sourceServer)
 		waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, heightBeforeRestart+5, 90*time.Second)
 		waitForOracleLatestHeight(
 			t,
@@ -171,7 +179,7 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 	stopOracleSidecar(t, nodes[3])
 	waitForAllOracleSoakNodesHeight(t, repoRoot, bin, nodes, latestOracleSoakHeight(t, repoRoot, bin, nodes)+8, 90*time.Second)
 	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", latestWithAllSidecars.BlockHeight+1, 90*time.Second)
-	startOracleSidecar(t, nodes[3], sourceServer.URL)
+	startOracleSidecar(t, repoRoot, oracledBin, nodes[3], sourceServer)
 
 	stopOracleSidecar(t, nodes[1])
 	stopOracleSidecar(t, nodes[2])
@@ -187,8 +195,8 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 		latestOracleSoakHeight(t, repoRoot, bin, nodes),
 		latestDuringOracleQuorumLoss.BlockHeight,
 	)
-	startOracleSidecar(t, nodes[1], sourceServer.URL)
-	startOracleSidecar(t, nodes[2], sourceServer.URL)
+	startOracleSidecar(t, repoRoot, oracledBin, nodes[1], sourceServer)
+	startOracleSidecar(t, repoRoot, oracledBin, nodes[2], sourceServer)
 	waitForOracleLatestHeight(t, repoRoot, bin, nodes[0].home, nodes[0].rpcAddr, "BTC/USD", latestBeforeOracleQuorumLoss.BlockHeight+1, 90*time.Second)
 	t.Logf("four-validator checkpoint=oracle-quorum-recovered height=%d", latestOracleSoakHeight(t, repoRoot, bin, nodes))
 
@@ -226,7 +234,7 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 	stopOracleSidecars(t, nodes)
 
 	importedNodes := bootstrapImportedOracleSoakNetwork(t, repoRoot, bin, t.TempDir(), nodes, exportedGenesis)
-	startOracleSidecars(t, importedNodes, sourceServer.URL)
+	startOracleSidecars(t, repoRoot, oracledBin, importedNodes, sourceServer)
 	defer stopOracleSidecars(t, importedNodes)
 	startOracleSoakNodes(t, repoRoot, bin, importedNodes)
 	defer stopOracleSoakNodes(t, importedNodes)
@@ -244,22 +252,24 @@ func TestE2EFourValidatorOracleSoakRestartExportImport(t *testing.T) {
 }
 
 type oracleSoakNode struct {
-	index         int
-	home          string
-	keyName       string
-	rpcPort       int
-	p2pPort       int
-	pprofPort     int
-	grpcPort      int
-	jsonRPCPort   int
-	jsonWSRPCPort int
-	apiPort       int
-	rpcAddr       string
-	grpcAddr      string
-	nodeID        string
-	oracleSocket  string
-	node          *runningNode
-	sidecar       *oracleSoakSidecar
+	index             int
+	home              string
+	keyName           string
+	rpcPort           int
+	p2pPort           int
+	pprofPort         int
+	grpcPort          int
+	jsonRPCPort       int
+	jsonWSRPCPort     int
+	apiPort           int
+	rpcAddr           string
+	grpcAddr          string
+	nodeID            string
+	oracleHome        string
+	oracleSocket      string
+	oracleAdminSocket string
+	node              *runningNode
+	sidecar           *runningOracleProcess
 }
 
 type oracleSoakAccounts struct {
@@ -268,11 +278,6 @@ type oracleSoakAccounts struct {
 	receiver  string
 	poor      string
 	valoper0  string
-}
-
-type oracleSoakSidecar struct {
-	cancel context.CancelFunc
-	done   chan error
 }
 
 type oracleLatestValue struct {
@@ -423,22 +428,41 @@ func newOracleSoakNode(t *testing.T, baseDir string, index int) *oracleSoakNode 
 	t.Helper()
 
 	home := filepath.Join(baseDir, fmt.Sprintf("validator-%d", index))
+	oracleTemp := os.TempDir()
+	if runtime.GOOS == "darwin" {
+		oracleTemp = "/private/tmp"
+	}
+	oracleBase, err := filepath.EvalSymlinks(oracleTemp)
+	if err != nil {
+		t.Fatalf("resolve temporary directory for oracle home: %v", err)
+	}
+	oracleHome := filepath.Join(
+		oracleBase,
+		fmt.Sprintf("gor-e2e-%d-%d-%d", os.Getpid(), time.Now().UnixNano(), index),
+	)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(oracleHome); err != nil {
+			t.Errorf("remove oracle home: %v", err)
+		}
+	})
 	rpcPort := pickTCPPort(t)
 	grpcPort := pickTCPPort(t)
 	return &oracleSoakNode{
-		index:         index,
-		home:          home,
-		keyName:       fmt.Sprintf("validator-%d", index),
-		rpcPort:       rpcPort,
-		p2pPort:       pickTCPPort(t),
-		pprofPort:     pickTCPPort(t),
-		grpcPort:      grpcPort,
-		jsonRPCPort:   pickTCPPort(t),
-		jsonWSRPCPort: pickTCPPort(t),
-		apiPort:       pickTCPPort(t),
-		rpcAddr:       fmt.Sprintf("tcp://127.0.0.1:%d", rpcPort),
-		grpcAddr:      fmt.Sprintf("127.0.0.1:%d", grpcPort),
-		oracleSocket:  filepath.Join(os.TempDir(), fmt.Sprintf("guru-oracle-soak-%d-%d-%d.sock", os.Getpid(), time.Now().UnixNano(), index)),
+		index:             index,
+		home:              home,
+		keyName:           fmt.Sprintf("validator-%d", index),
+		rpcPort:           rpcPort,
+		p2pPort:           pickTCPPort(t),
+		pprofPort:         pickTCPPort(t),
+		grpcPort:          grpcPort,
+		jsonRPCPort:       pickTCPPort(t),
+		jsonWSRPCPort:     pickTCPPort(t),
+		apiPort:           pickTCPPort(t),
+		rpcAddr:           fmt.Sprintf("tcp://127.0.0.1:%d", rpcPort),
+		grpcAddr:          fmt.Sprintf("127.0.0.1:%d", grpcPort),
+		oracleHome:        oracleHome,
+		oracleSocket:      filepath.Join(oracleHome, "run", "oracle.sock"),
+		oracleAdminSocket: filepath.Join(oracleHome, "run", "admin.sock"),
 	}
 }
 
@@ -584,34 +608,26 @@ func persistentPeersFor(self *oracleSoakNode, nodes []*oracleSoakNode) string {
 	return strings.Join(peers, ",")
 }
 
-func startOracleSidecars(t *testing.T, nodes []*oracleSoakNode, sourceURL string) {
+func startOracleSidecars(
+	t *testing.T,
+	repoRoot, oracledBin string,
+	nodes []*oracleSoakNode,
+	sourceServer *oracleTestHTTPSServer,
+) {
 	t.Helper()
 	for _, node := range nodes {
-		startOracleSidecar(t, node, sourceURL)
+		startOracleSidecar(t, repoRoot, oracledBin, node, sourceServer)
 	}
 }
 
-func startOracleSidecar(t *testing.T, node *oracleSoakNode, sourceURL string) {
+func startOracleSidecar(
+	t *testing.T,
+	repoRoot, oracledBin string,
+	node *oracleSoakNode,
+	sourceServer *oracleTestHTTPSServer,
+) {
 	t.Helper()
-	cfg := oracle.Config{
-		Socket:           node.oracleSocket,
-		RequestTimeout:   "2s",
-		SourceTimeout:    "500ms",
-		NodeGRPC:         node.grpcAddr,
-		NodeQueryTimeout: "2s",
-		Sources:          oracleSoakSources(sourceURL),
-	}
-	sidecar, err := oracle.NewSidecar(cfg, oracleSoakTasks())
-	if err != nil {
-		t.Fatalf("create oracle sidecar: %v", err)
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan error, 1)
-	go func() {
-		done <- sidecar.Run(ctx)
-	}()
-	node.sidecar = &oracleSoakSidecar{cancel: cancel, done: done}
-	waitForOracleSocket(t, node.oracleSocket, done, 5*time.Second)
+	node.sidecar = startOracleProcess(t, repoRoot, oracledBin, node, sourceServer)
 }
 
 func stopOracleSidecars(t *testing.T, nodes []*oracleSoakNode) {
@@ -626,62 +642,84 @@ func stopOracleSidecar(t *testing.T, node *oracleSoakNode) {
 	if node == nil || node.sidecar == nil {
 		return
 	}
-	node.sidecar.cancel()
-	select {
-	case err := <-node.sidecar.done:
-		if err != nil {
-			t.Fatalf("oracle sidecar stopped with error: %v", err)
-		}
-	case <-time.After(5 * time.Second):
-		t.Fatalf("oracle sidecar did not stop")
-	}
+	stopOracleProcess(t, node.sidecar, syscall.SIGTERM)
 	node.sidecar = nil
 }
 
-func waitForOracleSocket(t *testing.T, socket string, done <-chan error, timeout time.Duration) {
-	t.Helper()
-	deadline := time.Now().Add(timeout)
-	for time.Now().Before(deadline) {
-		select {
-		case err := <-done:
-			t.Fatalf("oracle sidecar exited before socket %s appeared: %v", socket, err)
-		default:
+type oracleTestSource struct {
+	id          string
+	url         string
+	jsonPointer string
+}
+
+type oracleTestFeed struct {
+	symbol     string
+	interval   string
+	staleAfter string
+	sources    []oracleTestSource
+}
+
+type oracleTestHTTPSServer struct {
+	*httptest.Server
+	certFile string
+}
+
+func renderOracleSourcesConfig(baseURL string) []byte {
+	feeds := []oracleTestFeed{
+		{
+			symbol: "BTC/USD", interval: "1s", staleAfter: "5s",
+			sources: []oracleTestSource{
+				{id: "btc-a", url: baseURL + "/price?symbol=BTC%2FUSD&price=101.0", jsonPointer: "/data/price"},
+				{id: "btc-b", url: baseURL + "/price?symbol=BTC%2FUSD&price=102.0", jsonPointer: "/data/price"},
+				{id: "btc-c", url: baseURL + "/price?symbol=BTC%2FUSD&price=103.0", jsonPointer: "/data/price"},
+				{id: "btc-bad", url: baseURL + "/price?symbol=BTC%2FUSD&bad=1", jsonPointer: "/data/price"},
+			},
+		},
+		{
+			symbol: "ETH/USD", interval: "1s", staleAfter: "5s",
+			sources: []oracleTestSource{
+				{id: "eth-a", url: baseURL + "/price?symbol=ETH%2FUSD&price=201.0", jsonPointer: "/data/price"},
+				{id: "eth-b", url: baseURL + "/price?symbol=ETH%2FUSD&price=202.0", jsonPointer: "/data/price"},
+				{id: "eth-c", url: baseURL + "/price?symbol=ETH%2FUSD&price=203.0", jsonPointer: "/data/price"},
+				{id: "eth-nonnumeric", url: baseURL + "/price?symbol=ETH%2FUSD&nonnumeric=1", jsonPointer: "/data/price"},
+			},
+		},
+		{
+			symbol: "TRX/USD", interval: "1s", staleAfter: "5s",
+			sources: []oracleTestSource{
+				{id: "trx-a", url: baseURL + "/price?symbol=TRX%2FUSD&price=0.10345&provider=a", jsonPointer: "/data/price"},
+				{id: "trx-b", url: baseURL + "/price?symbol=TRX%2FUSD&price=0.10345&provider=b", jsonPointer: "/data/price"},
+				{id: "trx-c", url: baseURL + "/price?symbol=TRX%2FUSD&price=0.10345&provider=c", jsonPointer: "/data/price"},
+			},
+		},
+	}
+	var content strings.Builder
+	_, _ = content.WriteString("schema_version = 1\npublication_revision = \"e2e-v1\"\n")
+	for _, feed := range feeds {
+		_, _ = fmt.Fprintf(
+			&content,
+			"\n[[feeds]]\nsymbol = %q\ninterval = %q\nstale_after = %q\n",
+			feed.symbol,
+			feed.interval,
+			feed.staleAfter,
+		)
+		for _, source := range feed.sources {
+			_, _ = fmt.Fprintf(
+				&content,
+				"\n[[feeds.sources]]\nid = %q\nurl = %q\njson_pointer = %q\n",
+				source.id,
+				source.url,
+				source.jsonPointer,
+			)
 		}
-		if _, err := os.Stat(socket); err == nil {
-			return
-		}
-		time.Sleep(50 * time.Millisecond)
 	}
-	t.Fatalf("oracle sidecar socket %s did not appear within %s", socket, timeout)
+	return []byte(content.String())
 }
 
-func oracleSoakTasks() []*oraclev1.OracleTask {
-	return []*oraclev1.OracleTask{
-		{Symbol: "BTC/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 5},
-		{Symbol: "ETH/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 7},
-		{Symbol: "TRX/USD", ValueType: oraclev1.ValueType_VALUE_TYPE_NUMERIC, Enabled: true, SubmissionInterval: 5},
-	}
-}
-
-func oracleSoakSources(baseURL string) []oracle.SourceConfig {
-	return []oracle.SourceConfig{
-		{Name: "btc-a", Symbol: "BTC/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=101.0", ResponsePath: "data.price"},
-		{Name: "btc-b", Symbol: "BTC/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=102.0", ResponsePath: "data.price"},
-		{Name: "btc-c", Symbol: "BTC/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=103.0", ResponsePath: "data.price"},
-		{Name: "btc-bad", Symbol: "BTC/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&bad=1", ResponsePath: "data.price"},
-		{Name: "eth-a", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=201.0", ResponsePath: "data.price"},
-		{Name: "eth-b", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=202.0", ResponsePath: "data.price"},
-		{Name: "eth-c", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=203.0", ResponsePath: "data.price"},
-		{Name: "eth-nonnumeric", Symbol: "ETH/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&nonnumeric=1", ResponsePath: "data.price"},
-		{Name: "trx-a", Symbol: "TRX/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=0.10345", ResponsePath: "data.price"},
-		{Name: "trx-b", Symbol: "TRX/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=0.10345", ResponsePath: "data.price"},
-		{Name: "trx-c", Symbol: "TRX/USD", ValueType: "numeric", URL: baseURL + "/price?symbol={symbol}&price=0.10345", ResponsePath: "data.price"},
-	}
-}
-
-func startOracleSoakSourceServer(t *testing.T) *httptest.Server {
+func startOracleSoakSourceServer(t *testing.T) *oracleTestHTTPSServer {
 	t.Helper()
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Query().Get("bad") == "1" {
 			http.Error(w, "bad source", http.StatusInternalServerError)
 			return
@@ -696,7 +734,88 @@ func startOracleSoakSourceServer(t *testing.T) *httptest.Server {
 			price = "1.0"
 		}
 		_, _ = fmt.Fprintf(w, `{"data":{"price":"%s"}}`, price)
-	}))
+	})
+	caKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("generate oracle test CA key: %v", err)
+	}
+	now := time.Now()
+	caTemplate := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: "Guru Oracle E2E CA"},
+		NotBefore:             now.Add(-time.Hour),
+		NotAfter:              now.Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+	caCertificate, err := x509.CreateCertificate(
+		rand.Reader,
+		caTemplate,
+		caTemplate,
+		&caKey.PublicKey,
+		caKey,
+	)
+	if err != nil {
+		t.Fatalf("create oracle test CA: %v", err)
+	}
+	serverKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("generate oracle test server key: %v", err)
+	}
+	serverTemplate := &x509.Certificate{
+		SerialNumber: big.NewInt(2),
+		Subject:      pkix.Name{CommonName: "Guru Oracle E2E Source"},
+		NotBefore:    now.Add(-time.Hour),
+		NotAfter:     now.Add(24 * time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		DNSNames:     []string{"localhost"},
+		IPAddresses: []net.IP{
+			net.ParseIP("127.0.0.1"),
+			net.ParseIP("::1"),
+		},
+	}
+	serverCertificate, err := x509.CreateCertificate(
+		rand.Reader,
+		serverTemplate,
+		caTemplate,
+		&serverKey.PublicKey,
+		caKey,
+	)
+	if err != nil {
+		t.Fatalf("create oracle test server certificate: %v", err)
+	}
+	serverKeyDER, err := x509.MarshalPKCS8PrivateKey(serverKey)
+	if err != nil {
+		t.Fatalf("marshal oracle test server key: %v", err)
+	}
+	certificatePEM := append(
+		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: serverCertificate}),
+		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caCertificate})...,
+	)
+	serverKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: serverKeyDER})
+	keyPair, err := tls.X509KeyPair(certificatePEM, serverKeyPEM)
+	if err != nil {
+		t.Fatalf("load oracle test server key pair: %v", err)
+	}
+	server := httptest.NewUnstartedServer(handler)
+	server.Config.ErrorLog = log.New(io.Discard, "", 0)
+	server.TLS = &tls.Config{
+		MinVersion:   tls.VersionTLS12,
+		Certificates: []tls.Certificate{keyPair},
+	}
+	server.StartTLS()
+	certificate := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: caCertificate,
+	})
+	certFile := filepath.Join(t.TempDir(), "oracle-test-ca.pem")
+	if err := os.WriteFile(certFile, certificate, 0o600); err != nil {
+		server.Close()
+		t.Fatalf("write oracle test CA: %v", err)
+	}
+	return &oracleTestHTTPSServer{Server: server, certFile: certFile}
 }
 
 func runOracleSoakTxMix(t *testing.T, repoRoot, bin string, node *oracleSoakNode, accounts oracleSoakAccounts) {

@@ -40,7 +40,7 @@ func (a Aggregator) aggregateValues(ctx sdk.Context, height int64, extCommit abc
 		for _, result := range extension.GetResults() {
 			symbol := oraclekeeper.NormalizeSymbol(result.GetSymbol())
 			task, ok := taskBySymbol[symbol]
-			if !ok || task.GetValueType() != result.GetValueType() {
+			if !ok || task.GetValueType() != oraclev1.ValueType_VALUE_TYPE_NUMERIC {
 				continue
 			}
 			if result.GetSourceCount() < params.GetMinSources() {
@@ -89,17 +89,4 @@ func voteExtensionHeight(proposalHeight int64) int64 {
 
 func isMinGasPriceOracleSymbol(symbol string) bool {
 	return oraclekeeper.NormalizeSymbol(symbol) == oraclekeeper.NormalizeSymbol(appparams.MinGasPriceOracleSymbol)
-}
-
-func median(values []sdkmath.LegacyDec) sdkmath.LegacyDec {
-	sort.Slice(values, func(i, j int) bool {
-		return values[i].LT(values[j])
-	})
-
-	mid := len(values) / 2
-	if len(values)%2 == 1 {
-		return values[mid]
-	}
-
-	return values[mid-1].Add(values[mid]).QuoInt64(2)
 }

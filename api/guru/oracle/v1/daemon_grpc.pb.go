@@ -19,17 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	OracleSidecar_GetSamples_FullMethodName = "/guru.oracle.v1.OracleSidecar/GetSamples"
+	OracleSidecar_GetAggregates_FullMethodName = "/guru.oracle.v1.OracleSidecar/GetAggregates"
 )
 
 // OracleSidecarClient is the client API for OracleSidecar service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// OracleSidecar exposes off-chain oracle samples to validator nodes.
+// OracleSidecar exposes fresh, locally aggregated oracle values to validators.
 type OracleSidecarClient interface {
-	// GetSamples returns source-level samples grouped by oracle symbol.
-	GetSamples(ctx context.Context, in *GetSamplesRequest, opts ...grpc.CallOption) (*GetSamplesResponse, error)
+	// GetAggregates returns fresh aggregate results for requested symbols.
+	GetAggregates(ctx context.Context, in *GetAggregatesRequest, opts ...grpc.CallOption) (*GetAggregatesResponse, error)
 }
 
 type oracleSidecarClient struct {
@@ -40,10 +40,10 @@ func NewOracleSidecarClient(cc grpc.ClientConnInterface) OracleSidecarClient {
 	return &oracleSidecarClient{cc}
 }
 
-func (c *oracleSidecarClient) GetSamples(ctx context.Context, in *GetSamplesRequest, opts ...grpc.CallOption) (*GetSamplesResponse, error) {
+func (c *oracleSidecarClient) GetAggregates(ctx context.Context, in *GetAggregatesRequest, opts ...grpc.CallOption) (*GetAggregatesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetSamplesResponse)
-	err := c.cc.Invoke(ctx, OracleSidecar_GetSamples_FullMethodName, in, out, cOpts...)
+	out := new(GetAggregatesResponse)
+	err := c.cc.Invoke(ctx, OracleSidecar_GetAggregates_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,10 +54,10 @@ func (c *oracleSidecarClient) GetSamples(ctx context.Context, in *GetSamplesRequ
 // All implementations must embed UnimplementedOracleSidecarServer
 // for forward compatibility.
 //
-// OracleSidecar exposes off-chain oracle samples to validator nodes.
+// OracleSidecar exposes fresh, locally aggregated oracle values to validators.
 type OracleSidecarServer interface {
-	// GetSamples returns source-level samples grouped by oracle symbol.
-	GetSamples(context.Context, *GetSamplesRequest) (*GetSamplesResponse, error)
+	// GetAggregates returns fresh aggregate results for requested symbols.
+	GetAggregates(context.Context, *GetAggregatesRequest) (*GetAggregatesResponse, error)
 	mustEmbedUnimplementedOracleSidecarServer()
 }
 
@@ -68,8 +68,8 @@ type OracleSidecarServer interface {
 // pointer dereference when methods are called.
 type UnimplementedOracleSidecarServer struct{}
 
-func (UnimplementedOracleSidecarServer) GetSamples(context.Context, *GetSamplesRequest) (*GetSamplesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetSamples not implemented")
+func (UnimplementedOracleSidecarServer) GetAggregates(context.Context, *GetAggregatesRequest) (*GetAggregatesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAggregates not implemented")
 }
 func (UnimplementedOracleSidecarServer) mustEmbedUnimplementedOracleSidecarServer() {}
 func (UnimplementedOracleSidecarServer) testEmbeddedByValue()                       {}
@@ -92,20 +92,20 @@ func RegisterOracleSidecarServer(s grpc.ServiceRegistrar, srv OracleSidecarServe
 	s.RegisterService(&OracleSidecar_ServiceDesc, srv)
 }
 
-func _OracleSidecar_GetSamples_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSamplesRequest)
+func _OracleSidecar_GetAggregates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAggregatesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OracleSidecarServer).GetSamples(ctx, in)
+		return srv.(OracleSidecarServer).GetAggregates(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: OracleSidecar_GetSamples_FullMethodName,
+		FullMethod: OracleSidecar_GetAggregates_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OracleSidecarServer).GetSamples(ctx, req.(*GetSamplesRequest))
+		return srv.(OracleSidecarServer).GetAggregates(ctx, req.(*GetAggregatesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -118,8 +118,8 @@ var OracleSidecar_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OracleSidecarServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetSamples",
-			Handler:    _OracleSidecar_GetSamples_Handler,
+			MethodName: "GetAggregates",
+			Handler:    _OracleSidecar_GetAggregates_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -6,7 +6,8 @@
 
 APP_NAME := guru
 
-VERSION := $(shell git describe --tags --always 2>/dev/null || echo "dev")
+VERSION := $(shell git describe --tags --match 'v[0-9]*' --always 2>/dev/null || echo "dev")
+ORACLE_VERSION := $(shell value=$$(git describe --tags --match 'oracle/v[0-9]*' --always 2>/dev/null); if test -n "$$value"; then printf '%s\n' "$$value" | sed 's|^oracle/||'; else echo "dev"; fi)
 COMMIT := $(shell git log -1 --format='%H' 2>/dev/null || echo "unknown")
 TMVERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 
@@ -18,6 +19,7 @@ BUILDDIR ?= $(CURDIR)/build
 CMD_MAIN_FILES := $(wildcard cmd/*/main.go)
 CMD_BINS := $(notdir $(patsubst %/,%,$(dir $(CMD_MAIN_FILES))))
 CMD_BUILD_TARGETS := $(addprefix $(BUILDDIR)/,$(CMD_BINS))
+ORACLE_BUILD_TARGET := $(BUILDDIR)/oracled
 
 export GO111MODULE = on
 export CGO_ENABLED ?= 1
@@ -59,17 +61,27 @@ BUILD_FLAGS := -mod=readonly -tags "$(build_tags)" -trimpath
 
 all: build
 
-build: $(CMD_BUILD_TARGETS)
-	@echo "Built $(CMD_BINS) to $(BUILDDIR)."
+build: $(CMD_BUILD_TARGETS) $(ORACLE_BUILD_TARGET)
+	@echo "Built $(CMD_BINS) and oracled to $(BUILDDIR)."
 
 $(BUILDDIR)/%: go.mod go.sum FORCE
 	@echo "Building $* to $(BUILDDIR) ..."
 	@mkdir -p $(BUILDDIR)
 	@go build $(BUILD_FLAGS) -ldflags '$(call ldflags,$*)' -o $@ ./cmd/$*
 
-install: go.mod go.sum
-	@echo "Installing gurud to $(GOPATH)/bin ..."
+$(ORACLE_BUILD_TARGET): oracle/go.mod oracle/go.sum FORCE
+	@echo "Building oracled to $(BUILDDIR) ..."
+	@mkdir -p $(BUILDDIR)
+	@CGO_ENABLED=0 GOWORK=off go -C oracle build -mod=readonly -trimpath \
+		-ldflags '-w -s -X github.com/gurufinglobal/guru/oracle/internal/version.Version=$(ORACLE_VERSION) -X github.com/gurufinglobal/guru/oracle/internal/version.Commit=$(COMMIT)' \
+		-o $(abspath $@) ./cmd/oracled
+
+install: go.mod go.sum oracle/go.mod oracle/go.sum
+	@echo "Installing gurud and oracled to $(GOPATH)/bin ..."
 	@go install $(BUILD_FLAGS) -ldflags '$(call ldflags,gurud)' ./cmd/gurud
+	@CGO_ENABLED=0 GOWORK=off go -C oracle install -mod=readonly -trimpath \
+		-ldflags '-w -s -X github.com/gurufinglobal/guru/oracle/internal/version.Version=$(ORACLE_VERSION) -X github.com/gurufinglobal/guru/oracle/internal/version.Commit=$(COMMIT)' \
+		./cmd/oracled
 
 clean:
 	@echo "Cleaning build directory..."
@@ -84,6 +96,7 @@ FORCE:
 test:
 	@echo "Running unit tests..."
 	@go test -mod=readonly -race -cover ./...
+	@GOWORK=off go -C oracle test -mod=readonly -race -cover ./...
 	@echo "Running two-chain TransSwap proof-relay acceptance test..."
 	@go test -mod=readonly -tags=test -race -cover ./tests/transwaptwochain
 
@@ -94,6 +107,7 @@ format:
 lint:
 	@echo "Running golangci-lint..."
 	@golangci-lint run ./... --timeout=15m
+	@cd oracle && GOWORK=off golangci-lint run ./... --timeout=15m
 
 ###############################################################################
 ###                                Protobuf                                 ###

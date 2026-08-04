@@ -1211,31 +1211,29 @@ func (x *fastReflection_OracleValue) ProtoMethods() *protoiface.Methods {
 }
 
 var (
-	md_OracleSample                  protoreflect.MessageDescriptor
-	fd_OracleSample_source           protoreflect.FieldDescriptor
-	fd_OracleSample_value_type       protoreflect.FieldDescriptor
-	fd_OracleSample_value            protoreflect.FieldDescriptor
-	fd_OracleSample_sample_time_unix protoreflect.FieldDescriptor
+	md_AggregatedResult              protoreflect.MessageDescriptor
+	fd_AggregatedResult_symbol       protoreflect.FieldDescriptor
+	fd_AggregatedResult_value        protoreflect.FieldDescriptor
+	fd_AggregatedResult_source_count protoreflect.FieldDescriptor
 )
 
 func init() {
 	file_guru_oracle_v1_oracle_proto_init()
-	md_OracleSample = File_guru_oracle_v1_oracle_proto.Messages().ByName("OracleSample")
-	fd_OracleSample_source = md_OracleSample.Fields().ByName("source")
-	fd_OracleSample_value_type = md_OracleSample.Fields().ByName("value_type")
-	fd_OracleSample_value = md_OracleSample.Fields().ByName("value")
-	fd_OracleSample_sample_time_unix = md_OracleSample.Fields().ByName("sample_time_unix")
+	md_AggregatedResult = File_guru_oracle_v1_oracle_proto.Messages().ByName("AggregatedResult")
+	fd_AggregatedResult_symbol = md_AggregatedResult.Fields().ByName("symbol")
+	fd_AggregatedResult_value = md_AggregatedResult.Fields().ByName("value")
+	fd_AggregatedResult_source_count = md_AggregatedResult.Fields().ByName("source_count")
 }
 
-var _ protoreflect.Message = (*fastReflection_OracleSample)(nil)
+var _ protoreflect.Message = (*fastReflection_AggregatedResult)(nil)
 
-type fastReflection_OracleSample OracleSample
+type fastReflection_AggregatedResult AggregatedResult
 
-func (x *OracleSample) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_OracleSample)(x)
+func (x *AggregatedResult) ProtoReflect() protoreflect.Message {
+	return (*fastReflection_AggregatedResult)(x)
 }
 
-func (x *OracleSample) slowProtoReflect() protoreflect.Message {
+func (x *AggregatedResult) slowProtoReflect() protoreflect.Message {
 	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1247,43 +1245,43 @@ func (x *OracleSample) slowProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-var _fastReflection_OracleSample_messageType fastReflection_OracleSample_messageType
-var _ protoreflect.MessageType = fastReflection_OracleSample_messageType{}
+var _fastReflection_AggregatedResult_messageType fastReflection_AggregatedResult_messageType
+var _ protoreflect.MessageType = fastReflection_AggregatedResult_messageType{}
 
-type fastReflection_OracleSample_messageType struct{}
+type fastReflection_AggregatedResult_messageType struct{}
 
-func (x fastReflection_OracleSample_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_OracleSample)(nil)
+func (x fastReflection_AggregatedResult_messageType) Zero() protoreflect.Message {
+	return (*fastReflection_AggregatedResult)(nil)
 }
-func (x fastReflection_OracleSample_messageType) New() protoreflect.Message {
-	return new(fastReflection_OracleSample)
+func (x fastReflection_AggregatedResult_messageType) New() protoreflect.Message {
+	return new(fastReflection_AggregatedResult)
 }
-func (x fastReflection_OracleSample_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_OracleSample
+func (x fastReflection_AggregatedResult_messageType) Descriptor() protoreflect.MessageDescriptor {
+	return md_AggregatedResult
 }
 
 // Descriptor returns message descriptor, which contains only the protobuf
 // type information for the message.
-func (x *fastReflection_OracleSample) Descriptor() protoreflect.MessageDescriptor {
-	return md_OracleSample
+func (x *fastReflection_AggregatedResult) Descriptor() protoreflect.MessageDescriptor {
+	return md_AggregatedResult
 }
 
 // Type returns the message type, which encapsulates both Go and protobuf
 // type information. If the Go type information is not needed,
 // it is recommended that the message descriptor be used instead.
-func (x *fastReflection_OracleSample) Type() protoreflect.MessageType {
-	return _fastReflection_OracleSample_messageType
+func (x *fastReflection_AggregatedResult) Type() protoreflect.MessageType {
+	return _fastReflection_AggregatedResult_messageType
 }
 
 // New returns a newly allocated and mutable empty message.
-func (x *fastReflection_OracleSample) New() protoreflect.Message {
-	return new(fastReflection_OracleSample)
+func (x *fastReflection_AggregatedResult) New() protoreflect.Message {
+	return new(fastReflection_AggregatedResult)
 }
 
 // Interface unwraps the message reflection interface and
 // returns the underlying ProtoMessage interface.
-func (x *fastReflection_OracleSample) Interface() protoreflect.ProtoMessage {
-	return (*OracleSample)(x)
+func (x *fastReflection_AggregatedResult) Interface() protoreflect.ProtoMessage {
+	return (*AggregatedResult)(x)
 }
 
 // Range iterates over every populated field in an undefined order,
@@ -1291,643 +1289,22 @@ func (x *fastReflection_OracleSample) Interface() protoreflect.ProtoMessage {
 // Range returns immediately if f returns false.
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
-func (x *fastReflection_OracleSample) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.Source != "" {
-		value := protoreflect.ValueOfString(x.Source)
-		if !f(fd_OracleSample_source, value) {
-			return
-		}
-	}
-	if x.ValueType != 0 {
-		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.ValueType))
-		if !f(fd_OracleSample_value_type, value) {
+func (x *fastReflection_AggregatedResult) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Symbol != "" {
+		value := protoreflect.ValueOfString(x.Symbol)
+		if !f(fd_AggregatedResult_symbol, value) {
 			return
 		}
 	}
 	if x.Value != "" {
 		value := protoreflect.ValueOfString(x.Value)
-		if !f(fd_OracleSample_value, value) {
+		if !f(fd_AggregatedResult_value, value) {
 			return
 		}
 	}
-	if x.SampleTimeUnix != int64(0) {
-		value := protoreflect.ValueOfInt64(x.SampleTimeUnix)
-		if !f(fd_OracleSample_sample_time_unix, value) {
-			return
-		}
-	}
-}
-
-// Has reports whether a field is populated.
-//
-// Some fields have the property of nullability where it is possible to
-// distinguish between the default value of a field and whether the field
-// was explicitly populated with the default value. Singular message fields,
-// member fields of a oneof, and proto2 scalar fields are nullable. Such
-// fields are populated only if explicitly set.
-//
-// In other cases (aside from the nullable cases above),
-// a proto3 scalar field is populated if it contains a non-zero value, and
-// a repeated field is populated if it is non-empty.
-func (x *fastReflection_OracleSample) Has(fd protoreflect.FieldDescriptor) bool {
-	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSample.source":
-		return x.Source != ""
-	case "guru.oracle.v1.OracleSample.value_type":
-		return x.ValueType != 0
-	case "guru.oracle.v1.OracleSample.value":
-		return x.Value != ""
-	case "guru.oracle.v1.OracleSample.sample_time_unix":
-		return x.SampleTimeUnix != int64(0)
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSample"))
-		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSample does not contain field %s", fd.FullName()))
-	}
-}
-
-// Clear clears the field such that a subsequent Has call reports false.
-//
-// Clearing an extension field clears both the extension type and value
-// associated with the given field number.
-//
-// Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_OracleSample) Clear(fd protoreflect.FieldDescriptor) {
-	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSample.source":
-		x.Source = ""
-	case "guru.oracle.v1.OracleSample.value_type":
-		x.ValueType = 0
-	case "guru.oracle.v1.OracleSample.value":
-		x.Value = ""
-	case "guru.oracle.v1.OracleSample.sample_time_unix":
-		x.SampleTimeUnix = int64(0)
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSample"))
-		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSample does not contain field %s", fd.FullName()))
-	}
-}
-
-// Get retrieves the value for a field.
-//
-// For unpopulated scalars, it returns the default value, where
-// the default value of a bytes scalar is guaranteed to be a copy.
-// For unpopulated composite types, it returns an empty, read-only view
-// of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_OracleSample) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
-	switch descriptor.FullName() {
-	case "guru.oracle.v1.OracleSample.source":
-		value := x.Source
-		return protoreflect.ValueOfString(value)
-	case "guru.oracle.v1.OracleSample.value_type":
-		value := x.ValueType
-		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
-	case "guru.oracle.v1.OracleSample.value":
-		value := x.Value
-		return protoreflect.ValueOfString(value)
-	case "guru.oracle.v1.OracleSample.sample_time_unix":
-		value := x.SampleTimeUnix
-		return protoreflect.ValueOfInt64(value)
-	default:
-		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSample"))
-		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSample does not contain field %s", descriptor.FullName()))
-	}
-}
-
-// Set stores the value for a field.
-//
-// For a field belonging to a oneof, it implicitly clears any other field
-// that may be currently set within the same oneof.
-// For extension fields, it implicitly stores the provided ExtensionType.
-// When setting a composite type, it is unspecified whether the stored value
-// aliases the source's memory in any way. If the composite value is an
-// empty, read-only value, then it panics.
-//
-// Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_OracleSample) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
-	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSample.source":
-		x.Source = value.Interface().(string)
-	case "guru.oracle.v1.OracleSample.value_type":
-		x.ValueType = (ValueType)(value.Enum())
-	case "guru.oracle.v1.OracleSample.value":
-		x.Value = value.Interface().(string)
-	case "guru.oracle.v1.OracleSample.sample_time_unix":
-		x.SampleTimeUnix = value.Int()
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSample"))
-		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSample does not contain field %s", fd.FullName()))
-	}
-}
-
-// Mutable returns a mutable reference to a composite type.
-//
-// If the field is unpopulated, it may allocate a composite value.
-// For a field belonging to a oneof, it implicitly clears any other field
-// that may be currently set within the same oneof.
-// For extension fields, it implicitly stores the provided ExtensionType
-// if not already stored.
-// It panics if the field does not contain a composite type.
-//
-// Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_OracleSample) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
-	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSample.source":
-		panic(fmt.Errorf("field source of message guru.oracle.v1.OracleSample is not mutable"))
-	case "guru.oracle.v1.OracleSample.value_type":
-		panic(fmt.Errorf("field value_type of message guru.oracle.v1.OracleSample is not mutable"))
-	case "guru.oracle.v1.OracleSample.value":
-		panic(fmt.Errorf("field value of message guru.oracle.v1.OracleSample is not mutable"))
-	case "guru.oracle.v1.OracleSample.sample_time_unix":
-		panic(fmt.Errorf("field sample_time_unix of message guru.oracle.v1.OracleSample is not mutable"))
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSample"))
-		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSample does not contain field %s", fd.FullName()))
-	}
-}
-
-// NewField returns a new value that is assignable to the field
-// for the given descriptor. For scalars, this returns the default value.
-// For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_OracleSample) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
-	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSample.source":
-		return protoreflect.ValueOfString("")
-	case "guru.oracle.v1.OracleSample.value_type":
-		return protoreflect.ValueOfEnum(0)
-	case "guru.oracle.v1.OracleSample.value":
-		return protoreflect.ValueOfString("")
-	case "guru.oracle.v1.OracleSample.sample_time_unix":
-		return protoreflect.ValueOfInt64(int64(0))
-	default:
-		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSample"))
-		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSample does not contain field %s", fd.FullName()))
-	}
-}
-
-// WhichOneof reports which field within the oneof is populated,
-// returning nil if none are populated.
-// It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_OracleSample) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
-	switch d.FullName() {
-	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.OracleSample", d.FullName()))
-	}
-	panic("unreachable")
-}
-
-// GetUnknown retrieves the entire list of unknown fields.
-// The caller may only mutate the contents of the RawFields
-// if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_OracleSample) GetUnknown() protoreflect.RawFields {
-	return x.unknownFields
-}
-
-// SetUnknown stores an entire list of unknown fields.
-// The raw fields must be syntactically valid according to the wire format.
-// An implementation may panic if this is not the case.
-// Once stored, the caller must not mutate the content of the RawFields.
-// An empty RawFields may be passed to clear the fields.
-//
-// SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_OracleSample) SetUnknown(fields protoreflect.RawFields) {
-	x.unknownFields = fields
-}
-
-// IsValid reports whether the message is valid.
-//
-// An invalid message is an empty, read-only value.
-//
-// An invalid message often corresponds to a nil pointer of the concrete
-// message type, but the details are implementation dependent.
-// Validity is not part of the protobuf data model, and may not
-// be preserved in marshaling or other operations.
-func (x *fastReflection_OracleSample) IsValid() bool {
-	return x != nil
-}
-
-// ProtoMethods returns optional fastReflectionFeature-path implementations of various operations.
-// This method may return nil.
-//
-// The returned methods type is identical to
-// "google.golang.org/protobuf/runtime/protoiface".Methods.
-// Consult the protoiface package documentation for details.
-func (x *fastReflection_OracleSample) ProtoMethods() *protoiface.Methods {
-	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*OracleSample)
-		if x == nil {
-			return protoiface.SizeOutput{
-				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-				Size:              0,
-			}
-		}
-		options := runtime.SizeInputToOptions(input)
-		_ = options
-		var n int
-		var l int
-		_ = l
-		l = len(x.Source)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
-		}
-		if x.ValueType != 0 {
-			n += 1 + runtime.Sov(uint64(x.ValueType))
-		}
-		l = len(x.Value)
-		if l > 0 {
-			n += 1 + l + runtime.Sov(uint64(l))
-		}
-		if x.SampleTimeUnix != 0 {
-			n += 1 + runtime.Sov(uint64(x.SampleTimeUnix))
-		}
-		if x.unknownFields != nil {
-			n += len(x.unknownFields)
-		}
-		return protoiface.SizeOutput{
-			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-			Size:              n,
-		}
-	}
-
-	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*OracleSample)
-		if x == nil {
-			return protoiface.MarshalOutput{
-				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-				Buf:               input.Buf,
-			}, nil
-		}
-		options := runtime.MarshalInputToOptions(input)
-		_ = options
-		size := options.Size(x)
-		dAtA := make([]byte, size)
-		i := len(dAtA)
-		_ = i
-		var l int
-		_ = l
-		if x.unknownFields != nil {
-			i -= len(x.unknownFields)
-			copy(dAtA[i:], x.unknownFields)
-		}
-		if x.SampleTimeUnix != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.SampleTimeUnix))
-			i--
-			dAtA[i] = 0x20
-		}
-		if len(x.Value) > 0 {
-			i -= len(x.Value)
-			copy(dAtA[i:], x.Value)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Value)))
-			i--
-			dAtA[i] = 0x1a
-		}
-		if x.ValueType != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.ValueType))
-			i--
-			dAtA[i] = 0x10
-		}
-		if len(x.Source) > 0 {
-			i -= len(x.Source)
-			copy(dAtA[i:], x.Source)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Source)))
-			i--
-			dAtA[i] = 0xa
-		}
-		if input.Buf != nil {
-			input.Buf = append(input.Buf, dAtA...)
-		} else {
-			input.Buf = dAtA
-		}
-		return protoiface.MarshalOutput{
-			NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-			Buf:               input.Buf,
-		}, nil
-	}
-	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*OracleSample)
-		if x == nil {
-			return protoiface.UnmarshalOutput{
-				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-				Flags:             input.Flags,
-			}, nil
-		}
-		options := runtime.UnmarshalInputToOptions(input)
-		_ = options
-		dAtA := input.Buf
-		l := len(dAtA)
-		iNdEx := 0
-		for iNdEx < l {
-			preIndex := iNdEx
-			var wire uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				wire |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			fieldNum := int32(wire >> 3)
-			wireType := int(wire & 0x7)
-			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: OracleSample: wiretype end group for non-group")
-			}
-			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: OracleSample: illegal tag %d (wire type %d)", fieldNum, wire)
-			}
-			switch fieldNum {
-			case 1:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
-				}
-				var stringLen uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.Source = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
-			case 2:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ValueType", wireType)
-				}
-				x.ValueType = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.ValueType |= ValueType(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-			case 3:
-				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
-				}
-				var stringLen uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					stringLen |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				intStringLen := int(stringLen)
-				if intStringLen < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				postIndex := iNdEx + intStringLen
-				if postIndex < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if postIndex > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				x.Value = string(dAtA[iNdEx:postIndex])
-				iNdEx = postIndex
-			case 4:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SampleTimeUnix", wireType)
-				}
-				x.SampleTimeUnix = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.SampleTimeUnix |= int64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-			default:
-				iNdEx = preIndex
-				skippy, err := runtime.Skip(dAtA[iNdEx:])
-				if err != nil {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
-				}
-				if (skippy < 0) || (iNdEx+skippy) < 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
-				}
-				if (iNdEx + skippy) > l {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-				}
-				if !options.DiscardUnknown {
-					x.unknownFields = append(x.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-				}
-				iNdEx += skippy
-			}
-		}
-
-		if iNdEx > l {
-			return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-		}
-		return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, nil
-	}
-	return &protoiface.Methods{
-		NoUnkeyedLiterals: struct{}{},
-		Flags:             protoiface.SupportMarshalDeterministic | protoiface.SupportUnmarshalDiscardUnknown,
-		Size:              size,
-		Marshal:           marshal,
-		Unmarshal:         unmarshal,
-		Merge:             nil,
-		CheckInitialized:  nil,
-	}
-}
-
-var _ protoreflect.List = (*_OracleSymbolSamples_2_list)(nil)
-
-type _OracleSymbolSamples_2_list struct {
-	list *[]*OracleSample
-}
-
-func (x *_OracleSymbolSamples_2_list) Len() int {
-	if x.list == nil {
-		return 0
-	}
-	return len(*x.list)
-}
-
-func (x *_OracleSymbolSamples_2_list) Get(i int) protoreflect.Value {
-	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
-}
-
-func (x *_OracleSymbolSamples_2_list) Set(i int, value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleSample)
-	(*x.list)[i] = concreteValue
-}
-
-func (x *_OracleSymbolSamples_2_list) Append(value protoreflect.Value) {
-	valueUnwrapped := value.Message()
-	concreteValue := valueUnwrapped.Interface().(*OracleSample)
-	*x.list = append(*x.list, concreteValue)
-}
-
-func (x *_OracleSymbolSamples_2_list) AppendMutable() protoreflect.Value {
-	v := new(OracleSample)
-	*x.list = append(*x.list, v)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
-}
-
-func (x *_OracleSymbolSamples_2_list) Truncate(n int) {
-	for i := n; i < len(*x.list); i++ {
-		(*x.list)[i] = nil
-	}
-	*x.list = (*x.list)[:n]
-}
-
-func (x *_OracleSymbolSamples_2_list) NewElement() protoreflect.Value {
-	v := new(OracleSample)
-	return protoreflect.ValueOfMessage(v.ProtoReflect())
-}
-
-func (x *_OracleSymbolSamples_2_list) IsValid() bool {
-	return x.list != nil
-}
-
-var (
-	md_OracleSymbolSamples         protoreflect.MessageDescriptor
-	fd_OracleSymbolSamples_symbol  protoreflect.FieldDescriptor
-	fd_OracleSymbolSamples_samples protoreflect.FieldDescriptor
-)
-
-func init() {
-	file_guru_oracle_v1_oracle_proto_init()
-	md_OracleSymbolSamples = File_guru_oracle_v1_oracle_proto.Messages().ByName("OracleSymbolSamples")
-	fd_OracleSymbolSamples_symbol = md_OracleSymbolSamples.Fields().ByName("symbol")
-	fd_OracleSymbolSamples_samples = md_OracleSymbolSamples.Fields().ByName("samples")
-}
-
-var _ protoreflect.Message = (*fastReflection_OracleSymbolSamples)(nil)
-
-type fastReflection_OracleSymbolSamples OracleSymbolSamples
-
-func (x *OracleSymbolSamples) ProtoReflect() protoreflect.Message {
-	return (*fastReflection_OracleSymbolSamples)(x)
-}
-
-func (x *OracleSymbolSamples) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-var _fastReflection_OracleSymbolSamples_messageType fastReflection_OracleSymbolSamples_messageType
-var _ protoreflect.MessageType = fastReflection_OracleSymbolSamples_messageType{}
-
-type fastReflection_OracleSymbolSamples_messageType struct{}
-
-func (x fastReflection_OracleSymbolSamples_messageType) Zero() protoreflect.Message {
-	return (*fastReflection_OracleSymbolSamples)(nil)
-}
-func (x fastReflection_OracleSymbolSamples_messageType) New() protoreflect.Message {
-	return new(fastReflection_OracleSymbolSamples)
-}
-func (x fastReflection_OracleSymbolSamples_messageType) Descriptor() protoreflect.MessageDescriptor {
-	return md_OracleSymbolSamples
-}
-
-// Descriptor returns message descriptor, which contains only the protobuf
-// type information for the message.
-func (x *fastReflection_OracleSymbolSamples) Descriptor() protoreflect.MessageDescriptor {
-	return md_OracleSymbolSamples
-}
-
-// Type returns the message type, which encapsulates both Go and protobuf
-// type information. If the Go type information is not needed,
-// it is recommended that the message descriptor be used instead.
-func (x *fastReflection_OracleSymbolSamples) Type() protoreflect.MessageType {
-	return _fastReflection_OracleSymbolSamples_messageType
-}
-
-// New returns a newly allocated and mutable empty message.
-func (x *fastReflection_OracleSymbolSamples) New() protoreflect.Message {
-	return new(fastReflection_OracleSymbolSamples)
-}
-
-// Interface unwraps the message reflection interface and
-// returns the underlying ProtoMessage interface.
-func (x *fastReflection_OracleSymbolSamples) Interface() protoreflect.ProtoMessage {
-	return (*OracleSymbolSamples)(x)
-}
-
-// Range iterates over every populated field in an undefined order,
-// calling f for each field descriptor and value encountered.
-// Range returns immediately if f returns false.
-// While iterating, mutating operations may only be performed
-// on the current field descriptor.
-func (x *fastReflection_OracleSymbolSamples) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
-	if x.Symbol != "" {
-		value := protoreflect.ValueOfString(x.Symbol)
-		if !f(fd_OracleSymbolSamples_symbol, value) {
-			return
-		}
-	}
-	if len(x.Samples) != 0 {
-		value := protoreflect.ValueOfList(&_OracleSymbolSamples_2_list{list: &x.Samples})
-		if !f(fd_OracleSymbolSamples_samples, value) {
+	if x.SourceCount != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.SourceCount)
+		if !f(fd_AggregatedResult_source_count, value) {
 			return
 		}
 	}
@@ -1944,17 +1321,19 @@ func (x *fastReflection_OracleSymbolSamples) Range(f func(protoreflect.FieldDesc
 // In other cases (aside from the nullable cases above),
 // a proto3 scalar field is populated if it contains a non-zero value, and
 // a repeated field is populated if it is non-empty.
-func (x *fastReflection_OracleSymbolSamples) Has(fd protoreflect.FieldDescriptor) bool {
+func (x *fastReflection_AggregatedResult) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSymbolSamples.symbol":
+	case "guru.oracle.v1.AggregatedResult.symbol":
 		return x.Symbol != ""
-	case "guru.oracle.v1.OracleSymbolSamples.samples":
-		return len(x.Samples) != 0
+	case "guru.oracle.v1.AggregatedResult.value":
+		return x.Value != ""
+	case "guru.oracle.v1.AggregatedResult.source_count":
+		return x.SourceCount != uint32(0)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSymbolSamples"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.AggregatedResult"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSymbolSamples does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.AggregatedResult does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1964,17 +1343,19 @@ func (x *fastReflection_OracleSymbolSamples) Has(fd protoreflect.FieldDescriptor
 // associated with the given field number.
 //
 // Clear is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_OracleSymbolSamples) Clear(fd protoreflect.FieldDescriptor) {
+func (x *fastReflection_AggregatedResult) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSymbolSamples.symbol":
+	case "guru.oracle.v1.AggregatedResult.symbol":
 		x.Symbol = ""
-	case "guru.oracle.v1.OracleSymbolSamples.samples":
-		x.Samples = nil
+	case "guru.oracle.v1.AggregatedResult.value":
+		x.Value = ""
+	case "guru.oracle.v1.AggregatedResult.source_count":
+		x.SourceCount = uint32(0)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSymbolSamples"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.AggregatedResult"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSymbolSamples does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.AggregatedResult does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -1984,22 +1365,22 @@ func (x *fastReflection_OracleSymbolSamples) Clear(fd protoreflect.FieldDescript
 // the default value of a bytes scalar is guaranteed to be a copy.
 // For unpopulated composite types, it returns an empty, read-only view
 // of the value; to obtain a mutable reference, use Mutable.
-func (x *fastReflection_OracleSymbolSamples) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_AggregatedResult) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "guru.oracle.v1.OracleSymbolSamples.symbol":
+	case "guru.oracle.v1.AggregatedResult.symbol":
 		value := x.Symbol
 		return protoreflect.ValueOfString(value)
-	case "guru.oracle.v1.OracleSymbolSamples.samples":
-		if len(x.Samples) == 0 {
-			return protoreflect.ValueOfList(&_OracleSymbolSamples_2_list{})
-		}
-		listValue := &_OracleSymbolSamples_2_list{list: &x.Samples}
-		return protoreflect.ValueOfList(listValue)
+	case "guru.oracle.v1.AggregatedResult.value":
+		value := x.Value
+		return protoreflect.ValueOfString(value)
+	case "guru.oracle.v1.AggregatedResult.source_count":
+		value := x.SourceCount
+		return protoreflect.ValueOfUint32(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSymbolSamples"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.AggregatedResult"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSymbolSamples does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.AggregatedResult does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -2013,19 +1394,19 @@ func (x *fastReflection_OracleSymbolSamples) Get(descriptor protoreflect.FieldDe
 // empty, read-only value, then it panics.
 //
 // Set is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_OracleSymbolSamples) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
+func (x *fastReflection_AggregatedResult) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSymbolSamples.symbol":
+	case "guru.oracle.v1.AggregatedResult.symbol":
 		x.Symbol = value.Interface().(string)
-	case "guru.oracle.v1.OracleSymbolSamples.samples":
-		lv := value.List()
-		clv := lv.(*_OracleSymbolSamples_2_list)
-		x.Samples = *clv.list
+	case "guru.oracle.v1.AggregatedResult.value":
+		x.Value = value.Interface().(string)
+	case "guru.oracle.v1.AggregatedResult.source_count":
+		x.SourceCount = uint32(value.Uint())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSymbolSamples"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.AggregatedResult"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSymbolSamples does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.AggregatedResult does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -2039,49 +1420,48 @@ func (x *fastReflection_OracleSymbolSamples) Set(fd protoreflect.FieldDescriptor
 // It panics if the field does not contain a composite type.
 //
 // Mutable is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_OracleSymbolSamples) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_AggregatedResult) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSymbolSamples.samples":
-		if x.Samples == nil {
-			x.Samples = []*OracleSample{}
-		}
-		value := &_OracleSymbolSamples_2_list{list: &x.Samples}
-		return protoreflect.ValueOfList(value)
-	case "guru.oracle.v1.OracleSymbolSamples.symbol":
-		panic(fmt.Errorf("field symbol of message guru.oracle.v1.OracleSymbolSamples is not mutable"))
+	case "guru.oracle.v1.AggregatedResult.symbol":
+		panic(fmt.Errorf("field symbol of message guru.oracle.v1.AggregatedResult is not mutable"))
+	case "guru.oracle.v1.AggregatedResult.value":
+		panic(fmt.Errorf("field value of message guru.oracle.v1.AggregatedResult is not mutable"))
+	case "guru.oracle.v1.AggregatedResult.source_count":
+		panic(fmt.Errorf("field source_count of message guru.oracle.v1.AggregatedResult is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSymbolSamples"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.AggregatedResult"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSymbolSamples does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.AggregatedResult does not contain field %s", fd.FullName()))
 	}
 }
 
 // NewField returns a new value that is assignable to the field
 // for the given descriptor. For scalars, this returns the default value.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
-func (x *fastReflection_OracleSymbolSamples) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
+func (x *fastReflection_AggregatedResult) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "guru.oracle.v1.OracleSymbolSamples.symbol":
+	case "guru.oracle.v1.AggregatedResult.symbol":
 		return protoreflect.ValueOfString("")
-	case "guru.oracle.v1.OracleSymbolSamples.samples":
-		list := []*OracleSample{}
-		return protoreflect.ValueOfList(&_OracleSymbolSamples_2_list{list: &list})
+	case "guru.oracle.v1.AggregatedResult.value":
+		return protoreflect.ValueOfString("")
+	case "guru.oracle.v1.AggregatedResult.source_count":
+		return protoreflect.ValueOfUint32(uint32(0))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.OracleSymbolSamples"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: guru.oracle.v1.AggregatedResult"))
 		}
-		panic(fmt.Errorf("message guru.oracle.v1.OracleSymbolSamples does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message guru.oracle.v1.AggregatedResult does not contain field %s", fd.FullName()))
 	}
 }
 
 // WhichOneof reports which field within the oneof is populated,
 // returning nil if none are populated.
 // It panics if the oneof descriptor does not belong to this message.
-func (x *fastReflection_OracleSymbolSamples) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
+func (x *fastReflection_AggregatedResult) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.OracleSymbolSamples", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in guru.oracle.v1.AggregatedResult", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -2089,7 +1469,7 @@ func (x *fastReflection_OracleSymbolSamples) WhichOneof(d protoreflect.OneofDesc
 // GetUnknown retrieves the entire list of unknown fields.
 // The caller may only mutate the contents of the RawFields
 // if the mutated bytes are stored back into the message with SetUnknown.
-func (x *fastReflection_OracleSymbolSamples) GetUnknown() protoreflect.RawFields {
+func (x *fastReflection_AggregatedResult) GetUnknown() protoreflect.RawFields {
 	return x.unknownFields
 }
 
@@ -2100,7 +1480,7 @@ func (x *fastReflection_OracleSymbolSamples) GetUnknown() protoreflect.RawFields
 // An empty RawFields may be passed to clear the fields.
 //
 // SetUnknown is a mutating operation and unsafe for concurrent use.
-func (x *fastReflection_OracleSymbolSamples) SetUnknown(fields protoreflect.RawFields) {
+func (x *fastReflection_AggregatedResult) SetUnknown(fields protoreflect.RawFields) {
 	x.unknownFields = fields
 }
 
@@ -2112,7 +1492,7 @@ func (x *fastReflection_OracleSymbolSamples) SetUnknown(fields protoreflect.RawF
 // message type, but the details are implementation dependent.
 // Validity is not part of the protobuf data model, and may not
 // be preserved in marshaling or other operations.
-func (x *fastReflection_OracleSymbolSamples) IsValid() bool {
+func (x *fastReflection_AggregatedResult) IsValid() bool {
 	return x != nil
 }
 
@@ -2122,9 +1502,9 @@ func (x *fastReflection_OracleSymbolSamples) IsValid() bool {
 // The returned methods type is identical to
 // "google.golang.org/protobuf/runtime/protoiface".Methods.
 // Consult the protoiface package documentation for details.
-func (x *fastReflection_OracleSymbolSamples) ProtoMethods() *protoiface.Methods {
+func (x *fastReflection_AggregatedResult) ProtoMethods() *protoiface.Methods {
 	size := func(input protoiface.SizeInput) protoiface.SizeOutput {
-		x := input.Message.Interface().(*OracleSymbolSamples)
+		x := input.Message.Interface().(*AggregatedResult)
 		if x == nil {
 			return protoiface.SizeOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2140,11 +1520,12 @@ func (x *fastReflection_OracleSymbolSamples) ProtoMethods() *protoiface.Methods 
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		if len(x.Samples) > 0 {
-			for _, e := range x.Samples {
-				l = options.Size(e)
-				n += 1 + l + runtime.Sov(uint64(l))
-			}
+		l = len(x.Value)
+		if l > 0 {
+			n += 1 + l + runtime.Sov(uint64(l))
+		}
+		if x.SourceCount != 0 {
+			n += 1 + runtime.Sov(uint64(x.SourceCount))
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -2156,7 +1537,7 @@ func (x *fastReflection_OracleSymbolSamples) ProtoMethods() *protoiface.Methods 
 	}
 
 	marshal := func(input protoiface.MarshalInput) (protoiface.MarshalOutput, error) {
-		x := input.Message.Interface().(*OracleSymbolSamples)
+		x := input.Message.Interface().(*AggregatedResult)
 		if x == nil {
 			return protoiface.MarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2175,21 +1556,17 @@ func (x *fastReflection_OracleSymbolSamples) ProtoMethods() *protoiface.Methods 
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if len(x.Samples) > 0 {
-			for iNdEx := len(x.Samples) - 1; iNdEx >= 0; iNdEx-- {
-				encoded, err := options.Marshal(x.Samples[iNdEx])
-				if err != nil {
-					return protoiface.MarshalOutput{
-						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-						Buf:               input.Buf,
-					}, err
-				}
-				i -= len(encoded)
-				copy(dAtA[i:], encoded)
-				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
-				i--
-				dAtA[i] = 0x12
-			}
+		if x.SourceCount != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.SourceCount))
+			i--
+			dAtA[i] = 0x18
+		}
+		if len(x.Value) > 0 {
+			i -= len(x.Value)
+			copy(dAtA[i:], x.Value)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Value)))
+			i--
+			dAtA[i] = 0x12
 		}
 		if len(x.Symbol) > 0 {
 			i -= len(x.Symbol)
@@ -2209,7 +1586,7 @@ func (x *fastReflection_OracleSymbolSamples) ProtoMethods() *protoiface.Methods 
 		}, nil
 	}
 	unmarshal := func(input protoiface.UnmarshalInput) (protoiface.UnmarshalOutput, error) {
-		x := input.Message.Interface().(*OracleSymbolSamples)
+		x := input.Message.Interface().(*AggregatedResult)
 		if x == nil {
 			return protoiface.UnmarshalOutput{
 				NoUnkeyedLiterals: input.NoUnkeyedLiterals,
@@ -2241,10 +1618,10 @@ func (x *fastReflection_OracleSymbolSamples) ProtoMethods() *protoiface.Methods 
 			fieldNum := int32(wire >> 3)
 			wireType := int(wire & 0x7)
 			if wireType == 4 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: OracleSymbolSamples: wiretype end group for non-group")
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: AggregatedResult: wiretype end group for non-group")
 			}
 			if fieldNum <= 0 {
-				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: OracleSymbolSamples: illegal tag %d (wire type %d)", fieldNum, wire)
+				return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: AggregatedResult: illegal tag %d (wire type %d)", fieldNum, wire)
 			}
 			switch fieldNum {
 			case 1:
@@ -2281,9 +1658,9 @@ func (x *fastReflection_OracleSymbolSamples) ProtoMethods() *protoiface.Methods 
 				iNdEx = postIndex
 			case 2:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Samples", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
 				}
-				var msglen int
+				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
@@ -2293,26 +1670,43 @@ func (x *fastReflection_OracleSymbolSamples) ProtoMethods() *protoiface.Methods 
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					msglen |= int(b&0x7F) << shift
+					stringLen |= uint64(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				if msglen < 0 {
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
-				postIndex := iNdEx + msglen
+				postIndex := iNdEx + intStringLen
 				if postIndex < 0 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
 				}
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.Samples = append(x.Samples, &OracleSample{})
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Samples[len(x.Samples)-1]); err != nil {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
-				}
+				x.Value = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
+			case 3:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field SourceCount", wireType)
+				}
+				x.SourceCount = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.SourceCount |= uint32(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
 			default:
 				iNdEx = preIndex
 				skippy, err := runtime.Skip(dAtA[iNdEx:])
@@ -2351,7 +1745,6 @@ func (x *fastReflection_OracleSymbolSamples) ProtoMethods() *protoiface.Methods 
 var (
 	md_OracleValidatorResult              protoreflect.MessageDescriptor
 	fd_OracleValidatorResult_symbol       protoreflect.FieldDescriptor
-	fd_OracleValidatorResult_value_type   protoreflect.FieldDescriptor
 	fd_OracleValidatorResult_value        protoreflect.FieldDescriptor
 	fd_OracleValidatorResult_source_count protoreflect.FieldDescriptor
 )
@@ -2360,7 +1753,6 @@ func init() {
 	file_guru_oracle_v1_oracle_proto_init()
 	md_OracleValidatorResult = File_guru_oracle_v1_oracle_proto.Messages().ByName("OracleValidatorResult")
 	fd_OracleValidatorResult_symbol = md_OracleValidatorResult.Fields().ByName("symbol")
-	fd_OracleValidatorResult_value_type = md_OracleValidatorResult.Fields().ByName("value_type")
 	fd_OracleValidatorResult_value = md_OracleValidatorResult.Fields().ByName("value")
 	fd_OracleValidatorResult_source_count = md_OracleValidatorResult.Fields().ByName("source_count")
 }
@@ -2374,7 +1766,7 @@ func (x *OracleValidatorResult) ProtoReflect() protoreflect.Message {
 }
 
 func (x *OracleValidatorResult) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[4]
+	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2436,12 +1828,6 @@ func (x *fastReflection_OracleValidatorResult) Range(f func(protoreflect.FieldDe
 			return
 		}
 	}
-	if x.ValueType != 0 {
-		value := protoreflect.ValueOfEnum((protoreflect.EnumNumber)(x.ValueType))
-		if !f(fd_OracleValidatorResult_value_type, value) {
-			return
-		}
-	}
 	if x.Value != "" {
 		value := protoreflect.ValueOfString(x.Value)
 		if !f(fd_OracleValidatorResult_value, value) {
@@ -2471,8 +1857,6 @@ func (x *fastReflection_OracleValidatorResult) Has(fd protoreflect.FieldDescript
 	switch fd.FullName() {
 	case "guru.oracle.v1.OracleValidatorResult.symbol":
 		return x.Symbol != ""
-	case "guru.oracle.v1.OracleValidatorResult.value_type":
-		return x.ValueType != 0
 	case "guru.oracle.v1.OracleValidatorResult.value":
 		return x.Value != ""
 	case "guru.oracle.v1.OracleValidatorResult.source_count":
@@ -2495,8 +1879,6 @@ func (x *fastReflection_OracleValidatorResult) Clear(fd protoreflect.FieldDescri
 	switch fd.FullName() {
 	case "guru.oracle.v1.OracleValidatorResult.symbol":
 		x.Symbol = ""
-	case "guru.oracle.v1.OracleValidatorResult.value_type":
-		x.ValueType = 0
 	case "guru.oracle.v1.OracleValidatorResult.value":
 		x.Value = ""
 	case "guru.oracle.v1.OracleValidatorResult.source_count":
@@ -2520,9 +1902,6 @@ func (x *fastReflection_OracleValidatorResult) Get(descriptor protoreflect.Field
 	case "guru.oracle.v1.OracleValidatorResult.symbol":
 		value := x.Symbol
 		return protoreflect.ValueOfString(value)
-	case "guru.oracle.v1.OracleValidatorResult.value_type":
-		value := x.ValueType
-		return protoreflect.ValueOfEnum((protoreflect.EnumNumber)(value))
 	case "guru.oracle.v1.OracleValidatorResult.value":
 		value := x.Value
 		return protoreflect.ValueOfString(value)
@@ -2551,8 +1930,6 @@ func (x *fastReflection_OracleValidatorResult) Set(fd protoreflect.FieldDescript
 	switch fd.FullName() {
 	case "guru.oracle.v1.OracleValidatorResult.symbol":
 		x.Symbol = value.Interface().(string)
-	case "guru.oracle.v1.OracleValidatorResult.value_type":
-		x.ValueType = (ValueType)(value.Enum())
 	case "guru.oracle.v1.OracleValidatorResult.value":
 		x.Value = value.Interface().(string)
 	case "guru.oracle.v1.OracleValidatorResult.source_count":
@@ -2579,8 +1956,6 @@ func (x *fastReflection_OracleValidatorResult) Mutable(fd protoreflect.FieldDesc
 	switch fd.FullName() {
 	case "guru.oracle.v1.OracleValidatorResult.symbol":
 		panic(fmt.Errorf("field symbol of message guru.oracle.v1.OracleValidatorResult is not mutable"))
-	case "guru.oracle.v1.OracleValidatorResult.value_type":
-		panic(fmt.Errorf("field value_type of message guru.oracle.v1.OracleValidatorResult is not mutable"))
 	case "guru.oracle.v1.OracleValidatorResult.value":
 		panic(fmt.Errorf("field value of message guru.oracle.v1.OracleValidatorResult is not mutable"))
 	case "guru.oracle.v1.OracleValidatorResult.source_count":
@@ -2600,8 +1975,6 @@ func (x *fastReflection_OracleValidatorResult) NewField(fd protoreflect.FieldDes
 	switch fd.FullName() {
 	case "guru.oracle.v1.OracleValidatorResult.symbol":
 		return protoreflect.ValueOfString("")
-	case "guru.oracle.v1.OracleValidatorResult.value_type":
-		return protoreflect.ValueOfEnum(0)
 	case "guru.oracle.v1.OracleValidatorResult.value":
 		return protoreflect.ValueOfString("")
 	case "guru.oracle.v1.OracleValidatorResult.source_count":
@@ -2679,9 +2052,6 @@ func (x *fastReflection_OracleValidatorResult) ProtoMethods() *protoiface.Method
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		if x.ValueType != 0 {
-			n += 1 + runtime.Sov(uint64(x.ValueType))
-		}
 		l = len(x.Value)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
@@ -2729,11 +2099,6 @@ func (x *fastReflection_OracleValidatorResult) ProtoMethods() *protoiface.Method
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Value)))
 			i--
 			dAtA[i] = 0x1a
-		}
-		if x.ValueType != 0 {
-			i = runtime.EncodeVarint(dAtA, i, uint64(x.ValueType))
-			i--
-			dAtA[i] = 0x10
 		}
 		if len(x.Symbol) > 0 {
 			i -= len(x.Symbol)
@@ -2823,25 +2188,6 @@ func (x *fastReflection_OracleValidatorResult) ProtoMethods() *protoiface.Method
 				}
 				x.Symbol = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
-			case 2:
-				if wireType != 0 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ValueType", wireType)
-				}
-				x.ValueType = 0
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
-					}
-					if iNdEx >= l {
-						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					x.ValueType |= ValueType(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
 			case 3:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
@@ -2956,7 +2302,7 @@ func (x *OracleSignedVoteExtension) ProtoReflect() protoreflect.Message {
 }
 
 func (x *OracleSignedVoteExtension) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[5]
+	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3651,7 +2997,7 @@ func (x *OracleSignedVoteExtensions) ProtoReflect() protoreflect.Message {
 }
 
 func (x *OracleSignedVoteExtensions) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[6]
+	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4195,7 +3541,7 @@ func (x *OracleProposalPayload) ProtoReflect() protoreflect.Message {
 }
 
 func (x *OracleProposalPayload) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[7]
+	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4814,7 +4160,7 @@ func (x *OracleHistory) ProtoReflect() protoreflect.Message {
 }
 
 func (x *OracleHistory) slowProtoReflect() protoreflect.Message {
-	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[8]
+	mi := &file_guru_oracle_v1_oracle_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5314,9 +4660,9 @@ const (
 
 // ValueType classifies the string-encoded oracle value.
 //
-// Guru oracle v1 only supports VALUE_TYPE_NUMERIC for configured tasks,
-// accepted values, samples, and validator results. Non-numeric enum values are
-// reserved for future use and are rejected by current validation.
+// Guru oracle v1 only supports VALUE_TYPE_NUMERIC for configured tasks and
+// accepted values. Sidecar aggregates and validator results omit the redundant
+// type and are valid only for numeric tasks. Other enum values are reserved.
 type ValueType int32
 
 const (
@@ -5501,20 +4847,19 @@ func (x *OracleValue) GetBlockTimeUnix() int64 {
 	return 0
 }
 
-type OracleSample struct {
+// AggregatedResult is a sidecar-produced strict-majority aggregate.
+type AggregatedResult struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Source string `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
-	ValueType      ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
-	Value          string    `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	SampleTimeUnix int64     `protobuf:"varint,4,opt,name=sample_time_unix,json=sampleTimeUnix,proto3" json:"sample_time_unix,omitempty"`
+	Symbol      string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Value       string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	SourceCount uint32 `protobuf:"varint,3,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
 }
 
-func (x *OracleSample) Reset() {
-	*x = OracleSample{}
+func (x *AggregatedResult) Reset() {
+	*x = AggregatedResult{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -5522,86 +4867,36 @@ func (x *OracleSample) Reset() {
 	}
 }
 
-func (x *OracleSample) String() string {
+func (x *AggregatedResult) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OracleSample) ProtoMessage() {}
+func (*AggregatedResult) ProtoMessage() {}
 
-// Deprecated: Use OracleSample.ProtoReflect.Descriptor instead.
-func (*OracleSample) Descriptor() ([]byte, []int) {
+// Deprecated: Use AggregatedResult.ProtoReflect.Descriptor instead.
+func (*AggregatedResult) Descriptor() ([]byte, []int) {
 	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *OracleSample) GetSource() string {
-	if x != nil {
-		return x.Source
-	}
-	return ""
-}
-
-func (x *OracleSample) GetValueType() ValueType {
-	if x != nil {
-		return x.ValueType
-	}
-	return ValueType_VALUE_TYPE_UNSPECIFIED
-}
-
-func (x *OracleSample) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-func (x *OracleSample) GetSampleTimeUnix() int64 {
-	if x != nil {
-		return x.SampleTimeUnix
-	}
-	return 0
-}
-
-type OracleSymbolSamples struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Symbol  string          `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Samples []*OracleSample `protobuf:"bytes,2,rep,name=samples,proto3" json:"samples,omitempty"`
-}
-
-func (x *OracleSymbolSamples) Reset() {
-	*x = OracleSymbolSamples{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *OracleSymbolSamples) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OracleSymbolSamples) ProtoMessage() {}
-
-// Deprecated: Use OracleSymbolSamples.ProtoReflect.Descriptor instead.
-func (*OracleSymbolSamples) Descriptor() ([]byte, []int) {
-	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *OracleSymbolSamples) GetSymbol() string {
+func (x *AggregatedResult) GetSymbol() string {
 	if x != nil {
 		return x.Symbol
 	}
 	return ""
 }
 
-func (x *OracleSymbolSamples) GetSamples() []*OracleSample {
+func (x *AggregatedResult) GetValue() string {
 	if x != nil {
-		return x.Samples
+		return x.Value
 	}
-	return nil
+	return ""
+}
+
+func (x *AggregatedResult) GetSourceCount() uint32 {
+	if x != nil {
+		return x.SourceCount
+	}
+	return 0
 }
 
 type OracleValidatorResult struct {
@@ -5609,17 +4904,15 @@ type OracleValidatorResult struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
-	ValueType   ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
-	Value       string    `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	SourceCount uint32    `protobuf:"varint,4,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
+	Symbol      string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Value       string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	SourceCount uint32 `protobuf:"varint,4,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
 }
 
 func (x *OracleValidatorResult) Reset() {
 	*x = OracleValidatorResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[4]
+		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5633,7 +4926,7 @@ func (*OracleValidatorResult) ProtoMessage() {}
 
 // Deprecated: Use OracleValidatorResult.ProtoReflect.Descriptor instead.
 func (*OracleValidatorResult) Descriptor() ([]byte, []int) {
-	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{4}
+	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *OracleValidatorResult) GetSymbol() string {
@@ -5641,13 +4934,6 @@ func (x *OracleValidatorResult) GetSymbol() string {
 		return x.Symbol
 	}
 	return ""
-}
-
-func (x *OracleValidatorResult) GetValueType() ValueType {
-	if x != nil {
-		return x.ValueType
-	}
-	return ValueType_VALUE_TYPE_UNSPECIFIED
 }
 
 func (x *OracleValidatorResult) GetValue() string {
@@ -5679,7 +4965,7 @@ type OracleSignedVoteExtension struct {
 func (x *OracleSignedVoteExtension) Reset() {
 	*x = OracleSignedVoteExtension{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[5]
+		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5693,7 +4979,7 @@ func (*OracleSignedVoteExtension) ProtoMessage() {}
 
 // Deprecated: Use OracleSignedVoteExtension.ProtoReflect.Descriptor instead.
 func (*OracleSignedVoteExtension) Descriptor() ([]byte, []int) {
-	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{5}
+	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *OracleSignedVoteExtension) GetValidatorAddress() []byte {
@@ -5743,7 +5029,7 @@ type OracleSignedVoteExtensions struct {
 func (x *OracleSignedVoteExtensions) Reset() {
 	*x = OracleSignedVoteExtensions{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[6]
+		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5757,7 +5043,7 @@ func (*OracleSignedVoteExtensions) ProtoMessage() {}
 
 // Deprecated: Use OracleSignedVoteExtensions.ProtoReflect.Descriptor instead.
 func (*OracleSignedVoteExtensions) Descriptor() ([]byte, []int) {
-	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{6}
+	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *OracleSignedVoteExtensions) GetRound() int32 {
@@ -5787,7 +5073,7 @@ type OracleProposalPayload struct {
 func (x *OracleProposalPayload) Reset() {
 	*x = OracleProposalPayload{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[7]
+		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5801,7 +5087,7 @@ func (*OracleProposalPayload) ProtoMessage() {}
 
 // Deprecated: Use OracleProposalPayload.ProtoReflect.Descriptor instead.
 func (*OracleProposalPayload) Descriptor() ([]byte, []int) {
-	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{7}
+	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *OracleProposalPayload) GetHeight() int64 {
@@ -5837,7 +5123,7 @@ type OracleHistory struct {
 func (x *OracleHistory) Reset() {
 	*x = OracleHistory{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[8]
+		mi := &file_guru_oracle_v1_oracle_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5851,7 +5137,7 @@ func (*OracleHistory) ProtoMessage() {}
 
 // Deprecated: Use OracleHistory.ProtoReflect.Descriptor instead.
 func (*OracleHistory) Descriptor() ([]byte, []int) {
-	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{8}
+	return file_guru_oracle_v1_oracle_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *OracleHistory) GetSymbol() string {
@@ -5896,93 +5182,80 @@ var file_guru_oracle_v1_oracle_proto_rawDesc = []byte{
 	0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x65,
 	0x69, 0x67, 0x68, 0x74, 0x12, 0x26, 0x0a, 0x0f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x74, 0x69,
 	0x6d, 0x65, 0x5f, 0x75, 0x6e, 0x69, 0x78, 0x18, 0x05, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0d, 0x62,
-	0x6c, 0x6f, 0x63, 0x6b, 0x54, 0x69, 0x6d, 0x65, 0x55, 0x6e, 0x69, 0x78, 0x22, 0xa0, 0x01, 0x0a,
-	0x0c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x12, 0x16, 0x0a,
-	0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x38, 0x0a, 0x0a, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x5f, 0x74,
-	0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x19, 0x2e, 0x67, 0x75, 0x72, 0x75,
-	0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65,
-	0x54, 0x79, 0x70, 0x65, 0x52, 0x09, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12,
-	0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
-	0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x28, 0x0a, 0x10, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x5f,
-	0x74, 0x69, 0x6d, 0x65, 0x5f, 0x75, 0x6e, 0x69, 0x78, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52,
-	0x0e, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x54, 0x69, 0x6d, 0x65, 0x55, 0x6e, 0x69, 0x78, 0x22,
-	0x65, 0x0a, 0x13, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x53,
-	0x61, 0x6d, 0x70, 0x6c, 0x65, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x36,
-	0x0a, 0x07, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x1c, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31,
-	0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x52, 0x07, 0x73,
-	0x61, 0x6d, 0x70, 0x6c, 0x65, 0x73, 0x22, 0xa2, 0x01, 0x0a, 0x15, 0x4f, 0x72, 0x61, 0x63, 0x6c,
-	0x65, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
+	0x6c, 0x6f, 0x63, 0x6b, 0x54, 0x69, 0x6d, 0x65, 0x55, 0x6e, 0x69, 0x78, 0x22, 0x63, 0x0a, 0x10,
+	0x41, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61, 0x74, 0x65, 0x64, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74,
 	0x12, 0x16, 0x0a, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x38, 0x0a, 0x0a, 0x76, 0x61, 0x6c, 0x75,
-	0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x19, 0x2e, 0x67,
-	0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x61,
-	0x6c, 0x75, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x09, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x54, 0x79,
-	0x70, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x52, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x21,
+	0x0a, 0x0c, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x0d, 0x52, 0x0b, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x43, 0x6f, 0x75, 0x6e,
+	0x74, 0x22, 0x7a, 0x0a, 0x15, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x79,
+	0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x6d, 0x62,
+	0x6f, 0x6c, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
 	0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x6f, 0x75, 0x72,
 	0x63, 0x65, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0b,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0xed, 0x01, 0x0a, 0x19,
-	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x56, 0x6f, 0x74, 0x65,
-	0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x2b, 0x0a, 0x11, 0x76, 0x61, 0x6c,
-	0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0c, 0x52, 0x10, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x41,
-	0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x27, 0x0a, 0x0f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x6f, 0x72, 0x5f, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52,
-	0x0e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65, 0x72, 0x12,
-	0x22, 0x0a, 0x0d, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x69, 0x64, 0x5f, 0x66, 0x6c, 0x61, 0x67,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x49, 0x64, 0x46,
-	0x6c, 0x61, 0x67, 0x12, 0x25, 0x0a, 0x0e, 0x76, 0x6f, 0x74, 0x65, 0x5f, 0x65, 0x78, 0x74, 0x65,
-	0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0d, 0x76, 0x6f, 0x74,
-	0x65, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x2f, 0x0a, 0x13, 0x65, 0x78,
-	0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72,
-	0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x12, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69,
-	0x6f, 0x6e, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x22, 0x73, 0x0a, 0x1a, 0x4f,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x4a, 0x04, 0x08, 0x02, 0x10,
+	0x03, 0x52, 0x0a, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x22, 0xed, 0x01,
+	0x0a, 0x19, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x56, 0x6f,
+	0x74, 0x65, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x2b, 0x0a, 0x11, 0x76,
+	0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x10, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f,
+	0x72, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x27, 0x0a, 0x0f, 0x76, 0x61, 0x6c, 0x69,
+	0x64, 0x61, 0x74, 0x6f, 0x72, 0x5f, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x03, 0x52, 0x0e, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x50, 0x6f, 0x77, 0x65,
+	0x72, 0x12, 0x22, 0x0a, 0x0d, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x69, 0x64, 0x5f, 0x66, 0x6c,
+	0x61, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x49,
+	0x64, 0x46, 0x6c, 0x61, 0x67, 0x12, 0x25, 0x0a, 0x0e, 0x76, 0x6f, 0x74, 0x65, 0x5f, 0x65, 0x78,
+	0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0d, 0x76,
+	0x6f, 0x74, 0x65, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x2f, 0x0a, 0x13,
+	0x65, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74,
+	0x75, 0x72, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x12, 0x65, 0x78, 0x74, 0x65, 0x6e,
+	0x73, 0x69, 0x6f, 0x6e, 0x53, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x22, 0x73, 0x0a,
+	0x1a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x56, 0x6f, 0x74,
+	0x65, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x72,
+	0x6f, 0x75, 0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x72, 0x6f, 0x75, 0x6e,
+	0x64, 0x12, 0x3f, 0x0a, 0x05, 0x76, 0x6f, 0x74, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x29, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x56, 0x6f,
+	0x74, 0x65, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x05, 0x76, 0x6f, 0x74,
+	0x65, 0x73, 0x22, 0xb9, 0x01, 0x0a, 0x15, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x50, 0x72, 0x6f,
+	0x70, 0x6f, 0x73, 0x61, 0x6c, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x16, 0x0a, 0x06,
+	0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x68, 0x65,
+	0x69, 0x67, 0x68, 0x74, 0x12, 0x53, 0x0a, 0x0f, 0x76, 0x6f, 0x74, 0x65, 0x5f, 0x65, 0x78, 0x74,
+	0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e,
+	0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f,
 	0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x56, 0x6f, 0x74, 0x65, 0x45,
-	0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x14, 0x0a, 0x05, 0x72, 0x6f, 0x75,
-	0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x72, 0x6f, 0x75, 0x6e, 0x64, 0x12,
-	0x3f, 0x0a, 0x05, 0x76, 0x6f, 0x74, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x29,
-	0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e,
-	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x56, 0x6f, 0x74, 0x65,
-	0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x52, 0x05, 0x76, 0x6f, 0x74, 0x65, 0x73,
-	0x22, 0xb9, 0x01, 0x0a, 0x15, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x70, 0x6f,
-	0x73, 0x61, 0x6c, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x68, 0x65,
-	0x69, 0x67, 0x68, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x68, 0x65, 0x69, 0x67,
-	0x68, 0x74, 0x12, 0x53, 0x0a, 0x0f, 0x76, 0x6f, 0x74, 0x65, 0x5f, 0x65, 0x78, 0x74, 0x65, 0x6e,
-	0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x67, 0x75,
-	0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61,
-	0x63, 0x6c, 0x65, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x56, 0x6f, 0x74, 0x65, 0x45, 0x78, 0x74,
-	0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x0e, 0x76, 0x6f, 0x74, 0x65, 0x45, 0x78, 0x74,
-	0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x33, 0x0a, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65,
-	0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f,
+	0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x0e, 0x76, 0x6f, 0x74, 0x65, 0x45,
+	0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x33, 0x0a, 0x06, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x67, 0x75, 0x72, 0x75,
+	0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x22, 0x5c,
+	0x0a, 0x0d, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x12,
+	0x16, 0x0a, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x33, 0x0a, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65,
+	0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f,
 	0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56,
-	0x61, 0x6c, 0x75, 0x65, 0x52, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x22, 0x5c, 0x0a, 0x0d,
-	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x16, 0x0a,
-	0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73,
-	0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x33, 0x0a, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18,
-	0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61,
-	0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x56, 0x61, 0x6c,
-	0x75, 0x65, 0x52, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x2a, 0x6b, 0x0a, 0x09, 0x56, 0x61,
-	0x6c, 0x75, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x16, 0x56, 0x41, 0x4c, 0x55, 0x45,
-	0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45,
-	0x44, 0x10, 0x00, 0x12, 0x16, 0x0a, 0x12, 0x56, 0x41, 0x4c, 0x55, 0x45, 0x5f, 0x54, 0x59, 0x50,
-	0x45, 0x5f, 0x4e, 0x55, 0x4d, 0x45, 0x52, 0x49, 0x43, 0x10, 0x01, 0x12, 0x15, 0x0a, 0x11, 0x56,
-	0x41, 0x4c, 0x55, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x53, 0x54, 0x52, 0x49, 0x4e, 0x47,
-	0x10, 0x02, 0x12, 0x13, 0x0a, 0x0f, 0x56, 0x41, 0x4c, 0x55, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45,
-	0x5f, 0x42, 0x4f, 0x4f, 0x4c, 0x10, 0x03, 0x42, 0xb9, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e,
-	0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b,
-	0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x3c, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x66, 0x69,
-	0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76, 0x33, 0x2f,
-	0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2f,
-	0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x47, 0x4f,
-	0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e,
-	0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65,
-	0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63, 0x6c,
-	0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
-	0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x3a,
-	0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x61, 0x6c, 0x75, 0x65, 0x52, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x2a, 0x6b, 0x0a, 0x09,
+	0x56, 0x61, 0x6c, 0x75, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x16, 0x56, 0x41, 0x4c,
+	0x55, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46,
+	0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x16, 0x0a, 0x12, 0x56, 0x41, 0x4c, 0x55, 0x45, 0x5f, 0x54,
+	0x59, 0x50, 0x45, 0x5f, 0x4e, 0x55, 0x4d, 0x45, 0x52, 0x49, 0x43, 0x10, 0x01, 0x12, 0x15, 0x0a,
+	0x11, 0x56, 0x41, 0x4c, 0x55, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x53, 0x54, 0x52, 0x49,
+	0x4e, 0x47, 0x10, 0x02, 0x12, 0x13, 0x0a, 0x0f, 0x56, 0x41, 0x4c, 0x55, 0x45, 0x5f, 0x54, 0x59,
+	0x50, 0x45, 0x5f, 0x42, 0x4f, 0x4f, 0x4c, 0x10, 0x03, 0x42, 0xb9, 0x01, 0x0a, 0x12, 0x63, 0x6f,
+	0x6d, 0x2e, 0x67, 0x75, 0x72, 0x75, 0x2e, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x2e, 0x76, 0x31,
+	0x42, 0x0b, 0x4f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a,
+	0x3c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x75, 0x72, 0x75,
+	0x66, 0x69, 0x6e, 0x67, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x76,
+	0x33, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x75, 0x72, 0x75, 0x2f, 0x6f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6f, 0x72, 0x61, 0x63, 0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03,
+	0x47, 0x4f, 0x58, 0xaa, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x2e, 0x4f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61, 0x63,
+	0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x47, 0x75, 0x72, 0x75, 0x5c, 0x4f, 0x72, 0x61,
+	0x63, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
+	0x74, 0x61, 0xea, 0x02, 0x10, 0x47, 0x75, 0x72, 0x75, 0x3a, 0x3a, 0x4f, 0x72, 0x61, 0x63, 0x6c,
+	0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -5998,34 +5271,30 @@ func file_guru_oracle_v1_oracle_proto_rawDescGZIP() []byte {
 }
 
 var file_guru_oracle_v1_oracle_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_guru_oracle_v1_oracle_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_guru_oracle_v1_oracle_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_guru_oracle_v1_oracle_proto_goTypes = []interface{}{
 	(ValueType)(0),                     // 0: guru.oracle.v1.ValueType
 	(*OracleTask)(nil),                 // 1: guru.oracle.v1.OracleTask
 	(*OracleValue)(nil),                // 2: guru.oracle.v1.OracleValue
-	(*OracleSample)(nil),               // 3: guru.oracle.v1.OracleSample
-	(*OracleSymbolSamples)(nil),        // 4: guru.oracle.v1.OracleSymbolSamples
-	(*OracleValidatorResult)(nil),      // 5: guru.oracle.v1.OracleValidatorResult
-	(*OracleSignedVoteExtension)(nil),  // 6: guru.oracle.v1.OracleSignedVoteExtension
-	(*OracleSignedVoteExtensions)(nil), // 7: guru.oracle.v1.OracleSignedVoteExtensions
-	(*OracleProposalPayload)(nil),      // 8: guru.oracle.v1.OracleProposalPayload
-	(*OracleHistory)(nil),              // 9: guru.oracle.v1.OracleHistory
+	(*AggregatedResult)(nil),           // 3: guru.oracle.v1.AggregatedResult
+	(*OracleValidatorResult)(nil),      // 4: guru.oracle.v1.OracleValidatorResult
+	(*OracleSignedVoteExtension)(nil),  // 5: guru.oracle.v1.OracleSignedVoteExtension
+	(*OracleSignedVoteExtensions)(nil), // 6: guru.oracle.v1.OracleSignedVoteExtensions
+	(*OracleProposalPayload)(nil),      // 7: guru.oracle.v1.OracleProposalPayload
+	(*OracleHistory)(nil),              // 8: guru.oracle.v1.OracleHistory
 }
 var file_guru_oracle_v1_oracle_proto_depIdxs = []int32{
 	0, // 0: guru.oracle.v1.OracleTask.value_type:type_name -> guru.oracle.v1.ValueType
 	0, // 1: guru.oracle.v1.OracleValue.value_type:type_name -> guru.oracle.v1.ValueType
-	0, // 2: guru.oracle.v1.OracleSample.value_type:type_name -> guru.oracle.v1.ValueType
-	3, // 3: guru.oracle.v1.OracleSymbolSamples.samples:type_name -> guru.oracle.v1.OracleSample
-	0, // 4: guru.oracle.v1.OracleValidatorResult.value_type:type_name -> guru.oracle.v1.ValueType
-	6, // 5: guru.oracle.v1.OracleSignedVoteExtensions.votes:type_name -> guru.oracle.v1.OracleSignedVoteExtension
-	7, // 6: guru.oracle.v1.OracleProposalPayload.vote_extensions:type_name -> guru.oracle.v1.OracleSignedVoteExtensions
-	2, // 7: guru.oracle.v1.OracleProposalPayload.values:type_name -> guru.oracle.v1.OracleValue
-	2, // 8: guru.oracle.v1.OracleHistory.values:type_name -> guru.oracle.v1.OracleValue
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	5, // 2: guru.oracle.v1.OracleSignedVoteExtensions.votes:type_name -> guru.oracle.v1.OracleSignedVoteExtension
+	6, // 3: guru.oracle.v1.OracleProposalPayload.vote_extensions:type_name -> guru.oracle.v1.OracleSignedVoteExtensions
+	2, // 4: guru.oracle.v1.OracleProposalPayload.values:type_name -> guru.oracle.v1.OracleValue
+	2, // 5: guru.oracle.v1.OracleHistory.values:type_name -> guru.oracle.v1.OracleValue
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_guru_oracle_v1_oracle_proto_init() }
@@ -6059,7 +5328,7 @@ func file_guru_oracle_v1_oracle_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_oracle_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OracleSample); i {
+			switch v := v.(*AggregatedResult); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -6071,18 +5340,6 @@ func file_guru_oracle_v1_oracle_proto_init() {
 			}
 		}
 		file_guru_oracle_v1_oracle_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OracleSymbolSamples); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_guru_oracle_v1_oracle_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OracleValidatorResult); i {
 			case 0:
 				return &v.state
@@ -6094,7 +5351,7 @@ func file_guru_oracle_v1_oracle_proto_init() {
 				return nil
 			}
 		}
-		file_guru_oracle_v1_oracle_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_guru_oracle_v1_oracle_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OracleSignedVoteExtension); i {
 			case 0:
 				return &v.state
@@ -6106,7 +5363,7 @@ func file_guru_oracle_v1_oracle_proto_init() {
 				return nil
 			}
 		}
-		file_guru_oracle_v1_oracle_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_guru_oracle_v1_oracle_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OracleSignedVoteExtensions); i {
 			case 0:
 				return &v.state
@@ -6118,7 +5375,7 @@ func file_guru_oracle_v1_oracle_proto_init() {
 				return nil
 			}
 		}
-		file_guru_oracle_v1_oracle_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_guru_oracle_v1_oracle_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OracleProposalPayload); i {
 			case 0:
 				return &v.state
@@ -6130,7 +5387,7 @@ func file_guru_oracle_v1_oracle_proto_init() {
 				return nil
 			}
 		}
-		file_guru_oracle_v1_oracle_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_guru_oracle_v1_oracle_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OracleHistory); i {
 			case 0:
 				return &v.state
@@ -6149,7 +5406,7 @@ func file_guru_oracle_v1_oracle_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_guru_oracle_v1_oracle_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

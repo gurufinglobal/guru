@@ -379,19 +379,29 @@ type mockSidecarServer struct {
 	oracletypes.UnimplementedOracleSidecarServer
 }
 
-func (mockSidecarServer) GetSamples(_ context.Context, req *oracletypes.GetSamplesRequest) (*oracletypes.GetSamplesResponse, error) {
-	if req.GetHeight() != 303 || len(req.GetTasks()) != 1 || req.GetTasks()[0].GetSymbol() != "ATOM/USD" {
-		return nil, status.Error(codes.InvalidArgument, "unexpected sample request")
+func (mockSidecarServer) GetAggregates(_ context.Context, req *oracletypes.GetAggregatesRequest) (*oracletypes.GetAggregatesResponse, error) {
+	if len(req.GetSymbols()) != 1 || req.GetSymbols()[0] != "ATOM/USD" {
+		return nil, status.Error(codes.InvalidArgument, "unexpected aggregate request")
 	}
-	return &oracletypes.GetSamplesResponse{Symbols: []*oracletypes.OracleSymbolSamples{{
-		Symbol: "ATOM/USD",
-		Samples: []*oracletypes.OracleSample{{
-			Source:         "source-a",
-			ValueType:      oracletypes.ValueType_VALUE_TYPE_NUMERIC,
-			Value:          "12.34",
-			SampleTimeUnix: 404,
-		}},
+	return &oracletypes.GetAggregatesResponse{Results: []*oracletypes.AggregatedResult{{
+		Symbol:      "ATOM/USD",
+		Value:       "12.34",
+		SourceCount: 3,
 	}}}, nil
+}
+
+type mockPublicSidecarServer struct {
+	pulsaroraclev1.UnimplementedOracleSidecarServer
+}
+
+func (mockPublicSidecarServer) GetAggregates(_ context.Context, req *pulsaroraclev1.GetAggregatesRequest) (*pulsaroraclev1.GetAggregatesResponse, error) {
+	if len(req.GetSymbols()) != 2 || req.GetSymbols()[0] != "BTC/USD" || req.GetSymbols()[1] != "ETH/USD" {
+		return nil, status.Error(codes.InvalidArgument, "unexpected aggregate request")
+	}
+	return &pulsaroraclev1.GetAggregatesResponse{Results: []*pulsaroraclev1.AggregatedResult{
+		{Symbol: "BTC/USD", Value: "65000.25", SourceCount: 3},
+		{Symbol: "ETH/USD", Value: "3500.5", SourceCount: 5},
+	}}, nil
 }
 
 func (mockMsgServer) UpsertTask(_ context.Context, req *oracletypes.MsgUpsertTask) (*oracletypes.MsgUpsertTaskResponse, error) {
@@ -500,20 +510,54 @@ func TestPulsarGRPCClientCallsInternalGogoServer(t *testing.T) {
 	}
 
 	sidecarClient := pulsaroraclev1.NewOracleSidecarClient(conn)
-	samples, err := sidecarClient.GetSamples(context.Background(), &pulsaroraclev1.GetSamplesRequest{
-		Height: 303,
-		Tasks: []*pulsaroraclev1.OracleTask{{
-			Symbol:             "ATOM/USD",
-			ValueType:          pulsaroraclev1.ValueType_VALUE_TYPE_NUMERIC,
-			Enabled:            true,
-			SubmissionInterval: 5,
-		}},
+	aggregates, err := sidecarClient.GetAggregates(context.Background(), &pulsaroraclev1.GetAggregatesRequest{
+		Symbols: []string{"ATOM/USD"},
 	})
 	if err != nil {
-		t.Fatalf("grpc GetSamples failed: %v", err)
+		t.Fatalf("grpc GetAggregates failed: %v", err)
 	}
-	if len(samples.GetSymbols()) != 1 || len(samples.GetSymbols()[0].GetSamples()) != 1 || samples.GetSymbols()[0].GetSamples()[0].GetSampleTimeUnix() != 404 {
-		t.Fatalf("unexpected GetSamples payload: %+v", samples)
+	if len(aggregates.GetResults()) != 1 || aggregates.GetResults()[0].GetValue() != "12.34" || aggregates.GetResults()[0].GetSourceCount() != 3 {
+		t.Fatalf("unexpected GetAggregates payload: %+v", aggregates)
+	}
+}
+
+func TestInternalGogoClientCallsPublicPulsarSidecarServer(t *testing.T) {
+	lis := bufconn.Listen(1024 * 1024)
+	s := grpc.NewServer()
+	pulsaroraclev1.RegisterOracleSidecarServer(s, mockPublicSidecarServer{})
+	defer s.Stop()
+
+	go func() {
+		_ = s.Serve(lis)
+	}()
+
+	conn, err := grpc.NewClient(
+		"passthrough:///bufnet",
+		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
+			return lis.Dial()
+		}),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		t.Fatalf("dial bufconn: %v", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	client := oracletypes.NewOracleSidecarClient(conn)
+	response, err := client.GetAggregates(context.Background(), &oracletypes.GetAggregatesRequest{
+		Symbols: []string{"BTC/USD", "ETH/USD"},
+	})
+	if err != nil {
+		t.Fatalf("internal gogo GetAggregates client failed against public Pulsar server: %v", err)
+	}
+	if len(response.GetResults()) != 2 {
+		t.Fatalf("unexpected result count: got=%d want=2", len(response.GetResults()))
+	}
+	if got := response.GetResults()[0]; got.GetSymbol() != "BTC/USD" || got.GetValue() != "65000.25" || got.GetSourceCount() != 3 {
+		t.Fatalf("unexpected first aggregate: %+v", got)
+	}
+	if got := response.GetResults()[1]; got.GetSymbol() != "ETH/USD" || got.GetValue() != "3500.5" || got.GetSourceCount() != 5 {
+		t.Fatalf("unexpected second aggregate: %+v", got)
 	}
 }
 
