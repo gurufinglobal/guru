@@ -1,209 +1,288 @@
-# Guru Oracle Daemon
+# Guru Oracle Sidecar
 
-`oracled` is the local sidecar daemon used by validators that participate in the
-Guru oracle. It does not write chain state directly. It serves source samples to
-the validator process over a Unix domain socket, and the validator includes
-derived oracle results in CometBFT vote extensions.
+`oracled` is the validator-local collector for the Guru Oracle. It is a
+standalone Go module and foreground process. It continuously collects configured
+HTTPS feeds, computes the first strict-majority median, persists successful
+aggregates, and serves fresh aggregates to one local validator over a Unix
+socket.
 
-## How It Works
+The sidecar never writes chain state. The node still chooses due symbols,
+enforces on-chain `min_sources`, signs vote extensions, and participates in
+cross-validator proposal aggregation and verification. A stopped sidecar,
+failed source, stale value, or reconciliation failure reduces that validator's
+Oracle contribution but does not halt ordinary consensus.
 
-1. `oracled start` loads `oracled.toml`.
-2. It validates the local configuration and immediately opens a gRPC server on
-   the configured Unix socket. The node does not need to be running first.
-3. In parallel, it queries the connected node gRPC endpoint for oracle params
-   and active tasks. Failed queries retry with exponential backoff from 250 ms
-   to a maximum of 5 seconds until the daemon stops.
-4. Once preflight succeeds, it checks that configured local sources match active
-   numeric node tasks and that at least one task satisfies the chain
-   `min_sources` parameter. Interval-based source pollers then start exactly
-   once.
-5. When the validator asks for samples for the tasks due at that
-   vote-extension height, the daemon fetches every matching HTTP source
-   concurrently, extracts the configured JSON path, and returns grouped samples
-   by symbol. The tasks in this request remain authoritative, including while
-   node preflight is degraded.
-6. The validator computes deterministic per-symbol medians from returned samples
-   and writes them into the vote extension if each result has enough sources.
+## Build
 
-The daemon follows paginated node task responses, so it can validate against more
-than the module query default page size. Per-task `submission_interval` is
-enforced by the chain node before it calls the daemon; `oracled` only serves the
-task list included in each request.
-
-## Commands
-
-Build all command binaries from the repository root:
+From the repository root:
 
 ```sh
 make build
 ```
 
-Write a default config:
+To build the nested module directly from this monorepo:
 
 ```sh
-build/oracled init-config
+CGO_ENABLED=0 GOWORK=off go -C oracle build -mod=readonly ./cmd/oracled
 ```
 
-Start the daemon:
+The module intentionally requires the Guru root module through
+`replace github.com/gurufinglobal/guru/v3 => ..`. Handwritten sidecar code
+imports only the root-generated internal gogo Oracle types for node-facing
+gRPC. Admin and storage protocols are sidecar-native and use no private
+protobuf tree.
 
-```sh
-build/oracled start
-```
+## Home and commands
 
-Useful flags:
-
-- `--home`: oracle daemon home directory. Defaults to `.oracled` under the
-  platform-specific user home.
-- `--config`: explicit config file path.
-- `--socket`: override the Unix socket path from config.
-- `--force`: overwrite an existing config during `init-config`.
-
-## Configuration
-
-Default config path:
+The default home is `$HOME/.oracled`. `--home <path>` replaces it completely:
 
 ```text
-$ORACLED_HOME/config/oracled.toml
+.oracled/
+├── config.toml
+├── sources.toml
+├── data/
+│   ├── oracle.db
+│   └── storage.meta
+├── logs/
+└── run/
+    ├── oracled.lock
+    ├── oracle.sock
+    └── admin.sock
 ```
 
-Example:
+Initialize a fresh unpublished sidecar home:
+
+```sh
+oracled --home /srv/guru/oracle init
+```
+
+Validate and start it:
+
+```sh
+oracled --home /srv/guru/oracle validate
+oracled --home /srv/guru/oracle start
+```
+
+`start` stays in the foreground. A service manager owns restarts, output
+capture, and rotation. The six product commands are:
+
+- `init`
+- `validate`
+- `start`
+- `status [--format text|json]`
+- `history <SYMBOL> [--page-size 1..50] [--page-key TOKEN] [--offline]`
+- `reconcile --node-grpc HOST:PORT [--format text|json]`
+
+Only `reconcile` connects to a Guru node. Long-running collection and both
+local services start without node gRPC.
+
+Each validator operates its own sidecar and selects its own source providers,
+topology, feed intervals, and freshness policy. Guru does not require or compare
+identical sidecar configurations across validators. The common on-chain view is
+limited to active Oracle tasks and acceptance parameters; source suitability and
+provider independence remain local operator responsibilities.
+
+## Configuration publication
+
+`config.toml` and `sources.toml` are one fail-closed publication pair. Both use
+schema version 1 and the same `publication_revision`. `config.toml` also
+contains the SHA-256 digest of the exact `sources.toml` bytes. Unknown fields,
+unsupported versions, a revision mismatch, or a digest mismatch are rejected.
+
+Publish an update by writing and fsyncing temporary files in the same
+directories, atomically renaming `sources.toml` first, atomically renaming
+`config.toml` last, running `validate`, and gracefully restarting `oracled`.
+Temporary and final configuration files must be mode `0600`; the home and all
+of its directories must be mode `0700`. Advance `publication_revision` for
+every published update. There is no runtime hot reload.
+
+The initialized process configuration is:
 
 ```toml
-socket = "/path/to/oracle/oracle.sock"
-request_timeout = "2s"
-source_timeout = "500ms"
-node_grpc = "127.0.0.1:9090"
-node_query_timeout = "2s"
+schema_version = 1
+publication_revision = "<generated>"
+sources_sha256 = "<exact lowercase SHA-256>"
 
-[[sources]]
-name = "coinbase-btc-usd"
+[server]
+consumer_socket = "run/oracle.sock"
+admin_socket = "run/admin.sock"
+max_request_bytes = 65536
+max_response_bytes = 1048576
+
+[collector]
+max_concurrency = 32
+source_response_bytes = 1048576
+max_redirects = 3
+max_attempts = 3
+request_timeout = "5s"
+connect_timeout = "2s"
+tls_handshake_timeout = "2s"
+response_header_timeout = "3s"
+retry_initial_backoff = "100ms"
+retry_max_backoff = "1s"
+
+[storage]
+database = "data/oracle.db"
+marker = "data/storage.meta"
+lock = "run/oracled.lock"
+history_retention = 30
+
+[runtime]
+shutdown_timeout = "10s"
+
+[logging]
+level = "info"
+format = "text"
+```
+
+The request and response limits are fixed protocol envelopes, not tuning
+knobs. The ownership lock is likewise fixed at `run/oracled.lock` so mutable
+configuration cannot create two lock domains for one home.
+
+`init` writes an empty feed list. Operators add at least three independently
+selected sources per feed:
+
+```toml
+schema_version = 1
+publication_revision = "<same revision>"
+
+[[feeds]]
 symbol = "BTC/USD"
-value_type = "NUMERIC"
-url = "https://example.invalid/prices/{symbol}"
-response_path = "data.price"
-timeout = "300ms"
-interval = "1s"
+interval = "10s"
+stale_after = "30s"
 
-[sources.headers]
-Authorization = "Bearer token"
+[[feeds.sources]]
+id = "provider-a"
+url = "https://provider-a.example/value"
+json_pointer = "/data/price"
+
+[[feeds.sources]]
+id = "provider-b"
+url = "https://provider-b.example/value"
+json_pointer = "/data/price"
+
+[[feeds.sources]]
+id = "provider-c"
+url = "https://provider-c.example/value"
+json_pointer = "/data/price"
 ```
 
-Fields:
+Sources are public HTTPS GET endpoints with RFC 6901 JSON Pointers. Credentials,
+fragments, HTTP downgrade redirects, POST, scripts, authentication, and
+provider-specific product branches are rejected or unsupported. Duplicate IDs
+and URLs are rejected, but configuration strings cannot prove provider
+independence. Source trust and genuine diversity remain operator
+responsibilities.
 
-- `socket`: Unix socket used by the validator process.
-- `request_timeout`: total timeout for one validator sample request.
-- `source_timeout`: default timeout for each HTTP source request.
-- `node_grpc`: node gRPC endpoint used for preflight task discovery.
-- `node_query_timeout`: timeout for node gRPC queries.
-- `sources`: local HTTP source definitions.
+`SSL_CERT_FILE` may name a bounded PEM CA bundle. It is appended to system
+roots on Linux and macOS; hostname and certificate verification remain
+enabled.
 
-Source fields:
+## Collection and freshness
 
-- `name`: unique source name per symbol.
-- `symbol`: oracle symbol. Matching is trim plus uppercase normalized.
-- `value_type`: `NUMERIC` only. `STRING` and `BOOL` are reserved for future
-  non-numeric aggregation and are rejected by the current daemon and module
-  validation.
-- `url`: HTTP GET URL. `{symbol}` is replaced with a URL-escaped task symbol.
-- `response_path`: dot-separated JSON path to extract.
-- `timeout`: optional per-source timeout override.
-- `interval`: optional source refresh interval. When set, `oracled` polls and
-  caches the source independently from validator sample requests.
-- `headers`: optional HTTP headers.
+Each feed starts immediately after both sockets are ready and then follows its
+own monotonic interval. All configured sources are admitted concurrently under
+the global bound. Effective source concurrency is also limited so configured
+response ceilings cannot place more than 32 MiB of raw response bodies in
+flight; the initialized `32 × 1 MiB` defaults are unchanged. A cycle waits for
+all terminal source results or its fixed deadline; reaching the first quorum
+does not finish it. Deadline cancellation covers semaphore waits, requests,
+retry sleeps, JSON decoding, and retries. Missed ticks are skipped and a feed
+never overlaps itself.
 
-## Validator Integration
+Local quorum is always `floor(source_count/2)+1`. Every successful source has
+equal weight. Odd medians select the middle fixed-18 value. Even medians use the
+overflow-safe, exact, toward-zero mean of the middle two values. Values are
+never parsed through binary floating point and excess precision is rejected,
+not rounded.
 
-Run `oracled` on the same host as the validator and configure the validator node
-oracle socket to the same Unix socket. The chain node controls whether the local
-validator participates in oracle vote extensions. For sources with `interval`,
-the daemon keeps a local fresh cache; for other sources, it fetches on each
-sample request.
+A failed or under-quorum cycle stores nothing and does not erase the previous
+successful aggregate. That older aggregate remains eligible only while it is
+fresh and belongs to the current activation generation. The exact stale
+boundary is `age >= stale_after`. Future persisted timestamps and unsafe clock
+classification are never served.
 
-The daemon silently ignores failed HTTP sources for a request. A symbol is useful
-only when enough configured sources return values for the validator to satisfy
-the module `min_sources` parameter.
+The node requests only normalized, sorted symbols from `oracle.sock`.
+`GetAggregates` performs one bounded in-memory pass under a short read lock: no
+HTTP, database, history, configuration, or node query occurs on that path.
+Unknown, unconfigured, no-value, under-quorum, stale, or clock-anomalous
+symbols are omitted. The sidecar may return a strict-majority value below chain
+`min_sources`; the node alone applies that on-chain threshold. The consumer
+listener, concurrent HTTP/2 streams, metadata, request, and response sizes are
+all bounded independently.
 
-### Node gRPC requirement
+## Status, history, and reconciliation
 
-New Guru node homes enable the gRPC query server in the generated `app.toml`.
-For an existing home, confirm this setting before relying on interval pollers or
-the `ready` state:
+`admin.sock` is a separate owner-only HTTP/JSON Unix service with exactly:
 
-```toml
-[grpc]
-enable = true
-address = "localhost:9090"
-```
+- `GET /v1/status`
+- `GET /v1/history?symbol=...&page_size=...&page_key=...`
 
-`node_grpc` in `oracled.toml` must resolve to that listener. Keeping gRPC bound
-to loopback is recommended when the daemon runs on the validator host.
+Status never exposes aggregate values, raw source observations, response
+bodies, URLs, pointers, headers, or credentials. History contains only
+successful aggregate values and bounded provenance. Page tokens are
+authenticated, snapshot high/low water, and expire after daemon restart or
+retention movement.
 
-Guru derives the SDK chain ID from `config/genesis.json` when the node starts.
-An explicit `--chain-id` is optional, but, when present, it must match genesis;
-the node rejects a mismatch instead of validating vote extensions under the
-wrong canonical signing tuple.
+Live history is the default. `history --offline` explicitly acquires the same
+exclusive home lock, proves no writer is active, verifies the full database,
+reads one page, and closes it. It never silently falls back from live access.
 
-## Runtime States
+`reconcile` is a one-shot, read-only comparison with node `Params` and all
+paginated `ActiveTasks`. It checks active-symbol coverage and the running
+sidecar's live contribution readiness, including configured and successful
+source counts, freshness, current aggregate availability, and whether the
+running process uses the currently published local configuration pair. Exit
+codes are:
 
-The daemon reports its state through bounded logs:
+- `0`: authoritative report with no blocking readiness mismatch
+- `1`: authoritative report with one or more blocking mismatches
+- `2`: configuration, sidecar, node, transport, or protocol failure
 
-- `state=serving`: the Unix socket is accepting validator requests. This state
-  does not imply that node preflight has completed.
-- `node_preflight=degraded`: the node is unavailable or its Oracle tasks and
-  the local source configuration are not yet compatible. The log includes the
-  bounded retry delay and query error. The daemon remains alive and serving.
-- `node_preflight=ready`: params and active tasks were validated. This includes
-  the attempt count and task count.
-- `state=ready`: interval source pollers have received the validated task set.
+Extra locally configured inactive feeds are informational because collection is
+intentionally node-independent. Reconciliation never edits configuration,
+writes a transaction, changes a task, injects a value, or restarts a process.
+It reports a blocking `runtime_config_mismatch` when the running daemon's
+publication revision or source digest differs from the published pair on disk.
+`Blocking` and exit code `1` mean only that this validator needs local operator
+action before it is ready to contribute for every active task. They do not stop
+the sidecar or node, reject a block, change chain state, or impose one
+validator's source configuration on another validator.
 
-A daemon can remain degraded indefinitely without stopping block production.
-Fix the node gRPC listener, endpoint, task state, or source configuration; the
-same process retries and becomes ready without a restart.
+## Storage and restart policy
 
-## Restart Runbook
+Successful aggregates and provenance are committed synchronously to bbolt
+before publication to the consumer snapshot. Default retention is 30 records
+per currently configured symbol across generations. Plan changes increment an
+activation generation; an `A -> B -> A` sequence cannot resurrect the first A
+value. Removing a symbol deletes its history during atomic plan activation.
+Raw source observations and bodies are never persisted.
 
-The node and sidecar may start and restart independently in either order. Use
-the existing node home, application database, CometBFT WAL, and private
-validator state.
+One process owns one home through `run/oracled.lock`. Startup refuses partial
+database/marker pairs, corruption, unknown schemas or records, live socket
+collisions, symlinks, and non-socket collisions. It removes only an
+unresponsive path that is itself a Unix socket. `SIGINT` and `SIGTERM` stop new
+cycles, cancel and join in-flight work, close both services, sync storage, and
+release the lock within the configured shutdown deadline. If a lower-level
+operation such as filesystem sync cannot finish by that deadline, a process
+watchdog exits with status 1 instead of waiting indefinitely; the operating
+system then closes descriptors and releases the home lock, but an explicit
+final sync may not have completed. A second termination signal uses the
+operating system's default immediate behavior.
 
-1. Prefer `SIGTERM` for planned maintenance and wait for the process to exit.
-   `SIGKILL` recovery is supported, but it cannot provide a graceful flush.
-2. Start either `gurud` or `oracled`. Do not wait for the other process merely
-   to establish the sidecar socket.
-3. Confirm `state=serving`. After the node gRPC service is reachable, confirm
-   `node_preflight=ready` and `state=ready`.
-4. Check chain progress and Oracle state with:
+bbolt is host-endian local state and does not shrink its file in place; bounded
+retention stabilizes reuse at a physical high-water mark rather than reducing
+file size. Persistent guarantees remain limited by the filesystem, kernel,
+storage hardware, and power-loss behavior. On Linux 5.10 through 5.16 with
+ext4, run with `fast_commit` disabled unless the kernel contains the upstream
+fix.
 
-   ```sh
-   gurud status
-   gurud query oracle active-tasks
-   gurud query oracle latest-values
-   ```
+Node and sidecar processes may restart independently. Requests while the
+sidecar is down produce the node's normal empty Oracle contribution. Rolling
+sidecar configuration across validators may temporarily reduce Oracle quorum,
+so coordinate restarts with the on-chain validator threshold in mind.
 
-5. If block production continues but Oracle values do not advance, verify the
-   task submission interval, active validator participation, source responses,
-   and the module `min_sources` and `min_validators` thresholds.
-
-Never delete or rewrite the WAL, application state, block store, or
-`priv_validator_state.json` as a restart remedy. Preserve the first failure
-logs and home for diagnosis if the node reports an Oracle vote-extension
-validation failure.
-
-When a validator cannot obtain enough local samples, it emits an empty Oracle
-vote extension. Consensus can continue; if fewer than `min_validators` provide
-usable Oracle results, Oracle state pauses until a later valid task window while
-ordinary blocks continue.
-
-## Operational Checks
-
-On startup, the daemon fails fast when:
-
-- the config is invalid;
-- the socket path cannot be created or an existing non-socket file is present.
-
-Node query failures, no active numeric task, source/task mismatches, and
-insufficient configured sources are degraded preflight conditions. They retry
-without closing the socket and become ready when the condition is corrected.
-
-The daemon removes stale socket files only when the existing path is a Unix
-socket.
+This is a pre-publication clean break. Deploy matching node and sidecar
+binaries on a fresh network and use fresh sidecar homes. Old RPCs,
+configurations, databases, mixed versions, and pre-change Oracle block replay
+are not supported.

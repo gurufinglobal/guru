@@ -1,17 +1,22 @@
 # Guru Oracle Module
 
 The oracle module stores chain-approved oracle tasks and accepted oracle values.
-Validators collect samples through their local oracle sidecar, attach compact
-results to CometBFT vote extensions, and the block proposer turns valid vote
-extensions into a deterministic oracle proposal payload.
+Each validator's independent sidecar continuously collects and aggregates its
+configured sources. The validator requests only due symbols, attaches the
+sidecar's fresh aggregate results to CometBFT vote extensions, and the block
+proposer turns valid vote extensions into a deterministic oracle proposal
+payload.
 
 ## How It Works
 
 1. The constitution moderator configures oracle parameters and tasks.
-2. Each validator that enables local oracle participation looks up the tasks due
-   for the current vote-extension height and asks its `oracled` sidecar for
-   samples for only those tasks.
-3. The validator writes median local results into its vote extension.
+2. Each validator operator configures at least three local sources per sidecar
+   feed. `oracled` polls them independently of node availability and persists a
+   strict-majority median.
+3. A participating validator looks up numeric tasks due for the current
+   vote-extension height and asks its sidecar for those symbols only. It applies
+   the on-chain `min_sources` threshold and writes valid aggregate results into
+   its vote extension.
 4. The proposer validates the extended commit, aggregates validator results, and
    prepends one oracle payload transaction to the proposal when vote extensions
    are enabled for the height.
@@ -116,10 +121,13 @@ next interval instead of retrying every block.
 
 ## Usage Notes
 
-Configure tasks with the moderator account, run `oracled` on validators that
-should participate, and set the validator node oracle socket to the daemon Unix
-socket. A validator with no matching local sources simply emits an empty oracle
-vote extension.
+Configure tasks with the moderator account, run the standalone `oracled`
+process on validators that should participate, and set the validator node
+oracle socket to its consumer Unix socket. The daemon does not discover or
+adopt node tasks automatically; operators can run its read-only `reconcile`
+command to compare local feeds with one node. A missing, stale, unavailable, or
+under-quorum local aggregate is omitted, and a validator with no eligible
+results emits an empty oracle vote extension without halting consensus.
 
 CLI commands are available under `gurud tx oracle` and `gurud query oracle`.
 Task creation uses numeric oracle tasks only:

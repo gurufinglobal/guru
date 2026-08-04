@@ -36,9 +36,12 @@ module name to the generation script or Makefile.
 
 ## Runtime Boundary
 
-Production packages under `app`, `cmd`, `oracle`, and `x` use the internal gogo
-types. External Pulsar types must remain isolated to public API compatibility
-tests and external client code.
+Production node packages under `app`, root `cmd`, and `x` use the internal gogo
+types. The standalone `oracle` module also imports the internal gogo
+`x/oracle/types` package through `oracle/go.mod`'s local root replacement for
+node-facing sidecar and Query gRPC. It does not copy proto sources or generated
+output. Its admin HTTP/JSON and private storage formats are intentionally
+outside protobuf.
 
 Generated internal files necessarily import `github.com/cosmos/gogoproto`.
 Handwritten Guru source should not import it except at an explicit, tested SDK

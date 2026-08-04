@@ -2,6 +2,20 @@
 
 This branch is currently being used for Guru V3 development.
 
+## Oracle sidecar
+
+`make build` produces both `build/gurud` and the independently versioned
+`build/oracled`. The sidecar is a standalone Go module under `oracle/`; it uses
+the root-generated internal gogo Oracle types for node-facing gRPC and does not
+maintain its own protobuf tree.
+
+`oracled` collects configured HTTPS feeds without depending on a running node,
+persists strict-majority local aggregates, and serves only fresh aggregate
+values over its consumer Unix socket. The validator sends due symbols only and
+continues consensus with an empty or partial vote extension when the sidecar or
+an aggregate is unavailable. See [oracle/README.md](oracle/README.md) for the
+configuration, lifecycle, status, history, and read-only reconcile runbook.
+
 ## EVM JSON-RPC indexer storage
 
 Validators and P2P-only sentries do not need the custom EVM transaction
