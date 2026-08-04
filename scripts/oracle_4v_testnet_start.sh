@@ -13,7 +13,11 @@ BALANCE="${BALANCE:-100000000000000000000agxn}"
 TX_BALANCE="${TX_BALANCE:-100000000000000000000agxn}"
 STAKE="${STAKE:-10000000000000000000agxn}"
 GENTX_FEE="${GENTX_FEE:-10000000000000000000agxn}"
-PRICE_URL="${PRICE_URL:-https://api.coinbase.com/v2/prices/BTC-USD/spot}"
+COINBASE_PRICE_BASE_URL="${COINBASE_PRICE_BASE_URL:-https://api.coinbase.com/v2/prices}"
+# This local harness verifies Coinbase payload compatibility, not provider independence.
+ORACLE_SYMBOLS=("BTC/USD" "ETH/USD" "SOL/USD")
+COINBASE_PRODUCTS=("BTC-USD" "ETH-USD" "SOL-USD")
+COINBASE_PRICE_KINDS=("spot" "buy" "sell")
 
 mkdir -p "$BASE/logs"
 
@@ -41,6 +45,7 @@ require_tool() {
 require_tool jq
 require_tool perl
 require_tool python3
+require_tool curl
 
 if [[ ! -x "$BIN" ]]; then
 	echo "missing gurud binary: $BIN" >&2
@@ -50,6 +55,42 @@ if [[ ! -x "$ORACLED" ]]; then
 	echo "missing oracled binary: $ORACLED" >&2
 	exit 1
 fi
+
+preflight_sources() {
+	if [[ "$COINBASE_PRICE_BASE_URL" != https://* ]]; then
+		echo "Coinbase price base URL must use HTTPS: $COINBASE_PRICE_BASE_URL" >&2
+		exit 1
+	fi
+
+	local index symbol product expected_base expected_currency kind url response amount
+	for index in "${!ORACLE_SYMBOLS[@]}"; do
+		symbol="${ORACLE_SYMBOLS[$index]}"
+		product="${COINBASE_PRODUCTS[$index]}"
+		expected_base="${product%-*}"
+		expected_currency="${product#*-}"
+		for kind in "${COINBASE_PRICE_KINDS[@]}"; do
+			url="${COINBASE_PRICE_BASE_URL%/}/$product/$kind"
+			if ! response="$(curl --fail-with-body --silent --show-error \
+				--connect-timeout 3 --max-time 10 --retry 2 --retry-all-errors \
+				--header 'Accept: application/json' \
+				--header 'User-Agent: guru-oracle-local-acceptance/1' \
+				"$url")"; then
+				echo "oracle source preflight failed: symbol=$symbol source=coinbase-$kind url=$url" >&2
+				exit 1
+			fi
+			if ! amount="$(printf '%s' "$response" | jq -er \
+				--arg base "$expected_base" \
+				--arg currency "$expected_currency" \
+				'.data | select(.base == $base and .currency == $currency) | .amount | select(type == "string" and (tonumber > 0))')"; then
+				echo "oracle source returned an unexpected payload: symbol=$symbol source=coinbase-$kind url=$url" >&2
+				exit 1
+			fi
+			echo "source_ok symbol=$symbol source=coinbase-$kind amount=$amount url=$url"
+		done
+	done
+}
+
+preflight_sources
 
 if [[ -z "$BASE_ADDR" || -z "$MOD_ADDR" ]]; then
 	CONSTITUTION_HOME="$BASE/constitution"
@@ -73,7 +114,7 @@ for i in 1 2 3 4; do
 	idx=$((i - 1))
 	HOMES[$i]="$BASE/node$i"
 	ORACLE_HOMES[$i]="$BASE/oracled$i"
-	ORACLE_SOCKETS[$i]="$BASE/oracle$i.sock"
+	ORACLE_SOCKETS[$i]="${ORACLE_HOMES[$i]}/run/oracle.sock"
 	RPC_PORTS[$i]=$((PORT_BASE + idx * 20 + 1))
 	P2P_PORTS[$i]=$((PORT_BASE + idx * 20 + 2))
 	PROXY_PORTS[$i]=$((PORT_BASE + idx * 20 + 3))
@@ -108,7 +149,7 @@ done
 genesis_path="$GENESIS_HOME/config/genesis.json"
 jq '
 	.app_state.oracle.params.min_validators = 4 |
-	.app_state.oracle.params.min_sources = 1 |
+	.app_state.oracle.params.min_sources = 3 |
 	.app_state.oracle.params.history_limit = 100 |
 	.app_state.oracle.tasks = [
 		{
@@ -116,7 +157,27 @@ jq '
 			"value_type": 1,
 			"enabled": true,
 			"submission_interval": 1
+		},
+		{
+			"symbol": "ETH/USD",
+			"value_type": 1,
+			"enabled": true,
+			"submission_interval": 1
+		},
+		{
+			"symbol": "SOL/USD",
+			"value_type": 1,
+			"enabled": true,
+			"submission_interval": 1
 		}
+	] |
+	.app_state.oracle.task_schedule = [
+		{"symbol": "BTC/USD", "height": 3},
+		{"symbol": "BTC/USD", "height": 4},
+		{"symbol": "ETH/USD", "height": 3},
+		{"symbol": "ETH/USD", "height": 4},
+		{"symbol": "SOL/USD", "height": 3},
+		{"symbol": "SOL/USD", "height": 4}
 	] |
 	.app_state.oracle.latest_values = [] |
 	.app_state.oracle.history = []
@@ -238,30 +299,80 @@ for i in 1 2 3 4; do
 	configure_node "$i"
 done
 
-write_oracled_config() {
+init_oracled_home() {
 	local i="$1"
 	local home="${ORACLE_HOMES[$i]}"
-	mkdir -p "$home/config"
-	cat >"$home/config/oracled.toml" <<EOF
-socket = "${ORACLE_SOCKETS[$i]}"
-request_timeout = "3s"
-source_timeout = "2s"
-node_grpc = "127.0.0.1:${GRPC_PORTS[$i]}"
-node_query_timeout = "3s"
+	local revision="coinbase-btc-eth-sol-usd-v1"
+	local sources_path="$home/sources.toml"
+	local sources_sha256
 
-[[sources]]
-name = "coinbase-btc-usd"
-symbol = "BTC/USD"
-value_type = "NUMERIC"
-url = "$PRICE_URL"
-response_path = "data.amount"
-timeout = "2s"
-interval = "1s"
+	"$ORACLED" init --home "$home" >"$BASE/logs/oracled-init-$i.log" 2>&1
+
+	{
+		printf 'schema_version = 1\npublication_revision = "%s"\n' "$revision"
+		local index symbol product kind
+		for index in "${!ORACLE_SYMBOLS[@]}"; do
+			symbol="${ORACLE_SYMBOLS[$index]}"
+			product="${COINBASE_PRODUCTS[$index]}"
+			printf '\n[[feeds]]\nsymbol = "%s"\ninterval = "5s"\nstale_after = "30s"\n' "$symbol"
+			for kind in "${COINBASE_PRICE_KINDS[@]}"; do
+				printf '\n[[feeds.sources]]\nid = "coinbase-%s"\nurl = "%s/%s/%s"\njson_pointer = "/data/amount"\n' \
+					"$kind" "${COINBASE_PRICE_BASE_URL%/}" "$product" "$kind"
+			done
+		done
+	} >"$sources_path"
+
+	sources_sha256="$(python3 - "$sources_path" <<'PY'
+import hashlib
+import pathlib
+import sys
+
+print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+)"
+
+	cat >"$home/config.toml" <<EOF
+schema_version = 1
+publication_revision = "$revision"
+sources_sha256 = "$sources_sha256"
+
+[server]
+consumer_socket = "run/oracle.sock"
+admin_socket = "run/admin.sock"
+max_request_bytes = 65536
+max_response_bytes = 1048576
+
+[collector]
+max_concurrency = 32
+source_response_bytes = 1048576
+max_redirects = 3
+max_attempts = 3
+request_timeout = "5s"
+connect_timeout = "2s"
+tls_handshake_timeout = "2s"
+response_header_timeout = "3s"
+retry_initial_backoff = "100ms"
+retry_max_backoff = "1s"
+
+[storage]
+database = "data/oracle.db"
+marker = "data/storage.meta"
+lock = "run/oracled.lock"
+history_retention = 30
+
+[runtime]
+shutdown_timeout = "10s"
+
+[logging]
+level = "info"
+format = "text"
 EOF
+
+	"$ORACLED" validate --home "$home" >"$BASE/logs/oracled-validate-$i.log" 2>&1
 }
 
 for i in 1 2 3 4; do
-	write_oracled_config "$i"
+	init_oracled_home "$i"
 done
 
 for i in 1 2 3 4; do
@@ -330,7 +441,7 @@ for idx in "${!ORACLE_PIDS[@]}"; do
 	fi
 done
 
-echo "querying oracle latest value..."
+echo "querying oracle latest values..."
 deadline=$((SECONDS + 120))
 latest_file="$BASE/latest-value.json"
 while true; do
@@ -339,18 +450,26 @@ while true; do
 		--home "${HOMES[1]}" \
 		--chain-id "$CHAIN_ID" \
 		--output json >"$latest_file" 2>"$BASE/logs/query-latest.err"; then
-		value="$(jq -r '.values[]? | select(.symbol == "BTC/USD") | .value' "$latest_file")"
-		if [[ -n "$value" && "$value" != "null" ]]; then
-			height="$(jq -r '.values[]? | select(.symbol == "BTC/USD") | .block_height' "$latest_file")"
-			block_time="$(jq -r '.values[]? | select(.symbol == "BTC/USD") | .block_time_unix' "$latest_file")"
-			echo "oracle_value=$value"
-			echo "oracle_height=$height"
-			echo "oracle_block_time_unix=$block_time"
+		all_values_ready=1
+		for symbol in "${ORACLE_SYMBOLS[@]}"; do
+			value="$(jq -r --arg symbol "$symbol" '[.values[]? | select(.symbol == $symbol) | .value][0] // empty' "$latest_file")"
+			if [[ -z "$value" ]]; then
+				all_values_ready=0
+				break
+			fi
+		done
+		if (( all_values_ready == 1 )); then
+			for symbol in "${ORACLE_SYMBOLS[@]}"; do
+				value="$(jq -r --arg symbol "$symbol" '.values[] | select(.symbol == $symbol) | .value' "$latest_file")"
+				height="$(jq -r --arg symbol "$symbol" '.values[] | select(.symbol == $symbol) | .block_height' "$latest_file")"
+				block_time="$(jq -r --arg symbol "$symbol" '.values[] | select(.symbol == $symbol) | .block_time_unix' "$latest_file")"
+				echo "oracle_symbol=$symbol oracle_value=$value oracle_height=$height oracle_block_time_unix=$block_time"
+			done
 			break
 		fi
 	fi
 	if (( SECONDS > deadline )); then
-		echo "oracle latest value did not appear before timeout" >&2
+		echo "oracle latest values did not appear for every required symbol before timeout" >&2
 		echo "last latest-values output:" >&2
 		cat "$latest_file" >&2 || true
 		echo "query error:" >&2
