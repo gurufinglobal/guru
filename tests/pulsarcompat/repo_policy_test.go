@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"sort"
 	"strings"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestGuruSourceDoesNotImportGoGoProtoDirectly(t *testing.T) {
-	repoRoot := projectRootFromTestFile(t)
+	repoRoot := policyProjectRoot(t)
 	disallowed := "github.com/cosmos/" + "gogoproto"
 	allowed := map[string]struct{}{
 		filepath.Join("app", "app.go"):                                   {},
@@ -69,12 +70,12 @@ func TestGuruSourceDoesNotImportGoGoProtoDirectly(t *testing.T) {
 	}
 }
 
-func TestMigratedNodeModulesDoNotImportPublicPulsarAPI(t *testing.T) {
-	repoRoot := projectRootFromTestFile(t)
+func TestNodeModulesDoNotImportPublicPulsarAPI(t *testing.T) {
+	repoRoot := policyProjectRoot(t)
 	publicAPI := "github.com/gurufinglobal/guru/v3/api/guru/"
 	var offenders []string
 
-	for _, sourceDir := range []string{"app", "cmd", "oracle", "x"} {
+	for _, sourceDir := range []string{"app", "cmd", "x"} {
 		root := filepath.Join(repoRoot, sourceDir)
 		err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 			if err != nil {
@@ -102,12 +103,245 @@ func TestMigratedNodeModulesDoNotImportPublicPulsarAPI(t *testing.T) {
 	}
 
 	if len(offenders) > 0 {
-		t.Fatalf("migrated node modules must use internal gogo types, found public Pulsar imports in: %s", strings.Join(offenders, ", "))
+		t.Fatalf("node modules must use internal gogo types, found public Pulsar imports in: %s", strings.Join(offenders, ", "))
+	}
+}
+
+func TestStandaloneOracleModuleBoundary(t *testing.T) {
+	repoRoot := policyProjectRoot(t)
+	oracleRoot := filepath.Join(repoRoot, "oracle")
+	moduleBytes, err := os.ReadFile(filepath.Join(oracleRoot, "go.mod"))
+	if err != nil {
+		t.Fatalf("read standalone oracle go.mod: %v", err)
+	}
+	sidecarModule := "github.com/gurufinglobal/guru/" + "oracle"
+	const rootModule = "github.com/gurufinglobal/guru/v3"
+	modulePath, rootRequirement, replacements := parseStandaloneModuleContract(string(moduleBytes), rootModule)
+	if modulePath != sidecarModule {
+		t.Fatalf("unexpected standalone oracle module path: %q", modulePath)
+	}
+	if rootRequirement != "v3.0.0" {
+		t.Fatalf("standalone oracle must require %s v3.0.0, got %q", rootModule, rootRequirement)
+	}
+	if len(replacements) != 1 || replacements[0] != rootModule+" => .." {
+		t.Fatalf("standalone oracle must have exactly `replace %s => ..`, got %v", rootModule, replacements)
+	}
+
+	for _, forbidden := range []string{"api", "proto"} {
+		path := filepath.Join(oracleRoot, forbidden)
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Fatalf("standalone oracle must consume root-generated types without a copied %s tree: %v", forbidden, err)
+		}
+	}
+
+	rootImport := rootModule + "/"
+	internalGogoAPI := rootModule + "/x/oracle/types"
+	foundInternalGogoAPI := false
+	var disallowedRootImports []string
+	err = filepath.WalkDir(oracleRoot, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			if entry.Name() == "vendor" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+		contents, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		for _, line := range strings.Split(string(contents), "\n") {
+			if !strings.Contains(line, rootImport) {
+				continue
+			}
+			if strings.Contains(line, `"`+internalGogoAPI+`"`) {
+				foundInternalGogoAPI = true
+				continue
+			}
+			rel, err := filepath.Rel(repoRoot, path)
+			if err != nil {
+				return err
+			}
+			disallowedRootImports = append(disallowedRootImports, rel+": "+strings.TrimSpace(line))
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("scan standalone oracle imports: %v", err)
+	}
+	if len(disallowedRootImports) > 0 {
+		t.Fatalf("standalone oracle may import only the root internal gogo Oracle types: %s", strings.Join(disallowedRootImports, ", "))
+	}
+	if !foundInternalGogoAPI {
+		t.Fatalf("standalone oracle does not import the root internal gogo Oracle types")
+	}
+}
+
+func parseStandaloneModuleContract(contents, rootModule string) (string, string, []string) {
+	var (
+		modulePath      string
+		rootRequirement string
+		replacements    []string
+	)
+	for _, rawLine := range strings.Split(contents, "\n") {
+		line := strings.TrimSpace(strings.SplitN(rawLine, "//", 2)[0])
+		fields := strings.Fields(line)
+		switch {
+		case len(fields) == 2 && fields[0] == "module":
+			modulePath = fields[1]
+		case len(fields) == 2 && fields[0] == rootModule:
+			rootRequirement = fields[1]
+		case len(fields) == 4 && fields[0] == "replace" && fields[2] == "=>":
+			replacements = append(replacements, strings.Join(fields[1:], " "))
+		case len(fields) > 0 && fields[0] == "replace":
+			replacements = append(replacements, line)
+		}
+	}
+	return modulePath, rootRequirement, replacements
+}
+
+func TestRootDoesNotImportStandaloneOracleOrUseGoWorkspace(t *testing.T) {
+	repoRoot := policyProjectRoot(t)
+	sidecarModule := "github.com/gurufinglobal/guru/" + "oracle"
+	var offenders []string
+
+	err := filepath.WalkDir(repoRoot, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			rel, err := filepath.Rel(repoRoot, path)
+			if err != nil {
+				return err
+			}
+			switch rel {
+			case ".git", "build", "vendor":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if entry.Name() == "go.work" || entry.Name() == "go.work.sum" {
+			rel, err := filepath.Rel(repoRoot, path)
+			if err != nil {
+				return err
+			}
+			offenders = append(offenders, rel)
+			return nil
+		}
+		rel, err := filepath.Rel(repoRoot, path)
+		if err != nil {
+			return err
+		}
+		if rel == "oracle" || strings.HasPrefix(rel, "oracle"+string(filepath.Separator)) {
+			return nil
+		}
+		if !strings.HasSuffix(path, ".go") && path != filepath.Join(repoRoot, "go.mod") {
+			return nil
+		}
+		contents, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if strings.Contains(string(contents), sidecarModule) {
+			offenders = append(offenders, rel)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("scan root module boundary: %v", err)
+	}
+	if len(offenders) > 0 {
+		t.Fatalf("root module must not import the standalone oracle or use a Go workspace: %s", strings.Join(offenders, ", "))
+	}
+}
+
+func TestProtoGenScriptIsRootOnly(t *testing.T) {
+	repoRoot := policyProjectRoot(t)
+	script, err := os.ReadFile(filepath.Join(repoRoot, "scripts", "proto-gen.sh"))
+	if err != nil {
+		t.Fatalf("read repository codegen script: %v", err)
+	}
+	for _, forbidden := range []string{"oracle/api", "oracle/proto", "oracle/scripts"} {
+		if strings.Contains(string(script), forbidden) {
+			t.Fatalf("root protobuf generator must not manage standalone sidecar files: found %q", forbidden)
+		}
+	}
+}
+
+func TestRootAndOracleReleaseTagsAreIsolated(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the version expressions and fixture use POSIX shell tools")
+	}
+
+	repoRoot := policyProjectRoot(t)
+	makefile, err := os.ReadFile(filepath.Join(repoRoot, "Makefile"))
+	if err != nil {
+		t.Fatalf("read Makefile: %v", err)
+	}
+	assignments := make(map[string]string, 2)
+	for _, line := range strings.Split(string(makefile), "\n") {
+		for _, name := range []string{"VERSION", "ORACLE_VERSION"} {
+			if strings.HasPrefix(line, name+" :=") {
+				assignments[name] = line
+			}
+		}
+	}
+	if len(assignments) != 2 {
+		t.Fatalf("Makefile must define isolated VERSION and ORACLE_VERSION expressions: %v", assignments)
+	}
+
+	fixture := t.TempDir()
+	runFixtureCommand(t, fixture, "git", "init", "-q")
+	runFixtureCommand(t, fixture, "git", "config", "user.email", "oracle-version-test@example.invalid")
+	runFixtureCommand(t, fixture, "git", "config", "user.name", "Oracle Version Test")
+	writeVersionFixtureCommit(t, fixture, "root")
+	runFixtureCommand(t, fixture, "git", "tag", "v1.2.3")
+	writeVersionFixtureCommit(t, fixture, "oracle")
+	runFixtureCommand(t, fixture, "git", "tag", "oracle/v4.5.6")
+	writeVersionFixtureCommit(t, fixture, "head")
+
+	fixtureMakefile := assignments["VERSION"] + "\n" +
+		assignments["ORACLE_VERSION"] + "\n" +
+		"print-versions:\n" +
+		"\t@printf '%s\\n%s\\n' '$(VERSION)' '$(ORACLE_VERSION)'\n"
+	if err := os.WriteFile(filepath.Join(fixture, "Makefile"), []byte(fixtureMakefile), 0o600); err != nil {
+		t.Fatalf("write version fixture Makefile: %v", err)
+	}
+	output := runFixtureCommand(t, fixture, "make", "--no-print-directory", "print-versions")
+	versions := strings.Fields(output)
+	if len(versions) != 2 {
+		t.Fatalf("unexpected version output %q", output)
+	}
+	if !strings.HasPrefix(versions[0], "v1.2.3-2-g") {
+		t.Fatalf("root version was contaminated by sidecar tag: %q", versions[0])
+	}
+	if !strings.HasPrefix(versions[1], "v4.5.6-1-g") {
+		t.Fatalf("sidecar version was contaminated by root tag or retained its namespace: %q", versions[1])
+	}
+
+	archive := t.TempDir()
+	if err := os.WriteFile(filepath.Join(archive, "Makefile"), []byte(fixtureMakefile), 0o600); err != nil {
+		t.Fatalf("write source archive Makefile: %v", err)
+	}
+	archiveVersions := strings.Fields(runFixtureCommand(
+		t,
+		archive,
+		"make",
+		"--no-print-directory",
+		"print-versions",
+	))
+	if len(archiveVersions) != 2 || archiveVersions[0] != "dev" || archiveVersions[1] != "dev" {
+		t.Fatalf("source archive versions = %v, want [dev dev]", archiveVersions)
 	}
 }
 
 func TestInternalAndPublicGatewayPatternsMatch(t *testing.T) {
-	repoRoot := projectRootFromTestFile(t)
+	repoRoot := policyProjectRoot(t)
 	modules := []struct {
 		name         string
 		internalPath string
@@ -130,12 +364,12 @@ func TestInternalAndPublicGatewayPatternsMatch(t *testing.T) {
 	}
 }
 
-func TestProtoGenScriptDiscoversFutureModulesAndPrunesStalePublicAPI(t *testing.T) {
+func TestProtoGenScriptDiscoversFutureModulesPrunesStalePublicAPIAndIsIdempotent(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the repository codegen script requires a POSIX shell")
 	}
 
-	repoRoot := projectRootFromTestFile(t)
+	repoRoot := policyProjectRoot(t)
 	tempRoot := t.TempDir()
 	for _, dir := range []string{
 		filepath.Join(tempRoot, "bin"),
@@ -211,6 +445,18 @@ esac
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("run codegen script fixture: %v\n%s", err, output)
 	}
+	firstGeneration := snapshotFixtureTrees(t, tempRoot, "x", "api")
+
+	cmd = exec.Command("sh", "scripts/proto-gen.sh")
+	cmd.Dir = tempRoot
+	cmd.Env = []string{"PATH=" + filepath.Join(tempRoot, "bin") + string(os.PathListSeparator) + os.Getenv("PATH")}
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("rerun codegen script fixture: %v\n%s", err, output)
+	}
+	secondGeneration := snapshotFixtureTrees(t, tempRoot, "x", "api")
+	if !reflect.DeepEqual(firstGeneration, secondGeneration) {
+		t.Fatalf("root protobuf generation is not idempotent:\nfirst=%v\nsecond=%v", firstGeneration, secondGeneration)
+	}
 
 	for _, path := range []string{
 		filepath.Join(tempRoot, "x", "constitution", "types", "types.pb.go"),
@@ -248,7 +494,7 @@ func TestProtoGenScriptRejectsFilesBelowTypesPackage(t *testing.T) {
 		t.Skip("the repository codegen script requires a POSIX shell")
 	}
 
-	repoRoot := projectRootFromTestFile(t)
+	repoRoot := policyProjectRoot(t)
 	tempRoot := t.TempDir()
 	for _, dir := range []string{
 		filepath.Join(tempRoot, "bin"),
@@ -300,7 +546,7 @@ esac
 }
 
 func TestPublicPulsarArtifactsExactlyMatchGuruProtoSources(t *testing.T) {
-	repoRoot := projectRootFromTestFile(t)
+	repoRoot := policyProjectRoot(t)
 	expected := make(map[string]struct{})
 	protoRoot := filepath.Join(repoRoot, "proto", "guru")
 
@@ -391,4 +637,63 @@ func isGeneratedGuruGogo(rel string) bool {
 
 	parts := strings.Split(filepath.ToSlash(rel), "/")
 	return len(parts) >= 4 && parts[0] == "x" && parts[len(parts)-2] == "types"
+}
+
+func snapshotFixtureTrees(t *testing.T, root string, trees ...string) map[string]string {
+	t.Helper()
+	snapshot := make(map[string]string)
+	for _, tree := range trees {
+		treeRoot := filepath.Join(root, tree)
+		err := filepath.WalkDir(treeRoot, func(path string, entry os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if entry.IsDir() {
+				return nil
+			}
+			contents, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			rel, err := filepath.Rel(root, path)
+			if err != nil {
+				return err
+			}
+			snapshot[rel] = string(contents)
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("snapshot fixture tree %s: %v", tree, err)
+		}
+	}
+	return snapshot
+}
+
+func writeVersionFixtureCommit(t *testing.T, root, contents string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(root, "state"), []byte(contents), 0o600); err != nil {
+		t.Fatalf("write version fixture state: %v", err)
+	}
+	runFixtureCommand(t, root, "git", "add", "state")
+	runFixtureCommand(t, root, "git", "commit", "-q", "-m", contents)
+}
+
+func runFixtureCommand(t *testing.T, root, name string, args ...string) string {
+	t.Helper()
+	command := exec.Command(name, args...)
+	command.Dir = root
+	output, err := command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("run %s %v: %v\n%s", name, args, err, output)
+	}
+	return strings.TrimSpace(string(output))
+}
+
+func policyProjectRoot(t *testing.T) string {
+	t.Helper()
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatalf("resolve repository root from policy test file")
+	}
+	return filepath.Clean(filepath.Join(filepath.Dir(filename), "..", ".."))
 }
