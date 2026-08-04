@@ -59,6 +59,73 @@ func TestDiagnosticsThrottleTransitionsAndBoundMessages(t *testing.T) {
 	}
 }
 
+func TestTextDiagnosticsAreHumanReadable(t *testing.T) {
+	t.Parallel()
+	var output bytes.Buffer
+	now := time.Unix(1_700_000_000, 0).UTC()
+	diagnostics := newDiagnosticsWithHome(
+		&output,
+		config.Logging{Level: "info", Format: "text"},
+		func() time.Time { return now },
+		"/private/tmp/oracle home",
+	)
+	diagnostics.Ready(3)
+	diagnostics.CycleFinished("BTC/USD", domain.CycleUnderQuorum, 4, 1)
+	diagnostics.CycleFinished("BTC/USD", domain.CycleFull, 4, 4)
+	diagnostics.Omitted("ETH/USD", "no_value")
+	if err := diagnostics.Close(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	text := output.String()
+	for _, expected := range []string{
+		"2023-11-14T22:13:20Z INFO  Oracle daemon is ready.",
+		"Home: /private/tmp/oracle home",
+		"Feeds: 3",
+		"oracled --home $'/private/tmp/oracle home' status",
+		"BTC/USD collection has insufficient sources (1/4).",
+		"BTC/USD collection recovered (4/4 sources).",
+		"Node request omitted ETH/USD: no aggregate is available.",
+	} {
+		if !strings.Contains(text, expected) {
+			t.Fatalf("text diagnostics missing %q:\n%s", expected, text)
+		}
+	}
+	for _, forbidden := range []string{"event=", "level=", "\t", "\x1b"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("text diagnostics contain %q:\n%s", forbidden, text)
+		}
+	}
+}
+
+func TestJSONDiagnosticsRemainExact(t *testing.T) {
+	t.Parallel()
+	var output bytes.Buffer
+	now := time.Unix(1_700_000_000, 0).UTC()
+	diagnostics := newDiagnosticsWithHome(
+		&output,
+		config.Logging{Level: "info", Format: "json"},
+		func() time.Time { return now },
+		"/private/tmp/oracle home",
+	)
+	diagnostics.Ready(3)
+	diagnostics.CycleFinished("BTC/USD", domain.CycleUnderQuorum, 4, 1)
+	diagnostics.CycleFinished("BTC/USD", domain.CycleFull, 4, 4)
+	diagnostics.Omitted("ETH/USD", "no_value")
+	if err := diagnostics.Close(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	const expected = "{\"timestamp\":\"2023-11-14T22:13:20Z\",\"level\":\"info\",\"event\":\"ready\",\"feed_count\":3,\"configured_source_count\":0,\"successful_source_count\":0}\n" +
+		"{\"timestamp\":\"2023-11-14T22:13:20Z\",\"level\":\"warn\",\"event\":\"collection_under_quorum\",\"symbol\":\"BTC/USD\",\"reason\":\"under_quorum\",\"feed_count\":0,\"configured_source_count\":4,\"successful_source_count\":1}\n" +
+		"{\"timestamp\":\"2023-11-14T22:13:20Z\",\"level\":\"info\",\"event\":\"collection_recovered\",\"symbol\":\"BTC/USD\",\"feed_count\":0,\"configured_source_count\":4,\"successful_source_count\":4}\n" +
+		"{\"timestamp\":\"2023-11-14T22:13:20Z\",\"level\":\"warn\",\"event\":\"consumer_omission\",\"symbol\":\"ETH/USD\",\"reason\":\"no_value\",\"feed_count\":0,\"configured_source_count\":0,\"successful_source_count\":0}\n"
+	if output.String() != expected {
+		t.Fatalf("JSON diagnostic changed:\n got %q\nwant %q", output.String(), expected)
+	}
+	if strings.Contains(output.String(), "oracle home") || strings.Contains(output.String(), "Run from another terminal") {
+		t.Fatalf("JSON diagnostic contains human context: %q", output.String())
+	}
+}
+
 func TestConsumerOmissionsUseBoundedDiagnostics(t *testing.T) {
 	pair, catalog, _ := serviceFixture(t, time.Now())
 	var output bytes.Buffer

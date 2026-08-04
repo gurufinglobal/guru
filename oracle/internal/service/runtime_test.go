@@ -97,7 +97,9 @@ func TestRunEmptyHomeReadinessAndGracefulShutdown(t *testing.T) {
 	if err := releasedLock.Close(); err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Contains(output.Bytes(), []byte("event=ready")) {
+	if !bytes.Contains(output.Bytes(), []byte("Oracle daemon is ready.")) ||
+		!bytes.Contains(output.Bytes(), []byte("oracled --home ")) ||
+		!bytes.Contains(output.Bytes(), []byte(" reconcile")) {
 		t.Fatalf("readiness diagnostic missing: %q", output.String())
 	}
 }

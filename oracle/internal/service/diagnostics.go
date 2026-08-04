@@ -37,6 +37,7 @@ type Diagnostics struct {
 	format  string
 	minimum int
 	now     func() time.Time
+	home    string
 
 	events    chan diagnosticEvent
 	stop      chan struct{}
@@ -61,11 +62,25 @@ func NewDiagnostics(output io.Writer, logging config.Logging) *Diagnostics {
 }
 
 func newDiagnostics(output io.Writer, logging config.Logging, now func() time.Time) *Diagnostics {
+	return newDiagnosticsWithHome(output, logging, now, "")
+}
+
+func newRuntimeDiagnostics(output io.Writer, logging config.Logging, home string) *Diagnostics {
+	return newDiagnosticsWithHome(output, logging, time.Now, home)
+}
+
+func newDiagnosticsWithHome(
+	output io.Writer,
+	logging config.Logging,
+	now func() time.Time,
+	home string,
+) *Diagnostics {
 	diagnostics := &Diagnostics{
 		output:  output,
 		format:  logging.Format,
 		minimum: diagnosticLevel(logging.Level),
 		now:     now,
+		home:    home,
 		events:  make(chan diagnosticEvent, diagnosticQueueSize),
 		stop:    make(chan struct{}),
 		done:    make(chan struct{}),
@@ -209,34 +224,111 @@ func (d *Diagnostics) emit(level string, observedAt time.Time, record diagnostic
 		}
 		line = encoded
 	} else {
-		var builder strings.Builder
-		fmt.Fprintf(
-			&builder,
-			"%s level=%s event=%s",
-			record.Timestamp,
-			record.Level,
-			record.Event,
-		)
-		if record.Symbol != "" {
-			fmt.Fprintf(&builder, " symbol=%s", strconv.Quote(record.Symbol))
-		}
-		if record.Reason != "" {
-			fmt.Fprintf(&builder, " reason=%s", strconv.Quote(record.Reason))
-		}
-		if record.Event == "ready" {
-			fmt.Fprintf(&builder, " feed_count=%d", record.FeedCount)
-		}
-		if strings.HasPrefix(record.Event, "collection_") {
-			fmt.Fprintf(&builder, " configured_source_count=%d", record.ConfiguredSourceCount)
-			fmt.Fprintf(&builder, " successful_source_count=%d", record.SuccessfulSourceCount)
-		}
-		line = []byte(builder.String())
+		line = []byte(formatTextDiagnostic(observedAt, record, d.home))
 	}
 	if len(line) >= maxDiagnosticBytes {
 		line = line[:maxDiagnosticBytes-1]
 	}
 	line = append(line, '\n')
 	_, _ = d.output.Write(line)
+}
+
+func formatTextDiagnostic(observedAt time.Time, record diagnosticRecord, home string) string {
+	prefix := observedAt.UTC().Truncate(time.Second).Format(time.RFC3339) + " " +
+		strings.ToUpper(record.Level)
+	switch record.Event {
+	case "ready":
+		var builder strings.Builder
+		fmt.Fprintf(&builder, "%s  Oracle daemon is ready.\n", prefix)
+		fmt.Fprintf(&builder, "Home: %s\n", diagnosticASCII(home))
+		fmt.Fprintf(&builder, "Feeds: %d\n", record.FeedCount)
+		builder.WriteString("Run from another terminal:\n")
+		fmt.Fprintf(&builder, "  %s\n", diagnosticCommand(home, "status"))
+		fmt.Fprintf(&builder, "  %s\n", diagnosticCommand(home, "history"))
+		fmt.Fprintf(&builder, "  %s", diagnosticCommand(home, "reconcile"))
+		return builder.String()
+	case "collection_under_quorum":
+		return fmt.Sprintf(
+			"%s  %s collection has insufficient sources (%d/%d).",
+			prefix,
+			diagnosticASCII(record.Symbol),
+			record.SuccessfulSourceCount,
+			record.ConfiguredSourceCount,
+		)
+	case "collection_recovered":
+		return fmt.Sprintf(
+			"%s  %s collection recovered (%d/%d sources).",
+			prefix,
+			diagnosticASCII(record.Symbol),
+			record.SuccessfulSourceCount,
+			record.ConfiguredSourceCount,
+		)
+	case "consumer_omission":
+		return fmt.Sprintf(
+			"%s  Node request omitted %s: %s.",
+			prefix,
+			diagnosticASCII(record.Symbol),
+			diagnosticOmission(record.Reason),
+		)
+	default:
+		return prefix + "  Oracle diagnostic event."
+	}
+}
+
+func diagnosticOmission(reason string) string {
+	switch reason {
+	case "unconfigured":
+		return "the symbol is not configured"
+	case "no_value":
+		return "no aggregate is available"
+	case "stale":
+		return "the aggregate is stale"
+	case "clock_anomaly":
+		return "the aggregate has a clock anomaly"
+	default:
+		return "no usable aggregate is available"
+	}
+}
+
+func diagnosticASCII(value string) string {
+	for i := 0; i < len(value); i++ {
+		if value[i] < 0x20 || value[i] > 0x7e {
+			return strconv.QuoteToASCII(value)
+		}
+	}
+	return value
+}
+
+func diagnosticShellQuote(value string) string {
+	if value != "" {
+		safe := true
+		for i := 0; i < len(value); i++ {
+			character := value[i]
+			if (character >= 'a' && character <= 'z') ||
+				(character >= 'A' && character <= 'Z') ||
+				(character >= '0' && character <= '9') ||
+				strings.ContainsRune("_@%+=:,./-", rune(character)) {
+				continue
+			}
+			safe = false
+			break
+		}
+		if safe {
+			return value
+		}
+	}
+	quoted := strconv.QuoteToASCII(value)
+	body := quoted[1 : len(quoted)-1]
+	body = strings.ReplaceAll(body, "\\\"", "\"")
+	body = strings.ReplaceAll(body, "'", "\\'")
+	return "$'" + body + "'"
+}
+
+func diagnosticCommand(home, command string) string {
+	if home == "" {
+		return "oracled " + command
+	}
+	return "oracled --home " + diagnosticShellQuote(home) + " " + command
 }
 
 func diagnosticLevel(level string) int {

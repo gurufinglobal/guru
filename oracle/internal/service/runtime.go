@@ -73,7 +73,7 @@ func RunLocked(
 	if err != nil {
 		return storageRunError("recover latest aggregates", err)
 	}
-	diagnostics := NewDiagnostics(output, pair.Config.Logging)
+	diagnostics := newRuntimeDiagnostics(output, pair.Config.Logging, pair.Paths.Home)
 	diagnosticsClosed := false
 	defer func() {
 		if diagnosticsClosed {
