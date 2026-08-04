@@ -193,7 +193,7 @@ func NewApp(
 		}))
 	}
 
-	app.configureVMRunner(bApp, encodingConfig.TxConfig.TxDecoder(), appKeepers.GetNonTransientKeys())
+	app.configureVMRunner(bApp, appOpts, encodingConfig.TxConfig.TxDecoder(), appKeepers.GetNonTransientKeys())
 
 	return app
 }

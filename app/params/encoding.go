@@ -26,7 +26,7 @@ type EncodingConfig struct {
 func MakeEncodingConfig(accountPrefix, validatorPrefix, consensusPrefix string) EncodingConfig {
 	registerBexGogoMapEntries()
 
-	// SDK v0.54.3 txsigning.Options has no ConsensusAddressCodec field.
+	// SDK v0.54.x txsigning.Options has no ConsensusAddressCodec field.
 	// Keep the consensus prefix in the signature for forward compatibility
 	// and to make all address prefixes explicit at call sites.
 	_ = evmaddress.NewEvmCodec(consensusPrefix)

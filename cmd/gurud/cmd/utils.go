@@ -29,7 +29,38 @@ import (
 	"github.com/spf13/viper"
 )
 
-func addModuleInitFlags(_ *cobra.Command) {}
+func addModuleInitFlags(cmd *cobra.Command) {
+	// Cosmos EVM owns the start command and therefore does not inherit the
+	// BlockSTM flags added by the SDK's StartCmd. Register them here with Guru's
+	// existing defaults so CLI, environment, and app.toml configuration expose
+	// the same execution controls.
+	cmd.Flags().String(sdkserver.FlagBlockExecutor, serverconfig.BlockExecutorBlockSTM, "Block executor mode (block-stm|sequential)")
+	cmd.Flags().Int(sdkserver.FlagBlockSTMWorkers, 0, "Number of workers for block-stm execution (0 = auto)")
+	cmd.Flags().Bool(sdkserver.FlagBlockSTMPreEstimate, true, "Enable pre-estimation for block-stm execution")
+
+	// In Cosmos EVM's standalone path AppCreator runs before the server config is
+	// validated. Validate in PreRunE so an invalid executor is returned as a
+	// startup error instead of reaching blockexec.Apply and panicking.
+	preRunE := cmd.PreRunE
+	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+		if preRunE != nil {
+			if err := preRunE(cmd, args); err != nil {
+				return err
+			}
+		}
+
+		serverCtx := sdkserver.GetServerContextFromCmd(cmd)
+		cfg, err := cosmosevmserverconfig.GetConfig(serverCtx.Viper)
+		if err != nil {
+			return err
+		}
+		if err := cfg.ValidateBasic(); err != nil {
+			return err
+		}
+
+		return cosmosevmserverconfig.ValidateCrossConfig(serverCtx.Config, &cfg)
+	}
+}
 
 const defaultOracleConfigTemplate = `
 [oracle]
@@ -61,6 +92,11 @@ func defaultAppToml() (string, any) {
 
 	cfg := cosmosevmserverconfig.DefaultConfig()
 	cfg.MinGasPrices = "0" + appparams.BaseDenom
+	// Preserve Guru's existing BlockSTM execution policy while exposing the SDK
+	// controls for an explicit sequential fallback and worker tuning.
+	cfg.BlockExecutor = serverconfig.BlockExecutorBlockSTM
+	cfg.BlockSTMWorkers = 0
+	cfg.BlockSTMPreEstimate = true
 	// The local oracle sidecar discovers active tasks through the node's gRPC
 	// query service. Keep it enabled in generated Guru node configuration.
 	cfg.GRPC.Enable = true
