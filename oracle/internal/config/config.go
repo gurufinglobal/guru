@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
+	_ "embed"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -24,9 +25,14 @@ const (
 	SchemaVersion        = 1
 	MaxConfigFileSize    = 1 << 20
 	HomeLockRelativePath = "run/oracled.lock"
+
+	defaultSourcesRevisionPlaceholder = "__PUBLICATION_REVISION__"
 )
 
 var revisionPattern = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+
+//go:embed default_sources.toml
+var defaultSourcesTemplate string
 
 type Duration struct {
 	time.Duration
@@ -597,7 +603,12 @@ func WriteInitialFiles(home string) (Paths, error) {
 		return Paths{}, fmt.Errorf("generate publication revision: %w", err)
 	}
 	revision := hex.EncodeToString(revisionBytes)
-	sources := []byte("schema_version = 1\npublication_revision = \"" + revision + "\"\nfeeds = []\n")
+	sources := []byte(strings.Replace(
+		defaultSourcesTemplate,
+		defaultSourcesRevisionPlaceholder,
+		revision,
+		1,
+	))
 	digest := sha256.Sum256(sources)
 	config := []byte(initialConfigTemplate(revision, hex.EncodeToString(digest[:])))
 

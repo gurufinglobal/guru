@@ -5,13 +5,15 @@ import (
 	"encoding/hex"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gurufinglobal/guru/oracle/internal/domain"
 )
 
-func TestWriteInitialAndLoadEmptyPair(t *testing.T) {
+func TestWriteInitialAndLoadDefaultPair(t *testing.T) {
 	t.Parallel()
 	home := filepath.Join(canonicalTemp(t), "home")
 	paths, err := WriteInitialFiles(home)
@@ -25,8 +27,54 @@ func TestWriteInitialAndLoadEmptyPair(t *testing.T) {
 	if pair.Paths != paths {
 		t.Fatalf("paths differ:\n%+v\n%+v", pair.Paths, paths)
 	}
-	if pair.Feeds == nil || len(pair.Feeds) != 0 {
-		t.Fatalf("initial feeds = %#v", pair.Feeds)
+	wantFeeds := []struct {
+		asset  string
+		symbol string
+	}{
+		{asset: "BTC", symbol: "BTC/USD"},
+		{asset: "ETH", symbol: "ETH/USD"},
+		{asset: "SOL", symbol: "SOL/USD"},
+	}
+	if len(pair.Feeds) != len(wantFeeds) {
+		t.Fatalf("initial feed count = %d, want %d", len(pair.Feeds), len(wantFeeds))
+	}
+	for i, wantFeed := range wantFeeds {
+		got := pair.Feeds[i]
+		if got.Symbol != wantFeed.symbol || got.Interval != 10*time.Second || got.StaleAfter != 20*time.Second {
+			t.Fatalf("initial feed %d = %#v", i, got)
+		}
+		assetLower := strings.ToLower(wantFeed.asset)
+		wantSources := []domain.SourcePlan{
+			{
+				ID:          "bitstamp",
+				URL:         "https://www.bitstamp.net/api/v2/ticker/" + assetLower + "usd/",
+				JSONPointer: "/last",
+			},
+			{
+				ID:          "coinbase",
+				URL:         "https://api.exchange.coinbase.com/products/" + wantFeed.asset + "-USD/ticker",
+				JSONPointer: "/price",
+			},
+			{
+				ID:          "gemini",
+				URL:         "https://api.gemini.com/v2/ticker/" + assetLower + "usd",
+				JSONPointer: "/close",
+			},
+			{
+				ID:          "kraken",
+				URL:         "https://api.kraken.com/0/public/Ticker?pair=" + wantFeed.asset + "%2FUSD&assetVersion=1",
+				JSONPointer: "/result/" + wantFeed.asset + "~1USD/c/0",
+			},
+		}
+		if !slices.Equal(got.Sources, wantSources) {
+			t.Fatalf("initial sources for %s = %#v, want %#v", got.Symbol, got.Sources, wantSources)
+		}
+		if got.Fingerprint == ([32]byte{}) {
+			t.Fatalf("initial feed %s has an empty fingerprint", got.Symbol)
+		}
+	}
+	if pair.PlanDigest == ([32]byte{}) {
+		t.Fatal("initial plan digest is empty")
 	}
 	wantPolicy := domain.CollectorPolicy{
 		MaxConcurrency:        pair.Config.Collector.MaxConcurrency,

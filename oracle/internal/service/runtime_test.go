@@ -41,6 +41,11 @@ func TestRunEmptyHomeReadinessAndGracefulShutdown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Keep this lifecycle test hermetic now that product init includes live feeds.
+	pair.Feeds, pair.PlanDigest, err = domain.CanonicalPlans(nil, pair.CollectorPolicy)
+	if err != nil {
+		t.Fatal(err)
+	}
 	lock, err := storage.AcquireHomeLock(pair.Paths.Lock)
 	if err != nil {
 		t.Fatal(err)

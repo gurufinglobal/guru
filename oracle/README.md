@@ -63,8 +63,19 @@ oracled --home /srv/guru/oracle validate
 oracled --home /srv/guru/oracle start
 ```
 
-`start` stays in the foreground. A service manager owns restarts, output
-capture, and rotation. The six product commands are:
+`start` stays in the foreground and immediately begins collecting the default
+BTC/USD, ETH/USD, and SOL/USD feeds. In another terminal, poll `status` until
+the initial collection is fresh, then inspect the local result or compare live
+contribution readiness with a node:
+
+```sh
+oracled --home /srv/guru/oracle status
+oracled --home /srv/guru/oracle history BTC/USD
+oracled --home /srv/guru/oracle reconcile --node-grpc 127.0.0.1:9090
+```
+
+A service manager owns restarts, output capture, and rotation. The six product
+commands are:
 
 - `init`
 - `validate`
@@ -139,8 +150,16 @@ The request and response limits are fixed protocol envelopes, not tuning
 knobs. The ownership lock is likewise fixed at `run/oracled.lock` so mutable
 configuration cannot create two lock domains for one home.
 
-`init` writes an empty feed list. Operators add at least three independently
-selected sources per feed:
+`init` writes working bootstrap feeds for BTC/USD, ETH/USD, and SOL/USD. Each
+uses a 10-second interval, a 20-second stale boundary, and Coinbase, Kraken,
+Bitstamp, and Gemini sources. Four configured sources require a local strict
+majority of three, allowing one source failure while matching the default
+on-chain `min_sources` of three.
+
+These public endpoints are editable validator-local bootstrap policy, not a
+chain requirement, provider endorsement, or availability guarantee. Operators
+must review and replace them as appropriate for production. The generated
+format is:
 
 ```toml
 schema_version = 1
@@ -149,22 +168,27 @@ publication_revision = "<same revision>"
 [[feeds]]
 symbol = "BTC/USD"
 interval = "10s"
-stale_after = "30s"
+stale_after = "20s"
 
 [[feeds.sources]]
-id = "provider-a"
-url = "https://provider-a.example/value"
-json_pointer = "/data/price"
+id = "coinbase"
+url = "https://api.exchange.coinbase.com/products/BTC-USD/ticker"
+json_pointer = "/price"
 
 [[feeds.sources]]
-id = "provider-b"
-url = "https://provider-b.example/value"
-json_pointer = "/data/price"
+id = "kraken"
+url = "https://api.kraken.com/0/public/Ticker?pair=BTC%2FUSD&assetVersion=1"
+json_pointer = "/result/BTC~1USD/c/0"
 
 [[feeds.sources]]
-id = "provider-c"
-url = "https://provider-c.example/value"
-json_pointer = "/data/price"
+id = "bitstamp"
+url = "https://www.bitstamp.net/api/v2/ticker/btcusd/"
+json_pointer = "/last"
+
+[[feeds.sources]]
+id = "gemini"
+url = "https://api.gemini.com/v2/ticker/btcusd"
+json_pointer = "/close"
 ```
 
 Sources are public HTTPS GET endpoints with RFC 6901 JSON Pointers. Credentials,

@@ -99,6 +99,21 @@ func TestReconcileCommandExitAndReadOnlyContracts(t *testing.T) {
 			wantNodeCalls: []string{"Params", "ActiveTasks:"},
 		},
 		{
+			name: "default feeds ready",
+			tasks: []*oraclev1.OracleTask{
+				numericTask("BTC/USD"),
+				numericTask("ETH/USD"),
+				numericTask("SOL/USD"),
+			},
+			statusFeeds: []service.FeedStatus{
+				freshFeed("BTC/USD", 4, 3, domain.CycleQuorum),
+				freshFeed("ETH/USD", 4, 3, domain.CycleQuorum),
+				freshFeed("SOL/USD", 4, 3, domain.CycleQuorum),
+			},
+			wantExit:      0,
+			wantNodeCalls: []string{"Params", "ActiveTasks:"},
+		},
+		{
 			name: "informational local-only symbol",
 			statusFeeds: []service.FeedStatus{
 				freshFeed("ETH/USD", 3, 3, domain.CycleFull),
