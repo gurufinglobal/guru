@@ -2,6 +2,7 @@ package ante
 
 import (
 	"context"
+	"errors"
 	"math/big"
 	"testing"
 
@@ -53,6 +54,34 @@ func (keeper staticFeePolicyKeeper) ResolveDiscount(
 	[]sdk.Msg,
 ) (feepolicytypes.Discount, error) {
 	return keeper.discount, nil
+}
+
+type virtualFeeBankKeeperSpy struct {
+	calls           int
+	ctx             context.Context
+	senderAddr      sdk.AccAddress
+	recipientModule string
+	amount          sdk.Coins
+	err             error
+	onSend          func(context.Context, sdk.AccAddress, string, sdk.Coins) error
+}
+
+func (keeper *virtualFeeBankKeeperSpy) SendCoinsFromAccountToModuleVirtual(
+	ctx context.Context,
+	senderAddr sdk.AccAddress,
+	recipientModule string,
+	amount sdk.Coins,
+) error {
+	keeper.calls++
+	keeper.ctx = ctx
+	keeper.senderAddr = senderAddr
+	keeper.recipientModule = recipientModule
+	keeper.amount = amount
+	if keeper.onSend != nil {
+		return keeper.onSend(ctx, senderAddr, recipientModule, amount)
+	}
+
+	return keeper.err
 }
 
 func feeDecoratorTestPayer() sdk.AccAddress {
@@ -116,7 +145,7 @@ func TestApplyDiscountToBaseFee(t *testing.T) {
 	}
 }
 
-func TestDeductFeeDecoratorNoPolicyMatchesUpstreamAccounting(t *testing.T) {
+func TestDeductFeeDecoratorNoPolicyMatchesUpstreamFeeAmountPriorityAndEvents(t *testing.T) {
 	payer := feeDecoratorTestPayer()
 	fee := parityFee(200)
 	tx := parityFeeTx{gas: 10, fee: fee, payer: payer}
@@ -124,10 +153,10 @@ func TestDeductFeeDecoratorNoPolicyMatchesUpstreamAccounting(t *testing.T) {
 	ethConfig := parityLondonConfig(0)
 
 	type observation struct {
-		payerBalance     sdkmath.Int
-		collectorBalance sdkmath.Int
-		priority         int64
-		events           sdk.Events
+		payerBalance sdkmath.Int
+		collectedFee sdkmath.Int
+		priority     int64
+		events       sdk.Events
 	}
 	run := func(local bool) observation {
 		controller := gomock.NewController(t)
@@ -146,14 +175,20 @@ func TestDeductFeeDecoratorNoPolicyMatchesUpstreamAccounting(t *testing.T) {
 		}
 
 		payerBalance := sdkmath.NewInt(1_000)
-		collectorBalance := sdkmath.ZeroInt()
-		bankKeeper.EXPECT().
-			SendCoinsFromAccountToModule(gomock.Any(), payer, authtypes.FeeCollectorName, fee).
-			DoAndReturn(func(context.Context, sdk.AccAddress, string, sdk.Coins) error {
-				payerBalance = payerBalance.Sub(fee.AmountOf(parityFeeDenom))
-				collectorBalance = collectorBalance.Add(fee.AmountOf(parityFeeDenom))
-				return nil
-			})
+		collectedFee := sdkmath.ZeroInt()
+		recordCollection := func(_ context.Context, _ sdk.AccAddress, _ string, amount sdk.Coins) error {
+			payerBalance = payerBalance.Sub(amount.AmountOf(parityFeeDenom))
+			collectedFee = collectedFee.Add(amount.AmountOf(parityFeeDenom))
+			return nil
+		}
+		virtualBankKeeper := &virtualFeeBankKeeperSpy{onSend: recordCollection}
+		if !local {
+			bankKeeper.EXPECT().
+				SendCoinsFromAccountToModule(gomock.Any(), payer, authtypes.FeeCollectorName, fee).
+				DoAndReturn(func(ctx context.Context, sender sdk.AccAddress, module string, amount sdk.Coins) error {
+					return recordCollection(ctx, sender, module, amount)
+				})
+		}
 
 		ctx := parityFeeContext(1, false)
 		var (
@@ -166,7 +201,7 @@ func TestDeductFeeDecoratorNoPolicyMatchesUpstreamAccounting(t *testing.T) {
 			}
 			newCtx, err = NewDeductFeeDecorator(
 				accountKeeper,
-				bankKeeper,
+				virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 				nil,
 				checker,
 				staticFeePolicyKeeper{},
@@ -187,18 +222,24 @@ func TestDeductFeeDecoratorNoPolicyMatchesUpstreamAccounting(t *testing.T) {
 			})
 		}
 		require.NoError(t, err)
+		if local {
+			require.Equal(t, 1, virtualBankKeeper.calls)
+			require.Equal(t, payer, virtualBankKeeper.senderAddr)
+			require.Equal(t, authtypes.FeeCollectorName, virtualBankKeeper.recipientModule)
+			require.Equal(t, fee, virtualBankKeeper.amount)
+		}
 		return observation{
-			payerBalance:     payerBalance,
-			collectorBalance: collectorBalance,
-			priority:         newCtx.Priority(),
-			events:           newCtx.EventManager().Events(),
+			payerBalance: payerBalance,
+			collectedFee: collectedFee,
+			priority:     newCtx.Priority(),
+			events:       newCtx.EventManager().Events(),
 		}
 	}
 
 	local := run(true)
 	upstream := run(false)
 	require.Equal(t, sdkmath.NewInt(800), local.payerBalance)
-	require.Equal(t, sdkmath.NewInt(200), local.collectorBalance)
+	require.Equal(t, sdkmath.NewInt(200), local.collectedFee)
 	require.Equal(t, upstream, local)
 	require.Len(t, local.events, 1)
 }
@@ -206,7 +247,7 @@ func TestDeductFeeDecoratorNoPolicyMatchesUpstreamAccounting(t *testing.T) {
 func TestDeductFeeDecoratorPreservesCheckerPriority(t *testing.T) {
 	controller := gomock.NewController(t)
 	accountKeeper := authantetestutil.NewMockAccountKeeper(controller)
-	bankKeeper := authtestutil.NewMockBankKeeper(controller)
+	virtualBankKeeper := &virtualFeeBankKeeperSpy{}
 	payer := feeDecoratorTestPayer()
 	accountKeeper.EXPECT().
 		GetModuleAddress(authtypes.FeeCollectorName).
@@ -223,7 +264,7 @@ func TestDeductFeeDecoratorPreservesCheckerPriority(t *testing.T) {
 	fee := parityFee(60)
 	ctx, err := NewDeductFeeDecorator(
 		accountKeeper,
-		bankKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 		nil,
 		staticFeeBreakdownChecker(fee, priority),
 		staticFeePolicyKeeper{discount: feepolicytypes.Discount{
@@ -243,6 +284,7 @@ func TestDeductFeeDecoratorPreservesCheckerPriority(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, priority, nextPriority)
 	require.Equal(t, priority, ctx.Priority())
+	require.Zero(t, virtualBankKeeper.calls, "zero fees must not create a virtual collection entry")
 	require.Len(t, ctx.EventManager().Events(), 1)
 	require.Equal(t, sdk.Coins{}.String(), ctx.EventManager().Events()[0].Attributes[0].Value)
 }
@@ -251,13 +293,13 @@ func TestDeductFeeDecoratorMissingFeeCollectorFailsBeforeSideEffects(t *testing.
 	controller := gomock.NewController(t)
 	accountKeeper := authantetestutil.NewMockAccountKeeper(controller)
 	accountKeeper.EXPECT().GetModuleAddress(authtypes.FeeCollectorName).Return(nil)
-	bankKeeper := authtestutil.NewMockBankKeeper(controller)
+	virtualBankKeeper := &virtualFeeBankKeeperSpy{}
 	nextCalled := false
 	ctx := parityFeeContext(1, false)
 
 	_, err := NewDeductFeeDecorator(
 		accountKeeper,
-		bankKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 		nil,
 		staticFeeBreakdownChecker(parityFee(60), 1),
 		noCallFeePolicyKeeper{t: t},
@@ -279,7 +321,7 @@ func TestDeductFeeDecoratorMissingFeeCollectorFailsBeforeSideEffects(t *testing.
 func TestDeductFeeDecoratorMissingPayerFailsBeforeBankSideEffects(t *testing.T) {
 	controller := gomock.NewController(t)
 	accountKeeper := authantetestutil.NewMockAccountKeeper(controller)
-	bankKeeper := authtestutil.NewMockBankKeeper(controller)
+	virtualBankKeeper := &virtualFeeBankKeeperSpy{}
 	payer := feeDecoratorTestPayer()
 	accountKeeper.EXPECT().
 		GetModuleAddress(authtypes.FeeCollectorName).
@@ -293,7 +335,7 @@ func TestDeductFeeDecoratorMissingPayerFailsBeforeBankSideEffects(t *testing.T) 
 
 	_, err := NewDeductFeeDecorator(
 		accountKeeper,
-		bankKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 		nil,
 		staticFeeBreakdownChecker(parityFee(60), 1),
 		staticFeePolicyKeeper{},
@@ -308,6 +350,50 @@ func TestDeductFeeDecoratorMissingPayerFailsBeforeBankSideEffects(t *testing.T) 
 	)
 
 	require.ErrorIs(t, err, sdkerrors.ErrUnknownAddress)
+	require.False(t, nextCalled)
+	require.Empty(t, ctx.EventManager().Events())
+}
+
+func TestDeductFeeDecoratorVirtualCollectionFailureStopsAnteChain(t *testing.T) {
+	controller := gomock.NewController(t)
+	accountKeeper := authantetestutil.NewMockAccountKeeper(controller)
+	payer := feeDecoratorTestPayer()
+	fee := parityFee(60)
+	virtualBankKeeper := &virtualFeeBankKeeperSpy{err: errors.New("virtual collection failed")}
+	accountKeeper.EXPECT().
+		GetModuleAddress(authtypes.FeeCollectorName).
+		Return(authtypes.NewModuleAddress(authtypes.FeeCollectorName))
+	accountKeeper.EXPECT().
+		AddressCodec().
+		Return(evmaddress.NewEvmCodec(sdk.GetConfig().GetBech32AccountAddrPrefix()))
+	accountKeeper.EXPECT().
+		GetAccount(gomock.Any(), payer).
+		Return(authtypes.NewBaseAccountWithAddress(payer))
+
+	nextCalled := false
+	ctx := parityFeeContext(1, false)
+	_, err := NewDeductFeeDecorator(
+		accountKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
+		nil,
+		staticFeeBreakdownChecker(fee, 1),
+		staticFeePolicyKeeper{},
+	).AnteHandle(
+		ctx,
+		parityFeeTx{gas: 1, fee: fee, payer: payer},
+		false,
+		func(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.Context, error) {
+			nextCalled = true
+			return ctx, nil
+		},
+	)
+
+	require.ErrorIs(t, err, sdkerrors.ErrInsufficientFunds)
+	require.ErrorContains(t, err, "virtual collection failed")
+	require.Equal(t, 1, virtualBankKeeper.calls)
+	require.Equal(t, payer, virtualBankKeeper.senderAddr)
+	require.Equal(t, authtypes.FeeCollectorName, virtualBankKeeper.recipientModule)
+	require.Equal(t, fee, virtualBankKeeper.amount)
 	require.False(t, nextCalled)
 	require.Empty(t, ctx.EventManager().Events())
 }
@@ -364,7 +450,7 @@ func TestDeductFeeDecoratorRejectsInvalidCheckerBreakdownBeforeSideEffects(t *te
 			controller := gomock.NewController(t)
 			decorator := NewDeductFeeDecorator(
 				authantetestutil.NewMockAccountKeeper(controller),
-				authtestutil.NewMockBankKeeper(controller),
+				new(virtualFeeBankKeeperSpy).SendCoinsFromAccountToModuleVirtual,
 				authantetestutil.NewMockFeegrantKeeper(controller),
 				func(sdk.Context, sdk.Tx) (EffectiveFeeBreakdown, error) {
 					return test.breakdown, nil
