@@ -381,7 +381,8 @@ func FeeChecker(
 		return EffectiveFeeBreakdown{}, errorsmod.Wrap(sdkerrors.ErrInsufficientFee, "max priority price cannot be negative")
 	}
 
-	gas := sdkmath.NewIntFromUint64(feeTx.GetGas())
+	effectiveGas := effectiveFeeGas(ctx, feeTx.GetGas())
+	gas := sdkmath.NewIntFromUint64(effectiveGas)
 	if gas.IsZero() {
 		return EffectiveFeeBreakdown{}, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "gas cannot be zero")
 	}
@@ -449,7 +450,7 @@ func feeWithValidatorMinGasPrices(
 	priorityFn func(sdk.Coins, int64) int64,
 ) (EffectiveFeeBreakdown, error) {
 	feeCoins := feeTx.GetFee()
-	gas := int64(feeTx.GetGas()) // #nosec G115 -- ValidateBasic bounds the gas limit before fee deduction.
+	gas := int64(effectiveFeeGas(ctx, feeTx.GetGas())) // #nosec G115 -- ValidateBasic bounds the gas limit before fee deduction.
 
 	if ctx.IsCheckTx() && !ctx.MinGasPrices().IsZero() {
 		minGasPrices := ctx.MinGasPrices()
@@ -507,4 +508,14 @@ func dynamicFeePriority(fees sdk.Coins, gas int64) int64 {
 		}
 	}
 	return priority
+}
+
+func effectiveFeeGas(
+	ctx sdk.Context,
+	declaredGas uint64,
+) uint64 {
+	if _, ok := ctx.GasMeter().(*standardMsgSendGasMeter); ok {
+		return StandardMsgSendGas
+	}
+	return declaredGas
 }

@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/log/v2"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	evmmempool "github.com/cosmos/evm/mempool"
 	evmserver "github.com/cosmos/evm/server"
@@ -54,12 +55,16 @@ func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.L
 		evmMempool,
 		NewNoCheckProposalTxVerifier(app.BaseApp),
 	)
+	proposalHandler.SetTxSelector(newStandardMsgSendTxSelector())
 	proposalHandler.SetSignerExtractionAdapter(
 		evmmempool.NewEthSignerExtractionAdapter(
 			sdkmempool.NewDefaultSignerExtractionAdapter(),
 		),
 	)
-	app.configureOracleProposalHandler(proposalHandler)
+	app.configureOracleProposalHandler(
+		proposalHandler.PrepareProposalHandler(),
+		app.standardMsgSendProcessProposal(proposalHandler.ProcessProposalHandler()),
+	)
 
 	txDecoder := app.txConfig.TxDecoder()
 	app.SetInsertTxHandler(evmMempool.NewInsertTxHandler(txDecoder))
@@ -75,18 +80,25 @@ func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.L
 }
 
 func (app *App) configureNoOpOracleProposalHandler() {
-	app.configureOracleProposalHandler(baseapp.NewDefaultProposalHandler(
+	proposalHandler := baseapp.NewDefaultProposalHandler(
 		sdkmempool.NoOpMempool{},
 		NewNoCheckProposalTxVerifier(app.BaseApp),
-	))
+	)
+	app.configureOracleProposalHandler(
+		proposalHandler.PrepareProposalHandler(),
+		app.standardMsgSendProcessProposal(proposalHandler.ProcessProposalHandler()),
+	)
 }
 
-func (app *App) configureOracleProposalHandler(proposalHandler *baseapp.DefaultProposalHandler) {
+func (app *App) configureOracleProposalHandler(
+	prepareProposalHandler sdk.PrepareProposalHandler,
+	processProposalHandler sdk.ProcessProposalHandler,
+) {
 	oracleAggregator := oracleabci.NewAggregator(app.OracleKeeper, app.StakingKeeper)
 	oracleProposalHandler := oracleabci.NewProposalHandler(
 		oracleAggregator,
-		proposalHandler.PrepareProposalHandler(),
-		proposalHandler.ProcessProposalHandler(),
+		prepareProposalHandler,
+		processProposalHandler,
 	)
 
 	app.SetPrepareProposal(oracleProposalHandler.PrepareProposal)

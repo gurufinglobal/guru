@@ -29,6 +29,7 @@ func newCosmosAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandl
 			sdk.MsgTypeURL(&sdkvesting.MsgCreateVestingAccount{}),
 		),
 		authante.NewSetUpContextDecorator(),
+		NewStandardMsgSendGasDecorator(evmOptions.AccountKeeper),
 		authante.NewExtensionOptionsDecorator(evmOptions.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
