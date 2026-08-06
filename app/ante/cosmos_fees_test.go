@@ -88,7 +88,6 @@ type virtualFeeBankKeeperSpy struct {
 func (keeper *virtualFeeBankKeeperSpy) IsSendEnabledCoins(_ context.Context, _ ...sdk.Coin) error {
 	return nil
 }
-
 func (keeper *virtualFeeBankKeeperSpy) SendCoinsFromAccountToModuleVirtual(
 	ctx context.Context,
 	senderAddr sdk.AccAddress,
@@ -123,7 +122,6 @@ func (keeper *virtualFeeBankKeeperSpy) SendCoinsFromAccountToModule(
 ) error {
 	return keeper.SendCoinsFromAccountToModuleVirtual(ctx, senderAddr, recipientModule, amount)
 }
-
 func feeDecoratorTestPayer() sdk.AccAddress {
 	return sdk.AccAddress([]byte("fee-policy-payer-001"))
 }
@@ -241,7 +239,7 @@ func TestDeductFeeDecoratorNoPolicyMatchesUpstreamFeeAmountPriorityAndEvents(t *
 			}
 			newCtx, err = NewDeductFeeDecorator(
 				accountKeeper,
-				virtualBankKeeper,
+				virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 				nil,
 				checker,
 				staticFeePolicyKeeper{},
@@ -304,7 +302,7 @@ func TestDeductFeeDecoratorPreservesCheckerPriority(t *testing.T) {
 	fee := parityFee(60)
 	ctx, err := NewDeductFeeDecorator(
 		accountKeeper,
-		virtualBankKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 		nil,
 		staticFeeBreakdownChecker(fee, priority),
 		staticFeePolicyKeeper{discount: feepolicytypes.Discount{
@@ -356,7 +354,7 @@ func TestDeductFeeDecoratorStandardMsgSendAppliesFeePolicy(t *testing.T) {
 	)
 	newCtx, err := NewDeductFeeDecorator(
 		accountKeeper,
-		virtualBankKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 		nil,
 		staticFeeBreakdownChecker(fee, 11),
 		discountKeeper,
@@ -419,7 +417,7 @@ func TestDeductFeeDecoratorMissingFeeCollectorFailsBeforeSideEffects(t *testing.
 
 	_, err := NewDeductFeeDecorator(
 		accountKeeper,
-		virtualBankKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 		nil,
 		staticFeeBreakdownChecker(parityFee(60), 1),
 		noCallFeePolicyKeeper{t: t},
@@ -455,7 +453,7 @@ func TestDeductFeeDecoratorMissingPayerFailsBeforeBankSideEffects(t *testing.T) 
 
 	_, err := NewDeductFeeDecorator(
 		accountKeeper,
-		virtualBankKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 		nil,
 		staticFeeBreakdownChecker(parityFee(60), 1),
 		staticFeePolicyKeeper{},
@@ -494,7 +492,7 @@ func TestDeductFeeDecoratorVirtualCollectionFailureStopsAnteChain(t *testing.T) 
 	ctx := parityFeeContext(1, false)
 	_, err := NewDeductFeeDecorator(
 		accountKeeper,
-		virtualBankKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
 		nil,
 		staticFeeBreakdownChecker(fee, 1),
 		staticFeePolicyKeeper{},
@@ -570,7 +568,7 @@ func TestDeductFeeDecoratorRejectsInvalidCheckerBreakdownBeforeSideEffects(t *te
 			controller := gomock.NewController(t)
 			decorator := NewDeductFeeDecorator(
 				authantetestutil.NewMockAccountKeeper(controller),
-				new(virtualFeeBankKeeperSpy),
+				new(virtualFeeBankKeeperSpy).SendCoinsFromAccountToModuleVirtual,
 				authantetestutil.NewMockFeegrantKeeper(controller),
 				func(sdk.Context, sdk.Tx) (EffectiveFeeBreakdown, error) {
 					return test.breakdown, nil

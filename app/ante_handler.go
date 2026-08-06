@@ -32,7 +32,9 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) er
 			DynamicFeeChecker:      true,
 			PendingTxListener:      app.onPendingTx,
 		},
-		FeePolicyKeeper: app.FeePolicyKeeper,
+		CosmosFeeBankKeeper:        app.BankKeeper,
+		CosmosVirtualFeeCollection: app.CosmosVirtualFeeCollectionEnabled(),
+		FeePolicyKeeper:            app.FeePolicyKeeper,
 	}
 
 	anteHandler, err := appante.NewAnteHandler(options)

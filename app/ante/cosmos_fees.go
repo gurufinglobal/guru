@@ -36,11 +36,43 @@ type EffectiveFeeBreakdown struct {
 // computed from fee-cap inputs, never inferred from the truncated priority.
 type TxFeeChecker func(ctx sdk.Context, tx sdk.Tx) (EffectiveFeeBreakdown, error)
 
+// CosmosFeeBankKeeper is the normal bank capability used when Cosmos virtual
+// fee collection is not enabled for a binary.
+type CosmosFeeBankKeeper interface {
+	SendCoinsFromAccountToModule(
+		ctx context.Context,
+		senderAddr sdk.AccAddress,
+		recipientModule string,
+		amt sdk.Coins,
+	) error
+}
+
+// VirtualFeeBankKeeper is the additional bank capability required when Cosmos
+// virtual fee collection is enabled independently from the EVM fee path.
+type VirtualFeeBankKeeper interface {
+	SendCoinsFromAccountToModuleVirtual(
+		ctx context.Context,
+		senderAddr sdk.AccAddress,
+		recipientModule string,
+		amt sdk.Coins,
+	) error
+}
+
+// CosmosFeeCollector is selected exactly once during ante construction. This
+// prevents later mutations of application keeper settings from changing the
+// transaction state transition function.
+type CosmosFeeCollector func(
+	ctx context.Context,
+	senderAddr sdk.AccAddress,
+	recipientModule string,
+	amt sdk.Coins,
+) error
+
 // DeductFeeDecorator applies a policy only to the Cosmos effective base fee,
 // consumes any fee grant with the resulting actual fee, and collects that fee.
 type DeductFeeDecorator struct {
 	accountKeeper      authante.AccountKeeper
-	bankKeeper         authtypes.BankKeeper
+	feeCollector       CosmosFeeCollector
 	feegrantKeeper     authante.FeegrantKeeper
 	txFeeChecker       TxFeeChecker
 	feePolicyKeeper    FeePolicyKeeper
@@ -48,11 +80,11 @@ type DeductFeeDecorator struct {
 }
 
 // NewDeductFeeDecorator is the application-local extension point for Cosmos
-// fee accounting. Collection currently remains a normal bank transfer to the
-// SDK fee_collector module account.
+// fee accounting. Its collector is selected independently from the EVM fee
+// path when the ante handler is constructed.
 func NewDeductFeeDecorator(
 	accountKeeper authante.AccountKeeper,
-	bankKeeper authtypes.BankKeeper,
+	feeCollector CosmosFeeCollector,
 	feegrantKeeper authante.FeegrantKeeper,
 	txFeeChecker TxFeeChecker,
 	feePolicyKeeper FeePolicyKeeper,
@@ -63,7 +95,7 @@ func NewDeductFeeDecorator(
 
 	return DeductFeeDecorator{
 		accountKeeper:      accountKeeper,
-		bankKeeper:         bankKeeper,
+		feeCollector:       feeCollector,
 		feegrantKeeper:     feegrantKeeper,
 		txFeeChecker:       txFeeChecker,
 		feePolicyKeeper:    feePolicyKeeper,
@@ -137,8 +169,8 @@ func (dfd DeductFeeDecorator) validate() error {
 	if dfd.accountKeeper == nil {
 		return errorsmod.Wrap(sdkerrors.ErrLogic, "account keeper is required for fee deduction")
 	}
-	if dfd.bankKeeper == nil {
-		return errorsmod.Wrap(sdkerrors.ErrLogic, "bank keeper is required for fee deduction")
+	if dfd.feeCollector == nil {
+		return errorsmod.Wrap(sdkerrors.ErrLogic, "fee collector is required for fee deduction")
 	}
 	if dfd.txFeeChecker == nil {
 		return errorsmod.Wrap(sdkerrors.ErrLogic, "tx fee checker is required for fee deduction")
@@ -248,14 +280,13 @@ func (dfd DeductFeeDecorator) checkDeductFee(
 }
 
 // collectFees is the single collection side-effect boundary for Cosmos fees.
-// Replacing the collection mechanism in a future task is intentionally local
-// to this helper and NewDeductFeeDecorator.
+// A zero fee must not create an object-store entry.
 func (dfd DeductFeeDecorator) collectFees(ctx context.Context, payer sdk.AccAddress, fee sdk.Coins) error {
 	if fee.IsZero() {
 		return nil
 	}
 
-	if err := dfd.bankKeeper.SendCoinsFromAccountToModule(
+	if err := dfd.feeCollector(
 		ctx,
 		payer,
 		dfd.feeRecipientModule,

@@ -13,7 +13,11 @@ import (
 // newCosmosAnteHandler mirrors the Cosmos EVM v0.7 Cosmos ante chain. The fee
 // market parameters are read in the transaction context, rather than captured
 // when the application constructs its ante handler.
-func newCosmosAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandler {
+func newCosmosAnteHandler(
+	ctx sdk.Context,
+	options HandlerOptions,
+	feeCollector CosmosFeeCollector,
+) sdk.AnteHandler {
 	evmOptions := options.EVMOptions
 	feemarketParams := evmOptions.FeeMarketKeeper.GetParams(ctx)
 
@@ -38,7 +42,7 @@ func newCosmosAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandl
 		authante.NewConsumeGasForTxSizeDecorator(evmOptions.AccountKeeper),
 		NewDeductFeeDecorator(
 			evmOptions.AccountKeeper,
-			evmOptions.BankKeeper,
+			feeCollector,
 			evmOptions.FeegrantKeeper,
 			txFeeChecker,
 			options.FeePolicyKeeper,
