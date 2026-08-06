@@ -5,9 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="${BIN:-$SCRIPT_DIR/build/gurud}"
 ORACLED="${ORACLED:-$SCRIPT_DIR/build/oracled}"
 
-CHAIN_ID="${CHAIN_ID:-guru_631}"
-CHAINDIR="${CHAINDIR:-$HOME/.gurud-local}"
-MONIKER="${MONIKER:-local-validator}"
+CHAIN_ID="${CHAIN_ID:-${CHAINID:-guru_631-1}}"
+CHAINDIR="${CHAINDIR:-$HOME/.gurud}"
+MONIKER="${MONIKER:-localtestnet}"
 KEYRING="${KEYRING:-test}"
 KEYALGO="${KEYALGO:-eth_secp256k1}"
 BOND_DENOM="${BOND_DENOM:-agxn}"
@@ -16,7 +16,8 @@ BALANCE="${BALANCE:-100000000000000000000000000${BOND_DENOM}}"
 STAKE="${STAKE:-1000000000000000000000000${BOND_DENOM}}"
 MIN_GAS_PRICE="${MIN_GAS_PRICE:-0${BOND_DENOM}}"
 BASE_FEE="${BASE_FEE:-0}"
-GENESIS_MIN_GAS_PRICE="${GENESIS_MIN_GAS_PRICE:-0}"
+GENESIS_MIN_GAS_PRICE="${GENESIS_MIN_GAS_PRICE:-0.0000000001}"
+GENTX_FEE="${GENTX_FEE:-1000000000000000000${BOND_DENOM}}"
 
 RPC_LADDR="${RPC_LADDR:-tcp://127.0.0.1:26657}"
 P2P_LADDR="${P2P_LADDR:-tcp://127.0.0.1:26656}"
@@ -26,9 +27,10 @@ GRPC_ADDRESS="${GRPC_ADDRESS:-127.0.0.1:9090}"
 GRPC_WEB_ADDRESS="${GRPC_WEB_ADDRESS:-127.0.0.1:9091}"
 JSONRPC_ADDRESS="${JSONRPC_ADDRESS:-127.0.0.1:8545}"
 JSONRPC_WS_ADDRESS="${JSONRPC_WS_ADDRESS:-127.0.0.1:8546}"
-ORACLE_SOCKET="${ORACLE_SOCKET:-}"
+ORACLE_SOCKET="${ORACLE_SOCKET:-run/oracle.sock}"
 PRICE_URL="${PRICE_URL:-https://api.coinbase.com/v2/prices/BTC-USD/spot}"
 ORACLE_SYMBOL="${ORACLE_SYMBOL:-BTC/USD}"
+ORACLE_ADMIN_SOCKET="${ORACLE_ADMIN_SOCKET:-run/admin.sock}"
 
 BUILD=true
 OVERWRITE=""
@@ -56,7 +58,8 @@ Options:
 
 Environment overrides:
   BIN, ORACLED, BOND_DENOM, BALANCE, STAKE, MIN_GAS_PRICE,
-  BASE_FEE, GENESIS_MIN_GAS_PRICE,
+  BASE_FEE, GENESIS_MIN_GAS_PRICE, GENTX_FEE,
+  ORACLE_SOCKET, ORACLE_ADMIN_SOCKET,
   RPC_LADDR, P2P_LADDR, API_ADDRESS, GRPC_ADDRESS,
   JSONRPC_ADDRESS, JSONRPC_WS_ADDRESS, ORACLE_SYMBOL, PRICE_URL
 EOF
@@ -109,10 +112,7 @@ APP_TOML="$CHAINDIR/config/app.toml"
 GENESIS="$CHAINDIR/config/genesis.json"
 TMP_GENESIS="$CHAINDIR/config/tmp_genesis.json"
 ORACLE_HOME="$CHAINDIR/oracled"
-
-if [[ -z "$ORACLE_SOCKET" ]]; then
-	ORACLE_SOCKET="$CHAINDIR/oracle.sock"
-fi
+ORACLE_SOCKET_PATH="$ORACLE_HOME/$ORACLE_SOCKET"
 
 require_tool() {
 	if ! command -v "$1" >/dev/null 2>&1; then
@@ -124,6 +124,9 @@ require_tool() {
 require_tool jq
 require_tool perl
 require_tool python3
+if [[ "$BUILD" == true ]]; then
+	require_tool make
+fi
 
 if [[ "$BUILD" == true && ! -x "$BIN" ]]; then
 	echo "building local binaries..."
@@ -239,7 +242,7 @@ configure_app_toml() {
 	set_toml "$APP_TOML" "json-rpc" "ws-address" "\"$JSONRPC_WS_ADDRESS\""
 	set_toml "$APP_TOML" "json-rpc" "api" "\"eth,txpool,personal,net,debug,web3\""
 	set_toml "$APP_TOML" "oracle" "enabled" "$WITH_ORACLE"
-	set_toml "$APP_TOML" "oracle" "sidecar_socket" "\"$ORACLE_SOCKET\""
+	set_toml "$APP_TOML" "oracle" "sidecar_socket" "\"$ORACLE_SOCKET_PATH\""
 	set_toml "$APP_TOML" "oracle" "sidecar_timeout" "\"3s\""
 	set_toml "$APP_TOML" "" "pruning" "\"custom\""
 	set_toml "$APP_TOML" "" "pruning-keep-recent" "\"100\""
@@ -329,23 +332,99 @@ customize_genesis() {
 }
 
 write_oracled_config() {
-	mkdir -p "$ORACLE_HOME/config"
-	cat >"$ORACLE_HOME/config/oracled.toml" <<EOF
-socket = "$ORACLE_SOCKET"
-request_timeout = "3s"
-source_timeout = "2s"
-node_grpc = "$GRPC_ADDRESS"
-node_query_timeout = "3s"
+	if [[ "$ORACLE_SOCKET" == /* || "$ORACLE_ADMIN_SOCKET" == /* ]]; then
+		echo "ORACLE_SOCKET and ORACLE_ADMIN_SOCKET must be relative paths, not absolute." >&2
+		echo "Example: ORACLE_SOCKET=run/oracle.sock, ORACLE_ADMIN_SOCKET=run/admin.sock" >&2
+		exit 1
+	fi
 
-[[sources]]
-name = "local-${ORACLE_SYMBOL//\//-}"
+	if [[ "$ORACLE_SOCKET" == "." || "$ORACLE_SOCKET" == ".." || "$ORACLE_ADMIN_SOCKET" == "." || "$ORACLE_ADMIN_SOCKET" == ".." ]]; then
+		echo "ORACLE_SOCKET and ORACLE_ADMIN_SOCKET must not be '.' or '..'." >&2
+		exit 1
+	fi
+
+	mkdir -p "$CHAINDIR/logs"
+	if ! "$ORACLED" init --home "$ORACLE_HOME" >"$CHAINDIR/logs/oracled-init.log" 2>&1; then
+		echo "oracled init failed. See: $CHAINDIR/logs/oracled-init.log" >&2
+		cat "$CHAINDIR/logs/oracled-init.log" >&2
+		exit 1
+	fi
+
+	if ! "$ORACLED" validate --home "$ORACLE_HOME" >"$CHAINDIR/logs/oracled-validate.log" 2>&1; then
+		echo "oracled initial validate failed. See: $CHAINDIR/logs/oracled-validate.log" >&2
+		cat "$CHAINDIR/logs/oracled-validate.log" >&2
+		exit 1
+	fi
+
+	local publication_revision
+	publication_revision="$(awk -F'"' '/publication_revision = / {print $2; exit}' "$ORACLE_HOME/config.toml")"
+	if [[ -z "$publication_revision" ]]; then
+		echo "oracled config is missing publication_revision" >&2
+		exit 1
+	fi
+
+	local separator="?source="
+	if [[ "$PRICE_URL" == *\?* ]]; then
+		separator="&source="
+	fi
+
+	local source_url_2="${PRICE_URL}${separator}oracle-2"
+	local source_url_3="${PRICE_URL}${separator}oracle-3"
+
+	cat >"$ORACLE_HOME/sources.toml" <<EOF
+schema_version = 1
+publication_revision = "$publication_revision"
+
+[[feeds]]
 symbol = "$ORACLE_SYMBOL"
-value_type = "NUMERIC"
+interval = "10s"
+stale_after = "20s"
+
+[[feeds.sources]]
+id = "coinbase-1"
 url = "$PRICE_URL"
-response_path = "data.amount"
-timeout = "2s"
-interval = "1s"
+json_pointer = "/data/amount"
+
+[[feeds.sources]]
+id = "coinbase-2"
+url = "$source_url_2"
+json_pointer = "/data/amount"
+
+[[feeds.sources]]
+id = "coinbase-3"
+url = "$source_url_3"
+json_pointer = "/data/amount"
 EOF
+
+	local sources_sha256
+	sources_sha256="$(python3 - "$ORACLE_HOME/sources.toml" <<'PY'
+import hashlib
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+print(hashlib.sha256(path.read_bytes()).hexdigest())
+PY
+)"
+
+	python3 - "$ORACLE_HOME/config.toml" "$ORACLE_SOCKET" "$ORACLE_ADMIN_SOCKET" "$sources_sha256" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path, consumer_socket, admin_socket, sources_sha256 = sys.argv[1:]
+content = Path(path).read_text(encoding="utf-8")
+content = re.sub(r'^consumer_socket = ".*"$', f'consumer_socket = "{consumer_socket}"', content, flags=re.M)
+content = re.sub(r'^admin_socket = ".*"$', f'admin_socket = "{admin_socket}"', content, flags=re.M)
+content = re.sub(r'^sources_sha256 = ".*"$', f'sources_sha256 = "{sources_sha256}"', content, flags=re.M)
+Path(path).write_text(content, encoding="utf-8")
+PY
+
+	if ! "$ORACLED" validate --home "$ORACLE_HOME" >"$CHAINDIR/logs/oracled-validate.log" 2>&1; then
+		echo "oracled validate failed after updating feeds. See: $CHAINDIR/logs/oracled-validate.log" >&2
+		cat "$CHAINDIR/logs/oracled-validate.log" >&2
+		exit 1
+	fi
 }
 
 if [[ "$OVERWRITE" == "y" || "$OVERWRITE" == "Y" ]]; then
@@ -386,6 +465,7 @@ if [[ "$OVERWRITE" == "y" || "$OVERWRITE" == "Y" ]]; then
 	"$BIN" genesis gentx "$VAL_KEY" "$STAKE" \
 		--chain-id "$CHAIN_ID" \
 		--keyring-backend "$KEYRING" \
+		--fees "$GENTX_FEE" \
 		--home "$CHAINDIR" \
 		>"$CHAINDIR/logs/gentx.json" 2>&1
 	"$BIN" genesis collect-gentxs --home "$CHAINDIR" >"$CHAINDIR/logs/collect-gentxs.json" 2>&1
