@@ -20,6 +20,7 @@ import (
 	protov2 "google.golang.org/protobuf/proto"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkauthante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -56,6 +57,24 @@ func (keeper staticFeePolicyKeeper) ResolveDiscount(
 	return keeper.discount, nil
 }
 
+type recordingFeePolicyKeeper struct {
+	calls            int
+	canonicalPayer   string
+	returnedDiscount feepolicytypes.Discount
+	lastResolvedMsgs []sdk.Msg
+}
+
+func (keeper *recordingFeePolicyKeeper) ResolveDiscount(
+	_ context.Context,
+	payer string,
+	msgs []sdk.Msg,
+) (feepolicytypes.Discount, error) {
+	keeper.calls++
+	keeper.canonicalPayer = payer
+	keeper.lastResolvedMsgs = append([]sdk.Msg{}, msgs...)
+	return keeper.returnedDiscount, nil
+}
+
 type virtualFeeBankKeeperSpy struct {
 	calls           int
 	ctx             context.Context
@@ -66,6 +85,9 @@ type virtualFeeBankKeeperSpy struct {
 	onSend          func(context.Context, sdk.AccAddress, string, sdk.Coins) error
 }
 
+func (keeper *virtualFeeBankKeeperSpy) IsSendEnabledCoins(_ context.Context, _ ...sdk.Coin) error {
+	return nil
+}
 func (keeper *virtualFeeBankKeeperSpy) SendCoinsFromAccountToModuleVirtual(
 	ctx context.Context,
 	senderAddr sdk.AccAddress,
@@ -84,6 +106,22 @@ func (keeper *virtualFeeBankKeeperSpy) SendCoinsFromAccountToModuleVirtual(
 	return keeper.err
 }
 
+func (keeper *virtualFeeBankKeeperSpy) SendCoins(
+	ctx context.Context,
+	from, to sdk.AccAddress,
+	amount sdk.Coins,
+) error {
+	return keeper.SendCoinsFromAccountToModule(ctx, from, to.String(), amount)
+}
+
+func (keeper *virtualFeeBankKeeperSpy) SendCoinsFromAccountToModule(
+	ctx context.Context,
+	senderAddr sdk.AccAddress,
+	recipientModule string,
+	amount sdk.Coins,
+) error {
+	return keeper.SendCoinsFromAccountToModuleVirtual(ctx, senderAddr, recipientModule, amount)
+}
 func feeDecoratorTestPayer() sdk.AccAddress {
 	return sdk.AccAddress([]byte("fee-policy-payer-001"))
 }
@@ -287,6 +325,86 @@ func TestDeductFeeDecoratorPreservesCheckerPriority(t *testing.T) {
 	require.Zero(t, virtualBankKeeper.calls, "zero fees must not create a virtual collection entry")
 	require.Len(t, ctx.EventManager().Events(), 1)
 	require.Equal(t, sdk.Coins{}.String(), ctx.EventManager().Events()[0].Attributes[0].Value)
+}
+
+func TestDeductFeeDecoratorStandardMsgSendAppliesFeePolicy(t *testing.T) {
+	controller := gomock.NewController(t)
+	accountKeeper := authantetestutil.NewMockAccountKeeper(controller)
+	virtualBankKeeper := &virtualFeeBankKeeperSpy{}
+	payer := feeDecoratorTestPayer()
+	accountKeeper.EXPECT().
+		GetModuleAddress(authtypes.FeeCollectorName).
+		Return(authtypes.NewModuleAddress(authtypes.FeeCollectorName))
+	accountKeeper.EXPECT().
+		AddressCodec().
+		Return(evmaddress.NewEvmCodec(sdk.GetConfig().GetBech32AccountAddrPrefix()))
+	accountKeeper.EXPECT().
+		GetAccount(gomock.Any(), payer).
+		Return(authtypes.NewBaseAccountWithAddress(payer))
+
+	fee := parityFee(60)
+	discountKeeper := &recordingFeePolicyKeeper{
+		returnedDiscount: feepolicytypes.Discount{
+			DiscountType: feepolicytypes.FeeDiscountTypePercent,
+			Amount:       sdkmath.LegacyNewDec(50),
+		},
+	}
+	ctx := parityFeeContext(1, false).WithGasMeter(
+		newStandardMsgSendGasMeter(storetypes.NewInfiniteGasMeter()),
+	)
+	newCtx, err := NewDeductFeeDecorator(
+		accountKeeper,
+		virtualBankKeeper.SendCoinsFromAccountToModuleVirtual,
+		nil,
+		staticFeeBreakdownChecker(fee, 11),
+		discountKeeper,
+	).AnteHandle(
+		ctx,
+		parityFeeTx{gas: StandardMsgSendGas, fee: fee, payer: payer},
+		false,
+		func(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.Context, error) {
+			return ctx, nil
+		},
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, 1, discountKeeper.calls)
+	require.Equal(t, feeDecoratorTestPayer().String(), discountKeeper.canonicalPayer)
+	require.Equal(t, int64(11), newCtx.Priority())
+	require.Equal(t, 1, virtualBankKeeper.calls)
+	require.Equal(t, parityFee(30), virtualBankKeeper.amount)
+}
+
+func TestFeeCheckerClampsStandardMsgSendGasMeter(t *testing.T) {
+	params := parityFeeMarketParams("10")
+	tx := parityFeeTx{
+		gas: StandardMsgSendGas + 1,
+		fee: parityFee(210_000),
+	}
+	ctx := parityFeeContext(1, false).WithGasMeter(
+		newStandardMsgSendGasMeter(storetypes.NewInfiniteGasMeter()),
+	)
+
+	got, err := FeeChecker(ctx, &params, parityFeeDenom, parityLondonConfig(0), tx)
+	require.NoError(t, err)
+	require.Equal(t, parityFee(210_000), got.EffectiveFee)
+	require.Equal(t, parityFee(210_000), got.BaseComponent)
+	require.True(t, got.TipComponent.IsZero())
+}
+
+func TestFeeWithValidatorMinGasPricesClampsStandardMsgSendGasMeter(t *testing.T) {
+	ctx := parityFeeContext(1, true).
+		WithMinGasPrices(sdk.NewDecCoins(sdk.NewDecCoin(parityFeeDenom, sdkmath.NewInt(10)))).
+		WithGasMeter(newStandardMsgSendGasMeter(storetypes.NewInfiniteGasMeter()))
+	tx := parityFeeTx{
+		gas: StandardMsgSendGas + 1,
+		fee: parityFee(210_000),
+	}
+
+	got, err := checkTxFeeWithValidatorMinGasPrices(ctx, tx)
+	require.NoError(t, err)
+	require.Equal(t, parityFee(210_000), got.EffectiveFee)
+	require.Equal(t, parityFee(210_000), got.BaseComponent)
 }
 
 func TestDeductFeeDecoratorMissingFeeCollectorFailsBeforeSideEffects(t *testing.T) {

@@ -100,6 +100,7 @@ type feePolicyRuntimeFixture struct {
 }
 
 type feePolicyRuntimeTxOptions struct {
+	gasLimit   uint64
 	feeGranter sdk.AccAddress
 	extension  *antetypes.ExtensionOptionDynamicFeeTx
 	corruptSig bool
@@ -389,10 +390,10 @@ func TestFeePolicyRuntimeDynamicTipIsNotDiscounted(t *testing.T) {
 		},
 	}))
 
-	// With a 0.4/gas priority cap and 200,000 gas, the undiscounted tip is
-	// 80,000. The global fixed policy changes only the positive base component
-	// to 12,345, so the actual fee must be 92,345 rather than 12,345.
-	const expectedActualFee = int64(92_345)
+	// The standardized 21,000-gas projection applies before fee accounting.
+	// With a 0.4/gas priority cap and fixed global discount of 12,345, the
+	// resulting charged fee is 15,750.
+	const expectedActualFee = int64(15_750)
 	require.Equal(t, abci.CodeTypeOK, result.Code, result.Log)
 	fixture.requireCommittedState(
 		t,
@@ -772,7 +773,11 @@ func (fixture *feePolicyRuntimeFixture) signTxWithFee(
 
 	builder := fixture.app.TxConfig().NewTxBuilder()
 	require.NoError(t, builder.SetMsgs(msgs...))
-	builder.SetGasLimit(feePolicyRuntimeGas)
+	gasLimit := feePolicyRuntimeGas
+	if options.gasLimit > 0 {
+		gasLimit = options.gasLimit
+	}
+	builder.SetGasLimit(gasLimit)
 	builder.SetFeeAmount(fee)
 	if options.feeGranter != nil {
 		builder.SetFeeGranter(options.feeGranter)
