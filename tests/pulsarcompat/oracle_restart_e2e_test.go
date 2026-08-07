@@ -1,3 +1,6 @@
+//go:build e2e || soak
+// +build e2e soak
+
 package pulsarcompat
 
 import (

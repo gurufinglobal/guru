@@ -57,7 +57,7 @@ BUILD_FLAGS := -mod=readonly -tags "$(build_tags)" -trimpath
 ###                                Commands                                 ###
 ###############################################################################
 
-.PHONY: all build install clean format lint test FORCE
+.PHONY: all build install clean format lint test test-unit test-integration test-e2e test-policy test-twochain test-oracle test-oracle-soak test-race test-cover test-ci test-all FORCE
 
 all: build
 
@@ -93,12 +93,65 @@ FORCE:
 ###                           Testing & Linting                             ###
 ###############################################################################
 
+UNIT_PACKAGES := ./app/... ./x/...
+POLICY_PACKAGES := ./tests/pulsarcompat
+E2E_PACKAGES := ./tests/pulsarcompat
+TWOCHAIN_PACKAGES := ./tests/transwaptwochain
+
 test:
-	@echo "Running unit tests..."
-	@go test -mod=readonly -race -cover ./...
-	@GOWORK=off go -C oracle test -mod=readonly -race -cover ./...
-	@echo "Running two-chain TransSwap proof-relay acceptance test..."
-	@go test -mod=readonly -tags=test -race -cover ./tests/transwaptwochain
+	@$(MAKE) test-unit
+
+test-unit:
+	@echo "Running unit tests only..."
+	@go test -mod=readonly $(UNIT_PACKAGES)
+
+test-integration:
+	@echo "Running module/app integration tests..."
+	@$(MAKE) test-unit
+
+test-e2e:
+	@echo "Running e2e tests..."
+	@go test -mod=readonly -tags=e2e $(E2E_PACKAGES)
+
+test-policy:
+	@echo "Running policy tests..."
+	@go test -mod=readonly -tags=policy -run 'TestPolicy' $(POLICY_PACKAGES)
+
+test-twochain:
+	@echo "Running two-chain TransSwap tests..."
+	@go test -mod=readonly -tags=test $(TWOCHAIN_PACKAGES)
+
+test-oracle:
+	@echo "Running standalone oracle module tests..."
+	@go test -mod=readonly -run Test ./x/oracle
+	@GOWORK=off go -C oracle test -mod=readonly ./...
+
+test-oracle-soak:
+	@echo "Running oracle soak tests..."
+	@go test -mod=readonly -tags=soak -run 'Soak' $(E2E_PACKAGES)
+
+test-race:
+	@echo "Running tests with race detector..."
+	@go test -mod=readonly -race $(UNIT_PACKAGES)
+	@GOWORK=off go -C oracle test -mod=readonly -race ./...
+
+test-cover:
+	@echo "Running tests with coverage..."
+	@go test -mod=readonly -cover $(UNIT_PACKAGES)
+	@GOWORK=off go -C oracle test -mod=readonly -cover ./...
+
+test-ci:
+	@echo "Running CI-oriented test suite..."
+	@$(MAKE) test-unit
+	@$(MAKE) test-policy
+	@$(MAKE) test-oracle
+
+test-all:
+	@echo "Running full non-soak suite..."
+	@$(MAKE) test-unit
+	@$(MAKE) test-policy
+	@$(MAKE) test-e2e
+	@$(MAKE) test-twochain
 
 format:
 	@echo "Formatting Go files..."

@@ -131,7 +131,7 @@ func TestSourceClientExactNumberAndRetry(t *testing.T) {
 }
 
 func TestSourceClientRetriesPerAttemptTimeout(t *testing.T) {
-	t.Parallel()
+	// Keep serial: this case is tightly coupled to request timing under race detector.
 	var requests atomic.Int32
 	server := httptest.NewTLSServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if requests.Add(1) == 1 {
@@ -163,7 +163,7 @@ func TestSourceClientRetriesPerAttemptTimeout(t *testing.T) {
 }
 
 func TestSourceClientDoesNotRetryParentDeadline(t *testing.T) {
-	t.Parallel()
+	// Keep serial: this case is sensitive to parent-context scheduling under race.
 	var requests atomic.Int32
 	server := httptest.NewTLSServer(http.HandlerFunc(func(_ http.ResponseWriter, request *http.Request) {
 		requests.Add(1)

@@ -1,8 +1,10 @@
+//go:build e2e
+// +build e2e
+
 package pulsarcompat
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -43,10 +45,16 @@ func TestInternalGogoClientCallsPublicPulsarSidecarProcess(t *testing.T) {
 	buildRuntimeFixture(t, repoRoot, serverBin, "./tests/pulsarcompat/testdata/pulsar_sidecar_server")
 	buildRuntimeFixture(t, repoRoot, clientBin, "./tests/pulsarcompat/testdata/gogo_node_client")
 
-	socket := filepath.Join(
-		os.TempDir(),
-		fmt.Sprintf("guru-oracle-wire-%d-%d.sock", os.Getpid(), time.Now().UnixNano()),
-	)
+	socketDir, err := os.MkdirTemp(".", "guru-oracle-wire-")
+	if err != nil {
+		t.Fatalf("create isolated sidecar socket directory: %v", err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(socketDir) })
+	socket := filepath.Join(socketDir, "wire.sock")
+	socket, err = filepath.Abs(socket)
+	if err != nil {
+		t.Fatalf("resolve absolute sidecar socket path: %v", err)
+	}
 	defer func() { _ = os.Remove(socket) }()
 
 	var serverLogs runtimeFixtureBuffer

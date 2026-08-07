@@ -431,6 +431,15 @@ func TestValidateAmountBranches(t *testing.T) {
 	}
 }
 
+func TestValidateParamsBoundsAutomaticRefundRetryGas(t *testing.T) {
+	params := DefaultParams()
+	params.MaxRefundRetries = MaximumMaxRefundRetries
+	require.NoError(t, ValidateParams(params))
+
+	params.MaxRefundRetries++
+	require.ErrorIs(t, ValidateParams(params), ErrInvalidParams)
+}
+
 func TestDenomPathRoundTripAndHash(t *testing.T) {
 	tests := []Denom{
 		NewDenom("ugxusd"),

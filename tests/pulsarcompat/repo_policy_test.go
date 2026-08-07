@@ -1,3 +1,6 @@
+//go:build policy
+// +build policy
+
 package pulsarcompat
 
 import (
@@ -11,7 +14,7 @@ import (
 	"testing"
 )
 
-func TestGuruSourceDoesNotImportGoGoProtoDirectly(t *testing.T) {
+func TestPolicyGuruSourceDoesNotImportGoGoProtoDirectly(t *testing.T) {
 	repoRoot := policyProjectRoot(t)
 	disallowed := "github.com/cosmos/" + "gogoproto"
 	allowed := map[string]struct{}{
@@ -70,7 +73,7 @@ func TestGuruSourceDoesNotImportGoGoProtoDirectly(t *testing.T) {
 	}
 }
 
-func TestNodeModulesDoNotImportPublicPulsarAPI(t *testing.T) {
+func TestPolicyNodeModulesDoNotImportPublicPulsarAPI(t *testing.T) {
 	repoRoot := policyProjectRoot(t)
 	publicAPI := "github.com/gurufinglobal/guru/v3/api/guru/"
 	var offenders []string
@@ -107,7 +110,7 @@ func TestNodeModulesDoNotImportPublicPulsarAPI(t *testing.T) {
 	}
 }
 
-func TestStandaloneOracleModuleBoundary(t *testing.T) {
+func TestPolicyStandaloneOracleModuleBoundary(t *testing.T) {
 	repoRoot := policyProjectRoot(t)
 	oracleRoot := filepath.Join(repoRoot, "oracle")
 	moduleBytes, err := os.ReadFile(filepath.Join(oracleRoot, "go.mod"))
@@ -205,7 +208,7 @@ func parseStandaloneModuleContract(contents, rootModule string) (string, string,
 	return modulePath, rootRequirement, replacements
 }
 
-func TestRootDoesNotImportStandaloneOracleOrUseGoWorkspace(t *testing.T) {
+func TestPolicyRootDoesNotImportStandaloneOracleOrUseGoWorkspace(t *testing.T) {
 	repoRoot := policyProjectRoot(t)
 	sidecarModule := "github.com/gurufinglobal/guru/" + "oracle"
 	var offenders []string
@@ -260,7 +263,7 @@ func TestRootDoesNotImportStandaloneOracleOrUseGoWorkspace(t *testing.T) {
 	}
 }
 
-func TestProtoGenScriptIsRootOnly(t *testing.T) {
+func TestPolicyProtoGenScriptIsRootOnly(t *testing.T) {
 	repoRoot := policyProjectRoot(t)
 	script, err := os.ReadFile(filepath.Join(repoRoot, "scripts", "proto-gen.sh"))
 	if err != nil {
@@ -273,7 +276,7 @@ func TestProtoGenScriptIsRootOnly(t *testing.T) {
 	}
 }
 
-func TestRootAndOracleReleaseTagsAreIsolated(t *testing.T) {
+func TestPolicyRootAndOracleReleaseTagsAreIsolated(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the version expressions and fixture use POSIX shell tools")
 	}
@@ -340,7 +343,7 @@ func TestRootAndOracleReleaseTagsAreIsolated(t *testing.T) {
 	}
 }
 
-func TestInternalAndPublicGatewayPatternsMatch(t *testing.T) {
+func TestPolicyInternalAndPublicGatewayPatternsMatch(t *testing.T) {
 	repoRoot := policyProjectRoot(t)
 	modules := []struct {
 		name         string
@@ -364,7 +367,7 @@ func TestInternalAndPublicGatewayPatternsMatch(t *testing.T) {
 	}
 }
 
-func TestProtoGenScriptDiscoversFutureModulesPrunesStalePublicAPIAndIsIdempotent(t *testing.T) {
+func TestPolicyProtoGenScriptDiscoversFutureModulesPrunesStalePublicAPIAndIsIdempotent(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the repository codegen script requires a POSIX shell")
 	}
@@ -489,7 +492,7 @@ esac
 	}
 }
 
-func TestProtoGenScriptRejectsFilesBelowTypesPackage(t *testing.T) {
+func TestPolicyProtoGenScriptRejectsFilesBelowTypesPackage(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the repository codegen script requires a POSIX shell")
 	}
@@ -545,7 +548,7 @@ esac
 	}
 }
 
-func TestPublicPulsarArtifactsExactlyMatchGuruProtoSources(t *testing.T) {
+func TestPolicyPublicPulsarArtifactsExactlyMatchGuruProtoSources(t *testing.T) {
 	repoRoot := policyProjectRoot(t)
 	expected := make(map[string]struct{})
 	protoRoot := filepath.Join(repoRoot, "proto", "guru")

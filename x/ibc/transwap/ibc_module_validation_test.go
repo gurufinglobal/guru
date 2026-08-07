@@ -250,6 +250,11 @@ func TestOnAcknowledgementPacketRejectsNonCanonicalAckBeforeKeeperUse(t *testing
 	require.Error(t, err)
 }
 
+func TestV1ExchangeSourceTimeoutTimestamp(t *testing.T) {
+	packet := channeltypes.Packet{TimeoutTimestamp: 987654321}
+	require.Equal(t, uint64(987654321), v1ExchangeSourceTimeoutTimestamp(packet))
+}
+
 type ibcValidationAccountKeeper struct {
 	moduleAddr sdk.AccAddress
 }
