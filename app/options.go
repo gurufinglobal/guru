@@ -10,23 +10,27 @@ import (
 )
 
 var (
-	ErrMissingLogger         = errors.New("application logger is required")
-	ErrMissingDB             = errors.New("application database is required")
-	ErrLoadLatestUnsupported = errors.New("loading application state is not available in Stage A")
+	ErrMissingLogger = errors.New("application logger is required")
+	ErrMissingDB     = errors.New("application database is required")
 )
 
-// AppOptions is the future runtime-configuration seam. Stage A deliberately
-// does not read options because no store, keeper, or server is wired.
+// AppOptions is reserved for the operator-facing server composition. Consensus
+// identity is represented by typed Options fields and immutable config values.
 type AppOptions interface {
 	Get(string) any
 }
 
-// Options contains the explicit dependencies of the Stage A composition root.
+// Options contains the explicit dependencies of the application composition
+// root. Zero values select the immutable Guru defaults.
 type Options struct {
 	Logger         log.Logger
 	DB             dbm.DB
 	TraceStore     io.Writer
 	LoadLatest     bool
+	HomePath       string
+	EVMTracer      string
+	MaxTxGasWanted uint64
+	SkipUpgrades   map[int64]bool
 	AppOptions     AppOptions
 	BaseAppOptions []func(*baseapp.BaseApp)
 }
@@ -38,9 +42,5 @@ func (options Options) validate() error {
 	if options.DB == nil {
 		return ErrMissingDB
 	}
-	if options.LoadLatest {
-		return ErrLoadLatestUnsupported
-	}
-
 	return nil
 }

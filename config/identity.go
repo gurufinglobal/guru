@@ -1,5 +1,5 @@
-// Package config defines the immutable product identity used by the Stage A
-// application shell.
+// Package config defines the immutable product and consensus identity used by
+// the Guru application.
 package config
 
 import (
@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	evmutils "github.com/cosmos/evm/utils"
 )
 
 const (
@@ -83,6 +84,12 @@ func ConfigureSDK(sdkConfig *sdk.Config) (err error) {
 func SetupSDKConfig() error {
 	setupSDKOnce.Do(func() {
 		setupSDKErr = ConfigureSDK(sdk.GetConfig())
+		if setupSDKErr == nil {
+			// Guru's native staking unit has 18 decimal places. Keeping the SDK's
+			// micro-denom default here would inflate consensus power by 10^12.
+			sdk.DefaultPowerReduction = evmutils.AttoPowerReduction
+			sdk.DefaultBondDenom = BaseDenom
+		}
 	})
 
 	return setupSDKErr

@@ -1,8 +1,10 @@
 # Guru
 
-Guru is a Cosmos SDK blockchain application. The current revision establishes the application bootstrap, chain identity, encoding boundary, and `gurud` command entry point.
+Guru is a Cosmos SDK blockchain application with an in-process Cosmos EVM v0.6.1 state machine.
 
-This revision is not yet a runnable validator node. Persistent stores, keepers, the module manager, transaction handlers, ABCI lifecycle wiring, EVM execution, JSON-RPC, and the `start` command remain intentionally unavailable. Unimplemented functionality is not represented by successful placeholder commands.
+The application now composes persistent stores, core Cosmos SDK keepers, IBC core, FeeMarket, VM, module lifecycle handlers, and the Cosmos/Ethereum ante paths.
+
+This revision is not yet an operator-facing validator node. The `start`, `init`, `status`, `query`, and `tx` commands, JSON-RPC, production EVM mempool/proposal handlers, IBC application routes, ERC-20 conversion, and stateful Cosmos precompiles remain unavailable. Unimplemented functionality is not represented by successful placeholder commands.
 
 ## Repository layout
 
@@ -12,7 +14,13 @@ This revision is not yet a runnable validator node. Persistent stores, keepers, 
 │   ├── app.go
 │   ├── encoding.go
 │   ├── genesis.go
-│   └── options.go
+│   ├── handlers.go
+│   ├── keepers.go
+│   ├── module_accounts.go
+│   ├── modules.go
+│   ├── parameter_policy.go
+│   ├── precompiles.go
+│   └── store_keys.go
 ├── cmd/gurud/
 │   ├── main.go
 │   └── cmd/
@@ -44,7 +52,15 @@ The canonical identity values are defined in `config/identity.go`.
 | EIP-155 chain ID | `631` |
 | BIP-44 coin type | `60` |
 
-The EIP-155 and local CometBFT chain identifiers are identity declarations only at this stage; the runtime does not yet enforce a network configuration.
+The application enforces the CometBFT chain ID at construction and InitChain, and configures EIP-155 signing and execution with chain ID `631`.
+
+## Runtime scope
+
+Stage C supports a new chain and state created by this application. It does not migrate databases produced by earlier Guru application layouts; governance history must be empty, and IBC genesis must equal the upstream empty default.
+
+Only the Prague Ethereum precompile registry is installed. Cosmos-specific stateful precompiles and governance preinstall registration are disabled, and bank sends to all reserved precompile addresses are blocked. Native staking, mint, governance deposit, and EVM denominations remain fixed to `agxn` across genesis and runtime parameter updates.
+
+FeeMarket starts with EIP-1559 active and a one-`agxn`-per-gas floor, the smallest non-zero atto-GXN price. Runtime FeeMarket updates preserve the fee floor. IBC core is present because the upstream Cosmos EVM ante handler requires it; no packet application route is active.
 
 ## Build
 
@@ -65,4 +81,4 @@ make build
 ./build/gurud version --long --output json
 ```
 
-The only operational command currently exposed is `version`. Commands including `start`, `init`, `status`, `query`, and `tx` are intentionally unavailable until their runtime paths are fully implemented.
+The only operational command currently exposed is `version`. Commands including `start`, `init`, `status`, `query`, and `tx` remain intentionally unavailable until the node, mempool, IBC application, and RPC paths are fully implemented.
