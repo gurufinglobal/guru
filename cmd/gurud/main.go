@@ -4,26 +4,28 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gurufinglobal/guru/v2/cmd/gurud/cmd"
-	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	examplechain "github.com/gurufinglobal/guru/v2/gurud"
-
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/gurufinglobal/guru/v2/cmd/gurud/cmd"
+	"github.com/gurufinglobal/guru/v2/config"
 )
 
-func main() {
-	setupSDKConfig()
-
-	rootCmd := cmd.NewRootCmd()
-	if err := svrcmd.Execute(rootCmd, "gurud", examplechain.DefaultNodeHome); err != nil {
-		fmt.Fprintln(rootCmd.OutOrStderr(), err)
-		os.Exit(1)
+func run() error {
+	rootCommand, err := cmd.NewRootCmd()
+	if err != nil {
+		return err
 	}
+	home, err := config.DefaultNodeHome()
+	if err != nil {
+		return err
+	}
+
+	return svrcmd.Execute(rootCommand, config.EnvPrefix, home)
 }
 
-func setupSDKConfig() {
-	config := sdk.GetConfig()
-	gurudconfig.SetBech32Prefixes(config)
-	config.Seal()
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
