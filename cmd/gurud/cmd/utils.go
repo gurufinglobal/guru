@@ -3,12 +3,16 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
+	"cosmossdk.io/store"
+	snapshottypes "cosmossdk.io/store/snapshots/types"
+	storetypes "cosmossdk.io/store/types"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -16,9 +20,6 @@ import (
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/store/v2"
-	snapshottypes "github.com/cosmos/cosmos-sdk/store/v2/snapshots/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	cosmosevmserver "github.com/cosmos/evm/server"
 	cosmosevmserverconfig "github.com/cosmos/evm/server/config"
@@ -29,40 +30,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-func addModuleInitFlags(cmd *cobra.Command) {
-	// Cosmos EVM owns the start command and therefore does not inherit the
-	// BlockSTM flags added by the SDK's StartCmd. Register them here with Guru's
-	// existing defaults so CLI, environment, and app.toml configuration expose
-	// the same execution controls.
-	cmd.Flags().String(sdkserver.FlagBlockExecutor, serverconfig.BlockExecutorBlockSTM, "Block executor mode (block-stm|sequential)")
-	cmd.Flags().Int(sdkserver.FlagBlockSTMWorkers, 0, "Number of workers for block-stm execution (0 = auto)")
-	cmd.Flags().Bool(sdkserver.FlagBlockSTMPreEstimate, true, "Enable pre-estimation for block-stm execution")
+func addModuleInitFlags(_ *cobra.Command) {}
 
-	// In Cosmos EVM's standalone path AppCreator runs before the server config is
-	// validated. Validate in PreRunE so an invalid executor is returned as a
-	// startup error instead of reaching blockexec.Apply and panicking.
-	preRunE := cmd.PreRunE
-	cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if preRunE != nil {
-			if err := preRunE(cmd, args); err != nil {
-				return err
-			}
-		}
-
-		serverCtx := sdkserver.GetServerContextFromCmd(cmd)
-		cfg, err := cosmosevmserverconfig.GetConfig(serverCtx.Viper)
-		if err != nil {
-			return err
-		}
-		if err := cfg.ValidateBasic(); err != nil {
-			return err
-		}
-
-		return cosmosevmserverconfig.ValidateCrossConfig(serverCtx.Config, &cfg)
-	}
-}
-
-const defaultOracleConfigTemplate = `
+const (
+	defaultCosmosMempoolMaxTxs  = 5_000
+	defaultOracleConfigTemplate = `
 [oracle]
 
 # Enables local validator oracle vote-extension participation.
@@ -74,6 +46,7 @@ sidecar_socket = "{{ .Oracle.SidecarSocket }}"
 # Timeout for one oracle sidecar request during ExtendVote.
 sidecar_timeout = "{{ .Oracle.SidecarTimeout }}"
 `
+)
 
 type guruConfig struct {
 	cosmosevmserverconfig.Config `mapstructure:",squash"`
@@ -92,11 +65,9 @@ func defaultAppToml() (string, any) {
 
 	cfg := cosmosevmserverconfig.DefaultConfig()
 	cfg.MinGasPrices = "0" + appparams.BaseDenom
-	// Preserve Guru's existing BlockSTM execution policy while exposing the SDK
-	// controls for an explicit sequential fallback and worker tuning.
-	cfg.BlockExecutor = serverconfig.BlockExecutorBlockSTM
-	cfg.BlockSTMWorkers = 0
-	cfg.BlockSTMPreEstimate = true
+	// Cosmos EVM v0.6.1 uses this SDK setting for the Cosmos side of its
+	// unified app mempool. Keep it bounded and enabled; -1 drops Cosmos txs.
+	cfg.Mempool.MaxTxs = defaultCosmosMempoolMaxTxs
 	// The operator-run oracle reconcile command compares configured feeds with
 	// active tasks through the node's gRPC query service.
 	cfg.GRPC.Enable = true
@@ -120,16 +91,19 @@ func defaultAppToml() (string, any) {
 func defaultConfigToml() *cmtcfg.Config {
 	cfg := cmtcfg.DefaultConfig()
 
-	cfg.DBBackend = "pebbledb"
-	// Krakatoa EVM mempool is enabled by default (mempool.max-txs=0),
-	// so CometBFT must use the app-side mempool type.
-	cfg.Mempool.Type = cmtcfg.MempoolTypeApp
+	// The v0.6.1 runtime only registers GoLevelDB and MemDB in the chain
+	// binary's application DB path. Use GoLevelDB for both CometBFT and the
+	// app-side fallback so a freshly generated home is immediately runnable.
+	cfg.DBBackend = "goleveldb"
+	// Keep the standard CometBFT transaction gossip path on the v0.6 launch
+	// profile. The v0.7 upgrade runbook switches this to the app mempool.
+	cfg.Mempool.Type = cmtcfg.MempoolTypeFlood
 	cfg.Consensus.TimeoutCommit = 500 * time.Millisecond
 
 	return cfg
 }
 
-func newApp(logger log.Logger, db dbm.DB, appOpts servertypes.AppOptions) cosmosevmserver.Application {
+func newApp(logger log.Logger, db dbm.DB, traceWriter io.Writer, appOpts servertypes.AppOptions) cosmosevmserver.Application {
 	var cache storetypes.MultiStorePersistentCache
 
 	if cast.ToBool(appOpts.Get(sdkserver.FlagInterBlockCache)) {
@@ -172,6 +146,11 @@ func newApp(logger log.Logger, db dbm.DB, appOpts servertypes.AppOptions) cosmos
 		baseapp.SetIAVLDisableFastNode(cast.ToBool(appOpts.Get(sdkserver.FlagDisableIAVLFastNode))),
 		baseapp.SetChainID(chainID),
 	}
+	if traceWriter != nil {
+		baseappOptions = append(baseappOptions, func(baseApp *baseapp.BaseApp) {
+			baseApp.SetCommitMultiStoreTracer(traceWriter)
+		})
+	}
 
 	return app.NewApp(
 		logger, db, true,
@@ -183,6 +162,7 @@ func newApp(logger log.Logger, db dbm.DB, appOpts servertypes.AppOptions) cosmos
 func appExport(
 	logger log.Logger,
 	db dbm.DB,
+	traceWriter io.Writer,
 	height int64,
 	forZeroHeight bool,
 	jailAllowedAddrs []string,
@@ -220,7 +200,13 @@ func appExport(
 		return servertypes.ExportedApp{}, err
 	}
 
-	emptyApp := app.NewApp(logger, db, false, appOpts, baseapp.SetChainID(chainID))
+	baseappOptions := []func(*baseapp.BaseApp){baseapp.SetChainID(chainID)}
+	if traceWriter != nil {
+		baseappOptions = append(baseappOptions, func(baseApp *baseapp.BaseApp) {
+			baseApp.SetCommitMultiStoreTracer(traceWriter)
+		})
+	}
+	emptyApp := app.NewApp(logger, db, false, appOpts, baseappOptions...)
 	defer func() {
 		err = errors.Join(err, emptyApp.Close())
 	}()

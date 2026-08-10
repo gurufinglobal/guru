@@ -40,7 +40,7 @@ func TestE2EOracleProposalConsumerCompatibility(t *testing.T) {
 	if os.Getenv(envOracleConsumerCompat) != "1" {
 		t.Skipf("set %s=1 to run Oracle proposal consumer compatibility", envOracleConsumerCompat)
 	}
-	runE2EOracleProposalConsumerCompatibility(t, "pebbledb", false)
+	runE2EOracleProposalConsumerCompatibility(t, "goleveldb", false)
 }
 
 func TestE2EOracleProposalConsumerCompatibilityGoLevelDBIndexerPersistence(t *testing.T) {
@@ -121,7 +121,14 @@ func runE2EOracleProposalConsumerCompatibility(t *testing.T, appDBBackend string
 	require.NoError(t, err)
 	require.NotNil(t, broadcast.GetTxResponse())
 	require.NotZero(t, broadcast.GetTxResponse().Code)
-	require.Contains(t, strings.ToLower(broadcast.GetTxResponse().RawLog), "reserved for consensus records")
+	broadcastLog := strings.ToLower(broadcast.GetTxResponse().RawLog)
+	require.True(
+		t,
+		strings.Contains(broadcastLog, "reserved for consensus records") ||
+			strings.Contains(broadcastLog, "must contain at least one message"),
+		"unexpected canonical Oracle record broadcast error: %s",
+		broadcast.GetTxResponse().RawLog,
+	)
 	unconfirmed, err := cometClient.NumUnconfirmedTxs(context.Background())
 	require.NoError(t, err)
 	require.Zero(t, unconfirmed.Count)

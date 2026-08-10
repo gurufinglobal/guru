@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/go-metrics"
 
-	coremetrics "github.com/cosmos/ibc-go/v11/modules/core/metrics"
+	coremetrics "github.com/cosmos/ibc-go/v10/modules/core/metrics"
 
 	"github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )

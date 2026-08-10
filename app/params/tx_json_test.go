@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	rpcmock "github.com/cometbft/cometbft/rpc/client/mock"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -18,7 +19,7 @@ import (
 )
 
 type txQueryClient struct {
-	client.MockClient
+	rpcmock.Client
 	txResult    *coretypes.ResultTx
 	block       *coretypes.ResultBlock
 	blockHeight int64
@@ -102,6 +103,7 @@ func TestStandardTxConfigSupportsJSONAndQueryTxRepresentation(t *testing.T) {
 	blockTime := time.Date(2026, 7, 16, 1, 2, 3, 0, time.UTC)
 	hash := bytes.Repeat([]byte{0x42}, 32)
 	node := txQueryClient{
+		Client: rpcmock.New(),
 		txResult: &coretypes.ResultTx{
 			Hash:   hash,
 			Height: height,

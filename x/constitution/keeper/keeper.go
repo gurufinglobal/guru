@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"cosmossdk.io/core/address"
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"

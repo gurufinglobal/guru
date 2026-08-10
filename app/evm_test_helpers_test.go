@@ -1,25 +1,16 @@
 package app
 
 import (
-	"sync"
-
-	evmmodule "github.com/cosmos/evm/x/vm"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
-
-	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var configureTestEVMOnce sync.Once
-
-func configureTestEVM() {
-	configureTestEVMOnce.Do(func() {
-		evmmodule.SetGlobalConfigVariables(evmtypes.EvmCoinInfo{
-			Denom:         appparams.BaseDenom,
-			ExtendedDenom: appparams.BaseDenom,
-			DisplayDenom:  appparams.DisplayDenom,
-			Decimals:      18,
-		})
-	})
+// NewNextBlockContext provides the SDK v0.54 test helper contract while this
+// launch branch is pinned to SDK v0.53. It is test-only and writes directly to
+// the mounted multistore, which is sufficient for fixtures that seed keeper
+// state outside ABCI execution.
+func (app *App) NewNextBlockContext(header cmtproto.Header) sdk.Context {
+	return app.NewUncachedContext(false, header)
 }
 
 func repeatedByteAddress(value byte) []byte {

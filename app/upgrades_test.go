@@ -3,16 +3,17 @@ package app
 import (
 	"testing"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
+	storemetrics "cosmossdk.io/store/metrics"
+	pruningtypes "cosmossdk.io/store/pruning/types"
+	"cosmossdk.io/store/rootmulti"
+	storetypes "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/v2/pruning/types"
-	"github.com/cosmos/cosmos-sdk/store/v2/rootmulti"
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 	"github.com/stretchr/testify/require"
@@ -45,7 +46,7 @@ func TestV1StoreLoaderAddsBEXAndTranswapToLegacyDatabase(t *testing.T) {
 	db := dbm.NewMemDB()
 	logger := log.NewNopLogger()
 
-	legacyStore := rootmulti.NewStore(db, logger)
+	legacyStore := rootmulti.NewStore(db, logger, storemetrics.NewNoOpMetrics())
 	legacyStore.SetPruning(pruningtypes.NewPruningOptions(pruningtypes.PruningNothing))
 	legacyKey := storetypes.NewKVStoreKey(legacyStoreName)
 	legacyStore.MountStoreWithDB(legacyKey, storetypes.StoreTypeIAVL, nil)

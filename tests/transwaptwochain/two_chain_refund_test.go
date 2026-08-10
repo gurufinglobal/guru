@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-db"
@@ -23,10 +23,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
-	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
-	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/require"
 
 	constitutionv1 "github.com/gurufinglobal/guru/v3/api/guru/constitution/v1"
@@ -100,16 +100,9 @@ func (app testingGuruApp) InitChain(req *abci.RequestInitChain) (*abci.ResponseI
 
 func TestProofRelayedRefundTimeoutRetryAndAcknowledgement(t *testing.T) {
 	configureGuruBech32Prefixes(t)
+	evmtypes.NewEVMConfigurator().ResetTestConfig()
 	t.Cleanup(func() { evmtypes.NewEVMConfigurator().ResetTestConfig() })
-	created := 0
 	creator := func() (ibctesting.TestingApp, map[string]json.RawMessage) {
-		if created > 0 {
-			// The two Apps use identical EVM configuration, but each VM module
-			// registers it from its own InitGenesis sync.Once. Clear the test-only
-			// process globals before constructing the second App.
-			evmtypes.NewEVMConfigurator().ResetTestConfig()
-		}
-		created++
 		app := guruapp.NewApp(
 			log.NewNopLogger(),
 			db.NewMemDB(),
@@ -127,6 +120,11 @@ func TestProofRelayedRefundTimeoutRetryAndAcknowledgement(t *testing.T) {
 		constitutionGenesis.BaseAddress = mustAppAddress(t, app, 0x41)
 		constitutionGenesis.ModeratorAddress = mustAppAddress(t, app, 0x42)
 		genesis[constitutiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(constitutionGenesis)
+		// The v0.6 keeper constructor installs a fallback EVM coin configuration.
+		// Clear only the test global after construction so this App's InitGenesis
+		// can install the identical chain configuration through its own sync.Once.
+		evmtypes.NewEVMConfigurator().ResetTestConfig()
+		require.NoError(t, evmtypes.SetChainConfig(evmtypes.DefaultChainConfig(appparams.EVMChainID)))
 		return testingGuruApp{
 			App:             app,
 			bankMetadata:    bankGenesis.DenomMetadata,
@@ -448,7 +446,8 @@ func advancePastPacketTimeout(
 ) {
 	t.Helper()
 	require.LessOrEqual(t, packet.TimeoutTimestamp, uint64(^uint64(0)>>1))
-	coordinator.SetTime(time.Unix(0, int64(packet.TimeoutTimestamp)).Add(time.Second)) //nolint:gosec // bounded above.
+	coordinator.CurrentTime = time.Unix(0, int64(packet.TimeoutTimestamp)).Add(time.Second).UTC() //nolint:gosec // bounded above.
+	coordinator.UpdateTime()
 	require.NoError(t, sourceEndpoint.UpdateClient())
 	require.NoError(t, sourceEndpoint.TimeoutPacket(packet))
 }

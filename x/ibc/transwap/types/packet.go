@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	ibcerrors "github.com/cosmos/ibc-go/v11/modules/core/errors"
+	ibcerrors "github.com/cosmos/ibc-go/v10/modules/core/errors"
 	"google.golang.org/protobuf/encoding/protowire"
 
 	errorsmod "cosmossdk.io/errors"

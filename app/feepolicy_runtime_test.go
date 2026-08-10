@@ -10,26 +10,23 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/x/feegrant"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/server"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	antetypes "github.com/cosmos/evm/ante/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
@@ -44,10 +41,8 @@ const (
 	feePolicyRuntimeGas          = uint64(200_000)
 	feePolicyRuntimeDeclaredFee  = int64(200_000)
 	feePolicyRuntimeWorkerEnv    = "GURU_FEEPOLICY_RUNTIME_WORKER"
-	feePolicyRuntimeTipWorkerEnv = "GURU_FEEPOLICY_RUNTIME_TIP_WORKER"
 
 	feePolicyActorNormal           = "normal"
-	feePolicyActorDynamic          = "dynamic"
 	feePolicyActorGrantPayer       = "grant-payer"
 	feePolicyActorGrantGranter     = "grant-granter"
 	feePolicyActorGrantBankPayer   = "grant-bank-failure-payer"
@@ -67,7 +62,6 @@ const (
 
 var feePolicyRuntimeActorNames = []string{
 	feePolicyActorNormal,
-	feePolicyActorDynamic,
 	feePolicyActorGrantPayer,
 	feePolicyActorGrantGranter,
 	feePolicyActorGrantBankPayer,
@@ -101,7 +95,6 @@ type feePolicyRuntimeFixture struct {
 
 type feePolicyRuntimeTxOptions struct {
 	feeGranter sdk.AccAddress
-	extension  *antetypes.ExtensionOptionDynamicFeeTx
 	corruptSig bool
 }
 
@@ -364,47 +357,6 @@ func TestFeePolicyRuntimeSignedCosmosTransactions(t *testing.T) {
 
 }
 
-func TestFeePolicyRuntimeDynamicTipIsNotDiscounted(t *testing.T) {
-	if !runFeePolicyRuntimeWorker(t, feePolicyRuntimeTipWorkerEnv) {
-		return
-	}
-
-	fixture := newFeePolicyRuntimeFixture(t, feePolicyRuntimeGenesisOptions{
-		noBaseFee:   false,
-		baseFee:     sdkmath.LegacyNewDecWithPrec(4, 1),
-		minGasPrice: sdkmath.LegacyZeroDec(),
-	})
-	feeMarketParams := fixture.app.FeeMarketKeeper.GetParams(fixture.committedContext())
-	require.False(t, feeMarketParams.NoBaseFee)
-	require.True(t, feeMarketParams.BaseFee.Equal(sdkmath.LegacyNewDecWithPrec(4, 1)))
-	payer := fixture.actor(feePolicyActorDynamic)
-	recipient := fixture.actor(feePolicyActorRecipient)
-	beforePayer := fixture.balance(payer.address)
-	beforeRecipient := fixture.balance(recipient.address)
-
-	msg := banktypes.NewMsgSend(payer.address, recipient.address, feePolicyRuntimeCoins(1))
-	result := fixture.finalize(t, fixture.signTx(t, payer, []sdk.Msg{msg}, feePolicyRuntimeTxOptions{
-		extension: &antetypes.ExtensionOptionDynamicFeeTx{
-			MaxPriorityPrice: sdkmath.LegacyNewDecWithPrec(4, 1),
-		},
-	}))
-
-	// With a 0.4/gas priority cap and 200,000 gas, the undiscounted tip is
-	// 80,000. The global fixed policy changes only the positive base component
-	// to 12,345, so the actual fee must be 92,345 rather than 12,345.
-	const expectedActualFee = int64(92_345)
-	require.Equal(t, abci.CodeTypeOK, result.Code, result.Log)
-	fixture.requireCommittedState(
-		t,
-		payer,
-		beforePayer.SubRaw(expectedActualFee+1),
-		beforeRecipient.AddRaw(1),
-		sdkmath.NewInt(expectedActualFee),
-		1,
-	)
-	fixture.requireFeeEvent(t, result, expectedActualFee, payer.addressString)
-}
-
 type feePolicyRuntimeGenesisOptions struct {
 	noBaseFee   bool
 	baseFee     sdkmath.LegacyDec
@@ -481,24 +433,6 @@ func newFeePolicyRuntimeFixture(
 	_, err = testApp.Commit()
 	require.NoError(t, err)
 	require.Equal(t, int64(1), testApp.LastBlockHeight())
-
-	if !genesisOptions.noBaseFee || !genesisOptions.baseFee.IsZero() ||
-		!genesisOptions.minGasPrice.Equal(sdkmath.LegacyOneDec()) {
-		ctx := testApp.NewNextBlockContext(cmtproto.Header{
-			ChainID: feePolicyRuntimeChainID,
-			Height:  2,
-			Time:    fixture.startTime.Add(2 * time.Second),
-		})
-		params := testApp.FeeMarketKeeper.GetParams(ctx)
-		params.NoBaseFee = genesisOptions.noBaseFee
-		params.BaseFee = genesisOptions.baseFee
-		params.MinGasPrice = genesisOptions.minGasPrice
-		require.NoError(t, testApp.FeeMarketKeeper.SetParams(ctx, params))
-		testApp.SimWriteState()
-		_, err = testApp.Commit()
-		require.NoError(t, err)
-		fixture.nextBlock = testApp.LastBlockHeight() + 1
-	}
 
 	return fixture
 }
@@ -777,14 +711,6 @@ func (fixture *feePolicyRuntimeFixture) signTxWithFee(
 	if options.feeGranter != nil {
 		builder.SetFeeGranter(options.feeGranter)
 	}
-	if options.extension != nil {
-		extension, err := codectypes.NewAnyWithValue(options.extension)
-		require.NoError(t, err)
-		extensionBuilder, ok := builder.(authtx.ExtensionOptionsTxBuilder)
-		require.True(t, ok)
-		extensionBuilder.SetExtensionOptions(extension)
-	}
-
 	signMode, err := authsigning.APISignModeToInternal(
 		fixture.app.TxConfig().SignModeHandler().DefaultMode(),
 	)

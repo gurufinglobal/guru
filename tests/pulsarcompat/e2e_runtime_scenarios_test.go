@@ -2,9 +2,11 @@ package pulsarcompat
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"maps"
+	"math/big"
 	"net"
 	"os"
 	"os/exec"
@@ -18,15 +20,23 @@ import (
 	"testing"
 	"time"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
+	"github.com/ethereum/go-ethereum/common"
+	gethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
+	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
 )
 
 const (
 	e2eChainID                = "guru_631"
 	e2eUpgradeNameV1          = "v1"
+	e2eCrossBinaryUpgradeName = "cosmos-evm-v0.7.1"
 	envEnableUpgradeHandlerV1 = "GURU_ENABLE_UPGRADE_HANDLER_V1"
-	e2eAppDBBackend           = "pebbledb"
+	envUpgradeTargetBinary    = "GURU_E2E_UPGRADE_TARGET_BINARY"
+	e2eAppDBBackend           = "goleveldb"
 	highFeeAGXN               = "10000000000000000000agxn"
 )
 
@@ -171,10 +181,34 @@ func TestE2EStateSyncUpgradeIBCCompatibility(t *testing.T) {
 func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	repoRoot := projectRootFromTestFile(t)
 	bin := buildGurudBinary(t, repoRoot)
+	targetBin := strings.TrimSpace(os.Getenv(envUpgradeTargetBinary))
+	crossBinary := targetBin != ""
+	upgradeName := e2eUpgradeNameV1
+	if crossBinary {
+		if !filepath.IsAbs(targetBin) {
+			t.Fatalf("%s must be an absolute path: %s", envUpgradeTargetBinary, targetBin)
+		}
+		if info, err := os.Stat(targetBin); err != nil || info.IsDir() {
+			t.Fatalf("invalid %s %q: %v", envUpgradeTargetBinary, targetBin, err)
+		}
+		upgradeName = e2eCrossBinaryUpgradeName
+	} else {
+		targetBin = bin
+	}
 
 	home := filepath.Join(t.TempDir(), "node-upgrade")
 	bootstrapSingleValidatorGenesis(t, repoRoot, bin, home)
+	if crossBinary {
+		seedStateSyncCustomGenesis(t, home)
+		privateKey, err := crypto.HexToECDSA("0000000000000000000000000000000000000000000000000000000000000001")
+		if err != nil {
+			t.Fatalf("parse cross-binary EVM fixture key: %v", err)
+		}
+		evmAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
+		runCmd(t, repoRoot, bin, "genesis", "add-genesis-account", evmAddress.Hex(), "1000000000000000000000agxn", "--home", home)
+	}
 	setFastGovernanceTimings(t, home)
+	runCmd(t, repoRoot, bin, "genesis", "validate-genesis", "--home", home)
 
 	// old binary (without upgrade handler) runs until scheduled upgrade height
 	oldRPCPort := pickTCPPort(t)
@@ -201,6 +235,13 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	)
 	defer stopNode(t, oldNode)
 	waitForBlockHeight(t, repoRoot, bin, home, oldRPCAddr, 6, 45*time.Second)
+	var preUpgradeState map[string]string
+	var preUpgradeEVMState crossBinaryEVMState
+	if crossBinary {
+		preUpgradeState = queryStateSyncCustomState(t, repoRoot, bin, home, oldRPCAddr)
+		assertSeededStateSyncCustomState(t, preUpgradeState)
+		preUpgradeEVMState = deployCrossBinaryEVMFixture(t, oldJSONRPCPort)
+	}
 
 	status := mustNodeStatus(t, repoRoot, bin, home, oldRPCAddr)
 	currentHeight := mustParseInt64(t, status.SyncInfo.LatestBlockHeight)
@@ -208,7 +249,7 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	authority := queryUpgradeAuthority(t, repoRoot, bin, home, oldRPCAddr)
 
 	proposalPath := filepath.Join(t.TempDir(), "software-upgrade.json")
-	writeSoftwareUpgradeProposal(t, proposalPath, authority, upgradeHeight)
+	writeSoftwareUpgradeProposal(t, proposalPath, authority, upgradeName, upgradeHeight)
 
 	submitTxHash := submitGovProposal(t, repoRoot, bin, home, oldRPCAddr, proposalPath)
 	waitForTx(t, repoRoot, bin, home, oldRPCAddr, submitTxHash)
@@ -231,9 +272,13 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	// in this fresh database since genesis. The missing-store loader path is
 	// covered by TestV1StoreLoaderAddsBEXAndTranswapToLegacyDatabase; this E2E isolates the on-chain
 	// halt, handler, migration, and resume path without adding BEX twice.
-	upgradeInfoPath := filepath.Join(home, "data", "upgrade-info.json")
-	if err := os.Remove(upgradeInfoPath); err != nil {
-		t.Fatalf("remove same-binary upgrade info %s: %v", upgradeInfoPath, err)
+	if crossBinary {
+		setCometMempoolTypeForV071Upgrade(t, home)
+	} else {
+		upgradeInfoPath := filepath.Join(home, "data", "upgrade-info.json")
+		if err := os.Remove(upgradeInfoPath); err != nil {
+			t.Fatalf("remove same-binary upgrade info %s: %v", upgradeInfoPath, err)
+		}
 	}
 
 	// new binary enables handler and resumes from upgrade height
@@ -248,7 +293,7 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 	newNode := startNodeWithOptions(
 		t,
 		repoRoot,
-		bin,
+		targetBin,
 		home,
 		newRPCPort,
 		newP2PPort,
@@ -266,10 +311,21 @@ func TestE2EOnChainUpgradeAppliesAfterBinarySwitch(t *testing.T) {
 		}
 	}()
 
-	waitForBlockHeight(t, repoRoot, bin, home, newRPCAddr, upgradeHeight+2, 90*time.Second)
-	appliedHeight := queryAppliedUpgradeHeight(t, repoRoot, bin, home, newRPCAddr, e2eUpgradeNameV1)
+	waitForBlockHeight(t, repoRoot, targetBin, home, newRPCAddr, upgradeHeight+2, 90*time.Second)
+	appliedHeight := queryAppliedUpgradeHeight(t, repoRoot, targetBin, home, newRPCAddr, upgradeName)
 	if appliedHeight != upgradeHeight {
 		t.Fatalf("unexpected applied upgrade height: got=%d want=%d", appliedHeight, upgradeHeight)
+	}
+	if crossBinary {
+		postUpgradeState := queryStateSyncCustomState(t, repoRoot, targetBin, home, newRPCAddr)
+		if !maps.Equal(preUpgradeState, postUpgradeState) {
+			t.Fatalf("custom state differs after cross-binary upgrade:\nbefore=%v\nafter=%v", preUpgradeState, postUpgradeState)
+		}
+		postStatus := mustNodeStatus(t, repoRoot, targetBin, home, newRPCAddr)
+		if postStatus.NodeInfo.Network != e2eChainID {
+			t.Fatalf("SDK chain ID changed after cross-binary upgrade: got=%s want=%s", postStatus.NodeInfo.Network, e2eChainID)
+		}
+		assertCrossBinaryEVMState(t, newJSONRPCPort, preUpgradeEVMState)
 	}
 }
 
@@ -427,6 +483,59 @@ func seedStateSyncCustomGenesis(t *testing.T, home string) {
 		"values": []any{value},
 	}}
 
+	_, moderatorAddress := e2eConstitutionAddresses(t)
+	accountCodec := evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr)
+	reserveAddress, err := accountCodec.BytesToString(authtypes.NewModuleAddress(bexkeeper.ReserveModuleName(1)))
+	if err != nil {
+		t.Fatalf("encode BEX reserve address: %v", err)
+	}
+	ibcDenomA, err := bexkeeper.ExpectedIBCDenomForGenesis("agxn", "transwap", "channel-0")
+	if err != nil {
+		t.Fatalf("derive BEX denom A: %v", err)
+	}
+	ibcDenomB, err := bexkeeper.ExpectedIBCDenomForGenesis("gxusd", "transwap", "channel-1")
+	if err != nil {
+		t.Fatalf("derive BEX denom B: %v", err)
+	}
+	bexState := mustJSONMap(t, appState, "bex")
+	bexState["admins"] = []any{moderatorAddress}
+	bexState["exchanges"] = []any{map[string]any{
+		"id":                           1,
+		"admin_address":                moderatorAddress,
+		"reserve_address":              reserveAddress,
+		"denom_a":                      "agxn",
+		"port_a":                       "transwap",
+		"channel_a":                    "channel-0",
+		"ibc_denom_a":                  ibcDenomA,
+		"denom_b":                      "gxusd",
+		"port_b":                       "transwap",
+		"channel_b":                    "channel-1",
+		"ibc_denom_b":                  ibcDenomB,
+		"oracle_symbol_a_to_b":         "AGXN/GXUSD",
+		"oracle_symbol_b_to_a":         "GXUSD/AGXN",
+		"fee_bps_a_to_b":               25,
+		"fee_bps_b_to_a":               10,
+		"limit_a_to_b":                 "10000",
+		"limit_b_to_a":                 "10000",
+		"volume_cap_a_to_b":            "1000",
+		"volume_cap_b_to_a":            "1000",
+		"revision":                     1,
+		"status":                       1,
+		"metadata":                     map[string]any{"fixture": "state-rich-upgrade"},
+		"volume_epoch_seconds":         86400,
+		"max_oracle_staleness_seconds": 300,
+		"volume_window_generation":     1,
+	}}
+	bexState["collected_fees"] = []any{}
+	bexState["locked_fees"] = []any{}
+	bexState["volume_windows"] = []any{}
+	bexState["reserve_depositors"] = []any{map[string]any{
+		"exchange_id":       1,
+		"depositor_address": moderatorAddress,
+	}}
+	bexState["pending_liabilities"] = []any{}
+	bexState["next_exchange_id"] = 2
+
 	out, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
 		t.Fatalf("encode state-sync genesis: %v", err)
@@ -445,6 +554,8 @@ func queryStateSyncCustomState(t *testing.T, repoRoot, bin, home, rpcAddr string
 		"oracle_task":        {"query", "oracle", "task", "STATE/SYNC"},
 		"oracle_latest":      {"query", "oracle", "latest-value", "STATE/SYNC"},
 		"oracle_history":     {"query", "oracle", "history", "STATE/SYNC", "--limit", "20"},
+		"bex_exchange":       {"query", "bex", "exchange", "1"},
+		"bex_depositors":     {"query", "bex", "reserve-depositors", "1"},
 	}
 	state := make(map[string]string, len(queries))
 	for name, args := range queries {
@@ -479,6 +590,8 @@ func assertSeededStateSyncCustomState(t *testing.T, state map[string]string) {
 		"oracle_task":        {`"symbol":"STATE/SYNC"`, `"submission_interval":13`},
 		"oracle_latest":      {`"symbol":"STATE/SYNC"`, `"value":"631.125"`},
 		"oracle_history":     {`"symbol":"STATE/SYNC"`, `"value":"631.125"`},
+		"bex_exchange":       {`"fixture":"state-rich-upgrade"`},
+		"bex_depositors":     {},
 	}
 	for name, fragments := range expectedFragments {
 		for _, fragment := range fragments {
@@ -495,6 +608,17 @@ func assertSeededStateSyncCustomState(t *testing.T, state map[string]string) {
 			t.Fatalf("%s query has unexpected block height: %s", name, state[name])
 		}
 	}
+	if !strings.Contains(state["bex_exchange"], `"id":1`) && !strings.Contains(state["bex_exchange"], `"id":"1"`) {
+		t.Fatalf("BEX query has unexpected exchange ID: %s", state["bex_exchange"])
+	}
+	_, moderatorAddress := e2eConstitutionAddresses(t)
+	if !strings.Contains(state["bex_depositors"], moderatorAddress) {
+		t.Fatalf("BEX depositor query is missing moderator %s: %s", moderatorAddress, state["bex_depositors"])
+	}
+	if !strings.Contains(state["bex_exchange"], `"status":1`) &&
+		!strings.Contains(state["bex_exchange"], `"status":"EXCHANGE_STATUS_ACTIVE"`) {
+		t.Fatalf("BEX query has unexpected exchange status: %s", state["bex_exchange"])
+	}
 }
 
 func assertRestoredSnapshotCustomState(t *testing.T, exported []byte) {
@@ -509,12 +633,15 @@ func assertRestoredSnapshotCustomState(t *testing.T, exported []byte) {
 	appState := mustJSONMap(t, doc, "app_state")
 	constitutionState := mustJSONMap(t, appState, "constitution")
 	oracleState := mustJSONMap(t, appState, "oracle")
+	bexState := mustJSONMap(t, appState, "bex")
 	state := map[string]string{
 		"constitution_ratio": canonicalJSONValue(t, constitutionState["separation_ratio"]),
 		"oracle_params":      canonicalJSONValue(t, oracleState["params"]),
 		"oracle_task":        canonicalJSONValue(t, oracleState["tasks"]),
 		"oracle_latest":      canonicalJSONValue(t, oracleState["latest_values"]),
 		"oracle_history":     canonicalJSONValue(t, oracleState["history"]),
+		"bex_exchange":       canonicalJSONValue(t, bexState["exchanges"]),
+		"bex_depositors":     canonicalJSONValue(t, bexState["reserve_depositors"]),
 	}
 	assertSeededStateSyncCustomState(t, state)
 }
@@ -554,7 +681,8 @@ func (b *synchronizedBuffer) String() string {
 
 type nodeStatus struct {
 	NodeInfo struct {
-		ID string `json:"id"`
+		ID      string `json:"id"`
+		Network string `json:"network"`
 	} `json:"node_info"`
 	SyncInfo struct {
 		LatestBlockHeight   string `json:"latest_block_height"`
@@ -562,6 +690,167 @@ type nodeStatus struct {
 		EarliestBlockHeight string `json:"earliest_block_height"`
 		CatchingUp          bool   `json:"catching_up"`
 	} `json:"sync_info"`
+}
+
+type crossBinaryEVMState struct {
+	ChainID         string
+	Sender          string
+	SenderNonce     uint64
+	SenderBalance   string
+	Contract        string
+	ContractNonce   uint64
+	ContractBalance string
+	Code            string
+	Storage         string
+}
+
+func deployCrossBinaryEVMFixture(t *testing.T, jsonRPCPort int) crossBinaryEVMState {
+	t.Helper()
+
+	privateKey, err := crypto.HexToECDSA("0000000000000000000000000000000000000000000000000000000000000001")
+	if err != nil {
+		t.Fatalf("parse cross-binary EVM fixture key: %v", err)
+	}
+	sender := crypto.PubkeyToAddress(privateKey.PublicKey)
+	client, err := ethclient.Dial(fmt.Sprintf("http://127.0.0.1:%d", jsonRPCPort))
+	if err != nil {
+		t.Fatalf("dial pre-upgrade EVM JSON-RPC: %v", err)
+	}
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	chainID, err := client.ChainID(ctx)
+	cancel()
+	if err != nil {
+		t.Fatalf("query pre-upgrade EVM chain ID: %v", err)
+	}
+	if chainID.Cmp(big.NewInt(631)) != 0 {
+		t.Fatalf("unexpected pre-upgrade EVM chain ID: got=%s want=631", chainID)
+	}
+
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	nonce, err := client.PendingNonceAt(ctx, sender)
+	cancel()
+	if err != nil {
+		t.Fatalf("query pre-upgrade EVM nonce: %v", err)
+	}
+	initCode := common.FromHex("0x602a600055600b6011600039600b6000f360005460005260206000f3")
+	signedTx, err := gethtypes.SignNewTx(
+		privateKey,
+		gethtypes.LatestSignerForChainID(chainID),
+		&gethtypes.LegacyTx{
+			Nonce:    nonce,
+			Value:    big.NewInt(0),
+			Gas:      300_000,
+			GasPrice: big.NewInt(1_000_000_000_000),
+			Data:     initCode,
+		},
+	)
+	if err != nil {
+		t.Fatalf("sign cross-binary EVM fixture deployment: %v", err)
+	}
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	err = client.SendTransaction(ctx, signedTx)
+	cancel()
+	if err != nil {
+		t.Fatalf("send cross-binary EVM fixture deployment: %v", err)
+	}
+
+	contract := crypto.CreateAddress(sender, nonce)
+	deadline := time.Now().Add(60 * time.Second)
+	var lastErr error
+	for time.Now().Before(deadline) {
+		ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+		var code []byte
+		code, lastErr = client.CodeAt(ctx, contract, nil)
+		cancel()
+		if lastErr == nil && len(code) != 0 {
+			break
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
+	if lastErr != nil {
+		t.Fatalf("wait for cross-binary EVM fixture deployment: %v", lastErr)
+	}
+
+	state := readCrossBinaryEVMState(t, client, sender, contract)
+	if state.Code != "60005460005260206000f3" {
+		t.Fatalf("unexpected deployed EVM fixture code: %s", state.Code)
+	}
+	if state.Storage != fmt.Sprintf("%064x", 42) {
+		t.Fatalf("unexpected deployed EVM fixture storage: %s", state.Storage)
+	}
+	return state
+}
+
+func assertCrossBinaryEVMState(t *testing.T, jsonRPCPort int, want crossBinaryEVMState) {
+	t.Helper()
+
+	client, err := ethclient.Dial(fmt.Sprintf("http://127.0.0.1:%d", jsonRPCPort))
+	if err != nil {
+		t.Fatalf("dial post-upgrade EVM JSON-RPC: %v", err)
+	}
+	defer client.Close()
+
+	got := readCrossBinaryEVMState(
+		t,
+		client,
+		common.HexToAddress(want.Sender),
+		common.HexToAddress(want.Contract),
+	)
+	if got != want {
+		t.Fatalf("EVM consensus state differs after cross-binary upgrade:\nbefore=%+v\nafter=%+v", want, got)
+	}
+}
+
+func readCrossBinaryEVMState(
+	t *testing.T,
+	client *ethclient.Client,
+	sender, contract common.Address,
+) crossBinaryEVMState {
+	t.Helper()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		t.Fatalf("query EVM chain ID: %v", err)
+	}
+	senderNonce, err := client.NonceAt(ctx, sender, nil)
+	if err != nil {
+		t.Fatalf("query EVM sender nonce: %v", err)
+	}
+	senderBalance, err := client.BalanceAt(ctx, sender, nil)
+	if err != nil {
+		t.Fatalf("query EVM sender balance: %v", err)
+	}
+	contractNonce, err := client.NonceAt(ctx, contract, nil)
+	if err != nil {
+		t.Fatalf("query EVM contract nonce: %v", err)
+	}
+	contractBalance, err := client.BalanceAt(ctx, contract, nil)
+	if err != nil {
+		t.Fatalf("query EVM contract balance: %v", err)
+	}
+	code, err := client.CodeAt(ctx, contract, nil)
+	if err != nil {
+		t.Fatalf("query EVM contract code: %v", err)
+	}
+	storage, err := client.StorageAt(ctx, contract, common.Hash{}, nil)
+	if err != nil {
+		t.Fatalf("query EVM contract storage: %v", err)
+	}
+	return crossBinaryEVMState{
+		ChainID:         chainID.String(),
+		Sender:          sender.Hex(),
+		SenderNonce:     senderNonce,
+		SenderBalance:   senderBalance.String(),
+		Contract:        contract.Hex(),
+		ContractNonce:   contractNonce,
+		ContractBalance: contractBalance.String(),
+		Code:            fmt.Sprintf("%x", code),
+		Storage:         fmt.Sprintf("%x", storage),
+	}
 }
 
 func startNode(
@@ -657,6 +946,11 @@ func startNodeWithChainIDOption(
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start node: %v", err)
 	}
+	t.Cleanup(func() {
+		if t.Failed() {
+			t.Logf("node logs (%s):\n%s", home, logBuf.String())
+		}
+	})
 
 	return &runningNode{
 		cmd:    cmd,
@@ -900,7 +1194,7 @@ func setFastGovernanceTimings(t *testing.T, home string) {
 	}
 }
 
-func writeSoftwareUpgradeProposal(t *testing.T, path, authority string, upgradeHeight int64) {
+func writeSoftwareUpgradeProposal(t *testing.T, path, authority, upgradeName string, upgradeHeight int64) {
 	t.Helper()
 
 	proposal := map[string]any{
@@ -909,7 +1203,7 @@ func writeSoftwareUpgradeProposal(t *testing.T, path, authority string, upgradeH
 				"@type":     "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
 				"authority": authority,
 				"plan": map[string]any{
-					"name":   e2eUpgradeNameV1,
+					"name":   upgradeName,
 					"height": strconv.FormatInt(upgradeHeight, 10),
 					"info":   "e2e-upgrade",
 				},
@@ -918,7 +1212,7 @@ func writeSoftwareUpgradeProposal(t *testing.T, path, authority string, upgradeH
 		"metadata":  "e2e-upgrade",
 		"deposit":   "10000000agxn",
 		"title":     "e2e software upgrade",
-		"summary":   "apply v1 upgrade handler",
+		"summary":   "apply " + upgradeName + " upgrade handler",
 		"expedited": false,
 	}
 
@@ -1081,26 +1375,43 @@ func parseTxHashFromSyncResponse(t *testing.T, out string) string {
 
 func waitForTx(t *testing.T, repoRoot, bin, home, rpcAddr, txHash string) {
 	t.Helper()
-	out := runCmd(
-		t,
-		repoRoot,
-		bin,
-		"query", "wait-tx", txHash,
-		"--node", rpcAddr,
-		"--home", home,
-		"--timeout", "60s",
-		"--output", "json",
-	)
-	var txResp struct {
-		Code   uint32 `json:"code"`
-		RawLog string `json:"raw_log"`
+
+	deadline := time.Now().Add(60 * time.Second)
+	var lastOutput string
+	var lastErr error
+	for {
+		out, err := runCmdE(
+			t,
+			repoRoot,
+			bin,
+			"query", "tx", txHash,
+			"--node", rpcAddr,
+			"--home", home,
+			"--output", "json",
+		)
+		if err == nil {
+			var txResp struct {
+				Code   uint32 `json:"code"`
+				RawLog string `json:"raw_log"`
+			}
+			if err := json.Unmarshal([]byte(out), &txResp); err != nil {
+				t.Fatalf("unmarshal tx query response: %v\noutput:\n%s", err, out)
+			}
+			if txResp.Code != 0 {
+				t.Fatalf("tx query returned non-zero code=%d raw_log=%s output=%s", txResp.Code, txResp.RawLog, out)
+			}
+			return
+		}
+
+		lastOutput = out
+		lastErr = err
+		if time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(250 * time.Millisecond)
 	}
-	if err := json.Unmarshal([]byte(out), &txResp); err != nil {
-		t.Fatalf("unmarshal wait-tx response: %v\noutput:\n%s", err, out)
-	}
-	if txResp.Code != 0 {
-		t.Fatalf("wait-tx returned non-zero code=%d raw_log=%s output=%s", txResp.Code, txResp.RawLog, out)
-	}
+
+	t.Fatalf("timed out waiting for transaction %s in the tx index: %v\nlast output:\n%s", txHash, lastErr, lastOutput)
 }
 
 func queryAppliedUpgradeHeight(t *testing.T, repoRoot, bin, home, rpcAddr, planName string) int64 {
@@ -1193,6 +1504,40 @@ func enableStateSyncInConfig(t *testing.T, home string, rpcPort int, trustHeight
 
 	if err := os.WriteFile(configPath, []byte(strings.Join(lines, "\n")), 0o644); err != nil {
 		t.Fatalf("write updated config.toml: %v", err)
+	}
+}
+
+func setCometMempoolTypeForV071Upgrade(t *testing.T, home string) {
+	t.Helper()
+
+	configPath := filepath.Join(home, "config", "config.toml")
+	bz, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatalf("read config.toml for v0.7.1 upgrade: %v", err)
+	}
+	lines := strings.Split(string(bz), "\n")
+	inMempool := false
+	updated := false
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "[") {
+			inMempool = trimmed == "[mempool]"
+			continue
+		}
+		if inMempool && strings.HasPrefix(trimmed, "type =") {
+			if trimmed != `type = "flood"` {
+				t.Fatalf("unexpected pre-upgrade CometBFT mempool type: %s", trimmed)
+			}
+			lines[i] = `type = "app"`
+			updated = true
+			break
+		}
+	}
+	if !updated {
+		t.Fatalf("CometBFT mempool type was not found in %s", configPath)
+	}
+	if err := os.WriteFile(configPath, []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+		t.Fatalf("write v0.7.1 CometBFT mempool config: %v", err)
 	}
 }
 

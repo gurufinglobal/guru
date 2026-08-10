@@ -73,8 +73,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 				switch extensions[0].GetTypeUrl() {
 				case ethereumExtension:
 					// Do not copy or wrap the Ethereum mono ante chain. Delegating
-					// here preserves EVM fee deduction, virtual fee collection and
-					// pending transaction listener behavior from Cosmos EVM v0.7.
+					// here preserves EVM fee deduction and pending transaction
+					// listener behavior from Cosmos EVM v0.6.
 					return upstreamHandler(ctx, tx, simulate)
 				case dynamicFeeExtension:
 					return newCosmosAnteHandler(ctx, options, feeCollector)(ctx, tx, simulate)

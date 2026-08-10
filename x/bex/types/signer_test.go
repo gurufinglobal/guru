@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	txsigning "github.com/cosmos/cosmos-sdk/x/tx/signing"
+	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/protoadapt"
 )

@@ -33,7 +33,7 @@ func (app *App) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) er
 			PendingTxListener:      app.onPendingTx,
 		},
 		CosmosFeeBankKeeper:        app.BankKeeper,
-		CosmosVirtualFeeCollection: app.CosmosVirtualFeeCollectionEnabled(),
+		CosmosVirtualFeeCollection: false,
 		FeePolicyKeeper:            app.FeePolicyKeeper,
 	}
 

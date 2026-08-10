@@ -131,9 +131,8 @@ func startOracleRestartNode(
 	extraArgs []string,
 ) *runningNode {
 	t.Helper()
-	// Snapshot shutdown is validated separately. Store v2 currently starts
-	// snapshot creation asynchronously, which can race application DB closure
-	// under phase-targeted SIGTERM and obscure the Oracle restart result.
+	// Snapshot shutdown is validated separately. Disable snapshot creation here
+	// so phase-targeted SIGTERM isolates the Oracle restart behavior.
 	args := []string{"--state-sync.snapshot-interval", "0"}
 	args = append(args, extraArgs...)
 

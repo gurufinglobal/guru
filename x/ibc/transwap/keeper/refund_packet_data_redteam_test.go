@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	transtypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -24,11 +24,12 @@ import (
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 )
 
-func TestEVM071LockedBalanceSnapshotThroughGuruApp(t *testing.T) {
-	testApp, ctx := newEVM071RegressionApp(t)
+func TestEVM061LockedBalanceSnapshotThroughGuruApp(t *testing.T) {
+	testApp, ctx := newEVM061RegressionApp(t)
 
 	addr := sdk.AccAddress(repeatedByteAddress(0x91))
-	baseAccount := authtypes.NewBaseAccountWithAddress(addr)
+	baseAccount, ok := testApp.AccountKeeper.NewAccountWithAddress(ctx, addr).(*authtypes.BaseAccount)
+	require.True(t, ok)
 	testApp.AccountKeeper.SetAccount(ctx, baseAccount)
 
 	total := sdk.NewInt64Coin(appparams.BaseDenom, 100)
@@ -75,16 +76,11 @@ func TestEVM071LockedBalanceSnapshotThroughGuruApp(t *testing.T) {
 	require.Equal(t, "80", testApp.EVMKeeper.GetBalance(ctx, ethAddr).String())
 }
 
-func TestEVM071ProtectedBalanceWritesThroughGuruApp(t *testing.T) {
-	testApp, ctx := newEVM071RegressionApp(t)
+func TestEVM061ProtectedBalanceWritesThroughGuruApp(t *testing.T) {
+	testApp, ctx := newEVM061RegressionApp(t)
 
 	moduleAddr := authtypes.NewModuleAddress(stakingtypes.BondedPoolName)
-	moduleAccount := authtypes.NewEmptyModuleAccount(
-		stakingtypes.BondedPoolName,
-		authtypes.Burner,
-		authtypes.Staking,
-	)
-	testApp.AccountKeeper.SetModuleAccount(ctx, moduleAccount)
+	require.NotNil(t, testApp.AccountKeeper.GetModuleAccount(ctx, stakingtypes.BondedPoolName))
 
 	initialModuleBalance := sdk.NewInt64Coin(appparams.BaseDenom, 10)
 	require.NoError(t, testApp.BankKeeper.MintCoins(
@@ -113,8 +109,9 @@ func TestEVM071ProtectedBalanceWritesThroughGuruApp(t *testing.T) {
 	require.True(t, testApp.BankKeeper.BlockedAddr(precompileAddr))
 
 	supplyBefore := testApp.BankKeeper.GetSupply(ctx, appparams.BaseDenom)
+	cacheCtx, _ := ctx.CacheContext()
 	err := testApp.EVMKeeper.SetBalance(
-		ctx,
+		cacheCtx,
 		common.BytesToAddress(precompileAddr),
 		uint256.NewInt(1),
 	)
@@ -123,9 +120,8 @@ func TestEVM071ProtectedBalanceWritesThroughGuruApp(t *testing.T) {
 	require.Equal(t, supplyBefore, testApp.BankKeeper.GetSupply(ctx, appparams.BaseDenom))
 }
 
-func newEVM071RegressionApp(t *testing.T) (*App, sdk.Context) {
+func newEVM061RegressionApp(t *testing.T) (*App, sdk.Context) {
 	t.Helper()
-	configureTestEVM()
 
 	testApp := NewApp(
 		log.NewNopLogger(),

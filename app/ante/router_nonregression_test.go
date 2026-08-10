@@ -10,7 +10,7 @@ import (
 	"time"
 
 	coreaddress "cosmossdk.io/core/address"
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	evmante "github.com/cosmos/evm/ante"
@@ -23,18 +23,18 @@ import (
 	"github.com/stretchr/testify/require"
 	protov2 "google.golang.org/protobuf/proto"
 
+	storetypes "cosmossdk.io/store/types"
+	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	txsigning "github.com/cosmos/cosmos-sdk/x/tx/signing"
-	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	feepolicytypes "github.com/gurufinglobal/guru/v3/x/feepolicy/types"
 )
@@ -366,6 +366,10 @@ type routerFeeMarketKeeper struct {
 func (keeper *routerFeeMarketKeeper) GetParams(sdk.Context) feemarkettypes.Params {
 	keeper.paramsCalls++
 	return keeper.params
+}
+
+func (*routerFeeMarketKeeper) AddTransientGasWanted(sdk.Context, uint64) (uint64, error) {
+	return 0, nil
 }
 
 type routerTestTx struct {

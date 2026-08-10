@@ -79,8 +79,12 @@ func (m MsgServer) validateModerator(ctx sdk.Context, moderator string) error {
 		return err
 	}
 
-	if err := sdk.ValidateAuthority(ctx, currentModerator, moderator); err != nil {
-		return types.ErrInvalidAuthority.Wrap(err.Error())
+	if currentModerator != moderator {
+		return types.ErrInvalidAuthority.Wrapf(
+			"invalid authority: expected %s, got %s",
+			currentModerator,
+			moderator,
+		)
 	}
 
 	return nil

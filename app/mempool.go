@@ -2,52 +2,43 @@ package app
 
 import (
 	"errors"
+	"fmt"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+	evmconfig "github.com/cosmos/evm/config"
 	evmmempool "github.com/cosmos/evm/mempool"
-	evmserver "github.com/cosmos/evm/server"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	oracleabci "github.com/gurufinglobal/guru/v3/x/oracle/abci"
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 )
 
 func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.Logger) error {
-	if evmtypes.GetChainConfig() == nil {
-		logger.Debug("evm chain config is not set, using default proposal handler with oracle payload wrapper")
-		app.configureNoOpOracleProposalHandler()
-		return nil
-	}
-
 	anteHandler := app.anteHandler
 	if anteHandler == nil {
 		return errors.New("ante handler must be configured before EVM mempool")
 	}
 
-	txEncoder := evmmempool.NewTxEncoder(app.txConfig)
-	evmRechecker := evmmempool.NewTxRechecker(anteHandler, txEncoder)
-	cosmosRechecker := evmmempool.NewTxRechecker(anteHandler, txEncoder)
-
-	mempoolCfg := evmserver.ResolveMempoolConfig(anteHandler, appOpts, logger)
-	cosmosPoolMaxTx := evmserver.GetCosmosPoolMaxTx(appOpts, logger)
-	if cosmosPoolMaxTx < 0 {
-		logger.Debug("evm mempool is disabled, using default proposal handler with oracle payload wrapper")
-		app.configureNoOpOracleProposalHandler()
-		return nil
+	mempoolCfg := &evmmempool.EVMMempoolConfig{
+		LegacyPoolConfig: evmconfig.GetLegacyPoolConfig(appOpts, logger),
+		AnteHandler:      anteHandler,
+		BroadCastTxFn:    app.broadcastEVMTransactions,
+		BlockGasLimit:    evmconfig.GetBlockGasLimit(appOpts, logger),
+		MinTip:           evmconfig.GetMinTip(appOpts, logger),
 	}
-
-	evmMempool := evmmempool.NewMempool(
+	evmMempool := evmmempool.NewExperimentalEVMMempool(
 		app.CreateQueryContext,
 		logger,
 		app.EVMKeeper,
 		app.FeeMarketKeeper,
 		app.txConfig,
-		evmRechecker,
-		cosmosRechecker,
+		client.Context{},
 		mempoolCfg,
-		cosmosPoolMaxTx,
+		evmconfig.GetCosmosPoolMaxTx(appOpts, logger),
 	)
 
 	proposalHandler := baseapp.NewDefaultProposalHandler(
@@ -61,24 +52,40 @@ func (app *App) configureEVMMempool(appOpts servertypes.AppOptions, logger log.L
 	)
 	app.configureOracleProposalHandler(proposalHandler)
 
-	txDecoder := app.txConfig.TxDecoder()
-	app.SetInsertTxHandler(evmMempool.NewInsertTxHandler(txDecoder))
-	app.SetReapTxsHandler(evmMempool.NewReapTxsHandler())
-	app.SetCheckTxHandler(evmMempool.NewCheckTxHandler(
-		txDecoder,
-		evmserver.GetMempoolCheckTxTimeout(appOpts, logger),
-	))
+	app.SetCheckTxHandler(evmmempool.NewCheckTxHandler(evmMempool))
 	app.SetMempool(evmMempool)
 	app.EVMMempool = evmMempool
 
 	return nil
 }
 
-func (app *App) configureNoOpOracleProposalHandler() {
-	app.configureOracleProposalHandler(baseapp.NewDefaultProposalHandler(
-		sdkmempool.NoOpMempool{},
-		NewNoCheckProposalTxVerifier(app.BaseApp),
-	))
+func (app *App) broadcastEVMTransactions(ethTxs []*ethtypes.Transaction) error {
+	for _, ethTx := range ethTxs {
+		msg := &evmtypes.MsgEthereumTx{}
+		msg.FromEthereumTx(ethTx)
+
+		txBuilder := app.txConfig.NewTxBuilder()
+		if err := txBuilder.SetMsgs(msg); err != nil {
+			return fmt.Errorf("set promoted EVM message: %w", err)
+		}
+		txBytes, err := app.txConfig.TxEncoder()(txBuilder.GetTx())
+		if err != nil {
+			return fmt.Errorf("encode promoted EVM transaction: %w", err)
+		}
+		res, err := app.clientCtx.BroadcastTxSync(txBytes)
+		if err != nil {
+			return fmt.Errorf("broadcast promoted EVM transaction %s: %w", ethTx.Hash().Hex(), err)
+		}
+		if res.Code != 0 {
+			return fmt.Errorf(
+				"promoted EVM transaction %s rejected: code=%d log=%s",
+				ethTx.Hash().Hex(),
+				res.Code,
+				res.RawLog,
+			)
+		}
+	}
+	return nil
 }
 
 func (app *App) configureOracleProposalHandler(proposalHandler *baseapp.DefaultProposalHandler) {

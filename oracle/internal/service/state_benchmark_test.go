@@ -14,7 +14,7 @@ func BenchmarkStateUpdate256Feeds(b *testing.B) {
 	state, symbols := benchmarkState(b, 256, 64)
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; b.Loop(); i++ {
+	for i := 0; i < b.N; i++ {
 		state.CycleStarted(symbols[i%len(symbols)])
 	}
 }
@@ -23,7 +23,7 @@ func BenchmarkStateFresh256Feeds(b *testing.B) {
 	state, symbols := benchmarkState(b, 256, 64)
 	b.ReportAllocs()
 	b.ResetTimer()
-	for b.Loop() {
+	for i := 0; i < b.N; i++ {
 		if values := state.Fresh(symbols); len(values) != len(symbols) {
 			b.Fatalf("fresh values = %d, want %d", len(values), len(symbols))
 		}

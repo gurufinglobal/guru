@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/std"
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	txsigning "github.com/cosmos/cosmos-sdk/x/tx/signing"
+	txsigning "cosmossdk.io/x/tx/signing"
 	cryptocodec "github.com/cosmos/evm/crypto/codec"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	"github.com/cosmos/evm/ethereum/eip712"

@@ -346,7 +346,7 @@ func clampDiscountedAmount(amount, original sdkmath.Int) sdkmath.Int {
 	return amount
 }
 
-// NewDynamicFeeChecker mirrors the Cosmos EVM v0.7 dynamic checker and adds an
+// NewDynamicFeeChecker mirrors the Cosmos EVM v0.6 dynamic checker and adds an
 // exact base/tip split without deriving tip from the truncated priority.
 func NewDynamicFeeChecker(feemarketParams *feemarkettypes.Params) TxFeeChecker {
 	return func(ctx sdk.Context, tx sdk.Tx) (EffectiveFeeBreakdown, error) {
@@ -373,7 +373,7 @@ func NewDynamicFeeChecker(feemarketParams *feemarkettypes.Params) TxFeeChecker {
 	}
 }
 
-// FeeChecker applies Cosmos EVM v0.7 EIP-1559 fee semantics and retains the
+// FeeChecker applies Cosmos EVM v0.6 EIP-1559 fee semantics and retains the
 // independently rounded tip component needed for policy accounting.
 func FeeChecker(
 	ctx sdk.Context,
@@ -391,7 +391,7 @@ func FeeChecker(
 	}
 
 	baseFee := feemarketParams.BaseFee
-	if baseFee.IsNil() || !feemarketParams.IsBaseFeeEnabled(ctx.BlockHeight()) {
+	if baseFee.IsNil() {
 		baseFee = sdkmath.LegacyZeroDec()
 	}
 

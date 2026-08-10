@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
@@ -76,7 +76,7 @@ func TestAppExportLatestHeightLoadsApplication(t *testing.T) {
 	require.NoError(t, seedApp.Close())
 
 	trackingDB := &closeTrackingDB{DB: db}
-	exported, err := appExport(logger, trackingDB, -1, false, nil, appOpts, nil)
+	exported, err := appExport(logger, trackingDB, nil, -1, false, nil, appOpts, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(2), exported.Height)
 	require.NotEmpty(t, exported.AppState)
@@ -95,7 +95,7 @@ func TestAppExportClosesApplicationWhenLoadHeightFails(t *testing.T) {
 	appOpts.Set(sdkserver.FlagMempoolMaxTxs, -1)
 	trackingDB := &closeTrackingDB{DB: dbm.NewMemDB()}
 
-	_, err := appExport(log.NewNopLogger(), trackingDB, 99, false, nil, appOpts, nil)
+	_, err := appExport(log.NewNopLogger(), trackingDB, nil, 99, false, nil, appOpts, nil)
 	require.Error(t, err)
 	require.Equal(t, int32(1), trackingDB.closeCount.Load())
 }

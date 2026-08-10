@@ -4,17 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"math/big"
 	"reflect"
 	"testing"
 	"time"
 
 	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdksecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -22,8 +24,14 @@ import (
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/evm/crypto/ethsecp256k1"
+	evmtesttx "github.com/cosmos/evm/testutil/tx"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/ethereum/go-ethereum/common"
+	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bexmodule "github.com/gurufinglobal/guru/v3/x/bex"
@@ -280,7 +288,6 @@ func TestBexReserveRestrictionIsWiredAcrossBankAndEVM(t *testing.T) {
 
 	require.Contains(t, testApp.ModuleManager.Modules, bextypes.ModuleName)
 	require.NotNil(t, testApp.EVMKeeper)
-	configureTestEVM()
 
 	ctx := testApp.NewNextBlockContext(cmtproto.Header{
 		ChainID: appparams.SDKChainID,
@@ -366,22 +373,86 @@ func TestBexReserveRestrictionIsWiredAcrossBankAndEVM(t *testing.T) {
 		bextypes.ErrUnauthorizedReserveDepositor,
 	)
 
-	// EVM native-value writes commit through UncheckedSetBalance rather than the
-	// normal bank send pipeline. The app adapter therefore rejects both reserve
-	// increases and decreases; only BEX keeper operations may mutate custody.
-	err = testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(reserve), uint256.NewInt(4))
+	// Cosmos EVM v0.6.1 applies balance increases as mint-plus-bank-send inside
+	// ApplyTransaction's cache context. Mirror that transaction boundary here so
+	// the failed reserve send discards the intermediate mint atomically.
+	supplyBefore := testApp.BankKeeper.GetSupply(ctx, appparams.BaseDenom)
+	err = setEVMBalanceWithTxCache(testApp, ctx, common.BytesToAddress(reserve), uint256.NewInt(4))
+	require.ErrorIs(t, err, bextypes.ErrDirectReserveTransfer)
+	require.Equal(t, int64(3), testApp.BankKeeper.GetBalance(ctx, reserve, appparams.BaseDenom).Amount.Int64())
+	require.Equal(t, supplyBefore, testApp.BankKeeper.GetSupply(ctx, appparams.BaseDenom))
+
+	nonReserve := sdk.AccAddress(repeatedByteAddress(0x62))
+	require.NoError(t, setEVMBalanceWithTxCache(testApp, ctx, common.BytesToAddress(nonReserve), uint256.NewInt(3)))
+	require.Equal(t, int64(3), testApp.BankKeeper.GetBalance(ctx, nonReserve, appparams.BaseDenom).Amount.Int64())
+	require.NoError(t, setEVMBalanceWithTxCache(testApp, ctx, common.BytesToAddress(nonReserve), uint256.NewInt(1)))
+	require.NoError(t, setEVMBalanceWithTxCache(testApp, ctx, common.BytesToAddress(nonReserve), uint256.NewInt(1)))
+	require.Equal(t, int64(1), testApp.BankKeeper.GetBalance(ctx, nonReserve, appparams.BaseDenom).Amount.Int64())
+
+	err = setEVMBalanceWithTxCache(testApp, ctx, common.BytesToAddress(reserve), uint256.NewInt(1))
 	require.ErrorIs(t, err, bextypes.ErrDirectReserveTransfer)
 	require.Equal(t, int64(3), testApp.BankKeeper.GetBalance(ctx, reserve, appparams.BaseDenom).Amount.Int64())
 
-	nonReserve := sdk.AccAddress(repeatedByteAddress(0x62))
-	require.NoError(t, testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(nonReserve), uint256.NewInt(3)))
-	require.Equal(t, int64(3), testApp.BankKeeper.GetBalance(ctx, nonReserve, appparams.BaseDenom).Amount.Int64())
-	require.NoError(t, testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(nonReserve), uint256.NewInt(1)))
-	require.NoError(t, testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(nonReserve), uint256.NewInt(1)))
-	require.Equal(t, int64(1), testApp.BankKeeper.GetBalance(ctx, nonReserve, appparams.BaseDenom).Amount.Int64())
+	proposerKey := sdksecp256k1.GenPrivKey()
+	proposerAddress := sdk.ValAddress(proposerKey.PubKey().Address())
+	proposerAddressString, err := testApp.StakingKeeper.ValidatorAddressCodec().BytesToString(proposerAddress)
+	require.NoError(t, err)
+	proposer, err := stakingtypes.NewValidator(
+		proposerAddressString,
+		proposerKey.PubKey(),
+		stakingtypes.Description{Moniker: "bex-evm-rollback-proposer"},
+	)
+	require.NoError(t, err)
+	require.NoError(t, testApp.StakingKeeper.SetValidator(ctx, proposer))
+	require.NoError(t, testApp.StakingKeeper.SetValidatorByConsAddr(ctx, proposer))
+	ctx = ctx.WithBlockHeader(cmtproto.Header{
+		ChainID:         appparams.SDKChainID,
+		Height:          1,
+		Time:            time.Unix(1_700_000_000, 0),
+		ProposerAddress: proposerKey.PubKey().Address(),
+	})
 
-	err = testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(reserve), uint256.NewInt(1))
+	evmParams := evmtypes.DefaultParams()
+	evmParams.EvmDenom = appparams.BaseDenom
+	evmParams.ExtendedDenomOptions = &evmtypes.ExtendedDenomOptions{ExtendedDenom: appparams.BaseDenom}
+	require.NoError(t, testApp.EVMKeeper.SetParams(ctx, evmParams))
+	feeMarketParams := feemarkettypes.DefaultParams()
+	feeMarketParams.NoBaseFee = true
+	feeMarketParams.BaseFee = sdkmath.LegacyZeroDec()
+	feeMarketParams.MinGasPrice = sdkmath.LegacyOneDec()
+	require.NoError(t, testApp.FeeMarketKeeper.SetParams(ctx, feeMarketParams))
+
+	payerKeyBytes := make([]byte, ethsecp256k1.PrivKeySize)
+	payerKeyBytes[len(payerKeyBytes)-1] = 1
+	payerKey := &ethsecp256k1.PrivKey{Key: payerKeyBytes}
+	payerEVMAddress := common.BytesToAddress(payerKey.PubKey().Address())
+	payerAddress := sdk.AccAddress(payerEVMAddress.Bytes())
+	payerFunding := sdk.NewCoins(sdk.NewInt64Coin(appparams.BaseDenom, 10))
+	require.NoError(t, testApp.BankKeeper.MintCoins(ctx, minttypes.ModuleName, payerFunding))
+	require.NoError(t, testApp.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, payerAddress, payerFunding))
+
+	reserveEVMAddress := common.BytesToAddress(reserve)
+	evmChainID := new(big.Int).Set(evmtypes.GetEthChainConfig().ChainID)
+	evmMessage := evmtypes.NewTx(&evmtypes.EvmTxArgs{
+		ChainID:  evmChainID,
+		Nonce:    0,
+		To:       &reserveEVMAddress,
+		Amount:   big.NewInt(1),
+		GasLimit: 21_000,
+		GasPrice: big.NewInt(0),
+	})
+	evmMessage.From = payerEVMAddress.Bytes()
+	require.NoError(t, evmMessage.Sign(
+		gethtypes.LatestSignerForChainID(evmChainID),
+		evmtesttx.NewSigner(payerKey),
+	))
+	supplyBeforeEVMTransaction := testApp.BankKeeper.GetSupply(ctx, appparams.BaseDenom)
+	payerBeforeEVMTransaction := testApp.BankKeeper.GetBalance(ctx, payerAddress, appparams.BaseDenom)
+	executionCtx := ctx.WithGasMeter(evmtypes.NewInfiniteGasMeterWithLimit(21_000))
+	_, err = testApp.EVMKeeper.ApplyTransaction(executionCtx, evmMessage.AsTransaction())
 	require.ErrorIs(t, err, bextypes.ErrDirectReserveTransfer)
+	require.Equal(t, supplyBeforeEVMTransaction, testApp.BankKeeper.GetSupply(ctx, appparams.BaseDenom))
+	require.Equal(t, payerBeforeEVMTransaction, testApp.BankKeeper.GetBalance(ctx, payerAddress, appparams.BaseDenom))
 	require.Equal(t, int64(3), testApp.BankKeeper.GetBalance(ctx, reserve, appparams.BaseDenom).Amount.Int64())
 }
 
@@ -456,7 +527,6 @@ func TestBexRegistrationReclaimsPrecreatedKeylessVestingReserve(t *testing.T) {
 }
 
 func TestBexFeeCustodyBoundariesAcrossBankAndEVM(t *testing.T) {
-	configureTestEVM()
 	testApp := NewApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
@@ -621,12 +691,12 @@ func TestBexFeeCustodyBoundariesAcrossBankAndEVM(t *testing.T) {
 	require.Equal(t, int64(2), testApp.BankKeeper.GetBalance(ctx, moduleAddr, appparams.BaseDenom).Amount.Int64())
 	require.Equal(t, int64(2), testApp.BankKeeper.GetBalance(ctx, recipient, appparams.BaseDenom).Amount.Int64())
 
-	// Cosmos EVM v0.7.1 rejects every module-account balance change before the
+	// Cosmos EVM v0.6.1 rejects every module-account balance change before the
 	// bank adapter; both decreases and increases must therefore be unauthorized.
-	err = testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(moduleAddr), uint256.NewInt(1))
+	err = setEVMBalanceWithTxCache(testApp, ctx, common.BytesToAddress(moduleAddr), uint256.NewInt(1))
 	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
 	require.Equal(t, int64(2), testApp.BankKeeper.GetBalance(ctx, moduleAddr, appparams.BaseDenom).Amount.Int64())
-	err = testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(moduleAddr), uint256.NewInt(3))
+	err = setEVMBalanceWithTxCache(testApp, ctx, common.BytesToAddress(moduleAddr), uint256.NewInt(3))
 	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
 	require.Equal(t, int64(2), testApp.BankKeeper.GetBalance(ctx, moduleAddr, appparams.BaseDenom).Amount.Int64())
 
@@ -649,7 +719,7 @@ func TestBexFeeCustodyBoundariesAcrossBankAndEVM(t *testing.T) {
 	)
 	require.ErrorIs(t, err, bextypes.ErrInsufficientAvailableFees, "surplus must not become withdrawable")
 	require.Equal(t, int64(3), testApp.BankKeeper.GetBalance(ctx, moduleAddr, appparams.BaseDenom).Amount.Int64())
-	err = testApp.EVMKeeper.SetBalance(ctx, common.BytesToAddress(reserveAddr), uint256.NewInt(0))
+	err = setEVMBalanceWithTxCache(testApp, ctx, common.BytesToAddress(reserveAddr), uint256.NewInt(0))
 	require.ErrorIs(t, err, bextypes.ErrDirectReserveTransfer)
 	require.Equal(t, int64(1), testApp.BankKeeper.GetBalance(ctx, reserveAddr, appparams.BaseDenom).Amount.Int64())
 	require.NoError(t, testApp.BexKeeper.AssertFeeSolvency(ctx))
@@ -663,6 +733,20 @@ func TestBexFeeCustodyBoundariesAcrossBankAndEVM(t *testing.T) {
 	require.NotEqual(t, -1, bankIndex)
 	require.NotEqual(t, -1, bexIndex)
 	require.Less(t, bankIndex, bexIndex)
+}
+
+func setEVMBalanceWithTxCache(
+	app *App,
+	ctx sdk.Context,
+	address common.Address,
+	amount *uint256.Int,
+) error {
+	cacheCtx, write := ctx.CacheContext()
+	if err := app.EVMKeeper.SetBalance(cacheCtx, address, amount); err != nil {
+		return err
+	}
+	write()
+	return nil
 }
 
 func TestBexInitGenesisAuditsActualBankBacking(t *testing.T) {

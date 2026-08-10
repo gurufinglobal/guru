@@ -3,8 +3,15 @@ package keepers
 import (
 	"fmt"
 
+	storetypes "cosmossdk.io/store/types"
+	evidencekeeper "cosmossdk.io/x/evidence/keeper"
+	evidencetypes "cosmossdk.io/x/evidence/types"
+	"cosmossdk.io/x/feegrant"
+	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
+	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -14,20 +21,16 @@ import (
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	precompiletypes "github.com/cosmos/evm/precompiles/types"
 	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
@@ -37,10 +40,12 @@ import (
 	ibccallbackskeeper "github.com/cosmos/evm/x/ibc/callbacks/keeper"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	transferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
-	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
+	transferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bexkeeper "github.com/gurufinglobal/guru/v3/x/bex/keeper"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
@@ -56,11 +61,8 @@ import (
 )
 
 type AppKeepers struct {
-	kvKeys  map[string]*storetypes.KVStoreKey
-	tKeys   map[string]*storetypes.TransientStoreKey
-	objKeys map[string]*storetypes.ObjectStoreKey
-
-	cosmosVirtualFeeCollection bool
+	kvKeys map[string]*storetypes.KVStoreKey
+	tKeys  map[string]*storetypes.TransientStoreKey
 
 	// cosmos sdk keepers
 	AccountKeeper         authkeeper.AccountKeeper
@@ -69,6 +71,7 @@ type AppKeepers struct {
 	CustomStakingKeeper   *customstakingkeeper.Keeper
 	SlashingKeeper        slashingkeeper.Keeper
 	MintKeeper            mintkeeper.Keeper
+	ParamsKeeper          paramskeeper.Keeper //nolint:staticcheck // IBC Go v10 requires the deprecated x/params keeper.
 	DistrKeeper           distrkeeper.Keeper
 	GovKeeper             govkeeper.Keeper
 	UpgradeKeeper         *upgradekeeper.Keeper
@@ -84,7 +87,7 @@ type AppKeepers struct {
 
 	// IBC keepers
 	IBCKeeper      *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	TransferKeeper *transferkeeper.Keeper
+	TransferKeeper transferkeeper.Keeper
 	TranswapKeeper transwapkeeper.Keeper
 	CallbackKeeper ibccallbackskeeper.ContractKeeper
 
@@ -98,7 +101,7 @@ type AppKeepers struct {
 func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	appKeepers := &AppKeepers{}
 
-	// Set keys KVStoreKey, ObjectStoreKey
+	// Set persistent and transient store keys.
 	appKeepers.GenerateKeys()
 
 	if cfg.BaseApp == nil {
@@ -145,9 +148,6 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		authority,
 		cfg.Logger,
 	)
-	appKeepers.BankKeeper = appKeepers.BankKeeper.WithObjStoreKey(appKeepers.objKeys[banktypes.ObjectStoreKey])
-	appKeepers.EnableCosmosVirtualFeeCollection()
-
 	appKeepers.StakingKeeper = stakingkeeper.NewKeeper(
 		cfg.AppCodec,
 		runtime.NewKVStoreService(appKeepers.kvKeys[stakingtypes.StoreKey]),
@@ -240,10 +240,25 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		cfg.BaseApp,
 		authority,
 	)
+	// IBC v10 still reads its migrated parameters through x/params. This Amino
+	// codec is isolated to those legacy subspaces and is never attached to the
+	// app TxConfig or client transaction context.
+	paramsAmino := codec.NewLegacyAmino()
+	appKeepers.ParamsKeeper = paramskeeper.NewKeeper( //nolint:staticcheck // IBC Go v10 requires legacy parameter subspaces.
+		cfg.AppCodec,
+		paramsAmino,
+		appKeepers.kvKeys[paramstypes.StoreKey],
+		appKeepers.tKeys[paramstypes.TStoreKey],
+	)
+	ibcKeyTable := ibcclienttypes.ParamKeyTable()
+	ibcKeyTable.RegisterParamSet(&ibcconnectiontypes.Params{})
+	ibcSubspace := appKeepers.ParamsKeeper.Subspace(ibcexported.ModuleName).WithKeyTable(ibcKeyTable)
+	transferSubspace := appKeepers.ParamsKeeper.Subspace(ibctransfertypes.ModuleName).WithKeyTable(ibctransfertypes.ParamKeyTable())
 
 	appKeepers.IBCKeeper = ibckeeper.NewKeeper(
 		cfg.AppCodec,
 		runtime.NewKVStoreService(appKeepers.kvKeys[ibcexported.StoreKey]),
+		ibcSubspace,
 		appKeepers.UpgradeKeeper,
 		authority,
 	)
@@ -264,11 +279,11 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		runtime.NewKVStoreService(appKeepers.kvKeys[govtypes.StoreKey]),
 		appKeepers.AccountKeeper,
 		appKeepers.BankKeeper,
+		appKeepers.StakingKeeper,
 		appKeepers.DistrKeeper,
 		cfg.BaseApp.MsgServiceRouter(),
 		govtypes.DefaultConfig(),
 		authority,
-		govkeeper.NewDefaultCalculateVoteResultsAndVotingPower(appKeepers.StakingKeeper),
 	)
 	appKeepers.GovKeeper = *govKeeper.SetHooks(govtypes.NewMultiGovHooks())
 
@@ -286,20 +301,23 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		cfg.AppCodec,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		appKeepers.kvKeys[feemarkettypes.StoreKey],
+		appKeepers.tKeys[feemarkettypes.TransientKey],
 	)
 	appKeepers.ConstitutionKeeper.SetFeeMarketKeeper(appKeepers.FeeMarketKeeper)
 	appKeepers.OracleKeeper.SetHooks(oracletypes.NewMultiOracleHooks(&appKeepers.ConstitutionKeeper))
 
 	appKeepers.TransferKeeper = transferkeeper.NewKeeper(
 		cfg.AppCodec,
-		evmaddress.NewEvmCodec(cfg.AccountAddressPrefix),
 		runtime.NewKVStoreService(appKeepers.kvKeys[ibctransfertypes.StoreKey]),
+		transferSubspace,
+		appKeepers.IBCKeeper.ChannelKeeper,
 		appKeepers.IBCKeeper.ChannelKeeper,
 		cfg.BaseApp.MsgServiceRouter(),
 		appKeepers.AccountKeeper,
 		appKeepers.BankKeeper,
 		authority,
 	)
+	appKeepers.TransferKeeper.SetAddressCodec(evmaddress.NewEvmCodec(cfg.AccountAddressPrefix))
 
 	appKeepers.TranswapKeeper = transwapkeeper.NewKeeper(
 		cfg.AppCodec,
@@ -318,30 +336,33 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		appKeepers.IBCKeeper.ClientKeeper,
 	)
 
-	nonTransientKeys := appKeepers.GetNonTransientKeys()
 	appKeepers.EVMKeeper = evmkeeper.NewKeeper(
 		cfg.AppCodec,
 		appKeepers.kvKeys[evmtypes.StoreKey],
-		appKeepers.objKeys[evmtypes.ObjectKey],
-		nonTransientKeys,
+		appKeepers.tKeys[evmtypes.TransientKey],
+		appKeepers.kvKeys,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		appKeepers.AccountKeeper,
-		newBEXRestrictedEVMBankKeeper(appKeepers.BankKeeper, appKeepers.BexKeeper),
+		appKeepers.BankKeeper,
 		appKeepers.StakingKeeper,
 		appKeepers.FeeMarketKeeper,
 		&appKeepers.ConsensusParamsKeeper,
 		&appKeepers.Erc20Keeper,
 		cfg.EVMChainID,
 		cfg.EVMTracer,
-	).WithStaticPrecompiles(
+	).WithDefaultEvmCoinInfo(evmtypes.EvmCoinInfo{
+		Denom:         appparams.BaseDenom,
+		ExtendedDenom: appparams.BaseDenom,
+		DisplayDenom:  appparams.DisplayDenom,
+		Decimals:      18,
+	}).WithStaticPrecompiles(
 		precompiletypes.DefaultStaticPrecompiles(
 			*appKeepers.StakingKeeper,
 			appKeepers.DistrKeeper,
 			appKeepers.BankKeeper,
 			&appKeepers.Erc20Keeper,
-			appKeepers.TransferKeeper,
+			&appKeepers.TransferKeeper,
 			appKeepers.IBCKeeper.ChannelKeeper,
-			appKeepers.IBCKeeper.ClientKeeper,
 			appKeepers.GovKeeper,
 			appKeepers.SlashingKeeper,
 			cfg.AppCodec,
@@ -350,7 +371,6 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 			precompiletypes.WithConsensusAddrCodec(evmaddress.NewEvmCodec(cfg.ConsensusAddressPrefix)),
 		),
 	)
-	appKeepers.EVMKeeper.EnableVirtualFeeCollection()
 
 	appKeepers.Erc20Keeper = erc20keeper.NewKeeper(
 		appKeepers.kvKeys[erc20types.StoreKey],
@@ -360,7 +380,7 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 		appKeepers.BankKeeper,
 		appKeepers.EVMKeeper,
 		appKeepers.StakingKeeper,
-		appKeepers.TransferKeeper,
+		&appKeepers.TransferKeeper,
 	)
 
 	appKeepers.CallbackKeeper = ibccallbackskeeper.NewKeeper(
@@ -370,21 +390,4 @@ func NewAppKeepers(cfg appparams.KeepersInitConfig) *AppKeepers {
 	)
 
 	return appKeepers
-}
-
-// EnableCosmosVirtualFeeCollection switches only the Cosmos ante fee path to
-// virtual bank collection. EVM fee collection is configured independently on
-// the EVM keeper. Call this only during single-threaded application assembly;
-// the ante handler snapshots the value before transaction execution starts.
-func (appKeepers *AppKeepers) EnableCosmosVirtualFeeCollection() {
-	if appKeepers.BankKeeper == nil {
-		panic("bank keeper must be initialized before enabling Cosmos virtual fee collection")
-	}
-	appKeepers.cosmosVirtualFeeCollection = true
-}
-
-// CosmosVirtualFeeCollectionEnabled reports the binary-selected Cosmos fee
-// policy used when the application constructs its ante handler.
-func (appKeepers *AppKeepers) CosmosVirtualFeeCollectionEnabled() bool {
-	return appKeepers.cosmosVirtualFeeCollection
 }

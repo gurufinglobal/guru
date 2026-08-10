@@ -3,7 +3,6 @@ package keeper
 import (
 	"testing"
 
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	"github.com/stretchr/testify/require"
 )
@@ -91,16 +90,13 @@ func TestMsgServerUpdateParams(t *testing.T) {
 	}
 }
 
-func TestMsgServerUpdateParamsIgnoresConsensusParamsAuthority(t *testing.T) {
+func TestMsgServerUpdateParamsRejectsNonGovAuthority(t *testing.T) {
 	f := setupKeeperFixture(t)
-	consensusAuthority := testAddress(t, f.keeper.accountCodec, 0x08)
-	f.ctx = f.ctx.WithConsensusParams(cmtproto.ConsensusParams{
-		Authority: &cmtproto.AuthorityParams{Authority: consensusAuthority},
-	})
+	nonGovAuthority := testAddress(t, f.keeper.accountCodec, 0x08)
 	msgServer := NewMsgServer(&f.keeper)
 
 	_, err := msgServer.UpdateParams(f.ctx, &constitutiontypes.MsgUpdateParams{
-		Authority: consensusAuthority,
+		Authority: nonGovAuthority,
 		Params:    testParams("12"),
 	})
 	require.Error(t, err)
@@ -243,13 +239,10 @@ func TestMsgServerModeratorMessagesIgnoreConsensusParamsAuthority(t *testing.T) 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			f := setupKeeperFixture(t)
-			consensusAuthority := testAddress(t, f.keeper.accountCodec, 0x0b)
-			f.ctx = f.ctx.WithConsensusParams(cmtproto.ConsensusParams{
-				Authority: &cmtproto.AuthorityParams{Authority: consensusAuthority},
-			})
+			unauthorized := testAddress(t, f.keeper.accountCodec, 0x0b)
 			msgServer := NewMsgServer(&f.keeper)
 
-			err := tc.run(msgServer, f, consensusAuthority)
+			err := tc.run(msgServer, f, unauthorized)
 			require.Error(t, err)
 			require.ErrorIs(t, err, constitutiontypes.ErrInvalidAuthority)
 

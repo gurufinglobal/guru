@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cosmosevmante "github.com/cosmos/evm/ante/evm"
@@ -568,7 +568,7 @@ func requireFeeCheckerParity(
 	return local
 }
 
-func TestDynamicFeeCheckerCosmosEVMV070Parity(t *testing.T) {
+func TestDynamicFeeCheckerCosmosEVMV061Parity(t *testing.T) {
 	t.Run("effective fee and nominal priority", func(t *testing.T) {
 		params := parityFeeMarketParams("10")
 		tip := sdkmath.LegacyNewDec(5).MulInt(evmtypes.DefaultPriorityReduction)
@@ -628,9 +628,10 @@ func TestDynamicFeeCheckerCosmosEVMV070Parity(t *testing.T) {
 		)
 	})
 
-	t.Run("disabled base fee preserves the zero-base special case", func(t *testing.T) {
-		params := parityFeeMarketParams("9")
+	t.Run("no base fee policy preserves the zero-base special case", func(t *testing.T) {
+		params := parityFeeMarketParams("0")
 		params.NoBaseFee = true
+		params.MinGasPrice = sdkmath.LegacyNewDec(9)
 		tx := parityFeeTx{
 			gas:        3,
 			fee:        parityFee(3),

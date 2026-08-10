@@ -58,8 +58,6 @@ func validatorUpdateKey(update abci.ValidatorUpdate) string {
 		return "ed25519:" + string(pubKey.Ed25519)
 	case *cryptoproto.PublicKey_Secp256K1:
 		return "secp256k1:" + string(pubKey.Secp256K1)
-	case *cryptoproto.PublicKey_Bls12381:
-		return "bls12381:" + string(pubKey.Bls12381)
 	default:
 		panic("unknown validator update public key type")
 	}

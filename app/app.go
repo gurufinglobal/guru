@@ -9,11 +9,10 @@ import (
 
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	"github.com/ethereum/go-ethereum/common"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -66,6 +65,7 @@ type App struct {
 	appCodec          codec.Codec
 	interfaceRegistry codectypes.InterfaceRegistry
 	txConfig          client.TxConfig
+	clientCtx         client.Context
 
 	pendingTxListeners []evmante.PendingTxListener
 
@@ -100,11 +100,6 @@ func NewApp(
 		appparams.Bech32PrefixAccAddr,
 		appparams.Bech32PrefixValAddr,
 		appparams.Bech32PrefixConsAddr,
-	)
-
-	baseAppOptions = append(
-		baseAppOptions,
-		baseapp.SetOptimisticExecution(),
 	)
 
 	bApp := baseapp.NewBaseApp(
@@ -164,7 +159,7 @@ func NewApp(
 	}
 	app.configureOracleVoteExtensions(appOpts)
 	tmLightClientModule := app.configureIBCRouters()
-	modules := app.configureModuleManager(tmLightClientModule)
+	app.configureModuleManager(tmLightClientModule)
 	app.mountStoresAndSetABCIHandlers()
 
 	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
@@ -186,15 +181,7 @@ func NewApp(
 			logger.Error("error on loading last version", "err", err)
 			os.Exit(1)
 		}
-
-		// Ensure EVM globals are hydrated before servicing RPC/query traffic after restart.
-		modules.evm.HydrateGlobals(app.NewContextLegacy(true, cmtproto.Header{
-			Height:  app.LastBlockHeight(),
-			ChainID: app.ChainID(),
-		}))
 	}
-
-	app.configureVMRunner(bApp, appOpts, encodingConfig.TxConfig.TxDecoder(), appKeepers.GetNonTransientKeys())
 
 	return app
 }
@@ -215,7 +202,36 @@ func (app *App) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
 }
 
 func (app *App) FinalizeBlock(req *abci.RequestFinalizeBlock) (res *abci.ResponseFinalizeBlock, err error) {
-	return app.BaseApp.FinalizeBlock(req)
+	if req == nil {
+		return app.BaseApp.FinalizeBlock(req)
+	}
+
+	// SDK v0.53 rejects a canonical zero-message Oracle record before ante
+	// handling. PreBlock validates and applies the record, then removes only that
+	// first raw transaction from the execution list. Restore the caller's request
+	// and its successful result slot after BaseApp executes the remaining txs.
+	originalTxs := req.Txs
+	defer func() { req.Txs = originalTxs }()
+
+	res, err = app.BaseApp.FinalizeBlock(req)
+	if err != nil || res == nil {
+		return res, err
+	}
+	if len(originalTxs) == 0 || len(req.Txs)+1 != len(originalTxs) || !oracleabci.IsProposalTx(originalTxs[0]) {
+		return res, nil
+	}
+	if len(res.TxResults) != len(req.Txs) {
+		return nil, fmt.Errorf(
+			"oracle proposal result alignment: got %d results for %d executable transactions",
+			len(res.TxResults),
+			len(req.Txs),
+		)
+	}
+
+	results := make([]*abci.ExecTxResult, 0, len(originalTxs))
+	results = append(results, &abci.ExecTxResult{})
+	res.TxResults = append(results, res.TxResults...)
+	return res, nil
 }
 
 func (app *App) Configurator() module.Configurator {
@@ -242,8 +258,12 @@ func (app *App) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.
 
 func (app *App) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
 	if app.OracleProposalHandler != nil {
+		hasPayload := len(req.Txs) > 0 && oracleabci.IsProposalTx(req.Txs[0])
 		if err := app.OracleProposalHandler.ApplyProposalPayload(ctx, req); err != nil {
 			return nil, err
+		}
+		if hasPayload {
+			req.Txs = req.Txs[1:]
 		}
 	}
 	return app.ModuleManager.PreBlock(ctx)
@@ -290,9 +310,7 @@ func (app *App) RegisterTendermintService(clientCtx client.Context) {
 }
 
 func (app *App) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
-	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg, func() int64 {
-		return app.CommitMultiStore().EarliestVersion()
-	})
+	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg)
 }
 
 // Close unsubscribes from the CometBFT event bus (if set) and closes the mempool and underlying BaseApp.
@@ -336,6 +354,12 @@ func (app *App) AutoCliOpts() autocli.AppOptions {
 // RegisterPendingTxListener allows JSON-RPC server to subscribe to pending tx callbacks.
 func (app *App) RegisterPendingTxListener(listener func(common.Hash)) {
 	app.pendingTxListeners = append(app.pendingTxListeners, listener)
+}
+
+// SetClientCtx supplies the live CometBFT client used when the v0.6 EVM
+// mempool promotes queued Ethereum transactions for rebroadcast.
+func (app *App) SetClientCtx(clientCtx client.Context) {
+	app.clientCtx = clientCtx
 }
 
 func (app *App) GetMempool() sdkmempool.ExtMempool {

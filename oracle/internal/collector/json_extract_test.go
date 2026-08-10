@@ -172,7 +172,7 @@ func BenchmarkExtractJSONNumericTextMaximumBody(b *testing.B) {
 	b.ReportAllocs()
 	b.ReportMetric(allocations, "allocs/extract")
 	b.ResetTimer()
-	for b.Loop() {
+	for i := 0; i < b.N; i++ {
 		value, err := extractJSONNumericText(context.Background(), input, "/value")
 		if err != nil || value != "1" {
 			b.Fatalf("value = %q, error = %v", value, err)

@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"io"
 	"os"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	dbm "github.com/cosmos/cosmos-db"
@@ -90,8 +91,8 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
-	sdkAppCreator := func(l log.Logger, d dbm.DB, ao servertypes.AppOptions) servertypes.Application {
-		return newApp(l, d, ao)
+	sdkAppCreator := func(l log.Logger, d dbm.DB, w io.Writer, ao servertypes.AppOptions) servertypes.Application {
+		return newApp(l, d, w, ao)
 	}
 
 	rootCmd.AddCommand(

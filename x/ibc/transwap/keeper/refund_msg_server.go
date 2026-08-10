@@ -27,8 +27,12 @@ func (m MsgServer) UpdateParams(
 		return nil, types.ErrInvalidParams.Wrap("empty request")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := sdk.ValidateAuthority(ctx, m.keeper.GetAuthority(), req.GetAuthority()); err != nil {
-		return nil, types.ErrInvalidAuthority.Wrap(err.Error())
+	if expected := m.keeper.GetAuthority(); expected != req.GetAuthority() {
+		return nil, types.ErrInvalidAuthority.Wrapf(
+			"invalid authority: expected %s, got %s",
+			expected,
+			req.GetAuthority(),
+		)
 	}
 	if err := m.keeper.SetParams(ctx, req.GetParams()); err != nil {
 		return nil, err

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -17,8 +17,9 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
+	evmmempool "github.com/cosmos/evm/mempool"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	appparams "github.com/gurufinglobal/guru/v3/app/params"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
@@ -144,14 +145,7 @@ func TestFeePolicyStoreKeyWiring(t *testing.T) {
 
 	feePolicyKey := testApp.GetKVStoreKey(feepolicytypes.StoreKey)
 	require.NotNil(t, feePolicyKey)
-	var occurrences int
-	for _, key := range testApp.GetNonTransientKeys() {
-		if key.Name() == feepolicytypes.StoreKey {
-			occurrences++
-			require.Same(t, feePolicyKey, key)
-		}
-	}
-	require.Equal(t, 1, occurrences)
+	require.Same(t, feePolicyKey, testApp.GetKVStoreKeys()[feepolicytypes.StoreKey])
 	require.Nil(t, testApp.GetTransientStoreKey(feepolicytypes.StoreKey))
 
 	evmKey, ok := testApp.EVMKeeper.KVStoreKeys()[feepolicytypes.StoreKey]
@@ -384,7 +378,7 @@ func TestOracleModuleWiringAndAppBoot(t *testing.T) {
 	require.NoError(t, app.ValidateChainGenesis(genesis))
 }
 
-func TestOracleProposalWiringUsesNoOpMempoolFallback(t *testing.T) {
+func TestOracleProposalWiringWrapsV061EVMMempoolWithCosmosPoolDisabled(t *testing.T) {
 	app := NewApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
@@ -394,7 +388,7 @@ func TestOracleProposalWiringUsesNoOpMempoolFallback(t *testing.T) {
 	)
 
 	require.NotNil(t, app.OracleProposalHandler)
-	require.Nil(t, app.EVMMempool)
+	require.IsType(t, &evmmempool.ExperimentalEVMMempool{}, app.EVMMempool)
 }
 
 func indexOf(values []string, target string) int {

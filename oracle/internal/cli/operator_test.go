@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net"
@@ -116,7 +117,7 @@ func TestLiveHistorySummaryUsesOneBoundedRequestPerFeed(t *testing.T) {
 			{Symbol: "ETH/USD", Sources: make([]domain.SourcePlan, 3)},
 		},
 	}
-	view, err := liveHistorySummary(t.Context(), pair)
+	view, err := liveHistorySummary(context.Background(), pair)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +140,7 @@ func TestLiveHistorySummaryProbesStatusWhenNoFeedsAreConfigured(t *testing.T) {
 			AdminSocket: filepath.Join(shortAdminDirectory(t), "missing.sock"),
 		},
 	}
-	if _, err := liveHistorySummary(t.Context(), pair); err == nil || !isAdminTransportError(err) {
+	if _, err := liveHistorySummary(context.Background(), pair); err == nil || !isAdminTransportError(err) {
 		t.Fatalf("stopped zero-feed summary error = %v", err)
 	}
 
@@ -172,7 +173,7 @@ func TestLiveHistorySummaryProbesStatusWhenNoFeedsAreConfigured(t *testing.T) {
 		<-done
 	})
 	pair.Paths.AdminSocket = socket
-	view, err := liveHistorySummary(t.Context(), pair)
+	view, err := liveHistorySummary(context.Background(), pair)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	"cosmossdk.io/log/v2"
+	"cosmossdk.io/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"

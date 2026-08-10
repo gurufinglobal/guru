@@ -8,7 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	host "github.com/cosmos/ibc-go/v11/modules/core/24-host"
+	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 )

@@ -1,27 +1,25 @@
 package keepers
 
 import (
-	"slices"
-	"strings"
-
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	storetypes "cosmossdk.io/store/types"
+	evidencetypes "cosmossdk.io/x/evidence/types"
+	feegrant "cosmossdk.io/x/feegrant"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	feegrant "github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
-	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	constitutiontypes "github.com/gurufinglobal/guru/v3/x/constitution/types"
 	feepolicytypes "github.com/gurufinglobal/guru/v3/x/feepolicy/types"
@@ -38,6 +36,7 @@ func (ak *AppKeepers) GenerateKeys() {
 		distrtypes.StoreKey,
 		slashingtypes.StoreKey,
 		govtypes.StoreKey,
+		paramstypes.StoreKey,
 		consensusparamtypes.StoreKey,
 		upgradetypes.StoreKey,
 		feegrant.StoreKey,
@@ -56,11 +55,11 @@ func (ak *AppKeepers) GenerateKeys() {
 		bextypes.StoreKey,
 		feepolicytypes.StoreKey,
 	)
-	ak.objKeys = storetypes.NewObjectStoreKeys(
-		banktypes.ObjectStoreKey,
-		evmtypes.ObjectKey,
+	ak.tKeys = storetypes.NewTransientStoreKeys(
+		paramstypes.TStoreKey,
+		evmtypes.TransientKey,
+		feemarkettypes.TransientKey,
 	)
-	ak.tKeys = storetypes.NewTransientStoreKeys()
 }
 
 func (ak *AppKeepers) GetKVStoreKey(key string) *storetypes.KVStoreKey {
@@ -71,43 +70,10 @@ func (ak *AppKeepers) GetKVStoreKeys() map[string]*storetypes.KVStoreKey {
 	return ak.kvKeys
 }
 
-func (ak *AppKeepers) GetObjectStoreKey(key string) *storetypes.ObjectStoreKey {
-	return ak.objKeys[key]
-}
-
-func (ak *AppKeepers) GetObjectStoreKeys() map[string]*storetypes.ObjectStoreKey {
-	return ak.objKeys
-}
-
 func (ak *AppKeepers) GetTransientStoreKey(key string) *storetypes.TransientStoreKey {
 	return ak.tKeys[key]
 }
 
 func (ak *AppKeepers) GetTransientStoreKeys() map[string]*storetypes.TransientStoreKey {
 	return ak.tKeys
-}
-
-func (ak *AppKeepers) GetNonTransientKeys() []storetypes.StoreKey {
-	names := make([]string, 0, len(ak.kvKeys)+len(ak.objKeys))
-	for name := range ak.kvKeys {
-		names = append(names, name)
-	}
-	for name := range ak.objKeys {
-		names = append(names, name)
-	}
-	slices.SortStableFunc(names, func(a, b string) int {
-		return strings.Compare(a, b)
-	})
-
-	nonTransientKeys := make([]storetypes.StoreKey, 0, len(names))
-	for _, name := range names {
-		if key, ok := ak.kvKeys[name]; ok {
-			nonTransientKeys = append(nonTransientKeys, key)
-			continue
-		}
-		if key, ok := ak.objKeys[name]; ok {
-			nonTransientKeys = append(nonTransientKeys, key)
-		}
-	}
-	return nonTransientKeys
 }

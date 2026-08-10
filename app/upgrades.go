@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	bextypes "github.com/gurufinglobal/guru/v3/x/bex/types"
 	transwaptypes "github.com/gurufinglobal/guru/v3/x/ibc/transwap/types"
 )
