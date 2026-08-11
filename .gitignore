@@ -8,6 +8,7 @@
 # Build and test output
 /build/
 /coverage.txt
+/.local/
 
 # Preserved dependency caches are not source files.
 **/node_modules/

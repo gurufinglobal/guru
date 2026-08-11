@@ -4,11 +4,13 @@ import (
 	"sync"
 
 	txsigning "cosmossdk.io/x/tx/signing"
+	"cosmossdk.io/x/tx/signing/textual"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	evmaddress "github.com/cosmos/evm/encoding/address"
@@ -48,8 +50,27 @@ func MakeEncodingConfig() (EncodingConfig, error) {
 	return encodingConfig, encodingConfigErr
 }
 
-func buildEncodingConfig() (EncodingConfig, error) {
-	signingOptions := txsigning.Options{
+// NewTextualTxConfig creates a transaction configuration with
+// SIGN_MODE_TEXTUAL. Validators supply a deterministic BankKeeper-backed
+// metadata query, while online clients supply a gRPC/ABCI-backed query.
+func NewTextualTxConfig(metadataQuery textual.CoinMetadataQueryFn) (client.TxConfig, error) {
+	encoding, err := MakeEncodingConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	enabledSignModes := append([]signingtypes.SignMode(nil), authtx.DefaultSignModes...)
+	enabledSignModes = append(enabledSignModes, signingtypes.SignMode_SIGN_MODE_TEXTUAL)
+	return newTxConfig(
+		encoding.Codec,
+		encoding.InterfaceRegistry,
+		enabledSignModes,
+		metadataQuery,
+	)
+}
+
+func newSigningOptions() txsigning.Options {
+	return txsigning.Options{
 		FileResolver:          gogoproto.HybridResolver,
 		AddressCodec:          evmaddress.NewEvmCodec(config.Bech32PrefixAccAddr),
 		ValidatorAddressCodec: evmaddress.NewEvmCodec(config.Bech32PrefixValAddr),
@@ -58,6 +79,25 @@ func buildEncodingConfig() (EncodingConfig, error) {
 			erc20types.MsgConvertERC20CustomGetSigner.MsgType: erc20types.MsgConvertERC20CustomGetSigner.Fn,
 		},
 	}
+}
+
+func newTxConfig(
+	appCodec codec.Codec,
+	interfaceRegistry codectypes.InterfaceRegistry,
+	enabledSignModes []signingtypes.SignMode,
+	metadataQuery textual.CoinMetadataQueryFn,
+) (client.TxConfig, error) {
+	signingOptions := newSigningOptions()
+	return authtx.NewTxConfigWithOptions(appCodec, authtx.ConfigOptions{
+		EnabledSignModes:           enabledSignModes,
+		SigningOptions:             &signingOptions,
+		SigningContext:             interfaceRegistry.SigningContext(),
+		TextualCoinMetadataQueryFn: metadataQuery,
+	})
+}
+
+func buildEncodingConfig() (EncodingConfig, error) {
+	signingOptions := newSigningOptions()
 
 	interfaceRegistry, err := codectypes.NewInterfaceRegistryWithOptions(codectypes.InterfaceRegistryOptions{
 		ProtoFiles:     gogoproto.HybridResolver,
@@ -68,19 +108,18 @@ func buildEncodingConfig() (EncodingConfig, error) {
 	}
 
 	evmcodec.RegisterInterfaces(interfaceRegistry)
+	legacyAmino := codec.NewLegacyAmino()
+	evmcodec.RegisterLegacyAminoCodec(legacyAmino)
+	moduleBasics := NewBasicManager()
+	moduleBasics.RegisterInterfaces(interfaceRegistry)
+	moduleBasics.RegisterLegacyAminoCodec(legacyAmino)
 
 	appCodec := codec.NewProtoCodec(interfaceRegistry)
-	txConfig, err := authtx.NewTxConfigWithOptions(appCodec, authtx.ConfigOptions{
-		EnabledSignModes: authtx.DefaultSignModes,
-		SigningOptions:   &signingOptions,
-		SigningContext:   interfaceRegistry.SigningContext(),
-	})
+	txConfig, err := newTxConfig(appCodec, interfaceRegistry, authtx.DefaultSignModes, nil)
 	if err != nil {
 		return EncodingConfig{}, err
 	}
 
-	legacyAmino := codec.NewLegacyAmino()
-	evmcodec.RegisterLegacyAminoCodec(legacyAmino)
 	// Publish process-wide EIP-712 compatibility state only after every
 	// fallible encoding component has been built successfully.
 	eip712.SetEncodingConfig(legacyAmino, interfaceRegistry, config.EVMChainID)

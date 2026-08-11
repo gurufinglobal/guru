@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"sync"
 
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/x/evidence"
@@ -35,18 +34,22 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/evm/x/erc20"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
 	"github.com/cosmos/evm/x/feemarket"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	"github.com/cosmos/evm/x/vm"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	transfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
 	ibc "github.com/cosmos/ibc-go/v10/modules/core"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 )
-
-var registerModuleCodecsOnce sync.Once
 
 var (
 	preBlockerOrder = []string{
@@ -57,6 +60,8 @@ var (
 	beginBlockerOrder = []string{
 		minttypes.ModuleName,
 		ibcexported.ModuleName,
+		ibctransfertypes.ModuleName,
+		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
 		distrtypes.ModuleName,
@@ -78,8 +83,10 @@ var (
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		evmtypes.ModuleName,
+		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
 		ibcexported.ModuleName,
+		ibctransfertypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		minttypes.ModuleName,
@@ -102,6 +109,8 @@ var (
 		ibcexported.ModuleName,
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
+		erc20types.ModuleName,
+		ibctransfertypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		authz.ModuleName,
@@ -111,9 +120,19 @@ var (
 	}
 )
 
-func (app *App) configureIBCCore() ibctm.LightClientModule {
-	app.IBCKeeper.SetRouter(porttypes.NewRouter())
-	app.IBCKeeper.SetRouterV2(ibcapi.NewRouter())
+func (app *App) configureIBC() ibctm.LightClientModule {
+	var transferStack porttypes.IBCModule = transfer.NewIBCModule(app.TransferKeeper)
+	transferStack = erc20.NewIBCMiddleware(app.ERC20Keeper, transferStack)
+	ibcRouter := porttypes.NewRouter()
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
+
+	var transferStackV2 ibcapi.IBCModule = transferv2.NewIBCModule(app.TransferKeeper)
+	transferStackV2 = erc20v2.NewIBCMiddleware(transferStackV2, app.ERC20Keeper)
+	ibcRouterV2 := ibcapi.NewRouter()
+	ibcRouterV2.AddRoute(ibctransfertypes.ModuleName, transferStackV2)
+
+	app.IBCKeeper.SetRouter(ibcRouter)
+	app.IBCKeeper.SetRouterV2(ibcRouterV2)
 
 	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()
 	tmLightClient := ibctm.NewLightClientModule(app.AppCodec(), storeProvider)
@@ -122,24 +141,23 @@ func (app *App) configureIBCCore() ibctm.LightClientModule {
 }
 
 func (app *App) configureModules(tmLightClient ibctm.LightClientModule) error {
-	upstreamVMModule := vm.NewAppModule(
+	vmModule := vm.NewAppModule(
 		app.EVMKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.AccountKeeper.AddressCodec(),
 	)
-	vmModule := newGuardedVMAppModule(upstreamVMModule, app.installedPrecompiles)
 
 	modules := []appmodule.AppModule{
-		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app, app.TxConfig()),
+		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app, app.GetTxConfig()),
 		auth.NewAppModule(app.AppCodec(), app.AccountKeeper, authsimulation.RandomGenesisAccounts, nil),
 		bank.NewAppModule(app.AppCodec(), app.BankKeeper, app.AccountKeeper, nil),
 		feegrantmodule.NewAppModule(app.AppCodec(), app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.InterfaceRegistry()),
-		newGuardedGovAppModule(gov.NewAppModule(app.AppCodec(), &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil)),
-		newGuardedMintAppModule(mint.NewAppModule(app.AppCodec(), app.MintKeeper, app.AccountKeeper, nil, nil)),
+		gov.NewAppModule(app.AppCodec(), &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
+		mint.NewAppModule(app.AppCodec(), app.MintKeeper, app.AccountKeeper, nil, nil),
 		slashing.NewAppModule(app.AppCodec(), app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.InterfaceRegistry()),
 		distribution.NewAppModule(app.AppCodec(), app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
-		newGuardedStakingAppModule(staking.NewAppModule(app.AppCodec(), app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil)),
+		staking.NewAppModule(app.AppCodec(), app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(app.AppCodec(), app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.InterfaceRegistry()),
@@ -147,11 +165,10 @@ func (app *App) configureModules(tmLightClient ibctm.LightClientModule) error {
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		ibctm.NewAppModule(tmLightClient),
+		transfer.NewAppModule(app.TransferKeeper),
 		vmModule,
-		newGuardedFeeMarketAppModule(
-			feemarket.NewAppModule(app.FeeMarketKeeper),
-			app.FeeMarketKeeper,
-		),
+		feemarket.NewAppModule(app.FeeMarketKeeper),
+		erc20.NewAppModule(app.ERC20Keeper, app.AccountKeeper),
 	}
 
 	moduleMap, err := namedModuleMap(modules)
@@ -159,18 +176,7 @@ func (app *App) configureModules(tmLightClient ibctm.LightClientModule) error {
 		return err
 	}
 	app.ModuleManager = module.NewManagerFromMap(moduleMap)
-	app.BasicModuleManager = module.NewBasicManagerFromManager(
-		app.ModuleManager,
-		map[string]module.AppModuleBasic{
-			genutiltypes.ModuleName: genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
-			stakingtypes.ModuleName: staking.AppModuleBasic{},
-			govtypes.ModuleName:     gov.NewAppModuleBasic(nil),
-		},
-	)
-	registerModuleCodecsOnce.Do(func() {
-		app.BasicModuleManager.RegisterLegacyAminoCodec(app.LegacyAmino())
-		app.BasicModuleManager.RegisterInterfaces(app.InterfaceRegistry())
-	})
+	app.BasicModuleManager = NewBasicManager()
 
 	app.ModuleManager.SetOrderPreBlockers(preBlockerOrder...)
 	app.ModuleManager.SetOrderBeginBlockers(beginBlockerOrder...)
@@ -183,6 +189,36 @@ func (app *App) configureModules(tmLightClient ibctm.LightClientModule) error {
 		return fmt.Errorf("register module services: %w", err)
 	}
 	return nil
+}
+
+// NewBasicManager builds the stateless module surface used by both the
+// application and the CLI. Keeping this independent from App construction is
+// important: constructing a temporary EVM keeper in the root command would
+// consume Cosmos EVM's process-wide chain configuration before `start` creates
+// the real application.
+func NewBasicManager() module.BasicManager {
+	return module.NewBasicManager(
+		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+		auth.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		feegrantmodule.AppModuleBasic{},
+		gov.NewAppModuleBasic(nil),
+		mint.AppModuleBasic{},
+		slashing.AppModuleBasic{},
+		distribution.AppModuleBasic{},
+		staking.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
+		evidence.NewAppModuleBasic(),
+		authzmodule.AppModuleBasic{},
+		consensus.AppModuleBasic{},
+		vesting.AppModuleBasic{},
+		ibc.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
+		transfer.AppModuleBasic{},
+		vm.AppModuleBasic{},
+		feemarket.AppModuleBasic{},
+		erc20.AppModuleBasic{},
+	)
 }
 
 func namedModuleMap(modules []appmodule.AppModule) (map[string]appmodule.AppModule, error) {
@@ -200,19 +236,3 @@ func namedModuleMap(modules []appmodule.AppModule) (map[string]appmodule.AppModu
 	}
 	return moduleMap, nil
 }
-
-func copyModuleOrder(order []string) []string {
-	return append([]string(nil), order...)
-}
-
-// ModuleOrderPreBlockers returns a defensive copy of the consensus-critical order.
-func ModuleOrderPreBlockers() []string { return copyModuleOrder(preBlockerOrder) }
-
-// ModuleOrderBeginBlockers returns a defensive copy of the consensus-critical order.
-func ModuleOrderBeginBlockers() []string { return copyModuleOrder(beginBlockerOrder) }
-
-// ModuleOrderEndBlockers returns a defensive copy of the consensus-critical order.
-func ModuleOrderEndBlockers() []string { return copyModuleOrder(endBlockerOrder) }
-
-// ModuleOrderInitGenesis returns a defensive copy of the consensus-critical order.
-func ModuleOrderInitGenesis() []string { return copyModuleOrder(initGenesisOrder) }

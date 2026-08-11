@@ -33,10 +33,14 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	transferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
@@ -44,8 +48,8 @@ import (
 )
 
 // AppKeepers owns the stateful dependencies used by the Guru application.
-// ERC-20 conversion, IBC applications, and stateful Cosmos precompiles are not
-// part of the Stage C composition.
+// The IBC transfer dependency is wired so every v0.6.1 default static
+// precompile has a complete implementation even when it starts inactive.
 type AppKeepers struct {
 	keys storeKeys
 
@@ -62,14 +66,12 @@ type AppKeepers struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 
-	// IBCKeeper is wired for the upstream Cosmos EVM ante handler. Stage C does
-	// not expose an IBC application route such as ICS-20 transfer.
-	IBCKeeper *ibckeeper.Keeper
+	IBCKeeper      *ibckeeper.Keeper
+	TransferKeeper transferkeeper.Keeper
 
 	FeeMarketKeeper feemarketkeeper.Keeper
 	EVMKeeper       *evmkeeper.Keeper
-
-	installedPrecompiles installedStaticPrecompiles
+	ERC20Keeper     erc20keeper.Keeper
 }
 
 type keeperConfig struct {
@@ -95,7 +97,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	keepers := &AppKeepers{keys: keys}
 	keepers.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(consensusparamtypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(consensusparamtypes.StoreKey)),
 		authority,
 		runtime.EventService{},
 	)
@@ -103,7 +105,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 
 	keepers.AccountKeeper = authkeeper.NewAccountKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(authtypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(authtypes.StoreKey)),
 		authtypes.ProtoBaseAccount,
 		permissions,
 		accountCodec,
@@ -117,7 +119,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	}
 	keepers.BankKeeper = bankkeeper.NewBaseKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(banktypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(banktypes.StoreKey)),
 		keepers.AccountKeeper,
 		blocked,
 		authority,
@@ -125,7 +127,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	)
 	keepers.StakingKeeper = stakingkeeper.NewKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(stakingtypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(stakingtypes.StoreKey)),
 		keepers.AccountKeeper,
 		keepers.BankKeeper,
 		authority,
@@ -134,7 +136,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	)
 	keepers.MintKeeper = mintkeeper.NewKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(minttypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(minttypes.StoreKey)),
 		keepers.StakingKeeper,
 		keepers.AccountKeeper,
 		keepers.BankKeeper,
@@ -143,7 +145,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	)
 	keepers.DistrKeeper = distrkeeper.NewKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(distrtypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(distrtypes.StoreKey)),
 		keepers.AccountKeeper,
 		keepers.BankKeeper,
 		keepers.StakingKeeper,
@@ -153,7 +155,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	keepers.SlashingKeeper = slashingkeeper.NewKeeper(
 		cfg.codec,
 		cfg.legacyAmino,
-		runtime.NewKVStoreService(keys.kvKey(slashingtypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(slashingtypes.StoreKey)),
 		keepers.StakingKeeper,
 		authority,
 	)
@@ -164,18 +166,18 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 
 	keepers.FeeGrantKeeper = feegrantkeeper.NewKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(feegrant.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(feegrant.StoreKey)),
 		keepers.AccountKeeper,
 	)
 	keepers.AuthzKeeper = authzkeeper.NewKeeper(
-		runtime.NewKVStoreService(keys.kvKey(authzkeeper.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(authzkeeper.StoreKey)),
 		cfg.codec,
 		cfg.baseApp.MsgServiceRouter(),
 		keepers.AccountKeeper,
 	)
 	keepers.UpgradeKeeper = upgradekeeper.NewKeeper(
 		cfg.skipUpgradeHeights,
-		runtime.NewKVStoreService(keys.kvKey(upgradetypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(upgradetypes.StoreKey)),
 		cfg.codec,
 		cfg.homePath,
 		cfg.baseApp,
@@ -183,7 +185,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	)
 	keepers.IBCKeeper = ibckeeper.NewKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(ibcexported.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(ibcexported.StoreKey)),
 		nil,
 		keepers.UpgradeKeeper,
 		authority,
@@ -191,7 +193,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 
 	governanceKeeper := govkeeper.NewKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(govtypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(govtypes.StoreKey)),
 		keepers.AccountKeeper,
 		keepers.BankKeeper,
 		keepers.StakingKeeper,
@@ -204,28 +206,36 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	// legacy proposals fail as unsupported instead of dereferencing a nil router.
 	governanceKeeper.SetLegacyRouter(govv1beta1.NewRouter())
 	keepers.GovKeeper = *governanceKeeper.SetHooks(govtypes.NewMultiGovHooks())
-	keepers.EvidenceKeeper = *evidencekeeper.NewKeeper(
+	evidenceKeeper := evidencekeeper.NewKeeper(
 		cfg.codec,
-		runtime.NewKVStoreService(keys.kvKey(evidencetypes.StoreKey)),
+		runtime.NewKVStoreService(keys.getKVStoreKey(evidencetypes.StoreKey)),
 		keepers.StakingKeeper,
 		keepers.SlashingKeeper,
 		keepers.AccountKeeper.AddressCodec(),
 		runtime.ProvideCometInfoService(),
 	)
+	// Stage C installs no application-defined evidence handlers. A sealed empty
+	// router makes submitted custom evidence fail deterministically instead of
+	// dereferencing a nil router; CometBFT equivocation handling remains wired
+	// through the module's begin-block path.
+	evidenceKeeper.SetRouter(evidencetypes.NewRouter())
+	keepers.EvidenceKeeper = *evidenceKeeper
 
 	keepers.FeeMarketKeeper = feemarketkeeper.NewKeeper(
 		cfg.codec,
 		govAddress,
-		keys.kvKey(feemarkettypes.StoreKey),
-		keys.transientKey(feemarkettypes.TransientKey),
+		keys.getKVStoreKey(feemarkettypes.StoreKey),
+		keys.getTransientStoreKey(feemarkettypes.TransientKey),
 	)
 
-	staticPrecompiles := stageCStaticPrecompiles()
-	keepers.installedPrecompiles = snapshotStaticPrecompiles(staticPrecompiles)
+	// DefaultStaticPrecompiles stores pointers to the ERC-20 and transfer keeper
+	// fields. The fields are populated below before the application can execute
+	// a transaction, completing the circular dependency used by upstream evmd.
+	staticPrecompiles := defaultStaticPrecompiles(keepers, cfg.codec)
 	keepers.EVMKeeper = evmkeeper.NewKeeper(
 		cfg.codec,
-		keys.kvKey(evmtypes.StoreKey),
-		keys.transientKey(evmtypes.TransientKey),
+		keys.getKVStoreKey(evmtypes.StoreKey),
+		keys.getTransientStoreKey(evmtypes.TransientKey),
 		keys.kv,
 		govAddress,
 		keepers.AccountKeeper,
@@ -233,7 +243,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		keepers.StakingKeeper,
 		keepers.FeeMarketKeeper,
 		&keepers.ConsensusParamsKeeper,
-		nil,
+		&keepers.ERC20Keeper,
 		chainconfig.EVMChainID,
 		cfg.evmTracer,
 	).WithDefaultEvmCoinInfo(evmtypes.EvmCoinInfo{
@@ -242,14 +252,36 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		DisplayDenom:  chainconfig.DisplayDenom,
 		Decimals:      chainconfig.DenomExponent,
 	}).WithStaticPrecompiles(staticPrecompiles)
+	keepers.ERC20Keeper = erc20keeper.NewKeeper(
+		keys.getKVStoreKey(erc20types.StoreKey),
+		cfg.codec,
+		govAddress,
+		keepers.AccountKeeper,
+		keepers.BankKeeper,
+		keepers.EVMKeeper,
+		keepers.StakingKeeper,
+		&keepers.TransferKeeper,
+	)
+	keepers.TransferKeeper = transferkeeper.NewKeeper(
+		cfg.codec,
+		runtime.NewKVStoreService(keys.getKVStoreKey(ibctransfertypes.StoreKey)),
+		nil,
+		keepers.IBCKeeper.ChannelKeeper,
+		keepers.IBCKeeper.ChannelKeeper,
+		cfg.baseApp.MsgServiceRouter(),
+		keepers.AccountKeeper,
+		keepers.BankKeeper,
+		authority,
+	)
+	keepers.TransferKeeper.SetAddressCodec(accountCodec)
 
 	return keepers, nil
 }
 
-func (keepers *AppKeepers) kvStoreKeys() map[string]*storetypes.KVStoreKey {
+func (keepers *AppKeepers) getKVStoreKeys() map[string]*storetypes.KVStoreKey {
 	return keepers.keys.kv
 }
 
-func (keepers *AppKeepers) transientStoreKeys() map[string]*storetypes.TransientStoreKey {
+func (keepers *AppKeepers) getTransientStoreKeys() map[string]*storetypes.TransientStoreKey {
 	return keepers.keys.transient
 }

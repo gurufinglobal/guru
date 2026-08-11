@@ -18,11 +18,11 @@ func (app *App) configureAnteHandler(maxTxGasWanted uint64) error {
 		EvmKeeper:              app.EVMKeeper,
 		FeegrantKeeper:         app.FeeGrantKeeper,
 		ExtensionOptionChecker: anteevmtypes.HasDynamicFeeExtensionOption,
-		SignModeHandler:        app.TxConfig().SignModeHandler(),
+		SignModeHandler:        app.GetTxConfig().SignModeHandler(),
 		SigGasConsumer:         evmante.SigVerificationGasConsumer,
 		MaxTxGasWanted:         maxTxGasWanted,
 		DynamicFeeChecker:      true,
-		PendingTxListener:      func(common.Hash) {},
+		PendingTxListener:      app.onPendingTx,
 	}
 	if err := options.Validate(); err != nil {
 		return fmt.Errorf("validate ante handler options: %w", err)
@@ -30,4 +30,16 @@ func (app *App) configureAnteHandler(maxTxGasWanted uint64) error {
 	app.anteHandler = evmante.NewAnteHandler(options)
 	app.SetAnteHandler(app.anteHandler)
 	return nil
+}
+
+func (app *App) onPendingTx(hash common.Hash) {
+	for _, listener := range app.pendingTxListeners {
+		listener(hash)
+	}
+}
+
+// RegisterPendingTxListener allows the JSON-RPC stream to observe successful
+// new CheckTx admissions without coupling the state machine to the RPC server.
+func (app *App) RegisterPendingTxListener(listener func(common.Hash)) {
+	app.pendingTxListeners = append(app.pendingTxListeners, listener)
 }

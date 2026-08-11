@@ -19,10 +19,9 @@ import (
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	gogoproto "github.com/cosmos/gogoproto/proto"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	ibctypes "github.com/cosmos/ibc-go/v10/modules/core/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethvm "github.com/ethereum/go-ethereum/core/vm"
+	ethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/gurufinglobal/guru/v2/config"
 )
@@ -30,8 +29,8 @@ import (
 // GenesisState contains the module genesis documents consumed by InitChain.
 type GenesisState map[string]json.RawMessage
 
-// DefaultGenesis builds a fresh-chain genesis with Guru's consensus-critical
-// denomination and EVM policy applied over every module default.
+// DefaultGenesis builds the initial genesis with Guru's chain identity and
+// module defaults applied over the upstream module defaults.
 func (app *App) DefaultGenesis() GenesisState {
 	genesis := GenesisState(app.BasicModuleManager.DefaultGenesis(app.AppCodec()))
 
@@ -79,11 +78,26 @@ func (app *App) DefaultGenesis() GenesisState {
 		evmGenesis.Params.ExtendedDenomOptions = &evmtypes.ExtendedDenomOptions{}
 	}
 	evmGenesis.Params.ExtendedDenomOptions.ExtendedDenom = config.BaseDenom
-	// Stateful Cosmos precompiles are intentionally unavailable in Stage C.
+	// The binary installs every v0.6.1 default static precompile, while the
+	// generated default starts with the governance-controlled active set empty.
 	evmGenesis.Params.ActiveStaticPrecompiles = []string{}
+	// EIP-2935 is the sole genesis preinstall because it records block-hash
+	// history from the first block. Other upstream preinstalls remain absent and
+	// can be registered later through the upstream governance message.
+	evmGenesis.Preinstalls = []evmtypes.Preinstall{mustHistoryStoragePreinstall()}
 	genesis[evmtypes.ModuleName] = app.AppCodec().MustMarshalJSON(evmGenesis)
 
 	return genesis
+}
+
+func mustHistoryStoragePreinstall() evmtypes.Preinstall {
+	index := slices.IndexFunc(evmtypes.DefaultPreinstalls, func(preinstall evmtypes.Preinstall) bool {
+		return common.HexToAddress(preinstall.Address) == ethparams.HistoryStorageAddress
+	})
+	if index < 0 {
+		panic("Cosmos EVM default preinstalls do not contain EIP-2935 history storage")
+	}
+	return evmtypes.DefaultPreinstalls[index]
 }
 
 func (app *App) unmarshalGenesis(genesis GenesisState, moduleName string, target gogoproto.Message) {
@@ -92,16 +106,18 @@ func (app *App) unmarshalGenesis(genesis GenesisState, moduleName string, target
 	}
 }
 
-// ValidateGenesis enforces both module schemas and Guru cross-module identity.
+// ValidateGenesis enforces module schemas and Guru's cross-module runtime
+// invariants. It accepts state exported by a running chain so that a normal
+// height export can be used as a new InitChain document.
 func (app *App) ValidateGenesis(genesis GenesisState) error {
 	// FeeMarket v0.6.1 dereferences a nil BaseFee in its upstream validator.
-	// Check the app policy first so malformed JSON is returned as an error.
+	// Reject that malformed shape before invoking the upstream validator.
 	feeMarketGenesis := new(feemarkettypes.GenesisState)
 	if err := app.decodeGenesis(genesis, feemarkettypes.ModuleName, feeMarketGenesis); err != nil {
 		return err
 	}
-	if err := validateFeeMarketParameterPolicy(feeMarketGenesis.Params); err != nil {
-		return fmt.Errorf("validate fee market params: %w", err)
+	if feeMarketGenesis.Params.BaseFee.IsNil() {
+		return fmt.Errorf("fee market base fee cannot be nil")
 	}
 	// Gov v0.53.6 also dereferences nil params in its upstream validator.
 	govRaw, ok := genesis[govtypes.ModuleName]
@@ -117,12 +133,6 @@ func (app *App) ValidateGenesis(genesis GenesisState) error {
 	}
 	if govGenesis.Params == nil {
 		return fmt.Errorf("governance params cannot be nil")
-	}
-	if err := validateGovParameterPolicy(*govGenesis.Params); err != nil {
-		return fmt.Errorf("validate governance params: %w", err)
-	}
-	if len(govGenesis.Proposals) != 0 || len(govGenesis.Deposits) != 0 || len(govGenesis.Votes) != 0 {
-		return fmt.Errorf("governance proposal, deposit, and vote records must remain empty in Stage C")
 	}
 
 	if err := app.validateBasicModuleGenesis(genesis); err != nil {
@@ -145,14 +155,6 @@ func (app *App) ValidateGenesis(genesis GenesisState) error {
 		return fmt.Errorf("validate bank metadata: %w", err)
 	}
 
-	stakingGenesis := stakingtypes.DefaultGenesisState()
-	if err := app.decodeGenesis(genesis, stakingtypes.ModuleName, stakingGenesis); err != nil {
-		return err
-	}
-	if err := validateStakingParameterPolicy(stakingGenesis.Params); err != nil {
-		return err
-	}
-
 	mintGenesis := minttypes.DefaultGenesisState()
 	if err := app.decodeGenesis(genesis, minttypes.ModuleName, mintGenesis); err != nil {
 		return err
@@ -165,19 +167,11 @@ func (app *App) ValidateGenesis(genesis GenesisState) error {
 	if err := app.decodeGenesis(genesis, evmtypes.ModuleName, evmGenesis); err != nil {
 		return err
 	}
-	if err := validateVMGenesisPolicy(*evmGenesis, app.installedPrecompiles); err != nil {
-		return fmt.Errorf("validate VM params: %w", err)
-	}
-	if err := validateVMGenesisAccounts(authGenesis, evmGenesis); err != nil {
+	if err := validateVMGenesisAccountEncoding(evmGenesis); err != nil {
 		return fmt.Errorf("validate VM genesis accounts: %w", err)
 	}
-
-	ibcGenesis := new(ibctypes.GenesisState)
-	if err := app.decodeGenesis(genesis, ibcexported.ModuleName, ibcGenesis); err != nil {
-		return err
-	}
-	if !gogoproto.Equal(ibcGenesis, ibctypes.DefaultGenesisState()) {
-		return fmt.Errorf("IBC genesis must remain empty and equal to the upstream default in Stage C")
+	if err := validateVMGenesisAccounts(authGenesis, evmGenesis); err != nil {
+		return fmt.Errorf("validate VM/auth genesis accounts: %w", err)
 	}
 
 	return nil
@@ -222,7 +216,7 @@ func (app *App) validateBasicModuleGenesis(genesis GenesisState) (err error) {
 			err = fmt.Errorf("validate module genesis: upstream validator panic: %v", recovered)
 		}
 	}()
-	if err := app.BasicModuleManager.ValidateGenesis(app.AppCodec(), app.TxConfig(), genesis); err != nil {
+	if err := app.BasicModuleManager.ValidateGenesis(app.AppCodec(), app.GetTxConfig(), genesis); err != nil {
 		return fmt.Errorf("validate module genesis: %w", err)
 	}
 	return nil
@@ -268,9 +262,6 @@ func validateGenesisModuleAccounts(genesis *authtypes.GenesisState) error {
 }
 
 func validateMintGenesisPolicy(genesis *minttypes.GenesisState) error {
-	if err := validateMintParameterPolicy(genesis.Params); err != nil {
-		return err
-	}
 	if genesis.Minter.Inflation.IsNil() {
 		return fmt.Errorf("mint genesis inflation cannot be nil")
 	}
@@ -310,6 +301,13 @@ func validateVMGenesisAccounts(
 	}
 	for _, address := range ethvm.PrecompiledAddressesPrague {
 		reserved[string(address.Bytes())] = fmt.Sprintf("reserved precompile %s", address.Hex())
+	}
+	for _, preinstall := range vmGenesis.Preinstalls {
+		address := common.HexToAddress(preinstall.Address)
+		if _, found := authAddresses[string(address.Bytes())]; found {
+			return fmt.Errorf("preinstall %s collides with an auth genesis account", address.Hex())
+		}
+		reserved[string(address.Bytes())] = fmt.Sprintf("preinstall %s", address.Hex())
 	}
 
 	for _, account := range vmGenesis.Accounts {
@@ -432,24 +430,6 @@ func validateNativeMetadata(metadata []banktypes.Metadata) error {
 		return nil
 	}
 	return fmt.Errorf("metadata for base denom %q is missing", config.BaseDenom)
-}
-
-func validateOnlyNativeCoins(coins sdk.Coins) error {
-	if len(coins) == 0 {
-		return fmt.Errorf("coin list cannot be empty")
-	}
-	for _, coin := range coins {
-		if coin.Denom != config.BaseDenom {
-			return fmt.Errorf("expected denom %q, got %q", config.BaseDenom, coin.Denom)
-		}
-		if coin.Amount.IsNil() {
-			return fmt.Errorf("amount cannot be nil")
-		}
-		if !coin.Amount.IsPositive() {
-			return fmt.Errorf("amount must be positive")
-		}
-	}
-	return nil
 }
 
 func mustInt(value string) sdkmath.Int {

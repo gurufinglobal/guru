@@ -14,8 +14,10 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 )
 
@@ -40,6 +42,8 @@ func newStoreKeys() storeKeys {
 			evidencetypes.StoreKey,
 			authzkeeper.StoreKey,
 			ibcexported.StoreKey,
+			ibctransfertypes.StoreKey,
+			erc20types.StoreKey,
 			evmtypes.StoreKey,
 			feemarkettypes.StoreKey,
 		),
@@ -50,10 +54,10 @@ func newStoreKeys() storeKeys {
 	}
 }
 
-func (keys storeKeys) kvKey(name string) *storetypes.KVStoreKey {
+func (keys storeKeys) getKVStoreKey(name string) *storetypes.KVStoreKey {
 	return keys.kv[name]
 }
 
-func (keys storeKeys) transientKey(name string) *storetypes.TransientStoreKey {
+func (keys storeKeys) getTransientStoreKey(name string) *storetypes.TransientStoreKey {
 	return keys.transient[name]
 }

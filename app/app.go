@@ -11,14 +11,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
+	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
+	evmante "github.com/cosmos/evm/ante"
 
 	"github.com/gurufinglobal/guru/v2/config"
 )
 
-// App is the in-process Guru state machine. Operator-facing node and JSON-RPC
-// services are intentionally composed in a later stage.
+// App is the Guru state machine and the application boundary used by the
+// Cosmos SDK and Cosmos EVM servers.
 type App struct {
 	*baseapp.BaseApp
 	encoding EncodingConfig
@@ -29,9 +32,11 @@ type App struct {
 	BasicModuleManager module.BasicManager
 	configurator       module.Configurator
 	anteHandler        sdk.AnteHandler
+
+	pendingTxListeners []evmante.PendingTxListener
 }
 
-// New constructs a fully wired, fresh-chain Cosmos EVM application.
+// New constructs a fully wired Cosmos EVM application.
 func New(options Options) (*App, error) {
 	if err := options.validate(); err != nil {
 		return nil, err
@@ -46,6 +51,10 @@ func New(options Options) (*App, error) {
 	}
 
 	baseAppOptions := append([]func(*baseapp.BaseApp){}, options.BaseAppOptions...)
+	// Guru delegates transaction storage and gossip to CometBFT. Apply NoOp
+	// after all caller options so the SDK app-side mempool cannot be enabled by
+	// mempool.max-txs or another server option.
+	baseAppOptions = append(baseAppOptions, baseapp.SetMempool(sdkmempool.NoOpMempool{}))
 	// The immutable chain ID is applied last so callers cannot accidentally
 	// construct a state machine whose signing and InitChain domains diverge.
 	baseAppOptions = append(baseAppOptions, baseapp.SetChainID(config.LocalChainID))
@@ -87,13 +96,27 @@ func New(options Options) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	if options.AppOptions != nil {
+		if err := baseApplication.RegisterStreamingServices(options.AppOptions, keepers.getKVStoreKeys()); err != nil {
+			return nil, fmt.Errorf("register state streaming services: %w", err)
+		}
+	}
 
 	application := &App{
 		BaseApp:    baseApplication,
 		encoding:   encodingConfig,
 		AppKeepers: keepers,
 	}
-	tmLightClient := application.configureIBCCore()
+	textualTxConfig, err := NewTextualTxConfig(
+		authtxconfig.NewBankKeeperCoinMetadataQueryFn(application.BankKeeper),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure textual transaction signing: %w", err)
+	}
+	application.encoding.TxConfig = textualTxConfig
+	application.SetTxDecoder(textualTxConfig.TxDecoder())
+	application.SetTxEncoder(textualTxConfig.TxEncoder())
+	tmLightClient := application.configureIBC()
 	if err := application.configureModules(tmLightClient); err != nil {
 		return nil, err
 	}
@@ -102,21 +125,17 @@ func New(options Options) (*App, error) {
 		return nil, err
 	}
 
-	// Loading version zero is also what materializes the mounted stores for a
-	// fresh InitChain. The flag controls whether an existing committed state is
-	// accepted, not whether the multistore is initialized.
-	if err := application.LoadLatestVersion(); err != nil {
-		return nil, fmt.Errorf("load latest application version: %w", err)
-	}
-	if !options.LoadLatest && application.LastBlockHeight() != 0 {
-		return nil, fmt.Errorf("database already contains application height %d", application.LastBlockHeight())
+	if options.LoadLatest {
+		if err := application.LoadLatestVersion(); err != nil {
+			return nil, fmt.Errorf("load latest application version: %w", err)
+		}
 	}
 	return application, nil
 }
 
 func (app *App) mountStoresAndHandlers() {
-	app.MountKVStores(app.kvStoreKeys())
-	app.MountTransientStores(app.transientStoreKeys())
+	app.MountKVStores(app.getKVStoreKeys())
+	app.MountTransientStores(app.getTransientStoreKeys())
 	app.SetInitChainer(app.InitChainer)
 	app.SetPreBlocker(app.PreBlocker)
 	app.SetBeginBlocker(app.BeginBlocker)
@@ -190,7 +209,12 @@ func (app *App) InterfaceRegistry() codectypes.InterfaceRegistry {
 	return app.encoding.InterfaceRegistry
 }
 
-// TxConfig returns the transaction encoder, decoder, and signing handlers.
+// TxConfig preserves the Cosmos SDK simulation accessor contract.
 func (app *App) TxConfig() client.TxConfig {
+	return app.GetTxConfig()
+}
+
+// GetTxConfig returns the transaction encoder, decoder, and signing handlers.
+func (app *App) GetTxConfig() client.TxConfig {
 	return app.encoding.TxConfig
 }
