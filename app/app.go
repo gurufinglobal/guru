@@ -24,7 +24,8 @@ import (
 // Cosmos SDK and Cosmos EVM servers.
 type App struct {
 	*baseapp.BaseApp
-	encoding EncodingConfig
+	encoding   EncodingConfig
+	evmChainID uint64
 
 	*AppKeepers
 
@@ -44,10 +45,21 @@ func New(options Options) (*App, error) {
 	if err := config.SetupSDKConfig(); err != nil {
 		return nil, err
 	}
+	chainID := options.ChainID
+	if chainID == "" {
+		chainID = config.DefaultChainID
+	}
+	evmChainID := options.EVMChainID
+	if evmChainID == 0 {
+		evmChainID = config.DefaultEVMChainID
+	}
 
 	encodingConfig, err := MakeEncodingConfig()
 	if err != nil {
 		return nil, err
+	}
+	if err := ConfigureEIP712ChainID(evmChainID); err != nil {
+		return nil, fmt.Errorf("configure EIP-712 chain ID: %w", err)
 	}
 
 	baseAppOptions := append([]func(*baseapp.BaseApp){}, options.BaseAppOptions...)
@@ -55,9 +67,9 @@ func New(options Options) (*App, error) {
 	// after all caller options so the SDK app-side mempool cannot be enabled by
 	// mempool.max-txs or another server option.
 	baseAppOptions = append(baseAppOptions, baseapp.SetMempool(sdkmempool.NoOpMempool{}))
-	// The immutable chain ID is applied last so callers cannot accidentally
-	// construct a state machine whose signing and InitChain domains diverge.
-	baseAppOptions = append(baseAppOptions, baseapp.SetChainID(config.LocalChainID))
+	// Apply the selected network's signing domain last so an earlier generic
+	// server option cannot silently replace the value supplied to this App.
+	baseAppOptions = append(baseAppOptions, baseapp.SetChainID(chainID))
 	baseApplication := baseapp.NewBaseApp(
 		config.BaseAppName,
 		options.Logger,
@@ -91,6 +103,7 @@ func New(options Options) (*App, error) {
 		logger:             options.Logger,
 		homePath:           homePath,
 		skipUpgradeHeights: skipUpgrades,
+		evmChainID:         evmChainID,
 		evmTracer:          options.EVMTracer,
 	})
 	if err != nil {
@@ -105,6 +118,7 @@ func New(options Options) (*App, error) {
 	application := &App{
 		BaseApp:    baseApplication,
 		encoding:   encodingConfig,
+		evmChainID: evmChainID,
 		AppKeepers: keepers,
 	}
 	textualTxConfig, err := NewTextualTxConfig(
@@ -142,23 +156,15 @@ func (app *App) mountStoresAndHandlers() {
 	app.SetEndBlocker(app.EndBlocker)
 }
 
-// InitChainer validates the fixed Guru identity and initializes all modules.
+// InitChainer validates the module genesis documents and initializes all
+// modules. BaseApp checks RequestInitChain.ChainId against the selected runtime
+// chain ID before invoking this handler.
 func (app *App) InitChainer(
 	ctx sdk.Context,
 	req *abci.RequestInitChain,
-) (response *abci.ResponseInitChain, err error) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			response = nil
-			err = fmt.Errorf("initialize genesis: upstream module panic: %v", recovered)
-		}
-	}()
-
+) (*abci.ResponseInitChain, error) {
 	if req == nil {
 		return nil, fmt.Errorf("init chain request cannot be nil")
-	}
-	if req.ChainId != config.LocalChainID {
-		return nil, fmt.Errorf("CometBFT chain ID must be %q, got %q", config.LocalChainID, req.ChainId)
 	}
 
 	var genesis GenesisState
@@ -217,4 +223,9 @@ func (app *App) TxConfig() client.TxConfig {
 // GetTxConfig returns the transaction encoder, decoder, and signing handlers.
 func (app *App) GetTxConfig() client.TxConfig {
 	return app.encoding.TxConfig
+}
+
+// EVMChainID returns the local EIP-155 domain selected for this process.
+func (app *App) EVMChainID() uint64 {
+	return app.evmChainID
 }

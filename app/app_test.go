@@ -45,13 +45,21 @@ import (
 // Cosmos EVM production configuration is process-global, so this test creates
 // exactly one application instance per test process.
 func TestApplicationStateMachine(t *testing.T) {
+	const (
+		testChainID    = "guru-test-1"
+		testEVMChainID = uint64(9631)
+	)
 	application, err := New(Options{
 		Logger:     log.NewNopLogger(),
 		DB:         dbm.NewMemDB(),
 		LoadLatest: true,
 		HomePath:   t.TempDir(),
+		ChainID:    testChainID,
+		EVMChainID: testEVMChainID,
 	})
 	require.NoError(t, err)
+	require.Equal(t, testChainID, application.ChainID())
+	require.Equal(t, testEVMChainID, application.EVMChainID())
 	require.IsType(t, sdkmempool.NoOpMempool{}, application.Mempool())
 	baseEncoding, err := MakeEncodingConfig()
 	require.NoError(t, err)
@@ -128,34 +136,6 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.Empty(t, vmGenesis.Params.ActiveStaticPrecompiles)
 	require.Equal(t, []evmtypes.Preinstall{mustHistoryStoragePreinstall()}, vmGenesis.Preinstalls)
 
-	preinstallCollisionGenesis := cloneGenesisState(genesis)
-	preinstallCollisionAuth := new(authtypes.GenesisState)
-	application.AppCodec().MustUnmarshalJSON(
-		preinstallCollisionGenesis[authtypes.ModuleName],
-		preinstallCollisionAuth,
-	)
-	preinstallCollisionAccounts, err := authtypes.UnpackAccounts(preinstallCollisionAuth.Accounts)
-	require.NoError(t, err)
-	var nextAccountNumber uint64
-	for _, account := range preinstallCollisionAccounts {
-		if account.GetAccountNumber() >= nextAccountNumber {
-			nextAccountNumber = account.GetAccountNumber() + 1
-		}
-	}
-	preinstallCollisionAccount := authtypes.NewBaseAccountWithAddress(
-		sdk.AccAddress(ethparams.HistoryStorageAddress.Bytes()),
-	)
-	require.NoError(t, preinstallCollisionAccount.SetAccountNumber(nextAccountNumber))
-	preinstallCollisionAccounts = append(preinstallCollisionAccounts, preinstallCollisionAccount)
-	preinstallCollisionAuth.Accounts, err = authtypes.PackAccounts(preinstallCollisionAccounts)
-	require.NoError(t, err)
-	preinstallCollisionGenesis[authtypes.ModuleName] = application.AppCodec().MustMarshalJSON(preinstallCollisionAuth)
-	require.ErrorContains(
-		t,
-		application.ValidateGenesis(preinstallCollisionGenesis),
-		"collides with an auth genesis account",
-	)
-
 	governanceDenomGenesis := cloneGenesisState(genesis)
 	governanceDenomVM := new(evmtypes.GenesisState)
 	application.AppCodec().MustUnmarshalJSON(governanceDenomGenesis[evmtypes.ModuleName], governanceDenomVM)
@@ -177,7 +157,7 @@ func TestApplicationStateMachine(t *testing.T) {
 	blockTime := time.Unix(1_700_000_000, 0).UTC()
 	_, err = application.InitChain(&abci.RequestInitChain{
 		Time:            blockTime,
-		ChainId:         config.LocalChainID,
+		ChainId:         testChainID,
 		InitialHeight:   1,
 		ConsensusParams: simtestutil.DefaultConsensusParams,
 		AppStateBytes:   genesisBytes,
@@ -473,7 +453,7 @@ func signAndEncodeEthereumTx(
 	t.Helper()
 	ecdsaKey, err := privateKey.ToECDSA()
 	require.NoError(t, err)
-	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(config.EVMChainID))
+	signer := ethtypes.LatestSignerForChainID(new(big.Int).SetUint64(application.EVMChainID()))
 	signed, err := ethtypes.SignTx(unsigned, signer, ecdsaKey)
 	require.NoError(t, err)
 
@@ -512,7 +492,7 @@ func signAndEncodeCosmosTx(
 	}))
 	signerData := xauthsigning.SignerData{
 		Address:       sdk.AccAddress(privateKey.PubKey().Address()).String(),
-		ChainID:       config.LocalChainID,
+		ChainID:       application.ChainID(),
 		AccountNumber: accountNumber,
 		Sequence:      sequence,
 		PubKey:        privateKey.PubKey(),

@@ -1,5 +1,5 @@
-// Package config defines the immutable product and consensus identity used by
-// the Guru application.
+// Package config defines Guru product settings and the defaults used when an
+// operator does not provide network-specific values.
 package config
 
 import (
@@ -20,8 +20,8 @@ const (
 	EnvPrefix   = "GURU"
 
 	DefaultNodeHomeName        = ".gurud"
-	LocalChainID               = "guru_631-1"
-	EVMChainID          uint64 = 631
+	DefaultChainID             = "guru_631-1"
+	DefaultEVMChainID   uint64 = 631
 
 	Bech32PrefixAccAddr  = "guru"
 	Bech32PrefixAccPub   = "gurupub"
@@ -55,9 +55,9 @@ func DefaultNodeHome() (string, error) {
 	return filepath.Join(home, DefaultNodeHomeName), nil
 }
 
-// ConfigureSDK applies Guru address and derivation identity to an unsealed SDK
-// configuration, then seals it. Accepting the config explicitly keeps the
-// identity contract independently testable without mutating the SDK singleton.
+// ConfigureSDK applies Guru address and derivation settings to an unsealed SDK
+// configuration, then seals it. Network-specific Cosmos and EVM chain IDs are
+// intentionally not part of this process-wide SDK configuration.
 func ConfigureSDK(sdkConfig *sdk.Config) (err error) {
 	if sdkConfig == nil {
 		return errNilSDKConfig

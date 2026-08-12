@@ -43,6 +43,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmaddress "github.com/cosmos/evm/encoding/address"
 	"github.com/cosmos/evm/x/erc20"
+	evmcli "github.com/cosmos/evm/x/vm/client/cli"
 	transfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	"github.com/spf13/cobra"
 
@@ -103,7 +104,7 @@ func newTxCommand() *cobra.Command {
 		bankcli.NewTxCmd(accountCodec),
 		stakingcli.NewTxCmd(validatorCodec, accountCodec),
 		distrcli.NewTxCmd(validatorCodec, accountCodec),
-		newEVMTxCommand(accountCodec),
+		evmcli.NewTxCmd(accountCodec),
 		gov.NewAppModuleBasic(nil).GetTxCmd(),
 		authzcli.GetTxCmd(accountCodec),
 		feegrantcli.GetTxCmd(accountCodec),

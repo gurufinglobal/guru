@@ -7,8 +7,6 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-
-	chainconfig "github.com/gurufinglobal/guru/v2/config"
 )
 
 // ExportAppStateAndValidators exports the currently loaded state at the next
@@ -29,7 +27,7 @@ func (app *App) ExportAppStateAndValidators(
 
 	ctx := app.NewContextLegacy(true, cmtproto.Header{
 		Height:  app.LastBlockHeight(),
-		ChainID: chainconfig.LocalChainID,
+		ChainID: app.ChainID(),
 	})
 	genesis, err := app.ModuleManager.ExportGenesisForModules(ctx, app.AppCodec(), modulesToExport)
 	if err != nil {

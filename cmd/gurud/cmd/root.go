@@ -2,7 +2,6 @@
 package cmd
 
 import (
-	"crypto/tls"
 	"fmt"
 	"os"
 
@@ -14,8 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/snapshot"
-	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -26,9 +23,6 @@ import (
 	cosmosevmserver "github.com/cosmos/evm/server"
 	srvflags "github.com/cosmos/evm/server/flags"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/gurufinglobal/guru/v2/app"
 	chainconfig "github.com/gurufinglobal/guru/v2/config"
@@ -61,7 +55,7 @@ func NewRootCmd() (*cobra.Command, error) {
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithBroadcastMode(flags.BroadcastSync).
 		WithHomeDir(defaultHome).
-		WithChainID(chainconfig.LocalChainID).
+		WithChainID(chainconfig.DefaultChainID).
 		WithViper(chainconfig.EnvPrefix).
 		WithKeyringOptions(hd.EthSecp256k1Option()).
 		WithLedgerHasProtobuf(true)
@@ -94,10 +88,6 @@ func NewRootCmd() (*cobra.Command, error) {
 				WithInput(command.InOrStdin()).
 				WithOutput(command.OutOrStdout())
 			commandContext, err = client.ReadPersistentCommandFlags(commandContext, command.Flags())
-			if err != nil {
-				return err
-			}
-			commandContext, err = setGRPCClientWithAppCodec(command, commandContext, encodingConfig.InterfaceRegistry)
 			if err != nil {
 				return err
 			}
@@ -139,12 +129,21 @@ func NewRootCmd() (*cobra.Command, error) {
 			}
 
 			appTemplate, appConfig := newDefaultAppConfig()
-			return server.InterceptConfigsPreRunHandler(
+			if err := server.InterceptConfigsPreRunHandler(
 				command,
 				appTemplate,
 				appConfig,
 				cmtcfg.DefaultConfig(),
+			); err != nil {
+				return err
+			}
+			evmChainID := server.GetServerContextFromCmd(command).Viper.GetUint64(
+				srvflags.EVMChainID,
 			)
+			if evmChainID == 0 {
+				evmChainID = chainconfig.DefaultEVMChainID
+			}
+			return app.ConfigureEIP712ChainID(evmChainID)
 		},
 	}
 
@@ -179,57 +178,9 @@ func NewRootCmd() (*cobra.Command, error) {
 	return rootCommand, nil
 }
 
-// setGRPCClientWithAppCodec replaces the generic protobuf connection created by the SDK
-// flag reader. Cosmos SDK and Cosmos EVM query responses include gogoproto
-// custom types such as LegacyDec, which require the application's gRPC codec.
-// Clearing Changed prevents a module command's second flag-read pass from
-// replacing this connection with the generic codec again.
-func setGRPCClientWithAppCodec(
-	command *cobra.Command,
-	clientCtx client.Context,
-	interfaceRegistry codectypes.InterfaceRegistry,
-) (client.Context, error) {
-	grpcFlag := command.Flags().Lookup(flags.FlagGRPC)
-	if grpcFlag == nil || !grpcFlag.Changed {
-		return clientCtx, nil
-	}
-
-	address, err := command.Flags().GetString(flags.FlagGRPC)
-	if err != nil || address == "" {
-		return clientCtx, err
-	}
-	useInsecure, err := command.Flags().GetBool(flags.FlagGRPCInsecure)
-	if err != nil {
-		return clientCtx, err
-	}
-
-	transportCredentials := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12})
-	if useInsecure {
-		transportCredentials = insecure.NewCredentials()
-	}
-	grpcClient, err := grpc.Dial(
-		address,
-		grpc.WithTransportCredentials(transportCredentials),
-		grpc.WithDefaultCallOptions(
-			grpc.ForceCodec(sdkcodec.NewProtoCodec(interfaceRegistry).GRPCCodec()),
-		),
-	)
-	if err != nil {
-		return clientCtx, err
-	}
-	if clientCtx.GRPCClient != nil {
-		_ = clientCtx.GRPCClient.Close()
-	}
-	grpcFlag.Changed = false
-	return clientCtx.WithGRPCClient(grpcClient), nil
-}
-
 func newDefaultAppConfig() (string, any) {
-	template, rawConfig := cosmosevmconfig.InitAppConfig(chainconfig.BaseDenom, chainconfig.EVMChainID)
-	appConfig := rawConfig.(cosmosevmconfig.EVMAppConfig)
-	appConfig.API.Enable = true
-	appConfig.GRPC.Enable = true
-	appConfig.JSONRPC.Enable = true
-	appConfig.JSONRPC.AllowInsecureUnlock = false
-	return template, appConfig
+	return cosmosevmconfig.InitAppConfig(
+		chainconfig.BaseDenom,
+		chainconfig.DefaultEVMChainID,
+	)
 }

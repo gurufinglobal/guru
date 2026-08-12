@@ -19,6 +19,12 @@ import (
 	chainconfig "github.com/gurufinglobal/guru/v2/config"
 )
 
+type runtimeConfig struct {
+	homePath   string
+	chainID    string
+	evmChainID uint64
+}
+
 func newSDKAppCreator() servertypes.AppCreator {
 	return func(
 		logger log.Logger,
@@ -26,11 +32,11 @@ func newSDKAppCreator() servertypes.AppCreator {
 		traceStore io.Writer,
 		appOpts servertypes.AppOptions,
 	) servertypes.Application {
-		homePath, err := validateRuntimeIdentity(appOpts, false)
+		cfg, err := resolveRuntimeConfig(appOpts)
 		if err != nil {
-			panic(fmt.Errorf("validate Guru maintenance identity: %w", err))
+			panic(fmt.Errorf("resolve Guru maintenance configuration: %w", err))
 		}
-		application, err := app.New(newAppOptions(logger, db, traceStore, appOpts, homePath, true))
+		application, err := app.New(newAppOptions(logger, db, traceStore, appOpts, cfg, true))
 		if err != nil {
 			panic(fmt.Errorf("create Guru maintenance application: %w", err))
 		}
@@ -39,19 +45,19 @@ func newSDKAppCreator() servertypes.AppCreator {
 }
 
 // newApp is the process boundary used by the Cosmos EVM server. The server
-// creator contract cannot return an error, so invalid operator configuration
-// is converted to a startup panic with an actionable message.
+// creator contract cannot return an error, so invalid local configuration is
+// converted to a startup panic with an actionable message.
 func newApp(
 	logger log.Logger,
 	db dbm.DB,
 	traceStore io.Writer,
 	appOpts servertypes.AppOptions,
 ) cosmosevmserver.Application {
-	homePath, err := validateRuntimeIdentity(appOpts, true)
+	cfg, err := resolveRuntimeConfig(appOpts)
 	if err != nil {
-		panic(fmt.Errorf("validate Guru runtime identity: %w", err))
+		panic(fmt.Errorf("resolve Guru runtime configuration: %w", err))
 	}
-	options := newAppOptions(logger, db, traceStore, appOpts, homePath, true)
+	options := newAppOptions(logger, db, traceStore, appOpts, cfg, true)
 	options.MaxTxGasWanted = cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
 	application, err := app.New(options)
 	if err != nil {
@@ -70,7 +76,7 @@ func appExport(
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
-	homePath, err := validateRuntimeIdentity(appOpts, true)
+	cfg, err := resolveRuntimeConfig(appOpts)
 	if err != nil {
 		return servertypes.ExportedApp{}, err
 	}
@@ -80,7 +86,7 @@ func appExport(
 		db,
 		traceStore,
 		appOpts,
-		homePath,
+		cfg,
 		height == -1,
 	))
 	if err != nil {
@@ -105,7 +111,7 @@ func newAppOptions(
 	db dbm.DB,
 	traceStore io.Writer,
 	appOpts servertypes.AppOptions,
-	homePath string,
+	cfg runtimeConfig,
 	loadLatest bool,
 ) app.Options {
 	return app.Options{
@@ -113,7 +119,9 @@ func newAppOptions(
 		DB:             db,
 		TraceStore:     traceStore,
 		LoadLatest:     loadLatest,
-		HomePath:       homePath,
+		HomePath:       cfg.homePath,
+		ChainID:        cfg.chainID,
+		EVMChainID:     cfg.evmChainID,
 		EVMTracer:      cast.ToString(appOpts.Get(srvflags.EVMTracer)),
 		SkipUpgrades:   getSkipUpgradeHeights(appOpts),
 		AppOptions:     appOpts,
@@ -121,54 +129,45 @@ func newAppOptions(
 	}
 }
 
-func validateRuntimeIdentity(appOpts servertypes.AppOptions, requireEVMConfig bool) (string, error) {
+// resolveRuntimeConfig follows the upstream server precedence rules. Cosmos
+// chain ID comes from an explicit flag when present, otherwise from genesis;
+// EVM chain ID comes from app.toml/flags and falls back to Guru's default.
+// These are local network selections and are not persisted as Guru-owned state.
+func resolveRuntimeConfig(appOpts servertypes.AppOptions) (runtimeConfig, error) {
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 	if homePath == "" {
-		return "", fmt.Errorf("application home is not configured")
+		return runtimeConfig{}, fmt.Errorf("application home is not configured")
 	}
 
-	genesisPath := cast.ToString(appOpts.Get("genesis_file"))
-	if genesisPath == "" {
-		genesisPath = filepath.Join("config", "genesis.json")
+	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
+	if chainID == "" {
+		genesisPath := cast.ToString(appOpts.Get("genesis_file"))
+		if genesisPath == "" {
+			genesisPath = filepath.Join("config", "genesis.json")
+		}
+		if !filepath.IsAbs(genesisPath) {
+			genesisPath = filepath.Join(homePath, genesisPath)
+		}
+		genesis, err := genutiltypes.AppGenesisFromFile(genesisPath)
+		if err != nil {
+			return runtimeConfig{}, fmt.Errorf("read genesis %q: %w", genesisPath, err)
+		}
+		chainID = genesis.ChainID
 	}
-	if !filepath.IsAbs(genesisPath) {
-		genesisPath = filepath.Join(homePath, genesisPath)
+	if chainID == "" {
+		chainID = chainconfig.DefaultChainID
 	}
-	genesis, err := genutiltypes.AppGenesisFromFile(genesisPath)
-	if err != nil {
-		return "", fmt.Errorf("read genesis %q: %w", genesisPath, err)
+
+	evmChainID := cast.ToUint64(appOpts.Get(srvflags.EVMChainID))
+	if evmChainID == 0 {
+		evmChainID = chainconfig.DefaultEVMChainID
 	}
-	if genesis.ChainID != chainconfig.LocalChainID {
-		return "", fmt.Errorf(
-			"genesis chain ID must be %q, got %q",
-			chainconfig.LocalChainID,
-			genesis.ChainID,
-		)
-	}
-	configuredChainID := cast.ToString(appOpts.Get(flags.FlagChainID))
-	if configuredChainID != "" && configuredChainID != chainconfig.LocalChainID {
-		return "", fmt.Errorf(
-			"configured chain ID must be %q, got %q",
-			chainconfig.LocalChainID,
-			configuredChainID,
-		)
-	}
-	rawEVMChainID := appOpts.Get(srvflags.EVMChainID)
-	evmChainID := cast.ToUint64(rawEVMChainID)
-	// SDK maintenance commands build a narrow AppOptions object without EVM
-	// keys. The node and export paths require an explicit matching value;
-	// maintenance paths inherit the immutable application value when absent.
-	if rawEVMChainID == nil && requireEVMConfig {
-		return "", fmt.Errorf("EVM chain ID is not configured")
-	}
-	if rawEVMChainID != nil && evmChainID != chainconfig.EVMChainID {
-		return "", fmt.Errorf(
-			"EVM chain ID must be %d, got %d",
-			chainconfig.EVMChainID,
-			evmChainID,
-		)
-	}
-	return homePath, nil
+
+	return runtimeConfig{
+		homePath:   homePath,
+		chainID:    chainID,
+		evmChainID: evmChainID,
+	}, nil
 }
 
 func getSkipUpgradeHeights(appOpts servertypes.AppOptions) map[int64]bool {
