@@ -21,6 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/cobra"
 
@@ -28,9 +29,8 @@ import (
 	chainconfig "github.com/gurufinglobal/guru/v2/config"
 )
 
-// newInitCommand creates the CometBFT node files and the policy-complete Guru
-// genesis in one pass. The App is constructed only while this command runs,
-// never while assembling the root command.
+// newInitCommand creates the CometBFT node files and Guru's default genesis in
+// one pass. Network values are command inputs; the compiled values are defaults.
 func newInitCommand(defaultHome string) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "init [moniker]",
@@ -47,25 +47,14 @@ func newInitCommand(defaultHome string) *cobra.Command {
 				return err
 			}
 			if chainID == "" {
-				chainID = chainconfig.LocalChainID
-			}
-			if chainID != chainconfig.LocalChainID {
-				return fmt.Errorf(
-					"chain ID must be %q, got %q",
-					chainconfig.LocalChainID,
-					chainID,
-				)
+				chainID = chainconfig.DefaultChainID
 			}
 			defaultDenom, err := command.Flags().GetString(genutilcli.FlagDefaultBondDenom)
 			if err != nil {
 				return err
 			}
-			if defaultDenom != "" && defaultDenom != chainconfig.BaseDenom {
-				return fmt.Errorf(
-					"default bond denomination must be %q, got %q",
-					chainconfig.BaseDenom,
-					defaultDenom,
-				)
+			if defaultDenom == "" {
+				defaultDenom = chainconfig.BaseDenom
 			}
 
 			var mnemonic string
@@ -110,15 +99,24 @@ func newInitCommand(defaultHome string) *cobra.Command {
 			}
 
 			application, err := app.New(app.Options{
-				Logger:   log.NewNopLogger(),
-				DB:       dbm.NewMemDB(),
-				HomePath: clientContext.HomeDir,
+				Logger:     log.NewNopLogger(),
+				DB:         dbm.NewMemDB(),
+				HomePath:   clientContext.HomeDir,
+				ChainID:    chainID,
+				EVMChainID: chainconfig.DefaultEVMChainID,
 			})
 			if err != nil {
 				return fmt.Errorf("construct application genesis: %w", err)
 			}
 			defer application.Close() //nolint:errcheck
 			appState := application.DefaultGenesis()
+			stakingGenesis := stakingtypes.DefaultGenesisState()
+			application.AppCodec().MustUnmarshalJSON(
+				appState[stakingtypes.ModuleName],
+				stakingGenesis,
+			)
+			stakingGenesis.Params.BondDenom = defaultDenom
+			appState[stakingtypes.ModuleName] = application.AppCodec().MustMarshalJSON(stakingGenesis)
 			if err := application.ValidateGenesis(appState); err != nil {
 				return fmt.Errorf("validate default Guru genesis: %w", err)
 			}
@@ -134,7 +132,7 @@ func newInitCommand(defaultHome string) *cobra.Command {
 			genesis := &genutiltypes.AppGenesis{
 				AppName:       version.AppName,
 				AppVersion:    version.Version,
-				ChainID:       chainconfig.LocalChainID,
+				ChainID:       chainID,
 				InitialHeight: initialHeight,
 				AppState:      appStateJSON,
 				Consensus: &genutiltypes.ConsensusGenesis{
@@ -154,7 +152,7 @@ func newInitCommand(defaultHome string) *cobra.Command {
 				Home    string `json:"home"`
 			}{
 				Moniker: cometConfig.Moniker,
-				ChainID: chainconfig.LocalChainID,
+				ChainID: chainID,
 				NodeID:  nodeID,
 				Home:    clientContext.HomeDir,
 			})
@@ -163,7 +161,7 @@ func newInitCommand(defaultHome string) *cobra.Command {
 	command.Flags().String(flags.FlagHome, defaultHome, "node's home directory")
 	command.Flags().BoolP(genutilcli.FlagOverwrite, "o", false, "overwrite an existing genesis file")
 	command.Flags().Bool(genutilcli.FlagRecover, false, "recover the validator key from a seed phrase")
-	command.Flags().String(flags.FlagChainID, chainconfig.LocalChainID, "genesis chain ID")
+	command.Flags().String(flags.FlagChainID, chainconfig.DefaultChainID, "genesis chain ID")
 	command.Flags().String(genutilcli.FlagDefaultBondDenom, chainconfig.BaseDenom, "native staking denomination")
 	command.Flags().Int64(flags.FlagInitHeight, 1, "initial block height")
 	command.Flags().String(genutilcli.FlagConsensusKeyAlgo, ed25519.KeyType, "consensus key algorithm")
@@ -202,22 +200,16 @@ func newValidateGenesisCommand() *cobra.Command {
 			if err := genesis.ValidateAndComplete(); err != nil {
 				return fmt.Errorf("validate CometBFT genesis: %w", err)
 			}
-			if genesis.ChainID != chainconfig.LocalChainID {
-				return fmt.Errorf(
-					"genesis chain ID must be %q, got %q",
-					chainconfig.LocalChainID,
-					genesis.ChainID,
-				)
-			}
-
 			var appState app.GenesisState
 			if err := json.Unmarshal(genesis.AppState, &appState); err != nil {
 				return fmt.Errorf("decode application genesis: %w", err)
 			}
 			application, err := app.New(app.Options{
-				Logger:   log.NewNopLogger(),
-				DB:       dbm.NewMemDB(),
-				HomePath: clientContext.HomeDir,
+				Logger:     log.NewNopLogger(),
+				DB:         dbm.NewMemDB(),
+				HomePath:   clientContext.HomeDir,
+				ChainID:    genesis.ChainID,
+				EVMChainID: chainconfig.DefaultEVMChainID,
 			})
 			if err != nil {
 				return fmt.Errorf("construct genesis validator: %w", err)

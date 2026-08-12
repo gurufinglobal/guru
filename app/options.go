@@ -14,20 +14,22 @@ var (
 	ErrMissingDB     = errors.New("application database is required")
 )
 
-// AppOptions is reserved for the operator-facing server composition. Consensus
-// identity is represented by typed Options fields and immutable config values.
+// AppOptions is reserved for the operator-facing server composition.
 type AppOptions interface {
 	Get(string) any
 }
 
 // Options contains the explicit dependencies of the application composition
-// root. Zero values select the immutable Guru defaults.
+// root. Empty ChainID and zero EVMChainID select the Guru defaults; callers
+// constructing a non-default network must pass both values explicitly.
 type Options struct {
 	Logger         log.Logger
 	DB             dbm.DB
 	TraceStore     io.Writer
 	LoadLatest     bool
 	HomePath       string
+	ChainID        string
+	EVMChainID     uint64
 	EVMTracer      string
 	MaxTxGasWanted uint64
 	SkipUpgrades   map[int64]bool

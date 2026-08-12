@@ -50,6 +50,21 @@ func MakeEncodingConfig() (EncodingConfig, error) {
 	return encodingConfig, encodingConfigErr
 }
 
+// ConfigureEIP712ChainID publishes the selected network's EIP-712 domain to
+// Cosmos EVM's process-wide signing compatibility layer. A gurud process runs
+// one network, while the same binary may be configured with different values
+// in separate processes. Callers must invoke this only during single-threaded
+// startup, before signing or transaction handling begins.
+func ConfigureEIP712ChainID(chainID uint64) error {
+	encoding, err := MakeEncodingConfig()
+	if err != nil {
+		return err
+	}
+
+	eip712.SetEncodingConfig(encoding.LegacyAmino, encoding.InterfaceRegistry, chainID)
+	return nil
+}
+
 // NewTextualTxConfig creates a transaction configuration with
 // SIGN_MODE_TEXTUAL. Validators supply a deterministic BankKeeper-backed
 // metadata query, while online clients supply a gRPC/ABCI-backed query.
@@ -122,7 +137,7 @@ func buildEncodingConfig() (EncodingConfig, error) {
 
 	// Publish process-wide EIP-712 compatibility state only after every
 	// fallible encoding component has been built successfully.
-	eip712.SetEncodingConfig(legacyAmino, interfaceRegistry, config.EVMChainID)
+	eip712.SetEncodingConfig(legacyAmino, interfaceRegistry, config.DefaultEVMChainID)
 	legacytx.RegressionTestingAminoCodec = legacyAmino
 
 	return EncodingConfig{

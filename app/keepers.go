@@ -81,6 +81,7 @@ type keeperConfig struct {
 	logger             log.Logger
 	homePath           string
 	skipUpgradeHeights map[int64]bool
+	evmChainID         uint64
 	evmTracer          string
 }
 
@@ -244,7 +245,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		keepers.FeeMarketKeeper,
 		&keepers.ConsensusParamsKeeper,
 		&keepers.ERC20Keeper,
-		chainconfig.EVMChainID,
+		cfg.evmChainID,
 		cfg.evmTracer,
 	).WithDefaultEvmCoinInfo(evmtypes.EvmCoinInfo{
 		Denom:         chainconfig.BaseDenom,
