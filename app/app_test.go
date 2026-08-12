@@ -97,10 +97,14 @@ func TestApplicationStateMachine(t *testing.T) {
 	requireModulePrecedes(t, initGenesisOrder, evmtypes.ModuleName, erc20types.ModuleName)
 	requireModulePrecedes(t, initGenesisOrder, erc20types.ModuleName, ibctransfertypes.ModuleName)
 
-	privateKey, err := ethsecp256k1.GenerateKey()
+	ethereumPrivateKey, err := ethsecp256k1.GenerateKey()
 	require.NoError(t, err)
-	sender := sdk.AccAddress(privateKey.PubKey().Address())
-	recipient := common.HexToAddress("0x000000000000000000000000000000000000bEEF")
+	cosmosPrivateKey, err := ethsecp256k1.GenerateKey()
+	require.NoError(t, err)
+	ethereumSender := sdk.AccAddress(ethereumPrivateKey.PubKey().Address())
+	cosmosSender := sdk.AccAddress(cosmosPrivateKey.PubKey().Address())
+	ethereumRecipient := common.HexToAddress("0x000000000000000000000000000000000000bEEF")
+	cosmosRecipient := common.HexToAddress("0x000000000000000000000000000000000000CAfE")
 	validatorSet, err := simtestutil.CreateRandomValidatorSet()
 	require.NoError(t, err)
 	proposerAddress := validatorSet.GetProposer().Address
@@ -112,15 +116,28 @@ func TestApplicationStateMachine(t *testing.T) {
 		0,
 		0,
 	)
-	senderAccount := authtypes.NewBaseAccount(sender, nil, 1, 0)
-	recipientAccount := authtypes.NewBaseAccount(sdk.AccAddress(recipient.Bytes()), nil, 2, 0)
+	ethereumSenderAccount := authtypes.NewBaseAccount(ethereumSender, nil, 1, 0)
+	ethereumRecipientAccount := authtypes.NewBaseAccount(
+		sdk.AccAddress(ethereumRecipient.Bytes()), nil, 2, 0,
+	)
+	cosmosSenderAccount := authtypes.NewBaseAccount(cosmosSender, nil, 3, 0)
+	cosmosRecipientAccount := authtypes.NewBaseAccount(
+		sdk.AccAddress(cosmosRecipient.Bytes()), nil, 4, 0,
+	)
 	senderFunds := sdk.NewCoins(sdk.NewCoin(config.BaseDenom, mustInt("10000000000000000000")))
 	genesisWithValidator, err := simtestutil.GenesisStateWithValSet(
 		application.AppCodec(),
 		genesis,
 		validatorSet,
-		[]authtypes.GenesisAccount{validatorAccount, senderAccount, recipientAccount},
-		banktypes.Balance{Address: sender.String(), Coins: senderFunds},
+		[]authtypes.GenesisAccount{
+			validatorAccount,
+			ethereumSenderAccount,
+			ethereumRecipientAccount,
+			cosmosSenderAccount,
+			cosmosRecipientAccount,
+		},
+		banktypes.Balance{Address: ethereumSender.String(), Coins: senderFunds},
+		banktypes.Balance{Address: cosmosSender.String(), Coins: senderFunds},
 	)
 	require.NoError(t, err)
 	genesis = GenesisState(genesisWithValidator)
@@ -265,46 +282,207 @@ func TestApplicationStateMachine(t *testing.T) {
 		require.Equal(t, common.FromHex(preinstall.Code), application.EVMKeeper.GetCode(governanceContext, codeHash))
 	}
 
-	amount := big.NewInt(12_345)
-	successBytes, successTx := signAndEncodeEthereumTx(
+	const submittedGas uint64 = 200_000
+	gasPrice := big.NewInt(2_000_000_000)
+	transferValue := big.NewInt(12_345)
+	minGasMultiplier := application.FeeMarketKeeper.GetParams(queryContext).MinGasMultiplier
+	require.True(t, minGasMultiplier.Equal(feemarkettypes.DefaultMinGasMultiplier))
+	minimumGasUsed := minGasMultiplier.
+		MulInt64(int64(submittedGas)).
+		TruncateInt().Uint64()
+	expectedBlockGasWanted := minGasMultiplier.
+		MulInt64(int64(2 * submittedGas)).
+		TruncateInt().Uint64()
+	protocolFee := sdkmath.NewIntFromUint64(minimumGasUsed).Mul(sdkmath.NewIntFromBigInt(gasPrice))
+	submittedFee := sdkmath.NewIntFromUint64(submittedGas).
+		Mul(sdkmath.NewIntFromBigInt(gasPrice))
+
+	ethereumBytes, ethereumTx := signAndEncodeEthereumTx(
 		t,
 		application,
-		privateKey,
+		ethereumPrivateKey,
 		ethtypes.NewTx(&ethtypes.LegacyTx{
 			Nonce:    0,
-			To:       &recipient,
-			Value:    amount,
-			Gas:      100_000,
-			GasPrice: big.NewInt(2_000_000_000),
+			To:       &ethereumRecipient,
+			Value:    transferValue,
+			Gas:      submittedGas,
+			GasPrice: gasPrice,
 		}),
 	)
-	finalized := finalizeAndCommit(
+	cosmosBytes := signAndEncodeCosmosTx(
 		t,
 		application,
-		2,
-		blockTime.Add(2*time.Second),
-		proposerAddress,
-		[][]byte{successBytes},
+		cosmosPrivateKey,
+		cosmosSenderAccount.GetAccountNumber(),
+		cosmosSenderAccount.GetSequence(),
+		banktypes.NewMsgSend(
+			cosmosSender,
+			sdk.AccAddress(cosmosRecipient.Bytes()),
+			sdk.NewCoins(sdk.NewCoin(
+				config.BaseDenom,
+				sdkmath.NewIntFromBigInt(transferValue),
+			)),
+		),
+		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, submittedFee)),
+		submittedGas,
 	)
-	require.Len(t, finalized.TxResults, 1)
-	require.True(t, finalized.TxResults[0].IsOK(), finalized.TxResults[0].Log)
-	successResult, err := evmtypes.DecodeTxResponse(finalized.TxResults[0].Data)
+
+	const proposalGas uint64 = 60_000_000
+	proposalFee := sdkmath.NewIntFromUint64(proposalGas).
+		Mul(sdkmath.NewIntFromBigInt(gasPrice))
+	proposalEthereumBytes, _ := signAndEncodeEthereumTx(
+		t,
+		application,
+		ethereumPrivateKey,
+		ethtypes.NewTx(&ethtypes.LegacyTx{
+			Nonce:    0,
+			To:       &ethereumRecipient,
+			Value:    transferValue,
+			Gas:      proposalGas,
+			GasPrice: gasPrice,
+		}),
+	)
+	proposalCosmosBytes := signAndEncodeCosmosTx(
+		t,
+		application,
+		cosmosPrivateKey,
+		cosmosSenderAccount.GetAccountNumber(),
+		cosmosSenderAccount.GetSequence(),
+		banktypes.NewMsgSend(
+			cosmosSender,
+			sdk.AccAddress(cosmosRecipient.Bytes()),
+			sdk.NewCoins(sdk.NewCoin(
+				config.BaseDenom,
+				sdkmath.NewIntFromBigInt(transferValue),
+			)),
+		),
+		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, proposalFee)),
+		proposalGas,
+	)
+	for _, proposalTxs := range [][][]byte{
+		{proposalEthereumBytes, proposalCosmosBytes},
+		{proposalCosmosBytes, proposalEthereumBytes},
+	} {
+		proposalGasResult, prepareErr := application.PrepareProposal(&abci.RequestPrepareProposal{
+			Height:     2,
+			Time:       blockTime.Add(2 * time.Second),
+			MaxTxBytes: simtestutil.DefaultConsensusParams.Block.MaxBytes,
+			Txs:        proposalTxs,
+		})
+		require.NoError(t, prepareErr)
+		require.Equal(t, proposalTxs[:1], proposalGasResult.Txs)
+	}
+
+	require.Zero(t, application.FeeMarketKeeper.GetTransientGasWanted(
+		application.GetContextForCheckTx(nil),
+	))
+	for index, test := range []struct {
+		name    string
+		txBytes []byte
+	}{
+		{name: "ethereum", txBytes: ethereumBytes},
+		{name: "msgsend", txBytes: cosmosBytes},
+	} {
+		t.Run(test.name+" gas queries", func(t *testing.T) {
+			gasInfo, _, simulateErr := application.Simulate(test.txBytes)
+			require.NoError(t, simulateErr)
+			require.Equal(t, submittedGas, gasInfo.GasWanted)
+			require.Equal(t, minimumGasUsed, gasInfo.GasUsed)
+
+			checkResult, checkErr := application.CheckTx(&abci.RequestCheckTx{
+				Tx:   test.txBytes,
+				Type: abci.CheckTxType_New,
+			})
+			require.NoError(t, checkErr)
+			require.Equal(t, abci.CodeTypeOK, checkResult.Code, checkResult.Log)
+			require.Equal(t, int64(submittedGas), checkResult.GasWanted)
+			require.Zero(t, checkResult.GasUsed)
+			require.Equal(
+				t,
+				uint64(index+1)*submittedGas,
+				application.FeeMarketKeeper.GetTransientGasWanted(
+					application.GetContextForCheckTx(nil),
+				),
+			)
+		})
+	}
+
+	prepareResult, err := application.PrepareProposal(&abci.RequestPrepareProposal{
+		Height:     2,
+		Time:       blockTime.Add(2 * time.Second),
+		MaxTxBytes: simtestutil.DefaultConsensusParams.Block.MaxBytes,
+		Txs:        [][]byte{ethereumBytes, cosmosBytes},
+	})
 	require.NoError(t, err)
-	require.False(t, successResult.Failed(), successResult.VmError)
-	require.Equal(t, successTx.Hash().Hex(), successResult.Hash)
+	require.Equal(t, [][]byte{ethereumBytes, cosmosBytes}, prepareResult.Txs)
+	processResult, err := application.ProcessProposal(&abci.RequestProcessProposal{
+		Height: 2,
+		Time:   blockTime.Add(2 * time.Second),
+		Txs:    prepareResult.Txs,
+	})
+	require.NoError(t, err)
+	require.Equal(t, abci.ResponseProcessProposal_ACCEPT, processResult.Status)
+
+	finalized, err := application.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Height:          2,
+		Time:            blockTime.Add(2 * time.Second),
+		ProposerAddress: proposerAddress,
+		Txs:             prepareResult.Txs,
+	})
+	require.NoError(t, err)
+	require.Len(t, finalized.TxResults, 2)
+	for index, result := range finalized.TxResults {
+		require.True(t, result.IsOK(), result.Log)
+		require.Equal(t, int64(submittedGas), result.GasWanted)
+		require.Equal(t, int64(minimumGasUsed), result.GasUsed)
+		if index == 0 {
+			ethereumResult, decodeErr := evmtypes.DecodeTxResponse(result.Data)
+			require.NoError(t, decodeErr)
+			require.False(t, ethereumResult.Failed(), ethereumResult.VmError)
+			require.Equal(t, ethereumTx.Hash().Hex(), ethereumResult.Hash)
+		}
+	}
+	finalizeContext := application.GetContextForFinalizeBlock(nil)
+	require.Equal(
+		t,
+		2*submittedGas,
+		application.FeeMarketKeeper.GetTransientGasWanted(finalizeContext),
+	)
+	require.Equal(
+		t,
+		expectedBlockGasWanted,
+		application.FeeMarketKeeper.GetBlockGasWanted(finalizeContext),
+	)
+	_, err = application.Commit()
+	require.NoError(t, err)
 
 	queryContext = committedContext(t, application)
-	recipientBalance := application.BankKeeper.GetBalance(
-		queryContext,
-		sdk.AccAddress(recipient.Bytes()),
-		config.BaseDenom,
+	expectedSenderBalance := senderFunds.AmountOf(config.BaseDenom).
+		Sub(sdkmath.NewIntFromBigInt(transferValue)).
+		Sub(protocolFee)
+	for _, sender := range []sdk.AccAddress{ethereumSender, cosmosSender} {
+		require.True(t, application.BankKeeper.GetBalance(
+			queryContext,
+			sender,
+			config.BaseDenom,
+		).Amount.Equal(expectedSenderBalance))
+	}
+	for _, recipient := range []common.Address{ethereumRecipient, cosmosRecipient} {
+		require.True(t, application.BankKeeper.GetBalance(
+			queryContext,
+			sdk.AccAddress(recipient.Bytes()),
+			config.BaseDenom,
+		).Amount.Equal(sdkmath.NewIntFromBigInt(transferValue)))
+	}
+	require.Equal(
+		t,
+		expectedBlockGasWanted,
+		application.FeeMarketKeeper.GetBlockGasWanted(queryContext),
 	)
-	require.Equal(t, amount.String(), recipientBalance.Amount.String())
-	senderBalanceAfterSuccess := application.BankKeeper.GetBalance(queryContext, sender, config.BaseDenom)
-	amountWithoutFee := senderFunds.AmountOf(config.BaseDenom).Sub(sdkmath.NewIntFromBigInt(amount))
-	require.True(t, senderBalanceAfterSuccess.Amount.LT(amountWithoutFee))
-	senderEVMAddress := common.BytesToAddress(sender)
+
+	senderEVMAddress := common.BytesToAddress(ethereumSender)
 	require.Equal(t, uint64(1), application.EVMKeeper.GetNonce(queryContext, senderEVMAddress))
+	require.Equal(t, uint64(1), application.AccountKeeper.GetAccount(queryContext, cosmosSender).GetSequence())
 
 	const revertGasLimit uint64 = 100_000
 	revertGasPrice := big.NewInt(2_000_000_000)
@@ -312,7 +490,7 @@ func TestApplicationStateMachine(t *testing.T) {
 	revertBytes, _ := signAndEncodeEthereumTx(
 		t,
 		application,
-		privateKey,
+		ethereumPrivateKey,
 		ethtypes.NewTx(&ethtypes.LegacyTx{
 			Nonce:    1,
 			Value:    revertValue,
@@ -320,6 +498,11 @@ func TestApplicationStateMachine(t *testing.T) {
 			GasPrice: revertGasPrice,
 			Data:     common.FromHex("0x60006000fd"),
 		}),
+	)
+	senderBalanceBeforeRevert := application.BankKeeper.GetBalance(
+		queryContext,
+		ethereumSender,
+		config.BaseDenom,
 	)
 	finalized = finalizeAndCommit(
 		t,
@@ -343,66 +526,26 @@ func TestApplicationStateMachine(t *testing.T) {
 		sdk.AccAddress(createdContract.Bytes()),
 		config.BaseDenom,
 	).IsZero())
-	require.Equal(t, amount.String(), application.BankKeeper.GetBalance(
-		queryContext,
-		sdk.AccAddress(recipient.Bytes()),
-		config.BaseDenom,
-	).Amount.String())
-	require.Equal(t, uint64(2), application.EVMKeeper.GetNonce(queryContext, senderEVMAddress))
-	senderBalanceAfterRevert := application.BankKeeper.GetBalance(queryContext, sender, config.BaseDenom)
-	revertCharge := senderBalanceAfterSuccess.Amount.Sub(senderBalanceAfterRevert.Amount)
-	expectedRevertFee := sdkmath.NewIntFromUint64(revertResult.GasUsed).Mul(sdkmath.NewIntFromBigInt(revertGasPrice))
-	require.True(t, revertCharge.Equal(expectedRevertFee))
-
-	senderAccountAfterRevert := application.AccountKeeper.GetAccount(queryContext, sender)
-	require.NotNil(t, senderAccountAfterRevert)
-	require.Equal(t, uint64(2), senderAccountAfterRevert.GetSequence())
-	cosmosValue := sdkmath.NewInt(777)
-	cosmosFee := sdk.NewCoins(sdk.NewCoin(config.BaseDenom, mustInt("1000000000000000")))
-	cosmosBytes := signAndEncodeCosmosTx(
-		t,
-		application,
-		privateKey,
-		senderAccountAfterRevert.GetAccountNumber(),
-		senderAccountAfterRevert.GetSequence(),
-		banktypes.NewMsgSend(
-			sender,
-			sdk.AccAddress(recipient.Bytes()),
-			sdk.NewCoins(sdk.NewCoin(config.BaseDenom, cosmosValue)),
-		),
-		cosmosFee,
-		200_000,
-	)
-	finalized = finalizeAndCommit(
-		t,
-		application,
-		4,
-		blockTime.Add(4*time.Second),
-		proposerAddress,
-		[][]byte{cosmosBytes},
-	)
-	require.Len(t, finalized.TxResults, 1)
-	require.True(t, finalized.TxResults[0].IsOK(), finalized.TxResults[0].Log)
-
-	queryContext = committedContext(t, application)
-	finalRecipientAmount := sdkmath.NewIntFromBigInt(amount).Add(cosmosValue)
-	require.Equal(t, finalRecipientAmount.String(), application.BankKeeper.GetBalance(
-		queryContext,
-		sdk.AccAddress(recipient.Bytes()),
-		config.BaseDenom,
-	).Amount.String())
 	require.True(t, application.BankKeeper.GetBalance(
 		queryContext,
-		sender,
+		sdk.AccAddress(ethereumRecipient.Bytes()),
 		config.BaseDenom,
-	).Amount.Equal(senderBalanceAfterRevert.Amount.Sub(cosmosValue).Sub(cosmosFee.AmountOf(config.BaseDenom))))
-	require.Equal(t, uint64(3), application.AccountKeeper.GetAccount(queryContext, sender).GetSequence())
-	require.Equal(t, uint64(3), application.EVMKeeper.GetNonce(queryContext, senderEVMAddress))
-	require.Equal(t, int64(4), application.LastBlockHeight())
+	).Amount.Equal(sdkmath.NewIntFromBigInt(transferValue)))
+	require.Equal(t, uint64(2), application.EVMKeeper.GetNonce(queryContext, senderEVMAddress))
+	senderBalanceAfterRevert := application.BankKeeper.GetBalance(
+		queryContext,
+		ethereumSender,
+		config.BaseDenom,
+	)
+	revertCharge := senderBalanceBeforeRevert.Amount.Sub(senderBalanceAfterRevert.Amount)
+	expectedRevertFee := sdkmath.NewIntFromUint64(revertResult.GasUsed).
+		Mul(sdkmath.NewIntFromBigInt(revertGasPrice))
+	require.True(t, revertCharge.Equal(expectedRevertFee))
+	require.Equal(t, int64(3), application.LastBlockHeight())
 
 	exported, err := application.ExportAppStateAndValidators(false, nil, nil)
 	require.NoError(t, err)
-	require.Equal(t, int64(5), exported.Height)
+	require.Equal(t, int64(4), exported.Height)
 	var exportedGenesis GenesisState
 	require.NoError(t, json.Unmarshal(exported.AppState, &exportedGenesis))
 	require.NoError(t, application.ValidateGenesis(exportedGenesis))
