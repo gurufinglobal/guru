@@ -6,6 +6,8 @@ import (
 	evmante "github.com/cosmos/evm/ante"
 	anteevmtypes "github.com/cosmos/evm/ante/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	appante "github.com/gurufinglobal/guru/v2/app/ante"
 )
 
 func (app *App) configureAnteHandler(maxTxGasWanted uint64) error {
@@ -27,7 +29,7 @@ func (app *App) configureAnteHandler(maxTxGasWanted uint64) error {
 	if err := options.Validate(); err != nil {
 		return fmt.Errorf("validate ante handler options: %w", err)
 	}
-	app.anteHandler = evmante.NewAnteHandler(options)
+	app.anteHandler = appante.NewAnteHandler(options)
 	app.SetAnteHandler(app.anteHandler)
 	return nil
 }
