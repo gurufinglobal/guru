@@ -250,6 +250,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		keepers.AccountKeeper.AddressCodec(),
 		&keepers.ConstitutionKeeper,
 	)
+	keepers.OracleKeeper.SetHooks(oracletypes.NewMultiOracleHooks(&keepers.ConstitutionKeeper))
 
 	// DefaultStaticPrecompiles stores pointers to the ERC-20 and transfer keeper
 	// fields. The fields are populated below before the application can execute
