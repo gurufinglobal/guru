@@ -26,6 +26,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
 	evmmempool "github.com/cosmos/evm/mempool"
 	evmutils "github.com/cosmos/evm/utils"
@@ -43,6 +44,7 @@ import (
 	"github.com/gurufinglobal/guru/v2/config"
 	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
+	customstaking "github.com/gurufinglobal/guru/v2/x/staking"
 )
 
 // Cosmos EVM production configuration is process-global, so this test creates
@@ -66,7 +68,9 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.IsType(t, sdkmempool.NoOpMempool{}, application.Mempool())
 	require.NotNil(t, application.OracleProposalHandler)
 	require.NotNil(t, application.oracleVoteHandler)
+	require.NotNil(t, application.CustomStakingKeeper)
 	require.Contains(t, application.ModuleManager.Modules, oracletypes.ModuleName)
+	require.IsType(t, customstaking.AppModule{}, application.ModuleManager.Modules[stakingtypes.ModuleName])
 	baseEncoding, err := MakeEncodingConfig()
 	require.NoError(t, err)
 	require.NotContains(
@@ -173,6 +177,77 @@ func TestApplicationStateMachine(t *testing.T) {
 	genesis[banktypes.ModuleName] = application.AppCodec().MustMarshalJSON(bankGenesis)
 	require.NoError(t, application.ValidateGenesis(genesis))
 
+	stakingGenesis := stakingtypes.DefaultGenesisState()
+	application.AppCodec().MustUnmarshalJSON(genesis[stakingtypes.ModuleName], stakingGenesis)
+	require.Len(t, stakingGenesis.Validators, 1)
+	require.Len(t, stakingGenesis.Delegations, 1)
+	genesisSelfBond := stakingGenesis.Validators[0].TokensFromSharesTruncated(
+		stakingGenesis.Delegations[0].GetShares(),
+	).TruncateInt()
+	require.True(t, genesisSelfBond.IsPositive())
+
+	belowMinGenesis := cloneGenesisState(genesis)
+	setGenesisMinValidatorBond(t, application, belowMinGenesis, genesisSelfBond.AddRaw(1))
+	require.ErrorContains(
+		t,
+		application.ValidateGenesis(belowMinGenesis),
+		"genesis self-bond "+genesisSelfBond.String()+" below constitution minimum "+genesisSelfBond.AddRaw(1).String(),
+	)
+
+	atMinGenesis := cloneGenesisState(genesis)
+	setGenesisMinValidatorBond(t, application, atMinGenesis, genesisSelfBond)
+	require.NoError(t, application.ValidateGenesis(atMinGenesis))
+
+	duplicateSelfDelegationGenesis := cloneGenesisState(genesis)
+	duplicateStakingGenesis := stakingtypes.DefaultGenesisState()
+	application.AppCodec().MustUnmarshalJSON(
+		duplicateSelfDelegationGenesis[stakingtypes.ModuleName],
+		duplicateStakingGenesis,
+	)
+	duplicateStakingGenesis.Delegations = append(
+		duplicateStakingGenesis.Delegations,
+		duplicateStakingGenesis.Delegations[0],
+	)
+	duplicateSelfDelegationGenesis[stakingtypes.ModuleName] = application.AppCodec().MustMarshalJSON(
+		duplicateStakingGenesis,
+	)
+	require.ErrorContains(
+		t,
+		application.ValidateGenesis(duplicateSelfDelegationGenesis),
+		"duplicate genesis self-delegation",
+	)
+
+	exportedInactiveGenesis := cloneGenesisState(belowMinGenesis)
+	exportedInactiveStakingGenesis := stakingtypes.DefaultGenesisState()
+	application.AppCodec().MustUnmarshalJSON(
+		exportedInactiveGenesis[stakingtypes.ModuleName],
+		exportedInactiveStakingGenesis,
+	)
+	exportedInactiveStakingGenesis.Exported = true
+	exportedInactiveStakingGenesis.LastValidatorPowers = nil
+	exportedInactiveGenesis[stakingtypes.ModuleName] = application.AppCodec().MustMarshalJSON(
+		exportedInactiveStakingGenesis,
+	)
+	require.NoError(t, application.ValidateGenesis(exportedInactiveGenesis))
+
+	exportedActiveGenesis := cloneGenesisState(belowMinGenesis)
+	exportedActiveStakingGenesis := stakingtypes.DefaultGenesisState()
+	application.AppCodec().MustUnmarshalJSON(
+		exportedActiveGenesis[stakingtypes.ModuleName],
+		exportedActiveStakingGenesis,
+	)
+	exportedActiveStakingGenesis.Exported = true
+	exportedActiveStakingGenesis.LastValidatorPowers = []stakingtypes.LastValidatorPower{
+		{
+			Address: exportedActiveStakingGenesis.Validators[0].GetOperator(),
+			Power:   1,
+		},
+	}
+	exportedActiveGenesis[stakingtypes.ModuleName] = application.AppCodec().MustMarshalJSON(
+		exportedActiveStakingGenesis,
+	)
+	require.ErrorContains(t, application.ValidateGenesis(exportedActiveGenesis), "genesis self-bond")
+
 	for _, tc := range []struct {
 		name        string
 		mutate      func(*feemarkettypes.Params)
@@ -274,6 +349,26 @@ func TestApplicationStateMachine(t *testing.T) {
 	belowPegResponse, err := application.CheckTx(&abci.RequestCheckTx{Tx: belowPegBytes})
 	require.NoError(t, err)
 	require.False(t, belowPegResponse.IsOK())
+	validatorAddress, err := application.StakingKeeper.ValidatorAddressCodec().BytesToString(cosmosSender)
+	require.NoError(t, err)
+	belowMinSelfBondBytes := signAndEncodeCosmosTx(
+		t,
+		application,
+		cosmosPrivateKey,
+		cosmosSenderAccount.GetAccountNumber(),
+		cosmosSenderAccount.GetSequence(),
+		&stakingtypes.MsgCreateValidator{
+			DelegatorAddress: cosmosSender.String(),
+			ValidatorAddress: validatorAddress,
+			Value:            sdk.NewInt64Coin(config.BaseDenom, 9),
+		},
+		nil,
+		0,
+	)
+	belowMinSelfBondResponse, err := application.CheckTx(&abci.RequestCheckTx{Tx: belowMinSelfBondBytes})
+	require.NoError(t, err)
+	require.False(t, belowMinSelfBondResponse.IsOK())
+	require.Contains(t, belowMinSelfBondResponse.Log, "self-bond below minimum")
 	require.True(t, application.EVMKeeper.IsContract(queryContext, ethparams.HistoryStorageAddress))
 	historyCodeHash := application.EVMKeeper.GetCodeHash(queryContext, ethparams.HistoryStorageAddress)
 	require.Equal(t, ethparams.HistoryStorageCode, application.EVMKeeper.GetCode(queryContext, historyCodeHash))
@@ -643,6 +738,22 @@ func cloneGenesisState(genesis GenesisState) GenesisState {
 		cloned[moduleName] = slices.Clone(state)
 	}
 	return cloned
+}
+
+func setGenesisMinValidatorBond(
+	t *testing.T,
+	application *App,
+	genesis GenesisState,
+	amount sdkmath.Int,
+) {
+	t.Helper()
+	constitutionGenesis := new(constitutiontypes.GenesisState)
+	application.AppCodec().MustUnmarshalJSON(genesis[constitutiontypes.ModuleName], constitutionGenesis)
+	constitutionGenesis.Params.MinValidatorBondAmount = &sdk.Coin{
+		Denom:  config.BaseDenom,
+		Amount: amount,
+	}
+	genesis[constitutiontypes.ModuleName] = application.AppCodec().MustMarshalJSON(constitutionGenesis)
 }
 
 func finalizeAndCommit(

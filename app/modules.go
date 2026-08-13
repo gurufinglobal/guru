@@ -32,7 +32,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	sdkstaking "github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/evm/x/erc20"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
@@ -54,6 +54,7 @@ import (
 	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 	oracle "github.com/gurufinglobal/guru/v2/x/oracle"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
+	customstaking "github.com/gurufinglobal/guru/v2/x/staking"
 )
 
 var (
@@ -168,7 +169,10 @@ func (app *App) configureModules(tmLightClient ibctm.LightClientModule) error {
 		mint.NewAppModule(app.AppCodec(), app.MintKeeper, app.AccountKeeper, nil, nil),
 		slashing.NewAppModule(app.AppCodec(), app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.InterfaceRegistry()),
 		distribution.NewAppModule(app.AppCodec(), app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
-		staking.NewAppModule(app.AppCodec(), app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
+		customstaking.NewAppModule(
+			sdkstaking.NewAppModule(app.AppCodec(), app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
+			app.CustomStakingKeeper,
+		),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(app.AppCodec(), app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.InterfaceRegistry()),
@@ -220,7 +224,7 @@ func NewBasicManager() module.BasicManager {
 		mint.AppModuleBasic{},
 		slashing.AppModuleBasic{},
 		distribution.AppModuleBasic{},
-		staking.AppModuleBasic{},
+		sdkstaking.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.NewAppModuleBasic(),
 		authzmodule.AppModuleBasic{},
