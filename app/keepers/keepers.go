@@ -1,4 +1,4 @@
-package app
+package keepers
 
 import (
 	"fmt"
@@ -83,18 +83,21 @@ type AppKeepers struct {
 	ERC20Keeper        erc20keeper.Keeper
 }
 
-type keeperConfig struct {
-	codec              codec.Codec
-	legacyAmino        *codec.LegacyAmino
-	baseApp            *baseapp.BaseApp
-	logger             log.Logger
-	homePath           string
-	skipUpgradeHeights map[int64]bool
-	evmChainID         uint64
-	evmTracer          string
+// Config contains the application dependencies and runtime values required to
+// construct the keeper graph.
+type Config struct {
+	Codec              codec.Codec
+	LegacyAmino        *codec.LegacyAmino
+	BaseApp            *baseapp.BaseApp
+	Logger             log.Logger
+	HomePath           string
+	SkipUpgradeHeights map[int64]bool
+	EVMChainID         uint64
+	EVMTracer          string
 }
 
-func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
+// NewAppKeepers constructs the complete Guru keeper graph.
+func NewAppKeepers(cfg Config) (*AppKeepers, error) {
 	keys := newStoreKeys()
 	permissions := moduleAccountPermissions()
 	accountCodec := evmaddress.NewEvmCodec(chainconfig.Bech32PrefixAccAddr)
@@ -106,15 +109,15 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 
 	keepers := &AppKeepers{keys: keys}
 	keepers.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(consensusparamtypes.StoreKey)),
 		authority,
 		runtime.EventService{},
 	)
-	cfg.baseApp.SetParamStore(keepers.ConsensusParamsKeeper.ParamsStore)
+	cfg.BaseApp.SetParamStore(keepers.ConsensusParamsKeeper.ParamsStore)
 
 	keepers.AccountKeeper = authkeeper.NewAccountKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(authtypes.StoreKey)),
 		authtypes.ProtoBaseAccount,
 		permissions,
@@ -128,15 +131,15 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		return nil, err
 	}
 	keepers.BankKeeper = bankkeeper.NewBaseKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(banktypes.StoreKey)),
 		keepers.AccountKeeper,
 		blocked,
 		authority,
-		cfg.logger,
+		cfg.Logger,
 	)
 	keepers.StakingKeeper = stakingkeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(stakingtypes.StoreKey)),
 		keepers.AccountKeeper,
 		keepers.BankKeeper,
@@ -145,7 +148,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		evmaddress.NewEvmCodec(chainconfig.Bech32PrefixConsAddr),
 	)
 	keepers.MintKeeper = mintkeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(minttypes.StoreKey)),
 		keepers.StakingKeeper,
 		keepers.AccountKeeper,
@@ -154,7 +157,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		authority,
 	)
 	keepers.DistrKeeper = distrkeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(distrtypes.StoreKey)),
 		keepers.AccountKeeper,
 		keepers.BankKeeper,
@@ -163,8 +166,8 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		authority,
 	)
 	keepers.SlashingKeeper = slashingkeeper.NewKeeper(
-		cfg.codec,
-		cfg.legacyAmino,
+		cfg.Codec,
+		cfg.LegacyAmino,
 		runtime.NewKVStoreService(keys.getKVStoreKey(slashingtypes.StoreKey)),
 		keepers.StakingKeeper,
 		authority,
@@ -175,26 +178,26 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	))
 
 	keepers.FeeGrantKeeper = feegrantkeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(feegrant.StoreKey)),
 		keepers.AccountKeeper,
 	)
 	keepers.AuthzKeeper = authzkeeper.NewKeeper(
 		runtime.NewKVStoreService(keys.getKVStoreKey(authzkeeper.StoreKey)),
-		cfg.codec,
-		cfg.baseApp.MsgServiceRouter(),
+		cfg.Codec,
+		cfg.BaseApp.MsgServiceRouter(),
 		keepers.AccountKeeper,
 	)
 	keepers.UpgradeKeeper = upgradekeeper.NewKeeper(
-		cfg.skipUpgradeHeights,
+		cfg.SkipUpgradeHeights,
 		runtime.NewKVStoreService(keys.getKVStoreKey(upgradetypes.StoreKey)),
-		cfg.codec,
-		cfg.homePath,
-		cfg.baseApp,
+		cfg.Codec,
+		cfg.HomePath,
+		cfg.BaseApp,
 		authority,
 	)
 	keepers.IBCKeeper = ibckeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(ibcexported.StoreKey)),
 		nil,
 		keepers.UpgradeKeeper,
@@ -202,13 +205,13 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	)
 
 	governanceKeeper := govkeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(govtypes.StoreKey)),
 		keepers.AccountKeeper,
 		keepers.BankKeeper,
 		keepers.StakingKeeper,
 		keepers.DistrKeeper,
-		cfg.baseApp.MsgServiceRouter(),
+		cfg.BaseApp.MsgServiceRouter(),
 		govtypes.DefaultConfig(),
 		authority,
 	)
@@ -217,7 +220,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	governanceKeeper.SetLegacyRouter(govv1beta1.NewRouter())
 	keepers.GovKeeper = *governanceKeeper.SetHooks(govtypes.NewMultiGovHooks())
 	evidenceKeeper := evidencekeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(evidencetypes.StoreKey)),
 		keepers.StakingKeeper,
 		keepers.SlashingKeeper,
@@ -232,7 +235,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	keepers.EvidenceKeeper = *evidenceKeeper
 
 	keepers.FeeMarketKeeper = feemarketkeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		govAddress,
 		keys.getKVStoreKey(feemarkettypes.StoreKey),
 		keys.getTransientStoreKey(feemarkettypes.TransientKey),
@@ -241,7 +244,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	keepers.ConstitutionKeeper = constitutionkeeper.NewKeeper(
 		govAddress,
 		runtime.NewKVStoreService(keys.getKVStoreKey(constitutiontypes.StoreKey)),
-		cfg.codec,
+		cfg.Codec,
 		keepers.AccountKeeper.AddressCodec(),
 		keepers.BankKeeper,
 	)
@@ -253,7 +256,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	)
 	keepers.OracleKeeper = oraclekeeper.NewKeeper(
 		runtime.NewKVStoreService(keys.getKVStoreKey(oracletypes.StoreKey)),
-		cfg.codec,
+		cfg.Codec,
 		keepers.AccountKeeper.AddressCodec(),
 		&keepers.ConstitutionKeeper,
 	)
@@ -262,9 +265,9 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	// DefaultStaticPrecompiles stores pointers to the ERC-20 and transfer keeper
 	// fields. The fields are populated below before the application can execute
 	// a transaction, completing the circular dependency used by upstream evmd.
-	staticPrecompiles := defaultStaticPrecompiles(keepers, cfg.codec)
+	staticPrecompiles := defaultStaticPrecompiles(keepers, cfg.Codec)
 	keepers.EVMKeeper = evmkeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		keys.getKVStoreKey(evmtypes.StoreKey),
 		keys.getTransientStoreKey(evmtypes.TransientKey),
 		keys.kv,
@@ -275,8 +278,8 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		keepers.FeeMarketKeeper,
 		&keepers.ConsensusParamsKeeper,
 		&keepers.ERC20Keeper,
-		cfg.evmChainID,
-		cfg.evmTracer,
+		cfg.EVMChainID,
+		cfg.EVMTracer,
 	).WithDefaultEvmCoinInfo(evmtypes.EvmCoinInfo{
 		Denom:         chainconfig.BaseDenom,
 		ExtendedDenom: chainconfig.BaseDenom,
@@ -285,7 +288,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	}).WithStaticPrecompiles(staticPrecompiles)
 	keepers.ERC20Keeper = erc20keeper.NewKeeper(
 		keys.getKVStoreKey(erc20types.StoreKey),
-		cfg.codec,
+		cfg.Codec,
 		govAddress,
 		keepers.AccountKeeper,
 		keepers.BankKeeper,
@@ -294,12 +297,12 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		&keepers.TransferKeeper,
 	)
 	keepers.TransferKeeper = transferkeeper.NewKeeper(
-		cfg.codec,
+		cfg.Codec,
 		runtime.NewKVStoreService(keys.getKVStoreKey(ibctransfertypes.StoreKey)),
 		nil,
 		keepers.IBCKeeper.ChannelKeeper,
 		keepers.IBCKeeper.ChannelKeeper,
-		cfg.baseApp.MsgServiceRouter(),
+		cfg.BaseApp.MsgServiceRouter(),
 		keepers.AccountKeeper,
 		keepers.BankKeeper,
 		authority,
@@ -309,10 +312,12 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 	return keepers, nil
 }
 
-func (keepers *AppKeepers) getKVStoreKeys() map[string]*storetypes.KVStoreKey {
+// GetKVStoreKeys returns the persistent store keys mounted by the application.
+func (keepers *AppKeepers) GetKVStoreKeys() map[string]*storetypes.KVStoreKey {
 	return keepers.keys.kv
 }
 
-func (keepers *AppKeepers) getTransientStoreKeys() map[string]*storetypes.TransientStoreKey {
+// GetTransientStoreKeys returns the transient store keys mounted by the application.
+func (keepers *AppKeepers) GetTransientStoreKeys() map[string]*storetypes.TransientStoreKey {
 	return keepers.keys.transient
 }

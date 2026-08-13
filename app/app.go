@@ -17,9 +17,17 @@ import (
 	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	evmante "github.com/cosmos/evm/ante"
 
+	appkeepers "github.com/gurufinglobal/guru/v2/app/keepers"
 	"github.com/gurufinglobal/guru/v2/config"
 	oracleabci "github.com/gurufinglobal/guru/v2/x/oracle/abci"
 )
+
+// AppKeepers preserves the application package's public keeper type while the
+// implementation lives in the dedicated keepers package.
+type AppKeepers = appkeepers.AppKeepers
+
+// FeeMarketAdapter preserves the application package's public adapter type.
+type FeeMarketAdapter = appkeepers.FeeMarketAdapter
 
 // App is the Guru state machine and the application boundary used by the
 // Cosmos SDK and Cosmos EVM servers.
@@ -99,21 +107,21 @@ func New(options Options) (*App, error) {
 		skipUpgrades[height] = skip
 	}
 
-	keepers, err := newAppKeepers(keeperConfig{
-		codec:              encodingConfig.Codec,
-		legacyAmino:        encodingConfig.LegacyAmino,
-		baseApp:            baseApplication,
-		logger:             options.Logger,
-		homePath:           homePath,
-		skipUpgradeHeights: skipUpgrades,
-		evmChainID:         evmChainID,
-		evmTracer:          options.EVMTracer,
+	keepers, err := appkeepers.NewAppKeepers(appkeepers.Config{
+		Codec:              encodingConfig.Codec,
+		LegacyAmino:        encodingConfig.LegacyAmino,
+		BaseApp:            baseApplication,
+		Logger:             options.Logger,
+		HomePath:           homePath,
+		SkipUpgradeHeights: skipUpgrades,
+		EVMChainID:         evmChainID,
+		EVMTracer:          options.EVMTracer,
 	})
 	if err != nil {
 		return nil, err
 	}
 	if options.AppOptions != nil {
-		if err := baseApplication.RegisterStreamingServices(options.AppOptions, keepers.getKVStoreKeys()); err != nil {
+		if err := baseApplication.RegisterStreamingServices(options.AppOptions, keepers.GetKVStoreKeys()); err != nil {
 			return nil, fmt.Errorf("register state streaming services: %w", err)
 		}
 	}
@@ -154,8 +162,8 @@ func New(options Options) (*App, error) {
 }
 
 func (app *App) mountStoresAndHandlers() {
-	app.MountKVStores(app.getKVStoreKeys())
-	app.MountTransientStores(app.getTransientStoreKeys())
+	app.MountKVStores(app.GetKVStoreKeys())
+	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.SetInitChainer(app.InitChainer)
 	app.SetPreBlocker(app.PreBlocker)
 	app.SetBeginBlocker(app.BeginBlocker)
