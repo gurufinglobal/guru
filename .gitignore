@@ -9,6 +9,7 @@
 /build/
 /coverage.txt
 /.local/
+/.proto-gen/
 
 # Preserved dependency caches are not source files.
 **/node_modules/

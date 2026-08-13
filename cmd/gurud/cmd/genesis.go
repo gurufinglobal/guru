@@ -56,6 +56,20 @@ func newInitCommand(defaultHome string) *cobra.Command {
 			if defaultDenom == "" {
 				defaultDenom = chainconfig.BaseDenom
 			}
+			constitutionBaseAddress, err := command.Flags().GetString("constitution-base-address")
+			if err != nil {
+				return err
+			}
+			if constitutionBaseAddress == "" {
+				return fmt.Errorf("--constitution-base-address is required")
+			}
+			constitutionModeratorAddress, err := command.Flags().GetString("constitution-moderator-address")
+			if err != nil {
+				return err
+			}
+			if constitutionModeratorAddress == "" {
+				return fmt.Errorf("--constitution-moderator-address is required")
+			}
 
 			var mnemonic string
 			recoverKey, err := command.Flags().GetBool(genutilcli.FlagRecover)
@@ -110,6 +124,13 @@ func newInitCommand(defaultHome string) *cobra.Command {
 			}
 			defer application.Close() //nolint:errcheck
 			appState := application.DefaultGenesis()
+			if err := application.ConfigureConstitutionGenesis(
+				appState,
+				constitutionBaseAddress,
+				constitutionModeratorAddress,
+			); err != nil {
+				return err
+			}
 			stakingGenesis := stakingtypes.DefaultGenesisState()
 			application.AppCodec().MustUnmarshalJSON(
 				appState[stakingtypes.ModuleName],
@@ -163,6 +184,8 @@ func newInitCommand(defaultHome string) *cobra.Command {
 	command.Flags().Bool(genutilcli.FlagRecover, false, "recover the validator key from a seed phrase")
 	command.Flags().String(flags.FlagChainID, chainconfig.DefaultChainID, "genesis chain ID")
 	command.Flags().String(genutilcli.FlagDefaultBondDenom, chainconfig.BaseDenom, "native staking denomination")
+	command.Flags().String("constitution-base-address", "", "Constitution fee base recipient address")
+	command.Flags().String("constitution-moderator-address", "", "Constitution policy moderator address")
 	command.Flags().Int64(flags.FlagInitHeight, 1, "initial block height")
 	command.Flags().String(genutilcli.FlagConsensusKeyAlgo, ed25519.KeyType, "consensus key algorithm")
 	return command

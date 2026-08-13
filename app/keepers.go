@@ -45,6 +45,10 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	chainconfig "github.com/gurufinglobal/guru/v2/config"
+	constitutionkeeper "github.com/gurufinglobal/guru/v2/x/constitution/keeper"
+	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
+	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // AppKeepers owns the stateful dependencies used by the Guru application.
@@ -69,9 +73,12 @@ type AppKeepers struct {
 	IBCKeeper      *ibckeeper.Keeper
 	TransferKeeper transferkeeper.Keeper
 
-	FeeMarketKeeper feemarketkeeper.Keeper
-	EVMKeeper       *evmkeeper.Keeper
-	ERC20Keeper     erc20keeper.Keeper
+	FeeMarketKeeper    feemarketkeeper.Keeper
+	FeeMarketAdapter   FeeMarketAdapter
+	ConstitutionKeeper constitutionkeeper.Keeper
+	OracleKeeper       oraclekeeper.Keeper
+	EVMKeeper          *evmkeeper.Keeper
+	ERC20Keeper        erc20keeper.Keeper
 }
 
 type keeperConfig struct {
@@ -228,6 +235,22 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		keys.getKVStoreKey(feemarkettypes.StoreKey),
 		keys.getTransientStoreKey(feemarkettypes.TransientKey),
 	)
+	keepers.FeeMarketAdapter = newFeeMarketAdapter(keepers.FeeMarketKeeper)
+	keepers.ConstitutionKeeper = constitutionkeeper.NewKeeper(
+		govAddress,
+		runtime.NewKVStoreService(keys.getKVStoreKey(constitutiontypes.StoreKey)),
+		cfg.codec,
+		keepers.AccountKeeper.AddressCodec(),
+		keepers.BankKeeper,
+	)
+	keepers.ConstitutionKeeper.SetFeeMarketKeeper(keepers.FeeMarketAdapter)
+	keepers.OracleKeeper = oraclekeeper.NewKeeper(
+		runtime.NewKVStoreService(keys.getKVStoreKey(oracletypes.StoreKey)),
+		cfg.codec,
+		keepers.AccountKeeper.AddressCodec(),
+		&keepers.ConstitutionKeeper,
+	)
+	keepers.OracleKeeper.SetHooks(oracletypes.NewMultiOracleHooks(&keepers.ConstitutionKeeper))
 
 	// DefaultStaticPrecompiles stores pointers to the ERC-20 and transfer keeper
 	// fields. The fields are populated below before the application can execute

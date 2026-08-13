@@ -34,6 +34,8 @@ const (
 	DisplayDenom  = "gxn"
 	DenomExponent = 18
 
+	MinGasPriceOracleSymbol = "TRX/USD"
+
 	BIP44Purpose  uint32 = 44
 	BIP44CoinType uint32 = 60
 	BIP44HDPath          = "m/44'/60'/0'/0/0"

@@ -18,6 +18,7 @@ import (
 	evmante "github.com/cosmos/evm/ante"
 
 	"github.com/gurufinglobal/guru/v2/config"
+	oracleabci "github.com/gurufinglobal/guru/v2/x/oracle/abci"
 )
 
 // App is the Guru state machine and the application boundary used by the
@@ -29,10 +30,12 @@ type App struct {
 
 	*AppKeepers
 
-	ModuleManager      *module.Manager
-	BasicModuleManager module.BasicManager
-	configurator       module.Configurator
-	anteHandler        sdk.AnteHandler
+	ModuleManager         *module.Manager
+	BasicModuleManager    module.BasicManager
+	configurator          module.Configurator
+	anteHandler           sdk.AnteHandler
+	OracleProposalHandler *oracleabci.ProposalHandler
+	oracleVoteHandler     *oracleabci.VoteExtensionHandler
 
 	pendingTxListeners []evmante.PendingTxListener
 }
@@ -138,6 +141,9 @@ func New(options Options) (*App, error) {
 	if err := application.configureAnteHandler(options.MaxTxGasWanted); err != nil {
 		return nil, err
 	}
+	if err := application.configureOracleConsensus(options.AppOptions); err != nil {
+		return nil, err
+	}
 
 	if options.LoadLatest {
 		if err := application.LoadLatestVersion(); err != nil {
@@ -181,7 +187,12 @@ func (app *App) InitChainer(
 }
 
 // PreBlocker delegates the consensus-critical pre-block lifecycle.
-func (app *App) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+func (app *App) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+	if app.OracleProposalHandler != nil {
+		if err := app.OracleProposalHandler.ApplyProposalPayload(ctx, req); err != nil {
+			return nil, err
+		}
+	}
 	return app.ModuleManager.PreBlock(ctx)
 }
 

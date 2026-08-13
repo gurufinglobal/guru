@@ -19,14 +19,15 @@ import (
 	ethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/gurufinglobal/guru/v2/config"
+	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 )
 
 // GenesisState contains the module genesis documents consumed by InitChain.
 type GenesisState map[string]json.RawMessage
 
-// DefaultGenesis applies Guru's recommended network defaults over the upstream
-// module defaults. These values are templates, not binary-enforced identities;
-// operators may edit them subject to each upstream module's validation rules.
+// DefaultGenesis applies Guru's network policy over the upstream module
+// defaults. ValidateGenesis enforces consensus-critical cross-module policy
+// that upstream module validation cannot express.
 func (app *App) DefaultGenesis() GenesisState {
 	genesis := GenesisState(app.BasicModuleManager.DefaultGenesis(app.AppCodec()))
 
@@ -60,10 +61,10 @@ func (app *App) DefaultGenesis() GenesisState {
 
 	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
 	app.unmarshalGenesis(genesis, feemarkettypes.ModuleName, feeMarketGenesis)
-	feeMarketGenesis.Params.NoBaseFee = false
-	feeMarketGenesis.Params.BaseFee = feemarkettypes.DefaultBaseFee
+	feeMarketGenesis.Params.NoBaseFee = true
+	feeMarketGenesis.Params.BaseFee = sdkmath.LegacyZeroDec()
 	feeMarketGenesis.Params.EnableHeight = 0
-	feeMarketGenesis.Params.MinGasPrice = sdkmath.LegacyOneDec()
+	feeMarketGenesis.Params.MinGasPrice = mustInt(constitutiontypes.MinGasPriceScaleFactor).ToLegacyDec()
 	genesis[feemarkettypes.ModuleName] = app.AppCodec().MustMarshalJSON(feeMarketGenesis)
 
 	evmGenesis := evmtypes.DefaultGenesisState()
@@ -78,6 +79,28 @@ func (app *App) DefaultGenesis() GenesisState {
 	genesis[evmtypes.ModuleName] = app.AppCodec().MustMarshalJSON(evmGenesis)
 
 	return genesis
+}
+
+// ConfigureConstitutionGenesis sets the operator-controlled addresses that the
+// Constitution module intentionally leaves unset in its default genesis.
+func (app *App) ConfigureConstitutionGenesis(
+	genesis GenesisState,
+	baseAddress string,
+	moderatorAddress string,
+) error {
+	raw, ok := genesis[constitutiontypes.ModuleName]
+	if !ok {
+		return fmt.Errorf("constitution genesis is missing")
+	}
+
+	state := new(constitutiontypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(raw, state); err != nil {
+		return fmt.Errorf("decode constitution genesis: %w", err)
+	}
+	state.BaseAddress = baseAddress
+	state.ModeratorAddress = moderatorAddress
+	genesis[constitutiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(state)
+	return nil
 }
 
 func mustHistoryStoragePreinstall() evmtypes.Preinstall {
@@ -100,8 +123,8 @@ func (app *App) unmarshalGenesis(
 	}
 }
 
-// ValidateGenesis delegates validation to the exact upstream module set wired
-// into this application. Guru does not add network policy constraints here.
+// ValidateGenesis delegates structural validation to the wired modules and
+// then enforces Guru's Oracle-pegged FeeMarket policy.
 func (app *App) ValidateGenesis(genesis GenesisState) error {
 	if err := app.BasicModuleManager.ValidateGenesis(
 		app.AppCodec(),
@@ -110,6 +133,31 @@ func (app *App) ValidateGenesis(genesis GenesisState) error {
 	); err != nil {
 		return fmt.Errorf("validate module genesis: %w", err)
 	}
+	if err := app.validateFeeMarketGenesisPolicy(genesis); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (app *App) validateFeeMarketGenesisPolicy(genesis GenesisState) error {
+	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
+	if raw, ok := genesis[feemarkettypes.ModuleName]; ok {
+		if err := app.AppCodec().UnmarshalJSON(raw, feeMarketGenesis); err != nil {
+			return fmt.Errorf("decode feemarket genesis: %w", err)
+		}
+	}
+
+	params := feeMarketGenesis.Params
+	if !params.NoBaseFee {
+		return fmt.Errorf("feemarket no_base_fee must be true")
+	}
+	if !params.BaseFee.IsZero() {
+		return fmt.Errorf("feemarket base_fee must be zero, got %s", params.BaseFee.String())
+	}
+	if !params.MinGasPrice.IsPositive() {
+		return fmt.Errorf("feemarket min_gas_price must be positive, got %s", params.MinGasPrice.String())
+	}
+
 	return nil
 }
 

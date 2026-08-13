@@ -29,7 +29,9 @@ func (app *App) configureAnteHandler(maxTxGasWanted uint64) error {
 	if err := options.Validate(); err != nil {
 		return fmt.Errorf("validate ante handler options: %w", err)
 	}
-	app.anteHandler = appante.NewAnteHandler(options)
+	app.anteHandler = appante.WrapAnteHandlerWithOracleProposalOptionBlock(
+		appante.NewAnteHandler(options),
+	)
 	app.SetAnteHandler(app.anteHandler)
 	return nil
 }

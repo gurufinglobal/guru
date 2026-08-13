@@ -19,6 +19,9 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+
+	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 type storeKeys struct {
@@ -46,6 +49,8 @@ func newStoreKeys() storeKeys {
 			erc20types.StoreKey,
 			evmtypes.StoreKey,
 			feemarkettypes.StoreKey,
+			constitutiontypes.StoreKey,
+			oracletypes.StoreKey,
 		),
 		transient: storetypes.NewTransientStoreKeys(
 			evmtypes.TransientKey,
