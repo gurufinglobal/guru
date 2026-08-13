@@ -258,6 +258,11 @@ if [[ "$overwrite" == "y" || "$overwrite" == "Y" ]]; then
     --algo "$KEY_ALGORITHM" \
     --home "$CHAIN_HOME"
 
+  constitution_address="$("$GURUD" keys show "$validator_key" \
+    --address \
+    --keyring-backend "$KEYRING_BACKEND" \
+    --home "$CHAIN_HOME")"
+
   provided_mnemonics=()
   if [[ -n "$mnemonics_input" ]]; then
     if [[ ! -f "$mnemonics_input" ]]; then
@@ -286,6 +291,8 @@ if [[ "$overwrite" == "y" || "$overwrite" == "Y" ]]; then
     --recover \
     --chain-id "$CHAIN_ID" \
     --default-denom "$BOND_DENOM" \
+    --constitution-base-address "$constitution_address" \
+    --constitution-moderator-address "$constitution_address" \
     --home "$CHAIN_HOME"
 
   jq \

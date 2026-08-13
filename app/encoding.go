@@ -21,6 +21,7 @@ import (
 	gogoproto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/gurufinglobal/guru/v2/config"
+	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 )
 
 var (
@@ -123,6 +124,7 @@ func buildEncodingConfig() (EncodingConfig, error) {
 	}
 
 	evmcodec.RegisterInterfaces(interfaceRegistry)
+	constitutiontypes.RegisterInterfaces(interfaceRegistry)
 	legacyAmino := codec.NewLegacyAmino()
 	evmcodec.RegisterLegacyAminoCodec(legacyAmino)
 	moduleBasics := NewBasicManager()

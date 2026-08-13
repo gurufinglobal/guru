@@ -1,0 +1,93 @@
+syntax = "proto3";
+package guru.oracle.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
+import "google/api/annotations.proto";
+import "guru/oracle/v1/oracle.proto";
+import "guru/oracle/v1/params.proto";
+
+option go_package = "github.com/gurufinglobal/guru/v2/x/oracle/types";
+
+// Query exposes read-only oracle state.
+service Query {
+  // Params returns oracle module parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/params";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // ActiveTasks returns configured numeric oracle tasks.
+  rpc ActiveTasks(QueryActiveTasksRequest) returns (QueryActiveTasksResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/tasks";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // Task returns a configured numeric oracle task by symbol.
+  rpc Task(QueryTaskRequest) returns (QueryTaskResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/task";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // LatestValue returns the latest accepted oracle value for a symbol.
+  rpc LatestValue(QueryLatestValueRequest) returns (QueryLatestValueResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/value";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // LatestValues returns all latest accepted oracle values.
+  rpc LatestValues(QueryLatestValuesRequest) returns (QueryLatestValuesResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/values";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+
+  // History returns bounded oracle value history for a symbol.
+  rpc History(QueryHistoryRequest) returns (QueryHistoryResponse) {
+    option (google.api.http).get = "/guru/oracle/v1/history";
+    option (cosmos.query.v1.module_query_safe) = true;
+  }
+}
+
+message QueryParamsRequest {}
+message QueryParamsResponse {
+  Params params = 1;
+}
+
+message QueryActiveTasksRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+message QueryActiveTasksResponse {
+  repeated OracleTask tasks = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryTaskRequest {
+  string symbol = 1;
+}
+message QueryTaskResponse {
+  OracleTask task = 1;
+}
+
+message QueryLatestValueRequest {
+  string symbol = 1;
+}
+message QueryLatestValueResponse {
+  OracleValue value = 1;
+}
+
+message QueryLatestValuesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+message QueryLatestValuesResponse {
+  repeated OracleValue values = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryHistoryRequest {
+  string symbol = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+message QueryHistoryResponse {
+  OracleHistory history = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

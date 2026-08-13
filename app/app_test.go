@@ -24,6 +24,7 @@ import (
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
 	evmmempool "github.com/cosmos/evm/mempool"
@@ -40,6 +41,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/gurufinglobal/guru/v2/config"
+	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 )
 
 // Cosmos EVM production configuration is process-global, so this test creates
@@ -93,6 +95,11 @@ func TestApplicationStateMachine(t *testing.T) {
 	requireModulePrecedes(t, beginBlockerOrder, ibctransfertypes.ModuleName, erc20types.ModuleName)
 	requireModulePrecedes(t, beginBlockerOrder, erc20types.ModuleName, feemarkettypes.ModuleName)
 	requireModulePrecedes(t, beginBlockerOrder, feemarkettypes.ModuleName, evmtypes.ModuleName)
+	requireModulePrecedes(t, beginBlockerOrder, evmtypes.ModuleName, constitutiontypes.ModuleName)
+	requireModulePrecedes(t, beginBlockerOrder, constitutiontypes.ModuleName, distrtypes.ModuleName)
+	requireModulePrecedes(t, endBlockerOrder, feemarkettypes.ModuleName, constitutiontypes.ModuleName)
+	requireModulePrecedes(t, initGenesisOrder, banktypes.ModuleName, constitutiontypes.ModuleName)
+	requireModulePrecedes(t, initGenesisOrder, constitutiontypes.ModuleName, evmtypes.ModuleName)
 	requireModulePrecedes(t, initGenesisOrder, authtypes.ModuleName, evmtypes.ModuleName)
 	requireModulePrecedes(t, initGenesisOrder, evmtypes.ModuleName, erc20types.ModuleName)
 	requireModulePrecedes(t, initGenesisOrder, erc20types.ModuleName, ibctransfertypes.ModuleName)
@@ -106,6 +113,11 @@ func TestApplicationStateMachine(t *testing.T) {
 	proposerAddress := validatorSet.GetProposer().Address
 
 	genesis := application.DefaultGenesis()
+	require.NoError(t, application.ConfigureConstitutionGenesis(
+		genesis,
+		sender.String(),
+		sdk.AccAddress(recipient.Bytes()).String(),
+	))
 	validatorAccount := authtypes.NewBaseAccount(
 		sdk.AccAddress(validatorSet.Validators[0].Address),
 		nil,
@@ -187,6 +199,10 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.NotNil(t, transferModuleAccount)
 	require.ElementsMatch(t, []string{authtypes.Minter, authtypes.Burner}, transferModuleAccount.GetPermissions())
 	require.True(t, application.BankKeeper.BlockedAddr(transferModuleAccount.GetAddress()))
+	constitutionModuleAccount := application.AccountKeeper.GetModuleAccount(queryContext, constitutiontypes.ModuleName)
+	require.NotNil(t, constitutionModuleAccount)
+	require.ElementsMatch(t, []string{authtypes.Burner}, constitutionModuleAccount.GetPermissions())
+	require.True(t, application.BankKeeper.BlockedAddr(constitutionModuleAccount.GetAddress()))
 	require.Equal(t, ibctransfertypes.DefaultParams(), application.TransferKeeper.GetParams(queryContext))
 	require.Equal(t, erc20types.DefaultParams(), application.ERC20Keeper.GetParams(queryContext))
 	require.Empty(t, application.ERC20Keeper.GetTokenPairs(queryContext))

@@ -45,6 +45,8 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	chainconfig "github.com/gurufinglobal/guru/v2/config"
+	constitutionkeeper "github.com/gurufinglobal/guru/v2/x/constitution/keeper"
+	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 )
 
 // AppKeepers owns the stateful dependencies used by the Guru application.
@@ -69,10 +71,11 @@ type AppKeepers struct {
 	IBCKeeper      *ibckeeper.Keeper
 	TransferKeeper transferkeeper.Keeper
 
-	FeeMarketKeeper  feemarketkeeper.Keeper
-	FeeMarketAdapter FeeMarketAdapter
-	EVMKeeper        *evmkeeper.Keeper
-	ERC20Keeper      erc20keeper.Keeper
+	FeeMarketKeeper    feemarketkeeper.Keeper
+	FeeMarketAdapter   FeeMarketAdapter
+	ConstitutionKeeper constitutionkeeper.Keeper
+	EVMKeeper          *evmkeeper.Keeper
+	ERC20Keeper        erc20keeper.Keeper
 }
 
 type keeperConfig struct {
@@ -230,6 +233,14 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		keys.getTransientStoreKey(feemarkettypes.TransientKey),
 	)
 	keepers.FeeMarketAdapter = newFeeMarketAdapter(keepers.FeeMarketKeeper)
+	keepers.ConstitutionKeeper = constitutionkeeper.NewKeeper(
+		govAddress,
+		runtime.NewKVStoreService(keys.getKVStoreKey(constitutiontypes.StoreKey)),
+		cfg.codec,
+		keepers.AccountKeeper.AddressCodec(),
+		keepers.BankKeeper,
+	)
+	keepers.ConstitutionKeeper.SetFeeMarketKeeper(keepers.FeeMarketAdapter)
 
 	// DefaultStaticPrecompiles stores pointers to the ERC-20 and transfer keeper
 	// fields. The fields are populated below before the application can execute

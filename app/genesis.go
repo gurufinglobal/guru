@@ -19,6 +19,7 @@ import (
 	ethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/gurufinglobal/guru/v2/config"
+	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 )
 
 // GenesisState contains the module genesis documents consumed by InitChain.
@@ -78,6 +79,28 @@ func (app *App) DefaultGenesis() GenesisState {
 	genesis[evmtypes.ModuleName] = app.AppCodec().MustMarshalJSON(evmGenesis)
 
 	return genesis
+}
+
+// ConfigureConstitutionGenesis sets the operator-controlled addresses that the
+// Constitution module intentionally leaves unset in its default genesis.
+func (app *App) ConfigureConstitutionGenesis(
+	genesis GenesisState,
+	baseAddress string,
+	moderatorAddress string,
+) error {
+	raw, ok := genesis[constitutiontypes.ModuleName]
+	if !ok {
+		return fmt.Errorf("constitution genesis is missing")
+	}
+
+	state := new(constitutiontypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(raw, state); err != nil {
+		return fmt.Errorf("decode constitution genesis: %w", err)
+	}
+	state.BaseAddress = baseAddress
+	state.ModeratorAddress = moderatorAddress
+	genesis[constitutiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(state)
+	return nil
 }
 
 func mustHistoryStoragePreinstall() evmtypes.Preinstall {

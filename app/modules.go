@@ -49,6 +49,9 @@ import (
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+
+	constitution "github.com/gurufinglobal/guru/v2/x/constitution"
+	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 )
 
 var (
@@ -64,6 +67,7 @@ var (
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
+		constitutiontypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -85,6 +89,7 @@ var (
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
+		constitutiontypes.ModuleName,
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		distrtypes.ModuleName,
@@ -101,6 +106,7 @@ var (
 	initGenesisOrder = []string{
 		authtypes.ModuleName,
 		banktypes.ModuleName,
+		constitutiontypes.ModuleName,
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -152,6 +158,7 @@ func (app *App) configureModules(tmLightClient ibctm.LightClientModule) error {
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app, app.GetTxConfig()),
 		auth.NewAppModule(app.AppCodec(), app.AccountKeeper, authsimulation.RandomGenesisAccounts, nil),
 		bank.NewAppModule(app.AppCodec(), app.BankKeeper, app.AccountKeeper, nil),
+		constitution.NewAppModule(app.ConstitutionKeeper),
 		feegrantmodule.NewAppModule(app.AppCodec(), app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.InterfaceRegistry()),
 		gov.NewAppModule(app.AppCodec(), &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
 		mint.NewAppModule(app.AppCodec(), app.MintKeeper, app.AccountKeeper, nil, nil),
@@ -176,7 +183,7 @@ func (app *App) configureModules(tmLightClient ibctm.LightClientModule) error {
 		return err
 	}
 	app.ModuleManager = module.NewManagerFromMap(moduleMap)
-	app.BasicModuleManager = NewBasicManager()
+	app.BasicModuleManager = module.NewBasicManagerFromManager(app.ModuleManager, NewBasicManager())
 
 	app.ModuleManager.SetOrderPreBlockers(preBlockerOrder...)
 	app.ModuleManager.SetOrderBeginBlockers(beginBlockerOrder...)
@@ -187,6 +194,9 @@ func (app *App) configureModules(tmLightClient ibctm.LightClientModule) error {
 	app.configurator = module.NewConfigurator(app.AppCodec(), app.MsgServiceRouter(), app.GRPCQueryRouter())
 	if err := app.ModuleManager.RegisterServices(app.configurator); err != nil {
 		return fmt.Errorf("register module services: %w", err)
+	}
+	if err := constitution.RegisterMigrations(app.configurator); err != nil {
+		return fmt.Errorf("register constitution migrations: %w", err)
 	}
 	return nil
 }

@@ -17,6 +17,8 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethvm "github.com/ethereum/go-ethereum/core/vm"
+
+	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 )
 
 func moduleAccountPermissions() map[string][]string {
@@ -31,6 +33,7 @@ func moduleAccountPermissions() map[string][]string {
 		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner},
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		feemarkettypes.ModuleName:      nil,
+		constitutiontypes.ModuleName:   {authtypes.Burner},
 	}
 }
 
