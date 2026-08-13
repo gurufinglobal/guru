@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -59,6 +60,11 @@ func (app *App) DefaultGenesis() GenesisState {
 		sdk.NewCoin(config.BaseDenom, oneToken.MulRaw(5)),
 	)
 	genesis[govtypes.ModuleName] = app.AppCodec().MustMarshalJSON(govGenesis)
+
+	distributionGenesis := distrtypes.DefaultGenesisState()
+	app.unmarshalGenesis(genesis, distrtypes.ModuleName, distributionGenesis)
+	distributionGenesis.Params.CommunityTax = sdkmath.LegacyZeroDec()
+	genesis[distrtypes.ModuleName] = app.AppCodec().MustMarshalJSON(distributionGenesis)
 
 	feeMarketGenesis := feemarkettypes.DefaultGenesisState()
 	app.unmarshalGenesis(genesis, feemarkettypes.ModuleName, feeMarketGenesis)
