@@ -128,6 +128,9 @@ func TestApplicationStateMachine(t *testing.T) {
 
 	genesis := application.DefaultGenesis()
 	require.Contains(t, genesis, oracletypes.ModuleName)
+	distributionGenesis := distrtypes.DefaultGenesisState()
+	application.AppCodec().MustUnmarshalJSON(genesis[distrtypes.ModuleName], distributionGenesis)
+	require.True(t, distributionGenesis.Params.CommunityTax.IsZero())
 	feeMarketGenesis := new(feemarkettypes.GenesisState)
 	application.AppCodec().MustUnmarshalJSON(genesis[feemarkettypes.ModuleName], feeMarketGenesis)
 	require.True(t, feeMarketGenesis.Params.NoBaseFee)
