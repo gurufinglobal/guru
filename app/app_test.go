@@ -120,6 +120,13 @@ func TestApplicationStateMachine(t *testing.T) {
 
 	genesis := application.DefaultGenesis()
 	require.Contains(t, genesis, oracletypes.ModuleName)
+	feeMarketGenesis := new(feemarkettypes.GenesisState)
+	application.AppCodec().MustUnmarshalJSON(genesis[feemarkettypes.ModuleName], feeMarketGenesis)
+	require.True(t, feeMarketGenesis.Params.NoBaseFee)
+	require.True(t, feeMarketGenesis.Params.BaseFee.IsZero())
+	require.True(t, feeMarketGenesis.Params.MinGasPrice.Equal(
+		mustInt(constitutiontypes.MinGasPriceScaleFactor).ToLegacyDec(),
+	))
 	require.NoError(t, application.ConfigureConstitutionGenesis(
 		genesis,
 		sender.String(),
@@ -148,6 +155,49 @@ func TestApplicationStateMachine(t *testing.T) {
 	bankGenesis.DenomMetadata = upsertNativeMetadata(bankGenesis.DenomMetadata)
 	genesis[banktypes.ModuleName] = application.AppCodec().MustMarshalJSON(bankGenesis)
 	require.NoError(t, application.ValidateGenesis(genesis))
+
+	for _, tc := range []struct {
+		name        string
+		mutate      func(*feemarkettypes.Params)
+		errorString string
+	}{
+		{
+			name: "base fee enabled",
+			mutate: func(params *feemarkettypes.Params) {
+				params.NoBaseFee = false
+			},
+			errorString: "feemarket no_base_fee must be true",
+		},
+		{
+			name: "non-zero base fee",
+			mutate: func(params *feemarkettypes.Params) {
+				params.BaseFee = feemarkettypes.DefaultBaseFee
+			},
+			errorString: "feemarket base_fee must be zero",
+		},
+		{
+			name: "non-positive minimum gas price",
+			mutate: func(params *feemarkettypes.Params) {
+				params.MinGasPrice = sdkmath.LegacyZeroDec()
+			},
+			errorString: "feemarket min_gas_price must be positive",
+		},
+	} {
+		t.Run("rejects feemarket policy with "+tc.name, func(t *testing.T) {
+			invalidGenesis := cloneGenesisState(genesis)
+			invalidFeeMarketGenesis := new(feemarkettypes.GenesisState)
+			application.AppCodec().MustUnmarshalJSON(
+				invalidGenesis[feemarkettypes.ModuleName],
+				invalidFeeMarketGenesis,
+			)
+			tc.mutate(&invalidFeeMarketGenesis.Params)
+			invalidGenesis[feemarkettypes.ModuleName] = application.AppCodec().MustMarshalJSON(
+				invalidFeeMarketGenesis,
+			)
+
+			require.ErrorContains(t, application.ValidateGenesis(invalidGenesis), tc.errorString)
+		})
+	}
 
 	vmGenesis := new(evmtypes.GenesisState)
 	application.AppCodec().MustUnmarshalJSON(genesis[evmtypes.ModuleName], vmGenesis)
@@ -186,9 +236,27 @@ func TestApplicationStateMachine(t *testing.T) {
 	finalizeAndCommit(t, application, 1, blockTime.Add(time.Second), proposerAddress, nil)
 
 	queryContext := committedContext(t, application)
+	feeMarketParams := application.FeeMarketKeeper.GetParams(queryContext)
+	require.True(t, feeMarketParams.NoBaseFee)
+	require.True(t, feeMarketParams.BaseFee.IsZero())
 	require.True(t, application.FeeMarketAdapter.GetMinGasPrice(
 		sdk.WrapSDKContext(queryContext),
-	).Equal(sdkmath.LegacyOneDec()))
+	).Equal(mustInt(constitutiontypes.MinGasPriceScaleFactor).ToLegacyDec()))
+	const testGasPrice int64 = 700_000_000_000
+	belowPegBytes, _ := signAndEncodeEthereumTx(
+		t,
+		application,
+		privateKey,
+		ethtypes.NewTx(&ethtypes.LegacyTx{
+			Nonce:    0,
+			To:       &recipient,
+			Gas:      100_000,
+			GasPrice: big.NewInt(2_000_000_000),
+		}),
+	)
+	belowPegResponse, err := application.CheckTx(&abci.RequestCheckTx{Tx: belowPegBytes})
+	require.NoError(t, err)
+	require.False(t, belowPegResponse.IsOK())
 	require.True(t, application.EVMKeeper.IsContract(queryContext, ethparams.HistoryStorageAddress))
 	historyCodeHash := application.EVMKeeper.GetCodeHash(queryContext, ethparams.HistoryStorageAddress)
 	require.Equal(t, ethparams.HistoryStorageCode, application.EVMKeeper.GetCode(queryContext, historyCodeHash))
@@ -301,7 +369,7 @@ func TestApplicationStateMachine(t *testing.T) {
 			To:       &recipient,
 			Value:    amount,
 			Gas:      100_000,
-			GasPrice: big.NewInt(2_000_000_000),
+			GasPrice: big.NewInt(testGasPrice),
 		}),
 	)
 	finalized := finalizeAndCommit(
@@ -333,7 +401,7 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.Equal(t, uint64(1), application.EVMKeeper.GetNonce(queryContext, senderEVMAddress))
 
 	const revertGasLimit uint64 = 100_000
-	revertGasPrice := big.NewInt(2_000_000_000)
+	revertGasPrice := big.NewInt(testGasPrice)
 	revertValue := big.NewInt(1_000_000_000_000_000_000)
 	revertBytes, _ := signAndEncodeEthereumTx(
 		t,
@@ -384,7 +452,10 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.NotNil(t, senderAccountAfterRevert)
 	require.Equal(t, uint64(2), senderAccountAfterRevert.GetSequence())
 	cosmosValue := sdkmath.NewInt(777)
-	cosmosFee := sdk.NewCoins(sdk.NewCoin(config.BaseDenom, mustInt("1000000000000000")))
+	cosmosFee := sdk.NewCoins(sdk.NewCoin(
+		config.BaseDenom,
+		sdkmath.NewInt(testGasPrice).MulRaw(200_000),
+	))
 	cosmosBytes := signAndEncodeCosmosTx(
 		t,
 		application,

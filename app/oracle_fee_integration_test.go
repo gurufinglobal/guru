@@ -55,9 +55,9 @@ func TestOracleConstitutionFeeMarketIntegration(t *testing.T) {
 		feeMarketTransientKey,
 	)
 	feeMarketParams := feemarkettypes.DefaultParams()
-	feeMarketParams.NoBaseFee = false
-	feeMarketParams.BaseFee = feemarkettypes.DefaultBaseFee
-	feeMarketParams.MinGasPrice = sdkmath.LegacyOneDec()
+	feeMarketParams.NoBaseFee = true
+	feeMarketParams.BaseFee = sdkmath.LegacyZeroDec()
+	feeMarketParams.MinGasPrice = mustInt(constitutiontypes.MinGasPriceScaleFactor).ToLegacyDec()
 	require.NoError(t, feeMarketParams.Validate())
 	require.NoError(t, feeMarketKeeper.SetParams(ctx, feeMarketParams))
 
@@ -98,11 +98,19 @@ func TestOracleConstitutionFeeMarketIntegration(t *testing.T) {
 	schedule, err := constitutionKeeper.GetMinGasPriceSchedule(ctx)
 	require.NoError(t, err)
 	require.Equal(t, int64(21), schedule.GetEffectiveHeight())
-	require.True(t, feeMarketKeeper.GetParams(ctx).MinGasPrice.Equal(sdkmath.LegacyOneDec()))
+	require.Equal(t, "1260000000000", schedule.GetRawMinGasPrice())
+	require.True(t, sdkmath.LegacyMustNewDecFromStr(schedule.GetPreviousMinGasPrice()).Equal(
+		feeMarketParams.MinGasPrice,
+	))
+	expectedMinGasPrice := sdkmath.LegacyMustNewDecFromStr("693000000000")
+	require.True(t, sdkmath.LegacyMustNewDecFromStr(schedule.GetScheduledMinGasPrice()).Equal(
+		expectedMinGasPrice,
+	))
+	require.True(t, feeMarketKeeper.GetParams(ctx).MinGasPrice.Equal(feeMarketParams.MinGasPrice))
 
 	require.NoError(t, constitutionKeeper.ApplyDueMinGasPriceSchedule(ctx))
 	expectedParams := feeMarketParams
-	expectedParams.MinGasPrice = sdkmath.LegacyMustNewDecFromStr("1.1")
+	expectedParams.MinGasPrice = expectedMinGasPrice
 	require.Equal(t, expectedParams, feeMarketKeeper.GetParams(ctx))
 	_, err = constitutionKeeper.GetMinGasPriceSchedule(ctx)
 	require.ErrorIs(t, err, collections.ErrNotFound)
