@@ -49,6 +49,7 @@ import (
 	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
+	customstakingkeeper "github.com/gurufinglobal/guru/v2/x/staking/keeper"
 )
 
 // AppKeepers owns the stateful dependencies used by the Guru application.
@@ -60,6 +61,7 @@ type AppKeepers struct {
 	AccountKeeper         authkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
 	StakingKeeper         *stakingkeeper.Keeper
+	CustomStakingKeeper   *customstakingkeeper.Keeper
 	SlashingKeeper        slashingkeeper.Keeper
 	MintKeeper            mintkeeper.Keeper
 	DistrKeeper           distrkeeper.Keeper
@@ -244,6 +246,11 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		keepers.BankKeeper,
 	)
 	keepers.ConstitutionKeeper.SetFeeMarketKeeper(keepers.FeeMarketAdapter)
+	keepers.CustomStakingKeeper = customstakingkeeper.NewKeeper(
+		keepers.StakingKeeper,
+		&keepers.ConstitutionKeeper,
+		keepers.AccountKeeper.AddressCodec(),
+	)
 	keepers.OracleKeeper = oraclekeeper.NewKeeper(
 		runtime.NewKVStoreService(keys.getKVStoreKey(oracletypes.StoreKey)),
 		cfg.codec,
