@@ -179,8 +179,40 @@ func NewRootCmd() (*cobra.Command, error) {
 }
 
 func newDefaultAppConfig() (string, any) {
-	return cosmosevmconfig.InitAppConfig(
+	template, rawConfig := cosmosevmconfig.InitAppConfig(
 		chainconfig.BaseDenom,
 		chainconfig.DefaultEVMChainID,
 	)
+	return template + defaultOracleConfigTemplate, guruAppConfig{
+		EVMAppConfig: rawConfig.(cosmosevmconfig.EVMAppConfig),
+		Oracle: oracleConfig{
+			Enabled:        true,
+			SidecarSocket:  "",
+			SidecarTimeout: "200ms",
+		},
+	}
+}
+
+const defaultOracleConfigTemplate = `
+[oracle]
+
+# Enables local validator oracle vote-extension participation.
+enabled = {{ .Oracle.Enabled }}
+
+# Unix domain socket used by validator nodes to query the oracle sidecar.
+sidecar_socket = "{{ .Oracle.SidecarSocket }}"
+
+# Timeout for one oracle sidecar request during ExtendVote.
+sidecar_timeout = "{{ .Oracle.SidecarTimeout }}"
+`
+
+type guruAppConfig struct {
+	cosmosevmconfig.EVMAppConfig `mapstructure:",squash"`
+	Oracle                       oracleConfig `mapstructure:"oracle"`
+}
+
+type oracleConfig struct {
+	Enabled        bool   `mapstructure:"enabled"`
+	SidecarSocket  string `mapstructure:"sidecar_socket"`
+	SidecarTimeout string `mapstructure:"sidecar_timeout"`
 }

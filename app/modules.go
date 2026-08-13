@@ -52,6 +52,8 @@ import (
 
 	constitution "github.com/gurufinglobal/guru/v2/x/constitution"
 	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
+	oracle "github.com/gurufinglobal/guru/v2/x/oracle"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 var (
@@ -107,6 +109,7 @@ var (
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		constitutiontypes.ModuleName,
+		oracletypes.ModuleName,
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -159,6 +162,7 @@ func (app *App) configureModules(tmLightClient ibctm.LightClientModule) error {
 		auth.NewAppModule(app.AppCodec(), app.AccountKeeper, authsimulation.RandomGenesisAccounts, nil),
 		bank.NewAppModule(app.AppCodec(), app.BankKeeper, app.AccountKeeper, nil),
 		constitution.NewAppModule(app.ConstitutionKeeper),
+		oracle.NewAppModule(app.OracleKeeper),
 		feegrantmodule.NewAppModule(app.AppCodec(), app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.InterfaceRegistry()),
 		gov.NewAppModule(app.AppCodec(), &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
 		mint.NewAppModule(app.AppCodec(), app.MintKeeper, app.AccountKeeper, nil, nil),

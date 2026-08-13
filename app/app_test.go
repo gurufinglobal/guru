@@ -42,6 +42,7 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/config"
 	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // Cosmos EVM production configuration is process-global, so this test creates
@@ -63,6 +64,9 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.Equal(t, testChainID, application.ChainID())
 	require.Equal(t, testEVMChainID, application.EVMChainID())
 	require.IsType(t, sdkmempool.NoOpMempool{}, application.Mempool())
+	require.NotNil(t, application.OracleProposalHandler)
+	require.NotNil(t, application.oracleVoteHandler)
+	require.Contains(t, application.ModuleManager.Modules, oracletypes.ModuleName)
 	baseEncoding, err := MakeEncodingConfig()
 	require.NoError(t, err)
 	require.NotContains(
@@ -99,6 +103,8 @@ func TestApplicationStateMachine(t *testing.T) {
 	requireModulePrecedes(t, beginBlockerOrder, constitutiontypes.ModuleName, distrtypes.ModuleName)
 	requireModulePrecedes(t, endBlockerOrder, feemarkettypes.ModuleName, constitutiontypes.ModuleName)
 	requireModulePrecedes(t, initGenesisOrder, banktypes.ModuleName, constitutiontypes.ModuleName)
+	requireModulePrecedes(t, initGenesisOrder, constitutiontypes.ModuleName, oracletypes.ModuleName)
+	requireModulePrecedes(t, initGenesisOrder, oracletypes.ModuleName, evmtypes.ModuleName)
 	requireModulePrecedes(t, initGenesisOrder, constitutiontypes.ModuleName, evmtypes.ModuleName)
 	requireModulePrecedes(t, initGenesisOrder, authtypes.ModuleName, evmtypes.ModuleName)
 	requireModulePrecedes(t, initGenesisOrder, evmtypes.ModuleName, erc20types.ModuleName)
@@ -113,6 +119,7 @@ func TestApplicationStateMachine(t *testing.T) {
 	proposerAddress := validatorSet.GetProposer().Address
 
 	genesis := application.DefaultGenesis()
+	require.Contains(t, genesis, oracletypes.ModuleName)
 	require.NoError(t, application.ConfigureConstitutionGenesis(
 		genesis,
 		sender.String(),

@@ -49,6 +49,7 @@ import (
 
 	guruapp "github.com/gurufinglobal/guru/v2/app"
 	chainconfig "github.com/gurufinglobal/guru/v2/config"
+	oraclecli "github.com/gurufinglobal/guru/v2/x/oracle/client/cli"
 )
 
 func newQueryCommand() *cobra.Command {
@@ -72,6 +73,7 @@ func newQueryCommand() *cobra.Command {
 	// commands rather than AutoCLI descriptors. The stateless basic manager
 	// adds those commands without constructing an App or consuming EVM globals.
 	guruapp.NewBasicManager().AddQueryCommands(command)
+	command.AddCommand(oraclecli.GetQueryCmd())
 	command.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 	return command
 }
@@ -112,6 +114,7 @@ func newTxCommand() *cobra.Command {
 		vestingcli.GetTxCmd(accountCodec),
 		erc20.AppModuleBasic{}.GetTxCmd(),
 		transfer.AppModuleBasic{}.GetTxCmd(),
+		oraclecli.GetTxCmd(),
 	)
 	command.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 	return command

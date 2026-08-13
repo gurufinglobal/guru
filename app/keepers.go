@@ -47,6 +47,8 @@ import (
 	chainconfig "github.com/gurufinglobal/guru/v2/config"
 	constitutionkeeper "github.com/gurufinglobal/guru/v2/x/constitution/keeper"
 	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
+	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // AppKeepers owns the stateful dependencies used by the Guru application.
@@ -74,6 +76,7 @@ type AppKeepers struct {
 	FeeMarketKeeper    feemarketkeeper.Keeper
 	FeeMarketAdapter   FeeMarketAdapter
 	ConstitutionKeeper constitutionkeeper.Keeper
+	OracleKeeper       oraclekeeper.Keeper
 	EVMKeeper          *evmkeeper.Keeper
 	ERC20Keeper        erc20keeper.Keeper
 }
@@ -241,6 +244,12 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		keepers.BankKeeper,
 	)
 	keepers.ConstitutionKeeper.SetFeeMarketKeeper(keepers.FeeMarketAdapter)
+	keepers.OracleKeeper = oraclekeeper.NewKeeper(
+		runtime.NewKVStoreService(keys.getKVStoreKey(oracletypes.StoreKey)),
+		cfg.codec,
+		keepers.AccountKeeper.AddressCodec(),
+		&keepers.ConstitutionKeeper,
+	)
 
 	// DefaultStaticPrecompiles stores pointers to the ERC-20 and transfer keeper
 	// fields. The fields are populated below before the application can execute

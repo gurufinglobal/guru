@@ -21,6 +21,7 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 type storeKeys struct {
@@ -49,6 +50,7 @@ func newStoreKeys() storeKeys {
 			evmtypes.StoreKey,
 			feemarkettypes.StoreKey,
 			constitutiontypes.StoreKey,
+			oracletypes.StoreKey,
 		),
 		transient: storetypes.NewTransientStoreKeys(
 			evmtypes.TransientKey,
