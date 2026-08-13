@@ -69,9 +69,10 @@ type AppKeepers struct {
 	IBCKeeper      *ibckeeper.Keeper
 	TransferKeeper transferkeeper.Keeper
 
-	FeeMarketKeeper feemarketkeeper.Keeper
-	EVMKeeper       *evmkeeper.Keeper
-	ERC20Keeper     erc20keeper.Keeper
+	FeeMarketKeeper  feemarketkeeper.Keeper
+	FeeMarketAdapter FeeMarketAdapter
+	EVMKeeper        *evmkeeper.Keeper
+	ERC20Keeper      erc20keeper.Keeper
 }
 
 type keeperConfig struct {
@@ -228,6 +229,7 @@ func newAppKeepers(cfg keeperConfig) (*AppKeepers, error) {
 		keys.getKVStoreKey(feemarkettypes.StoreKey),
 		keys.getTransientStoreKey(feemarkettypes.TransientKey),
 	)
+	keepers.FeeMarketAdapter = newFeeMarketAdapter(keepers.FeeMarketKeeper)
 
 	// DefaultStaticPrecompiles stores pointers to the ERC-20 and transfer keeper
 	// fields. The fields are populated below before the application can execute

@@ -167,6 +167,9 @@ func TestApplicationStateMachine(t *testing.T) {
 	finalizeAndCommit(t, application, 1, blockTime.Add(time.Second), proposerAddress, nil)
 
 	queryContext := committedContext(t, application)
+	require.True(t, application.FeeMarketAdapter.GetMinGasPrice(
+		sdk.WrapSDKContext(queryContext),
+	).Equal(sdkmath.LegacyOneDec()))
 	require.True(t, application.EVMKeeper.IsContract(queryContext, ethparams.HistoryStorageAddress))
 	historyCodeHash := application.EVMKeeper.GetCodeHash(queryContext, ethparams.HistoryStorageAddress)
 	require.Equal(t, ethparams.HistoryStorageCode, application.EVMKeeper.GetCode(queryContext, historyCodeHash))
