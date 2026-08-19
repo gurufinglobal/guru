@@ -131,27 +131,31 @@ func TestSourceClientExactNumberAndRetry(t *testing.T) {
 }
 
 func TestSourceClientRetriesPerAttemptTimeout(t *testing.T) {
-	// Keep serial: this case is tightly coupled to request timing under race detector.
 	var requests atomic.Int32
-	server := httptest.NewTLSServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+	policy := testCollectorPolicy()
+	policy.RequestTimeout = 50 * time.Millisecond
+	policy.MaxAttempts = 2
+	client, err := NewSourceClient(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.CloseIdleConnections()
+	client.client.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
 		if requests.Add(1) == 1 {
 			<-request.Context().Done()
-			return
+			return nil, request.Context().Err()
 		}
-		_, _ = writer.Write([]byte(`{"v":2}`))
-	}))
-	defer server.Close()
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     make(http.Header),
+			Body:       io.NopCloser(strings.NewReader(`{"v":2}`)),
+			Request:    request,
+		}, nil
+	})
 
-	policy := testCollectorPolicy()
-	policy.RequestTimeout = 30 * time.Millisecond
-	policy.MaxAttempts = 2
-	client := testSourceClient(t, server, policy)
-	defer client.CloseIdleConnections()
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancel()
-	value, err := client.Fetch(ctx, domain.SourcePlan{
+	value, err := client.Fetch(context.Background(), domain.SourcePlan{
 		ID:          "a",
-		URL:         server.URL,
+		URL:         "https://source.test/value",
 		JSONPointer: "/v",
 	})
 	if err != nil {
@@ -163,30 +167,54 @@ func TestSourceClientRetriesPerAttemptTimeout(t *testing.T) {
 }
 
 func TestSourceClientDoesNotRetryParentDeadline(t *testing.T) {
-	// Keep serial: this case is sensitive to parent-context scheduling under race.
 	var requests atomic.Int32
-	server := httptest.NewTLSServer(http.HandlerFunc(func(_ http.ResponseWriter, request *http.Request) {
-		requests.Add(1)
-		<-request.Context().Done()
-	}))
-	defer server.Close()
-
+	started := make(chan struct{})
+	var startedOnce sync.Once
 	policy := testCollectorPolicy()
-	policy.RequestTimeout = time.Second
+	policy.RequestTimeout = time.Hour
 	policy.MaxAttempts = 3
-	client := testSourceClient(t, server, policy)
+	client, err := NewSourceClient(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer client.CloseIdleConnections()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
-	defer cancel()
-	if _, err := client.Fetch(ctx, domain.SourcePlan{
-		ID:          "a",
-		URL:         server.URL,
-		JSONPointer: "/v",
-	}); err == nil {
-		t.Fatal("parent deadline unexpectedly succeeded")
+	client.client.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		requests.Add(1)
+		startedOnce.Do(func() { close(started) })
+		<-request.Context().Done()
+		return nil, request.Context().Err()
+	})
+
+	ctx := newControllableDeadlineContext(time.Now().Add(time.Hour))
+	t.Cleanup(ctx.expire)
+	result := make(chan error, 1)
+	go func() {
+		_, err := client.Fetch(ctx, domain.SourcePlan{
+			ID:          "a",
+			URL:         "https://source.test/value",
+			JSONPointer: "/v",
+		})
+		result <- err
+	}()
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("source request did not start")
+	}
+	ctx.expire()
+	select {
+	case err := <-result:
+		if err == nil {
+			t.Fatal("parent deadline unexpectedly succeeded")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("parent deadline did not stop source request")
 	}
 	if requests.Load() != 1 {
 		t.Fatalf("parent deadline triggered %d attempts", requests.Load())
+	}
+	if ctx.Err() != context.DeadlineExceeded {
+		t.Fatalf("parent context error = %v, want deadline exceeded", ctx.Err())
 	}
 }
 
@@ -511,6 +539,38 @@ func (c *cancelAfterDoneChecksContext) Err() error {
 }
 
 func (*cancelAfterDoneChecksContext) Value(any) any { return nil }
+
+type controllableDeadlineContext struct {
+	context.Context
+	deadline time.Time
+	done     chan struct{}
+	once     sync.Once
+}
+
+func newControllableDeadlineContext(deadline time.Time) *controllableDeadlineContext {
+	return &controllableDeadlineContext{
+		Context:  context.Background(),
+		deadline: deadline,
+		done:     make(chan struct{}),
+	}
+}
+
+func (c *controllableDeadlineContext) Deadline() (time.Time, bool) { return c.deadline, true }
+
+func (c *controllableDeadlineContext) Done() <-chan struct{} { return c.done }
+
+func (c *controllableDeadlineContext) Err() error {
+	select {
+	case <-c.done:
+		return context.DeadlineExceeded
+	default:
+		return nil
+	}
+}
+
+func (c *controllableDeadlineContext) expire() {
+	c.once.Do(func() { close(c.done) })
+}
 
 type testObserver struct {
 	mu      sync.Mutex

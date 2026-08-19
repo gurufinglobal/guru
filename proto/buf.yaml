@@ -12,7 +12,7 @@ deps:
 
 lint:
   use:
-    - STANDARD
+    - DEFAULT
     - COMMENTS
   except:
     - UNARY_RPC

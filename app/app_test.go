@@ -10,6 +10,7 @@ import (
 
 	bankv1beta1 "cosmossdk.io/api/cosmos/bank/v1beta1"
 	signingv1beta1 "cosmossdk.io/api/cosmos/tx/signing/v1beta1"
+	"cosmossdk.io/collections"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	evidencetypes "cosmossdk.io/x/evidence/types"
@@ -337,6 +338,9 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.True(t, application.FeeMarketAdapter.GetMinGasPrice(
 		sdk.WrapSDKContext(queryContext),
 	).Equal(mustInt(constitutiontypes.MinGasPriceScaleFactor).ToLegacyDec()))
+	t.Run("oracle fee production wiring", func(t *testing.T) {
+		assertOracleFeeMarketProductionWiring(t, application, queryContext)
+	})
 	const testGasPrice int64 = 700_000_000_000
 	belowPegBytes, _ := signAndEncodeEthereumTx(
 		t,
@@ -733,6 +737,52 @@ func TestApplicationStateMachine(t *testing.T) {
 	var exportedGenesis GenesisState
 	require.NoError(t, json.Unmarshal(exported.AppState, &exportedGenesis))
 	require.NoError(t, application.ValidateGenesis(exportedGenesis))
+}
+
+func assertOracleFeeMarketProductionWiring(
+	t *testing.T,
+	application *App,
+	baseCtx sdk.Context,
+) {
+	t.Helper()
+	ctx, _ := baseCtx.CacheContext()
+	ctx = ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
+	initialParams := application.FeeMarketKeeper.GetParams(ctx)
+
+	require.NoError(t, application.OracleKeeper.SetTaskDefinition(ctx, &oracletypes.OracleTask{
+		Symbol:             config.MinGasPriceOracleSymbol,
+		ValueType:          oracletypes.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            true,
+		SubmissionInterval: 2,
+	}))
+	require.NoError(t, application.OracleKeeper.ApplyOracleValues(ctx, []*oracletypes.OracleValue{{
+		Symbol:        config.MinGasPriceOracleSymbol,
+		ValueType:     oracletypes.ValueType_VALUE_TYPE_NUMERIC,
+		Value:         "0.5",
+		BlockHeight:   20,
+		BlockTimeUnix: 1_700_000_000,
+	}}))
+
+	schedule, err := application.ConstitutionKeeper.GetMinGasPriceSchedule(ctx)
+	require.NoError(t, err)
+	require.Equal(t, int64(22), schedule.GetEffectiveHeight())
+	require.Equal(t, uint32(2), schedule.GetSourceSubmissionIntervalBlocks())
+	require.Equal(t, "693000000000.000000000000000000", schedule.GetScheduledMinGasPrice())
+	require.Equal(t, initialParams, application.FeeMarketKeeper.GetParams(ctx))
+
+	require.NoError(t, application.ConstitutionKeeper.ApplyDueMinGasPriceSchedule(ctx))
+	require.Equal(t, initialParams, application.FeeMarketKeeper.GetParams(ctx))
+	pending, err := application.ConstitutionKeeper.GetMinGasPriceSchedule(ctx)
+	require.NoError(t, err)
+	require.Equal(t, schedule, pending)
+
+	dueCtx := ctx.WithBlockHeight(21).WithEventManager(sdk.NewEventManager())
+	require.NoError(t, application.ConstitutionKeeper.ApplyDueMinGasPriceSchedule(dueCtx))
+	expectedParams := initialParams
+	expectedParams.MinGasPrice = sdkmath.LegacyMustNewDecFromStr("693000000000")
+	require.Equal(t, expectedParams, application.FeeMarketKeeper.GetParams(dueCtx))
+	_, err = application.ConstitutionKeeper.GetMinGasPriceSchedule(dueCtx)
+	require.ErrorIs(t, err, collections.ErrNotFound)
 }
 
 func cloneGenesisState(genesis GenesisState) GenesisState {
