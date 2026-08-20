@@ -1,6 +1,6 @@
 # Guru
 
-Guru is a Cosmos SDK v0.53.6 application assembled on Cosmos EVM v0.6.1.
+Guru is a Cosmos SDK v0.53.6 application assembled on Cosmos EVM v0.6.2.
 
 The repository owns the Guru application composition: keeper and module
 wiring, genesis defaults, and the operator command tree. Cosmos SDK, Cosmos
@@ -92,7 +92,7 @@ rule.
 
 ## RPC behavior
 
-Guru uses the Cosmos EVM v0.6.1 server implementation without a local RPC
+Guru uses the Cosmos EVM v0.6.2 server implementation without a local RPC
 quarantine or lifecycle patch. The generated application configuration keeps
 the upstream service defaults, including JSON-RPC disabled by default.
 Operators may enable JSON-RPC, WebSocket, the custom indexer, gRPC, or REST

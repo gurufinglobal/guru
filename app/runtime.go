@@ -54,11 +54,11 @@ func (app *App) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
-// SetClientCtx satisfies the v0.6.1 server contract. Guru does not retain it:
+// SetClientCtx satisfies the v0.6.2 server contract. Guru does not retain it:
 // transaction broadcasting and pending queries use the server's Comet client.
 func (*App) SetClientCtx(client.Context) {}
 
-// GetMempool returns a typed nil solely for Cosmos EVM v0.6.1 server
+// GetMempool returns a typed nil solely for Cosmos EVM v0.6.2 server
 // compatibility. Its JSON-RPC startup path asserts this concrete type without
 // checking it, while the RPC backend handles a nil EVM pool. BaseApp itself is
 // configured with NoOpMempool and CometBFT owns transaction storage and gossip.

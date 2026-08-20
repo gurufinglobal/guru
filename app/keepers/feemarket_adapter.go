@@ -36,7 +36,7 @@ func (a FeeMarketAdapter) GetMinGasPrice(ctx context.Context) sdkmath.LegacyDec 
 
 // SetMinGasPrice updates only MinGasPrice and preserves every other FeeMarket
 // parameter. Validation happens before the single state write because the
-// v0.6.1 keeper's SetParams method does not validate its input.
+// v0.6.2 keeper's SetParams method does not validate its input.
 func (a FeeMarketAdapter) SetMinGasPrice(
 	ctx context.Context,
 	minGasPrice sdkmath.LegacyDec,

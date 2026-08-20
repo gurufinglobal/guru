@@ -18,7 +18,7 @@ var (
 	dynamicFeeExtensionURL   = sdk.MsgTypeURL(&antetypes.ExtensionOptionDynamicFeeTx{})
 )
 
-// NewAnteHandler preserves the upstream Cosmos EVM v0.6.1 Ethereum path and
+// NewAnteHandler preserves the upstream Cosmos EVM v0.6.2 Ethereum path and
 // routes Cosmos transactions through the application-local standard MsgSend
 // gas extension.
 func NewAnteHandler(options evmante.HandlerOptions) sdk.AnteHandler {
@@ -47,7 +47,7 @@ func NewAnteHandler(options evmante.HandlerOptions) sdk.AnteHandler {
 	}
 }
 
-// newCosmosAnteHandler mirrors the Cosmos EVM v0.6.1 Cosmos ante chain. Fee
+// newCosmosAnteHandler mirrors the Cosmos EVM v0.6.2 Cosmos ante chain. Fee
 // market parameters are read from the transaction context on every invocation.
 func newCosmosAnteHandler(ctx sdk.Context, options evmante.HandlerOptions) sdk.AnteHandler {
 	feemarketParams := options.FeeMarketKeeper.GetParams(ctx)

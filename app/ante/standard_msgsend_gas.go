@@ -112,7 +112,7 @@ func (d StandardMsgSendGasDecorator) AnteHandle(
 	)
 }
 
-// standardMsgSendExecutionGas mirrors Cosmos EVM v0.6.1 minimum-gas
+// standardMsgSendExecutionGas mirrors Cosmos EVM v0.6.2 minimum-gas
 // settlement and preserves the 21k intrinsic floor for a standard send.
 func standardMsgSendExecutionGas(
 	declaredGas uint64,

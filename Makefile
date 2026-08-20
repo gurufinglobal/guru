@@ -330,7 +330,7 @@ protoImageReadOnly=$(DOCKER) run --rm -v "$(CURDIR):/workspace:ro" --workdir /wo
 	--user "$(PROTO_UID):$(PROTO_GID)" --env HOME=/home/proto \
 	-v "$(PROTO_HOME_DIR):/home/proto" $(PROTO_BUILDER_IMAGE)
 
-# Cosmos EVM v0.6.1 additionally runs yoheimuta/protolint:0.44.0 with its
+# Cosmos EVM v0.6.2 additionally runs yoheimuta/protolint:0.44.0 with its
 # repository-level .protolint.yml. Guru has no equivalent config; adopting
 # those schema comment rules is a separate Proto source compatibility scope.
 

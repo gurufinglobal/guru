@@ -21,7 +21,7 @@ import (
 )
 
 // newStandardMsgSendDynamicFeeChecker leaves ordinary transactions on the
-// upstream Cosmos EVM v0.6.1 checker. Eligible MsgSend transactions use the
+// upstream Cosmos EVM v0.6.2 checker. Eligible MsgSend transactions use the
 // Ethereum transaction price model against declared gas D, then settle that
 // price against execution gas E.
 //
@@ -147,7 +147,7 @@ func checkAndSettleStandardMsgSendFee(
 
 	denom := evmtypes.GetEVMCoinDenom()
 	declaredGasInt := sdkmath.NewIntFromUint64(declaredGas)
-	feeAmount := feeTx.GetFee().AmountOfNoDenomValidation(denom) //nolint:staticcheck // matches Cosmos EVM v0.6.1
+	feeAmount := feeTx.GetFee().AmountOfNoDenomValidation(denom) //nolint:staticcheck // matches Cosmos EVM v0.6.2
 	feeCap := sdkmath.LegacyNewDecFromInt(feeAmount).QuoInt(declaredGasInt)
 	baseFee := standardMsgSendEthereumBaseFee(ctx, feemarketParams)
 
@@ -285,7 +285,7 @@ func (d standardMsgSendMinGasPriceDecorator) AnteHandle(
 		return ctx, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "gas cannot be zero")
 	}
 
-	feeCap := sdkmath.LegacyNewDecFromInt(feeCoins.AmountOfNoDenomValidation(denom)). //nolint:staticcheck // matches v0.6.1 native-denom handling
+	feeCap := sdkmath.LegacyNewDecFromInt(feeCoins.AmountOfNoDenomValidation(denom)). //nolint:staticcheck // matches v0.6.2 native-denom handling
 												QuoInt(sdkmath.NewIntFromUint64(feeTx.GetGas()))
 	effectivePrice := feeCap
 	if dynamicFee, ok := standardMsgSendDynamicFee(feeTx); ok {

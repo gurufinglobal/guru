@@ -53,7 +53,7 @@ import (
 )
 
 // AppKeepers owns the stateful dependencies used by the Guru application.
-// The IBC transfer dependency is wired so every v0.6.1 default static
+// The IBC transfer dependency is wired so every v0.6.2 default static
 // precompile has a complete implementation even when it starts inactive.
 type AppKeepers struct {
 	keys storeKeys
