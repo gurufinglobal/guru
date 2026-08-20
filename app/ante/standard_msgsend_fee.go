@@ -147,7 +147,7 @@ func checkAndSettleStandardMsgSendFee(
 
 	denom := evmtypes.GetEVMCoinDenom()
 	declaredGasInt := sdkmath.NewIntFromUint64(declaredGas)
-	feeAmount := feeTx.GetFee().AmountOfNoDenomValidation(denom) //nolint:staticcheck // matches Cosmos EVM v0.6.2
+	feeAmount := feeTx.GetFee().AmountOf(denom)
 	feeCap := sdkmath.LegacyNewDecFromInt(feeAmount).QuoInt(declaredGasInt)
 	baseFee := standardMsgSendEthereumBaseFee(ctx, feemarketParams)
 
@@ -285,8 +285,8 @@ func (d standardMsgSendMinGasPriceDecorator) AnteHandle(
 		return ctx, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "gas cannot be zero")
 	}
 
-	feeCap := sdkmath.LegacyNewDecFromInt(feeCoins.AmountOfNoDenomValidation(denom)). //nolint:staticcheck // matches v0.6.2 native-denom handling
-												QuoInt(sdkmath.NewIntFromUint64(feeTx.GetGas()))
+	feeCap := sdkmath.LegacyNewDecFromInt(feeCoins.AmountOf(denom)).
+		QuoInt(sdkmath.NewIntFromUint64(feeTx.GetGas()))
 	effectivePrice := feeCap
 	if dynamicFee, ok := standardMsgSendDynamicFee(feeTx); ok {
 		tipCap := dynamicFee.MaxPriorityPrice

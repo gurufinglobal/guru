@@ -75,7 +75,6 @@ func ConfigureSDK(sdkConfig *sdk.Config) (err error) {
 	sdkConfig.SetBech32PrefixForConsensusNode(Bech32PrefixConsAddr, Bech32PrefixConsPub)
 	sdkConfig.SetPurpose(BIP44Purpose)
 	sdkConfig.SetCoinType(BIP44CoinType)
-	sdkConfig.SetFullFundraiserPath(BIP44HDPath)
 	sdkConfig.Seal()
 
 	return nil

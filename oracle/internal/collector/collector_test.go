@@ -478,7 +478,7 @@ func runCycleCase(t *testing.T, server *httptest.Server, paths []string, interva
 	if committed == nil || committed.Value != want {
 		t.Fatalf("committed = %#v, want value %s", committed, want)
 	}
-	if committed.CollectedAt == committed.CollectedAt.Round(0) { //nolint:staticcheck // Equality detects monotonic metadata removed by Round.
+	if committed.CollectedAt == committed.CollectedAt.Round(0) {
 		t.Fatal("committed completion time lost its monotonic clock reading")
 	}
 	if len(committed.ContributorIDs) != len(paths) && !expectDeadline {

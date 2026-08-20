@@ -12,7 +12,10 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"google.golang.org/protobuf/encoding/protowire"
 )
+
+const authInfoTipFieldNumber = 3
 
 func TestProposalTxUsesCanonicalSDKEnvelope(t *testing.T) {
 	payload := proposalPayloadFixture()
@@ -43,7 +46,7 @@ func TestProposalTxUsesCanonicalSDKEnvelope(t *testing.T) {
 	require.Zero(t, authInfo.Fee.GasLimit)
 	require.Empty(t, authInfo.Fee.Payer)
 	require.Empty(t, authInfo.Fee.Granter)
-	require.Nil(t, authInfo.Tip)
+	requireNoProtobufField(t, raw.AuthInfoBytes, authInfoTipFieldNumber)
 
 	registry := codectypes.NewInterfaceRegistry()
 	oracletypes.RegisterInterfaces(registry)
@@ -169,9 +172,18 @@ func TestProposalTxClassificationRejectsNonCanonicalCandidates(t *testing.T) {
 		},
 		{
 			name: "tip",
-			tx: mutateProposalTx(t, canonical, func(_ *txtypes.TxRaw, _ *txtypes.TxBody, authInfo *txtypes.AuthInfo) {
-				authInfo.Tip = &txtypes.Tip{} //nolint:staticcheck // candidate validation intentionally covers the deprecated SDK tip field.
-			}),
+			tx: func(t *testing.T) []byte {
+				var raw txtypes.TxRaw
+				require.NoError(t, raw.Unmarshal(canonical))
+				raw.AuthInfoBytes = appendLengthDelimitedField(
+					append([]byte(nil), raw.AuthInfoBytes...),
+					authInfoTipFieldNumber,
+					nil,
+				)
+				txBytes, err := raw.Marshal()
+				require.NoError(t, err)
+				return txBytes
+			},
 			wantCandidate: true,
 		},
 		{
@@ -276,4 +288,14 @@ func appendLengthDelimitedField(dst []byte, fieldNumber byte, value []byte) []by
 	n := binary.PutUvarint(length[:], uint64(len(value)))
 	dst = append(dst, length[:n]...)
 	return append(dst, value...)
+}
+
+func requireNoProtobufField(t *testing.T, encoded []byte, fieldNumber protowire.Number) {
+	t.Helper()
+	for len(encoded) > 0 {
+		number, _, consumed := protowire.ConsumeField(encoded)
+		require.Greater(t, consumed, 0)
+		require.NotEqual(t, fieldNumber, number)
+		encoded = encoded[consumed:]
+	}
 }

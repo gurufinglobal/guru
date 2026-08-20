@@ -15,7 +15,7 @@ func TestFeeMarketAdapterGetMinGasPrice(t *testing.T) {
 	paramsStore.params.MinGasPrice = sdkmath.LegacyNewDecWithPrec(25, 1)
 	adapter := newFeeMarketAdapter(paramsStore)
 
-	minGasPrice := adapter.GetMinGasPrice(sdk.WrapSDKContext(sdk.Context{}))
+	minGasPrice := adapter.GetMinGasPrice(sdk.Context{})
 
 	require.True(t, minGasPrice.Equal(sdkmath.LegacyNewDecWithPrec(25, 1)))
 }
@@ -26,7 +26,7 @@ func TestFeeMarketAdapterSetMinGasPricePreservesOtherParams(t *testing.T) {
 	adapter := newFeeMarketAdapter(paramsStore)
 	newMinGasPrice := sdkmath.LegacyNewDecWithPrec(15, 1)
 
-	err := adapter.SetMinGasPrice(sdk.WrapSDKContext(sdk.Context{}), newMinGasPrice)
+	err := adapter.SetMinGasPrice(sdk.Context{}, newMinGasPrice)
 
 	require.NoError(t, err)
 	require.Equal(t, 1, paramsStore.setCalls)
@@ -44,7 +44,7 @@ func TestFeeMarketAdapterSetMinGasPriceRejectsInvalidParams(t *testing.T) {
 	adapter := newFeeMarketAdapter(paramsStore)
 
 	err := adapter.SetMinGasPrice(
-		sdk.WrapSDKContext(sdk.Context{}),
+		sdk.Context{},
 		sdkmath.LegacyNewDec(-1),
 	)
 
@@ -61,7 +61,7 @@ func TestFeeMarketAdapterSetMinGasPricePropagatesStoreError(t *testing.T) {
 	adapter := newFeeMarketAdapter(paramsStore)
 
 	err := adapter.SetMinGasPrice(
-		sdk.WrapSDKContext(sdk.Context{}),
+		sdk.Context{},
 		sdkmath.LegacyOneDec(),
 	)
 

@@ -336,7 +336,7 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.True(t, feeMarketParams.NoBaseFee)
 	require.True(t, feeMarketParams.BaseFee.IsZero())
 	require.True(t, application.FeeMarketAdapter.GetMinGasPrice(
-		sdk.WrapSDKContext(queryContext),
+		queryContext,
 	).Equal(mustInt(constitutiontypes.MinGasPriceScaleFactor).ToLegacyDec()))
 	t.Run("oracle fee production wiring", func(t *testing.T) {
 		assertOracleFeeMarketProductionWiring(t, application, queryContext)
