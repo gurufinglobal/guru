@@ -31,3 +31,7 @@ contracts/@openzeppelin/*
 
 # Build files
 build/
+
+.agent-work/
+AGENTS.md
+scripts/localnet/

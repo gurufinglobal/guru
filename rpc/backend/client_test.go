@@ -21,7 +21,6 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	rpc "github.com/gurufinglobal/guru/v2/rpc/types"
 )
@@ -182,18 +181,11 @@ func TestRegisterConsensusParams(t *testing.T) {
 
 // BlockResults
 
-func RegisterBlockResultsWithEventLog(client *mocks.Client, height int64) (*cmtrpctypes.ResultBlockResults, error) {
+func RegisterBlockResultsWithData(client *mocks.Client, height int64, data []byte) (*cmtrpctypes.ResultBlockResults, error) {
 	res := &cmtrpctypes.ResultBlockResults{
 		Height: height,
 		TxsResults: []*abci.ExecTxResult{
-			{Code: 0, GasUsed: 0, Events: []abci.Event{{
-				Type: evmtypes.EventTypeEthereumTx,
-				Attributes: []abci.EventAttribute{{
-					Key:   evmtypes.AttributeKeyTxLog,
-					Value: "{\"test\": \"hello\"}", // TODO refactor the value to unmarshall to a evmtypes.Log struct successfully
-					Index: true,
-				}},
-			}}},
+			{Code: 0, GasUsed: 0, Data: data},
 		},
 	}
 	client.On("BlockResults", rpc.ContextWithHeight(height), mock.AnythingOfType("*int64")).

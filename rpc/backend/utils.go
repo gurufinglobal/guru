@@ -274,12 +274,12 @@ func ShouldIgnoreGasUsed(res *abci.ExecTxResult) bool {
 func GetLogsFromBlockResults(blockRes *cmtrpctypes.ResultBlockResults) ([][]*ethtypes.Log, error) {
 	blockLogs := [][]*ethtypes.Log{}
 	for _, txResult := range blockRes.TxsResults {
-		logs, err := AllTxLogsFromEvents(txResult.Events)
+		logs, err := evmtypes.DecodeTxLogs(txResult.Data, uint64(blockRes.Height)) // #nosec G115 -- checked for int overflow already
 		if err != nil {
 			return nil, err
 		}
 
-		blockLogs = append(blockLogs, logs...)
+		blockLogs = append(blockLogs, logs)
 	}
 	return blockLogs, nil
 }

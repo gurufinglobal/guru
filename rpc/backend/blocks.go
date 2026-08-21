@@ -571,9 +571,13 @@ func (b *Backend) formatTxReceipt(ethMsg *evmtypes.MsgEthereumTx, blockMsgs []*e
 
 	from := ethMsg.GetSender()
 
-	// parse tx logs from events
+	// parse tx logs from the protobuf response data
 	msgIndex := int(txResult.MsgIndex) // #nosec G115 -- checked for int overflow already
-	logs, err := TxLogsFromEvents(blockRes.TxsResults[txResult.TxIndex].Events, msgIndex)
+	logs, err := evmtypes.DecodeMsgLogs(
+		blockRes.TxsResults[txResult.TxIndex].Data,
+		msgIndex,
+		uint64(txResult.Height), // #nosec G115 -- checked for int overflow already
+	)
 	if err != nil {
 		b.logger.Debug("failed to parse logs", "hash", ethMsg.Hash().Hex(), "error", err.Error())
 	}

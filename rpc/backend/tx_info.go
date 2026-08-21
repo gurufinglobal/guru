@@ -188,9 +188,13 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 
 	from := ethMsg.GetSender()
 
-	// parse tx logs from events
+	// parse tx logs from the protobuf response data
 	msgIndex := int(res.MsgIndex) // #nosec G115 -- checked for int overflow already
-	logs, err := TxLogsFromEvents(blockRes.TxsResults[res.TxIndex].Events, msgIndex)
+	logs, err := evmtypes.DecodeMsgLogs(
+		blockRes.TxsResults[res.TxIndex].Data,
+		msgIndex,
+		uint64(res.Height), // #nosec G115 -- checked for int overflow already
+	)
 	if err != nil {
 		b.logger.Debug("failed to parse logs", "hash", hexTx, "error", err.Error())
 	}
@@ -294,9 +298,13 @@ func (b *Backend) GetTransactionLogs(hash common.Hash) ([]*ethtypes.Log, error) 
 		return nil, nil
 	}
 
-	// parse tx logs from events
+	// parse tx logs from the protobuf response data
 	index := int(res.MsgIndex) // #nosec G701
-	return TxLogsFromEvents(resBlockResult.TxsResults[res.TxIndex].Events, index)
+	return evmtypes.DecodeMsgLogs(
+		resBlockResult.TxsResults[res.TxIndex].Data,
+		index,
+		uint64(res.Height), // #nosec G115 -- checked for int overflow already
+	)
 }
 
 // GetTransactionByBlockHashAndIndex returns the transaction identified by hash and index.

@@ -1,27 +1,29 @@
 package backend
 
 import (
-	"encoding/json"
-
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	cmttypes "github.com/cometbft/cometbft/types"
 
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/gurufinglobal/guru/v2/rpc/backend/mocks"
 	ethrpc "github.com/gurufinglobal/guru/v2/rpc/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *BackendTestSuite) TestGetLogs() {
 	_, bz := suite.buildEthereumTx()
 	block := cmttypes.MakeBlock(1, []cmttypes.Tx{bz}, nil, nil)
-	logs := make([]*evmtypes.Log, 0, 1)
-	var log evmtypes.Log
-	err := json.Unmarshal([]byte("{\"test\": \"hello\"}"), &log) // TODO refactor this to unmarshall to a log struct successfully
-	suite.Require().NoError(err)
-
-	logs = append(logs, &log)
+	txHash := common.HexToHash("0x1234")
+	evmLog := &evmtypes.Log{
+		Address: common.HexToAddress("0x0000000000000000000000000000000000001234").Hex(),
+		Topics:  []string{common.HexToHash("0x5678").Hex()},
+		Data:    []byte("data"),
+	}
+	data := suite.encodeTxResponseData(&evmtypes.MsgEthereumTxResponse{Hash: txHash.Hex(), Logs: []*evmtypes.Log{evmLog}})
+	expectedLog := evmLog.ToEthereum()
+	expectedLog.TxHash = txHash
+	expectedLog.BlockNumber = 1
 
 	testCases := []struct {
 		name         string
@@ -68,11 +70,11 @@ func (suite *BackendTestSuite) TestGetLogs() {
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				_, err := RegisterBlockByHash(client, hash, bz)
 				suite.Require().NoError(err)
-				_, err = RegisterBlockResultsWithEventLog(client, ethrpc.BlockNumber(1).Int64())
+				_, err = RegisterBlockResultsWithData(client, ethrpc.BlockNumber(1).Int64(), data)
 				suite.Require().NoError(err)
 			},
 			common.BytesToHash(block.Hash()),
-			[][]*ethtypes.Log{evmtypes.LogsToEthereum(logs)},
+			[][]*ethtypes.Log{{expectedLog}},
 			true,
 		},
 	}

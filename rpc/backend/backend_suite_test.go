@@ -16,6 +16,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -217,4 +218,15 @@ func (suite *BackendTestSuite) signAndEncodeEthTx(msgEthereumTx *evmtypes.MsgEth
 	suite.Require().NoError(err)
 
 	return txBz
+}
+
+func (suite *BackendTestSuite) encodeTxResponseData(responses ...*evmtypes.MsgEthereumTxResponse) []byte {
+	msgResponses := make([]*codectypes.Any, len(responses))
+	for i, response := range responses {
+		msgResponses[i] = codectypes.UnsafePackAny(response)
+	}
+
+	bz, err := suite.backend.clientCtx.Codec.Marshal(&sdk.TxMsgData{MsgResponses: msgResponses})
+	suite.Require().NoError(err)
+	return bz
 }

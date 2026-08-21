@@ -7,8 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/mock"
-	"google.golang.org/grpc/metadata"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -556,6 +556,18 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 	_ = txHash2
 
 	txBz := suite.signAndEncodeEthTx(msgEthereumTx)
+	evmLog := &evmtypes.Log{
+		Address: common.HexToAddress("0x0000000000000000000000000000000000001234").Hex(),
+		Topics:  []string{common.HexToHash("0x5678").Hex()},
+		Data:    []byte("data"),
+	}
+	txResponseData := suite.encodeTxResponseData(&evmtypes.MsgEthereumTxResponse{
+		Hash: txHash.Hex(),
+		Logs: []*evmtypes.Log{evmLog},
+	})
+	expectedLog := evmLog.ToEthereum()
+	expectedLog.TxHash = txHash
+	expectedLog.BlockNumber = 1
 
 	testCases := []struct {
 		name         string
@@ -566,7 +578,6 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 		expPass      bool
 		expErr       error
 	}{
-		// TODO test happy path
 		{
 			name:         "fail - tx not found",
 			registerMock: func() {},
@@ -648,13 +659,10 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 		{
 			"happy path",
 			func() {
-				var header metadata.MD
-				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
-				RegisterParams(queryClient, &header, 1)
 				_, err := RegisterBlock(client, 1, txBz)
 				suite.Require().NoError(err)
-				_, err = RegisterBlockResults(client, 1)
+				_, err = RegisterBlockResultsWithData(client, 1, txResponseData)
 				suite.Require().NoError(err)
 			},
 			msgEthereumTx,
@@ -662,6 +670,7 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 			[]*abci.ExecTxResult{
 				{
 					Code: 0,
+					Data: txResponseData,
 					Events: []abci.Event{
 						{Type: evmtypes.EventTypeEthereumTx, Attributes: []abci.EventAttribute{
 							{Key: "ethereumTxHash", Value: txHash.Hex()},
@@ -700,6 +709,23 @@ func (suite *BackendTestSuite) TestGetTransactionReceipt() {
 				}
 				suite.Require().Nil(res["contractAddress"]) // no contract creation
 				suite.Require().NoError(err)
+
+				receiptLogs, ok := res["logs"].([]*ethtypes.Log)
+				suite.Require().True(ok)
+				suite.Require().Equal([]*ethtypes.Log{expectedLog}, receiptLogs)
+
+				txLogs, err := suite.backend.GetTransactionLogs(hash)
+				suite.Require().NoError(err)
+				suite.Require().Equal([]*ethtypes.Log{expectedLog}, txLogs)
+
+				blockReceipt, err := suite.backend.formatTxReceipt(
+					tc.tx,
+					[]*evmtypes.MsgEthereumTx{tc.tx},
+					&tmrpctypes.ResultBlockResults{Height: tc.block.Height, TxsResults: tc.blockResult},
+					common.Hash{}.Hex(),
+				)
+				suite.Require().NoError(err)
+				suite.Require().Equal([]*ethtypes.Log{expectedLog}, blockReceipt["logs"])
 				// } else {
 				// 	// for compatibility with evm tools
 				// 	// suite.Require().Error(err)
