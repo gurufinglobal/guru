@@ -1,60 +1,53 @@
 package cli
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/spf13/cobra"
-
-	errorsmod "cosmossdk.io/errors"
+	querytypes "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/spf13/cobra"
 )
 
-// GetQueryCmd returns the cli query commands for this module
+// GetQueryCmd returns the root query command for the oracle module.
 func GetQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
-		DisableFlagParsing:         true,
+		Short:                      "Query commands for the oracle module",
+		DisableFlagParsing:         false,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 
 	cmd.AddCommand(
-		GetCmdQueryParams(),
-		GetCmdQueryOracleRequestDoc(),
-		GetCmdQueryOracleData(),
-		GetCmdQueryOracleSubmitData(),
-		GetCmdQueryOracleRequestDocs(),
-		GetCmdQueryModeratorAddress(),
+		CmdQueryParams(),
+		CmdQueryActiveTasks(),
+		CmdQueryTask(),
+		CmdQueryLatestValue(),
+		CmdQueryLatestValues(),
+		CmdQueryHistory(),
 	)
 
 	return cmd
 }
 
-// GetCmdQueryParams implements the params query command
-func GetCmdQueryParams() *cobra.Command {
+func CmdQueryParams() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "params",
-		Short: "Query the current oracle parameters",
+		Short: "Query oracle parameters",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
+			resp, err := queryClient.Params(cmd.Context(), &types.QueryParamsRequest{})
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintProto(&res.Params)
+			return clientCtx.PrintProto(resp)
 		},
 	}
 
@@ -62,11 +55,40 @@ func GetCmdQueryParams() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryOracleRequestDoc implements the oracle request document query command
-func GetCmdQueryOracleRequestDoc() *cobra.Command {
+func CmdQueryActiveTasks() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "request-doc [request-id]",
-		Short: "Query an oracle request document by Request ID",
+		Use:   "active-tasks",
+		Short: "Query active oracle tasks",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			pageReq, err := readPageRequest(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.ActiveTasks(cmd.Context(), &types.QueryActiveTasksRequest{Pagination: pageReq})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddPaginationFlagsToCmd(cmd, "oracle tasks")
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryTask() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "task [symbol]",
+		Short: "Query an oracle task",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -75,20 +97,12 @@ func GetCmdQueryOracleRequestDoc() *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-
-			requestId, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return errorsmod.Wrapf(types.ErrInvalidRequestId, "args[0] parse error: %s", args[0])
-			}
-
-			res, err := queryClient.OracleRequestDoc(cmd.Context(), &types.QueryOracleRequestDocRequest{
-				RequestId: requestId,
-			})
+			resp, err := queryClient.Task(cmd.Context(), &types.QueryTaskRequest{Symbol: args[0]})
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintProto(res)
+			return clientCtx.PrintProto(resp)
 		},
 	}
 
@@ -96,11 +110,10 @@ func GetCmdQueryOracleRequestDoc() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryOracleData implements the oracle data query command
-func GetCmdQueryOracleData() *cobra.Command {
+func CmdQueryLatestValue() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "data [request-id]",
-		Short: "Query an oracle data by Request ID",
+		Use:   "latest-value [symbol]",
+		Short: "Query the latest accepted oracle value for a symbol",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -109,20 +122,12 @@ func GetCmdQueryOracleData() *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-
-			requestId, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return errorsmod.Wrapf(types.ErrInvalidRequestId, "args[0] parse error: %s", args[0])
-			}
-
-			res, err := queryClient.OracleData(cmd.Context(), &types.QueryOracleDataRequest{
-				RequestId: requestId,
-			})
+			resp, err := queryClient.LatestValue(cmd.Context(), &types.QueryLatestValueRequest{Symbol: args[0]})
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintProto(res)
+			return clientCtx.PrintProto(resp)
 		},
 	}
 
@@ -130,120 +135,84 @@ func GetCmdQueryOracleData() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryOracleSubmitData implements the oracle data query command
-func GetCmdQueryOracleSubmitData() *cobra.Command {
+func CmdQueryLatestValues() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "submit-data [request-id] [nonce] [provider-account]",
-		Short: "Query oracle submit data for a request",
-		Long: strings.TrimSpace(fmt.Sprintf(`Query oracle submit data for a request.
-
-Example:
-$ %s query oracle submit-data 1 1
-$ %s query oracle submit-data 1 1 provider-account
-
-Description:
-- By default, shows all submissions for the given [request-id] and [nonce]
-- Optional [provider-account] parameter filters results to show only submissions from that account`,
-			version.AppName, version.AppName)),
-		Args: cobra.RangeArgs(2, 3),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			requestId, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return errorsmod.Wrapf(types.ErrInvalidRequestId, "args[0] parse error: %s", args[0])
-			}
-
-			nonce, err := strconv.ParseUint(args[1], 10, 64)
-			if err != nil {
-				return fmt.Errorf("invalid nonce: %w", err)
-			}
-
-			provider := ""
-			if len(args) > 2 {
-				provider = args[2]
-			}
-
-			res, err := queryClient.OracleSubmitData(cmd.Context(), &types.QueryOracleSubmitDataRequest{
-				RequestId: requestId,
-				Nonce:     nonce,
-				Provider:  provider,
-			})
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
-}
-
-// GetCmdQueryOracleRequestDocs implements the oracle request documents query command
-func GetCmdQueryOracleRequestDocs() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "request-docs [status]",
-		Short: "Query all oracle request documents",
-		// Args:  cobra.MaximumNArgs(1),
-		Args: cobra.RangeArgs(0, 1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			var status int64 = 0
-			if len(args) > 0 {
-				status, err = strconv.ParseInt(args[0], 10, 32)
-				if err != nil {
-					return fmt.Errorf("invalid status: %w", err)
-				}
-			}
-
-			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.OracleRequestDocs(cmd.Context(), &types.QueryOracleRequestDocsRequest{
-				Status: types.RequestStatus(status),
-			})
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
-}
-
-// GetCmdQueryModeratorAddress implements the moderator address query command
-func GetCmdQueryModeratorAddress() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "moderator-address",
-		Short: "Query the moderator address",
+		Use:   "latest-values",
+		Short: "Query latest accepted oracle values",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			pageReq, err := readPageRequest(cmd)
 			if err != nil {
 				return err
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.ModeratorAddress(cmd.Context(), &types.QueryModeratorAddressRequest{})
+			resp, err := queryClient.LatestValues(cmd.Context(), &types.QueryLatestValuesRequest{Pagination: pageReq})
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintProto(res)
+			return clientCtx.PrintProto(resp)
 		},
 	}
+
+	flags.AddPaginationFlagsToCmd(cmd, "oracle values")
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
+}
+
+func CmdQueryHistory() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "history [symbol]",
+		Short: "Query bounded oracle value history for a symbol",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			pageReq, err := readPageRequest(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.History(cmd.Context(), &types.QueryHistoryRequest{
+				Symbol:     args[0],
+				Pagination: pageReq,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddPaginationFlagsToCmd(cmd, "oracle history")
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func readPageRequest(cmd *cobra.Command) (*querytypes.PageRequest, error) {
+	flagSet, err := client.FlagSetWithPageKeyDecoded(cmd.Flags())
+	if err != nil {
+		return nil, err
+	}
+	pageReq, err := client.ReadPageRequest(flagSet)
+	if err != nil {
+		return nil, err
+	}
+
+	return &querytypes.PageRequest{
+		Key:        pageReq.GetKey(),
+		Offset:     pageReq.GetOffset(),
+		Limit:      pageReq.GetLimit(),
+		CountTotal: pageReq.GetCountTotal(),
+		Reverse:    pageReq.GetReverse(),
+	}, nil
 }

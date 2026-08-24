@@ -4,11 +4,7 @@
 package types
 
 import (
-	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-proto"
-	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
-	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"
@@ -26,16 +22,12 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// GenesisState defines the oracle module's genesis state
 type GenesisState struct {
-	// params defines all the parameters of the module
-	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
-	// oracle_request_doc_count defines the count of oracle request documents
-	OracleRequestDocCount uint64 `protobuf:"varint,2,opt,name=oracle_request_doc_count,json=oracleRequestDocCount,proto3" json:"oracle_request_doc_count,omitempty"`
-	// request_oracle_docs defines the list of oracle request documents
-	OracleRequestDocs []OracleRequestDoc `protobuf:"bytes,3,rep,name=oracle_request_docs,json=oracleRequestDocs,proto3" json:"oracle_request_docs"`
-	// moderator_address defines the address of the oracle moderator
-	ModeratorAddress string `protobuf:"bytes,4,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
+	Params       *Params                    `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	Tasks        []*OracleTask              `protobuf:"bytes,2,rep,name=tasks,proto3" json:"tasks,omitempty"`
+	LatestValues []*OracleValue             `protobuf:"bytes,3,rep,name=latest_values,json=latestValues,proto3" json:"latest_values,omitempty"`
+	History      []*OracleHistory           `protobuf:"bytes,4,rep,name=history,proto3" json:"history,omitempty"`
+	TaskSchedule []*OracleTaskScheduleEntry `protobuf:"bytes,5,rep,name=task_schedule,json=taskSchedule,proto3" json:"task_schedule,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -71,61 +63,58 @@ func (m *GenesisState) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GenesisState proto.InternalMessageInfo
 
-func (m *GenesisState) GetParams() Params {
+func (m *GenesisState) GetParams() *Params {
 	if m != nil {
 		return m.Params
-	}
-	return Params{}
-}
-
-func (m *GenesisState) GetOracleRequestDocCount() uint64 {
-	if m != nil {
-		return m.OracleRequestDocCount
-	}
-	return 0
-}
-
-func (m *GenesisState) GetOracleRequestDocs() []OracleRequestDoc {
-	if m != nil {
-		return m.OracleRequestDocs
 	}
 	return nil
 }
 
-func (m *GenesisState) GetModeratorAddress() string {
+func (m *GenesisState) GetTasks() []*OracleTask {
 	if m != nil {
-		return m.ModeratorAddress
+		return m.Tasks
 	}
-	return ""
+	return nil
 }
 
-// Params defines the parameters for the oracle module
-type Params struct {
-	// enable_oracle defines whether the oracle module is enabled
-	EnableOracle bool `protobuf:"varint,1,opt,name=enable_oracle,json=enableOracle,proto3" json:"enable_oracle,omitempty"`
-	// submit_window defines the time window in seconds for submitting oracle data
-	SubmitWindow uint64 `protobuf:"varint,2,opt,name=submit_window,json=submitWindow,proto3" json:"submit_window,omitempty"`
-	// min_submit_per_window defines the minimum number of submissions required per window
-	MinSubmitPerWindow cosmossdk_io_math.LegacyDec `protobuf:"bytes,3,opt,name=min_submit_per_window,json=minSubmitPerWindow,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_submit_per_window"`
-	// slash_fraction_downtime defines the fraction of stake to slash for downtime
-	SlashFractionDowntime cosmossdk_io_math.LegacyDec `protobuf:"bytes,4,opt,name=slash_fraction_downtime,json=slashFractionDowntime,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"slash_fraction_downtime"`
-	// max_account_list_size defines the maximum size of the account list for oracle requests
-	// This also effectively limits the maximum submissions per aggregation since each account can only submit once(Updated when resubmitted)
-	MaxAccountListSize uint64 `protobuf:"varint,5,opt,name=max_account_list_size,json=maxAccountListSize,proto3" json:"max_account_list_size,omitempty"`
+func (m *GenesisState) GetLatestValues() []*OracleValue {
+	if m != nil {
+		return m.LatestValues
+	}
+	return nil
 }
 
-func (m *Params) Reset()         { *m = Params{} }
-func (m *Params) String() string { return proto.CompactTextString(m) }
-func (*Params) ProtoMessage()    {}
-func (*Params) Descriptor() ([]byte, []int) {
+func (m *GenesisState) GetHistory() []*OracleHistory {
+	if m != nil {
+		return m.History
+	}
+	return nil
+}
+
+func (m *GenesisState) GetTaskSchedule() []*OracleTaskScheduleEntry {
+	if m != nil {
+		return m.TaskSchedule
+	}
+	return nil
+}
+
+type OracleTaskScheduleEntry struct {
+	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Height int64  `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (m *OracleTaskScheduleEntry) Reset()         { *m = OracleTaskScheduleEntry{} }
+func (m *OracleTaskScheduleEntry) String() string { return proto.CompactTextString(m) }
+func (*OracleTaskScheduleEntry) ProtoMessage()    {}
+func (*OracleTaskScheduleEntry) Descriptor() ([]byte, []int) {
 	return fileDescriptor_c4a1ce927fa70879, []int{1}
 }
-func (m *Params) XXX_Unmarshal(b []byte) error {
+func (m *OracleTaskScheduleEntry) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OracleTaskScheduleEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Params.Marshal(b, m, deterministic)
+		return xxx_messageInfo_OracleTaskScheduleEntry.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -135,81 +124,63 @@ func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Params) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Params.Merge(m, src)
+func (m *OracleTaskScheduleEntry) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleTaskScheduleEntry.Merge(m, src)
 }
-func (m *Params) XXX_Size() int {
+func (m *OracleTaskScheduleEntry) XXX_Size() int {
 	return m.Size()
 }
-func (m *Params) XXX_DiscardUnknown() {
-	xxx_messageInfo_Params.DiscardUnknown(m)
+func (m *OracleTaskScheduleEntry) XXX_DiscardUnknown() {
+	xxx_messageInfo_OracleTaskScheduleEntry.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Params proto.InternalMessageInfo
+var xxx_messageInfo_OracleTaskScheduleEntry proto.InternalMessageInfo
 
-func (m *Params) GetEnableOracle() bool {
+func (m *OracleTaskScheduleEntry) GetSymbol() string {
 	if m != nil {
-		return m.EnableOracle
+		return m.Symbol
 	}
-	return false
+	return ""
 }
 
-func (m *Params) GetSubmitWindow() uint64 {
+func (m *OracleTaskScheduleEntry) GetHeight() int64 {
 	if m != nil {
-		return m.SubmitWindow
-	}
-	return 0
-}
-
-func (m *Params) GetMaxAccountListSize() uint64 {
-	if m != nil {
-		return m.MaxAccountListSize
+		return m.Height
 	}
 	return 0
 }
 
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "guru.oracle.v1.GenesisState")
-	proto.RegisterType((*Params)(nil), "guru.oracle.v1.Params")
+	proto.RegisterType((*OracleTaskScheduleEntry)(nil), "guru.oracle.v1.OracleTaskScheduleEntry")
 }
 
 func init() { proto.RegisterFile("guru/oracle/v1/genesis.proto", fileDescriptor_c4a1ce927fa70879) }
 
 var fileDescriptor_c4a1ce927fa70879 = []byte{
-	// 513 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x92, 0xc1, 0x6e, 0xd3, 0x30,
-	0x18, 0xc7, 0x9b, 0xb6, 0x54, 0xe0, 0x15, 0x44, 0x03, 0x85, 0xb0, 0xa1, 0x2c, 0x1a, 0x97, 0x0a,
-	0x44, 0xa2, 0x16, 0x04, 0xe7, 0x95, 0x0a, 0x84, 0x34, 0x89, 0x29, 0x95, 0x40, 0xe2, 0x62, 0xb9,
-	0x8e, 0x97, 0x5a, 0xc4, 0x76, 0xb1, 0x9d, 0xb6, 0xdb, 0x91, 0x27, 0xe0, 0x31, 0x38, 0x72, 0xe0,
-	0x21, 0x76, 0x9c, 0x38, 0x21, 0x0e, 0xd3, 0xd4, 0x1e, 0x78, 0x0d, 0x14, 0xdb, 0x43, 0xa2, 0xdc,
-	0xb8, 0x44, 0xf1, 0xff, 0xf7, 0xf7, 0xff, 0xfb, 0xec, 0xcf, 0xe0, 0x7e, 0x5e, 0xca, 0x32, 0x11,
-	0x12, 0xe1, 0x82, 0x24, 0xf3, 0x7e, 0x92, 0x13, 0x4e, 0x14, 0x55, 0xf1, 0x4c, 0x0a, 0x2d, 0xfc,
-	0x1b, 0x15, 0x8d, 0x2d, 0x8d, 0xe7, 0xfd, 0xed, 0xdb, 0xb9, 0xc8, 0x85, 0x41, 0x49, 0xf5, 0x67,
-	0x5d, 0xdb, 0x3b, 0x1b, 0x19, 0xce, 0x6f, 0xe1, 0x3d, 0x2c, 0x14, 0x13, 0x0a, 0xda, 0x5d, 0x76,
-	0xe1, 0x50, 0x07, 0x31, 0xca, 0x45, 0x62, 0xbe, 0x56, 0xda, 0xfb, 0x54, 0x07, 0xed, 0x57, 0xb6,
-	0x85, 0xb1, 0x46, 0x9a, 0xf8, 0x4f, 0x41, 0x6b, 0x86, 0x24, 0x62, 0x2a, 0xf0, 0x22, 0xaf, 0xb7,
-	0x35, 0xb8, 0x13, 0xff, 0xdd, 0x52, 0x7c, 0x68, 0xe8, 0xb0, 0x79, 0x7a, 0xbe, 0x5b, 0x4b, 0x9d,
-	0xd7, 0x7f, 0x0e, 0x02, 0xeb, 0x80, 0x92, 0x7c, 0x2c, 0x89, 0xd2, 0x30, 0x13, 0x18, 0x62, 0x51,
-	0x72, 0x1d, 0xd4, 0x23, 0xaf, 0xd7, 0x4c, 0xbb, 0x96, 0xa7, 0x16, 0x8f, 0x04, 0x7e, 0x51, 0x41,
-	0xff, 0x2d, 0xb8, 0xf5, 0xef, 0x46, 0x15, 0x34, 0xa2, 0x46, 0x6f, 0x6b, 0x10, 0x6d, 0xd6, 0x7e,
-	0xb3, 0x91, 0xe1, 0xba, 0xe8, 0x6c, 0x66, 0x2b, 0xff, 0x11, 0xe8, 0x30, 0x91, 0x11, 0x89, 0xb4,
-	0x90, 0x10, 0x65, 0x99, 0x24, 0x4a, 0x05, 0xcd, 0xc8, 0xeb, 0x5d, 0x4b, 0x6f, 0xfe, 0x01, 0xfb,
-	0x56, 0xdf, 0xbb, 0xa8, 0x83, 0x96, 0x3d, 0x96, 0xff, 0x00, 0x5c, 0x27, 0x1c, 0x4d, 0x0a, 0x02,
-	0x6d, 0xa6, 0xb9, 0x85, 0xab, 0x69, 0xdb, 0x8a, 0xb6, 0x7e, 0x65, 0x52, 0xe5, 0x84, 0x51, 0x0d,
-	0x17, 0x94, 0x67, 0x62, 0xe1, 0x8e, 0xd8, 0xb6, 0xe2, 0x3b, 0xa3, 0xf9, 0x14, 0x74, 0x19, 0xe5,
-	0xd0, 0x19, 0x67, 0x44, 0x5e, 0x9a, 0x1b, 0x91, 0xd7, 0x6b, 0x0f, 0x9f, 0x55, 0x9d, 0xff, 0x3c,
-	0xdf, 0xdd, 0xb1, 0x13, 0x52, 0xd9, 0x87, 0x98, 0x8a, 0x84, 0x21, 0x3d, 0x8d, 0x0f, 0x48, 0x8e,
-	0xf0, 0xf1, 0x88, 0xe0, 0xef, 0xdf, 0x1e, 0x03, 0x37, 0xc0, 0x11, 0xc1, 0x5f, 0x7e, 0x7d, 0x7d,
-	0xe8, 0xa5, 0x3e, 0xa3, 0x7c, 0x6c, 0x32, 0x0f, 0x89, 0x74, 0xa5, 0x38, 0xb8, 0xab, 0x0a, 0xa4,
-	0xa6, 0xf0, 0x48, 0x22, 0xac, 0xa9, 0xe0, 0x30, 0x13, 0x0b, 0xae, 0x29, 0x23, 0xe6, 0xc8, 0xff,
-	0x5f, 0xac, 0x6b, 0x62, 0x5f, 0xba, 0xd4, 0x91, 0x0b, 0xf5, 0xfb, 0xa0, 0xcb, 0xd0, 0x12, 0x22,
-	0x6c, 0x06, 0x0c, 0x0b, 0xaa, 0x34, 0x54, 0xf4, 0x84, 0x04, 0x57, 0xcc, 0x3d, 0xf8, 0x0c, 0x2d,
-	0xf7, 0x2d, 0x3b, 0xa0, 0x4a, 0x8f, 0xe9, 0x09, 0x19, 0xbe, 0x3e, 0x5d, 0x85, 0xde, 0xd9, 0x2a,
-	0xf4, 0x2e, 0x56, 0xa1, 0xf7, 0x79, 0x1d, 0xd6, 0xce, 0xd6, 0x61, 0xed, 0xc7, 0x3a, 0xac, 0xbd,
-	0x4f, 0x72, 0xaa, 0xa7, 0xe5, 0x24, 0xc6, 0x82, 0x25, 0xd5, 0xb8, 0x8f, 0x28, 0xcf, 0x0b, 0x31,
-	0x41, 0x85, 0x59, 0x25, 0xf3, 0x41, 0xb2, 0xbc, 0x7c, 0xea, 0xfa, 0x78, 0x46, 0xd4, 0xa4, 0x65,
-	0x5e, 0xee, 0x93, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x04, 0xcc, 0xf6, 0xe9, 0x4a, 0x03, 0x00,
-	0x00,
+	// 344 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0xc1, 0x4e, 0xc2, 0x40,
+	0x14, 0x45, 0x29, 0x08, 0xc6, 0x01, 0x5c, 0xcc, 0x02, 0x1b, 0xd0, 0x86, 0xb0, 0x91, 0xd5, 0x8c,
+	0xe0, 0xc2, 0xad, 0x31, 0x31, 0x4a, 0x62, 0xa2, 0x19, 0x8c, 0x0b, 0x37, 0x64, 0x8a, 0x63, 0xdb,
+	0x30, 0x30, 0xa4, 0xf3, 0xda, 0xd8, 0xbf, 0xf0, 0x77, 0xfc, 0x03, 0x97, 0x2c, 0x5d, 0x1a, 0xf8,
+	0x11, 0xd3, 0x69, 0x49, 0x14, 0x61, 0xd7, 0xfb, 0xee, 0xb9, 0xaf, 0x37, 0xf3, 0xd0, 0xb1, 0x17,
+	0x85, 0x11, 0x55, 0x21, 0x1f, 0x4b, 0x41, 0xe3, 0x1e, 0xf5, 0xc4, 0x4c, 0xe8, 0x40, 0x93, 0x79,
+	0xa8, 0x40, 0xe1, 0xc3, 0xd4, 0x25, 0x99, 0x4b, 0xe2, 0x5e, 0xb3, 0xb5, 0x41, 0xe7, 0x8e, 0x81,
+	0xff, 0x99, 0x73, 0x1e, 0xf2, 0x69, 0xbe, 0xa9, 0xf3, 0x51, 0x44, 0xb5, 0x9b, 0x6c, 0xf7, 0x10,
+	0x38, 0x08, 0x4c, 0x50, 0x25, 0x03, 0x6c, 0xab, 0x6d, 0x75, 0xab, 0xfd, 0x06, 0xf9, 0xfb, 0x2f,
+	0xf2, 0x60, 0x5c, 0x96, 0x53, 0xf8, 0x0c, 0x95, 0x81, 0xeb, 0x89, 0xb6, 0x8b, 0xed, 0x52, 0xb7,
+	0xda, 0x6f, 0x6e, 0xe2, 0xf7, 0xe6, 0xeb, 0x91, 0xeb, 0x09, 0xcb, 0x40, 0x7c, 0x89, 0xea, 0x92,
+	0x83, 0xd0, 0x30, 0x8a, 0xb9, 0x8c, 0x84, 0xb6, 0x4b, 0x26, 0xd9, 0xda, 0x9e, 0x7c, 0x4a, 0x19,
+	0x56, 0xcb, 0x12, 0x46, 0x68, 0x7c, 0x81, 0xf6, 0xfd, 0x40, 0x83, 0x0a, 0x13, 0x7b, 0xcf, 0x64,
+	0x4f, 0xb6, 0x67, 0x6f, 0x33, 0x88, 0xad, 0x69, 0x7c, 0x87, 0xea, 0x69, 0x87, 0x91, 0x1e, 0xfb,
+	0xe2, 0x25, 0x92, 0xc2, 0x2e, 0x9b, 0xf8, 0xe9, 0xee, 0xd2, 0xc3, 0x9c, 0xbc, 0x9e, 0x41, 0x98,
+	0xb0, 0x1a, 0xfc, 0x1a, 0x75, 0x06, 0xe8, 0x68, 0x07, 0x88, 0x1b, 0xa8, 0xa2, 0x93, 0xa9, 0xab,
+	0xa4, 0x79, 0xc5, 0x03, 0x96, 0xab, 0x74, 0xee, 0x8b, 0xc0, 0xf3, 0xc1, 0x2e, 0xb6, 0xad, 0x6e,
+	0x89, 0xe5, 0xea, 0x6a, 0xf0, 0xb9, 0x74, 0xac, 0xc5, 0xd2, 0xb1, 0xbe, 0x97, 0x8e, 0xf5, 0xbe,
+	0x72, 0x0a, 0x8b, 0x95, 0x53, 0xf8, 0x5a, 0x39, 0x85, 0x67, 0xea, 0x05, 0xe0, 0x47, 0x2e, 0x19,
+	0xab, 0x29, 0x4d, 0x5b, 0xbe, 0x06, 0x33, 0x4f, 0x2a, 0x97, 0x4b, 0xa3, 0x68, 0xdc, 0xa7, 0x6f,
+	0xeb, 0xdb, 0x42, 0x32, 0x17, 0xda, 0xad, 0x98, 0xc3, 0x9e, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff,
+	0x69, 0x73, 0x58, 0x21, 0x42, 0x02, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -232,17 +203,38 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.ModeratorAddress) > 0 {
-		i -= len(m.ModeratorAddress)
-		copy(dAtA[i:], m.ModeratorAddress)
-		i = encodeVarintGenesis(dAtA, i, uint64(len(m.ModeratorAddress)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.OracleRequestDocs) > 0 {
-		for iNdEx := len(m.OracleRequestDocs) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.TaskSchedule) > 0 {
+		for iNdEx := len(m.TaskSchedule) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.OracleRequestDocs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.TaskSchedule[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if len(m.History) > 0 {
+		for iNdEx := len(m.History) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.History[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.LatestValues) > 0 {
+		for iNdEx := len(m.LatestValues) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.LatestValues[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -253,25 +245,36 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x1a
 		}
 	}
-	if m.OracleRequestDocCount != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(m.OracleRequestDocCount))
-		i--
-		dAtA[i] = 0x10
-	}
-	{
-		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
+	if len(m.Tasks) > 0 {
+		for iNdEx := len(m.Tasks) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Tasks[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
 		}
-		i -= size
-		i = encodeVarintGenesis(dAtA, i, uint64(size))
 	}
-	i--
-	dAtA[i] = 0xa
+	if m.Params != nil {
+		{
+			size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
-func (m *Params) Marshal() (dAtA []byte, err error) {
+func (m *OracleTaskScheduleEntry) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -281,55 +284,27 @@ func (m *Params) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Params) MarshalTo(dAtA []byte) (int, error) {
+func (m *OracleTaskScheduleEntry) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *OracleTaskScheduleEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.MaxAccountListSize != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(m.MaxAccountListSize))
-		i--
-		dAtA[i] = 0x28
-	}
-	{
-		size := m.SlashFractionDowntime.Size()
-		i -= size
-		if _, err := m.SlashFractionDowntime.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintGenesis(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x22
-	{
-		size := m.MinSubmitPerWindow.Size()
-		i -= size
-		if _, err := m.MinSubmitPerWindow.MarshalTo(dAtA[i:]); err != nil {
-			return 0, err
-		}
-		i = encodeVarintGenesis(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x1a
-	if m.SubmitWindow != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(m.SubmitWindow))
+	if m.Height != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.Height))
 		i--
 		dAtA[i] = 0x10
 	}
-	if m.EnableOracle {
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Symbol)))
 		i--
-		if m.EnableOracle {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -351,42 +326,49 @@ func (m *GenesisState) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = m.Params.Size()
-	n += 1 + l + sovGenesis(uint64(l))
-	if m.OracleRequestDocCount != 0 {
-		n += 1 + sovGenesis(uint64(m.OracleRequestDocCount))
+	if m.Params != nil {
+		l = m.Params.Size()
+		n += 1 + l + sovGenesis(uint64(l))
 	}
-	if len(m.OracleRequestDocs) > 0 {
-		for _, e := range m.OracleRequestDocs {
+	if len(m.Tasks) > 0 {
+		for _, e := range m.Tasks {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	l = len(m.ModeratorAddress)
-	if l > 0 {
-		n += 1 + l + sovGenesis(uint64(l))
+	if len(m.LatestValues) > 0 {
+		for _, e := range m.LatestValues {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.History) > 0 {
+		for _, e := range m.History {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.TaskSchedule) > 0 {
+		for _, e := range m.TaskSchedule {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
 	}
 	return n
 }
 
-func (m *Params) Size() (n int) {
+func (m *OracleTaskScheduleEntry) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.EnableOracle {
-		n += 2
+	l = len(m.Symbol)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
 	}
-	if m.SubmitWindow != 0 {
-		n += 1 + sovGenesis(uint64(m.SubmitWindow))
-	}
-	l = m.MinSubmitPerWindow.Size()
-	n += 1 + l + sovGenesis(uint64(l))
-	l = m.SlashFractionDowntime.Size()
-	n += 1 + l + sovGenesis(uint64(l))
-	if m.MaxAccountListSize != 0 {
-		n += 1 + sovGenesis(uint64(m.MaxAccountListSize))
+	if m.Height != 0 {
+		n += 1 + sovGenesis(uint64(m.Height))
 	}
 	return n
 }
@@ -455,32 +437,16 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
+			if m.Params == nil {
+				m.Params = &Params{}
+			}
 			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OracleRequestDocCount", wireType)
-			}
-			m.OracleRequestDocCount = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.OracleRequestDocCount |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OracleRequestDocs", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Tasks", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -507,14 +473,166 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.OracleRequestDocs = append(m.OracleRequestDocs, OracleRequestDoc{})
-			if err := m.OracleRequestDocs[len(m.OracleRequestDocs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Tasks = append(m.Tasks, &OracleTask{})
+			if err := m.Tasks[len(m.Tasks)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LatestValues", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.LatestValues = append(m.LatestValues, &OracleValue{})
+			if err := m.LatestValues[len(m.LatestValues)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ModeratorAddress", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field History", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.History = append(m.History, &OracleHistory{})
+			if err := m.History[len(m.History)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TaskSchedule", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TaskSchedule = append(m.TaskSchedule, &OracleTaskScheduleEntry{})
+			if err := m.TaskSchedule[len(m.TaskSchedule)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OracleTaskScheduleEntry) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OracleTaskScheduleEntry: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OracleTaskScheduleEntry: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -542,83 +660,13 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ModeratorAddress = string(dAtA[iNdEx:postIndex])
+			m.Symbol = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipGenesis(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Params) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowGenesis
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Params: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Params: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EnableOracle", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.EnableOracle = bool(v != 0)
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SubmitWindow", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
 			}
-			m.SubmitWindow = 0
+			m.Height = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGenesis
@@ -628,92 +676,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.SubmitWindow |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MinSubmitPerWindow", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.MinSubmitPerWindow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlashFractionDowntime", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.SlashFractionDowntime.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MaxAccountListSize", wireType)
-			}
-			m.MaxAccountListSize = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.MaxAccountListSize |= uint64(b&0x7F) << shift
+				m.Height |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

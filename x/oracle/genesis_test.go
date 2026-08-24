@@ -1,247 +1,236 @@
 package oracle
 
 import (
+	"context"
 	"testing"
 
-	"github.com/gurufinglobal/guru/v2/x/oracle/keeper"
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
-
-	"cosmossdk.io/log"
-
-	"cosmossdk.io/store"
+	"cosmossdk.io/core/appmodule"
+	coregenesis "cosmossdk.io/core/genesis"
 	storetypes "cosmossdk.io/store/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmdb "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	evmaddress "github.com/cosmos/evm/encoding/address"
+	appparams "github.com/gurufinglobal/guru/v2/config"
+	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
-func setupTest(t *testing.T) (sdk.Context, *keeper.Keeper) {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("guru", "gurupub")
-
-	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
-
-	db := tmdb.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db, log.NewNopLogger(), nil)
-	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
-	stateStore.MountStoreWithDB(memStoreKey, storetypes.StoreTypeMemory, nil)
-	err := stateStore.LoadLatestVersion()
-	require.NoError(t, err)
-
-	registry := codectypes.NewInterfaceRegistry()
-	cdc := codec.NewProtoCodec(registry)
-
-	k := keeper.NewKeeper(cdc, storeKey, "cosmos1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft", nil)
-
-	ctx := sdk.NewContext(stateStore, tmproto.Header{ChainID: "test-chain"}, false, log.NewNopLogger())
-
-	// Pre-initialize store by setting default params to avoid nil pointer
-	defaultParams := types.DefaultParams()
-	err = k.SetParams(ctx, defaultParams)
-	require.NoError(t, err)
-
-	return ctx, k
+func TestValidateGenesisRejectsDuplicateTaskSymbols(t *testing.T) {
+	err := (AppModule{}).validateGenesisState(&oracletypes.GenesisState{
+		Params: oraclekeeper.DefaultParams(),
+		Tasks: []*oracletypes.OracleTask{
+			{
+				Symbol:             "BTC/USD",
+				ValueType:          oracletypes.ValueType_VALUE_TYPE_NUMERIC,
+				Enabled:            true,
+				SubmissionInterval: 1,
+			},
+			{
+				Symbol:             " btc/usd ",
+				ValueType:          oracletypes.ValueType_VALUE_TYPE_NUMERIC,
+				Enabled:            true,
+				SubmissionInterval: 1,
+			},
+		},
+	})
+	require.Error(t, err)
 }
 
-func TestInitGenesis(t *testing.T) {
-	ctx, k := setupTest(t)
+func TestInitGenesisAndExportGenesisPreservesTaskSchedule(t *testing.T) {
+	ctx, keeper := setupGenesisKeeper(t)
+	ctx = ctx.WithBlockHeight(100)
+	module := NewAppModule(keeper)
 
-	tests := []struct {
-		name     string
-		genesis  types.GenesisState
-		expPanic bool
+	source := genesisSourceFromState(t, &oracletypes.GenesisState{
+		Params: oraclekeeper.DefaultParams(),
+		Tasks: []*oracletypes.OracleTask{
+			genesisTask("BTC/USD", true, 5),
+			genesisTask("ETH/USD", true, 5),
+		},
+		TaskSchedule: []*oracletypes.OracleTaskScheduleEntry{
+			{Symbol: "BTC/USD", Height: 8},
+			{Symbol: "BTC/USD", Height: 13},
+			{Symbol: "ETH/USD", Height: 10},
+			{Symbol: "ETH/USD", Height: 15},
+		},
+		LatestValues: []*oracletypes.OracleValue{
+			genesisValue("BTC/USD", "10.0", 8),
+			genesisValue("ETH/USD", "20.0", 10),
+		},
+		History: []*oracletypes.OracleHistory{
+			{Symbol: "BTC/USD", Values: []*oracletypes.OracleValue{genesisValue("BTC/USD", "10.0", 8)}},
+			{Symbol: "ETH/USD", Values: []*oracletypes.OracleValue{genesisValue("ETH/USD", "20.0", 10)}},
+		},
+	})
+	require.NoError(t, module.InitGenesis(ctx, source))
+
+	target := &coregenesis.RawJSONTarget{}
+	require.NoError(t, module.ExportGenesis(ctx, target.Target()))
+	raw, err := target.JSON()
+	require.NoError(t, err)
+	exportedSource, err := coregenesis.SourceFromRawJSON(raw)
+	require.NoError(t, err)
+	exported, err := readGenesisState(exportedSource, module.defaultGenesisState())
+	require.NoError(t, err)
+
+	require.Equal(t, []*oracletypes.OracleTaskScheduleEntry{
+		{Symbol: "BTC/USD", Height: 8},
+		{Symbol: "ETH/USD", Height: 10},
+		{Symbol: "BTC/USD", Height: 13},
+		{Symbol: "ETH/USD", Height: 15},
+	}, exported.GetTaskSchedule())
+	require.Equal(t, []*oracletypes.OracleValue{
+		genesisValue("BTC/USD", "10.0", 8),
+		genesisValue("ETH/USD", "20.0", 10),
+	}, exported.GetLatestValues())
+	require.Equal(t, []*oracletypes.OracleHistory{
+		{Symbol: "BTC/USD", Values: []*oracletypes.OracleValue{genesisValue("BTC/USD", "10.0", 8)}},
+		{Symbol: "ETH/USD", Values: []*oracletypes.OracleValue{genesisValue("ETH/USD", "20.0", 10)}},
+	}, exported.GetHistory())
+}
+
+func TestReadGenesisStateAcceptsCanonicalProtoJSON(t *testing.T) {
+	source, err := coregenesis.SourceFromRawJSON([]byte(`{
+		"params":{"min_validators":1,"min_sources":3,"history_limit":100},
+		"tasks":[{"symbol":"BTC/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":5}],
+		"task_schedule":[{"symbol":"BTC/USD","height":"8"}],
+		"latest_values":[{"symbol":"BTC/USD","value_type":"VALUE_TYPE_NUMERIC","value":"10.0","block_height":"8","block_time_unix":"80"}],
+		"history":[{"symbol":"BTC/USD","values":[{"symbol":"BTC/USD","value_type":"VALUE_TYPE_NUMERIC","value":"10.0","block_height":"8","block_time_unix":"80"}]}]
+	}`))
+	require.NoError(t, err)
+
+	genesis, err := readGenesisState(source, (&AppModule{}).defaultGenesisState())
+	require.NoError(t, err)
+	require.Equal(t, oracletypes.ValueType_VALUE_TYPE_NUMERIC, genesis.GetTasks()[0].GetValueType())
+	require.Equal(t, int64(8), genesis.GetTaskSchedule()[0].GetHeight())
+	require.Equal(t, int64(80), genesis.GetLatestValues()[0].GetBlockTimeUnix())
+}
+
+func TestValidateGenesisRejectsInvalidTaskSchedule(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		genesis *oracletypes.GenesisState
 	}{
 		{
-			name: "1. valid genesis state",
-			genesis: types.GenesisState{
-				Params: types.Params{
-					EnableOracle: true,
-				},
-				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				OracleRequestDocCount: 1,
-				OracleRequestDocs: []types.OracleRequestDoc{
-					{
-						RequestId:       1,
-						OracleType:      types.OracleType_ORACLE_TYPE_MIN_GAS_PRICE,
-						Name:            "Test Oracle",
-						Description:     "Test Description",
-						Period:          60,
-						AccountList:     []string{"guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"},
-						Quorum:          1,
-						Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
-						AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
-						Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-					},
-				},
+			name: "non-positive height",
+			genesis: &oracletypes.GenesisState{
+				Params:       oraclekeeper.DefaultParams(),
+				Tasks:        []*oracletypes.OracleTask{genesisTask("BTC/USD", true, 5)},
+				TaskSchedule: []*oracletypes.OracleTaskScheduleEntry{{Symbol: "BTC/USD", Height: 0}},
 			},
-			expPanic: false,
 		},
 		{
-			name: "2. empty moderator address",
-			genesis: types.GenesisState{
-				Params: types.Params{
-					EnableOracle: true,
+			name: "duplicate normalized symbol and height",
+			genesis: &oracletypes.GenesisState{
+				Params: oraclekeeper.DefaultParams(),
+				Tasks:  []*oracletypes.OracleTask{genesisTask("BTC/USD", true, 5)},
+				TaskSchedule: []*oracletypes.OracleTaskScheduleEntry{
+					{Symbol: "BTC/USD", Height: 8},
+					{Symbol: " btc/usd ", Height: 8},
 				},
-				ModeratorAddress: "",
 			},
-			expPanic: true,
 		},
 		{
-			name: "3. invalid oracle request doc",
-			genesis: types.GenesisState{
-				Params: types.Params{
-					EnableOracle: true,
-				},
-				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				OracleRequestDocCount: 1,
-				OracleRequestDocs: []types.OracleRequestDoc{
-					{
-						RequestId:       1,
-						OracleType:      types.OracleType_ORACLE_TYPE_MIN_GAS_PRICE,
-						Name:            "", // Empty name should cause validation error
-						Description:     "Test Description",
-						Period:          60,
-						AccountList:     []string{"guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"},
-						Quorum:          1,
-						Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
-						AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
-						Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-					},
-				},
+			name: "missing task",
+			genesis: &oracletypes.GenesisState{
+				Params:       oraclekeeper.DefaultParams(),
+				Tasks:        []*oracletypes.OracleTask{genesisTask("BTC/USD", true, 5)},
+				TaskSchedule: []*oracletypes.OracleTaskScheduleEntry{{Symbol: "ETH/USD", Height: 8}},
 			},
-			expPanic: true,
 		},
 		{
-			name: "4. unspecified oracle type",
-			genesis: types.GenesisState{
-				Params: types.Params{
-					EnableOracle: true,
-				},
-				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				OracleRequestDocCount: 1,
-				OracleRequestDocs: []types.OracleRequestDoc{
-					{
-						RequestId:       1,
-						OracleType:      types.OracleType_ORACLE_TYPE_UNSPECIFIED,
-						Name:            "Test Oracle",
-						Description:     "Test Description",
-						Period:          60,
-						AccountList:     []string{"guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"},
-						Quorum:          1,
-						Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
-						AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
-						Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-					},
-				},
+			name: "disabled task",
+			genesis: &oracletypes.GenesisState{
+				Params:       oraclekeeper.DefaultParams(),
+				Tasks:        []*oracletypes.OracleTask{genesisTask("BTC/USD", false, 5)},
+				TaskSchedule: []*oracletypes.OracleTaskScheduleEntry{{Symbol: "BTC/USD", Height: 8}},
 			},
-			expPanic: true,
 		},
 		{
-			name: "5. empty endpoints",
-			genesis: types.GenesisState{
-				Params: types.Params{
-					EnableOracle: true,
-				},
-				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				OracleRequestDocCount: 1,
-				OracleRequestDocs: []types.OracleRequestDoc{
-					{
-						RequestId:       1,
-						OracleType:      types.OracleType_ORACLE_TYPE_MIN_GAS_PRICE,
-						Name:            "Test Oracle",
-						Description:     "Test Description",
-						Period:          60,
-						AccountList:     []string{"guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"},
-						Quorum:          1,
-						Endpoints:       []*types.OracleEndpoint{},
-						AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
-						Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-					},
-				},
+			name: "enabled task missing schedule",
+			genesis: &oracletypes.GenesisState{
+				Params: oraclekeeper.DefaultParams(),
+				Tasks:  []*oracletypes.OracleTask{genesisTask("BTC/USD", true, 5)},
 			},
-			expPanic: true,
 		},
 		{
-			name: "6. invalid account address",
-			genesis: types.GenesisState{
-				Params: types.Params{
-					EnableOracle: true,
-				},
-				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				OracleRequestDocCount: 1,
-				OracleRequestDocs: []types.OracleRequestDoc{
-					{
-						RequestId:       1,
-						OracleType:      types.OracleType_ORACLE_TYPE_MIN_GAS_PRICE,
-						Name:            "Test Oracle",
-						Description:     "Test Description",
-						Period:          60,
-						AccountList:     []string{"invalid-address"},
-						Quorum:          1,
-						Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
-						AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
-						Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-					},
-				},
+			name: "enabled task partial schedule window",
+			genesis: &oracletypes.GenesisState{
+				Params:       oraclekeeper.DefaultParams(),
+				Tasks:        []*oracletypes.OracleTask{genesisTask("BTC/USD", true, 5)},
+				TaskSchedule: []*oracletypes.OracleTaskScheduleEntry{{Symbol: "BTC/USD", Height: 8}},
 			},
-			expPanic: true,
 		},
 		{
-			name: "7. quorum greater than account list length",
-			genesis: types.GenesisState{
-				Params: types.Params{
-					EnableOracle: true,
-				},
-				ModeratorAddress:      "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				OracleRequestDocCount: 1,
-				OracleRequestDocs: []types.OracleRequestDoc{
-					{
-						RequestId:   1,
-						OracleType:  types.OracleType_ORACLE_TYPE_MIN_GAS_PRICE,
-						Name:        "Test Oracle",
-						Description: "Test Description",
-						Period:      60,
-						AccountList: []string{
-							"guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-							"guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-						}, // 2개의 계정
-						Quorum:          3, // 3개의 quorum (계정 수보다 큼)
-						Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
-						AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
-						Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-					},
+			name: "schedule phase mismatch",
+			genesis: &oracletypes.GenesisState{
+				Params: oraclekeeper.DefaultParams(),
+				Tasks:  []*oracletypes.OracleTask{genesisTask("BTC/USD", true, 5)},
+				TaskSchedule: []*oracletypes.OracleTaskScheduleEntry{
+					{Symbol: "BTC/USD", Height: 8},
+					{Symbol: "BTC/USD", Height: 14},
 				},
 			},
-			expPanic: true,
 		},
-	}
-
-	for _, tc := range tests {
+	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.expPanic {
-				require.Panics(t, func() {
-					InitGenesis(ctx, *k, tc.genesis)
-				})
-			} else {
-				require.NotPanics(t, func() {
-					InitGenesis(ctx, *k, tc.genesis)
-				})
-			}
-
-			// for _, doc := range tc.genesis.OracleRequestDocs {
-			// 	found, err := k.GetOracleRequestDoc(ctx, doc.RequestId)
-			// 	require.NoError(t, err)
-			// 	require.Equal(t, doc, *found)
-			// }
+			require.Error(t, (AppModule{}).validateGenesisState(tc.genesis))
 		})
 	}
 }
 
-// TestExportGenesis disabled temporarily due to store setup issues
-// func TestExportGenesis(t *testing.T) {
-// 	// Test implementation will be added later with proper integration test setup
-// }
+func setupGenesisKeeper(t *testing.T) (sdk.Context, oraclekeeper.Keeper) {
+	t.Helper()
+
+	key := storetypes.NewKVStoreKey(oracletypes.StoreKey)
+	transientKey := storetypes.NewTransientStoreKey("transient_oracle_genesis_test")
+	testCtx := testutil.DefaultContextWithDB(t, key, transientKey)
+	keeper := oraclekeeper.NewKeeper(
+		runtime.NewKVStoreService(key),
+		codec.NewProtoCodec(codectypes.NewInterfaceRegistry()),
+		evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr),
+		genesisConstitutionKeeper{},
+	)
+
+	return testCtx.Ctx, keeper
+}
+
+func genesisSourceFromState(t *testing.T, state *oracletypes.GenesisState) appmodule.GenesisSource {
+	t.Helper()
+
+	target := &coregenesis.RawJSONTarget{}
+	require.NoError(t, writeGenesisState(target.Target(), state))
+	raw, err := target.JSON()
+	require.NoError(t, err)
+	source, err := coregenesis.SourceFromRawJSON(raw)
+	require.NoError(t, err)
+	return source
+}
+
+func genesisTask(symbol string, enabled bool, interval uint32) *oracletypes.OracleTask {
+	return &oracletypes.OracleTask{
+		Symbol:             symbol,
+		ValueType:          oracletypes.ValueType_VALUE_TYPE_NUMERIC,
+		Enabled:            enabled,
+		SubmissionInterval: interval,
+	}
+}
+
+func genesisValue(symbol, value string, height int64) *oracletypes.OracleValue {
+	return &oracletypes.OracleValue{
+		Symbol:      symbol,
+		ValueType:   oracletypes.ValueType_VALUE_TYPE_NUMERIC,
+		Value:       value,
+		BlockHeight: height,
+	}
+}
+
+type genesisConstitutionKeeper struct{}
+
+func (genesisConstitutionKeeper) GetModeratorAddress(context.Context) (string, error) {
+	return "", nil
+}

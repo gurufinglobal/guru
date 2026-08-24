@@ -1,445 +1,218 @@
+// Package cmd composes the gurud operator command tree.
 package cmd
 
 import (
-	"errors"
-	"io"
+	"fmt"
 	"os"
 
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
-	tmcfg "github.com/cometbft/cometbft/config"
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
-
-	cosmosevmcmd "github.com/gurufinglobal/guru/v2/client"
-	gurudconfig "github.com/gurufinglobal/guru/v2/cmd/gurud/config"
-	cosmosevmkeyring "github.com/gurufinglobal/guru/v2/crypto/keyring"
-	"github.com/gurufinglobal/guru/v2/gurud"
-	"github.com/gurufinglobal/guru/v2/gurud/testutil"
-	cosmosevmserver "github.com/gurufinglobal/guru/v2/server"
-	cosmosevmserverconfig "github.com/gurufinglobal/guru/v2/server/config"
-	srvflags "github.com/gurufinglobal/guru/v2/server/flags"
-	dbm "github.com/cosmos/cosmos-db"
-
-	"cosmossdk.io/log"
-	"cosmossdk.io/store"
-	snapshottypes "cosmossdk.io/store/snapshots/types"
-	storetypes "cosmossdk.io/store/types"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
+	cmtcfg "github.com/cometbft/cometbft/config"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	clientcfg "github.com/cosmos/cosmos-sdk/client/config"
-	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/snapshot"
-	sdkserver "github.com/cosmos/cosmos-sdk/server"
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
-	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
-	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	"github.com/cosmos/cosmos-sdk/server"
+	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	cosmosevmcmd "github.com/cosmos/evm/client"
+	evmdebug "github.com/cosmos/evm/client/debug"
+	cosmosevmconfig "github.com/cosmos/evm/config"
+	"github.com/cosmos/evm/crypto/hd"
+	cosmosevmserver "github.com/cosmos/evm/server"
+	srvflags "github.com/cosmos/evm/server/flags"
+	"github.com/spf13/cobra"
+
+	"github.com/gurufinglobal/guru/v2/app"
+	chainconfig "github.com/gurufinglobal/guru/v2/config"
 )
 
-// NewRootCmd creates a new root command for gurud. It is called once in the
-// main function.
-func NewRootCmd() *cobra.Command {
-	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
-	// and the CLI options for the modules
-	// add keyring to autocli opts
-	tempApp := gurud.NewExampleApp(
-		log.NewNopLogger(),
-		dbm.NewMemDB(),
-		nil,
-		true,
-		simtestutil.EmptyAppOptions{},
-		cosmosevmserverconfig.DefaultEVMChainID,
-		testutil.NoOpEvmAppOptions,
-	)
-
-	encodingConfig := sdktestutil.TestEncodingConfig{
-		InterfaceRegistry: tempApp.InterfaceRegistry(),
-		Codec:             tempApp.AppCodec(),
-		TxConfig:          tempApp.GetTxConfig(),
-		Amino:             tempApp.LegacyAmino(),
+// NewRootCmd creates the complete operator and client command surface without
+// constructing a temporary App. Cosmos EVM's chain configuration is
+// process-wide, so the selected command must be the sole App constructor in a
+// gurud process.
+func NewRootCmd() (*cobra.Command, error) {
+	if err := chainconfig.SetupSDKConfig(); err != nil {
+		return nil, err
+	}
+	encodingConfig, err := app.MakeEncodingConfig()
+	if err != nil {
+		return nil, err
+	}
+	defaultHome, err := chainconfig.DefaultNodeHome()
+	if err != nil {
+		return nil, err
 	}
 
-	initClientCtx := client.Context{}.
+	initialClientContext := client.Context{}.
 		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
-		WithLegacyAmino(encodingConfig.Amino).
+		WithLegacyAmino(encodingConfig.LegacyAmino).
 		WithInput(os.Stdin).
-		WithAccountRetriever(authtypes.AccountRetriever{}).
-		WithBroadcastMode(flags.FlagBroadcastMode).
-		WithHomeDir(gurud.DefaultNodeHome).
-		WithViper(""). // In simapp, we don't use any prefix for env variables.
-		// Cosmos EVM specific setup
-		WithKeyringOptions(cosmosevmkeyring.Option()).
+		WithOutput(os.Stdout).
+		WithAccountRetriever(types.AccountRetriever{}).
+		WithBroadcastMode(flags.BroadcastSync).
+		WithHomeDir(defaultHome).
+		WithChainID(chainconfig.DefaultChainID).
+		WithViper(chainconfig.EnvPrefix).
+		WithKeyringOptions(hd.EthSecp256k1Option()).
 		WithLedgerHasProtobuf(true)
+	// ReadPersistentCommandFlags resolves Ledger keys before the fully configured
+	// client context is available. Advertise textual support during that first
+	// pass, then replace this bootstrap querier with the live client below.
+	bootstrapTextualTxConfig, err := app.NewTextualTxConfig(
+		authtxconfig.NewGRPCCoinMetadataQueryFn(initialClientContext),
+	)
+	if err != nil {
+		return nil, err
+	}
+	initialClientContext = initialClientContext.WithTxConfig(bootstrapTextualTxConfig)
 
-	rootCmd := &cobra.Command{
-		Use:   "gurud",
-		Short: "Gurufin app",
-		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			// set the default command outputs
-			cmd.SetOut(cmd.OutOrStdout())
-			cmd.SetErr(cmd.ErrOrStderr())
+	rootCommand := &cobra.Command{
+		Use:           chainconfig.BinaryName,
+		Short:         "Guru Cosmos EVM node",
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		RunE:          client.ValidateCmd,
+		CompletionOptions: cobra.CompletionOptions{
+			DisableDefaultCmd: true,
+		},
+		PersistentPreRunE: func(command *cobra.Command, _ []string) error {
+			command.SetOut(command.OutOrStdout())
+			command.SetErr(command.ErrOrStderr())
 
-			initClientCtx = initClientCtx.WithCmdContext(cmd.Context())
-			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
+			commandContext := initialClientContext.
+				WithCmdContext(command.Context()).
+				WithInput(command.InOrStdin()).
+				WithOutput(command.OutOrStdout())
+			commandContext, err = client.ReadPersistentCommandFlags(commandContext, command.Flags())
 			if err != nil {
 				return err
 			}
-
-			initClientCtx, err = clientcfg.ReadFromClientConfig(initClientCtx)
+			commandContext, err = clientcfg.ReadFromClientConfig(commandContext)
 			if err != nil {
 				return err
 			}
-
-			// This needs to go after ReadFromClientConfig, as that function
-			// sets the RPC client needed for SIGN_MODE_TEXTUAL. This sign mode
-			// is only available if the client is online.
-			if !initClientCtx.Offline {
-				enabledSignModes := append(tx.DefaultSignModes, signing.SignMode_SIGN_MODE_TEXTUAL) //nolint:gocritic
-				txConfigOpts := tx.ConfigOptions{
-					EnabledSignModes:           enabledSignModes,
-					TextualCoinMetadataQueryFn: txmodule.NewGRPCCoinMetadataQueryFn(initClientCtx),
+			offline := commandContext.Offline
+			if offlineFlag := command.Flags().Lookup(flags.FlagOffline); offlineFlag != nil && offlineFlag.Changed {
+				offline, err = command.Flags().GetBool(flags.FlagOffline)
+				if err != nil {
+					return err
 				}
-				txConfig, err := tx.NewTxConfigWithOptions(
-					initClientCtx.Codec,
-					txConfigOpts,
+				commandContext = commandContext.WithOffline(offline)
+			}
+			signMode := commandContext.SignModeStr
+			if signModeFlag := command.Flags().Lookup(flags.FlagSignMode); signModeFlag != nil && signModeFlag.Changed {
+				signMode, err = command.Flags().GetString(flags.FlagSignMode)
+				if err != nil {
+					return err
+				}
+			}
+			if offline {
+				if signMode == flags.SignModeTextual {
+					return fmt.Errorf("SIGN_MODE_TEXTUAL requires an online client")
+				}
+				commandContext = commandContext.WithTxConfig(encodingConfig.TxConfig)
+			} else {
+				textualTxConfig, err := app.NewTextualTxConfig(
+					authtxconfig.NewGRPCCoinMetadataQueryFn(commandContext),
 				)
 				if err != nil {
 					return err
 				}
-
-				initClientCtx = initClientCtx.WithTxConfig(txConfig)
+				commandContext = commandContext.WithTxConfig(textualTxConfig)
 			}
-
-			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
+			if err := client.SetCmdClientContextHandler(commandContext, command); err != nil {
 				return err
 			}
 
-			customAppTemplate, customAppConfig := InitAppConfig(gurudconfig.BaseDenom, gurudconfig.EVMChainID)
-			customTMConfig := initTendermintConfig()
-
-			return sdkserver.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)
+			appTemplate, appConfig := newDefaultAppConfig()
+			if err := server.InterceptConfigsPreRunHandler(
+				command,
+				appTemplate,
+				appConfig,
+				cmtcfg.DefaultConfig(),
+			); err != nil {
+				return err
+			}
+			evmChainID := server.GetServerContextFromCmd(command).Viper.GetUint64(
+				srvflags.EVMChainID,
+			)
+			if evmChainID == 0 {
+				evmChainID = chainconfig.DefaultEVMChainID
+			}
+			return app.ConfigureEIP712ChainID(evmChainID)
 		},
 	}
 
-	initRootCmd(rootCmd, tempApp)
-
-	autoCliOpts := tempApp.AutoCliOpts()
-	initClientCtx, _ = clientcfg.ReadFromClientConfig(initClientCtx)
-	autoCliOpts.ClientCtx = initClientCtx
-
-	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
-		panic(err)
-	}
-
-	if initClientCtx.ChainID != "" {
-		if err := gurud.EvmAppOptions(cosmosevmserverconfig.DefaultEVMChainID); err != nil {
-			panic(err)
-		}
-	}
-
-	return rootCmd
-}
-
-// initTendermintConfig helps to override default Tendermint Config values.
-// return tmcfg.DefaultConfig if no custom configuration is required for the application.
-func initTendermintConfig() *tmcfg.Config {
-	cfg := tmcfg.DefaultConfig()
-
-	// these values put a higher strain on node memory
-	// cfg.P2P.MaxNumInboundPeers = 100
-	// cfg.P2P.MaxNumOutboundPeers = 40
-
-	return cfg
-}
-
-// InitAppConfig helps to override default appConfig template and configs.
-// return "", nil if no custom configuration is required for the application.
-func InitAppConfig(denom string, evmChainID uint64) (string, interface{}) {
-	type CustomAppConfig struct {
-		serverconfig.Config
-
-		EVM     cosmosevmserverconfig.EVMConfig
-		JSONRPC cosmosevmserverconfig.JSONRPCConfig
-		TLS     cosmosevmserverconfig.TLSConfig
-	}
-
-	// Optionally allow the chain developer to overwrite the SDK's default
-	// server config.
-	srvCfg := serverconfig.DefaultConfig()
-	// The SDK's default minimum gas price is set to "" (empty value) inside
-	// app.toml. If left empty by validators, the node will halt on startup.
-	// However, the chain developer can set a default app.toml value for their
-	// validators here.
-	//
-	// In summary:
-	// - if you leave srvCfg.MinGasPrices = "", all validators MUST tweak their
-	//   own app.toml config,
-	// - if you set srvCfg.MinGasPrices non-empty, validators CAN tweak their
-	//   own app.toml to override, or use this default value.
-	//
-	// In this example application, we set the min gas prices to 0.
-	srvCfg.MinGasPrices = "0" + denom
-
-	evmCfg := cosmosevmserverconfig.DefaultEVMConfig()
-	evmCfg.EVMChainID = evmChainID
-
-	customAppConfig := CustomAppConfig{
-		Config:  *srvCfg,
-		EVM:     *evmCfg,
-		JSONRPC: *cosmosevmserverconfig.DefaultJSONRPCConfig(),
-		TLS:     *cosmosevmserverconfig.DefaultTLSConfig(),
-	}
-
-	customAppTemplate := serverconfig.DefaultConfigTemplate +
-		cosmosevmserverconfig.DefaultEVMConfigTemplate
-
-	return customAppTemplate, customAppConfig
-}
-
-func initRootCmd(rootCmd *cobra.Command, osApp *gurud.EVMD) {
-	cfg := sdk.GetConfig()
-	cfg.Seal()
-
-	rootCmd.AddCommand(
-		genutilcli.InitCmd(
-			osApp.BasicModuleManager,
-			gurud.DefaultNodeHome,
-		),
-		genutilcli.Commands(osApp.TxConfig(), osApp.BasicModuleManager, gurud.DefaultNodeHome),
-		cmtcli.NewCompletionCmd(rootCmd, true),
-		debug.Cmd(),
+	sdkAppCreator := newSDKAppCreator()
+	rootCommand.AddCommand(
+		newInitCommand(defaultHome),
+		newGenesisCommand(encodingConfig.TxConfig, defaultHome),
+		cmtcli.NewCompletionCmd(rootCommand, true),
+		evmdebug.Cmd(),
 		confixcmd.ConfigCommand(),
-		pruning.Cmd(newApp, gurud.DefaultNodeHome),
-		snapshot.Cmd(newApp),
+		pruning.Cmd(sdkAppCreator, defaultHome),
+		snapshot.Cmd(sdkAppCreator),
+		cosmosevmcmd.KeyCommands(defaultHome, true),
+		server.StatusCommand(),
+		newQueryCommand(),
+		newTxCommand(),
 	)
 
-	// add Cosmos EVM' flavored TM commands to start server, etc.
 	cosmosevmserver.AddCommands(
-		rootCmd,
-		cosmosevmserver.NewDefaultStartOptions(newApp, gurud.DefaultNodeHome),
+		rootCommand,
+		cosmosevmserver.NewDefaultStartOptions(newApp, defaultHome),
 		appExport,
-		addModuleInitFlags,
+		func(*cobra.Command) {},
 	)
+	if _, err := srvflags.AddTxFlags(rootCommand); err != nil {
+		return nil, err
+	}
+	if err := enhanceAutoCLI(rootCommand, initialClientContext); err != nil {
+		return nil, err
+	}
 
-	// add Cosmos EVM key commands
-	rootCmd.AddCommand(
-		cosmosevmcmd.KeyCommands(gurud.DefaultNodeHome, true),
+	return rootCommand, nil
+}
+
+func newDefaultAppConfig() (string, any) {
+	template, rawConfig := cosmosevmconfig.InitAppConfig(
+		chainconfig.BaseDenom,
+		chainconfig.DefaultEVMChainID,
 	)
-
-	// add keybase, auxiliary RPC, query, genesis, and tx child commands
-	rootCmd.AddCommand(
-		sdkserver.StatusCommand(),
-		queryCommand(),
-		txCommand(),
-	)
-
-	// add general tx flags to the root command
-	var err error
-	_, err = srvflags.AddTxFlags(rootCmd)
-	if err != nil {
-		panic(err)
+	return template + defaultOracleConfigTemplate, guruAppConfig{
+		EVMAppConfig: rawConfig.(cosmosevmconfig.EVMAppConfig),
+		Oracle: oracleConfig{
+			Enabled:        true,
+			SidecarSocket:  "",
+			SidecarTimeout: "200ms",
+		},
 	}
 }
 
-func addModuleInitFlags(_ *cobra.Command) {}
+const defaultOracleConfigTemplate = `
+[oracle]
 
-func queryCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:                        "query",
-		Aliases:                    []string{"q"},
-		Short:                      "Querying subcommands",
-		DisableFlagParsing:         false,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
+# Enables local validator oracle vote-extension participation.
+enabled = {{ .Oracle.Enabled }}
 
-	cmd.AddCommand(
-		rpc.QueryEventForTxCmd(),
-		rpc.ValidatorCommand(),
-		authcmd.QueryTxsByEventsCmd(),
-		authcmd.QueryTxCmd(),
-		sdkserver.QueryBlockCmd(),
-		sdkserver.QueryBlockResultsCmd(),
-	)
+# Unix domain socket used by validator nodes to query the oracle sidecar.
+sidecar_socket = "{{ .Oracle.SidecarSocket }}"
 
-	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+# Timeout for one oracle sidecar request during ExtendVote.
+sidecar_timeout = "{{ .Oracle.SidecarTimeout }}"
+`
 
-	return cmd
+type guruAppConfig struct {
+	cosmosevmconfig.EVMAppConfig `mapstructure:",squash"`
+	Oracle                       oracleConfig `mapstructure:"oracle"`
 }
 
-func txCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:                        "tx",
-		Short:                      "Transactions subcommands",
-		DisableFlagParsing:         false,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
-
-	cmd.AddCommand(
-		authcmd.GetSignCommand(),
-		authcmd.GetSignBatchCommand(),
-		authcmd.GetMultiSignCommand(),
-		authcmd.GetMultiSignBatchCmd(),
-		authcmd.GetValidateSignaturesCommand(),
-		authcmd.GetBroadcastCommand(),
-		authcmd.GetEncodeCommand(),
-		authcmd.GetDecodeCommand(),
-		authcmd.GetSimulateCmd(),
-	)
-
-	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
-
-	return cmd
-}
-
-// newApp creates the application
-func newApp(
-	logger log.Logger,
-	db dbm.DB,
-	traceStore io.Writer,
-	appOpts servertypes.AppOptions,
-) servertypes.Application {
-	var cache storetypes.MultiStorePersistentCache
-
-	if cast.ToBool(appOpts.Get(sdkserver.FlagInterBlockCache)) {
-		cache = store.NewCommitKVStoreCacheManager()
-	}
-
-	pruningOpts, err := sdkserver.GetPruningOptionsFromFlags(appOpts)
-	if err != nil {
-		panic(err)
-	}
-
-	// get the chain id
-	chainID, err := getChainIDFromOpts(appOpts)
-	if err != nil {
-		panic(err)
-	}
-
-	snapshotStore, err := sdkserver.GetSnapshotStore(appOpts)
-	if err != nil {
-		panic(err)
-	}
-
-	snapshotOptions := snapshottypes.NewSnapshotOptions(
-		cast.ToUint64(appOpts.Get(sdkserver.FlagStateSyncSnapshotInterval)),
-		cast.ToUint32(appOpts.Get(sdkserver.FlagStateSyncSnapshotKeepRecent)),
-	)
-
-	baseappOptions := []func(*baseapp.BaseApp){
-		baseapp.SetPruning(pruningOpts),
-		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(sdkserver.FlagMinGasPrices))),
-		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(sdkserver.FlagHaltHeight))),
-		baseapp.SetHaltTime(cast.ToUint64(appOpts.Get(sdkserver.FlagHaltTime))),
-		baseapp.SetMinRetainBlocks(cast.ToUint64(appOpts.Get(sdkserver.FlagMinRetainBlocks))),
-		baseapp.SetInterBlockCache(cache),
-		baseapp.SetTrace(cast.ToBool(appOpts.Get(sdkserver.FlagTrace))),
-		baseapp.SetIndexEvents(cast.ToStringSlice(appOpts.Get(sdkserver.FlagIndexEvents))),
-		baseapp.SetSnapshot(snapshotStore, snapshotOptions),
-		baseapp.SetIAVLCacheSize(cast.ToInt(appOpts.Get(sdkserver.FlagIAVLCacheSize))),
-		baseapp.SetIAVLDisableFastNode(cast.ToBool(appOpts.Get(sdkserver.FlagDisableIAVLFastNode))),
-		baseapp.SetChainID(chainID),
-	}
-
-	// Set up the required mempool and ABCI proposal handlers for Cosmos EVM
-	baseappOptions = append(baseappOptions, func(app *baseapp.BaseApp) {
-		mempool := sdkmempool.NoOpMempool{}
-		app.SetMempool(mempool)
-
-		handler := baseapp.NewDefaultProposalHandler(mempool, app)
-		app.SetPrepareProposal(handler.PrepareProposalHandler())
-		app.SetProcessProposal(handler.ProcessProposalHandler())
-	})
-
-	return gurud.NewExampleApp(
-		logger, db, traceStore, true,
-		appOpts,
-		gurudconfig.EVMChainID,
-		gurud.EvmAppOptions,
-		baseappOptions...,
-	)
-}
-
-// appExport creates a new application (optionally at a given height) and exports state.
-func appExport(
-	logger log.Logger,
-	db dbm.DB,
-	traceStore io.Writer,
-	height int64,
-	forZeroHeight bool,
-	jailAllowedAddrs []string,
-	appOpts servertypes.AppOptions,
-	modulesToExport []string,
-) (servertypes.ExportedApp, error) {
-	var exampleApp *gurud.EVMD
-
-	// this check is necessary as we use the flag in x/upgrade.
-	// we can exit more gracefully by checking the flag here.
-	homePath, ok := appOpts.Get(flags.FlagHome).(string)
-	if !ok || homePath == "" {
-		return servertypes.ExportedApp{}, errors.New("application home not set")
-	}
-
-	viperAppOpts, ok := appOpts.(*viper.Viper)
-	if !ok {
-		return servertypes.ExportedApp{}, errors.New("appOpts is not viper.Viper")
-	}
-
-	// overwrite the FlagInvCheckPeriod
-	viperAppOpts.Set(sdkserver.FlagInvCheckPeriod, 1)
-	appOpts = viperAppOpts
-
-	// get the chain id
-	chainID, err := getChainIDFromOpts(appOpts)
-	if err != nil {
-		return servertypes.ExportedApp{}, err
-	}
-
-	if height != -1 {
-		exampleApp = gurud.NewExampleApp(logger, db, traceStore, false, appOpts, gurudconfig.EVMChainID, gurud.EvmAppOptions, baseapp.SetChainID(chainID))
-
-		if err := exampleApp.LoadHeight(height); err != nil {
-			return servertypes.ExportedApp{}, err
-		}
-	} else {
-		exampleApp = gurud.NewExampleApp(logger, db, traceStore, true, appOpts, gurudconfig.EVMChainID, gurud.EvmAppOptions, baseapp.SetChainID(chainID))
-	}
-
-	return exampleApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
-}
-
-// getChainIDFromOpts returns the chain Id from app Opts
-// It first tries to get from the chainId flag, if not available
-// it will load from home
-func getChainIDFromOpts(appOpts servertypes.AppOptions) (chainID string, err error) {
-	// Get the chain Id from appOpts
-	chainID = cast.ToString(appOpts.Get(flags.FlagChainID))
-	if chainID == "" {
-		// If not available load from home
-		homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
-		chainID, err = gurudconfig.GetChainIDFromHome(homeDir)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return
+type oracleConfig struct {
+	Enabled        bool   `mapstructure:"enabled"`
+	SidecarSocket  string `mapstructure:"sidecar_socket"`
+	SidecarTimeout string `mapstructure:"sidecar_timeout"`
 }

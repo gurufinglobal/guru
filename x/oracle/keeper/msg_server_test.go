@@ -1,130 +1,103 @@
 package keeper
 
 import (
+	"bytes"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	evmaddress "github.com/cosmos/evm/encoding/address"
+	appparams "github.com/gurufinglobal/guru/v2/config"
+	oraclev1 "github.com/gurufinglobal/guru/v2/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSubmitOracleDataNilDataSet(t *testing.T) {
-	keeper, ctx := setupKeeper(t)
+func TestMsgServerAllowsModeratorToUpdateParamsAndTasks(t *testing.T) {
+	f := setupKeeperFixture(t)
+	msgServer := NewMsgServer(&f.keeper)
+	goCtx := f.ctx
 
-	// Test with nil DataSet - should return error, not panic
-	msg := &types.MsgSubmitOracleData{
-		AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-		DataSet:          nil, // This should cause validation to fail
+	params := &oraclev1.Params{
+		MinValidators: 2,
+		MinSources:    4,
+		HistoryLimit:  5,
 	}
+	_, err := msgServer.UpdateParams(goCtx, &oraclev1.MsgUpdateParams{
+		Moderator: f.moderator,
+		Params:    params,
+	})
+	require.NoError(t, err)
+	storedParams, err := f.keeper.GetParams(f.ctx)
+	require.NoError(t, err)
+	require.Equal(t, params.GetMinValidators(), storedParams.GetMinValidators())
+	require.Equal(t, params.GetMinSources(), storedParams.GetMinSources())
+	require.Equal(t, params.GetHistoryLimit(), storedParams.GetHistoryLimit())
 
-	// This should not panic and should return an error
-	response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
+	_, err = msgServer.UpsertTask(goCtx, &oraclev1.MsgUpsertTask{
+		Moderator: f.moderator,
+		Task: &oraclev1.OracleTask{
+			Symbol:             " BTC/USD ",
+			ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            true,
+			SubmissionInterval: 1,
+		},
+	})
+	require.NoError(t, err)
+	task, err := f.keeper.GetTask(f.ctx, "BTC/USD")
+	require.NoError(t, err)
+	require.Equal(t, "BTC/USD", task.GetSymbol())
+
+	_, err = msgServer.RemoveTask(goCtx, &oraclev1.MsgRemoveTask{
+		Moderator: f.moderator,
+		Symbol:    " BTC/USD ",
+	})
+	require.NoError(t, err)
+	_, err = f.keeper.GetTask(f.ctx, "BTC/USD")
 	require.Error(t, err)
-	require.Nil(t, response)
-	require.Contains(t, err.Error(), "DataSet must be provided")
 }
 
-// func TestSubmitOracleDataValidDataSet(t *testing.T) {
-// 	keeper, ctx := setupKeeper(t)
+func TestMsgServerRejectsGovAndArbitraryAuthorities(t *testing.T) {
+	f := setupKeeperFixture(t)
+	msgServer := NewMsgServer(&f.keeper)
+	goCtx := f.ctx
 
-// 	// Set up a moderator address first
-// 	moderatorAddr := "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft"
-// 	keeper.SetModeratorAddress(ctx, moderatorAddr)
-
-// 	// Create a test oracle request document
-// 	doc := types.OracleRequestDoc{
-// 		RequestId:       1,
-// 		OracleType:      types.OracleType_ORACLE_TYPE_CRYPTO,
-// 		Name:            "Test Oracle",
-// 		Description:     "Test Description",
-// 		Period:          60,
-// 		AccountList:     []string{moderatorAddr},
-// 		Quorum:          1,
-// 		Endpoints:       []*types.OracleEndpoint{{Url: "http://test.com", ParseRule: "test"}},
-// 		AggregationRule: types.AggregationRule_AGGREGATION_RULE_AVG,
-// 		Status:          types.RequestStatus_REQUEST_STATUS_ENABLED,
-// 		Nonce:           0,
-// 	}
-// 	keeper.SetOracleRequestDoc(ctx, doc)
-
-// 	// Test with valid DataSet
-// 	msg := &types.MsgSubmitOracleData{
-// 		AuthorityAddress: moderatorAddr,
-// 		DataSet: &types.SubmitDataSet{
-// 			RequestId: 1,
-// 			Nonce:     1,
-// 			RawData:   "123.456",
-// 			Provider:  moderatorAddr,
-// 			Signature: []byte("test signature"),
-// 		},
-// 	}
-
-// 	// This should succeed
-// 	response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), msg)
-// 	require.NoError(t, err)
-// 	require.NotNil(t, response)
-// }
-
-func TestSubmitOracleDataEdgeCases(t *testing.T) {
-	keeper, ctx := setupKeeper(t)
-
-	testCases := []struct {
-		name        string
-		msg         *types.MsgSubmitOracleData
-		expectError bool
-		errorMsg    string
-	}{
-		{
-			name: "nil message",
-			msg:  nil,
-			// This would panic before reaching our handler, so we skip this test
-			expectError: true,
-		},
-		{
-			name: "nil DataSet",
-			msg: &types.MsgSubmitOracleData{
-				AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				DataSet:          nil,
-			},
-			expectError: true,
-			errorMsg:    "DataSet must be provided",
-		},
-		{
-			name: "valid DataSet structure but invalid content",
-			msg: &types.MsgSubmitOracleData{
-				AuthorityAddress: "guru1h9y8h0rh6tqxrj045fyvarnnyyxdg07693zkft",
-				DataSet: &types.SubmitDataSet{
-					RequestId: 0, // Invalid: zero request ID
-					Nonce:     1,
-					RawData:   "",
-					Provider:  "",
-					Signature: nil,
-				},
-			},
-			expectError: true,
-			errorMsg:    "request id is 0",
-		},
-	}
-
-	for _, tc := range testCases {
-		if tc.name == "nil message" {
-			// Skip nil message test as it would panic before reaching our handler
-			continue
-		}
-
-		t.Run(tc.name, func(t *testing.T) {
-			response, err := keeper.SubmitOracleData(sdk.WrapSDKContext(ctx), tc.msg)
-
-			if tc.expectError {
-				require.Error(t, err)
-				require.Nil(t, response)
-				if tc.errorMsg != "" {
-					require.Contains(t, err.Error(), tc.errorMsg)
-				}
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, response)
-			}
+	for _, authority := range []string{
+		testGovAddress(t),
+		testAccountAddress(t, 0x02),
+	} {
+		_, err := msgServer.UpdateParams(goCtx, &oraclev1.MsgUpdateParams{
+			Moderator: authority,
+			Params:    DefaultParams(),
 		})
+		require.Error(t, err)
+
+		_, err = msgServer.UpsertTask(goCtx, &oraclev1.MsgUpsertTask{
+			Moderator: authority,
+			Task: &oraclev1.OracleTask{
+				Symbol:             "BTC/USD",
+				ValueType:          oraclev1.ValueType_VALUE_TYPE_NUMERIC,
+				Enabled:            true,
+				SubmissionInterval: 1,
+			},
+		})
+		require.Error(t, err)
 	}
+}
+
+func testGovAddress(t *testing.T) string {
+	t.Helper()
+
+	codec := evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr)
+	address, err := codec.BytesToString(authtypes.NewModuleAddress(govtypes.ModuleName))
+	require.NoError(t, err)
+	return address
+}
+
+func testAccountAddress(t *testing.T, b byte) string {
+	t.Helper()
+
+	codec := evmaddress.NewEvmCodec(appparams.Bech32PrefixAccAddr)
+	address, err := codec.BytesToString(bytes.Repeat([]byte{b}, 20))
+	require.NoError(t, err)
+	return address
 }

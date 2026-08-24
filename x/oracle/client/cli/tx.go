@@ -1,112 +1,39 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/spf13/cobra"
-
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/gurufinglobal/guru/v2/x/oracle/types"
+	"github.com/spf13/cobra"
 )
 
-// GetTxCmd returns the transaction commands for this module
+// GetTxCmd returns the root transaction command for the oracle module.
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("%s transactions subcommands", types.ModuleName),
-		DisableFlagParsing:         true,
+		Short:                      "Transaction commands for the oracle module",
+		DisableFlagParsing:         false,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
 
 	cmd.AddCommand(
-		NewRegisterOracleRequestDocCmd(),
-		NewUpdateOracleRequestDocCmd(),
-		NewSubmitOracleDataCmd(),
-		NewUpdateModeratorAddressCmd(),
-		NewUpdateParamsCmd(),
+		CmdUpdateParams(),
+		CmdUpsertTask(),
+		CmdRemoveTask(),
 	)
 
 	return cmd
 }
 
-// NewRegisterOracleRequestDocCmd implements the register oracle request document command
-func NewRegisterOracleRequestDocCmd() *cobra.Command {
+func CmdUpdateParams() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-request [path/to/request-doc.json]",
-		Short: "Register a new oracle request document",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			requestDoc, err := parseRequestDocJson(args[0])
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgRegisterOracleRequestDoc(
-				clientCtx.GetFromAddress().String(),
-				*requestDoc,
-			)
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
-}
-
-// NewUpdateOracleRequestDocCmd implements the update oracle request document command
-func NewUpdateOracleRequestDocCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "update-request [path/to/request-doc.json] [reason]",
-		Short: "Update an existing oracle request document",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			requestDoc, err := parseRequestDocJson(args[0])
-			if err != nil {
-				return err
-			}
-
-			reason := args[1]
-
-			msg := types.NewMsgUpdateOracleRequestDoc(
-				clientCtx.GetFromAddress().String(),
-				*requestDoc,
-				reason,
-			)
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
-}
-
-// NewSubmitOracleDataCmd implements the submit oracle data command
-func NewSubmitOracleDataCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "submit-data [request-id] [nonce] [raw-data]",
-		Short: "Submit oracle data for a request",
+		Use:   "update-params [min-validators] [min-sources] [history-limit]",
+		Short: "Update oracle parameters",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -114,44 +41,10 @@ func NewSubmitOracleDataCmd() *cobra.Command {
 				return err
 			}
 
-			requestId := args[0]
-			nonce := args[1]
-			rawData := args[2]
-
-			requestIdUint64, err := strconv.ParseUint(requestId, 10, 64)
-			if err != nil {
-				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "request id is not a valid uint64")
-			}
-
-			nonceUint64, err := strconv.ParseUint(nonce, 10, 64)
-			if err != nil {
-				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "nonce is not a valid uint64")
-			}
-
-			msg := types.NewMsgSubmitOracleData(
-				requestIdUint64,
-				nonceUint64,
-				rawData,
-				clientCtx.GetFromAddress().String(),
-				nil,
-				clientCtx.GetFromAddress().String(),
-			)
-
-			dataset, err := msg.DataSet.Bytes()
+			msg, err := newMsgUpdateParams(clientCtx.GetFromAddress().String(), args)
 			if err != nil {
 				return err
 			}
-
-			signature, _, err := clientCtx.Keyring.Sign(
-				clientCtx.FromName,
-				dataset,
-				signing.SignMode_SIGN_MODE_DIRECT,
-			)
-			if err != nil {
-				return err
-			}
-
-			msg.DataSet.Signature = signature
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -161,10 +54,39 @@ func NewSubmitOracleDataCmd() *cobra.Command {
 	return cmd
 }
 
-func NewUpdateModeratorAddressCmd() *cobra.Command {
+func CmdUpsertTask() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-moderator-address [moderator-address]",
-		Short: "Update the moderator address",
+		Use:   "upsert-task [symbol] [submission-interval]",
+		Short: "Add or update a numeric oracle task",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			enabled, err := cmd.Flags().GetBool(flagEnabled)
+			if err != nil {
+				return err
+			}
+
+			msg, err := newMsgUpsertTask(clientCtx.GetFromAddress().String(), args[0], args[1], enabled)
+			if err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().Bool(flagEnabled, true, "enable the oracle task")
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdRemoveTask() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "remove-task [symbol]",
+		Short: "Remove an oracle task",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -172,94 +94,9 @@ func NewUpdateModeratorAddressCmd() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgUpdateModeratorAddress(
-				clientCtx.GetFromAddress().String(),
-				args[0],
-			)
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
-}
-
-func parseRequestDocJson(path string) (*types.OracleRequestDoc, error) {
-	var doc types.OracleRequestDoc
-
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(contents, &doc)
-	if err != nil {
-		return nil, err
-	}
-
-	return &doc, nil
-}
-
-// NewUpdateParamsCmd implements the update oracle parameters command for governance proposals
-func NewUpdateParamsCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "update-params [submit-window] [min-submit-per-window] [slash-fraction-downtime] [max-account-list-size]",
-		Short: "Generate governance proposal to update oracle module parameters",
-		Long: `Generate a governance proposal to update oracle module parameters.
-This command creates a MsgUpdateParams that must be submitted through governance.
-
-Example:
-  # Create a governance proposal JSON file
-  gurud tx oracle update-params 3600 1.0 0.01 1000 --generate-only > update_params_proposal.json
-
-  # Submit the proposal through governance
-  gurud tx gov submit-proposal update_params_proposal.json --from proposer`,
-		Args: cobra.ExactArgs(4),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			// Parse submit window
-			submitWindow, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "submit window must be a valid uint64")
-			}
-
-			// Parse min submit per window
-			minSubmitPerWindow, err := sdkmath.LegacyNewDecFromStr(args[1])
-			if err != nil {
-				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "min submit per window must be a valid decimal")
-			}
-
-			// Parse slash fraction downtime
-			slashFractionDowntime, err := sdkmath.LegacyNewDecFromStr(args[2])
-			if err != nil {
-				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "slash fraction downtime must be a valid decimal")
-			}
-
-			// Parse max account list size
-			maxAccountListSize, err := strconv.ParseUint(args[3], 10, 64)
-			if err != nil {
-				return errorsmod.Wrap(errortypes.ErrInvalidRequest, "max account list size must be a valid uint64")
-			}
-
-			params := types.Params{
-				EnableOracle:          true, // Always enabled
-				SubmitWindow:          submitWindow,
-				MinSubmitPerWindow:    minSubmitPerWindow,
-				SlashFractionDowntime: slashFractionDowntime,
-				MaxAccountListSize:    maxAccountListSize,
-			}
-
-			// Use governance module address as authority
-			govModuleAddr := "cosmos10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn" // This should be the governance module address
-
-			msg := &types.MsgUpdateParams{
-				Authority: govModuleAddr,
-				Params:    params,
+			msg := &types.MsgRemoveTask{
+				Moderator: clientCtx.GetFromAddress().String(),
+				Symbol:    args[0],
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -269,3 +106,58 @@ Example:
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
+
+func newMsgUpdateParams(moderator string, args []string) (*types.MsgUpdateParams, error) {
+	minValidators, err := parsePositiveUint32Argument("min_validators", args[0])
+	if err != nil {
+		return nil, err
+	}
+	minSources, err := parsePositiveUint32Argument("min_sources", args[1])
+	if err != nil {
+		return nil, err
+	}
+	historyLimit, err := parsePositiveUint32Argument("history_limit", args[2])
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateParams{
+		Moderator: moderator,
+		Params: &types.Params{
+			MinValidators: minValidators,
+			MinSources:    minSources,
+			HistoryLimit:  historyLimit,
+		},
+	}, nil
+}
+
+func newMsgUpsertTask(moderator, symbol, intervalRaw string, enabled bool) (*types.MsgUpsertTask, error) {
+	interval, err := parsePositiveUint32Argument("submission_interval", intervalRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpsertTask{
+		Moderator: moderator,
+		Task: &types.OracleTask{
+			Symbol:             symbol,
+			ValueType:          types.ValueType_VALUE_TYPE_NUMERIC,
+			Enabled:            enabled,
+			SubmissionInterval: interval,
+		},
+	}, nil
+}
+
+func parsePositiveUint32Argument(fieldName, raw string) (uint32, error) {
+	value, err := strconv.ParseUint(raw, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s: %w", fieldName, err)
+	}
+	if value == 0 {
+		return 0, fmt.Errorf("invalid %s: must be positive", fieldName)
+	}
+
+	return uint32(value), nil
+}
+
+const flagEnabled = "enabled"

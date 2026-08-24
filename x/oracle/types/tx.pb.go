@@ -7,12 +7,9 @@ import (
 	context "context"
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
-	_ "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
-	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -32,347 +29,16 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgRegisterOracleRequestDoc represents a message to register a new oracle request document
-type MsgRegisterOracleRequestDoc struct {
-	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	// The oracle request document to be registered
-	RequestDoc OracleRequestDoc `protobuf:"bytes,2,opt,name=request_doc,json=requestDoc,proto3" json:"request_doc"`
-}
-
-func (m *MsgRegisterOracleRequestDoc) Reset()         { *m = MsgRegisterOracleRequestDoc{} }
-func (m *MsgRegisterOracleRequestDoc) String() string { return proto.CompactTextString(m) }
-func (*MsgRegisterOracleRequestDoc) ProtoMessage()    {}
-func (*MsgRegisterOracleRequestDoc) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{0}
-}
-func (m *MsgRegisterOracleRequestDoc) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgRegisterOracleRequestDoc) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgRegisterOracleRequestDoc.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgRegisterOracleRequestDoc) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRegisterOracleRequestDoc.Merge(m, src)
-}
-func (m *MsgRegisterOracleRequestDoc) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgRegisterOracleRequestDoc) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRegisterOracleRequestDoc.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgRegisterOracleRequestDoc proto.InternalMessageInfo
-
-// MsgRegisterOracleRequestDocResponse defines the Msg/RegisterOracleRequestDoc response type
-type MsgRegisterOracleRequestDocResponse struct {
-	// ID of the registered oracle request
-	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-}
-
-func (m *MsgRegisterOracleRequestDocResponse) Reset()         { *m = MsgRegisterOracleRequestDocResponse{} }
-func (m *MsgRegisterOracleRequestDocResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgRegisterOracleRequestDocResponse) ProtoMessage()    {}
-func (*MsgRegisterOracleRequestDocResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{1}
-}
-func (m *MsgRegisterOracleRequestDocResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgRegisterOracleRequestDocResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgRegisterOracleRequestDocResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgRegisterOracleRequestDocResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRegisterOracleRequestDocResponse.Merge(m, src)
-}
-func (m *MsgRegisterOracleRequestDocResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgRegisterOracleRequestDocResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRegisterOracleRequestDocResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgRegisterOracleRequestDocResponse proto.InternalMessageInfo
-
-func (m *MsgRegisterOracleRequestDocResponse) GetRequestId() uint64 {
-	if m != nil {
-		return m.RequestId
-	}
-	return 0
-}
-
-// MsgUpdateOracleRequestDoc represents a message to update an existing oracle request document
-type MsgUpdateOracleRequestDoc struct {
-	ModeratorAddress string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	// The updated oracle request document
-	RequestDoc OracleRequestDoc `protobuf:"bytes,2,opt,name=request_doc,json=requestDoc,proto3" json:"request_doc"`
-	// Reason for the update
-	Reason string `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
-}
-
-func (m *MsgUpdateOracleRequestDoc) Reset()         { *m = MsgUpdateOracleRequestDoc{} }
-func (m *MsgUpdateOracleRequestDoc) String() string { return proto.CompactTextString(m) }
-func (*MsgUpdateOracleRequestDoc) ProtoMessage()    {}
-func (*MsgUpdateOracleRequestDoc) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{2}
-}
-func (m *MsgUpdateOracleRequestDoc) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgUpdateOracleRequestDoc) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgUpdateOracleRequestDoc.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgUpdateOracleRequestDoc) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgUpdateOracleRequestDoc.Merge(m, src)
-}
-func (m *MsgUpdateOracleRequestDoc) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgUpdateOracleRequestDoc) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgUpdateOracleRequestDoc.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgUpdateOracleRequestDoc proto.InternalMessageInfo
-
-// MsgUpdateOracleRequestDocResponse defines the Msg/UpdateOracleRequestDoc response type
-type MsgUpdateOracleRequestDocResponse struct {
-	// ID of the updated oracle request
-	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-}
-
-func (m *MsgUpdateOracleRequestDocResponse) Reset()         { *m = MsgUpdateOracleRequestDocResponse{} }
-func (m *MsgUpdateOracleRequestDocResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgUpdateOracleRequestDocResponse) ProtoMessage()    {}
-func (*MsgUpdateOracleRequestDocResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{3}
-}
-func (m *MsgUpdateOracleRequestDocResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgUpdateOracleRequestDocResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgUpdateOracleRequestDocResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgUpdateOracleRequestDocResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgUpdateOracleRequestDocResponse.Merge(m, src)
-}
-func (m *MsgUpdateOracleRequestDocResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgUpdateOracleRequestDocResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgUpdateOracleRequestDocResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgUpdateOracleRequestDocResponse proto.InternalMessageInfo
-
-func (m *MsgUpdateOracleRequestDocResponse) GetRequestId() uint64 {
-	if m != nil {
-		return m.RequestId
-	}
-	return 0
-}
-
-// MsgSubmitOracleData represents a message to submit oracle data
-type MsgSubmitOracleData struct {
-	AuthorityAddress string `protobuf:"bytes,1,opt,name=authority_address,json=authorityAddress,proto3" json:"authority_address,omitempty"`
-	// The oracle data set to be submitted, containing the raw data and metadata
-	DataSet *SubmitDataSet `protobuf:"bytes,2,opt,name=data_set,json=dataSet,proto3" json:"data_set,omitempty"`
-}
-
-func (m *MsgSubmitOracleData) Reset()         { *m = MsgSubmitOracleData{} }
-func (m *MsgSubmitOracleData) String() string { return proto.CompactTextString(m) }
-func (*MsgSubmitOracleData) ProtoMessage()    {}
-func (*MsgSubmitOracleData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{4}
-}
-func (m *MsgSubmitOracleData) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgSubmitOracleData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgSubmitOracleData.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgSubmitOracleData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgSubmitOracleData.Merge(m, src)
-}
-func (m *MsgSubmitOracleData) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgSubmitOracleData) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgSubmitOracleData.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgSubmitOracleData proto.InternalMessageInfo
-
-// MsgSubmitOracleDataResponse defines the Msg/SubmitOracleData response type
-type MsgSubmitOracleDataResponse struct {
-}
-
-func (m *MsgSubmitOracleDataResponse) Reset()         { *m = MsgSubmitOracleDataResponse{} }
-func (m *MsgSubmitOracleDataResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgSubmitOracleDataResponse) ProtoMessage()    {}
-func (*MsgSubmitOracleDataResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{5}
-}
-func (m *MsgSubmitOracleDataResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgSubmitOracleDataResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgSubmitOracleDataResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgSubmitOracleDataResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgSubmitOracleDataResponse.Merge(m, src)
-}
-func (m *MsgSubmitOracleDataResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgSubmitOracleDataResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgSubmitOracleDataResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgSubmitOracleDataResponse proto.InternalMessageInfo
-
-// MsgUpdateModeratorAddress represents a message to update the moderator address
-type MsgUpdateModeratorAddress struct {
-	ModeratorAddress    string `protobuf:"bytes,1,opt,name=moderator_address,json=moderatorAddress,proto3" json:"moderator_address,omitempty"`
-	NewModeratorAddress string `protobuf:"bytes,2,opt,name=new_moderator_address,json=newModeratorAddress,proto3" json:"new_moderator_address,omitempty"`
-}
-
-func (m *MsgUpdateModeratorAddress) Reset()         { *m = MsgUpdateModeratorAddress{} }
-func (m *MsgUpdateModeratorAddress) String() string { return proto.CompactTextString(m) }
-func (*MsgUpdateModeratorAddress) ProtoMessage()    {}
-func (*MsgUpdateModeratorAddress) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{6}
-}
-func (m *MsgUpdateModeratorAddress) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgUpdateModeratorAddress) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgUpdateModeratorAddress.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgUpdateModeratorAddress) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgUpdateModeratorAddress.Merge(m, src)
-}
-func (m *MsgUpdateModeratorAddress) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgUpdateModeratorAddress) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgUpdateModeratorAddress.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgUpdateModeratorAddress proto.InternalMessageInfo
-
-// MsgUpdateModeratorAddressResponse defines the Msg/UpdateModeratorAddress response type
-type MsgUpdateModeratorAddressResponse struct {
-}
-
-func (m *MsgUpdateModeratorAddressResponse) Reset()         { *m = MsgUpdateModeratorAddressResponse{} }
-func (m *MsgUpdateModeratorAddressResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgUpdateModeratorAddressResponse) ProtoMessage()    {}
-func (*MsgUpdateModeratorAddressResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{7}
-}
-func (m *MsgUpdateModeratorAddressResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgUpdateModeratorAddressResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgUpdateModeratorAddressResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgUpdateModeratorAddressResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgUpdateModeratorAddressResponse.Merge(m, src)
-}
-func (m *MsgUpdateModeratorAddressResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgUpdateModeratorAddressResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgUpdateModeratorAddressResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgUpdateModeratorAddressResponse proto.InternalMessageInfo
-
-// MsgUpdateParams defines a Msg for updating the oracle module parameters
 type MsgUpdateParams struct {
-	// authority is the address of the governance account
-	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
-	// params defines the oracle parameters to update
-	// NOTE: All parameters must be supplied
-	Params Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params"`
+	Moderator string  `protobuf:"bytes,1,opt,name=moderator,proto3" json:"moderator,omitempty"`
+	Params    *Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
 }
 
 func (m *MsgUpdateParams) Reset()         { *m = MsgUpdateParams{} }
 func (m *MsgUpdateParams) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParams) ProtoMessage()    {}
 func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{8}
+	return fileDescriptor_febdd1f478235f42, []int{0}
 }
 func (m *MsgUpdateParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -401,21 +67,20 @@ func (m *MsgUpdateParams) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParams proto.InternalMessageInfo
 
-func (m *MsgUpdateParams) GetAuthority() string {
+func (m *MsgUpdateParams) GetModerator() string {
 	if m != nil {
-		return m.Authority
+		return m.Moderator
 	}
 	return ""
 }
 
-func (m *MsgUpdateParams) GetParams() Params {
+func (m *MsgUpdateParams) GetParams() *Params {
 	if m != nil {
 		return m.Params
 	}
-	return Params{}
+	return nil
 }
 
-// MsgUpdateParamsResponse defines the response structure for executing a MsgUpdateParams message
 type MsgUpdateParamsResponse struct {
 }
 
@@ -423,7 +88,7 @@ func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse
 func (m *MsgUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParamsResponse) ProtoMessage()    {}
 func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_febdd1f478235f42, []int{9}
+	return fileDescriptor_febdd1f478235f42, []int{1}
 }
 func (m *MsgUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -452,72 +117,222 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
+type MsgUpsertTask struct {
+	Moderator string      `protobuf:"bytes,1,opt,name=moderator,proto3" json:"moderator,omitempty"`
+	Task      *OracleTask `protobuf:"bytes,2,opt,name=task,proto3" json:"task,omitempty"`
+}
+
+func (m *MsgUpsertTask) Reset()         { *m = MsgUpsertTask{} }
+func (m *MsgUpsertTask) String() string { return proto.CompactTextString(m) }
+func (*MsgUpsertTask) ProtoMessage()    {}
+func (*MsgUpsertTask) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{2}
+}
+func (m *MsgUpsertTask) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpsertTask) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpsertTask.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpsertTask) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpsertTask.Merge(m, src)
+}
+func (m *MsgUpsertTask) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpsertTask) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpsertTask.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpsertTask proto.InternalMessageInfo
+
+func (m *MsgUpsertTask) GetModerator() string {
+	if m != nil {
+		return m.Moderator
+	}
+	return ""
+}
+
+func (m *MsgUpsertTask) GetTask() *OracleTask {
+	if m != nil {
+		return m.Task
+	}
+	return nil
+}
+
+type MsgUpsertTaskResponse struct {
+}
+
+func (m *MsgUpsertTaskResponse) Reset()         { *m = MsgUpsertTaskResponse{} }
+func (m *MsgUpsertTaskResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpsertTaskResponse) ProtoMessage()    {}
+func (*MsgUpsertTaskResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{3}
+}
+func (m *MsgUpsertTaskResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpsertTaskResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpsertTaskResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpsertTaskResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpsertTaskResponse.Merge(m, src)
+}
+func (m *MsgUpsertTaskResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpsertTaskResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpsertTaskResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpsertTaskResponse proto.InternalMessageInfo
+
+type MsgRemoveTask struct {
+	Moderator string `protobuf:"bytes,1,opt,name=moderator,proto3" json:"moderator,omitempty"`
+	Symbol    string `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
+}
+
+func (m *MsgRemoveTask) Reset()         { *m = MsgRemoveTask{} }
+func (m *MsgRemoveTask) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveTask) ProtoMessage()    {}
+func (*MsgRemoveTask) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{4}
+}
+func (m *MsgRemoveTask) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveTask) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveTask.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveTask) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveTask.Merge(m, src)
+}
+func (m *MsgRemoveTask) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveTask) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveTask.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveTask proto.InternalMessageInfo
+
+func (m *MsgRemoveTask) GetModerator() string {
+	if m != nil {
+		return m.Moderator
+	}
+	return ""
+}
+
+func (m *MsgRemoveTask) GetSymbol() string {
+	if m != nil {
+		return m.Symbol
+	}
+	return ""
+}
+
+type MsgRemoveTaskResponse struct {
+}
+
+func (m *MsgRemoveTaskResponse) Reset()         { *m = MsgRemoveTaskResponse{} }
+func (m *MsgRemoveTaskResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveTaskResponse) ProtoMessage()    {}
+func (*MsgRemoveTaskResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_febdd1f478235f42, []int{5}
+}
+func (m *MsgRemoveTaskResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveTaskResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveTaskResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveTaskResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveTaskResponse.Merge(m, src)
+}
+func (m *MsgRemoveTaskResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveTaskResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveTaskResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveTaskResponse proto.InternalMessageInfo
+
 func init() {
-	proto.RegisterType((*MsgRegisterOracleRequestDoc)(nil), "guru.oracle.v1.MsgRegisterOracleRequestDoc")
-	proto.RegisterType((*MsgRegisterOracleRequestDocResponse)(nil), "guru.oracle.v1.MsgRegisterOracleRequestDocResponse")
-	proto.RegisterType((*MsgUpdateOracleRequestDoc)(nil), "guru.oracle.v1.MsgUpdateOracleRequestDoc")
-	proto.RegisterType((*MsgUpdateOracleRequestDocResponse)(nil), "guru.oracle.v1.MsgUpdateOracleRequestDocResponse")
-	proto.RegisterType((*MsgSubmitOracleData)(nil), "guru.oracle.v1.MsgSubmitOracleData")
-	proto.RegisterType((*MsgSubmitOracleDataResponse)(nil), "guru.oracle.v1.MsgSubmitOracleDataResponse")
-	proto.RegisterType((*MsgUpdateModeratorAddress)(nil), "guru.oracle.v1.MsgUpdateModeratorAddress")
-	proto.RegisterType((*MsgUpdateModeratorAddressResponse)(nil), "guru.oracle.v1.MsgUpdateModeratorAddressResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "guru.oracle.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "guru.oracle.v1.MsgUpdateParamsResponse")
+	proto.RegisterType((*MsgUpsertTask)(nil), "guru.oracle.v1.MsgUpsertTask")
+	proto.RegisterType((*MsgUpsertTaskResponse)(nil), "guru.oracle.v1.MsgUpsertTaskResponse")
+	proto.RegisterType((*MsgRemoveTask)(nil), "guru.oracle.v1.MsgRemoveTask")
+	proto.RegisterType((*MsgRemoveTaskResponse)(nil), "guru.oracle.v1.MsgRemoveTaskResponse")
 }
 
 func init() { proto.RegisterFile("guru/oracle/v1/tx.proto", fileDescriptor_febdd1f478235f42) }
 
 var fileDescriptor_febdd1f478235f42 = []byte{
-	// 776 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x96, 0x4f, 0x6b, 0x13, 0x4f,
-	0x18, 0xc7, 0x33, 0x6d, 0x7f, 0xf9, 0xd9, 0xa9, 0xd4, 0xba, 0xad, 0x6d, 0x9a, 0x9a, 0x4d, 0xdc,
-	0xaa, 0xfd, 0x47, 0xb3, 0xa4, 0x15, 0x91, 0xde, 0x0c, 0x15, 0x29, 0x18, 0x94, 0x2d, 0x5e, 0xbc,
-	0x2c, 0x93, 0xec, 0x38, 0x5d, 0x48, 0x76, 0xe2, 0xce, 0x6c, 0xff, 0xdc, 0xa4, 0x27, 0x0f, 0x82,
-	0x82, 0x77, 0x29, 0x88, 0x47, 0xa1, 0x07, 0xf1, 0x35, 0xf4, 0x22, 0x14, 0xbd, 0x78, 0x12, 0x69,
-	0x84, 0xfa, 0x32, 0x64, 0x77, 0x76, 0xb7, 0xcd, 0xa4, 0xdb, 0x44, 0xf0, 0xe0, 0x2d, 0x3b, 0xcf,
-	0xf7, 0x79, 0xe6, 0xf3, 0x7c, 0x67, 0x9e, 0x21, 0x70, 0x82, 0x78, 0xae, 0xa7, 0x53, 0x17, 0xd5,
-	0xea, 0x58, 0xdf, 0x2c, 0xe9, 0x7c, 0xbb, 0xd8, 0x74, 0x29, 0xa7, 0xca, 0xb0, 0x1f, 0x28, 0x8a,
-	0x40, 0x71, 0xb3, 0x94, 0x9d, 0xa8, 0x51, 0xd6, 0xa0, 0x4c, 0x6f, 0x30, 0xe2, 0xeb, 0x1a, 0x8c,
-	0x08, 0x61, 0x76, 0x52, 0x04, 0xcc, 0xe0, 0x4b, 0x17, 0x1f, 0x61, 0x68, 0x8c, 0x50, 0x42, 0xc5,
-	0xba, 0xff, 0x2b, 0x5c, 0xbd, 0x4a, 0x28, 0x25, 0x75, 0xac, 0xa3, 0xa6, 0xad, 0x23, 0xc7, 0xa1,
-	0x1c, 0x71, 0x9b, 0x3a, 0x51, 0xce, 0x94, 0x04, 0x14, 0x12, 0x44, 0xa9, 0xed, 0x41, 0x82, 0x1d,
-	0xcc, 0xec, 0x28, 0x55, 0x0d, 0x11, 0xab, 0x88, 0xf9, 0xd1, 0x2a, 0xe6, 0xa8, 0xa4, 0xd7, 0xa8,
-	0xed, 0x88, 0xb8, 0xf6, 0x19, 0xc0, 0xa9, 0x0a, 0x23, 0x06, 0x26, 0x36, 0xe3, 0xd8, 0x7d, 0x18,
-	0x94, 0x31, 0xf0, 0x33, 0x0f, 0x33, 0xbe, 0x4a, 0x6b, 0xca, 0x3d, 0x78, 0xb9, 0x41, 0x2d, 0xec,
-	0x22, 0x4e, 0x5d, 0x13, 0x59, 0x96, 0x8b, 0x19, 0xcb, 0x80, 0x02, 0x98, 0x1d, 0x2c, 0x67, 0xbe,
-	0x7c, 0x5c, 0x1c, 0x0b, 0x7b, 0xbb, 0x2b, 0x22, 0xeb, 0xdc, 0xb5, 0x1d, 0x62, 0x8c, 0xc4, 0x29,
-	0xe1, 0xba, 0x72, 0x1f, 0x0e, 0xb9, 0xa2, 0xa8, 0x69, 0xd1, 0x5a, 0xa6, 0xaf, 0x00, 0x66, 0x87,
-	0x96, 0x0a, 0xc5, 0x76, 0x3f, 0x8b, 0xf2, 0xee, 0xe5, 0x81, 0x83, 0xef, 0xf9, 0x94, 0x01, 0xdd,
-	0x78, 0x65, 0x45, 0x7d, 0xb1, 0x97, 0x4f, 0xfd, 0xda, 0xcb, 0xa7, 0x76, 0x8f, 0xf7, 0xe7, 0x3b,
-	0xd1, 0xb4, 0x55, 0x38, 0x7d, 0x4e, 0x3b, 0x06, 0x66, 0x4d, 0xea, 0x30, 0xac, 0xe4, 0x60, 0x54,
-	0xd4, 0xb4, 0xad, 0xa0, 0x9f, 0x01, 0x63, 0x30, 0x5c, 0x59, 0xb3, 0xb4, 0x16, 0x80, 0x93, 0x15,
-	0x46, 0x1e, 0x37, 0x2d, 0xc4, 0xf1, 0xbf, 0xee, 0x89, 0x32, 0x0e, 0xd3, 0x2e, 0x46, 0x8c, 0x3a,
-	0x99, 0x7e, 0x1f, 0xc2, 0x08, 0xbf, 0xba, 0x7a, 0x55, 0x86, 0xd7, 0x12, 0x9b, 0xec, 0xd5, 0xa9,
-	0x4f, 0x00, 0x8e, 0x56, 0x18, 0x59, 0xf7, 0xaa, 0x0d, 0x9b, 0x8b, 0x22, 0xab, 0x88, 0x23, 0xdf,
-	0x23, 0xe4, 0xf1, 0x0d, 0xea, 0xda, 0x7c, 0xa7, 0x77, 0x8f, 0xe2, 0x94, 0xc8, 0xa3, 0x3b, 0xf0,
-	0x82, 0x85, 0x38, 0x32, 0x19, 0xe6, 0xa1, 0x41, 0x39, 0xd9, 0x20, 0xb1, 0xb5, 0xbf, 0xe9, 0x3a,
-	0xe6, 0xc6, 0xff, 0x96, 0xf8, 0x21, 0x35, 0xdf, 0xc1, 0xa2, 0xe5, 0x82, 0x7b, 0x2f, 0x73, 0x47,
-	0x6d, 0x6b, 0x87, 0xa7, 0x6f, 0x40, 0x45, 0x3e, 0xba, 0xbf, 0x74, 0x03, 0x1e, 0xc0, 0x2b, 0x0e,
-	0xde, 0x32, 0x3b, 0x4b, 0xf5, 0x75, 0x29, 0x35, 0xea, 0xe0, 0x2d, 0x19, 0xaa, 0xeb, 0x71, 0x4f,
-	0x9f, 0x3a, 0x6e, 0x39, 0x39, 0xee, 0xfb, 0x15, 0x80, 0x97, 0x62, 0xd5, 0x23, 0xe4, 0xa2, 0x06,
-	0x53, 0x6e, 0xc3, 0xc1, 0xd8, 0xbf, 0xae, 0x5d, 0x9e, 0x48, 0x95, 0x5b, 0x30, 0xdd, 0x0c, 0x2a,
-	0x84, 0x47, 0x37, 0x2e, 0x1f, 0x9d, 0xa8, 0x1f, 0xde, 0xe8, 0x50, 0xbb, 0x32, 0xec, 0xe3, 0x9f,
-	0x54, 0xd1, 0x26, 0xe1, 0x84, 0x04, 0x14, 0xc1, 0x2e, 0xbd, 0x4d, 0xc3, 0xfe, 0x0a, 0x23, 0xca,
-	0x07, 0x00, 0x33, 0x89, 0x2f, 0xd8, 0x82, 0xbc, 0xeb, 0x39, 0xef, 0x43, 0x76, 0xf9, 0x0f, 0xc4,
-	0xb1, 0x67, 0xfa, 0xee, 0xd7, 0x9f, 0x6f, 0xfa, 0xe6, 0x56, 0xc0, 0xbc, 0x76, 0x5d, 0x97, 0x5e,
-	0x63, 0x37, 0x4c, 0x36, 0x4f, 0x8d, 0xba, 0xf2, 0x1e, 0xc0, 0xf1, 0x84, 0xb7, 0x65, 0xee, 0x0c,
-	0x80, 0xb3, 0xa5, 0xd9, 0x52, 0xcf, 0xd2, 0x98, 0x74, 0x31, 0x20, 0x9d, 0xf1, 0x49, 0x35, 0x99,
-	0xd4, 0x0b, 0x52, 0xdb, 0x38, 0x5f, 0x02, 0x38, 0xd2, 0x31, 0xd9, 0xd3, 0x67, 0x6c, 0x2b, 0x8b,
-	0xb2, 0x0b, 0x3d, 0x88, 0x62, 0xaa, 0x9b, 0x01, 0x55, 0xc1, 0xa7, 0x9a, 0x92, 0xa9, 0x58, 0x90,
-	0x64, 0xfa, 0x53, 0xad, 0xbc, 0x8b, 0x6d, 0xeb, 0x18, 0xc8, 0x64, 0xdb, 0x64, 0xe9, 0x39, 0xb6,
-	0x25, 0x0e, 0xc5, 0x42, 0x00, 0x78, 0xc3, 0x07, 0x2c, 0x24, 0xd8, 0x16, 0x8f, 0x9b, 0xb2, 0x0b,
-	0xe0, 0xc5, 0xb6, 0xf1, 0xc9, 0x27, 0x6e, 0x28, 0x04, 0xd9, 0x99, 0x2e, 0x82, 0x98, 0x63, 0x36,
-	0xe0, 0xd0, 0x7c, 0x8e, 0x5c, 0x02, 0x87, 0x18, 0xa2, 0xec, 0x7f, 0xcf, 0x8f, 0xf7, 0xe7, 0x41,
-	0x79, 0xed, 0xe0, 0x48, 0x05, 0x87, 0x47, 0x2a, 0xf8, 0x71, 0xa4, 0x82, 0xd7, 0x2d, 0x35, 0x75,
-	0xd8, 0x52, 0x53, 0xdf, 0x5a, 0x6a, 0xea, 0x89, 0x4e, 0x6c, 0xbe, 0xe1, 0x55, 0x8b, 0x35, 0xda,
-	0x08, 0x2a, 0x3d, 0xb5, 0x1d, 0x52, 0xa7, 0x55, 0x54, 0x17, 0x75, 0x37, 0x97, 0xf4, 0xed, 0xa8,
-	0x38, 0xdf, 0x69, 0x62, 0x56, 0x4d, 0x07, 0xff, 0x17, 0x96, 0x7f, 0x07, 0x00, 0x00, 0xff, 0xff,
-	0xed, 0x33, 0x21, 0xae, 0x1d, 0x09, 0x00, 0x00,
+	// 424 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x93, 0x41, 0xeb, 0xd3, 0x30,
+	0x18, 0xc6, 0x97, 0xa9, 0x83, 0x45, 0x9d, 0x50, 0x74, 0xdd, 0x2a, 0xd6, 0x31, 0x10, 0xc7, 0xc0,
+	0x86, 0x4d, 0xf0, 0xe0, 0xcd, 0xdd, 0x3c, 0x0c, 0xa5, 0x2a, 0x88, 0x17, 0x49, 0xd7, 0x18, 0xc7,
+	0x9a, 0xa5, 0x24, 0x59, 0xd9, 0x6e, 0xe2, 0x45, 0xbc, 0x88, 0x1f, 0x65, 0x07, 0x3f, 0x84, 0xc7,
+	0xe1, 0xc9, 0xa3, 0x6c, 0x87, 0x7d, 0x0d, 0x69, 0xda, 0xda, 0xad, 0xab, 0xff, 0xff, 0x61, 0xb7,
+	0xbc, 0x3c, 0xcf, 0xfb, 0xbc, 0xbf, 0xbc, 0x21, 0xd0, 0xa4, 0x0b, 0xb1, 0x40, 0x5c, 0xe0, 0x49,
+	0x40, 0x50, 0x34, 0x40, 0x6a, 0xe9, 0x84, 0x82, 0x2b, 0x6e, 0x34, 0x62, 0xc1, 0x49, 0x04, 0x27,
+	0x1a, 0x58, 0xe6, 0x84, 0x4b, 0xc6, 0x25, 0x62, 0x92, 0xc6, 0x3e, 0x26, 0x69, 0x62, 0xb4, 0xda,
+	0x89, 0xf0, 0x5e, 0x57, 0x28, 0x29, 0x52, 0xe9, 0x6e, 0x21, 0x3c, 0x4d, 0x2b, 0x17, 0x43, 0x2c,
+	0x30, 0x4b, 0x3b, 0xbb, 0x5f, 0x01, 0xbc, 0x35, 0x96, 0xf4, 0x4d, 0xe8, 0x63, 0x45, 0x5e, 0x6a,
+	0xc5, 0x78, 0x02, 0xeb, 0x8c, 0xfb, 0x44, 0x60, 0xc5, 0x45, 0x0b, 0x74, 0x40, 0xaf, 0x3e, 0x6a,
+	0xfd, 0xfa, 0xf1, 0xe8, 0x76, 0x3a, 0xf2, 0x99, 0xef, 0x0b, 0x22, 0xe5, 0x2b, 0x25, 0xa6, 0x73,
+	0xea, 0xe6, 0x56, 0xc3, 0x81, 0xb5, 0x24, 0xbb, 0x55, 0xed, 0x80, 0xde, 0xf5, 0x61, 0xd3, 0x39,
+	0xbe, 0x9a, 0x93, 0xe4, 0xbb, 0xa9, 0xeb, 0x69, 0xe3, 0xf3, 0x7e, 0xdd, 0xcf, 0xfb, 0xbb, 0x6d,
+	0x68, 0x16, 0x50, 0x5c, 0x22, 0x43, 0x3e, 0x97, 0xa4, 0xfb, 0x05, 0xc0, 0x9b, 0x5a, 0x93, 0x44,
+	0xa8, 0xd7, 0x58, 0xce, 0xce, 0x80, 0xbc, 0xaa, 0xb0, 0x9c, 0xa5, 0x88, 0x56, 0x11, 0xf1, 0x85,
+	0x3e, 0xc5, 0x13, 0x5c, 0xed, 0x3b, 0x81, 0x34, 0xe1, 0x9d, 0x23, 0x90, 0x7f, 0x88, 0x5c, 0x13,
+	0xba, 0x84, 0xf1, 0x88, 0x9c, 0x45, 0xd8, 0x84, 0x35, 0xb9, 0x62, 0x1e, 0x0f, 0x34, 0x63, 0xdd,
+	0x4d, 0xab, 0xff, 0x90, 0xe4, 0x03, 0x33, 0x92, 0xe1, 0xb7, 0x2a, 0xbc, 0x32, 0x96, 0xd4, 0x78,
+	0x0b, 0x6f, 0x1c, 0xbd, 0xeb, 0xfd, 0xe2, 0x65, 0x0b, 0xdb, 0xb6, 0x1e, 0x5e, 0x62, 0xc8, 0x26,
+	0x18, 0x2e, 0x84, 0x07, 0x4f, 0x71, 0xaf, 0xb4, 0x2d, 0x93, 0xad, 0x07, 0x17, 0xca, 0x87, 0x99,
+	0x07, 0xcb, 0x2b, 0xcb, 0xcc, 0xe5, 0xd2, 0xcc, 0xd3, 0x4d, 0x58, 0xd7, 0x3e, 0xed, 0xd7, 0x7d,
+	0x30, 0x7a, 0xfe, 0x73, 0x6b, 0x83, 0xcd, 0xd6, 0x06, 0x7f, 0xb6, 0x36, 0xf8, 0xbe, 0xb3, 0x2b,
+	0x9b, 0x9d, 0x5d, 0xf9, 0xbd, 0xb3, 0x2b, 0xef, 0x10, 0x9d, 0xaa, 0x8f, 0x0b, 0xcf, 0x99, 0x70,
+	0x86, 0xe2, 0xc4, 0x0f, 0xd3, 0x39, 0x0d, 0xb8, 0x87, 0x03, 0x5d, 0xa1, 0x68, 0x88, 0x96, 0xd9,
+	0xcf, 0x51, 0xab, 0x90, 0x48, 0xaf, 0xa6, 0xbf, 0xcd, 0xe3, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff,
+	0x05, 0x5a, 0xba, 0xdc, 0xcf, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -532,16 +347,12 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// RegisterOracleRequestDoc defines a method for registering a new oracle request document
-	RegisterOracleRequestDoc(ctx context.Context, in *MsgRegisterOracleRequestDoc, opts ...grpc.CallOption) (*MsgRegisterOracleRequestDocResponse, error)
-	// UpdateOracleRequestDoc defines a method for updating an existing oracle request document
-	UpdateOracleRequestDoc(ctx context.Context, in *MsgUpdateOracleRequestDoc, opts ...grpc.CallOption) (*MsgUpdateOracleRequestDocResponse, error)
-	// SubmitOracleData defines a method for submitting oracle data
-	SubmitOracleData(ctx context.Context, in *MsgSubmitOracleData, opts ...grpc.CallOption) (*MsgSubmitOracleDataResponse, error)
-	// UpdateModeratorAddress defines a method for updating the moderator address
-	UpdateModeratorAddress(ctx context.Context, in *MsgUpdateModeratorAddress, opts ...grpc.CallOption) (*MsgUpdateModeratorAddressResponse, error)
-	// UpdateParams defines a governance operation for updating the oracle module parameters
+	// UpdateParams defines a moderator operation for updating the parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
+	// UpsertTask manages one numeric oracle task keyed by symbol.
+	UpsertTask(ctx context.Context, in *MsgUpsertTask, opts ...grpc.CallOption) (*MsgUpsertTaskResponse, error)
+	// RemoveTask deletes one oracle task by symbol.
+	RemoveTask(ctx context.Context, in *MsgRemoveTask, opts ...grpc.CallOption) (*MsgRemoveTaskResponse, error)
 }
 
 type msgClient struct {
@@ -550,42 +361,6 @@ type msgClient struct {
 
 func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
-}
-
-func (c *msgClient) RegisterOracleRequestDoc(ctx context.Context, in *MsgRegisterOracleRequestDoc, opts ...grpc.CallOption) (*MsgRegisterOracleRequestDocResponse, error) {
-	out := new(MsgRegisterOracleRequestDocResponse)
-	err := c.cc.Invoke(ctx, "/guru.oracle.v1.Msg/RegisterOracleRequestDoc", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *msgClient) UpdateOracleRequestDoc(ctx context.Context, in *MsgUpdateOracleRequestDoc, opts ...grpc.CallOption) (*MsgUpdateOracleRequestDocResponse, error) {
-	out := new(MsgUpdateOracleRequestDocResponse)
-	err := c.cc.Invoke(ctx, "/guru.oracle.v1.Msg/UpdateOracleRequestDoc", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *msgClient) SubmitOracleData(ctx context.Context, in *MsgSubmitOracleData, opts ...grpc.CallOption) (*MsgSubmitOracleDataResponse, error) {
-	out := new(MsgSubmitOracleDataResponse)
-	err := c.cc.Invoke(ctx, "/guru.oracle.v1.Msg/SubmitOracleData", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *msgClient) UpdateModeratorAddress(ctx context.Context, in *MsgUpdateModeratorAddress, opts ...grpc.CallOption) (*MsgUpdateModeratorAddressResponse, error) {
-	out := new(MsgUpdateModeratorAddressResponse)
-	err := c.cc.Invoke(ctx, "/guru.oracle.v1.Msg/UpdateModeratorAddress", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error) {
@@ -597,114 +372,50 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
+func (c *msgClient) UpsertTask(ctx context.Context, in *MsgUpsertTask, opts ...grpc.CallOption) (*MsgUpsertTaskResponse, error) {
+	out := new(MsgUpsertTaskResponse)
+	err := c.cc.Invoke(ctx, "/guru.oracle.v1.Msg/UpsertTask", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RemoveTask(ctx context.Context, in *MsgRemoveTask, opts ...grpc.CallOption) (*MsgRemoveTaskResponse, error) {
+	out := new(MsgRemoveTaskResponse)
+	err := c.cc.Invoke(ctx, "/guru.oracle.v1.Msg/RemoveTask", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// RegisterOracleRequestDoc defines a method for registering a new oracle request document
-	RegisterOracleRequestDoc(context.Context, *MsgRegisterOracleRequestDoc) (*MsgRegisterOracleRequestDocResponse, error)
-	// UpdateOracleRequestDoc defines a method for updating an existing oracle request document
-	UpdateOracleRequestDoc(context.Context, *MsgUpdateOracleRequestDoc) (*MsgUpdateOracleRequestDocResponse, error)
-	// SubmitOracleData defines a method for submitting oracle data
-	SubmitOracleData(context.Context, *MsgSubmitOracleData) (*MsgSubmitOracleDataResponse, error)
-	// UpdateModeratorAddress defines a method for updating the moderator address
-	UpdateModeratorAddress(context.Context, *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error)
-	// UpdateParams defines a governance operation for updating the oracle module parameters
+	// UpdateParams defines a moderator operation for updating the parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
+	// UpsertTask manages one numeric oracle task keyed by symbol.
+	UpsertTask(context.Context, *MsgUpsertTask) (*MsgUpsertTaskResponse, error)
+	// RemoveTask deletes one oracle task by symbol.
+	RemoveTask(context.Context, *MsgRemoveTask) (*MsgRemoveTaskResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) RegisterOracleRequestDoc(ctx context.Context, req *MsgRegisterOracleRequestDoc) (*MsgRegisterOracleRequestDocResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterOracleRequestDoc not implemented")
-}
-func (*UnimplementedMsgServer) UpdateOracleRequestDoc(ctx context.Context, req *MsgUpdateOracleRequestDoc) (*MsgUpdateOracleRequestDocResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateOracleRequestDoc not implemented")
-}
-func (*UnimplementedMsgServer) SubmitOracleData(ctx context.Context, req *MsgSubmitOracleData) (*MsgSubmitOracleDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SubmitOracleData not implemented")
-}
-func (*UnimplementedMsgServer) UpdateModeratorAddress(ctx context.Context, req *MsgUpdateModeratorAddress) (*MsgUpdateModeratorAddressResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateModeratorAddress not implemented")
-}
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
+}
+func (*UnimplementedMsgServer) UpsertTask(ctx context.Context, req *MsgUpsertTask) (*MsgUpsertTaskResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertTask not implemented")
+}
+func (*UnimplementedMsgServer) RemoveTask(ctx context.Context, req *MsgRemoveTask) (*MsgRemoveTaskResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveTask not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
-}
-
-func _Msg_RegisterOracleRequestDoc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgRegisterOracleRequestDoc)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).RegisterOracleRequestDoc(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/guru.oracle.v1.Msg/RegisterOracleRequestDoc",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).RegisterOracleRequestDoc(ctx, req.(*MsgRegisterOracleRequestDoc))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Msg_UpdateOracleRequestDoc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgUpdateOracleRequestDoc)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).UpdateOracleRequestDoc(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/guru.oracle.v1.Msg/UpdateOracleRequestDoc",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).UpdateOracleRequestDoc(ctx, req.(*MsgUpdateOracleRequestDoc))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Msg_SubmitOracleData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgSubmitOracleData)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).SubmitOracleData(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/guru.oracle.v1.Msg/SubmitOracleData",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).SubmitOracleData(ctx, req.(*MsgSubmitOracleData))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Msg_UpdateModeratorAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgUpdateModeratorAddress)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).UpdateModeratorAddress(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/guru.oracle.v1.Msg/UpdateModeratorAddress",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).UpdateModeratorAddress(ctx, req.(*MsgUpdateModeratorAddress))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -725,301 +436,61 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_UpsertTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpsertTask)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpsertTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/guru.oracle.v1.Msg/UpsertTask",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpsertTask(ctx, req.(*MsgUpsertTask))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RemoveTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveTask)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RemoveTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/guru.oracle.v1.Msg/RemoveTask",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RemoveTask(ctx, req.(*MsgRemoveTask))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "guru.oracle.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "RegisterOracleRequestDoc",
-			Handler:    _Msg_RegisterOracleRequestDoc_Handler,
-		},
-		{
-			MethodName: "UpdateOracleRequestDoc",
-			Handler:    _Msg_UpdateOracleRequestDoc_Handler,
-		},
-		{
-			MethodName: "SubmitOracleData",
-			Handler:    _Msg_SubmitOracleData_Handler,
-		},
-		{
-			MethodName: "UpdateModeratorAddress",
-			Handler:    _Msg_UpdateModeratorAddress_Handler,
-		},
-		{
 			MethodName: "UpdateParams",
 			Handler:    _Msg_UpdateParams_Handler,
+		},
+		{
+			MethodName: "UpsertTask",
+			Handler:    _Msg_UpsertTask_Handler,
+		},
+		{
+			MethodName: "RemoveTask",
+			Handler:    _Msg_RemoveTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "guru/oracle/v1/tx.proto",
-}
-
-func (m *MsgRegisterOracleRequestDoc) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgRegisterOracleRequestDoc) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgRegisterOracleRequestDoc) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size, err := m.RequestDoc.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintTx(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x12
-	if len(m.ModeratorAddress) > 0 {
-		i -= len(m.ModeratorAddress)
-		copy(dAtA[i:], m.ModeratorAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ModeratorAddress)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgRegisterOracleRequestDocResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgRegisterOracleRequestDocResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgRegisterOracleRequestDocResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.RequestId != 0 {
-		i = encodeVarintTx(dAtA, i, uint64(m.RequestId))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgUpdateOracleRequestDoc) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgUpdateOracleRequestDoc) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgUpdateOracleRequestDoc) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Reason) > 0 {
-		i -= len(m.Reason)
-		copy(dAtA[i:], m.Reason)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Reason)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	{
-		size, err := m.RequestDoc.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintTx(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x12
-	if len(m.ModeratorAddress) > 0 {
-		i -= len(m.ModeratorAddress)
-		copy(dAtA[i:], m.ModeratorAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ModeratorAddress)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgUpdateOracleRequestDocResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgUpdateOracleRequestDocResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgUpdateOracleRequestDocResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.RequestId != 0 {
-		i = encodeVarintTx(dAtA, i, uint64(m.RequestId))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgSubmitOracleData) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgSubmitOracleData) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgSubmitOracleData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.DataSet != nil {
-		{
-			size, err := m.DataSet.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.AuthorityAddress) > 0 {
-		i -= len(m.AuthorityAddress)
-		copy(dAtA[i:], m.AuthorityAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.AuthorityAddress)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgSubmitOracleDataResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgSubmitOracleDataResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgSubmitOracleDataResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgUpdateModeratorAddress) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgUpdateModeratorAddress) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgUpdateModeratorAddress) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.NewModeratorAddress) > 0 {
-		i -= len(m.NewModeratorAddress)
-		copy(dAtA[i:], m.NewModeratorAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.NewModeratorAddress)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.ModeratorAddress) > 0 {
-		i -= len(m.ModeratorAddress)
-		copy(dAtA[i:], m.ModeratorAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.ModeratorAddress)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgUpdateModeratorAddressResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgUpdateModeratorAddressResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgUpdateModeratorAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
 }
 
 func (m *MsgUpdateParams) Marshal() (dAtA []byte, err error) {
@@ -1042,20 +513,22 @@ func (m *MsgUpdateParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	{
-		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
+	if m.Params != nil {
+		{
+			size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
 		}
-		i -= size
-		i = encodeVarintTx(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
 	}
-	i--
-	dAtA[i] = 0x12
-	if len(m.Authority) > 0 {
-		i -= len(m.Authority)
-		copy(dAtA[i:], m.Authority)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Authority)))
+	if len(m.Moderator) > 0 {
+		i -= len(m.Moderator)
+		copy(dAtA[i:], m.Moderator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Moderator)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1085,6 +558,131 @@ func (m *MsgUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgUpsertTask) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpsertTask) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpsertTask) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Task != nil {
+		{
+			size, err := m.Task.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Moderator) > 0 {
+		i -= len(m.Moderator)
+		copy(dAtA[i:], m.Moderator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Moderator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpsertTaskResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpsertTaskResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpsertTaskResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveTask) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveTask) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveTask) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Symbol)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Moderator) > 0 {
+		i -= len(m.Moderator)
+		copy(dAtA[i:], m.Moderator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Moderator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveTaskResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveTaskResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveTaskResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -1096,132 +694,76 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgRegisterOracleRequestDoc) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.ModeratorAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = m.RequestDoc.Size()
-	n += 1 + l + sovTx(uint64(l))
-	return n
-}
-
-func (m *MsgRegisterOracleRequestDocResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.RequestId != 0 {
-		n += 1 + sovTx(uint64(m.RequestId))
-	}
-	return n
-}
-
-func (m *MsgUpdateOracleRequestDoc) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.ModeratorAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = m.RequestDoc.Size()
-	n += 1 + l + sovTx(uint64(l))
-	l = len(m.Reason)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgUpdateOracleRequestDocResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.RequestId != 0 {
-		n += 1 + sovTx(uint64(m.RequestId))
-	}
-	return n
-}
-
-func (m *MsgSubmitOracleData) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.AuthorityAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.DataSet != nil {
-		l = m.DataSet.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgSubmitOracleDataResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *MsgUpdateModeratorAddress) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.ModeratorAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.NewModeratorAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgUpdateModeratorAddressResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
 func (m *MsgUpdateParams) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Authority)
+	l = len(m.Moderator)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = m.Params.Size()
-	n += 1 + l + sovTx(uint64(l))
+	if m.Params != nil {
+		l = m.Params.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
 	return n
 }
 
 func (m *MsgUpdateParamsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgUpsertTask) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Moderator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Task != nil {
+		l = m.Task.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgUpsertTaskResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgRemoveTask) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Moderator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Symbol)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRemoveTaskResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1235,738 +777,6 @@ func sovTx(x uint64) (n int) {
 }
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func (m *MsgRegisterOracleRequestDoc) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRegisterOracleRequestDoc: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRegisterOracleRequestDoc: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ModeratorAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ModeratorAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RequestDoc", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.RequestDoc.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgRegisterOracleRequestDocResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRegisterOracleRequestDocResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRegisterOracleRequestDocResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RequestId", wireType)
-			}
-			m.RequestId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.RequestId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgUpdateOracleRequestDoc) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgUpdateOracleRequestDoc: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgUpdateOracleRequestDoc: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ModeratorAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ModeratorAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RequestDoc", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.RequestDoc.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Reason = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgUpdateOracleRequestDocResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgUpdateOracleRequestDocResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgUpdateOracleRequestDocResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RequestId", wireType)
-			}
-			m.RequestId = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.RequestId |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgSubmitOracleData) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgSubmitOracleData: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgSubmitOracleData: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AuthorityAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.AuthorityAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DataSet", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.DataSet == nil {
-				m.DataSet = &SubmitDataSet{}
-			}
-			if err := m.DataSet.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgSubmitOracleDataResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgSubmitOracleDataResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgSubmitOracleDataResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgUpdateModeratorAddress) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgUpdateModeratorAddress: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgUpdateModeratorAddress: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ModeratorAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ModeratorAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field NewModeratorAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.NewModeratorAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgUpdateModeratorAddressResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgUpdateModeratorAddressResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgUpdateModeratorAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
 }
 func (m *MsgUpdateParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -1999,7 +809,7 @@ func (m *MsgUpdateParams) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Moderator", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2027,7 +837,7 @@ func (m *MsgUpdateParams) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Authority = string(dAtA[iNdEx:postIndex])
+			m.Moderator = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -2057,6 +867,9 @@ func (m *MsgUpdateParams) Unmarshal(dAtA []byte) error {
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
+			}
+			if m.Params == nil {
+				m.Params = &Params{}
 			}
 			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2110,6 +923,338 @@ func (m *MsgUpdateParamsResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgUpdateParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpsertTask) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpsertTask: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpsertTask: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Moderator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Moderator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Task", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Task == nil {
+				m.Task = &OracleTask{}
+			}
+			if err := m.Task.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpsertTaskResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpsertTaskResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpsertTaskResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveTask) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveTask: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveTask: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Moderator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Moderator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Symbol = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveTaskResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveTaskResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveTaskResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

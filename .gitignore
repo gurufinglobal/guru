@@ -1,41 +1,23 @@
-# OS
+# Operating system and editor files
 .DS_Store
 *.swp
 *.swo
-*.swl
-*.swm
-*.swn
-*.pyc
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-.dccache
-
-# Testing
-coverage.txt
-yarn.lock
-
-# IDE
 .idea/
 .vscode/
-*.iml
-*.code-workspace
 
+# Codex/OMX local state
 .omx/
 
-# Node.js
-**/node_modules
+# Build and test output
+/build/
+/coverage.txt
+/.local/
+/.proto-gen/
 
-# OpenZeppelin contracts
-contracts/@openzeppelin/*
-
-# Build files
-build/
 # Preserved dependency caches are not source files.
 **/node_modules/
 **/artifacts/
 **/cache/
+
 # OpenZeppelin contracts
 contracts/@openzeppelin/*

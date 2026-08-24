@@ -1,270 +1,449 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-CHAINID="${CHAIN_ID:-guru_631-1}"
-MONIKER="localtestnet"
-# Remember to change to other types of keyring like 'file' in-case exposing to outside world,
-# otherwise your balance will be wiped quickly
-# The keyring test does not require private key to steal tokens from you
-KEYRING="test"
-KEYALGO="eth_secp256k1"
+set -euo pipefail
 
-LOGLEVEL="info"
-# Set dedicated home directory for the gurud instance
-HOMEDIR="$HOME/.gurud"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_BINARY="$SCRIPT_DIR/build/gurud"
 
-BASEFEE=630000000000
+CHAIN_ID="${CHAIN_ID:-guru_631-1}"
+EVM_CHAIN_ID="${EVM_CHAIN_ID:-631}"
+MONIKER="${MONIKER:-localtestnet}"
+CHAIN_HOME="${GURU_HOME:-${HOME:?HOME is not set}/.gurud}"
+BOND_DENOM="${BOND_DENOM:-agxn}"
+DISPLAY_DENOM="${DISPLAY_DENOM:-gxn}"
+KEYRING_BACKEND="test"
+KEY_ALGORITHM="eth_secp256k1"
+LOG_LEVEL="${LOG_LEVEL:-info}"
+BASE_FEE="${BASE_FEE:-630000000000}"
+BUILD_GOTOOLCHAIN="${GURU_GOTOOLCHAIN:-go1.23.8}"
 
-# Path variables
-CONFIG=$HOMEDIR/config/config.toml
-APP_TOML=$HOMEDIR/config/app.toml
-GENESIS=$HOMEDIR/config/genesis.json
-TMP_GENESIS=$HOMEDIR/config/tmp_genesis.json
+CONFIG_TOML="$CHAIN_HOME/config/config.toml"
+APP_TOML="$CHAIN_HOME/config/app.toml"
+GENESIS="$CHAIN_HOME/config/genesis.json"
+TMP_GENESIS="$CHAIN_HOME/config/genesis.json.tmp"
 
-# validate dependencies are installed
-command -v jq >/dev/null 2>&1 || {
-	echo >&2 "jq not installed. More info: https://stedolan.github.io/jq/download/"
-	exit 1
+build_binary=true
+overwrite=""
+build_for_debug=false
+additional_users=0
+mnemonic_file=""
+mnemonics_input=""
+
+usage() {
+  cat <<EOF
+Usage: $0 [options]
+
+Options:
+  -y                       Overwrite existing chain data without prompting
+  -n                       Keep existing chain data and start the node
+  --no-install             Skip building gurud (compatible with the reference script)
+  --no-build               Alias for --no-install
+  --remote-debugging       Build gurud with compiler optimizations disabled
+  --additional-users N     Create N extra users after the four default users
+  --mnemonic-file PATH     Write generated mnemonics to PATH
+                           (default: \$GURU_HOME/mnemonics.yaml)
+  --mnemonics-input PATH   Read all dev mnemonics from a simple YAML list
+  -h, --help               Show this help
+
+Environment:
+  GURUD_BINARY             Use this gurud binary and skip the default build
+  GURU_HOME                Node home (default: \$HOME/.gurud)
+  CHAIN_ID                 Cosmos chain ID (default: guru_631-1)
+  EVM_CHAIN_ID             EIP-155 chain ID (default: 631)
+  BOND_DENOM               Native base denomination (default: agxn)
+  DISPLAY_DENOM            Native display denomination (default: gxn)
+  GURU_GOTOOLCHAIN         Go toolchain used to build (default: go1.23.8)
+EOF
 }
 
-# used to exit on first error (any non-zero exit code)
-set -e
-
-# Parse input flags
-install=true
-overwrite=""
-BUILD_FOR_DEBUG=false
-
 while [[ $# -gt 0 ]]; do
-	key="$1"
-	case $key in
-	-y)
-		echo "Flag -y passed -> Overwriting the previous chain data."
-		overwrite="y"
-		shift # Move past the flag
-		;;
-	-n)
-		echo "Flag -n passed -> Not overwriting the previous chain data."
-		overwrite="n"
-		shift # Move past the argument
-		;;
-	--no-install)
-		echo "Flag --no-install passed -> Skipping installation of the gurud binary."
-		install=false
-		shift # Move past the flag
-		;;
-	--remote-debugging)
-		echo "Flag --remote-debugging passed -> Building with remote debugging options."
-		BUILD_FOR_DEBUG=true
-		shift # Move past the flag
-		;;
-	*)
-		echo "Unknown flag passed: $key -> Exiting script!"
-		exit 1
-		;;
-	esac
+  case "$1" in
+    -y)
+      overwrite="y"
+      shift
+      ;;
+    -n)
+      overwrite="n"
+      shift
+      ;;
+    --no-install | --no-build)
+      build_binary=false
+      shift
+      ;;
+    --remote-debugging)
+      build_for_debug=true
+      shift
+      ;;
+    --additional-users)
+      if [[ ! "${2:-}" =~ ^[0-9]+$ ]]; then
+        echo >&2 "Error: --additional-users requires a non-negative integer."
+        usage >&2
+        exit 1
+      fi
+      additional_users="$2"
+      shift 2
+      ;;
+    --mnemonic-file)
+      if [[ -z "${2:-}" || "$2" == -* ]]; then
+        echo >&2 "Error: --mnemonic-file requires a path."
+        usage >&2
+        exit 1
+      fi
+      mnemonic_file="$2"
+      shift 2
+      ;;
+    --mnemonics-input)
+      if [[ -z "${2:-}" || "$2" == -* ]]; then
+        echo >&2 "Error: --mnemonics-input requires a path."
+        usage >&2
+        exit 1
+      fi
+      mnemonics_input="$2"
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo >&2 "Error: unknown option: $1"
+      usage >&2
+      exit 1
+      ;;
+  esac
 done
 
-if [[ $install == true ]]; then
-	if [[ $BUILD_FOR_DEBUG == true ]]; then
-		# for remote debugging the optimization should be disabled and the debug info should not be stripped
-		make install COSMOS_BUILD_OPTIONS=nooptimization,nostrip
-	else
-		make install
-	fi
+if [[ -n "$mnemonics_input" && "$additional_users" -gt 0 ]]; then
+  echo >&2 "Error: --mnemonics-input and --additional-users cannot be used together."
+  exit 1
 fi
 
-# User prompt if neither -y nor -n was passed as a flag
-# and an existing local node configuration is found.
-if [[ $overwrite = "" ]]; then
-	if [ -d "$HOMEDIR" ]; then
-		printf "\nAn existing folder at '%s' was found. You can choose to delete this folder and start a new local node with new keys from genesis. When declined, the existing local node is started. \n" "$HOMEDIR"
-		echo "Overwrite the existing configuration and start a new local node? [y/n]"
-		read -r overwrite
-	else
-		overwrite="y"
-	fi
+if [[ ! "$BUILD_GOTOOLCHAIN" =~ ^(auto|local|path|go[0-9]+\.[0-9]+(\.[0-9]+)?([+-](auto|path))?)$ ]]; then
+  echo >&2 "Error: unsupported GURU_GOTOOLCHAIN value: $BUILD_GOTOOLCHAIN"
+  exit 1
 fi
 
-# Setup local node if overwrite is set to Yes, otherwise skip setup
-if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
-	# Remove the previous folder
-	rm -rf "$HOMEDIR"
+command -v jq >/dev/null 2>&1 || {
+  echo >&2 "jq is required. See https://jqlang.github.io/jq/download/"
+  exit 1
+}
 
-	# Set client config
-	gurud config set client chain-id "$CHAINID" --home "$HOMEDIR"
-	gurud config set client keyring-backend "$KEYRING" --home "$HOMEDIR"
-
-	# myKey address 0x7cb61d4117ae31a12e393a1cfa3bac666481d02e | guru10jmp6sgh4cc6zt3e8gw05wavvejgr5pwggsdaj
-	VAL_KEY="mykey"
-	VAL_MNEMONIC="gesture inject test cycle original hollow east ridge hen combine junk child bacon zero hope comfort vacuum milk pitch cage oppose unhappy lunar seat"
-
-	# dev0 address 0xc6fe5d33615a1c52c08018c47e8bc53646a0e101 | guru1cml96vmptgw99syqrrz8az79xer2pcgpawsch9
-	USER1_KEY="dev0"
-	USER1_MNEMONIC="copper push brief egg scan entry inform record adjust fossil boss egg comic alien upon aspect dry avoid interest fury window hint race symptom"
-
-	# dev1 address 0x963ebdf2e1f8db8707d05fc75bfeffba1b5bac17 | guru1jcltmuhplrdcwp7stlr4hlhlhgd4htqhtx0smk
-	USER2_KEY="dev1"
-	USER2_MNEMONIC="maximum display century economy unlock van census kite error heart snow filter midnight usage egg venture cash kick motor survey drastic edge muffin visual"
-
-	# dev2 address 0x40a0cb1C63e026A81B55EE1308586E21eec1eFa9 | guru1gzsvk8rruqn2sx64acfsskrwy8hvrmaf6dvhj3
-	USER3_KEY="dev2"
-	USER3_MNEMONIC="will wear settle write dance topic tape sea glory hotel oppose rebel client problem era video gossip glide during yard balance cancel file rose"
-
-	# dev3 address 0x498B5AeC5D439b733dC2F58AB489783A23FB26dA | guru1fx944mzagwdhx0wz7k9tfztc8g3lkfk6ecee3f
-	USER4_KEY="dev3"
-	USER4_MNEMONIC="doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch"
-
-	MODERATOR_KEY="moderator"
-	MODERATOR_MNEMONIC="piece edge candy scare bicycle grass tackle have mango virus either erosion setup tuition inmate choice sun rule depth suffer debris purse whale napkin"
-
-	# Import keys from mnemonics
-	echo "$VAL_MNEMONIC" | gurud keys add "$VAL_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-	echo "$USER1_MNEMONIC" | gurud keys add "$USER1_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-	echo "$USER2_MNEMONIC" | gurud keys add "$USER2_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-	echo "$USER3_MNEMONIC" | gurud keys add "$USER3_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-	echo "$USER4_MNEMONIC" | gurud keys add "$USER4_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-	echo "$MODERATOR_MNEMONIC" | gurud keys add "$MODERATOR_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-
-	# Set moniker and chain-id for the example chain (Moniker can be anything, chain-id must be an integer)
-	gurud init $MONIKER -o --chain-id "$CHAINID" --home "$HOMEDIR"
-
-	# Change parameter token denominations to desired value
-	jq '.app_state["staking"]["params"]["bond_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["gov"]["params"]["expedited_min_deposit"][0]["denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["evm_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# feemarket: elasticity_multiplier = 1, base_fee = 6.3*10^-7, min_gas_price = 6.3*10^-7
-	jq '.app_state["feemarket"]["params"]["elasticity_multiplier"]="1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["feemarket"]["params"]["base_fee"]="630000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["feemarket"]["params"]["min_gas_price"]="630000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["feemarket"]["params"]["gas_price_adjustment_factor"]="630000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["feemarket"]["params"]["max_change_rate"]="0.1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["feemarket"]["params"]["no_base_fee"]=true' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# Set claims start time
-	current_date=$(date -u +"%Y-%m-%dT%TZ")
-	jq -r --arg current_date "$current_date" '.app_state["claims"]["params"]["airdrop_start_time"]=$current_date' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# disable minting for inflation
-	jq '.app_state["mint"]["minter"]["inflation"]="0.000000000000000000"' "$GENESIS" > "$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["mint"]["minter"]["annual_provisions"]="0.000000000000000000"' "$GENESIS" > "$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["mint"]["params"]["inflation_rate_change"]="0.000000000000000000"' "$GENESIS" > "$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["mint"]["params"]["inflation_max"]="0.000000000000000000"' "$GENESIS" > "$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["mint"]["params"]["inflation_min"]="0.000000000000000000"' "$GENESIS" > "$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"	
-	
-	jq '.app_state["mint"]["params"]["mint_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# Add default token metadata to genesis
-	jq '.app_state["bank"]["denom_metadata"]=[{"description":"The native staking token for gurud.","denom_units":[{"denom":"agxn","exponent":0,"aliases":["attogxn"]},{"denom":"gxn","exponent":18,"aliases":[]}],"base":"agxn","display":"gxn","name":"GXN Token","symbol":"GXN","uri":"","uri_hash":""}]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# Enable precompiles in EVM params
-	jq '.app_state["evm"]["params"]["active_static_precompiles"]=["0x0000000000000000000000000000000000000100","0x0000000000000000000000000000000000000400","0x0000000000000000000000000000000000000800","0x0000000000000000000000000000000000000801","0x0000000000000000000000000000000000000802","0x0000000000000000000000000000000000000803","0x0000000000000000000000000000000000000804","0x0000000000000000000000000000000000000805","0x0000000000000000000000000000000000000806","0x0000000000000000000000000000000000000807"]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# Set EVM config
-	jq '.app_state["evm"]["params"]["evm_denom"]="agxn"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# Enable native denomination as a token pair for STRv2
-	jq '.app_state.erc20.native_precompiles=["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state.erc20.token_pairs=[{contract_owner:1,erc20_address:"0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",denom:"atest",enabled:true}]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# Set gas limit in genesis
-	jq '.consensus.params.block.max_gas="10000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# Set distribution addresses
-	jq -r --arg moderator_address "$(gurud keys show moderator --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq -r --arg base_address "$(gurud keys show dev3 --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["distribution"]["base_address"] = $base_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# Set feepolicy addresses
-	jq -r --arg moderator_address "$(gurud keys show moderator --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["feepolicy"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	
-	# Set oracle moderator address
-	jq -r --arg moderator_address "$(gurud keys show moderator --address --keyring-backend "$KEYRING" --home "$HOMEDIR")" '.app_state["oracle"]["moderator_address"] = $moderator_address' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-	# Set auth module parameters for transaction costs
-	jq '.app_state["auth"]["params"]["tx_size_cost_per_byte"]="2"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["auth"]["params"]["sig_verify_cost_ed25519"]="118"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["auth"]["params"]["sig_verify_cost_secp256k1"]="200"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	
-
-	if [[ $1 == "pending" ]]; then
-		if [[ "$OSTYPE" == "darwin"* ]]; then
-			sed -i '' 's/timeout_propose = "3s"/timeout_propose = "30s"/g' "$CONFIG"
-			sed -i '' 's/timeout_propose_delta = "500ms"/timeout_propose_delta = "5s"/g' "$CONFIG"
-			sed -i '' 's/timeout_prevote = "1s"/timeout_prevote = "10s"/g' "$CONFIG"
-			sed -i '' 's/timeout_prevote_delta = "500ms"/timeout_prevote_delta = "5s"/g' "$CONFIG"
-			sed -i '' 's/timeout_precommit = "1s"/timeout_precommit = "10s"/g' "$CONFIG"
-			sed -i '' 's/timeout_precommit_delta = "500ms"/timeout_precommit_delta = "5s"/g' "$CONFIG"
-			sed -i '' 's/timeout_commit = "5s"/timeout_commit = "150s"/g' "$CONFIG"
-			sed -i '' 's/timeout_broadcast_tx_commit = "10s"/timeout_broadcast_tx_commit = "150s"/g' "$CONFIG"
-		else
-			sed -i 's/timeout_propose = "3s"/timeout_propose = "30s"/g' "$CONFIG"
-			sed -i 's/timeout_propose_delta = "500ms"/timeout_propose_delta = "5s"/g' "$CONFIG"
-			sed -i 's/timeout_prevote = "1s"/timeout_prevote = "10s"/g' "$CONFIG"
-			sed -i 's/timeout_prevote_delta = "500ms"/timeout_prevote_delta = "5s"/g' "$CONFIG"
-			sed -i 's/timeout_precommit = "1s"/timeout_precommit = "10s"/g' "$CONFIG"
-			sed -i 's/timeout_precommit_delta = "500ms"/timeout_precommit_delta = "5s"/g' "$CONFIG"
-			sed -i 's/timeout_commit = "5s"/timeout_commit = "150s"/g' "$CONFIG"
-			sed -i 's/timeout_broadcast_tx_commit = "10s"/timeout_broadcast_tx_commit = "150s"/g' "$CONFIG"
-		fi
-	fi
-
-	# enable prometheus metrics and all APIs for dev node
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		sed -i '' 's/prometheus = false/prometheus = true/' "$CONFIG"
-		sed -i '' 's/prometheus-retention-time = 0/prometheus-retention-time  = 1000000000000/g' "$APP_TOML"
-		sed -i '' 's/enabled = false/enabled = true/g' "$APP_TOML"
-		sed -i '' 's/enable = false/enable = true/g' "$APP_TOML"
-	else
-		sed -i 's/prometheus = false/prometheus = true/' "$CONFIG"
-		sed -i 's/prometheus-retention-time  = "0"/prometheus-retention-time  = "1000000000000"/g' "$APP_TOML"
-		sed -i 's/enabled = false/enabled = true/g' "$APP_TOML"
-		sed -i 's/enable = false/enable = true/g' "$APP_TOML"
-	fi
-
-	# Change proposal periods to pass within a reasonable time for local testing
-	sed -i.bak 's/"max_deposit_period": "172800s"/"max_deposit_period": "30s"/g' "$GENESIS"
-	sed -i.bak 's/"voting_period": "172800s"/"voting_period": "30s"/g' "$GENESIS"
-	sed -i.bak 's/"expedited_voting_period": "86400s"/"expedited_voting_period": "15s"/g' "$GENESIS"
-
-	# set custom pruning settings
-	sed -i.bak 's/pruning = "default"/pruning = "custom"/g' "$APP_TOML"
-	sed -i.bak 's/pruning-keep-recent = "0"/pruning-keep-recent = "2"/g' "$APP_TOML"
-	sed -i.bak 's/pruning-interval = "0"/pruning-interval = "10"/g' "$APP_TOML"
-
-	# Allocate genesis accounts (cosmos formatted addresses)
-	gurud genesis add-genesis-account "$VAL_KEY" 100000000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	gurud genesis add-genesis-account "$USER1_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	gurud genesis add-genesis-account "$USER2_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	gurud genesis add-genesis-account "$USER3_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	gurud genesis add-genesis-account "$USER4_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	gurud genesis add-genesis-account "$MODERATOR_KEY" 1000000000000000000000agxn --keyring-backend "$KEYRING" --home "$HOMEDIR"
-
-	# Sign genesis transaction
-	gurud genesis gentx "$VAL_KEY" 1000000000000000000000agxn --gas-prices ${BASEFEE}agxn --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"
-	## In case you want to create multiple validators at genesis
-	## 1. Back to `gurud keys add` step, init more keys
-	## 2. Back to `gurud add-genesis-account` step, add balance for those
-	## 3. Clone this ~/.gurud home directory into some others, let's say `~/.clonedOsd`
-	## 4. Run `gentx` in each of those folders
-	## 5. Copy the `gentx-*` folders under `~/.clonedOsd/config/gentx/` folders into the original `~/.gurud/config/gentx`
-
-	# Collect genesis tx
-	gurud genesis collect-gentxs --home "$HOMEDIR"
-
-	# Run this to ensure everything worked and that the genesis file is setup correctly
-	gurud genesis validate-genesis --home "$HOMEDIR"
-
-	if [[ $1 == "pending" ]]; then
-		echo "pending mode is on, please wait for the first block committed."
-	fi
+if [[ -n "${GURUD_BINARY:-}" ]]; then
+  build_binary=false
+  GURUD="$GURUD_BINARY"
+else
+  GURUD="$DEFAULT_BINARY"
 fi
 
-# Start the node
-gurud start "$TRACE" \
-	--log_level $LOGLEVEL \
-	--minimum-gas-prices=0.0001agxn \
-	--home "$HOMEDIR" \
-	--json-rpc.api eth,txpool,personal,net,debug,web3 \
-	--chain-id "$CHAINID"
+if [[ "$build_binary" == true ]]; then
+  if [[ "$build_for_debug" == true ]]; then
+    mkdir -p "$SCRIPT_DIR/build"
+    (
+      cd "$SCRIPT_DIR"
+      env GOTOOLCHAIN="$BUILD_GOTOOLCHAIN" \
+        go build -mod=readonly -gcflags='all=-N -l' -o "$DEFAULT_BINARY" ./cmd/gurud
+    )
+  else
+    make -C "$SCRIPT_DIR" build \
+      "GO=env GOTOOLCHAIN=$BUILD_GOTOOLCHAIN go"
+  fi
+elif [[ ! -x "$GURUD" ]]; then
+  if command -v gurud >/dev/null 2>&1; then
+    GURUD="$(command -v gurud)"
+  else
+    echo >&2 "Error: gurud is not executable at $GURUD. Build it or set GURUD_BINARY."
+    exit 1
+  fi
+fi
+
+if [[ ! -x "$GURUD" ]]; then
+  echo >&2 "Error: gurud is not executable at $GURUD."
+  exit 1
+fi
+
+if [[ -z "$overwrite" ]]; then
+  if [[ -d "$CHAIN_HOME" ]]; then
+    printf '\nExisting local node data was found at %s.\n' "$CHAIN_HOME"
+    printf 'Overwrite it and create fresh genesis data? [y/n] '
+    read -r overwrite
+  else
+    overwrite="y"
+  fi
+fi
+
+read_mnemonics_yaml() {
+  local file_path="$1"
+
+  awk '
+    BEGIN { in_list=0 }
+    /^[[:space:]]*mnemonics:[[:space:]]*$/ { in_list=1; next }
+    in_list && /^[[:space:]]*-[[:space:]]*/ {
+      line=$0
+      sub(/^[[:space:]]*-[[:space:]]*/, "", line)
+      gsub(/^"[[:space:]]*|[[:space:]]*"$/, "", line)
+      gsub(/^'\''[[:space:]]*|[[:space:]]*'\''$/, "", line)
+      print line
+      next
+    }
+    in_list && NF==0 { next }
+  ' "$file_path"
+}
+
+write_mnemonics_yaml() {
+  local file_path="$1"
+  shift
+  local mnemonic
+
+  mkdir -p "$(dirname "$file_path")"
+  umask 077
+  {
+    echo "mnemonics:"
+    for mnemonic in "$@"; do
+      printf '  - "%s"\n' "$mnemonic"
+    done
+  } >"$file_path"
+  echo "Wrote mnemonics to $file_path"
+}
+
+add_genesis_funds() {
+  local key_name="$1"
+
+  "$GURUD" genesis add-genesis-account \
+    "$key_name" "1000000000000000000000${BOND_DENOM}" \
+    --keyring-backend "$KEYRING_BACKEND" \
+    --home "$CHAIN_HOME"
+}
+
+replace_config_value() {
+  local file_path="$1"
+  local expression="$2"
+
+  sed -i.bak -e "$expression" "$file_path"
+  rm -f -- "${file_path}.bak"
+}
+
+cleanup() {
+  rm -f -- "$TMP_GENESIS"
+}
+trap cleanup EXIT
+
+if [[ "$overwrite" == "y" || "$overwrite" == "Y" ]]; then
+  case "$CHAIN_HOME" in
+    "" | "/" | "${HOME:?HOME is not set}")
+      echo >&2 "Error: refusing to overwrite unsafe GURU_HOME: $CHAIN_HOME"
+      exit 1
+      ;;
+  esac
+
+  rm -rf -- "$CHAIN_HOME"
+
+  "$GURUD" config set client chain-id "$CHAIN_ID" --home "$CHAIN_HOME"
+  "$GURUD" config set client keyring-backend "$KEYRING_BACKEND" --home "$CHAIN_HOME"
+
+  validator_key="mykey"
+  validator_mnemonic="gesture inject test cycle original hollow east ridge hen combine junk child bacon zero hope comfort vacuum milk pitch cage oppose unhappy lunar seat"
+
+  # Deterministic, public development accounts. Never use these keys on a
+  # public network or fund them with assets of value.
+  default_mnemonics=(
+    "copper push brief egg scan entry inform record adjust fossil boss egg comic alien upon aspect dry avoid interest fury window hint race symptom"
+    "maximum display century economy unlock van census kite error heart snow filter midnight usage egg venture cash kick motor survey drastic edge muffin visual"
+    "will wear settle write dance topic tape sea glory hotel oppose rebel client problem era video gossip glide during yard balance cancel file rose"
+    "doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch"
+  )
+
+  echo "$validator_mnemonic" | "$GURUD" keys add "$validator_key" \
+    --recover \
+    --keyring-backend "$KEYRING_BACKEND" \
+    --algo "$KEY_ALGORITHM" \
+    --home "$CHAIN_HOME"
+
+  constitution_address="$("$GURUD" keys show "$validator_key" \
+    --address \
+    --keyring-backend "$KEYRING_BACKEND" \
+    --home "$CHAIN_HOME")"
+
+  provided_mnemonics=()
+  if [[ -n "$mnemonics_input" ]]; then
+    if [[ ! -f "$mnemonics_input" ]]; then
+      echo >&2 "Error: mnemonic input file not found: $mnemonics_input"
+      exit 1
+    fi
+
+    while IFS= read -r mnemonic; do
+      [[ -n "$mnemonic" ]] && provided_mnemonics+=("$mnemonic")
+    done < <(read_mnemonics_yaml "$mnemonics_input")
+
+    if [[ ${#provided_mnemonics[@]} -eq 0 ]]; then
+      echo >&2 "Error: no entries found below 'mnemonics:' in $mnemonics_input"
+      exit 1
+    fi
+  fi
+
+  if [[ ${#provided_mnemonics[@]} -gt 0 ]]; then
+    dev_mnemonics=("${provided_mnemonics[@]}")
+  else
+    dev_mnemonics=("${default_mnemonics[@]}")
+  fi
+
+  echo "$validator_mnemonic" | "$GURUD" init "$MONIKER" \
+    --overwrite \
+    --recover \
+    --chain-id "$CHAIN_ID" \
+    --default-denom "$BOND_DENOM" \
+    --constitution-base-address "$constitution_address" \
+    --constitution-moderator-address "$constitution_address" \
+    --home "$CHAIN_HOME"
+
+  jq \
+    --arg bond_denom "$BOND_DENOM" \
+    --arg display_denom "$DISPLAY_DENOM" '
+      .app_state.staking.params.bond_denom = $bond_denom
+      | .app_state.mint.params.mint_denom = $bond_denom
+      | .app_state.evm.params.evm_denom = $bond_denom
+      | if .app_state.evm.params.extended_denom_options != null then
+          .app_state.evm.params.extended_denom_options.extended_denom = $bond_denom
+        else . end
+      | if .app_state.gov.params.min_deposit[0] != null then
+          .app_state.gov.params.min_deposit[0].denom = $bond_denom
+        else . end
+      | if .app_state.gov.params.expedited_min_deposit[0] != null then
+          .app_state.gov.params.expedited_min_deposit[0].denom = $bond_denom
+        else . end
+      | .app_state.bank.denom_metadata = [{
+          description: "The native staking and EVM gas token of the Guru chain",
+          denom_units: [
+            {denom: $bond_denom, exponent: 0, aliases: ["atto\($display_denom)"]},
+            {denom: $display_denom, exponent: 18, aliases: []}
+          ],
+          base: $bond_denom,
+          display: $display_denom,
+          name: "Guru",
+          symbol: "GXN",
+          uri: "",
+          uri_hash: ""
+        }]
+      | .app_state.evm.params.active_static_precompiles = [
+          "0x0000000000000000000000000000000000000100",
+          "0x0000000000000000000000000000000000000400",
+          "0x0000000000000000000000000000000000000800",
+          "0x0000000000000000000000000000000000000801",
+          "0x0000000000000000000000000000000000000802",
+          "0x0000000000000000000000000000000000000804",
+          "0x0000000000000000000000000000000000000805",
+          "0x0000000000000000000000000000000000000806"
+        ]
+      | if .app_state.erc20 != null then
+          .app_state.erc20.native_precompiles = [
+            "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+          ]
+          | .app_state.erc20.token_pairs = [{
+              contract_owner: 1,
+              erc20_address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+              denom: $bond_denom,
+              enabled: true
+            }]
+        else . end
+      | .consensus.params.block.max_gas = "10000000"
+      | if .app_state.gov.params.max_deposit_period != null then
+          .app_state.gov.params.max_deposit_period = "30s"
+        else . end
+      | if .app_state.gov.params.voting_period != null then
+          .app_state.gov.params.voting_period = "30s"
+        else . end
+      | if .app_state.gov.params.expedited_voting_period != null then
+          .app_state.gov.params.expedited_voting_period = "15s"
+        else . end
+    ' "$GENESIS" >"$TMP_GENESIS"
+  mv "$TMP_GENESIS" "$GENESIS"
+
+  "$GURUD" genesis add-genesis-account \
+    "$validator_key" "100000000000000000000000000${BOND_DENOM}" \
+    --keyring-backend "$KEYRING_BACKEND" \
+    --home "$CHAIN_HOME"
+
+  replace_config_value "$CONFIG_TOML" 's/timeout_propose = "3s"/timeout_propose = "2s"/'
+  replace_config_value "$CONFIG_TOML" 's/timeout_propose_delta = "500ms"/timeout_propose_delta = "200ms"/'
+  replace_config_value "$CONFIG_TOML" 's/timeout_prevote = "1s"/timeout_prevote = "500ms"/'
+  replace_config_value "$CONFIG_TOML" 's/timeout_prevote_delta = "500ms"/timeout_prevote_delta = "200ms"/'
+  replace_config_value "$CONFIG_TOML" 's/timeout_precommit = "1s"/timeout_precommit = "500ms"/'
+  replace_config_value "$CONFIG_TOML" 's/timeout_precommit_delta = "500ms"/timeout_precommit_delta = "200ms"/'
+  replace_config_value "$CONFIG_TOML" 's/timeout_commit = "5s"/timeout_commit = "500ms"/'
+  replace_config_value "$CONFIG_TOML" 's/timeout_broadcast_tx_commit = "10s"/timeout_broadcast_tx_commit = "5s"/'
+  replace_config_value "$CONFIG_TOML" 's/prometheus = false/prometheus = true/'
+
+  replace_config_value "$APP_TOML" 's/^prometheus-retention-time[[:space:]]*=.*/prometheus-retention-time = 1000000000000/'
+  replace_config_value "$APP_TOML" 's/enabled = false/enabled = true/g'
+  replace_config_value "$APP_TOML" 's/enable = false/enable = true/g'
+
+  final_mnemonics=("${dev_mnemonics[@]}")
+  if [[ -z "$mnemonic_file" ]]; then
+    mnemonic_file="$CHAIN_HOME/mnemonics.yaml"
+  fi
+
+  for ((i = 0; i < ${#dev_mnemonics[@]}; i++)); do
+    key_name="dev${i}"
+    mnemonic="${dev_mnemonics[i]}"
+    echo "$mnemonic" | "$GURUD" keys add "$key_name" \
+      --recover \
+      --keyring-backend "$KEYRING_BACKEND" \
+      --algo "$KEY_ALGORITHM" \
+      --home "$CHAIN_HOME"
+    add_genesis_funds "$key_name"
+  done
+
+  if [[ "$additional_users" -gt 0 ]]; then
+    start_index=${#dev_mnemonics[@]}
+    for ((i = 0; i < additional_users; i++)); do
+      index=$((start_index + i))
+      key_name="dev${index}"
+      key_output="$(
+        "$GURUD" keys add "$key_name" \
+          --keyring-backend "$KEYRING_BACKEND" \
+          --algo "$KEY_ALGORITHM" \
+          --home "$CHAIN_HOME" 2>&1
+      )"
+      generated_mnemonic="$(
+        printf '%s\n' "$key_output" |
+          grep -E '([[:alpha:]]+[[:space:]]+){11,}[[:alpha:]]+$' |
+          tail -n 1 ||
+          true
+      )"
+      generated_mnemonic="${generated_mnemonic//$'\r'/}"
+      if [[ -z "$generated_mnemonic" ]]; then
+        echo >&2 "Error: failed to capture mnemonic for $key_name"
+        exit 1
+      fi
+
+      final_mnemonics+=("$generated_mnemonic")
+      add_genesis_funds "$key_name"
+    done
+    write_mnemonics_yaml "$mnemonic_file" "${final_mnemonics[@]}"
+  fi
+
+  "$GURUD" genesis gentx \
+    "$validator_key" "1000000000000000000000${BOND_DENOM}" \
+    --gas-prices "${BASE_FEE}${BOND_DENOM}" \
+    --keyring-backend "$KEYRING_BACKEND" \
+    --chain-id "$CHAIN_ID" \
+    --home "$CHAIN_HOME"
+  "$GURUD" genesis collect-gentxs --home "$CHAIN_HOME"
+  "$GURUD" genesis validate --home "$CHAIN_HOME"
+fi
+
+start_args=(
+  start
+  --pruning nothing
+  --log_level "$LOG_LEVEL"
+  --minimum-gas-prices "0${BOND_DENOM}"
+  --evm.min-tip 0
+  --home "$CHAIN_HOME"
+  --json-rpc.api eth,txpool,personal,net,debug,web3
+  --evm.evm-chain-id "$EVM_CHAIN_ID"
+  --chain-id "$CHAIN_ID"
+)
+if [[ -n "${TRACE:-}" ]]; then
+  start_args+=("$TRACE")
+fi
+
+exec "$GURUD" "${start_args[@]}"

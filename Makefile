@@ -1,49 +1,67 @@
 #!/usr/bin/make -f
 
-PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
-VERSION ?= $(shell echo $(shell git describe --tags --always) | sed 's/^v//')
-TMVERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
-COMMIT := $(shell git log -1 --format='%H')
-BINDIR ?= $(GOPATH)/bin
-EXAMPLE_BINARY = gurud
+.DEFAULT_GOAL := build
+
+###############################################################################
+###                           Module & Versioning                           ###
+###############################################################################
+
+GO ?= go
+DOCKER ?= docker
+GOFMT ?= gofmt
+VERSION ?= $(shell (git describe --tags --always 2>/dev/null || echo dev) | sed 's/^v//')
+ORACLE_VERSION ?= $(shell value=$$(git describe --tags --match 'oracle/v[0-9]*' --always 2>/dev/null); if test -n "$$value"; then printf '%s\n' "$$value" | sed 's|^oracle/||'; else echo dev; fi)
+COMMIT ?= $(shell git log -1 --format='%H' 2>/dev/null || echo unknown)
+TMVERSION = $(shell $(GO) list -m github.com/cometbft/cometbft 2>/dev/null | sed 's:.* ::')
+
+###############################################################################
+###                          Directories & Binaries                         ###
+###############################################################################
+
+BINARY ?= gurud
+ORACLE_BINARY ?= oracled
+BINDIR ?= $(shell $(GO) env GOPATH)/bin
 BUILDDIR ?= $(CURDIR)/build
-HTTPS_GIT := https://github.com/gurufinglobal/guru/v2.git
-DOCKER := $(shell which docker)
+# Keep BUILD_DIR as a compatibility override for the original Guru Makefile.
+BUILD_DIR ?= $(BUILDDIR)
+BUILD_DIR := $(abspath $(strip $(BUILD_DIR)))
+MAIN_PKG := ./cmd/gurud
+ORACLE_MAIN_PKG := ./cmd/oracled
+VERSION_SMOKE_ROOT ?= $(BUILD_DIR)/version-smoke
+VERSION_SMOKE_GURUD_VERSION ?= 0.0.0-gurud-smoke
+VERSION_SMOKE_ORACLE_VERSION ?= 0.0.0-oracled-smoke
+VERSION_SMOKE_COMMIT ?= 0123456789abcdef0123456789abcdef01234567
 
 export GO111MODULE = on
 
-# Default target executed when no arguments are given to make.
-default_target: all
-
-.PHONY: build default_target
-
 ###############################################################################
-###                          gurud Build & Install                          ###
+###                            Build & Install                              ###
 ###############################################################################
 
-# process build tags
+COSMOS_BUILD_OPTIONS ?=
+BUILD_TAGS ?=
+LDFLAGS ?=
+CGO_ENABLED ?= 1
+
 build_tags = netgo
 
 ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
   build_tags += gcc
 endif
+
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
-# process linker flags
-
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=os \
-          -X github.com/cosmos/cosmos-sdk/version.AppName=$(EXAMPLE_BINARY) \
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=guru \
+          -X github.com/cosmos/cosmos-sdk/version.AppName=$(BINARY) \
           -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
           -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
           -X github.com/cometbft/cometbft/version.TMCoreSemVer=$(TMVERSION)
 
-# DB backend selection
 ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
 endif
 
-# add build tags to linker flags
 whitespace := $(subst ,, )
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
@@ -52,163 +70,242 @@ ldflags += -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma
 ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
   ldflags += -w -s
 endif
+
 ldflags += $(LDFLAGS)
-ldflags := $(strip $(ldflags))
 
 ifeq (staticlink,$(findstring staticlink,$(COSMOS_BUILD_OPTIONS)))
   ldflags += -linkmode external -extldflags '-static'
 endif
 
-BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
-# check for nostrip option
+BUILD_FLAGS = -mod=readonly -tags "$(build_tags)" -ldflags '$(strip $(ldflags))'
+
 ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
   BUILD_FLAGS += -trimpath
 endif
 
-# check if no optimization option is passed
-# used for remote debugging
 ifneq (,$(findstring nooptimization,$(COSMOS_BUILD_OPTIONS)))
   BUILD_FLAGS += -gcflags "all=-N -l"
 endif
 
+all: build
 
-BUILD_TARGETS := build install
+build: build-gurud build-oracled
 
-build: BUILD_ARGS=-o $(BUILDDIR)/
+build-gurud: | $(BUILD_DIR)/
+	@echo "Building $(BINARY) to $(BUILD_DIR)/$(BINARY)"
+	@CGO_ENABLED="$(CGO_ENABLED)" $(GO) build $(BUILD_FLAGS) \
+		-o "$(BUILD_DIR)/$(BINARY)" $(MAIN_PKG)
+
+build-oracled: | $(BUILD_DIR)/
+	@echo "Building $(ORACLE_BINARY) to $(BUILD_DIR)/$(ORACLE_BINARY)"
+	@CGO_ENABLED=0 GOWORK=off $(GO) -C oracle build -mod=readonly -trimpath \
+		-ldflags '-w -s -X github.com/gurufinglobal/guru/oracle/internal/version.Version=$(ORACLE_VERSION) -X github.com/gurufinglobal/guru/oracle/internal/version.Commit=$(COMMIT)' \
+		-o $(abspath $(BUILD_DIR)/$(ORACLE_BINARY)) $(ORACLE_MAIN_PKG)
+
 build-linux:
-	GOOS=linux GOARCH=amd64 $(MAKE) build
+	@if [ "$$(uname -m)" = "aarch64" ] || [ "$$(uname -m)" = "arm64" ]; then \
+	  echo "Building for linux/arm64..."; \
+	  GOOS=linux GOARCH=arm64 CGO_ENABLED=1 $(MAKE) build; \
+	else \
+	  echo "Building for linux/amd64..."; \
+	  CC=x86_64-linux-gnu-gcc GOOS=linux GOARCH=amd64 CGO_ENABLED=1 $(MAKE) build; \
+	fi
 
-$(BUILD_TARGETS): swagger-gen go.sum $(BUILDDIR)/
-	CGO_ENABLED="1" go $@ $(BUILD_FLAGS) $(BUILD_ARGS) ./...
+install:
+	@echo "Installing $(BINARY) to $(BINDIR)"
+	@CGO_ENABLED="$(CGO_ENABLED)" GOBIN="$(BINDIR)" \
+		$(GO) install $(BUILD_FLAGS) $(MAIN_PKG)
+	@echo "Installing $(ORACLE_BINARY) to $(BINDIR)"
+	@CGO_ENABLED=0 GOWORK=off GOBIN="$(BINDIR)" \
+		$(GO) -C oracle install -mod=readonly -trimpath \
+		-ldflags '-w -s -X github.com/gurufinglobal/guru/oracle/internal/version.Version=$(ORACLE_VERSION) -X github.com/gurufinglobal/guru/oracle/internal/version.Commit=$(COMMIT)' \
+		$(ORACLE_MAIN_PKG)
 
-$(BUILDDIR)/:
-	mkdir -p $(BUILDDIR)/
+version-smoke:
+	@mkdir -p "$(VERSION_SMOKE_ROOT)"
+	@set -eu; \
+	scratch=$$(mktemp -d "$(VERSION_SMOKE_ROOT)/run.XXXXXX"); \
+	trap 'rm -rf "$$scratch"' 0 1 2 15; \
+	$(MAKE) --no-print-directory build \
+		BUILD_DIR="$$scratch" \
+		VERSION="$(VERSION_SMOKE_GURUD_VERSION)" \
+		ORACLE_VERSION="$(VERSION_SMOKE_ORACLE_VERSION)" \
+		COMMIT="$(VERSION_SMOKE_COMMIT)"; \
+	gurud_output="$$("$$scratch/$(BINARY)" version --long --output json)"; \
+	gurud_compact=$$(printf '%s\n' "$$gurud_output" | tr -d '[:space:]'); \
+	printf '%s\n' "$$gurud_compact" | grep -Fq '"server_name":"$(BINARY)"' || { echo "gurud server_name mismatch" >&2; exit 1; }; \
+	printf '%s\n' "$$gurud_compact" | grep -Fq '"version":"$(VERSION_SMOKE_GURUD_VERSION)"' || { echo "gurud version mismatch" >&2; exit 1; }; \
+	printf '%s\n' "$$gurud_compact" | grep -Fq '"commit":"$(VERSION_SMOKE_COMMIT)"' || { echo "gurud commit mismatch" >&2; exit 1; }; \
+	oracled_output="$$("$$scratch/$(ORACLE_BINARY)" --version)"; \
+	expected="$(ORACLE_BINARY) version $(VERSION_SMOKE_ORACLE_VERSION) ($(VERSION_SMOKE_COMMIT))"; \
+	test "$$oracled_output" = "$$expected" || { echo "oracled version mismatch" >&2; exit 1; }
+
+$(BUILD_DIR)/:
+	@mkdir -p "$(BUILD_DIR)"
+
+.PHONY: all build build-gurud build-oracled build-linux install version-smoke
 
 ###############################################################################
-###                          Tools & Dependencies                           ###
+###                         Dependencies & Verification                     ###
 ###############################################################################
 
-go.sum: go.mod
-	echo "Ensure dependencies have not been modified ..." >&2
-	go mod verify
-	go mod tidy
+mod-verify:
+	@$(GO) mod verify
 
-vulncheck:
-	@go install golang.org/x/vuln/cmd/govulncheck@latest
-	@govulncheck ./...
+tidy-check:
+	@$(GO) mod tidy -diff
+
+tidy:
+	@$(GO) mod tidy
+
+mod-check-root:
+	@$(GO) mod verify
+	@$(GO) mod tidy -diff
+
+mod-check-oracle:
+	@GOWORK=off $(GO) -C oracle mod verify
+	@GOWORK=off $(GO) -C oracle mod tidy -diff
+
+mod-check: mod-check-root mod-check-oracle
+
+.PHONY: mod-verify tidy-check tidy mod-check-root mod-check-oracle mod-check
 
 ###############################################################################
-###                           Tests & Simulation                            ###
+###                            Tests & Benchmarks                           ###
 ###############################################################################
+
+TEST_PACKAGES ?= ./...
+TEST_TIMEOUT ?= 15m
+EXTRA_ARGS ?=
+ROOT_TEST_PACKAGES ?= $(TEST_PACKAGES)
+ORACLE_TEST_PACKAGES ?= ./...
+ROOT_TEST_TIMEOUT ?= $(TEST_TIMEOUT)
+ORACLE_TEST_TIMEOUT ?= $(TEST_TIMEOUT)
+ROOT_TEST_ARGS ?=
+ORACLE_TEST_ARGS ?=
+COVERAGE_DIR ?= $(BUILD_DIR)/coverage
+ROOT_COVERAGE_PROFILE ?= $(COVERAGE_DIR)/root.out
+ORACLE_COVERAGE_PROFILE ?= $(COVERAGE_DIR)/oracle.out
+COVERAGE_MODE ?= atomic
+FUZZ_TIME ?= 30s
+ROOT_BENCH_PACKAGES ?= $(ROOT_TEST_PACKAGES)
+ORACLE_BENCH_PACKAGES ?= $(ORACLE_TEST_PACKAGES)
+BENCH_TIMEOUT ?= $(TEST_TIMEOUT)
+BENCH_ARGS ?=
 
 test: test-unit
-test-all: test-unit test-race
 
-# For unit tests we don't want to execute the upgrade tests in tests/e2e but
-# we want to include all unit tests in the subfolders (tests/e2e/*)
-PACKAGES_UNIT=$(shell go list ./... | grep -v '/tests/e2e$$')
-TEST_PACKAGES=./...
-TEST_TARGETS := test-unit test-unit-cover test-race
+test-unit: test-unit-root test-unit-oracle
 
-# Test runs-specific rules. To add a new test target, just add
-# a new rule, customise ARGS or TEST_PACKAGES ad libitum, and
-# append the new rule to the TEST_TARGETS list.
-test-unit: ARGS=-timeout=15m
-test-unit: TEST_PACKAGES=$(PACKAGES_UNIT)
+test-oracle: test-unit-oracle
 
-test-race: ARGS=-race
-test-race: TEST_PACKAGES=$(PACKAGES_NOSIMULATION)
-$(TEST_TARGETS): run-tests
+test-unit-root:
+	@$(GO) test -mod=readonly -timeout=$(ROOT_TEST_TIMEOUT) \
+		$(EXTRA_ARGS) $(ROOT_TEST_ARGS) $(ROOT_TEST_PACKAGES)
 
-test-unit-cover: ARGS=-timeout=15m -coverprofile=coverage.txt -covermode=atomic
-test-unit-cover: TEST_PACKAGES=$(PACKAGES_UNIT)
-test-unit-cover:
-	@echo "Filtering ignored files from coverage.txt..."
-	@grep -v -E '/cmd/|/client/|/proto/|/testutil/|/mocks/|/test_.*\.go:|\.pb\.go:|\.pb\.gw\.go:|/x/[^/]+/module\.go:|/scripts/|/ibc/testing/|/version/|\.md:|\.pulsar\.go:' coverage.txt > tmp_coverage.txt && mv tmp_coverage.txt coverage.txt
-	@echo "Function-level coverage summary:"
-	@go tool cover -func=coverage.txt
+test-unit-oracle:
+	@GOWORK=off $(GO) -C oracle test -mod=readonly -timeout=$(ORACLE_TEST_TIMEOUT) \
+		$(EXTRA_ARGS) $(ORACLE_TEST_ARGS) $(ORACLE_TEST_PACKAGES)
 
+test-race: test-race-root test-race-oracle
 
-run-tests:
-ifneq (,$(shell which tparse 2>/dev/null))
-	go test -tags=test -mod=readonly -json $(ARGS) $(EXTRA_ARGS) $(TEST_PACKAGES) | tparse
-else
-	go test -tags=test -mod=readonly $(ARGS)  $(EXTRA_ARGS) $(TEST_PACKAGES)
-endif
+test-race-root:
+	@$(GO) test -race -mod=readonly -timeout=$(ROOT_TEST_TIMEOUT) \
+		$(EXTRA_ARGS) $(ROOT_TEST_ARGS) $(ROOT_TEST_PACKAGES)
 
-# Use the old Apple linker to workaround broken xcode - https://github.com/golang/go/issues/65169
-ifeq ($(OS_FAMILY),Darwin)
-  FUZZLDFLAGS := -ldflags=-extldflags=-Wl,-ld_classic
-endif
+test-race-oracle:
+	@GOWORK=off $(GO) -C oracle test -race -mod=readonly -timeout=$(ORACLE_TEST_TIMEOUT) \
+		$(EXTRA_ARGS) $(ORACLE_TEST_ARGS) $(ORACLE_TEST_PACKAGES)
 
-test-fuzz:
-	go test -tags=test $(FUZZLDFLAGS) -run NOTAREALTEST -v -fuzztime 10s -fuzz=FuzzMintCoins ./x/precisebank/keeper
-	go test -tags=test $(FUZZLDFLAGS) -run NOTAREALTEST -v -fuzztime 10s -fuzz=FuzzBurnCoins ./x/precisebank/keeper
-	go test -tags=test $(FUZZLDFLAGS) -run NOTAREALTEST -v -fuzztime 10s -fuzz=FuzzSendCoins ./x/precisebank/keeper
-	go test -tags=test $(FUZZLDFLAGS) -run NOTAREALTEST -v -fuzztime 10s -fuzz=FuzzGenesisStateValidate_NonZeroRemainder ./x/precisebank/types
-	go test -tags=test $(FUZZLDFLAGS) -run NOTAREALTEST -v -fuzztime 10s -fuzz=FuzzGenesisStateValidate_ZeroRemainder ./x/precisebank/types
+test-cover: test-cover-root test-cover-oracle
 
-test-scripts:
-	@echo "Running scripts tests"
-	@pytest -s -vv ./scripts
+test-unit-cover: test-cover
 
-test-solidity:
-	@echo "Beginning solidity tests..."
-	./scripts/run-solidity-tests.sh
+test-cover-root:
+	@mkdir -p "$(dir $(ROOT_COVERAGE_PROFILE))"
+	@$(GO) test -mod=readonly -timeout=$(ROOT_TEST_TIMEOUT) \
+		-covermode=$(COVERAGE_MODE) -coverprofile="$(ROOT_COVERAGE_PROFILE)" \
+		$(EXTRA_ARGS) $(ROOT_TEST_ARGS) $(ROOT_TEST_PACKAGES)
 
-.PHONY: run-tests test test-all $(TEST_TARGETS)
+test-cover-oracle:
+	@mkdir -p "$(dir $(ORACLE_COVERAGE_PROFILE))"
+	@GOWORK=off $(GO) -C oracle test -mod=readonly -timeout=$(ORACLE_TEST_TIMEOUT) \
+		-covermode=$(COVERAGE_MODE) -coverprofile="$(abspath $(ORACLE_COVERAGE_PROFILE))" \
+		$(EXTRA_ARGS) $(ORACLE_TEST_ARGS) $(ORACLE_TEST_PACKAGES)
 
-benchmark:
-	@go test -tags=test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)
+test-fuzz-oracle:
+	@$(MAKE) --no-print-directory test-fuzz-oracle-decimal
+	@$(MAKE) --no-print-directory test-fuzz-oracle-json
 
-.PHONY: benchmark
+test-fuzz-oracle-decimal:
+	@GOWORK=off $(GO) -C oracle test -mod=readonly -timeout=$(ORACLE_TEST_TIMEOUT) \
+		-run='^$$' -fuzz='^FuzzNormalizeDecimal$$' -fuzztime=$(FUZZ_TIME) \
+		$(EXTRA_ARGS) $(ORACLE_TEST_ARGS) ./internal/domain
+
+test-fuzz-oracle-json:
+	@GOWORK=off $(GO) -C oracle test -mod=readonly -timeout=$(ORACLE_TEST_TIMEOUT) \
+		-run='^$$' -fuzz='^FuzzExtractJSONNumericText$$' -fuzztime=$(FUZZ_TIME) \
+		$(EXTRA_ARGS) $(ORACLE_TEST_ARGS) ./internal/collector
+
+benchmark: benchmark-root
+
+benchmark-root:
+	@$(GO) test -mod=readonly -timeout=$(BENCH_TIMEOUT) -run='^$$' -bench=. \
+		$(EXTRA_ARGS) $(BENCH_ARGS) $(ROOT_BENCH_PACKAGES)
+
+benchmark-oracle:
+	@GOWORK=off $(GO) -C oracle test -mod=readonly -timeout=$(BENCH_TIMEOUT) \
+		-run='^$$' -bench=. $(EXTRA_ARGS) $(BENCH_ARGS) $(ORACLE_BENCH_PACKAGES)
+
+benchmark-all:
+	@$(MAKE) --no-print-directory benchmark-root
+	@$(MAKE) --no-print-directory benchmark-oracle
+
+.PHONY: test test-unit test-unit-root test-unit-oracle test-oracle \
+	test-race test-race-root test-race-oracle \
+	test-cover test-unit-cover test-cover-root test-cover-oracle \
+	test-fuzz-oracle test-fuzz-oracle-decimal test-fuzz-oracle-json \
+	benchmark benchmark-root benchmark-oracle benchmark-all
 
 ###############################################################################
-###                                Linting                                  ###
+###                            Linting & Formatting                         ###
 ###############################################################################
-golangci_lint_cmd=golangci-lint
-golangci_version=v2.1.6
 
-lint: lint-go lint-python lint-contracts
+GO_FILES := $(shell find app cmd config x oracle -type f -name '*.go' \
+	-not -name '*.pb.go' -not -name '*.pb.gw.go' 2>/dev/null)
 
-lint-go:
-	@echo "--> Running linter"
-	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(golangci_version)
-	@$(golangci_lint_cmd) run --timeout=15m
+lint: lint-root lint-oracle
 
-lint-python:
-	find . -name "*.py" -type f -not -path "*/node_modules/*" | xargs pylint
-	flake8
+lint-go: lint-root
 
-lint-contracts:
-	solhint contracts/**/*.sol
+lint-root:
+	@$(GO) vet -mod=readonly $(ROOT_TEST_PACKAGES)
 
-lint-fix:
-	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(golangci_version)
-	@$(golangci_lint_cmd) run --timeout=15m --fix
+lint-oracle:
+	@GOWORK=off $(GO) -C oracle vet -mod=readonly $(ORACLE_TEST_PACKAGES)
 
-lint-fix-contracts:
-	solhint --fix contracts/**/*.sol
+format:
+	@$(GOFMT) -w $(GO_FILES)
 
-.PHONY: lint lint-fix lint-contracts lint-go lint-python
+format-check:
+	@set -eu; \
+	set -o pipefail; \
+	tmp=$$(mktemp); \
+	if ! $(GOFMT) -l $(GO_FILES) > "$$tmp"; then \
+		echo "gofmt failed:" >&2; \
+		cat "$$tmp" >&2; \
+		rm -f "$$tmp"; \
+		exit 1; \
+	fi; \
+	if [ -s "$$tmp" ]; then \
+		echo "The following Go files are not formatted:"; \
+		cat "$$tmp"; \
+		rm -f "$$tmp"; \
+		exit 1; \
+	fi; \
+	rm -f "$$tmp"
 
-format: format-go format-python format-shell
-
-format-go:
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' -not -name '*.pb.gw.go' -not -name '*.pulsar.go' | xargs gofumpt -w -l
-
-format-python: format-isort format-black
-
-format-black:
-	find . -name '*.py' -type f -not -path "*/node_modules/*" | xargs black
-
-format-isort:
-	find . -name '*.py' -type f -not -path "*/node_modules/*" | xargs isort
-
-format-shell:
-	shfmt -l -w .
-
-.PHONY: format format-go format-python format-black format-isort format-go
+.PHONY: lint lint-go lint-root lint-oracle format format-check
 
 ###############################################################################
 ###                                Protobuf                                 ###
@@ -216,98 +313,94 @@ format-shell:
 
 protoVer=0.14.0
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace --user 0 $(protoImageName)
+protoImageDigest=sha256:93e2035b90e5780b4d56210a88ecb0afed881c7bb828285d4a61a897cebb54fb
+protoImageRef=$(protoImageName)@$(protoImageDigest)
 
-protoLintVer=0.44.0
-protoLinterImage=yoheimuta/protolint
-protoLinter=$(DOCKER) run --rm -v "$(CURDIR):/workspace" --workdir /workspace --user 0 $(protoLinterImage):$(protoLintVer)
+# Compatibility override for callers that provide the complete image reference.
+PROTO_BUILDER_IMAGE ?= $(protoImageRef)
+PROTO_UID ?= $(shell id -u)
+PROTO_GID ?= $(shell id -g)
+PROTO_SCRATCH_ROOT ?= $(BUILD_DIR)/proto
+PROTO_HOME_DIR ?= $(PROTO_SCRATCH_ROOT)/home
+PROTO_BREAKING_AGAINST ?=
+protoImage=$(DOCKER) run --rm -v "$(CURDIR):/workspace" --workdir /workspace \
+	--user "$(PROTO_UID):$(PROTO_GID)" --env HOME=/home/proto \
+	-v "$(PROTO_HOME_DIR):/home/proto" $(PROTO_BUILDER_IMAGE)
+protoImageReadOnly=$(DOCKER) run --rm -v "$(CURDIR):/workspace:ro" --workdir /workspace \
+	--user "$(PROTO_UID):$(PROTO_GID)" --env HOME=/home/proto \
+	-v "$(PROTO_HOME_DIR):/home/proto" $(PROTO_BUILDER_IMAGE)
 
-# ------
-# NOTE: If you are experiencing problems running these commands, try deleting
-#       the docker images and execute the desired command again.
-#
-proto-all: proto-format proto-lint proto-gen
+# Cosmos EVM v0.6.2 additionally runs yoheimuta/protolint:0.44.0 with its
+# repository-level .protolint.yml. Guru has no equivalent config; adopting
+# those schema comment rules is a separate Proto source compatibility scope.
 
-proto-gen:
-	@echo "generating implementations from Protobuf files"
-	@$(protoImage) sh ./scripts/generate_protos.sh
-	@$(protoImage) sh ./scripts/generate_protos_pulsar.sh
+proto-all:
+	@$(MAKE) --no-print-directory proto-format
+	@$(MAKE) --no-print-directory proto-lint
+	@$(MAKE) --no-print-directory proto-gen
 
-swagger-gen:
-	@echo "generating embedded proto files for swagger"
-	@cd server/swagger && go run generate_embedded_protos.go
+proto-gen: | $(PROTO_HOME_DIR)/
+	@echo "Generating Guru gogo Protobuf files"
+	@$(protoImage) sh scripts/proto-gen.sh
 
-proto-format:
-	@echo "formatting Protobuf files"
-	@$(protoImage) find ./ -name *.proto -exec clang-format -i {} \;
+proto-format: | $(PROTO_HOME_DIR)/
+	@$(protoImage) buf format -w proto
 
-proto-lint:
-	@echo "linting Protobuf files"
-	@$(protoImage) buf lint --error-format=json
-	@$(protoLinter) lint ./proto
+proto-format-check: | $(PROTO_HOME_DIR)/
+	@$(protoImageReadOnly) buf format --diff --exit-code proto
 
-proto-check-breaking:
-	@echo "checking Protobuf files for breaking changes"
-	@$(protoImage) buf breaking --against $(HTTPS_GIT)#branch=main
+proto-lint: | $(PROTO_HOME_DIR)/
+	@$(protoImageReadOnly) buf lint proto
 
-.PHONY: proto-all proto-gen swagger-gen proto-format proto-lint proto-check-breaking
+proto-deps-update: | $(PROTO_HOME_DIR)/
+	@$(protoImage) buf mod update proto
 
-###############################################################################
-###                                Releasing                                ###
-###############################################################################
+proto-drift: | $(PROTO_HOME_DIR)/
+	@mkdir -p "$(PROTO_SCRATCH_ROOT)"
+	@set -eu; \
+	scratch=$$(mktemp -d "$(PROTO_SCRATCH_ROOT)/drift.XXXXXX"); \
+	trap 'rm -rf "$$scratch"' 0 1 2 15; \
+	cp -R proto scripts x "$$scratch/"; \
+	$(DOCKER) run --rm --user "$(PROTO_UID):$(PROTO_GID)" \
+		--env HOME=/home/proto -v "$(PROTO_HOME_DIR):/home/proto" \
+		-v "$$scratch:/workspace" --workdir /workspace \
+		$(PROTO_BUILDER_IMAGE) sh scripts/proto-gen.sh; \
+	diff -ru "$(CURDIR)/x" "$$scratch/x"
 
-PACKAGE_NAME:=github.com/gurufinglobal/guru/v2
-GOLANG_CROSS_VERSION  = v1.22
-GOPATH ?= '$(HOME)/go'
-release-dry-run:
-	docker run \
-		--rm \
-		--privileged \
-		-e CGO_ENABLED=1 \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v `pwd`:/go/src/$(PACKAGE_NAME) \
-		-v ${GOPATH}/pkg:/go/pkg \
-		-w /go/src/$(PACKAGE_NAME) \
-		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-		--clean --skip validate --skip publish --snapshot
+proto-breaking: | $(PROTO_HOME_DIR)/
+	@test -n "$(strip $(PROTO_BREAKING_AGAINST))" || { echo "PROTO_BREAKING_AGAINST is required" >&2; exit 2; }
+	@$(protoImageReadOnly) buf breaking proto --against "$(PROTO_BREAKING_AGAINST)"
 
-release:
-	@if [ ! -f ".release-env" ]; then \
-		echo "\033[91m.release-env is required for release\033[0m";\
-		exit 1;\
-	fi
-	docker run \
-		--rm \
-		--privileged \
-		-e CGO_ENABLED=1 \
-		--env-file .release-env \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		-v `pwd`:/go/src/$(PACKAGE_NAME) \
-		-w /go/src/$(PACKAGE_NAME) \
-		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-		release --clean --skip validate
+proto-check:
+	@$(MAKE) --no-print-directory proto-format-check
+	@$(MAKE) --no-print-directory proto-lint
+	@$(MAKE) --no-print-directory proto-drift
 
-.PHONY: release-dry-run release
+$(PROTO_HOME_DIR)/:
+	@mkdir -p "$@"
+
+.PHONY: proto-all proto-gen proto-format proto-format-check proto-lint \
+	proto-deps-update proto-drift proto-breaking proto-check
 
 ###############################################################################
-###                        Compile Solidity Contracts                       ###
+###                           Default Verification                          ###
 ###############################################################################
 
-# Install the necessary dependencies, compile the solidity contracts found in the
-# Cosmos EVM repository and then clean up the contracts data.
-contracts-all: contracts-compile contracts-clean
+verify:
+	@$(MAKE) --no-print-directory mod-check
+	@$(MAKE) --no-print-directory format-check
+	@$(MAKE) --no-print-directory lint
+	@$(MAKE) --no-print-directory test-unit
 
-# Clean smart contract compilation artifacts, dependencies and cache files
-contracts-clean:
-	@echo "Cleaning up the contracts directory..."
-	@python3 ./scripts/compile_smart_contracts/compile_smart_contracts.py --clean
+.PHONY: verify
 
-# Compile the solidity contracts found in the Cosmos EVM repository.
-contracts-compile:
-	@echo "Compiling smart contracts..."
-	@python3 ./scripts/compile_smart_contracts/compile_smart_contracts.py --compile
+###############################################################################
+###                              Local Node                                 ###
+###############################################################################
 
-# Add a new solidity contract to be compiled
-contracts-add:
-	@echo "Adding a new smart contract to be compiled..."
-	@python3 ./scripts/compile_smart_contracts/compile_smart_contracts.py --add $(CONTRACT)
+LOCALNET_ARGS ?=
+
+local-node localnet-start:
+	@./local_node.sh $(LOCALNET_ARGS)
+
+.PHONY: local-node localnet-start

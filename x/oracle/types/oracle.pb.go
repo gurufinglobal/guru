@@ -5,10 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -25,164 +22,66 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// OracleType defines the type of oracle data that can be requested and provided
-// This enum helps categorize different kinds of oracle data sources and their purposes
-type OracleType int32
+// ValueType classifies the string-encoded oracle value.
+//
+// Guru oracle v1 only supports VALUE_TYPE_NUMERIC for configured tasks and
+// accepted values. Sidecar aggregates and validator results omit the redundant
+// type and are valid only for numeric tasks. Other enum values are reserved.
+type ValueType int32
 
 const (
-	// Default value, should not be used
-	OracleType_ORACLE_TYPE_UNSPECIFIED OracleType = 0
-	// Minimum gas price oracle for network fee estimation
-	OracleType_ORACLE_TYPE_MIN_GAS_PRICE OracleType = 1
-	// Currency exchange rates and forex data
-	OracleType_ORACLE_TYPE_CURRENCY OracleType = 2
-	// Stock market data and indices
-	OracleType_ORACLE_TYPE_STOCK OracleType = 3
-	// Cryptocurrency prices and market data
-	OracleType_ORACLE_TYPE_CRYPTO OracleType = 4
+	// VALUE_TYPE_UNSPECIFIED is invalid for configured tasks and results.
+	ValueType_VALUE_TYPE_UNSPECIFIED ValueType = 0
+	// VALUE_TYPE_NUMERIC is aggregated as a Cosmos decimal string.
+	ValueType_VALUE_TYPE_NUMERIC ValueType = 1
+	// VALUE_TYPE_STRING is reserved for future non-numeric aggregation and is not supported in v1.
+	ValueType_VALUE_TYPE_STRING ValueType = 2
+	// VALUE_TYPE_BOOL is reserved for future non-numeric aggregation and is not supported in v1.
+	ValueType_VALUE_TYPE_BOOL ValueType = 3
 )
 
-var OracleType_name = map[int32]string{
-	0: "ORACLE_TYPE_UNSPECIFIED",
-	1: "ORACLE_TYPE_MIN_GAS_PRICE",
-	2: "ORACLE_TYPE_CURRENCY",
-	3: "ORACLE_TYPE_STOCK",
-	4: "ORACLE_TYPE_CRYPTO",
+var ValueType_name = map[int32]string{
+	0: "VALUE_TYPE_UNSPECIFIED",
+	1: "VALUE_TYPE_NUMERIC",
+	2: "VALUE_TYPE_STRING",
+	3: "VALUE_TYPE_BOOL",
 }
 
-var OracleType_value = map[string]int32{
-	"ORACLE_TYPE_UNSPECIFIED":   0,
-	"ORACLE_TYPE_MIN_GAS_PRICE": 1,
-	"ORACLE_TYPE_CURRENCY":      2,
-	"ORACLE_TYPE_STOCK":         3,
-	"ORACLE_TYPE_CRYPTO":        4,
+var ValueType_value = map[string]int32{
+	"VALUE_TYPE_UNSPECIFIED": 0,
+	"VALUE_TYPE_NUMERIC":     1,
+	"VALUE_TYPE_STRING":      2,
+	"VALUE_TYPE_BOOL":        3,
 }
 
-func (x OracleType) String() string {
-	return proto.EnumName(OracleType_name, int32(x))
+func (x ValueType) String() string {
+	return proto.EnumName(ValueType_name, int32(x))
 }
 
-func (OracleType) EnumDescriptor() ([]byte, []int) {
+func (ValueType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_f372f15f6da5f250, []int{0}
 }
 
-// RequestStatus defines the current state of an oracle request
-// This helps track the lifecycle of oracle data requests
-type RequestStatus int32
-
-const (
-	// Default value, should not be used
-	RequestStatus_REQUEST_STATUS_UNSPECIFIED RequestStatus = 0
-	// Request is enabled
-	RequestStatus_REQUEST_STATUS_ENABLED RequestStatus = 1
-	// Request is paused
-	RequestStatus_REQUEST_STATUS_PAUSED RequestStatus = 2
-	// Request is disabled
-	RequestStatus_REQUEST_STATUS_DISABLED RequestStatus = 3
-)
-
-var RequestStatus_name = map[int32]string{
-	0: "REQUEST_STATUS_UNSPECIFIED",
-	1: "REQUEST_STATUS_ENABLED",
-	2: "REQUEST_STATUS_PAUSED",
-	3: "REQUEST_STATUS_DISABLED",
+type OracleTask struct {
+	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
+	ValueType          ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
+	Enabled            bool      `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	SubmissionInterval uint32    `protobuf:"varint,4,opt,name=submission_interval,json=submissionInterval,proto3" json:"submission_interval,omitempty"`
 }
 
-var RequestStatus_value = map[string]int32{
-	"REQUEST_STATUS_UNSPECIFIED": 0,
-	"REQUEST_STATUS_ENABLED":     1,
-	"REQUEST_STATUS_PAUSED":      2,
-	"REQUEST_STATUS_DISABLED":    3,
-}
-
-func (x RequestStatus) String() string {
-	return proto.EnumName(RequestStatus_name, int32(x))
-}
-
-func (RequestStatus) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{1}
-}
-
-// AggregationRule defines the enumeration for aggregating oracle data
-// Specifies how multiple data points should be combined into a single value
-type AggregationRule int32
-
-const (
-	// Default value, should not be used
-	AggregationRule_AGGREGATION_RULE_UNSPECIFIED AggregationRule = 0
-	// Use average value to aggregate the data
-	AggregationRule_AGGREGATION_RULE_AVG AggregationRule = 1
-	// Use minimum value to aggregate the data
-	AggregationRule_AGGREGATION_RULE_MIN AggregationRule = 2
-	// Use maximum value to aggregate the data
-	AggregationRule_AGGREGATION_RULE_MAX AggregationRule = 3
-	// Use median value to aggregate the data
-	AggregationRule_AGGREGATION_RULE_MEDIAN AggregationRule = 4
-)
-
-var AggregationRule_name = map[int32]string{
-	0: "AGGREGATION_RULE_UNSPECIFIED",
-	1: "AGGREGATION_RULE_AVG",
-	2: "AGGREGATION_RULE_MIN",
-	3: "AGGREGATION_RULE_MAX",
-	4: "AGGREGATION_RULE_MEDIAN",
-}
-
-var AggregationRule_value = map[string]int32{
-	"AGGREGATION_RULE_UNSPECIFIED": 0,
-	"AGGREGATION_RULE_AVG":         1,
-	"AGGREGATION_RULE_MIN":         2,
-	"AGGREGATION_RULE_MAX":         3,
-	"AGGREGATION_RULE_MEDIAN":      4,
-}
-
-func (x AggregationRule) String() string {
-	return proto.EnumName(AggregationRule_name, int32(x))
-}
-
-func (AggregationRule) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{2}
-}
-
-// OracleRequestDoc defines the structure for oracle request documents
-// This is the main document that describes what oracle data is needed and how it should be processed
-type OracleRequestDoc struct {
-	// Unique identifier for the oracle request
-	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	// Type of oracle data being requested
-	OracleType OracleType `protobuf:"varint,2,opt,name=oracle_type,json=oracleType,proto3,enum=guru.oracle.v1.OracleType" json:"oracle_type,omitempty"`
-	// Human-readable name for the oracle request
-	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	// Detailed description of what data is needed and its purpose
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	// Time period in seconds between data updates
-	Period uint32 `protobuf:"varint,5,opt,name=period,proto3" json:"period,omitempty"`
-	// List of account addresses that are authorized to provide data
-	AccountList []string `protobuf:"bytes,6,rep,name=account_list,json=accountList,proto3" json:"account_list,omitempty"`
-	// Minimum number of oracle nodes required to validate the data
-	Quorum uint32 `protobuf:"varint,7,opt,name=quorum,proto3" json:"quorum,omitempty"`
-	// Source endpoints where the data can be fetched
-	Endpoints []*OracleEndpoint `protobuf:"bytes,8,rep,name=endpoints,proto3" json:"endpoints,omitempty"`
-	// Rule for aggregating multiple data points (e.g., median, mean)
-	AggregationRule AggregationRule `protobuf:"varint,9,opt,name=aggregation_rule,json=aggregationRule,proto3,enum=guru.oracle.v1.AggregationRule" json:"aggregation_rule,omitempty"`
-	// Current status of the request
-	Status RequestStatus `protobuf:"varint,10,opt,name=status,proto3,enum=guru.oracle.v1.RequestStatus" json:"status,omitempty"`
-	// Sequential number to ensure data freshness
-	Nonce uint64 `protobuf:"varint,12,opt,name=nonce,proto3" json:"nonce,omitempty"`
-}
-
-func (m *OracleRequestDoc) Reset()         { *m = OracleRequestDoc{} }
-func (m *OracleRequestDoc) String() string { return proto.CompactTextString(m) }
-func (*OracleRequestDoc) ProtoMessage()    {}
-func (*OracleRequestDoc) Descriptor() ([]byte, []int) {
+func (m *OracleTask) Reset()         { *m = OracleTask{} }
+func (m *OracleTask) String() string { return proto.CompactTextString(m) }
+func (*OracleTask) ProtoMessage()    {}
+func (*OracleTask) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f372f15f6da5f250, []int{0}
 }
-func (m *OracleRequestDoc) XXX_Unmarshal(b []byte) error {
+func (m *OracleTask) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *OracleRequestDoc) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OracleTask) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_OracleRequestDoc.Marshal(b, m, deterministic)
+		return xxx_messageInfo_OracleTask.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -192,114 +91,67 @@ func (m *OracleRequestDoc) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *OracleRequestDoc) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OracleRequestDoc.Merge(m, src)
+func (m *OracleTask) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleTask.Merge(m, src)
 }
-func (m *OracleRequestDoc) XXX_Size() int {
+func (m *OracleTask) XXX_Size() int {
 	return m.Size()
 }
-func (m *OracleRequestDoc) XXX_DiscardUnknown() {
-	xxx_messageInfo_OracleRequestDoc.DiscardUnknown(m)
+func (m *OracleTask) XXX_DiscardUnknown() {
+	xxx_messageInfo_OracleTask.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_OracleRequestDoc proto.InternalMessageInfo
+var xxx_messageInfo_OracleTask proto.InternalMessageInfo
 
-func (m *OracleRequestDoc) GetRequestId() uint64 {
+func (m *OracleTask) GetSymbol() string {
 	if m != nil {
-		return m.RequestId
-	}
-	return 0
-}
-
-func (m *OracleRequestDoc) GetOracleType() OracleType {
-	if m != nil {
-		return m.OracleType
-	}
-	return OracleType_ORACLE_TYPE_UNSPECIFIED
-}
-
-func (m *OracleRequestDoc) GetName() string {
-	if m != nil {
-		return m.Name
+		return m.Symbol
 	}
 	return ""
 }
 
-func (m *OracleRequestDoc) GetDescription() string {
+func (m *OracleTask) GetValueType() ValueType {
 	if m != nil {
-		return m.Description
+		return m.ValueType
 	}
-	return ""
+	return ValueType_VALUE_TYPE_UNSPECIFIED
 }
 
-func (m *OracleRequestDoc) GetPeriod() uint32 {
+func (m *OracleTask) GetEnabled() bool {
 	if m != nil {
-		return m.Period
+		return m.Enabled
 	}
-	return 0
+	return false
 }
 
-func (m *OracleRequestDoc) GetAccountList() []string {
+func (m *OracleTask) GetSubmissionInterval() uint32 {
 	if m != nil {
-		return m.AccountList
-	}
-	return nil
-}
-
-func (m *OracleRequestDoc) GetQuorum() uint32 {
-	if m != nil {
-		return m.Quorum
+		return m.SubmissionInterval
 	}
 	return 0
 }
 
-func (m *OracleRequestDoc) GetEndpoints() []*OracleEndpoint {
-	if m != nil {
-		return m.Endpoints
-	}
-	return nil
+type OracleValue struct {
+	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	// value_type must be VALUE_TYPE_NUMERIC in oracle v1.
+	ValueType     ValueType `protobuf:"varint,2,opt,name=value_type,json=valueType,proto3,enum=guru.oracle.v1.ValueType" json:"value_type,omitempty"`
+	Value         string    `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	BlockHeight   int64     `protobuf:"varint,4,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	BlockTimeUnix int64     `protobuf:"varint,5,opt,name=block_time_unix,json=blockTimeUnix,proto3" json:"block_time_unix,omitempty"`
 }
 
-func (m *OracleRequestDoc) GetAggregationRule() AggregationRule {
-	if m != nil {
-		return m.AggregationRule
-	}
-	return AggregationRule_AGGREGATION_RULE_UNSPECIFIED
-}
-
-func (m *OracleRequestDoc) GetStatus() RequestStatus {
-	if m != nil {
-		return m.Status
-	}
-	return RequestStatus_REQUEST_STATUS_UNSPECIFIED
-}
-
-func (m *OracleRequestDoc) GetNonce() uint64 {
-	if m != nil {
-		return m.Nonce
-	}
-	return 0
-}
-
-type OracleEndpoint struct {
-	// URL of the oracle endpoint
-	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	// Type of the oracle endpoint
-	ParseRule string `protobuf:"bytes,2,opt,name=parse_rule,json=parseRule,proto3" json:"parse_rule,omitempty"`
-}
-
-func (m *OracleEndpoint) Reset()         { *m = OracleEndpoint{} }
-func (m *OracleEndpoint) String() string { return proto.CompactTextString(m) }
-func (*OracleEndpoint) ProtoMessage()    {}
-func (*OracleEndpoint) Descriptor() ([]byte, []int) {
+func (m *OracleValue) Reset()         { *m = OracleValue{} }
+func (m *OracleValue) String() string { return proto.CompactTextString(m) }
+func (*OracleValue) ProtoMessage()    {}
+func (*OracleValue) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f372f15f6da5f250, []int{1}
 }
-func (m *OracleEndpoint) XXX_Unmarshal(b []byte) error {
+func (m *OracleValue) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *OracleEndpoint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OracleValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_OracleEndpoint.Marshal(b, m, deterministic)
+		return xxx_messageInfo_OracleValue.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -309,264 +161,478 @@ func (m *OracleEndpoint) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *OracleEndpoint) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OracleEndpoint.Merge(m, src)
+func (m *OracleValue) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleValue.Merge(m, src)
 }
-func (m *OracleEndpoint) XXX_Size() int {
+func (m *OracleValue) XXX_Size() int {
 	return m.Size()
 }
-func (m *OracleEndpoint) XXX_DiscardUnknown() {
-	xxx_messageInfo_OracleEndpoint.DiscardUnknown(m)
+func (m *OracleValue) XXX_DiscardUnknown() {
+	xxx_messageInfo_OracleValue.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_OracleEndpoint proto.InternalMessageInfo
+var xxx_messageInfo_OracleValue proto.InternalMessageInfo
 
-func (m *OracleEndpoint) GetUrl() string {
+func (m *OracleValue) GetSymbol() string {
 	if m != nil {
-		return m.Url
+		return m.Symbol
 	}
 	return ""
 }
 
-func (m *OracleEndpoint) GetParseRule() string {
+func (m *OracleValue) GetValueType() ValueType {
 	if m != nil {
-		return m.ParseRule
+		return m.ValueType
+	}
+	return ValueType_VALUE_TYPE_UNSPECIFIED
+}
+
+func (m *OracleValue) GetValue() string {
+	if m != nil {
+		return m.Value
 	}
 	return ""
 }
 
-// SubmitDataSet defines the structure for oracle data sets for submit
-// This represents a single data point provided by an oracle node
-type SubmitDataSet struct {
-	// ID of the request this data set belongs to
-	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	// Sequential number to prevent replay attacks
-	Nonce uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	// Raw data in string format (can be JSON, CSV, etc.)
-	RawData string `protobuf:"bytes,3,opt,name=raw_data,json=rawData,proto3" json:"raw_data,omitempty"`
-	// Address of the data provider
-	Provider string `protobuf:"bytes,4,opt,name=provider,proto3" json:"provider,omitempty"`
-	// Cryptographic signature of the data for verification
-	Signature []byte `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
-}
-
-func (m *SubmitDataSet) Reset()         { *m = SubmitDataSet{} }
-func (m *SubmitDataSet) String() string { return proto.CompactTextString(m) }
-func (*SubmitDataSet) ProtoMessage()    {}
-func (*SubmitDataSet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{2}
-}
-func (m *SubmitDataSet) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *SubmitDataSet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_SubmitDataSet.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *SubmitDataSet) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SubmitDataSet.Merge(m, src)
-}
-func (m *SubmitDataSet) XXX_Size() int {
-	return m.Size()
-}
-func (m *SubmitDataSet) XXX_DiscardUnknown() {
-	xxx_messageInfo_SubmitDataSet.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SubmitDataSet proto.InternalMessageInfo
-
-func (m *SubmitDataSet) GetRequestId() uint64 {
-	if m != nil {
-		return m.RequestId
-	}
-	return 0
-}
-
-func (m *SubmitDataSet) GetNonce() uint64 {
-	if m != nil {
-		return m.Nonce
-	}
-	return 0
-}
-
-func (m *SubmitDataSet) GetRawData() string {
-	if m != nil {
-		return m.RawData
-	}
-	return ""
-}
-
-func (m *SubmitDataSet) GetProvider() string {
-	if m != nil {
-		return m.Provider
-	}
-	return ""
-}
-
-func (m *SubmitDataSet) GetSignature() []byte {
-	if m != nil {
-		return m.Signature
-	}
-	return nil
-}
-
-// DataSet defines the structure for oracle data sets
-type DataSet struct {
-	// request_id represents the ID of the request this data set belongs to
-	RequestId uint64 `protobuf:"varint,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	// nonce represents the sequential number to prevent replay attacks
-	Nonce uint64 `protobuf:"varint,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	// block_height represents the height of the block where the data was aggregated
-	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	// block_time represents the time of the block where the data was aggregated
-	BlockTime uint64 `protobuf:"varint,4,opt,name=block_time,json=blockTime,proto3" json:"block_time,omitempty"`
-	// raw_data represents the raw data in string format (can be JSON, CSV, etc.)
-	RawData string `protobuf:"bytes,5,opt,name=raw_data,json=rawData,proto3" json:"raw_data,omitempty"`
-}
-
-func (m *DataSet) Reset()         { *m = DataSet{} }
-func (m *DataSet) String() string { return proto.CompactTextString(m) }
-func (*DataSet) ProtoMessage()    {}
-func (*DataSet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f372f15f6da5f250, []int{3}
-}
-func (m *DataSet) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *DataSet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_DataSet.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *DataSet) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DataSet.Merge(m, src)
-}
-func (m *DataSet) XXX_Size() int {
-	return m.Size()
-}
-func (m *DataSet) XXX_DiscardUnknown() {
-	xxx_messageInfo_DataSet.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_DataSet proto.InternalMessageInfo
-
-func (m *DataSet) GetRequestId() uint64 {
-	if m != nil {
-		return m.RequestId
-	}
-	return 0
-}
-
-func (m *DataSet) GetNonce() uint64 {
-	if m != nil {
-		return m.Nonce
-	}
-	return 0
-}
-
-func (m *DataSet) GetBlockHeight() uint64 {
+func (m *OracleValue) GetBlockHeight() int64 {
 	if m != nil {
 		return m.BlockHeight
 	}
 	return 0
 }
 
-func (m *DataSet) GetBlockTime() uint64 {
+func (m *OracleValue) GetBlockTimeUnix() int64 {
 	if m != nil {
-		return m.BlockTime
+		return m.BlockTimeUnix
 	}
 	return 0
 }
 
-func (m *DataSet) GetRawData() string {
+// AggregatedResult is a sidecar-produced strict-majority aggregate.
+type AggregatedResult struct {
+	Symbol      string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Value       string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	SourceCount uint32 `protobuf:"varint,3,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
+}
+
+func (m *AggregatedResult) Reset()         { *m = AggregatedResult{} }
+func (m *AggregatedResult) String() string { return proto.CompactTextString(m) }
+func (*AggregatedResult) ProtoMessage()    {}
+func (*AggregatedResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f372f15f6da5f250, []int{2}
+}
+func (m *AggregatedResult) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AggregatedResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AggregatedResult.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AggregatedResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AggregatedResult.Merge(m, src)
+}
+func (m *AggregatedResult) XXX_Size() int {
+	return m.Size()
+}
+func (m *AggregatedResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_AggregatedResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AggregatedResult proto.InternalMessageInfo
+
+func (m *AggregatedResult) GetSymbol() string {
 	if m != nil {
-		return m.RawData
+		return m.Symbol
 	}
 	return ""
 }
 
+func (m *AggregatedResult) GetValue() string {
+	if m != nil {
+		return m.Value
+	}
+	return ""
+}
+
+func (m *AggregatedResult) GetSourceCount() uint32 {
+	if m != nil {
+		return m.SourceCount
+	}
+	return 0
+}
+
+type OracleValidatorResult struct {
+	Symbol      string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Value       string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	SourceCount uint32 `protobuf:"varint,4,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
+}
+
+func (m *OracleValidatorResult) Reset()         { *m = OracleValidatorResult{} }
+func (m *OracleValidatorResult) String() string { return proto.CompactTextString(m) }
+func (*OracleValidatorResult) ProtoMessage()    {}
+func (*OracleValidatorResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f372f15f6da5f250, []int{3}
+}
+func (m *OracleValidatorResult) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OracleValidatorResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OracleValidatorResult.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OracleValidatorResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleValidatorResult.Merge(m, src)
+}
+func (m *OracleValidatorResult) XXX_Size() int {
+	return m.Size()
+}
+func (m *OracleValidatorResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_OracleValidatorResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OracleValidatorResult proto.InternalMessageInfo
+
+func (m *OracleValidatorResult) GetSymbol() string {
+	if m != nil {
+		return m.Symbol
+	}
+	return ""
+}
+
+func (m *OracleValidatorResult) GetValue() string {
+	if m != nil {
+		return m.Value
+	}
+	return ""
+}
+
+func (m *OracleValidatorResult) GetSourceCount() uint32 {
+	if m != nil {
+		return m.SourceCount
+	}
+	return 0
+}
+
+type OracleSignedVoteExtension struct {
+	ValidatorAddress   []byte `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
+	ValidatorPower     int64  `protobuf:"varint,2,opt,name=validator_power,json=validatorPower,proto3" json:"validator_power,omitempty"`
+	BlockIdFlag        int32  `protobuf:"varint,3,opt,name=block_id_flag,json=blockIdFlag,proto3" json:"block_id_flag,omitempty"`
+	VoteExtension      []byte `protobuf:"bytes,4,opt,name=vote_extension,json=voteExtension,proto3" json:"vote_extension,omitempty"`
+	ExtensionSignature []byte `protobuf:"bytes,5,opt,name=extension_signature,json=extensionSignature,proto3" json:"extension_signature,omitempty"`
+}
+
+func (m *OracleSignedVoteExtension) Reset()         { *m = OracleSignedVoteExtension{} }
+func (m *OracleSignedVoteExtension) String() string { return proto.CompactTextString(m) }
+func (*OracleSignedVoteExtension) ProtoMessage()    {}
+func (*OracleSignedVoteExtension) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f372f15f6da5f250, []int{4}
+}
+func (m *OracleSignedVoteExtension) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OracleSignedVoteExtension) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OracleSignedVoteExtension.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OracleSignedVoteExtension) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleSignedVoteExtension.Merge(m, src)
+}
+func (m *OracleSignedVoteExtension) XXX_Size() int {
+	return m.Size()
+}
+func (m *OracleSignedVoteExtension) XXX_DiscardUnknown() {
+	xxx_messageInfo_OracleSignedVoteExtension.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OracleSignedVoteExtension proto.InternalMessageInfo
+
+func (m *OracleSignedVoteExtension) GetValidatorAddress() []byte {
+	if m != nil {
+		return m.ValidatorAddress
+	}
+	return nil
+}
+
+func (m *OracleSignedVoteExtension) GetValidatorPower() int64 {
+	if m != nil {
+		return m.ValidatorPower
+	}
+	return 0
+}
+
+func (m *OracleSignedVoteExtension) GetBlockIdFlag() int32 {
+	if m != nil {
+		return m.BlockIdFlag
+	}
+	return 0
+}
+
+func (m *OracleSignedVoteExtension) GetVoteExtension() []byte {
+	if m != nil {
+		return m.VoteExtension
+	}
+	return nil
+}
+
+func (m *OracleSignedVoteExtension) GetExtensionSignature() []byte {
+	if m != nil {
+		return m.ExtensionSignature
+	}
+	return nil
+}
+
+type OracleSignedVoteExtensions struct {
+	Round int32                        `protobuf:"varint,1,opt,name=round,proto3" json:"round,omitempty"`
+	Votes []*OracleSignedVoteExtension `protobuf:"bytes,2,rep,name=votes,proto3" json:"votes,omitempty"`
+}
+
+func (m *OracleSignedVoteExtensions) Reset()         { *m = OracleSignedVoteExtensions{} }
+func (m *OracleSignedVoteExtensions) String() string { return proto.CompactTextString(m) }
+func (*OracleSignedVoteExtensions) ProtoMessage()    {}
+func (*OracleSignedVoteExtensions) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f372f15f6da5f250, []int{5}
+}
+func (m *OracleSignedVoteExtensions) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OracleSignedVoteExtensions) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OracleSignedVoteExtensions.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OracleSignedVoteExtensions) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleSignedVoteExtensions.Merge(m, src)
+}
+func (m *OracleSignedVoteExtensions) XXX_Size() int {
+	return m.Size()
+}
+func (m *OracleSignedVoteExtensions) XXX_DiscardUnknown() {
+	xxx_messageInfo_OracleSignedVoteExtensions.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OracleSignedVoteExtensions proto.InternalMessageInfo
+
+func (m *OracleSignedVoteExtensions) GetRound() int32 {
+	if m != nil {
+		return m.Round
+	}
+	return 0
+}
+
+func (m *OracleSignedVoteExtensions) GetVotes() []*OracleSignedVoteExtension {
+	if m != nil {
+		return m.Votes
+	}
+	return nil
+}
+
+type OracleProposalPayload struct {
+	Height         int64                       `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	VoteExtensions *OracleSignedVoteExtensions `protobuf:"bytes,2,opt,name=vote_extensions,json=voteExtensions,proto3" json:"vote_extensions,omitempty"`
+	Values         []*OracleValue              `protobuf:"bytes,3,rep,name=values,proto3" json:"values,omitempty"`
+}
+
+func (m *OracleProposalPayload) Reset()         { *m = OracleProposalPayload{} }
+func (m *OracleProposalPayload) String() string { return proto.CompactTextString(m) }
+func (*OracleProposalPayload) ProtoMessage()    {}
+func (*OracleProposalPayload) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f372f15f6da5f250, []int{6}
+}
+func (m *OracleProposalPayload) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OracleProposalPayload) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OracleProposalPayload.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OracleProposalPayload) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleProposalPayload.Merge(m, src)
+}
+func (m *OracleProposalPayload) XXX_Size() int {
+	return m.Size()
+}
+func (m *OracleProposalPayload) XXX_DiscardUnknown() {
+	xxx_messageInfo_OracleProposalPayload.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OracleProposalPayload proto.InternalMessageInfo
+
+func (m *OracleProposalPayload) GetHeight() int64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *OracleProposalPayload) GetVoteExtensions() *OracleSignedVoteExtensions {
+	if m != nil {
+		return m.VoteExtensions
+	}
+	return nil
+}
+
+func (m *OracleProposalPayload) GetValues() []*OracleValue {
+	if m != nil {
+		return m.Values
+	}
+	return nil
+}
+
+type OracleHistory struct {
+	Symbol string         `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Values []*OracleValue `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`
+}
+
+func (m *OracleHistory) Reset()         { *m = OracleHistory{} }
+func (m *OracleHistory) String() string { return proto.CompactTextString(m) }
+func (*OracleHistory) ProtoMessage()    {}
+func (*OracleHistory) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f372f15f6da5f250, []int{7}
+}
+func (m *OracleHistory) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OracleHistory) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OracleHistory.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OracleHistory) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OracleHistory.Merge(m, src)
+}
+func (m *OracleHistory) XXX_Size() int {
+	return m.Size()
+}
+func (m *OracleHistory) XXX_DiscardUnknown() {
+	xxx_messageInfo_OracleHistory.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OracleHistory proto.InternalMessageInfo
+
+func (m *OracleHistory) GetSymbol() string {
+	if m != nil {
+		return m.Symbol
+	}
+	return ""
+}
+
+func (m *OracleHistory) GetValues() []*OracleValue {
+	if m != nil {
+		return m.Values
+	}
+	return nil
+}
+
 func init() {
-	proto.RegisterEnum("guru.oracle.v1.OracleType", OracleType_name, OracleType_value)
-	proto.RegisterEnum("guru.oracle.v1.RequestStatus", RequestStatus_name, RequestStatus_value)
-	proto.RegisterEnum("guru.oracle.v1.AggregationRule", AggregationRule_name, AggregationRule_value)
-	proto.RegisterType((*OracleRequestDoc)(nil), "guru.oracle.v1.OracleRequestDoc")
-	proto.RegisterType((*OracleEndpoint)(nil), "guru.oracle.v1.OracleEndpoint")
-	proto.RegisterType((*SubmitDataSet)(nil), "guru.oracle.v1.SubmitDataSet")
-	proto.RegisterType((*DataSet)(nil), "guru.oracle.v1.DataSet")
+	proto.RegisterEnum("guru.oracle.v1.ValueType", ValueType_name, ValueType_value)
+	proto.RegisterType((*OracleTask)(nil), "guru.oracle.v1.OracleTask")
+	proto.RegisterType((*OracleValue)(nil), "guru.oracle.v1.OracleValue")
+	proto.RegisterType((*AggregatedResult)(nil), "guru.oracle.v1.AggregatedResult")
+	proto.RegisterType((*OracleValidatorResult)(nil), "guru.oracle.v1.OracleValidatorResult")
+	proto.RegisterType((*OracleSignedVoteExtension)(nil), "guru.oracle.v1.OracleSignedVoteExtension")
+	proto.RegisterType((*OracleSignedVoteExtensions)(nil), "guru.oracle.v1.OracleSignedVoteExtensions")
+	proto.RegisterType((*OracleProposalPayload)(nil), "guru.oracle.v1.OracleProposalPayload")
+	proto.RegisterType((*OracleHistory)(nil), "guru.oracle.v1.OracleHistory")
 }
 
 func init() { proto.RegisterFile("guru/oracle/v1/oracle.proto", fileDescriptor_f372f15f6da5f250) }
 
 var fileDescriptor_f372f15f6da5f250 = []byte{
-	// 799 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0x4d, 0x73, 0xe3, 0x44,
-	0x10, 0x8d, 0x6c, 0xe7, 0xc3, 0x9d, 0x8f, 0x15, 0x53, 0xd9, 0xa0, 0x78, 0x37, 0x5a, 0x6f, 0x4e,
-	0xae, 0x1c, 0xac, 0x4a, 0x28, 0x4e, 0x70, 0xd1, 0xda, 0xc2, 0x08, 0xb2, 0xb6, 0x19, 0xc9, 0x14,
-	0xe1, 0xa2, 0x1a, 0xcb, 0xb3, 0x8a, 0x0a, 0x59, 0xa3, 0x1d, 0x8d, 0xb2, 0xec, 0x99, 0x3f, 0x00,
-	0x47, 0x8a, 0x2a, 0x7e, 0x0f, 0x27, 0x6a, 0x8f, 0x1c, 0xa9, 0xe4, 0x8f, 0x50, 0x33, 0x12, 0xf1,
-	0x47, 0x52, 0xc5, 0x81, 0x5b, 0xf7, 0x7b, 0xaf, 0x7b, 0xde, 0x4c, 0xcf, 0x0c, 0x3c, 0x8b, 0x0a,
-	0x5e, 0x58, 0x8c, 0x93, 0x30, 0xa1, 0xd6, 0xcd, 0x79, 0x15, 0x75, 0x33, 0xce, 0x04, 0x43, 0x07,
-	0x92, 0xec, 0x56, 0xd0, 0xcd, 0x79, 0xeb, 0x30, 0x62, 0x11, 0x53, 0x94, 0x25, 0xa3, 0x52, 0xd5,
-	0x7a, 0x11, 0x31, 0x16, 0x25, 0xd4, 0x52, 0xd9, 0xb4, 0x78, 0x63, 0x89, 0x78, 0x4e, 0x73, 0x41,
-	0xe6, 0x59, 0x25, 0x30, 0x43, 0x96, 0xcf, 0x59, 0x6e, 0x4d, 0x49, 0x2e, 0xd7, 0x98, 0x52, 0x41,
-	0xce, 0xad, 0x90, 0xc5, 0x69, 0xc9, 0x9f, 0xfe, 0x59, 0x07, 0x7d, 0xa4, 0x16, 0xc1, 0xf4, 0x6d,
-	0x41, 0x73, 0xd1, 0x67, 0x21, 0x3a, 0x01, 0xe0, 0x65, 0x16, 0xc4, 0x33, 0x43, 0x6b, 0x6b, 0x9d,
-	0x06, 0x6e, 0x56, 0x88, 0x3b, 0x43, 0x9f, 0xc1, 0x6e, 0xe9, 0x2b, 0x10, 0xef, 0x33, 0x6a, 0xd4,
-	0xda, 0x5a, 0xe7, 0xe0, 0xa2, 0xd5, 0x5d, 0x35, 0xdc, 0x2d, 0xbb, 0xfa, 0xef, 0x33, 0x8a, 0x81,
-	0xdd, 0xc7, 0x08, 0x41, 0x23, 0x25, 0x73, 0x6a, 0xd4, 0xdb, 0x5a, 0xa7, 0x89, 0x55, 0x8c, 0xda,
-	0xb0, 0x3b, 0xa3, 0x79, 0xc8, 0xe3, 0x4c, 0xc4, 0x2c, 0x35, 0x1a, 0x8a, 0x5a, 0x86, 0xd0, 0x11,
-	0x6c, 0x65, 0x94, 0xc7, 0x6c, 0x66, 0x6c, 0xb6, 0xb5, 0xce, 0x3e, 0xae, 0x32, 0xf4, 0x12, 0xf6,
-	0x48, 0x18, 0xb2, 0x22, 0x15, 0x41, 0x12, 0xe7, 0xc2, 0xd8, 0x6a, 0xd7, 0x65, 0x69, 0x85, 0x5d,
-	0xc6, 0xb9, 0x90, 0xa5, 0x6f, 0x0b, 0xc6, 0x8b, 0xb9, 0xb1, 0x5d, 0x96, 0x96, 0x19, 0xfa, 0x1c,
-	0x9a, 0x34, 0x9d, 0x65, 0x2c, 0x4e, 0x45, 0x6e, 0xec, 0xb4, 0xeb, 0x9d, 0xdd, 0x0b, 0xf3, 0xf1,
-	0x3d, 0x38, 0x95, 0x0c, 0x2f, 0x0a, 0xd0, 0x57, 0xa0, 0x93, 0x28, 0xe2, 0x34, 0x22, 0xd2, 0x5f,
-	0xc0, 0x8b, 0x84, 0x1a, 0x4d, 0x75, 0x10, 0x2f, 0xd6, 0x9b, 0xd8, 0x0b, 0x1d, 0x2e, 0x12, 0x8a,
-	0x9f, 0x90, 0x55, 0x00, 0x7d, 0x0a, 0x5b, 0xb9, 0x20, 0xa2, 0xc8, 0x0d, 0x50, 0x1d, 0x4e, 0xd6,
-	0x3b, 0x54, 0xa3, 0xf1, 0x94, 0x08, 0x57, 0x62, 0x74, 0x08, 0x9b, 0x29, 0x4b, 0x43, 0x6a, 0xec,
-	0xa9, 0x01, 0x95, 0xc9, 0xa9, 0x0d, 0x07, 0xab, 0xae, 0x91, 0x0e, 0xf5, 0x82, 0x27, 0x6a, 0x8c,
-	0x4d, 0x2c, 0x43, 0x39, 0xdf, 0x8c, 0xf0, 0x9c, 0x96, 0xb6, 0x6b, 0x8a, 0x68, 0x2a, 0x44, 0xfa,
-	0x39, 0xfd, 0x55, 0x83, 0x7d, 0xaf, 0x98, 0xce, 0x63, 0xd1, 0x27, 0x82, 0x78, 0x54, 0xfc, 0xd7,
-	0x85, 0xb8, 0x77, 0x52, 0x5b, 0x72, 0x82, 0x8e, 0x61, 0x87, 0x93, 0x77, 0xc1, 0x8c, 0x08, 0x52,
-	0x4d, 0x7b, 0x9b, 0x93, 0x77, 0xb2, 0x25, 0x6a, 0xc1, 0x4e, 0xc6, 0xd9, 0x4d, 0x3c, 0xa3, 0xbc,
-	0x9a, 0xf6, 0x7d, 0x8e, 0x9e, 0x43, 0x33, 0x8f, 0xa3, 0x94, 0x88, 0x82, 0x53, 0x35, 0xed, 0x3d,
-	0xbc, 0x00, 0x4e, 0x7f, 0xd3, 0x60, 0xfb, 0x7f, 0xb9, 0x7a, 0x09, 0x7b, 0xd3, 0x84, 0x85, 0x3f,
-	0x04, 0xd7, 0x34, 0x8e, 0xae, 0x85, 0x72, 0xd6, 0xc0, 0xbb, 0x0a, 0xfb, 0x52, 0x41, 0xb2, 0x6f,
-	0x29, 0x91, 0x8f, 0x49, 0xf9, 0x6b, 0xe0, 0xa6, 0x42, 0xfc, 0x78, 0xbe, 0xba, 0xaf, 0xcd, 0x95,
-	0x7d, 0x9d, 0xfd, 0xa2, 0x01, 0x2c, 0xee, 0x3d, 0x7a, 0x06, 0x1f, 0x8f, 0xb0, 0xdd, 0xbb, 0x74,
-	0x02, 0xff, 0x6a, 0xec, 0x04, 0x93, 0xa1, 0x37, 0x76, 0x7a, 0xee, 0x17, 0xae, 0xd3, 0xd7, 0x37,
-	0xd0, 0x09, 0x1c, 0x2f, 0x93, 0xaf, 0xdd, 0x61, 0x30, 0xb0, 0xbd, 0x60, 0x8c, 0xdd, 0x9e, 0xa3,
-	0x6b, 0xc8, 0x80, 0xc3, 0x65, 0xba, 0x37, 0xc1, 0xd8, 0x19, 0xf6, 0xae, 0xf4, 0x1a, 0x7a, 0x0a,
-	0x1f, 0x2d, 0x33, 0x9e, 0x3f, 0xea, 0x7d, 0xad, 0xd7, 0xd1, 0x11, 0xa0, 0x95, 0x02, 0x7c, 0x35,
-	0xf6, 0x47, 0x7a, 0xe3, 0xec, 0x27, 0x0d, 0xf6, 0x57, 0x2e, 0x10, 0x32, 0xa1, 0x85, 0x9d, 0x6f,
-	0x26, 0x8e, 0xe7, 0x07, 0x9e, 0x6f, 0xfb, 0x13, 0x6f, 0xcd, 0x59, 0x0b, 0x8e, 0xd6, 0x78, 0x67,
-	0x68, 0xbf, 0xba, 0x74, 0xfa, 0xba, 0x86, 0x8e, 0xe1, 0xe9, 0x1a, 0x37, 0xb6, 0x27, 0x9e, 0xd3,
-	0xd7, 0x6b, 0x72, 0xb7, 0x6b, 0x54, 0xdf, 0xf5, 0xca, 0xba, 0xfa, 0xd9, 0xef, 0x1a, 0x3c, 0x59,
-	0x7b, 0x08, 0xa8, 0x0d, 0xcf, 0xed, 0xc1, 0x00, 0x3b, 0x03, 0xdb, 0x77, 0x47, 0xc3, 0x00, 0x4f,
-	0x2e, 0xd7, 0xcf, 0xc8, 0x80, 0xc3, 0x07, 0x0a, 0xfb, 0xdb, 0x41, 0x79, 0x3c, 0x0f, 0x98, 0xd7,
-	0xee, 0x50, 0xaf, 0x3d, 0xce, 0xd8, 0xdf, 0xe9, 0x75, 0x69, 0xf0, 0x21, 0xe3, 0xf4, 0x5d, 0x7b,
-	0xa8, 0x37, 0x5e, 0xb9, 0x7f, 0xdc, 0x9a, 0xda, 0x87, 0x5b, 0x53, 0xfb, 0xfb, 0xd6, 0xd4, 0x7e,
-	0xbe, 0x33, 0x37, 0x3e, 0xdc, 0x99, 0x1b, 0x7f, 0xdd, 0x99, 0x1b, 0xdf, 0x5b, 0x51, 0x2c, 0xae,
-	0x8b, 0x69, 0x37, 0x64, 0x73, 0x4b, 0x3e, 0xcc, 0x37, 0x71, 0x1a, 0x25, 0x6c, 0x4a, 0x12, 0x95,
-	0x59, 0x37, 0x17, 0xd6, 0x8f, 0xff, 0x7e, 0xe2, 0xf2, 0x3f, 0xcc, 0xa7, 0x5b, 0xea, 0x6b, 0xfd,
-	0xe4, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x11, 0xf4, 0x55, 0x54, 0xe0, 0x05, 0x00, 0x00,
+	// 712 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0x4f, 0x4f, 0xdb, 0x48,
+	0x14, 0x8f, 0x63, 0xc2, 0x92, 0x97, 0xbf, 0x0c, 0x0b, 0x32, 0x20, 0x45, 0x59, 0x4b, 0xbb, 0x9b,
+	0x65, 0xa5, 0x58, 0x84, 0xcb, 0xde, 0x56, 0xc0, 0x86, 0x25, 0x15, 0x85, 0x68, 0x92, 0x20, 0xb5,
+	0xaa, 0x64, 0x39, 0xf1, 0x60, 0x46, 0x38, 0x9e, 0xc8, 0x33, 0x76, 0x93, 0x7e, 0x8a, 0x7e, 0x8d,
+	0x7e, 0x84, 0xde, 0x7a, 0xec, 0x91, 0x63, 0x8f, 0x15, 0x9c, 0xfb, 0x1d, 0x2a, 0x8f, 0x9d, 0x90,
+	0xd0, 0xa6, 0xe2, 0xd2, 0x9b, 0x7f, 0xbf, 0xf7, 0xfc, 0xde, 0xef, 0xf7, 0xde, 0xcc, 0xc0, 0xae,
+	0x13, 0xf8, 0x81, 0xc1, 0x7c, 0x6b, 0xe0, 0x12, 0x23, 0xdc, 0x4f, 0xbe, 0xea, 0x23, 0x9f, 0x09,
+	0x86, 0x8a, 0x51, 0xb0, 0x9e, 0x50, 0xe1, 0xbe, 0xfe, 0x4e, 0x01, 0xb8, 0x90, 0xa8, 0x6b, 0xf1,
+	0x1b, 0xb4, 0x05, 0xab, 0x7c, 0x32, 0xec, 0x33, 0x57, 0x53, 0xaa, 0x4a, 0x2d, 0x8b, 0x13, 0x84,
+	0xfe, 0x01, 0x08, 0x2d, 0x37, 0x20, 0xa6, 0x98, 0x8c, 0x88, 0x96, 0xae, 0x2a, 0xb5, 0x62, 0x63,
+	0xbb, 0xbe, 0x58, 0xab, 0x7e, 0x19, 0x65, 0x74, 0x27, 0x23, 0x82, 0xb3, 0xe1, 0xf4, 0x13, 0x69,
+	0xf0, 0x0b, 0xf1, 0xac, 0xbe, 0x4b, 0x6c, 0x4d, 0xad, 0x2a, 0xb5, 0x35, 0x3c, 0x85, 0xc8, 0x80,
+	0x0d, 0x1e, 0xf4, 0x87, 0x94, 0x73, 0xca, 0x3c, 0x93, 0x7a, 0x82, 0xf8, 0xa1, 0xe5, 0x6a, 0x2b,
+	0x55, 0xa5, 0x56, 0xc0, 0xe8, 0x21, 0xd4, 0x4a, 0x22, 0xfa, 0x07, 0x05, 0x72, 0xb1, 0x56, 0xd9,
+	0xe9, 0x27, 0x88, 0xfd, 0x15, 0x32, 0x12, 0x48, 0xa9, 0x59, 0x1c, 0x03, 0xf4, 0x1b, 0xe4, 0xfb,
+	0x2e, 0x1b, 0xdc, 0x98, 0xd7, 0x84, 0x3a, 0xd7, 0x42, 0x2a, 0x54, 0x71, 0x4e, 0x72, 0xa7, 0x92,
+	0x42, 0x7f, 0x40, 0x29, 0x4e, 0x11, 0x74, 0x48, 0xcc, 0xc0, 0xa3, 0x63, 0x2d, 0x23, 0xb3, 0x0a,
+	0x92, 0xee, 0xd2, 0x21, 0xe9, 0x79, 0x74, 0xac, 0x0f, 0xa0, 0x7c, 0xe8, 0x38, 0x3e, 0x71, 0x2c,
+	0x41, 0x6c, 0x4c, 0x78, 0xe0, 0x8a, 0xa5, 0x36, 0x66, 0x62, 0xd2, 0x8f, 0xc4, 0x70, 0x16, 0xf8,
+	0x03, 0x62, 0x0e, 0x58, 0xe0, 0x09, 0xa9, 0xb4, 0x80, 0x73, 0x31, 0x77, 0x1c, 0x51, 0xfa, 0x1b,
+	0xd8, 0x9c, 0x8d, 0x89, 0xda, 0x96, 0x60, 0xfe, 0x53, 0x3b, 0xa9, 0x3f, 0xea, 0xb4, 0xf2, 0x4d,
+	0xa7, 0x67, 0x2b, 0x6b, 0xe9, 0xb2, 0x8a, 0xe7, 0xa6, 0xad, 0x7f, 0x51, 0x60, 0x3b, 0x6e, 0xde,
+	0xa1, 0x8e, 0x47, 0xec, 0x4b, 0x26, 0x48, 0x73, 0x2c, 0x88, 0x17, 0x6d, 0x12, 0xfd, 0x0d, 0xeb,
+	0xe1, 0x54, 0x93, 0x69, 0xd9, 0xb6, 0x4f, 0x38, 0x97, 0x5a, 0xf2, 0xb8, 0x3c, 0x0b, 0x1c, 0xc6,
+	0x3c, 0xfa, 0x13, 0x4a, 0x0f, 0xc9, 0x23, 0xf6, 0x9a, 0xf8, 0x72, 0x12, 0x2a, 0x2e, 0xce, 0xe8,
+	0x76, 0xc4, 0x22, 0x1d, 0xe2, 0x29, 0x9b, 0xd4, 0x36, 0xaf, 0x5c, 0xcb, 0x91, 0x36, 0x32, 0xc9,
+	0x82, 0x5a, 0xf6, 0x89, 0x6b, 0x39, 0xe8, 0x77, 0x28, 0x86, 0x4c, 0x10, 0x93, 0x4c, 0xb5, 0x48,
+	0x3b, 0x79, 0x5c, 0x08, 0x17, 0x04, 0x1a, 0xb0, 0x31, 0xcb, 0x30, 0x39, 0x75, 0x3c, 0x4b, 0x04,
+	0x3e, 0x91, 0xbb, 0xcc, 0x63, 0x34, 0x0b, 0x75, 0xa6, 0x11, 0x9d, 0xc3, 0xce, 0x52, 0xbb, 0x3c,
+	0x1a, 0xac, 0xcf, 0x02, 0xcf, 0x96, 0x1e, 0x33, 0x38, 0x06, 0xe8, 0x5f, 0xc8, 0x44, 0x5d, 0xb9,
+	0x96, 0xae, 0xaa, 0xb5, 0x5c, 0xe3, 0xaf, 0xc7, 0x47, 0x73, 0x69, 0x41, 0x1c, 0xff, 0xa7, 0xbf,
+	0x57, 0xa6, 0x1b, 0x6e, 0xfb, 0x6c, 0xc4, 0xb8, 0xe5, 0xb6, 0xad, 0x89, 0xcb, 0x2c, 0x3b, 0xda,
+	0x70, 0x72, 0x48, 0x15, 0x39, 0xaa, 0x04, 0xa1, 0x0e, 0x94, 0x16, 0xed, 0x73, 0x39, 0xcb, 0x5c,
+	0x63, 0xef, 0xc9, 0xcd, 0x39, 0x2e, 0x86, 0x8b, 0xee, 0x0e, 0x60, 0x55, 0x6e, 0x9e, 0x6b, 0xaa,
+	0x34, 0xb2, 0xfb, 0xfd, 0x5a, 0xf2, 0xa6, 0xe1, 0x24, 0x55, 0x7f, 0x05, 0x85, 0x98, 0x3e, 0xa5,
+	0x5c, 0x30, 0x7f, 0xb2, 0xf4, 0x50, 0x3e, 0x54, 0x4f, 0x3f, 0xb9, 0xfa, 0xde, 0x0d, 0x64, 0x67,
+	0x17, 0x1b, 0xed, 0xc0, 0xd6, 0xe5, 0xe1, 0x59, 0xaf, 0x69, 0x76, 0x5f, 0xb4, 0x9b, 0x66, 0xef,
+	0xbc, 0xd3, 0x6e, 0x1e, 0xb7, 0x4e, 0x5a, 0xcd, 0xff, 0xca, 0x29, 0xb4, 0x05, 0x68, 0x2e, 0x76,
+	0xde, 0x7b, 0xde, 0xc4, 0xad, 0xe3, 0xb2, 0x82, 0x36, 0x61, 0x7d, 0x8e, 0xef, 0x74, 0x71, 0xeb,
+	0xfc, 0xff, 0x72, 0x1a, 0x6d, 0x40, 0x69, 0x8e, 0x3e, 0xba, 0xb8, 0x38, 0x2b, 0xab, 0x47, 0xad,
+	0x8f, 0x77, 0x15, 0xe5, 0xf6, 0xae, 0xa2, 0x7c, 0xbe, 0xab, 0x28, 0x6f, 0xef, 0x2b, 0xa9, 0xdb,
+	0xfb, 0x4a, 0xea, 0xd3, 0x7d, 0x25, 0xf5, 0xd2, 0x70, 0xa8, 0xb8, 0x0e, 0xfa, 0xf5, 0x01, 0x1b,
+	0x1a, 0x91, 0xea, 0x2b, 0xea, 0x39, 0x2e, 0xeb, 0x5b, 0xae, 0x44, 0x46, 0xd8, 0x30, 0xc6, 0xd3,
+	0x07, 0x3a, 0xba, 0x35, 0xbc, 0xbf, 0x2a, 0x5f, 0xe7, 0x83, 0xaf, 0x01, 0x00, 0x00, 0xff, 0xff,
+	0xda, 0x13, 0xad, 0xb5, 0xbc, 0x05, 0x00, 0x00,
 }
 
-func (m *OracleRequestDoc) Marshal() (dAtA []byte, err error) {
+func (m *OracleTask) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -576,35 +642,260 @@ func (m *OracleRequestDoc) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *OracleRequestDoc) MarshalTo(dAtA []byte) (int, error) {
+func (m *OracleTask) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *OracleRequestDoc) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *OracleTask) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Nonce != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.Nonce))
+	if m.SubmissionInterval != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.SubmissionInterval))
 		i--
-		dAtA[i] = 0x60
+		dAtA[i] = 0x20
 	}
-	if m.Status != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.Status))
+	if m.Enabled {
 		i--
-		dAtA[i] = 0x50
-	}
-	if m.AggregationRule != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.AggregationRule))
+		if m.Enabled {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
 		i--
-		dAtA[i] = 0x48
+		dAtA[i] = 0x18
 	}
-	if len(m.Endpoints) > 0 {
-		for iNdEx := len(m.Endpoints) - 1; iNdEx >= 0; iNdEx-- {
+	if m.ValueType != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.ValueType))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.Symbol)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OracleValue) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OracleValue) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OracleValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.BlockTimeUnix != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.BlockTimeUnix))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.BlockHeight != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.BlockHeight))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Value) > 0 {
+		i -= len(m.Value)
+		copy(dAtA[i:], m.Value)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.Value)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.ValueType != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.ValueType))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.Symbol)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *AggregatedResult) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AggregatedResult) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AggregatedResult) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.SourceCount != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.SourceCount))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.Value) > 0 {
+		i -= len(m.Value)
+		copy(dAtA[i:], m.Value)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.Value)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.Symbol)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OracleValidatorResult) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OracleValidatorResult) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OracleValidatorResult) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.SourceCount != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.SourceCount))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Value) > 0 {
+		i -= len(m.Value)
+		copy(dAtA[i:], m.Value)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.Value)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.Symbol)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OracleSignedVoteExtension) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OracleSignedVoteExtension) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OracleSignedVoteExtension) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ExtensionSignature) > 0 {
+		i -= len(m.ExtensionSignature)
+		copy(dAtA[i:], m.ExtensionSignature)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.ExtensionSignature)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.VoteExtension) > 0 {
+		i -= len(m.VoteExtension)
+		copy(dAtA[i:], m.VoteExtension)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.VoteExtension)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.BlockIdFlag != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.BlockIdFlag))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.ValidatorPower != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.ValidatorPower))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.ValidatorAddress) > 0 {
+		i -= len(m.ValidatorAddress)
+		copy(dAtA[i:], m.ValidatorAddress)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.ValidatorAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OracleSignedVoteExtensions) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OracleSignedVoteExtensions) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OracleSignedVoteExtensions) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Votes) > 0 {
+		for iNdEx := len(m.Votes) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Endpoints[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Votes[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -612,56 +903,18 @@ func (m *OracleRequestDoc) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintOracle(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x42
+			dAtA[i] = 0x12
 		}
 	}
-	if m.Quorum != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.Quorum))
-		i--
-		dAtA[i] = 0x38
-	}
-	if len(m.AccountList) > 0 {
-		for iNdEx := len(m.AccountList) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.AccountList[iNdEx])
-			copy(dAtA[i:], m.AccountList[iNdEx])
-			i = encodeVarintOracle(dAtA, i, uint64(len(m.AccountList[iNdEx])))
-			i--
-			dAtA[i] = 0x32
-		}
-	}
-	if m.Period != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.Period))
-		i--
-		dAtA[i] = 0x28
-	}
-	if len(m.Description) > 0 {
-		i -= len(m.Description)
-		copy(dAtA[i:], m.Description)
-		i = encodeVarintOracle(dAtA, i, uint64(len(m.Description)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintOracle(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if m.OracleType != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.OracleType))
-		i--
-		dAtA[i] = 0x10
-	}
-	if m.RequestId != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.RequestId))
+	if m.Round != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.Round))
 		i--
 		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *OracleEndpoint) Marshal() (dAtA []byte, err error) {
+func (m *OracleProposalPayload) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -671,133 +924,90 @@ func (m *OracleEndpoint) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *OracleEndpoint) MarshalTo(dAtA []byte) (int, error) {
+func (m *OracleProposalPayload) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *OracleEndpoint) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *OracleProposalPayload) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ParseRule) > 0 {
-		i -= len(m.ParseRule)
-		copy(dAtA[i:], m.ParseRule)
-		i = encodeVarintOracle(dAtA, i, uint64(len(m.ParseRule)))
+	if len(m.Values) > 0 {
+		for iNdEx := len(m.Values) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Values[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintOracle(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if m.VoteExtensions != nil {
+		{
+			size, err := m.VoteExtensions.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintOracle(dAtA, i, uint64(size))
+		}
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Url) > 0 {
-		i -= len(m.Url)
-		copy(dAtA[i:], m.Url)
-		i = encodeVarintOracle(dAtA, i, uint64(len(m.Url)))
+	if m.Height != 0 {
+		i = encodeVarintOracle(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OracleHistory) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OracleHistory) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OracleHistory) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Values) > 0 {
+		for iNdEx := len(m.Values) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Values[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintOracle(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.Symbol) > 0 {
+		i -= len(m.Symbol)
+		copy(dAtA[i:], m.Symbol)
+		i = encodeVarintOracle(dAtA, i, uint64(len(m.Symbol)))
 		i--
 		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *SubmitDataSet) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *SubmitDataSet) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *SubmitDataSet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Signature) > 0 {
-		i -= len(m.Signature)
-		copy(dAtA[i:], m.Signature)
-		i = encodeVarintOracle(dAtA, i, uint64(len(m.Signature)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if len(m.Provider) > 0 {
-		i -= len(m.Provider)
-		copy(dAtA[i:], m.Provider)
-		i = encodeVarintOracle(dAtA, i, uint64(len(m.Provider)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.RawData) > 0 {
-		i -= len(m.RawData)
-		copy(dAtA[i:], m.RawData)
-		i = encodeVarintOracle(dAtA, i, uint64(len(m.RawData)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if m.Nonce != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.Nonce))
-		i--
-		dAtA[i] = 0x10
-	}
-	if m.RequestId != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.RequestId))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *DataSet) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *DataSet) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *DataSet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.RawData) > 0 {
-		i -= len(m.RawData)
-		copy(dAtA[i:], m.RawData)
-		i = encodeVarintOracle(dAtA, i, uint64(len(m.RawData)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if m.BlockTime != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.BlockTime))
-		i--
-		dAtA[i] = 0x20
-	}
-	if m.BlockHeight != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.BlockHeight))
-		i--
-		dAtA[i] = 0x18
-	}
-	if m.Nonce != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.Nonce))
-		i--
-		dAtA[i] = 0x10
-	}
-	if m.RequestId != 0 {
-		i = encodeVarintOracle(dAtA, i, uint64(m.RequestId))
-		i--
-		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -813,121 +1023,176 @@ func encodeVarintOracle(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *OracleRequestDoc) Size() (n int) {
+func (m *OracleTask) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.RequestId != 0 {
-		n += 1 + sovOracle(uint64(m.RequestId))
-	}
-	if m.OracleType != 0 {
-		n += 1 + sovOracle(uint64(m.OracleType))
-	}
-	l = len(m.Name)
+	l = len(m.Symbol)
 	if l > 0 {
 		n += 1 + l + sovOracle(uint64(l))
 	}
-	l = len(m.Description)
-	if l > 0 {
-		n += 1 + l + sovOracle(uint64(l))
+	if m.ValueType != 0 {
+		n += 1 + sovOracle(uint64(m.ValueType))
 	}
-	if m.Period != 0 {
-		n += 1 + sovOracle(uint64(m.Period))
+	if m.Enabled {
+		n += 2
 	}
-	if len(m.AccountList) > 0 {
-		for _, s := range m.AccountList {
-			l = len(s)
-			n += 1 + l + sovOracle(uint64(l))
-		}
-	}
-	if m.Quorum != 0 {
-		n += 1 + sovOracle(uint64(m.Quorum))
-	}
-	if len(m.Endpoints) > 0 {
-		for _, e := range m.Endpoints {
-			l = e.Size()
-			n += 1 + l + sovOracle(uint64(l))
-		}
-	}
-	if m.AggregationRule != 0 {
-		n += 1 + sovOracle(uint64(m.AggregationRule))
-	}
-	if m.Status != 0 {
-		n += 1 + sovOracle(uint64(m.Status))
-	}
-	if m.Nonce != 0 {
-		n += 1 + sovOracle(uint64(m.Nonce))
+	if m.SubmissionInterval != 0 {
+		n += 1 + sovOracle(uint64(m.SubmissionInterval))
 	}
 	return n
 }
 
-func (m *OracleEndpoint) Size() (n int) {
+func (m *OracleValue) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Url)
+	l = len(m.Symbol)
 	if l > 0 {
 		n += 1 + l + sovOracle(uint64(l))
 	}
-	l = len(m.ParseRule)
+	if m.ValueType != 0 {
+		n += 1 + sovOracle(uint64(m.ValueType))
+	}
+	l = len(m.Value)
 	if l > 0 {
 		n += 1 + l + sovOracle(uint64(l))
-	}
-	return n
-}
-
-func (m *SubmitDataSet) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.RequestId != 0 {
-		n += 1 + sovOracle(uint64(m.RequestId))
-	}
-	if m.Nonce != 0 {
-		n += 1 + sovOracle(uint64(m.Nonce))
-	}
-	l = len(m.RawData)
-	if l > 0 {
-		n += 1 + l + sovOracle(uint64(l))
-	}
-	l = len(m.Provider)
-	if l > 0 {
-		n += 1 + l + sovOracle(uint64(l))
-	}
-	l = len(m.Signature)
-	if l > 0 {
-		n += 1 + l + sovOracle(uint64(l))
-	}
-	return n
-}
-
-func (m *DataSet) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.RequestId != 0 {
-		n += 1 + sovOracle(uint64(m.RequestId))
-	}
-	if m.Nonce != 0 {
-		n += 1 + sovOracle(uint64(m.Nonce))
 	}
 	if m.BlockHeight != 0 {
 		n += 1 + sovOracle(uint64(m.BlockHeight))
 	}
-	if m.BlockTime != 0 {
-		n += 1 + sovOracle(uint64(m.BlockTime))
+	if m.BlockTimeUnix != 0 {
+		n += 1 + sovOracle(uint64(m.BlockTimeUnix))
 	}
-	l = len(m.RawData)
+	return n
+}
+
+func (m *AggregatedResult) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Symbol)
 	if l > 0 {
 		n += 1 + l + sovOracle(uint64(l))
+	}
+	l = len(m.Value)
+	if l > 0 {
+		n += 1 + l + sovOracle(uint64(l))
+	}
+	if m.SourceCount != 0 {
+		n += 1 + sovOracle(uint64(m.SourceCount))
+	}
+	return n
+}
+
+func (m *OracleValidatorResult) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Symbol)
+	if l > 0 {
+		n += 1 + l + sovOracle(uint64(l))
+	}
+	l = len(m.Value)
+	if l > 0 {
+		n += 1 + l + sovOracle(uint64(l))
+	}
+	if m.SourceCount != 0 {
+		n += 1 + sovOracle(uint64(m.SourceCount))
+	}
+	return n
+}
+
+func (m *OracleSignedVoteExtension) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ValidatorAddress)
+	if l > 0 {
+		n += 1 + l + sovOracle(uint64(l))
+	}
+	if m.ValidatorPower != 0 {
+		n += 1 + sovOracle(uint64(m.ValidatorPower))
+	}
+	if m.BlockIdFlag != 0 {
+		n += 1 + sovOracle(uint64(m.BlockIdFlag))
+	}
+	l = len(m.VoteExtension)
+	if l > 0 {
+		n += 1 + l + sovOracle(uint64(l))
+	}
+	l = len(m.ExtensionSignature)
+	if l > 0 {
+		n += 1 + l + sovOracle(uint64(l))
+	}
+	return n
+}
+
+func (m *OracleSignedVoteExtensions) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Round != 0 {
+		n += 1 + sovOracle(uint64(m.Round))
+	}
+	if len(m.Votes) > 0 {
+		for _, e := range m.Votes {
+			l = e.Size()
+			n += 1 + l + sovOracle(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *OracleProposalPayload) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Height != 0 {
+		n += 1 + sovOracle(uint64(m.Height))
+	}
+	if m.VoteExtensions != nil {
+		l = m.VoteExtensions.Size()
+		n += 1 + l + sovOracle(uint64(l))
+	}
+	if len(m.Values) > 0 {
+		for _, e := range m.Values {
+			l = e.Size()
+			n += 1 + l + sovOracle(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *OracleHistory) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Symbol)
+	if l > 0 {
+		n += 1 + l + sovOracle(uint64(l))
+	}
+	if len(m.Values) > 0 {
+		for _, e := range m.Values {
+			l = e.Size()
+			n += 1 + l + sovOracle(uint64(l))
+		}
 	}
 	return n
 }
@@ -938,7 +1203,7 @@ func sovOracle(x uint64) (n int) {
 func sozOracle(x uint64) (n int) {
 	return sovOracle(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *OracleRequestDoc) Unmarshal(dAtA []byte) error {
+func (m *OracleTask) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -961,17 +1226,17 @@ func (m *OracleRequestDoc) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: OracleRequestDoc: wiretype end group for non-group")
+			return fmt.Errorf("proto: OracleTask: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OracleRequestDoc: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OracleTask: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RequestId", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
 			}
-			m.RequestId = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOracle
@@ -981,16 +1246,29 @@ func (m *OracleRequestDoc) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.RequestId |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Symbol = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OracleType", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ValueType", wireType)
 			}
-			m.OracleType = 0
+			m.ValueType = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOracle
@@ -1000,16 +1278,16 @@ func (m *OracleRequestDoc) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.OracleType |= OracleType(b&0x7F) << shift
+				m.ValueType |= ValueType(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
 			}
-			var stringLen uint64
+			var v int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOracle
@@ -1019,61 +1297,17 @@ func (m *OracleRequestDoc) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				v |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthOracle
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthOracle
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
+			m.Enabled = bool(v != 0)
 		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthOracle
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthOracle
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Description = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Period", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SubmissionInterval", wireType)
 			}
-			m.Period = 0
+			m.SubmissionInterval = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOracle
@@ -1083,149 +1317,7 @@ func (m *OracleRequestDoc) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Period |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AccountList", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthOracle
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthOracle
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.AccountList = append(m.AccountList, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		case 7:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Quorum", wireType)
-			}
-			m.Quorum = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Quorum |= uint32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Endpoints", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthOracle
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthOracle
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Endpoints = append(m.Endpoints, &OracleEndpoint{})
-			if err := m.Endpoints[len(m.Endpoints)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 9:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AggregationRule", wireType)
-			}
-			m.AggregationRule = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.AggregationRule |= AggregationRule(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 10:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
-			}
-			m.Status = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Status |= RequestStatus(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 12:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
-			}
-			m.Nonce = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Nonce |= uint64(b&0x7F) << shift
+				m.SubmissionInterval |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1251,7 +1343,7 @@ func (m *OracleRequestDoc) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *OracleEndpoint) Unmarshal(dAtA []byte) error {
+func (m *OracleValue) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1274,15 +1366,15 @@ func (m *OracleEndpoint) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: OracleEndpoint: wiretype end group for non-group")
+			return fmt.Errorf("proto: OracleValue: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OracleEndpoint: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OracleValue: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Url", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1310,11 +1402,30 @@ func (m *OracleEndpoint) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Url = string(dAtA[iNdEx:postIndex])
+			m.Symbol = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValueType", wireType)
+			}
+			m.ValueType = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ValueType |= ValueType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ParseRule", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1342,8 +1453,46 @@ func (m *OracleEndpoint) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ParseRule = string(dAtA[iNdEx:postIndex])
+			m.Value = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockHeight", wireType)
+			}
+			m.BlockHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlockHeight |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockTimeUnix", wireType)
+			}
+			m.BlockTimeUnix = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlockTimeUnix |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipOracle(dAtA[iNdEx:])
@@ -1365,7 +1514,7 @@ func (m *OracleEndpoint) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *SubmitDataSet) Unmarshal(dAtA []byte) error {
+func (m *AggregatedResult) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1388,17 +1537,17 @@ func (m *SubmitDataSet) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: SubmitDataSet: wiretype end group for non-group")
+			return fmt.Errorf("proto: AggregatedResult: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SubmitDataSet: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: AggregatedResult: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RequestId", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
 			}
-			m.RequestId = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOracle
@@ -1408,16 +1557,29 @@ func (m *SubmitDataSet) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.RequestId |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Symbol = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
-			m.Nonce = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOracle
@@ -1427,14 +1589,128 @@ func (m *SubmitDataSet) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Nonce |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Value = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SourceCount", wireType)
+			}
+			m.SourceCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SourceCount |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipOracle(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OracleValidatorResult) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowOracle
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OracleValidatorResult: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OracleValidatorResult: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Symbol = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RawData", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1462,13 +1738,13 @@ func (m *SubmitDataSet) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RawData = string(dAtA[iNdEx:postIndex])
+			m.Value = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Provider", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SourceCount", wireType)
 			}
-			var stringLen uint64
+			m.SourceCount = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOracle
@@ -1478,27 +1754,64 @@ func (m *SubmitDataSet) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				m.SourceCount |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipOracle(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthOracle
 			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthOracle
-			}
-			if postIndex > l {
+			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Provider = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OracleSignedVoteExtension) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowOracle
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OracleSignedVoteExtension: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OracleSignedVoteExtension: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Signature", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorAddress", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -1525,9 +1838,115 @@ func (m *SubmitDataSet) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Signature = append(m.Signature[:0], dAtA[iNdEx:postIndex]...)
-			if m.Signature == nil {
-				m.Signature = []byte{}
+			m.ValidatorAddress = append(m.ValidatorAddress[:0], dAtA[iNdEx:postIndex]...)
+			if m.ValidatorAddress == nil {
+				m.ValidatorAddress = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorPower", wireType)
+			}
+			m.ValidatorPower = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ValidatorPower |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockIdFlag", wireType)
+			}
+			m.BlockIdFlag = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlockIdFlag |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VoteExtension", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.VoteExtension = append(m.VoteExtension[:0], dAtA[iNdEx:postIndex]...)
+			if m.VoteExtension == nil {
+				m.VoteExtension = []byte{}
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExtensionSignature", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ExtensionSignature = append(m.ExtensionSignature[:0], dAtA[iNdEx:postIndex]...)
+			if m.ExtensionSignature == nil {
+				m.ExtensionSignature = []byte{}
 			}
 			iNdEx = postIndex
 		default:
@@ -1551,7 +1970,7 @@ func (m *SubmitDataSet) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *DataSet) Unmarshal(dAtA []byte) error {
+func (m *OracleSignedVoteExtensions) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1574,17 +1993,17 @@ func (m *DataSet) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: DataSet: wiretype end group for non-group")
+			return fmt.Errorf("proto: OracleSignedVoteExtensions: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DataSet: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OracleSignedVoteExtensions: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RequestId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Round", wireType)
 			}
-			m.RequestId = 0
+			m.Round = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowOracle
@@ -1594,71 +2013,237 @@ func (m *DataSet) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.RequestId |= uint64(b&0x7F) << shift
+				m.Round |= int32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Nonce", wireType)
-			}
-			m.Nonce = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Nonce |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BlockHeight", wireType)
-			}
-			m.BlockHeight = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.BlockHeight |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BlockTime", wireType)
-			}
-			m.BlockTime = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowOracle
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.BlockTime |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RawData", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Votes", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Votes = append(m.Votes, &OracleSignedVoteExtension{})
+			if err := m.Votes[len(m.Votes)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipOracle(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OracleProposalPayload) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowOracle
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OracleProposalPayload: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OracleProposalPayload: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VoteExtensions", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.VoteExtensions == nil {
+				m.VoteExtensions = &OracleSignedVoteExtensions{}
+			}
+			if err := m.VoteExtensions.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Values", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Values = append(m.Values, &OracleValue{})
+			if err := m.Values[len(m.Values)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipOracle(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OracleHistory) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowOracle
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OracleHistory: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OracleHistory: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1686,7 +2271,41 @@ func (m *DataSet) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RawData = string(dAtA[iNdEx:postIndex])
+			m.Symbol = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Values", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowOracle
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthOracle
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthOracle
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Values = append(m.Values, &OracleValue{})
+			if err := m.Values[len(m.Values)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

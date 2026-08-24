@@ -1,419 +1,145 @@
-# Oracle Module
+# Guru Oracle Module
 
-## Overview
+The oracle module stores chain-approved oracle tasks and accepted oracle values.
+Each validator's independent sidecar continuously collects and aggregates its
+configured sources. The validator requests only due symbols, attaches the
+sidecar's fresh aggregate results to CometBFT vote extensions, and the block
+proposer turns valid vote extensions into a deterministic oracle proposal
+payload.
 
-The oracle module is responsible for managing oracle data in the blockchain. It provides functionality for registering, updating, and managing oracle request documents, as well as submitting and aggregating oracle data.
+## How It Works
 
-## Features
+1. The constitution moderator configures oracle parameters and tasks.
+2. Each validator operator configures at least three local sources per sidecar
+   feed. `oracled` polls them independently of node availability and persists a
+   strict-majority median.
+3. A participating validator looks up numeric tasks due for the current
+   vote-extension height and asks its sidecar for those symbols only. It applies
+   the on-chain `min_sources` threshold and writes valid aggregate results into
+   its vote extension.
+4. The proposer validates the extended commit, aggregates validator results, and
+   prepends one oracle payload transaction to the proposal when vote extensions
+   are enabled for the height.
+5. Every node recomputes the payload during proposal processing. A proposal is
+   rejected if the payload is missing, malformed, too large for the proposal
+   limit, uses mismatched commit flags, or does not match the recomputed values.
+6. FinalizeBlock applies accepted oracle values to latest-value state and bounded
+   per-symbol history.
 
-- Oracle Request Document Management
-  - Register new oracle request documents
-  - Update existing oracle request documents
-  - Query oracle request documents
-
-- Oracle Data Management
-  - Submit oracle data
-  - Aggregate oracle data based on different rules (AVG, MIN, MAX, MEDIAN)
-  - Query oracle data
-
-- Moderator Management
-  - Update moderator address
-  - Validate moderator permissions
-
-## Messages
-
-### Register Oracle Request Document
-```go
-MsgRegisterOracleRequestDoc
-- ModeratorAddress: string
-- RequestDoc: OracleRequestDoc
-```
-
-### Update Oracle Request Document
-```go
-MsgUpdateOracleRequestDoc
-- ModeratorAddress: string
-- RequestDoc: OracleRequestDoc
-- Reason: string
-```
-
-### Submit Oracle Data
-```go
-MsgSubmitOracleData
-- AuthorityAddress: string
-- DataSet: SubmitDataSet
-```
-
-### Update Moderator Address
-```go
-MsgUpdateModeratorAddress
-- ModeratorAddress: string
-- NewModeratorAddress: string
-```
-
-## Queries
-
-### Oracle Request Document
-```go
-QueryOracleRequestDocRequest
-- RequestId: uint64
-```
-
-### Oracle Data
-```go
-QueryOracleDataRequest
-- RequestId: uint64
-- Nonce: uint64
-```
-
-## Events
-
-### Register Oracle Request Document
-```go
-EventTypeRegisterOracleRequestDoc
-- AttributeKeyRequestId
-- AttributeKeyOracleType
-- AttributeKeyName
-- AttributeKeyDescription
-- AttributeKeyPeriod
-- AttributeKeyAccountList
-- AttributeKeyEndpoints
-- AttributeKeyAggregationRule
-- AttributeKeyStatus
-- AttributeKeyCreator
-```
-
-### Update Oracle Request Document
-```go
-EventTypeUpdateOracleRequestDoc
-- AttributeKeyRequestId
-- AttributeKeyOracleType
-- AttributeKeyName
-- AttributeKeyDescription
-- AttributeKeyPeriod
-- AttributeKeyAccountList
-- AttributeKeyEndpoints
-- AttributeKeyAggregationRule
-- AttributeKeyStatus
-- AttributeKeyNonce
-- AttributeKeyCreator
-```
-
-### Submit Oracle Data
-```go
-EventTypeSubmitOracleData
-- AttributeKeyRequestId
-- AttributeKeyNonce
-- AttributeKeyRawData
-- AttributeKeyFromAddress
-```
-
-### Update Moderator Address
-```go
-EventTypeUpdateModeratorAddress
-- AttributeKeyModeratorAddress
-```
-
-## Aggregation Rules
-
-The module supports the following aggregation rules:
-
-- AGGREGATION_RULE_AVG: Calculate the average of all submitted values
-- AGGREGATION_RULE_MIN: Use the minimum value from all submissions
-- AGGREGATION_RULE_MAX: Use the maximum value from all submissions
-- AGGREGATION_RULE_MEDIAN: Calculate the median of all submitted values
-
-## Authorization
-
-- Only the moderator can register and update oracle request documents
-- Only authorized accounts can submit oracle data
-- Only the current moderator can update the moderator address
+The module does not have an on-chain `enabled` parameter. Once the module is
+wired into the app, oracle payload expectation is controlled by CometBFT vote
+extension enable height. Individual validators can still disable local oracle
+sidecar participation through their node configuration.
 
 ## State
 
-The module maintains the following state:
+- `Params`: `min_validators`, `min_sources`, and `history_limit`.
+- `OracleTask`: symbol, value type, per-task enabled flag, and
+  `submission_interval` in block heights.
+- `OracleValue`: latest accepted value per symbol.
+- `OracleHistory`: bounded accepted value history per symbol.
+- `task_schedule`: exported schedule entries keyed by `(height, symbol)`.
+  The reverse `(symbol, height)` keyset is reconstructed during import.
 
-- Oracle Request Documents
-- Oracle Data Sets
-- Moderator Address
-- Oracle Request Document Count
+Symbols are normalized with `strings.TrimSpace` and uppercase before storage,
+lookup, aggregation, and daemon matching.
 
-## Hooks
+Task scheduling is stored with composite keys. Exact due lookups use a prefixed
+range over `(height, symbol)`, and vote-extension due lookups include the exact
+vote-extension height plus missed buckets older than the one-block proposal
+pipeline. The `height - 1` bucket is left alone because it may still be the
+normal stale bucket that will be consumed by the next proposal. Task updates and
+removals use the reverse `(symbol, height)` range to remove schedule entries
+directly.
 
-The module provides hooks for external modules to react to oracle events:
+## Parameters
 
-- AfterOracleEnd: Called after an oracle data set is completed
+- `min_validators`: minimum number of validator results required before a symbol
+  can be accepted in a proposal payload.
+- `min_sources`: minimum source count required inside each validator result.
+- `history_limit`: maximum number of historical values retained per symbol.
 
-## Genesis State
+All parameters must be positive. Parameter updates are accepted only from the
+current constitution moderator address.
 
-The Oracle module's genesis state contains the following parameters:
+## Messages
 
-```json
-{
-  "oracle": {
-    "params": {
-      "enable_oracle": true,
-      "submit_window": 3600,
-      "min_submit_per_window": "0.5",
-      "slash_fraction_downtime": "0.01"
-    },
-    "oracle_request_doc_count": 0,
-    "oracle_request_docs": [],
-    "moderator_address": "guru1..."
-  }
-}
-```
+- `MsgUpdateParams`: update oracle params.
+- `MsgUpsertTask`: add or update an oracle task.
+- `MsgRemoveTask`: remove an oracle task by symbol.
 
-### Parameters
-
-- `enable_oracle`: Whether the oracle module is enabled
-- `submit_window`: The window within which oracle data is expected to be submitted
-- `min_submit_per_window`: Minimum number of submissions required per window (as a decimal)
-- `slash_fraction_downtime`: Fraction of stake to slash for downtime (as a decimal)
-
-### Export Genesis State
-
-To export the current state of the Oracle module:
-
-```bash
-gurud export --home <path-to-home> | jq '.app_state.oracle'
-```
-
-### Import Genesis State
-
-To import a genesis state for the Oracle module:
-
-```bash
-# Create a new genesis file with oracle state
-jq '.app_state.oracle = {
-  "params": {
-    "enable_oracle": true,
-    "submit_window": 3600,
-    "min_submit_per_window": "0.5",
-    "slash_fraction_downtime": "0.01"
-  },
-  "oracle_request_doc_count": 0,
-  "oracle_request_docs": [],
-  "moderator_address": "guru1..."
-}' genesis.json > new-genesis.json
-
-# Replace the old genesis file
-mv new-genesis.json genesis.json
-```
-
-## Transactions
-
-### Register Oracle Request Document
-
-Register a new oracle request document.
-
-```bash
-gurud tx oracle register-request [path/to/request-doc.json]
-```
-
-### Update Oracle Request Document
-
-Update an existing oracle request document.
-
-```bash
-gurud tx oracle update-request [path/to/request-doc.json] [reason]
-```
-
-### Submit Oracle Data
-
-Submit oracle data for a specific request.
-
-```bash
-gurud tx oracle submit-data [request-id] [nonce] [raw-data]
-```
-
-### Update Moderator Address
-
-Update the moderator address for the oracle module.
-
-```bash
-gurud tx oracle update-moderator-address [moderator-address]
-```
+Task updates and removals are also moderator-only.
+Configured tasks must have a positive `submission_interval`.
 
 ## Queries
 
-### Parameters
+- `Params`: returns oracle parameters.
+- `ActiveTasks`: returns enabled oracle tasks.
+- `Task`: returns one task by symbol.
+- `LatestValue`: returns the latest accepted value for a symbol.
+- `LatestValues`: returns latest accepted values.
+- `History`: returns bounded history for a symbol.
 
-Query the current oracle parameters.
+`ActiveTasks`, `LatestValues`, and `History` are paginated. If the request does
+not set `pagination.limit`, the module returns 30 items. Clients can request a
+different page size with `pagination.limit`, use `pagination.offset`, or pass the
+previous response `pagination.next_key` as `pagination.key`.
 
-```bash
+## Proposal Payload Rules
+
+The oracle payload is expected only after vote extensions are enabled, the
+current height is greater than the configured enable height, and at least one
+task is due for the vote-extension height. The proposer must reserve proposal
+bytes for the oracle payload before selecting normal txs. If the payload alone
+exceeds `MaxTxBytes`, proposal preparation returns the payload and no normal txs.
+
+Proposal verification checks:
+
+- the payload height matches the block height;
+- vote extension signatures and validator addresses validate through BaseApp;
+- vote extension `BlockIdFlag` values match the current `LastCommit`;
+- the payload values match locally recomputed aggregation output.
+
+If BaseApp rejects an extended commit, Guru logs the block/header height,
+canonical chain ID, extended-commit and last-commit rounds, vote count, and one
+bounded tuple record per vote. Tuple records contain validator identity and
+power, block-ID flag, byte lengths, SHA-256 hashes of the extension, signature,
+canonical sign bytes, and public key, plus the result of diagnostic signature
+verification. Raw vote-extension bytes, signatures, source responses, and
+private keys are never logged. These records are emitted only after the
+unchanged `baseapp.ValidateVoteExtensions` call returns an error; they do not
+weaken or replace proposal validation.
+
+Proposal height `H` aggregates vote extensions submitted at height `H-1`, so the
+payload uses due tasks for `H-1`. Due tasks are the exact `H-1` bucket plus
+missed buckets at `H-3` or older; the `H-2` bucket is preserved for the normal
+one-block pipeline. When FinalizeBlock accepts the payload, the consumed due
+buckets are removed and each task's schedule window is refilled from the
+symbol's latest consumed due height. If a due task fails quorum or source
+requirements, the empty payload is still accepted and the task waits until its
+next interval instead of retrying every block.
+
+## Usage Notes
+
+Configure tasks with the moderator account, run the standalone `oracled`
+process on validators that should participate, and set the validator node
+oracle socket to its consumer Unix socket. The daemon does not discover or
+adopt node tasks automatically; operators can run its read-only `reconcile`
+command to compare local feeds with one node. A missing, stale, unavailable, or
+under-quorum local aggregate is omitted, and a validator with no eligible
+results emits an empty oracle vote extension without halting consensus.
+
+CLI commands are available under `gurud tx oracle` and `gurud query oracle`.
+Task creation uses numeric oracle tasks only:
+
+```sh
+gurud tx oracle update-params 3 3 100 --from <moderator>
+gurud tx oracle upsert-task BTC/USD 5 --from <moderator>
+gurud tx oracle remove-task BTC/USD --from <moderator>
 gurud query oracle params
-```
-
-### Oracle Request Document
-
-Query a specific oracle request document by ID.
-
-```bash
-gurud query oracle request-doc [request-id]
-```
-
-### Oracle Data
-
-Query oracle data for a specific request.
-
-```bash
-gurud query oracle data [request-id]
-```
-
-### Oracle Submit Data
-
-Query oracle submit data for a request. You can provide [request-id], [nonce], and [provider-account] as arguments. However, if you only provide [request-id] and [nonce], you can view the list of submitted data corresponding to the [nonce] of the specified [request-id].
-
-```bash
-gurud query oracle submit-data [request-id] [nonce] [provider-account]
-```
-
-### Oracle Request Documents
-
-Query all oracle request documents.
-
-```bash
-gurud query oracle request-docs
-```
-
-### Moderator Address
-
-Query the current moderator address.
-
-```bash
-gurud query oracle moderator-address
-```
-
-## CLI Examples
-
-### Register a New Oracle Request
-
-### Oracle Types
-
-The Oracle module supports the following types of oracle data:
-
-| Constant | Value | Description |
-| --- | --- | --- |
-| `ORACLE_TYPE_UNSPECIFIED` | 0 | Default value, should not be used |
-| `ORACLE_TYPE_MIN_GAS_PRICE` | 1 | Minimum gas price oracle for network fee estimation |
-| `ORACLE_TYPE_CURRENCY` | 2 | Exchange rate and foreign exchange data |
-| `ORACLE_TYPE_STOCK` | 3 | Stock market data and indices |
-| `ORACLE_TYPE_CRYPTO` | 4 | Cryptocurrency price and market data |
-
-Each oracle request must specify the type of data it requires using one of these oracle types.
-
-### Aggregation Rules
-
-The Oracle module supports the following rules for aggregating oracle data:
-
-| Constant | Value | Description |
-| --- | --- | --- |
-| `AGGREGATION_RULE_UNSPECIFIED` | 0 | Default value, should not be used |
-| `AGGREGATION_RULE_AVG` | 1 | Use average value for data aggregation |
-| `AGGREGATION_RULE_MIN` | 2 | Use minimum value for data aggregation |
-| `AGGREGATION_RULE_MAX` | 3 | Use maximum value for data aggregation |
-| `AGGREGATION_RULE_MEDIAN` | 4 | Use median value for data aggregation |
-
-Each oracle request must specify the rule for aggregating data using one of these aggregation rules.
-
-### Request Statuses
-
-The Oracle module supports the following statuses for oracle requests:
-
-| Constant | Value | Description |
-| --- | --- | --- |
-| `REQUEST_STATUS_UNSPECIFIED` | 0 | Default value, should not be used |
-| `REQUEST_STATUS_ENABLED` | 1 | Request is enabled |
-| `REQUEST_STATUS_PAUSED` | 2 | Request is paused |
-| `REQUEST_STATUS_DISABLED` | 3 | Request is disabled |
-
-Each oracle request must specify its current status using one of these request statuses.
-
-```bash
-# Create a request document JSON file
-# request_id is omitted.
-cat > request.json << EOF
-{
-  "oracle_type": 1,
-  "name": "BTC/USD Price Oracle",
-  "description": "Provides real-time BTC/USD price data from multiple sources",
-  "period": 60,
-  "account_list": [
-    "guru1...",
-    "guru1..."
-  ],
-  "quorum": 3,
-  "endpoints": [
-    {
-      "url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
-      "parse_rule": "data.amount"
-    },
-    {
-      "url": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
-      "parse_rule": "data.amount"
-    }
-  ],
-  "aggregation_rule": 1,
-  "status": 1
-}
-EOF
-
-# Register the request
-gurud tx oracle register-request request.json --from mykey
-```
-
-### Update an Oracle Request
-
-```bash
-# Create an updated request document JSON file
-# It is mandatory to include the request_id. Only [period, status, account_list, quorum, endpoints, parser_rule, aggregation_rule] can be updated. Remove any items that do not need to be updated.
-cat > updated_request.json << EOF
-{
-  "request_id": 1,
-  "period": 30,
-  "account_list": [
-    "guru1...",
-    "guru1...",
-    "guru1..."
-  ],
-  "quorum": 4,
-  "endpoints": [
-    {
-      "url": "https://api.coinbase.com/v2/prices/BTC-USD/spot",
-      "parse_rule": "data.amount"
-    },
-    {
-      "url": "https://api.coinbase.com/v2/prices/ETH-USD/spot",
-      "parse_rule": "data.amount"
-    }
-  ],
-  "aggregation_rule": 4,
-  "status": 1
-}
-EOF
-
-# Update the request with a reason
-gurud tx oracle update-request updated_request.json "Improving data reliability and update frequency" --from mykey
-```
-
-### Submit Oracle Data
-
-```bash
-# Submit data for request ID 1 with nonce 1
-gurud tx oracle submit-data 1 1 100 --from mykey
-```
-
-### Query Oracle Data
-
-```bash
-# Query data for request ID 1
-gurud query oracle data 1
-```
-
-### Update Moderator
-
-```bash
-# Update moderator address
-gurud tx oracle update-moderator-address guru1... --from current-moderator-address
+gurud query oracle active-tasks
+gurud query oracle task BTC/USD
+gurud query oracle latest-value BTC/USD
+gurud query oracle latest-values
+gurud query oracle history BTC/USD
 ```

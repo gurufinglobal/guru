@@ -1,0 +1,77 @@
+schema_version = 1
+publication_revision = "__PUBLICATION_REVISION__"
+
+[[feeds]]
+symbol = "BTC/USD"
+interval = "10s"
+stale_after = "20s"
+
+[[feeds.sources]]
+id = "coinbase"
+url = "https://api.exchange.coinbase.com/products/BTC-USD/ticker"
+json_pointer = "/price"
+
+[[feeds.sources]]
+id = "kraken"
+url = "https://api.kraken.com/0/public/Ticker?pair=BTC%2FUSD&assetVersion=1"
+json_pointer = "/result/BTC~1USD/c/0"
+
+[[feeds.sources]]
+id = "bitstamp"
+url = "https://www.bitstamp.net/api/v2/ticker/btcusd/"
+json_pointer = "/last"
+
+[[feeds.sources]]
+id = "gemini"
+url = "https://api.gemini.com/v2/ticker/btcusd"
+json_pointer = "/close"
+
+[[feeds]]
+symbol = "ETH/USD"
+interval = "10s"
+stale_after = "20s"
+
+[[feeds.sources]]
+id = "coinbase"
+url = "https://api.exchange.coinbase.com/products/ETH-USD/ticker"
+json_pointer = "/price"
+
+[[feeds.sources]]
+id = "kraken"
+url = "https://api.kraken.com/0/public/Ticker?pair=ETH%2FUSD&assetVersion=1"
+json_pointer = "/result/ETH~1USD/c/0"
+
+[[feeds.sources]]
+id = "bitstamp"
+url = "https://www.bitstamp.net/api/v2/ticker/ethusd/"
+json_pointer = "/last"
+
+[[feeds.sources]]
+id = "gemini"
+url = "https://api.gemini.com/v2/ticker/ethusd"
+json_pointer = "/close"
+
+[[feeds]]
+symbol = "SOL/USD"
+interval = "10s"
+stale_after = "20s"
+
+[[feeds.sources]]
+id = "coinbase"
+url = "https://api.exchange.coinbase.com/products/SOL-USD/ticker"
+json_pointer = "/price"
+
+[[feeds.sources]]
+id = "kraken"
+url = "https://api.kraken.com/0/public/Ticker?pair=SOL%2FUSD&assetVersion=1"
+json_pointer = "/result/SOL~1USD/c/0"
+
+[[feeds.sources]]
+id = "bitstamp"
+url = "https://www.bitstamp.net/api/v2/ticker/solusd/"
+json_pointer = "/last"
+
+[[feeds.sources]]
+id = "gemini"
+url = "https://api.gemini.com/v2/ticker/solusd"
+json_pointer = "/close"
