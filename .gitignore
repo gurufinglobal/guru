@@ -23,6 +23,8 @@ yarn.lock
 *.iml
 *.code-workspace
 
+.omx/
+
 # Node.js
 **/node_modules
 
@@ -31,3 +33,9 @@ contracts/@openzeppelin/*
 
 # Build files
 build/
+# Preserved dependency caches are not source files.
+**/node_modules/
+**/artifacts/
+**/cache/
+# OpenZeppelin contracts
+contracts/@openzeppelin/*
