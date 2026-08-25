@@ -289,7 +289,6 @@ format:
 
 format-check:
 	@set -eu; \
-	set -o pipefail; \
 	tmp=$$(mktemp); \
 	if ! $(GOFMT) -l $(GO_FILES) > "$$tmp"; then \
 		echo "gofmt failed:" >&2; \
