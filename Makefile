@@ -383,6 +383,21 @@ $(PROTO_HOME_DIR)/:
 	proto-deps-update proto-drift proto-breaking proto-check
 
 ###############################################################################
+###                               Release                                   ###
+###############################################################################
+
+release-check:
+	@bash scripts/run-goreleaser-cross.sh check
+
+release-dry-run:
+	@bash scripts/run-goreleaser-cross.sh snapshot
+
+release:
+	@bash scripts/run-goreleaser-cross.sh release
+
+.PHONY: release-check release-dry-run release
+
+###############################################################################
 ###                           Default Verification                          ###
 ###############################################################################
 

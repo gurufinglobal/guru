@@ -1,0 +1,77 @@
+name: Dependencies
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev-v2.1
+      - release/**
+  push:
+    branches:
+      - main
+      - dev-v2.1
+      - release/**
+  schedule:
+    - cron: '11 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    # Keep advisory until Dependency Graph and GitHub Code Security are confirmed.
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+
+  govulncheck:
+    name: Govulncheck
+    # The current Go/dependency baseline has known findings. Keep the scanner
+    # visible but advisory until those findings are remediated and baselined.
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - root
+          - oracle
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            oracle/go.sum
+
+      - name: Install govulncheck
+        env:
+          GOBIN: ${{ runner.temp }}
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
+
+      - name: Scan root module
+        if: matrix.module == 'root'
+        run: '"$RUNNER_TEMP/govulncheck" ./...'
+
+      - name: Scan oracle module
+        if: matrix.module == 'oracle'
+        working-directory: oracle
+        run: 'GOWORK=off "$RUNNER_TEMP/govulncheck" ./...'

@@ -1,0 +1,50 @@
+name: Proto
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+      - dev-v2.1
+      - release/**
+  push:
+    branches:
+      - main
+      - dev-v2.1
+      - release/**
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Format, lint, and generated-code drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check protobuf sources and generation
+        run: make proto-check
+
+  breaking:
+    name: Breaking-change check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Compare against pull request base
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: make proto-breaking PROTO_BREAKING_AGAINST=".git#ref=${BASE_SHA},subdir=proto"
