@@ -12,7 +12,8 @@ on:
       - dev-v2.1
       - release/**
   schedule:
-    - cron: '11 4 * * 1'
+    - cron: '30 8 * * 1'
+      timezone: Asia/Seoul
   workflow_dispatch:
 
 concurrency:
