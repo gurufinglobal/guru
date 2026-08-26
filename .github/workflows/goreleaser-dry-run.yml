@@ -42,13 +42,8 @@ jobs:
       - name: Run GoReleaser snapshot
         run: make release-dry-run
 
-      - name: Upload release candidates
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: goreleaser-snapshot
-          path: |
-            dist/*.tar.gz
-            dist/*.zip
-            dist/checksums.txt
-          if-no-files-found: error
-          retention-days: 7
+      - name: Verify release checksums
+        run: |
+          test -f dist/checksums.txt
+          cd dist
+          sha256sum --check checksums.txt
