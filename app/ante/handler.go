@@ -1,14 +1,19 @@
 package ante
 
 import (
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
 	evmante "github.com/cosmos/evm/ante"
 	cosmosante "github.com/cosmos/evm/ante/cosmos"
 	evmanteevm "github.com/cosmos/evm/ante/evm"
 	antetypes "github.com/cosmos/evm/ante/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 )
@@ -19,8 +24,8 @@ var (
 )
 
 // NewAnteHandler preserves the upstream Cosmos EVM v0.6.2 Ethereum path and
-// routes Cosmos transactions through the application-local standard MsgSend
-// gas extension.
+// routes Cosmos transactions through the application-local fee policy and
+// standard MsgSend gas extension.
 func NewAnteHandler(options evmante.HandlerOptions) sdk.AnteHandler {
 	upstreamHandler := evmante.NewAnteHandler(options)
 
@@ -54,7 +59,7 @@ func newCosmosAnteHandler(ctx sdk.Context, options evmante.HandlerOptions) sdk.A
 
 	var txFeeChecker authante.TxFeeChecker
 	if options.DynamicFeeChecker {
-		txFeeChecker = newStandardMsgSendDynamicFeeChecker(&feemarketParams)
+		txFeeChecker = newCosmosDynamicFeeChecker(&feemarketParams)
 	} else {
 		txFeeChecker = newStandardMsgSendValidatorFeeChecker()
 	}
@@ -95,4 +100,95 @@ func newCosmosAnteHandler(ctx sdk.Context, options evmante.HandlerOptions) sdk.A
 			&feemarketParams,
 		),
 	)
+}
+
+// newCosmosDynamicFeeChecker owns the application-wide Cosmos dynamic-fee
+// policy. Ordinary transactions preserve the upstream Cosmos EVM v0.6.2 fee,
+// priority, fallback, and error ordering, then enforce the global floor against
+// the exact dynamic effective price. Eligible MsgSend transactions delegate to
+// the separate FixedSendGas fee and settlement policy.
+func newCosmosDynamicFeeChecker(
+	feemarketParams *feemarkettypes.Params,
+) authante.TxFeeChecker {
+	upstream := evmanteevm.NewDynamicFeeChecker(feemarketParams)
+
+	return func(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, int64, error) {
+		if isStandardMsgSendGasContext(ctx) {
+			return checkStandardMsgSendDynamicFee(ctx, tx, feemarketParams, upstream)
+		}
+
+		feeTx, ok := tx.(sdk.FeeTx)
+		if !ok {
+			return upstream(ctx, tx)
+		}
+		fees, priority, err := upstream(ctx, tx)
+		if err != nil {
+			return fees, priority, err
+		}
+		if err := checkOrdinaryDynamicFeeFloor(ctx, feeTx, feemarketParams); err != nil {
+			return nil, 0, err
+		}
+		return fees, priority, nil
+	}
+}
+
+// checkOrdinaryDynamicFeeFloor reconstructs the exact LegacyDec price used by
+// the upstream v0.6.2 dynamic checker. It runs only after that checker succeeds,
+// preserving its fallback and error ordering without deriving price from the
+// rounded effective fee.
+func checkOrdinaryDynamicFeeFloor(
+	ctx sdk.Context,
+	feeTx sdk.FeeTx,
+	feemarketParams *feemarkettypes.Params,
+) error {
+	if ctx.BlockHeight() == 0 ||
+		!evmtypes.IsLondon(evmtypes.GetEthChainConfig(), ctx.BlockHeight()) ||
+		feemarketParams.MinGasPrice.IsZero() {
+		return nil
+	}
+
+	dynamicFee, ok := dynamicFeeExtension(feeTx)
+	if !ok {
+		return nil
+	}
+
+	baseFee := feemarketParams.BaseFee
+	if baseFee.IsNil() {
+		baseFee = sdkmath.LegacyZeroDec()
+	}
+	tipCap := dynamicFee.MaxPriorityPrice
+	if tipCap.IsNil() {
+		tipCap = sdkmath.LegacyZeroDec()
+	}
+
+	denom := evmtypes.GetEVMCoinDenom()
+	gas := sdkmath.NewIntFromUint64(feeTx.GetGas())
+	feeAmount := feeTx.GetFee().AmountOf(denom)
+	feeCap := sdkmath.LegacyNewDecFromInt(feeAmount).QuoInt(gas)
+	effectivePrice := sdkmath.LegacyMinDec(baseFee.Add(tipCap), feeCap)
+	if effectivePrice.LT(feemarketParams.MinGasPrice) {
+		return errorsmod.Wrapf(
+			sdkerrors.ErrInsufficientFee,
+			"effective gas price below minimum global gas price (%s%s < %s%s)",
+			effectivePrice,
+			denom,
+			feemarketParams.MinGasPrice,
+			denom,
+		)
+	}
+
+	return nil
+}
+
+func dynamicFeeExtension(feeTx sdk.FeeTx) (*antetypes.ExtensionOptionDynamicFeeTx, bool) {
+	extensionTx, ok := feeTx.(authante.HasExtensionOptionsTx)
+	if !ok {
+		return nil, false
+	}
+	for _, option := range extensionTx.GetExtensionOptions() {
+		if dynamicFee, ok := option.GetCachedValue().(*antetypes.ExtensionOptionDynamicFeeTx); ok {
+			return dynamicFee, true
+		}
+	}
+	return nil, false
 }

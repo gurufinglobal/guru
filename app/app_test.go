@@ -18,17 +18,21 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	signing "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	antetypes "github.com/cosmos/evm/ante/types"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
 	evmmempool "github.com/cosmos/evm/mempool"
 	evmutils "github.com/cosmos/evm/utils"
@@ -342,6 +346,115 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.True(t, application.FeeMarketAdapter.GetMinGasPrice(
 		queryContext,
 	).Equal(mustInt(constitutiontypes.MinGasPriceScaleFactor).ToLegacyDec()))
+	const ordinaryDynamicFloorGas = uint64(200_000)
+	var ordinaryDynamicFloorTxBytes []byte
+	t.Run("ordinary SDK dynamic fee enforces effective price floor", func(t *testing.T) {
+		minGasPrice := feeMarketParams.MinGasPrice
+		nominalFee := minGasPrice.
+			MulInt(sdkmath.NewIntFromUint64(ordinaryDynamicFloorGas)).
+			Ceil().
+			RoundInt()
+		feeCap := sdkmath.LegacyNewDecFromInt(nominalFee).
+			QuoInt(sdkmath.NewIntFromUint64(ordinaryDynamicFloorGas))
+		require.True(t, feeCap.GTE(minGasPrice))
+		require.True(t, feeMarketParams.BaseFee.IsZero())
+
+		transferCoin := sdk.NewInt64Coin(config.BaseDenom, 1)
+		ordinaryMessage := &banktypes.MsgMultiSend{
+			Inputs: []banktypes.Input{{
+				Address: cosmosSender.String(),
+				Coins:   sdk.NewCoins(transferCoin),
+			}},
+			Outputs: []banktypes.Output{{
+				Address: sdk.AccAddress(cosmosRecipient.Bytes()).String(),
+				Coins:   sdk.NewCoins(transferCoin),
+			}},
+		}
+		dynamicExtension, extensionErr := codectypes.NewAnyWithValue(
+			&antetypes.ExtensionOptionDynamicFeeTx{},
+		)
+		require.NoError(t, extensionErr)
+		ordinaryDynamicFloorTxBytes = signAndEncodeCosmosTx(
+			t,
+			application,
+			cosmosPrivateKey,
+			cosmosSenderAccount.GetAccountNumber(),
+			cosmosSenderAccount.GetSequence(),
+			ordinaryMessage,
+			sdk.NewCoins(sdk.NewCoin(config.BaseDenom, nominalFee)),
+			ordinaryDynamicFloorGas,
+			dynamicExtension,
+		)
+
+		type stateSnapshot struct {
+			senderBalance    sdkmath.Int
+			recipientBalance sdkmath.Int
+			collectorBalance sdkmath.Int
+			sequence         uint64
+		}
+		feeCollector := authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+		snapshot := func(ctx sdk.Context) stateSnapshot {
+			account := application.AccountKeeper.GetAccount(ctx, cosmosSender)
+			require.NotNil(t, account)
+			return stateSnapshot{
+				senderBalance: application.BankKeeper.GetBalance(
+					ctx,
+					cosmosSender,
+					config.BaseDenom,
+				).Amount,
+				recipientBalance: application.BankKeeper.GetBalance(
+					ctx,
+					sdk.AccAddress(cosmosRecipient.Bytes()),
+					config.BaseDenom,
+				).Amount,
+				collectorBalance: application.BankKeeper.GetBalance(
+					ctx,
+					feeCollector,
+					config.BaseDenom,
+				).Amount,
+				sequence: account.GetSequence(),
+			}
+		}
+		assertUnchanged := func(before stateSnapshot, ctx sdk.Context) {
+			t.Helper()
+			require.Equal(t, before, snapshot(ctx))
+		}
+
+		simulateBefore := snapshot(queryContext)
+		_, _, simulateErr := application.Simulate(ordinaryDynamicFloorTxBytes)
+		require.NoError(t, simulateErr)
+		assertUnchanged(simulateBefore, committedContext(t, application))
+
+		checkBefore := snapshot(application.GetContextForCheckTx(nil))
+		checkResponse, checkErr := application.CheckTx(&abci.RequestCheckTx{
+			Tx:   ordinaryDynamicFloorTxBytes,
+			Type: abci.CheckTxType_New,
+		})
+		require.NoError(t, checkErr)
+		require.Equal(t, sdkerrors.ErrInsufficientFee.ABCICode(), checkResponse.Code)
+		assertUnchanged(checkBefore, application.GetContextForCheckTx(nil))
+
+		recheckBefore := snapshot(application.GetContextForCheckTx(nil))
+		recheckResponse, recheckErr := application.CheckTx(&abci.RequestCheckTx{
+			Tx:   ordinaryDynamicFloorTxBytes,
+			Type: abci.CheckTxType_Recheck,
+		})
+		require.NoError(t, recheckErr)
+		require.Equal(t, sdkerrors.ErrInsufficientFee.ABCICode(), recheckResponse.Code)
+		assertUnchanged(recheckBefore, application.GetContextForCheckTx(nil))
+
+		proposalBefore := snapshot(committedContext(t, application))
+		proposalResponse, proposalErr := application.ProcessProposal(&abci.RequestProcessProposal{
+			Height: 2,
+			Time:   blockTime.Add(2 * time.Second),
+			Txs:    [][]byte{ordinaryDynamicFloorTxBytes},
+		})
+		require.NoError(t, proposalErr)
+		// Guru intentionally uses the SDK no-op proposal handler; execution safety
+		// is enforced when the same production ante handler runs in FinalizeBlock.
+		require.Equal(t, abci.ResponseProcessProposal_ACCEPT, proposalResponse.Status)
+		assertUnchanged(proposalBefore, committedContext(t, application))
+	})
 	t.Run("oracle fee production wiring", func(t *testing.T) {
 		assertOracleFeeMarketProductionWiring(t, application, queryContext)
 	})
@@ -602,6 +715,56 @@ func TestApplicationStateMachine(t *testing.T) {
 			))
 		})
 	}
+	t.Run("ordinary SDK dynamic fee accepts exact floor through production ante", func(t *testing.T) {
+		minGasPrice := feeMarketParams.MinGasPrice
+		nominalFee := minGasPrice.
+			MulInt(sdkmath.NewIntFromUint64(ordinaryDynamicFloorGas)).
+			Ceil().
+			RoundInt()
+		feeCap := sdkmath.LegacyNewDecFromInt(nominalFee).
+			QuoInt(sdkmath.NewIntFromUint64(ordinaryDynamicFloorGas))
+		effectivePrice := sdkmath.LegacyMinDec(
+			feeMarketParams.BaseFee.Add(minGasPrice),
+			feeCap,
+		)
+		require.True(t, effectivePrice.Equal(minGasPrice))
+
+		exactFloorExtension, extensionErr := codectypes.NewAnyWithValue(
+			&antetypes.ExtensionOptionDynamicFeeTx{MaxPriorityPrice: minGasPrice},
+		)
+		require.NoError(t, extensionErr)
+		checkContext := application.GetContextForCheckTx(nil)
+		checkAccount := application.AccountKeeper.GetAccount(checkContext, cosmosSender)
+		require.NotNil(t, checkAccount)
+		exactFloorTxBytes := signAndEncodeCosmosTx(
+			t,
+			application,
+			cosmosPrivateKey,
+			checkAccount.GetAccountNumber(),
+			checkAccount.GetSequence(),
+			&banktypes.MsgMultiSend{
+				Inputs: []banktypes.Input{{
+					Address: cosmosSender.String(),
+					Coins:   sdk.NewCoins(sdk.NewInt64Coin(config.BaseDenom, 1)),
+				}},
+				Outputs: []banktypes.Output{{
+					Address: sdk.AccAddress(cosmosRecipient.Bytes()).String(),
+					Coins:   sdk.NewCoins(sdk.NewInt64Coin(config.BaseDenom, 1)),
+				}},
+			},
+			sdk.NewCoins(sdk.NewCoin(config.BaseDenom, nominalFee)),
+			ordinaryDynamicFloorGas,
+			exactFloorExtension,
+		)
+
+		exactFloorResult, checkErr := application.CheckTx(&abci.RequestCheckTx{
+			Tx:   exactFloorTxBytes,
+			Type: abci.CheckTxType_New,
+		})
+		require.NoError(t, checkErr)
+		require.Equal(t, abci.CodeTypeOK, exactFloorResult.Code, exactFloorResult.Log)
+		require.Equal(t, int64(ordinaryDynamicFloorGas), exactFloorResult.GasWanted)
+	})
 
 	prepareResult, err := application.PrepareProposal(&abci.RequestPrepareProposal{
 		Height:     2,
@@ -619,15 +782,22 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, abci.ResponseProcessProposal_ACCEPT, processResult.Status)
 
+	finalizeTxs := make([][]byte, 0, len(prepareResult.Txs)+1)
+	finalizeTxs = append(finalizeTxs, ordinaryDynamicFloorTxBytes)
+	finalizeTxs = append(finalizeTxs, prepareResult.Txs...)
 	finalized, err := application.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height:          2,
 		Time:            blockTime.Add(2 * time.Second),
 		ProposerAddress: proposerAddress,
-		Txs:             prepareResult.Txs,
+		Txs:             finalizeTxs,
 	})
 	require.NoError(t, err)
-	require.Len(t, finalized.TxResults, 2)
-	for index, result := range finalized.TxResults {
+	require.Len(t, finalized.TxResults, 3)
+	rejectedDynamicResult := finalized.TxResults[0]
+	require.Equal(t, sdkerrors.ErrInsufficientFee.ABCICode(), rejectedDynamicResult.Code)
+	require.Equal(t, int64(ordinaryDynamicFloorGas), rejectedDynamicResult.GasWanted)
+	require.Positive(t, rejectedDynamicResult.GasUsed)
+	for index, result := range finalized.TxResults[1:] {
 		require.True(t, result.IsOK(), result.Log)
 		require.Equal(t, int64(submittedGas), result.GasWanted)
 		require.Equal(t, int64(minimumGasUsed), result.GasUsed)
@@ -640,9 +810,10 @@ func TestApplicationStateMachine(t *testing.T) {
 	}
 	finalizeContext := application.GetContextForFinalizeBlock(nil)
 	require.Zero(t, application.FeeMarketKeeper.GetTransientGasWanted(finalizeContext))
+	expectedBlockGasWantedWithRejected := expectedBlockGasWanted + uint64(rejectedDynamicResult.GasUsed)
 	require.Equal(
 		t,
-		expectedBlockGasWanted,
+		expectedBlockGasWantedWithRejected,
 		application.FeeMarketKeeper.GetBlockGasWanted(finalizeContext),
 	)
 	_, err = application.Commit()
@@ -668,7 +839,7 @@ func TestApplicationStateMachine(t *testing.T) {
 	}
 	require.Equal(
 		t,
-		expectedBlockGasWanted,
+		expectedBlockGasWantedWithRejected,
 		application.FeeMarketKeeper.GetBlockGasWanted(queryContext),
 	)
 
@@ -872,9 +1043,15 @@ func signAndEncodeCosmosTx(
 	message sdk.Msg,
 	fees sdk.Coins,
 	gasLimit uint64,
+	extensionOptions ...*codectypes.Any,
 ) []byte {
 	t.Helper()
 	builder := application.GetTxConfig().NewTxBuilder()
+	if len(extensionOptions) > 0 {
+		extensionBuilder, ok := builder.(authtx.ExtensionOptionsTxBuilder)
+		require.True(t, ok)
+		extensionBuilder.SetExtensionOptions(extensionOptions...)
+	}
 	require.NoError(t, builder.SetMsgs(message))
 	builder.SetFeeAmount(fees)
 	builder.SetGasLimit(gasLimit)
