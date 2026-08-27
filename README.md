@@ -2,18 +2,24 @@
 
 Guru is a Cosmos SDK v0.53.6 application assembled on Cosmos EVM v0.6.2.
 
-The repository owns the Guru application composition: keeper and module
-wiring, genesis defaults, and the operator command tree. Cosmos SDK, Cosmos
-EVM, IBC-Go, CometBFT, and their module behavior are consumed as upstream
-dependencies and are not locally forked or policy-wrapped here.
+The repository owns the Guru application composition: keeper and module wiring,
+genesis and transaction policy, Oracle consensus integration, and the operator
+command tree. Cosmos SDK, Cosmos EVM, IBC-Go, and CometBFT remain upstream
+dependencies, while Guru adds application-specific Constitution, Oracle,
+staking, fee, and proposal behavior around them.
 
 ## Repository layout
 
 ```text
 .
-├── app/               # application, keepers, modules, and lifecycle
+├── app/               # application, keepers, ante, consensus, and lifecycle
 ├── cmd/gurud/         # node and client command tree
 ├── config/            # product settings and network defaults
+├── oracle/            # standalone oracled sidecar Go module
+├── proto/             # Guru protobuf definitions
+├── x/constitution/    # chain policy and minimum gas price scheduling
+├── x/oracle/          # on-chain Oracle tasks, values, and consensus payloads
+├── x/staking/         # staking wrapper enforcing minimum self-bond policy
 ├── Makefile
 ├── go.mod
 └── go.sum
@@ -21,9 +27,10 @@ dependencies and are not locally forked or policy-wrapped here.
 
 ## Network defaults
 
-The values in `config/identity.go` are defaults for newly created
-configuration and genesis files. They are not persisted in a Guru-owned
-identity store and are not immutable policy enforced by the binary.
+`config/identity.go` centralizes Guru's compiled product identity and network
+defaults. Chain IDs can be selected per network, while address prefixes, coin
+type, native denomination, and related genesis policies are applied by the
+application.
 
 | Property | Default |
 |---|---|
@@ -45,10 +52,8 @@ The same source and binary can be configured for another network:
   otherwise from `config/genesis.json`;
 - the EVM chain ID is selected from `app.toml` or
   `--evm.evm-chain-id`, with `631` as the fallback;
-- `app.New` forwards those values to BaseApp, the Cosmos EVM keeper, and the
-  EIP-712 compatibility layer;
-- genesis validation delegates to the upstream module validators and does not
-  impose Guru-only denomination or governance locks.
+- `app.New` forwards the selected values to BaseApp, the Cosmos EVM keeper, and
+  the EIP-712 compatibility layer.
 
 Both IDs are transaction replay-protection domains. Every validator and client
 on one network must therefore use the same values. Guru deliberately leaves
@@ -57,38 +62,53 @@ committing a second application-owned identity record.
 
 ## Application composition
 
-Guru installs the Cosmos SDK modules, Cosmos EVM VM/FeeMarket/ERC20 modules,
-IBC core and ICS-20 modules, and their upstream message/query services directly.
-There are no Guru wrappers that constrain governance parameter updates or
-attempt to repair behavior inside those dependencies.
+Guru installs Cosmos SDK modules, Cosmos EVM VM/FeeMarket/ERC20 modules, IBC
+core, and ICS-20. It also installs the Guru Constitution and Oracle modules and
+wraps upstream staking so the chain-wide minimum validator self-bond is applied
+at genesis and during validator-set updates. The ante handler preserves the
+upstream Ethereum transaction path while applying Guru's standard `MsgSend`
+gas and fee rules to eligible Cosmos transactions.
 
 The generated default genesis:
 
 - applies `agxn` to the recommended staking, mint, governance, FeeMarket, and
   EVM settings;
+- requires explicit Constitution base and moderator addresses during `init`;
+- configures FeeMarket with `no_base_fee = true`, `base_fee = 0`, and a positive
+  chain-wide `min_gas_price`;
 - starts with no active optional static precompiles;
 - installs the upstream EIP-2935 history-storage preinstall;
 - starts without ERC-20 token pairs or IBC clients/channels.
 
 These are bootstrap values. Operators may edit a new network's genesis subject
-to the corresponding upstream module validation rules.
+to both upstream module validation and Guru's cross-module checks. Guru validates
+the Constitution self-bond denomination and amount and the required FeeMarket
+policy before accepting genesis.
 
 ## Mempool and proposal behavior
 
 Guru deliberately uses the SDK `NoOpMempool` because CometBFT owns transaction
-storage and gossip. Guru leaves the SDK's default proposal handlers unchanged.
-For a no-op application mempool, the default `PrepareProposal` selects the
-transactions supplied by CometBFT without repeating ante verification, and the
-default `ProcessProposal` accepts the proposal.
+storage and gossip. The normal transaction selection path delegates to the SDK
+default proposal handler for a no-op application mempool.
+
+Guru wraps that default path with Oracle proposal handling. When an Oracle
+payload is expected, `PrepareProposal` validates the extended commit, builds a
+deterministic payload, reserves its proposal bytes, and prepends it to the normal
+transactions. Every node recomputes the payload in `ProcessProposal` and rejects
+a missing, malformed, or mismatched Oracle payload.
 
 Broadcast transactions normally pass `CheckTx` before entering the CometBFT
 mempool. Ante verification runs again during `FinalizeBlock`; an invalid or
-stale transaction therefore produces a deterministic failed transaction result
-without committing its state. Guru does not add a stricter application-specific
-proposal acceptance policy. A proposer can consequently waste its proposal
-capacity with failing transactions, which is the upstream availability and
-throughput trade-off of this configuration rather than a separate state-safety
-rule.
+stale normal transaction therefore produces a deterministic failed transaction
+result without committing its state. Oracle consensus records are stricter: the
+proposal is rejected when their canonical content or position is invalid.
+
+Each validator may run the standalone `oracled` process and configure its Unix
+socket in the node's `[oracle]` section. Oracle participation is enabled by
+default, but an unavailable or disabled sidecar only omits that validator's
+Oracle contribution and does not halt ordinary consensus. See the
+[Oracle sidecar guide](oracle/README.md) and
+[Oracle module guide](x/oracle/README.md).
 
 ## RPC behavior
 
@@ -107,22 +127,69 @@ query-gas limits for the node role.
 The module declares Go `1.23.8`.
 
 ```bash
-make build VERSION=<version> COMMIT=<git-commit>
+make build
+
+# Optional explicit build metadata
+make build \
+  VERSION=2.1.0 \
+  ORACLE_VERSION=2.1.0 \
+  COMMIT="$(git rev-parse HEAD)"
+
 ./build/gurud version --long --output json
+./build/oracled --version
 ```
 
-The binary is written to `build/gurud`.
+The build writes the node binary to `build/gurud` and the Oracle sidecar binary
+to `build/oracled`.
+
+## Release artifacts
+
+Tagged releases are published on the
+[GitHub Releases page](https://github.com/gurufinglobal/guru/releases) with
+checksums. `gurud` archives are built for Linux AMD64/ARM64, macOS AMD64/ARM64,
+and Windows AMD64. `oracled` archives are built for Linux and macOS on AMD64 and
+ARM64; Windows is not supported because the sidecar relies on Unix sockets and
+POSIX filesystem semantics.
 
 ## Initialize a network
 
-The following example creates a development validator. The `test` keyring
-stores private keys without production-grade protection.
+The following example creates a development validator. It creates separate
+Constitution base and moderator accounts before `init` because both addresses
+are required in genesis. The `test` keyring stores private keys without
+production-grade protection; securely record the generated mnemonics and do not
+use this setup for production keys.
 
 ```bash
 export GURU_HOME="$PWD/.local/guru"
 
+./build/gurud keys add constitution-base \
+  --algo eth_secp256k1 \
+  --keyring-backend test \
+  --home "$GURU_HOME"
+
+./build/gurud keys add constitution-moderator \
+  --algo eth_secp256k1 \
+  --keyring-backend test \
+  --home "$GURU_HOME"
+
+CONSTITUTION_BASE_ADDRESS="$(
+  ./build/gurud keys show constitution-base \
+    --address \
+    --keyring-backend test \
+    --home "$GURU_HOME"
+)"
+
+CONSTITUTION_MODERATOR_ADDRESS="$(
+  ./build/gurud keys show constitution-moderator \
+    --address \
+    --keyring-backend test \
+    --home "$GURU_HOME"
+)"
+
 ./build/gurud init validator-0 \
   --chain-id guru_631-1 \
+  --constitution-base-address "$CONSTITUTION_BASE_ADDRESS" \
+  --constitution-moderator-address "$CONSTITUTION_MODERATOR_ADDRESS" \
   --home "$GURU_HOME"
 
 ./build/gurud keys add validator \
@@ -140,6 +207,16 @@ VALIDATOR_ADDRESS="$(
 ./build/gurud genesis add-genesis-account \
   "$VALIDATOR_ADDRESS" \
   1000000000000000000000agxn \
+  --home "$GURU_HOME"
+
+./build/gurud genesis add-genesis-account \
+  "$CONSTITUTION_BASE_ADDRESS" \
+  100000000000000000000agxn \
+  --home "$GURU_HOME"
+
+./build/gurud genesis add-genesis-account \
+  "$CONSTITUTION_MODERATOR_ADDRESS" \
+  100000000000000000000agxn \
   --home "$GURU_HOME"
 
 ./build/gurud genesis gentx \
@@ -190,8 +267,11 @@ Before launch:
 
 - choose a finite CometBFT `consensus.params.block.max_gas` based on measured
   execution capacity; do not use unlimited gas for production;
-- keep FeeMarket enforcement and a non-zero base fee, and configure non-zero
-  local `minimum-gas-prices` consistently across validators;
+- preserve the genesis FeeMarket policy (`no_base_fee = true`, `base_fee = 0`,
+  and a positive chain-wide `min_gas_price`) and configure non-zero local
+  `minimum-gas-prices` consistently across validators;
+- secure the Constitution base and moderator accounts and operate validator
+  Oracle sidecars with reviewed, independent data sources;
 - set finite query/RPC limits and expose only services required by each node
   role;
 - validate pruning, snapshots, state sync, indexing, backups, sentry topology,
@@ -199,3 +279,9 @@ Before launch:
   multi-validator load.
 
 These deployment choices are intentionally not hard-coded in the application.
+
+## Contributing and conduct
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development and pull request
+workflow. All project participation is governed by the
+[Code of Conduct](CODE_OF_CONDUCT.md).
