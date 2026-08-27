@@ -142,6 +142,57 @@ make build \
 The build writes the node binary to `build/gurud` and the Oracle sidecar binary
 to `build/oracled`.
 
+## Local testnets
+
+For the existing single-node development flow, use:
+
+```bash
+make local-node
+```
+
+This path keeps `local_node.sh` unchanged and does not start an Oracle sidecar.
+
+For Oracle consensus validation, use the dedicated 4-validator harness:
+
+```bash
+make oracle-4v-testnet
+```
+
+The harness requires Bash, `curl`, `jq`, and Python 3. The Make target builds
+`gurud` and `oracled` before starting the testnet. You can override the default
+timeout and port range, for example:
+
+```bash
+WAIT_TIMEOUT=300 PORT_BASE=39000 make oracle-4v-testnet
+```
+
+It starts four `gurud` validators and four `oracled` sidecars on loopback
+ports, requires each sidecar to have fresh BTC/USD, ETH/USD, and SOL/USD values
+from at least three sources, then verifies four validators, block production,
+sidecar reconciliation, and on-chain latest Oracle values. The script writes a
+private base directory under the platform temporary directory, prints the
+paths to `ready.env` and the stop file, and waits until the stop file exists or
+it receives Ctrl-C. To stop it from another shell, create the printed stop file:
+
+```bash
+source /path/printed/by/the/harness/ready.env
+touch "$BASE/stop"
+```
+
+For a one-shot end-to-end readiness and consensus check:
+
+```bash
+make oracle-4v-smoke
+```
+
+The harness uses the development `test` keyring and public HTTPS price sources,
+so it is intended for local and testnet validation only. It is deliberately not
+part of the default CI or Docker workflows: provider availability, outbound
+network policy, or rate limiting can make it fail independently of the code.
+On failure, inspect the printed base directory, especially its `logs/` files.
+The harness does not delete that directory automatically, and it does not
+validate the TRX/USD dynamic minimum gas price path used by Constitution.
+
 ## Docker
 
 The repository includes a non-root, Debian-based `gurud` image and Compose

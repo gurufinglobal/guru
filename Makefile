@@ -464,8 +464,15 @@ verify:
 ###############################################################################
 
 LOCALNET_ARGS ?=
+ORACLE_4V_ARGS ?=
 
 local-node localnet-start:
 	@./local_node.sh $(LOCALNET_ARGS)
 
-.PHONY: local-node localnet-start
+oracle-4v-testnet: build
+	@bash scripts/oracle_4v_testnet_start.sh $(ORACLE_4V_ARGS)
+
+oracle-4v-smoke: build
+	@bash scripts/oracle_4v_testnet_start.sh --exit-after-ready $(ORACLE_4V_ARGS)
+
+.PHONY: local-node localnet-start oracle-4v-testnet oracle-4v-smoke

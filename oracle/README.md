@@ -165,6 +165,14 @@ Bitstamp, and Gemini sources. Four configured sources require a local strict
 majority of three, allowing one source failure while matching the default
 on-chain `min_sources` of three.
 
+The repository-level `make oracle-4v-testnet` harness uses this initialized
+publication unchanged for four local validators. It starts all four sidecars
+before the nodes, waits until every sidecar reports JSON `status` health
+`healthy` with exactly BTC/USD, ETH/USD, and SOL/USD fresh values, and then
+checks node gRPC reconciliation after the chain is producing blocks. This
+keeps sidecar source validation separate from Docker; the Docker node image
+contains `gurud` only.
+
 These public endpoints are editable validator-local bootstrap policy, not a
 chain requirement, provider endorsement, or availability guarantee. Operators
 must review and replace them as appropriate for production. The generated
