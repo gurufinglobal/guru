@@ -16,6 +16,7 @@ import (
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -62,6 +63,9 @@ func TestApplicationStateMachine(t *testing.T) {
 		HomePath:   t.TempDir(),
 		ChainID:    testChainID,
 		EVMChainID: testEVMChainID,
+		BaseAppOptions: []func(*baseapp.BaseApp){
+			baseapp.SetMempool(sdkmempool.NewSenderNonceMempool()),
+		},
 	})
 	require.NoError(t, err)
 	require.Equal(t, testChainID, application.ChainID())
