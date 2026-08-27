@@ -4,6 +4,9 @@
 *.swo
 .idea/
 .vscode/
+.env
+.env.*
+!.env.example
 
 # Codex/OMX local state
 .omx/

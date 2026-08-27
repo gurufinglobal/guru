@@ -142,6 +142,27 @@ make build \
 The build writes the node binary to `build/gurud` and the Oracle sidecar binary
 to `build/oracled`.
 
+## Docker
+
+The repository includes a non-root, Debian-based `gurud` image and Compose
+configurations for local development and testnet nodes. Node state, genesis,
+keys, and configuration live in a persistent named volume and are never baked
+into the image.
+
+```bash
+make docker-check
+
+# After initializing the persistent volume as described in the guide:
+docker compose -f compose.yaml -f compose.local.yaml up --detach --no-build
+docker compose -f compose.yaml -f compose.local.yaml ps
+```
+
+The base Compose model publishes only P2P. The local override binds RPC-facing
+ports to host loopback, with REST and JSON-RPC disabled by default. See
+[Run a Guru node with Docker](docs/docker.md) for initialization, existing
+testnet genesis installation, port policy, lifecycle commands, backups, and the
+end-to-end integration check.
+
 ## Release artifacts
 
 Tagged releases are published on the
@@ -224,13 +245,17 @@ VALIDATOR_ADDRESS="$(
   1000000000000000000agxn \
   --chain-id guru_631-1 \
   --gas 200000 \
-  --gas-prices 1agxn \
+  --gas-prices 630000000000agxn \
   --keyring-backend test \
   --home "$GURU_HOME"
 
 ./build/gurud genesis collect-gentxs --home "$GURU_HOME"
 ./build/gurud genesis validate --home "$GURU_HOME"
 ```
+
+The gentx gas price matches Guru's default genesis FeeMarket minimum. A lower
+fee may pass file-level genesis validation but will fail when the application
+executes the gentx during `InitChain`.
 
 For another network, use its Cosmos chain ID during initialization and set the
 chosen EVM chain ID in every validator's `app.toml`:

@@ -73,6 +73,10 @@ make proto-check
 
 # GoReleaser or release packaging configuration
 make release-check
+
+# Dockerfile, Compose, or Docker operator documentation
+make docker-check
+make docker-integration
 ```
 
 If a required check cannot be run locally, explain why in the pull request.

@@ -1,0 +1,39 @@
+services:
+  gurud:
+    image: ${GURU_DOCKER_IMAGE:-guru-node:local}
+    build:
+      context: .
+      target: gurud-runtime
+      args:
+        VERSION: ${GURU_VERSION:-dev}
+        COMMIT: ${GURU_COMMIT:-unknown}
+    command:
+      - start
+      - --home=/var/lib/guru/.gurud
+      - --chain-id=${GURU_CHAIN_ID:-guru_631-1}
+      - --evm.evm-chain-id=${GURU_EVM_CHAIN_ID:-631}
+      - --minimum-gas-prices=${GURU_MINIMUM_GAS_PRICES:-630000000000agxn}
+      - --p2p.seeds=${GURU_P2P_SEEDS:-}
+      - --p2p.persistent_peers=${GURU_PERSISTENT_PEERS:-}
+    restart: unless-stopped
+    stop_grace_period: 2m
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - ${GURU_P2P_BIND_IP:-0.0.0.0}:${GURU_P2P_PORT:-26656}:26656
+    volumes:
+      - guru-data:/var/lib/guru/.gurud
+    healthcheck:
+      test: ["CMD", "gurud", "status", "--node", "tcp://127.0.0.1:26657"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 12
+
+volumes:
+  guru-data:

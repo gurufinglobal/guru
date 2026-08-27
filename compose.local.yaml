@@ -1,0 +1,24 @@
+# Opt-in local RPC access. The host bind remains loopback-only by default.
+services:
+  gurud:
+    command:
+      - start
+      - --home=/var/lib/guru/.gurud
+      - --chain-id=${GURU_CHAIN_ID:-guru_631-1}
+      - --evm.evm-chain-id=${GURU_EVM_CHAIN_ID:-631}
+      - --minimum-gas-prices=${GURU_MINIMUM_GAS_PRICES:-630000000000agxn}
+      - --p2p.seeds=${GURU_P2P_SEEDS:-}
+      - --p2p.persistent_peers=${GURU_PERSISTENT_PEERS:-}
+      - --rpc.laddr=tcp://0.0.0.0:26657
+      - --grpc.address=0.0.0.0:9090
+      - --api.enable=${GURU_API_ENABLE:-false}
+      - --json-rpc.enable=${GURU_JSON_RPC_ENABLE:-false}
+      - --json-rpc.address=0.0.0.0:8545
+      - --json-rpc.ws-address=0.0.0.0:8546
+      - --json-rpc.allow-insecure-unlock=false
+    ports:
+      - ${GURU_RPC_BIND_IP:-127.0.0.1}:${GURU_RPC_PORT:-26657}:26657
+      - ${GURU_API_BIND_IP:-127.0.0.1}:${GURU_API_PORT:-1317}:1317
+      - ${GURU_GRPC_BIND_IP:-127.0.0.1}:${GURU_GRPC_PORT:-9090}:9090
+      - ${GURU_JSON_RPC_BIND_IP:-127.0.0.1}:${GURU_JSON_RPC_PORT:-8545}:8545
+      - ${GURU_JSON_RPC_BIND_IP:-127.0.0.1}:${GURU_JSON_RPC_WS_PORT:-8546}:8546

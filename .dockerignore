@@ -1,0 +1,17 @@
+# Start from an allowlist so local keys, node data, credentials, build output,
+# and editor state cannot enter the build context under an unexpected name.
+**
+
+!go.mod
+!go.sum
+!Makefile
+!LICENSE
+
+!app/
+!app/**
+!cmd/
+!cmd/**
+!config/
+!config/**
+!x/
+!x/**

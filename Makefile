@@ -13,6 +13,10 @@ VERSION ?= $(shell (git describe --tags --always 2>/dev/null || echo dev) | sed 
 ORACLE_VERSION ?= $(shell value=$$(git describe --tags --match 'oracle/v[0-9]*' --always 2>/dev/null); if test -n "$$value"; then printf '%s\n' "$$value" | sed 's|^oracle/||'; else echo dev; fi)
 COMMIT ?= $(shell git log -1 --format='%H' 2>/dev/null || echo unknown)
 TMVERSION = $(shell $(GO) list -m github.com/cometbft/cometbft 2>/dev/null | sed 's:.* ::')
+DOCKER_IMAGE ?= guru-node:local
+DOCKER_PLATFORM ?=
+DOCKER_PLATFORMS ?= linux/amd64,linux/arm64
+DOCKER_OCI_OUTPUT ?= $(BUILD_DIR)/guru-node.oci.tar
 
 ###############################################################################
 ###                          Directories & Binaries                         ###
@@ -380,6 +384,53 @@ $(PROTO_HOME_DIR)/:
 
 .PHONY: proto-all proto-gen proto-format proto-format-check proto-lint \
 	proto-deps-update proto-drift proto-breaking proto-check
+
+###############################################################################
+###                                Docker                                    ###
+###############################################################################
+
+docker-build:
+	@$(DOCKER) build \
+		--target gurud-runtime \
+		$(if $(strip $(DOCKER_PLATFORM)),--platform $(DOCKER_PLATFORM),) \
+		--build-arg VERSION="$(VERSION)" \
+		--build-arg COMMIT="$(COMMIT)" \
+		--tag "$(DOCKER_IMAGE)" .
+
+docker-build-multiarch: | $(BUILD_DIR)/
+	@$(DOCKER) buildx build \
+		--target gurud-runtime \
+		--platform "$(DOCKER_PLATFORMS)" \
+		--build-arg VERSION="$(VERSION)" \
+		--build-arg COMMIT="$(COMMIT)" \
+		--output "type=oci,dest=$(DOCKER_OCI_OUTPUT)" .
+
+docker-compose-check:
+	@$(DOCKER) compose -f compose.yaml config --quiet
+	@$(DOCKER) compose -f compose.yaml -f compose.local.yaml config --quiet
+
+docker-smoke:
+	@set -eu; \
+	output="$$( $(DOCKER) run --rm "$(DOCKER_IMAGE)" version --long --output json )"; \
+	compact="$$(printf '%s\n' "$$output" | tr -d '[:space:]')"; \
+	printf '%s\n' "$$compact" | grep -Fq '"server_name":"$(BINARY)"' || { echo "gurud server_name mismatch" >&2; exit 1; }; \
+	printf '%s\n' "$$compact" | grep -Fq '"version":"$(VERSION)"' || { echo "gurud version mismatch" >&2; exit 1; }; \
+	printf '%s\n' "$$compact" | grep -Fq '"commit":"$(COMMIT)"' || { echo "gurud commit mismatch" >&2; exit 1; }; \
+	uid="$$( $(DOCKER) run --rm --entrypoint /usr/bin/id "$(DOCKER_IMAGE)" -u )"; \
+	test "$$uid" -gt 0 || { echo "container must not run as root" >&2; exit 1; }; \
+	$(DOCKER) run --rm --entrypoint /bin/sh "$(DOCKER_IMAGE)" -c \
+		'test ! -e /usr/local/go && test ! -e /src && test -x /usr/local/bin/gurud'
+
+docker-check:
+	@$(MAKE) --no-print-directory docker-compose-check
+	@$(MAKE) --no-print-directory docker-build
+	@$(MAKE) --no-print-directory docker-smoke
+
+docker-integration: docker-build
+	@bash scripts/docker-node-smoke.sh "$(DOCKER_IMAGE)"
+
+.PHONY: docker-build docker-build-multiarch docker-compose-check docker-smoke \
+	docker-check docker-integration
 
 ###############################################################################
 ###                               Release                                   ###
