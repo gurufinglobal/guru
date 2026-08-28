@@ -6,281 +6,305 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 
 	antetypes "github.com/cosmos/evm/ante/types"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	chainconfig "github.com/gurufinglobal/guru/v2/config"
 )
 
 const (
-	// StandardMsgSendGas is the intrinsic execution-gas floor for the bounded
-	// MsgSend class.
+	// StandardMsgSendGas is the consensus accounting gas for every eligible
+	// FixedSendGas transaction. The signed gas limit remains unchanged in the
+	// transaction bytes and is used only as the maximum fee-price denominator.
 	StandardMsgSendGas uint64 = 21_000
 
-	// StandardMsgSendMaxMemoBytes keeps the standard-send class bounded even if the
-	// chain's auth parameter is raised later.
-	StandardMsgSendMaxMemoBytes = 256
+	// StandardMsgSendMaxTxBytes is the FixedSendGas eligibility ceiling. It is
+	// intentionally not a chain-wide transaction-size limit: larger decode-valid
+	// transactions use the ordinary upstream path.
+	StandardMsgSendMaxTxBytes = 2_048
 )
 
-// StandardMsgSendGasDecorator assigns Ethereum-compatible minimum execution
-// gas, with a 21k floor, to a deliberately narrow MsgSend shape. The submitted
-// gas limit remains visible as the public meter limit, while internal ante and
-// message work is tracked by an unbounded meter. Transactions outside this
-// class continue through the ordinary Cosmos gas path.
-type StandardMsgSendGasDecorator struct {
-	accountKeeper    authante.AccountKeeper
-	minGasMultiplier sdkmath.LegacyDec
-	maxTxGasWanted   uint64
+type standardMsgSendContextKey struct{}
+
+type standardMsgSendClassification struct {
+	feeTx  sdk.FeeTx
+	msg    *banktypes.MsgSend
+	sender sdk.AccAddress
 }
 
-func NewStandardMsgSendGasDecorator(
-	accountKeeper authante.AccountKeeper,
-	minGasMultiplier sdkmath.LegacyDec,
-	maxTxGasWanted uint64,
-) StandardMsgSendGasDecorator {
-	return StandardMsgSendGasDecorator{
-		accountKeeper:    accountKeeper,
-		minGasMultiplier: minGasMultiplier,
-		maxTxGasWanted:   maxTxGasWanted,
-	}
+// StandardMsgSendClassifier is the single FixedSendGas classification source
+// shared by ante and proposal handling. A nil error with eligible=false means
+// ordinary upstream fallback; an error is a deterministic admission failure.
+type StandardMsgSendClassifier struct {
+	accountKeeper authante.AccountKeeper
 }
 
-func (d StandardMsgSendGasDecorator) AnteHandle(
+func NewStandardMsgSendClassifier(accountKeeper authante.AccountKeeper) StandardMsgSendClassifier {
+	return StandardMsgSendClassifier{accountKeeper: accountKeeper}
+}
+
+// ClassifyProposal applies the same classifier to original proposal bytes.
+// Callers must put those exact bytes in ctx.TxBytes before calling this method.
+func (c StandardMsgSendClassifier) ClassifyProposal(
+	ctx sdk.Context,
+	tx sdk.Tx,
+) (bool, error) {
+	_, eligible, err := c.classify(ctx, tx, false)
+	return eligible, err
+}
+
+// classify deliberately has a three-way result:
+//
+//   - eligible=false, err=nil: decode-valid ordinary upstream transaction;
+//   - eligible=true, err=nil: bounded FixedSendGas transaction;
+//   - err!=nil: deterministic FixedSendGas admission failure.
+//
+// Raw size is checked before decoded accessors. A decode-valid transaction over
+// the ceiling is always ordinary, even if its canonical re-encoding is smaller.
+func (c StandardMsgSendClassifier) classify(
 	ctx sdk.Context,
 	tx sdk.Tx,
 	simulate bool,
-	next sdk.AnteHandler,
-) (sdk.Context, error) {
-	eligible, publicGasLimit, insufficientGas, dependenciesMissing := d.classify(ctx, tx, simulate)
-	if insufficientGas {
-		return ctx, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidGasLimit,
-			"standard MsgSend requires at least %d gas",
-			StandardMsgSendGas,
-		)
-	}
-	if dependenciesMissing {
-		return ctx, errorsmod.Wrap(
-			sdkerrors.ErrLogic,
-			"standard MsgSend gas dependencies are not configured",
-		)
-	}
-	if !eligible {
-		return next(ctx, tx, simulate)
-	}
-
-	executionGas, ok := standardMsgSendExecutionGas(publicGasLimit, d.minGasMultiplier)
-	if !ok {
-		return ctx, errorsmod.Wrap(
-			sdkerrors.ErrLogic,
-			"standard MsgSend minimum gas multiplier is invalid",
-		)
-	}
-
-	actualMeter := storetypes.NewInfiniteGasMeter()
-	if consumed := ctx.GasMeter().GasConsumed(); consumed > 0 {
-		actualMeter.ConsumeGas(consumed, "standard MsgSend pre-classification gas")
-	}
-	gasWanted := publicGasLimit
-	if (ctx.IsCheckTx() || ctx.IsReCheckTx()) &&
-		d.maxTxGasWanted > 0 && gasWanted > d.maxTxGasWanted {
-		gasWanted = d.maxTxGasWanted
-	}
-
-	return next(
-		ctx.
-			WithKVGasConfig(storetypes.GasConfig{}).
-			WithTransientKVGasConfig(storetypes.GasConfig{}).
-			WithGasMeter(newStandardMsgSendGasMeter(
-				actualMeter,
-				gasWanted,
-				executionGas,
-				simulate || (!ctx.IsCheckTx() && !ctx.IsReCheckTx()),
-			)),
-		tx,
-		simulate,
-	)
-}
-
-// standardMsgSendExecutionGas mirrors Cosmos EVM v0.6.2 minimum-gas
-// settlement and preserves the 21k intrinsic floor for a standard send.
-func standardMsgSendExecutionGas(
-	declaredGas uint64,
-	minGasMultiplier sdkmath.LegacyDec,
-) (uint64, bool) {
-	if declaredGas == 0 {
-		return StandardMsgSendGas, true
-	}
-	if minGasMultiplier.IsNil() {
-		minGasMultiplier = sdkmath.LegacyZeroDec()
-	}
-	if minGasMultiplier.IsNegative() || minGasMultiplier.GT(sdkmath.LegacyOneDec()) {
-		return 0, false
-	}
-
-	minimumGasUsed := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(declaredGas)).
-		Mul(minGasMultiplier).
-		TruncateInt()
-	if !minimumGasUsed.IsUint64() {
-		return 0, false
-	}
-
-	executionGas := minimumGasUsed.Uint64()
-	if executionGas < StandardMsgSendGas {
-		executionGas = StandardMsgSendGas
-	}
-
-	return executionGas, true
-}
-
-// classify contains only standard-send classification. The recovery boundary is
-// intentionally narrower than the downstream ante call: malformed fee payer,
-// granter, signer, or message accessors fall back to the ordinary path, where
-// the normal decorators determine the canonical error without replaying work.
-func (d StandardMsgSendGasDecorator) classify(
-	ctx sdk.Context,
-	tx sdk.Tx,
-	simulate bool,
-) (eligible bool, publicGasLimit uint64, insufficientGas bool, dependenciesMissing bool) {
+) (classification standardMsgSendClassification, eligible bool, err error) {
 	defer func() {
 		if recover() != nil {
+			classification = standardMsgSendClassification{}
 			eligible = false
-			publicGasLimit = 0
-			insufficientGas = false
-			dependenciesMissing = false
+			err = errorsmod.Wrap(
+				sdkerrors.ErrTxDecode,
+				"panic while classifying FixedSendGas transaction",
+			)
 		}
 	}()
 
-	feeTx, msg, candidate := standardMsgSendShapeWithoutGasLimit(tx)
-	if !candidate {
-		return false, 0, false, false
-	}
-
-	declaredGas := feeTx.GetGas()
-	if simulate {
-		switch {
-		case declaredGas == 0:
-			publicGasLimit = StandardMsgSendGas
-		case declaredGas < StandardMsgSendGas:
-			return false, 0, false, false
-		default:
-			publicGasLimit = declaredGas
-		}
-	} else if declaredGas < StandardMsgSendGas {
-		return false, 0, true, false
-	} else {
-		publicGasLimit = declaredGas
-	}
-
-	if d.accountKeeper == nil {
-		return false, 0, false, true
-	}
-
-	feePayer := feeTx.FeePayer()
-	from, err := d.accountKeeper.AddressCodec().StringToBytes(msg.FromAddress)
-	if err != nil || !bytes.Equal(from, feePayer) {
-		return false, 0, false, false
-	}
-	if _, err = d.accountKeeper.AddressCodec().StringToBytes(msg.ToAddress); err != nil ||
-		!d.hasSingleSupportedSigner(ctx, tx, feePayer) {
-		return false, 0, false, false
-	}
-
-	return true, publicGasLimit, false, false
-}
-
-func standardMsgSendShapeWithoutGasLimit(tx sdk.Tx) (sdk.FeeTx, *banktypes.MsgSend, bool) {
 	if tx == nil {
-		return nil, nil, false
+		return standardMsgSendClassification{}, false, errorsmod.Wrap(
+			sdkerrors.ErrTxDecode,
+			"cannot classify a nil FixedSendGas transaction",
+		)
+	}
+	if len(ctx.TxBytes()) > StandardMsgSendMaxTxBytes {
+		return standardMsgSendClassification{}, false, nil
 	}
 
 	msgs := tx.GetMsgs()
 	if len(msgs) != 1 {
-		return nil, nil, false
+		return standardMsgSendClassification{}, false, nil
 	}
 	msg, ok := msgs[0].(*banktypes.MsgSend)
-	if !ok || msg == nil || len(msg.Amount) != 1 ||
-		!msg.Amount.IsValid() || !msg.Amount.IsAllPositive() {
-		return nil, nil, false
+	if !ok || msg == nil || len(msg.Amount) != 1 {
+		return standardMsgSendClassification{}, false, nil
+	}
+	if !msg.Amount.IsValid() || !msg.Amount.IsAllPositive() {
+		return standardMsgSendClassification{}, false, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidCoins,
+			"FixedSendGas requires one positive %s transfer amount",
+			chainconfig.BaseDenom,
+		)
+	}
+	if msg.Amount[0].Denom != chainconfig.BaseDenom {
+		return standardMsgSendClassification{}, false, nil
 	}
 
 	feeTx, ok := tx.(sdk.FeeTx)
-	if !ok || !feeTx.GetFee().IsValid() ||
-		len(feeTx.FeeGranter()) != 0 || len(feeTx.GetFee()) > 1 {
-		return nil, nil, false
+	if !ok {
+		return standardMsgSendClassification{}, false, errorsmod.Wrap(
+			sdkerrors.ErrTxDecode,
+			"FixedSendGas MsgSend must implement sdk.FeeTx",
+		)
 	}
-	if len(feeTx.GetFee()) == 1 && feeTx.GetFee()[0].Denom != evmtypes.GetEVMCoinDenom() {
-		return nil, nil, false
+	declaredGas := feeTx.GetGas()
+	fees := feeTx.GetFee()
+	if !fees.IsValid() {
+		return standardMsgSendClassification{}, false, errorsmod.Wrapf(
+			sdkerrors.ErrInsufficientFee,
+			"invalid FixedSendGas fee: %s",
+			fees,
+		)
+	}
+	if len(feeTx.FeeGranter()) != 0 {
+		return standardMsgSendClassification{}, false, nil
 	}
 
-	if memoTx, ok := tx.(sdk.TxWithMemo); ok && len(memoTx.GetMemo()) > StandardMsgSendMaxMemoBytes {
-		return nil, nil, false
-	}
-	if unorderedTx, ok := tx.(sdk.TxWithUnordered); ok && unorderedTx.GetUnordered() {
-		return nil, nil, false
+	if simulate && declaredGas == 0 {
+		if len(fees) > 1 || (len(fees) == 1 && fees[0].Denom != chainconfig.BaseDenom) {
+			return standardMsgSendClassification{}, false, nil
+		}
+	} else if len(fees) != 1 || fees[0].Denom != chainconfig.BaseDenom {
+		return standardMsgSendClassification{}, false, nil
 	}
 
-	if extensionTx, ok := tx.(authante.HasExtensionOptionsTx); ok {
-		if len(extensionTx.GetNonCriticalExtensionOptions()) != 0 {
-			return nil, nil, false
+	if c.accountKeeper == nil {
+		return standardMsgSendClassification{}, false, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas account keeper is not configured",
+		)
+	}
+	memoTx, ok := tx.(sdk.TxWithMemo)
+	if !ok {
+		return standardMsgSendClassification{}, false, errorsmod.Wrap(
+			sdkerrors.ErrTxDecode,
+			"FixedSendGas transaction must implement sdk.TxWithMemo",
+		)
+	}
+	memoLength := len(memoTx.GetMemo())
+	if maxMemo := c.accountKeeper.GetParams(ctx).MaxMemoCharacters; uint64(memoLength) > maxMemo {
+		return standardMsgSendClassification{}, false, errorsmod.Wrapf(
+			sdkerrors.ErrMemoTooLarge,
+			"maximum number of characters is %d but received %d characters",
+			maxMemo,
+			memoLength,
+		)
+	}
+
+	from, err := c.accountKeeper.AddressCodec().StringToBytes(msg.FromAddress)
+	if err != nil {
+		return standardMsgSendClassification{}, false, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidAddress,
+			"invalid FixedSendGas sender: %s",
+			err,
+		)
+	}
+	if _, err := c.accountKeeper.AddressCodec().StringToBytes(msg.ToAddress); err != nil {
+		return standardMsgSendClassification{}, false, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidAddress,
+			"invalid FixedSendGas recipient: %s",
+			err,
+		)
+	}
+
+	feePayer := sdk.AccAddress(feeTx.FeePayer())
+	if !bytes.Equal(from, feePayer) {
+		return standardMsgSendClassification{}, false, nil
+	}
+	singleKey, err := c.hasSingleSupportedSigner(ctx, tx, feePayer)
+	if err != nil {
+		return standardMsgSendClassification{}, false, err
+	}
+	if !singleKey {
+		return standardMsgSendClassification{}, false, nil
+	}
+
+	extensionTx, ok := tx.(authante.HasExtensionOptionsTx)
+	if !ok {
+		return standardMsgSendClassification{}, false, errorsmod.Wrap(
+			sdkerrors.ErrTxDecode,
+			"FixedSendGas transaction must implement extension options",
+		)
+	}
+	extensions := extensionTx.GetExtensionOptions()
+	if len(extensions) > 1 {
+		return standardMsgSendClassification{}, false, errorsmod.Wrap(
+			sdkerrors.ErrUnknownExtensionOptions,
+			"FixedSendGas permits at most one dynamic-fee extension",
+		)
+	}
+	if len(extensions) == 1 {
+		option := extensions[0]
+		if option == nil || option.GetTypeUrl() != dynamicFeeExtensionURL {
+			return standardMsgSendClassification{}, false, errorsmod.Wrap(
+				sdkerrors.ErrUnknownExtensionOptions,
+				"FixedSendGas has an unsupported critical extension",
+			)
 		}
-		extensions := extensionTx.GetExtensionOptions()
-		if len(extensions) > 1 {
-			return nil, nil, false
+		if _, ok := option.GetCachedValue().(*antetypes.ExtensionOptionDynamicFeeTx); !ok {
+			return standardMsgSendClassification{}, false, errorsmod.Wrap(
+				sdkerrors.ErrUnknownExtensionOptions,
+				"FixedSendGas dynamic-fee extension is malformed",
+			)
 		}
-		if len(extensions) == 1 {
-			if _, ok := extensions[0].GetCachedValue().(*antetypes.ExtensionOptionDynamicFeeTx); !ok {
-				return nil, nil, false
+	}
+	if len(extensionTx.GetNonCriticalExtensionOptions()) != 0 {
+		return standardMsgSendClassification{}, false, nil
+	}
+
+	if declaredGas < StandardMsgSendGas {
+		if simulate {
+			if declaredGas == 0 {
+				// D=0 is the explicit gas-only estimation exception.
+				return standardMsgSendClassification{
+					feeTx:  feeTx,
+					msg:    msg,
+					sender: sdk.AccAddress(from),
+				}, true, nil
 			}
+
+			// A non-zero simulation below G keeps ordinary SDK semantics.
+			return standardMsgSendClassification{}, false, nil
 		}
+		return standardMsgSendClassification{}, false, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidGasLimit,
+			"FixedSendGas requires at least %d declared gas",
+			StandardMsgSendGas,
+		)
 	}
 
-	return feeTx, msg, true
+	return standardMsgSendClassification{
+		feeTx:  feeTx,
+		msg:    msg,
+		sender: sdk.AccAddress(from),
+	}, true, nil
 }
 
-func (d StandardMsgSendGasDecorator) hasSingleSupportedSigner(
+func (c StandardMsgSendClassifier) hasSingleSupportedSigner(
 	ctx context.Context,
 	tx sdk.Tx,
 	feePayer sdk.AccAddress,
-) bool {
+) (bool, error) {
 	sigTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {
-		return false
+		return false, errorsmod.Wrap(
+			sdkerrors.ErrTxDecode,
+			"FixedSendGas transaction must implement signature verification",
+		)
 	}
 
 	signers, err := sigTx.GetSigners()
-	if err != nil || len(signers) != 1 || !bytes.Equal(signers[0], feePayer) {
-		return false
+	if err != nil {
+		return false, errorsmod.Wrap(sdkerrors.ErrTxDecode, "get FixedSendGas signers")
+	}
+	if len(signers) != 1 || !bytes.Equal(signers[0], feePayer) {
+		return false, nil
 	}
 	signatures, err := sigTx.GetSignaturesV2()
-	if err != nil || len(signatures) != 1 {
-		return false
+	if err != nil {
+		return false, errorsmod.Wrap(sdkerrors.ErrTxDecode, "get FixedSendGas signatures")
+	}
+	if len(signatures) != 1 {
+		return false, nil
+	}
+	if _, ok := signatures[0].Data.(*signing.SingleSignatureData); !ok {
+		return false, nil
 	}
 	pubKeys, err := sigTx.GetPubKeys()
-	if err != nil || len(pubKeys) != 1 {
-		return false
+	if err != nil {
+		return false, errorsmod.Wrap(sdkerrors.ErrTxDecode, "get FixedSendGas public keys")
+	}
+	if len(pubKeys) != 1 {
+		return false, nil
 	}
 
 	pubKey := pubKeys[0]
 	if pubKey == nil {
-		account := d.accountKeeper.GetAccount(ctx, feePayer)
+		account := c.accountKeeper.GetAccount(ctx, feePayer)
 		if account == nil {
-			return false
+			return false, nil
 		}
 		pubKey = account.GetPubKey()
 	}
 
-	return hasStandardMsgSendPubKey(pubKey)
+	return hasStandardMsgSendPubKey(pubKey), nil
 }
 
 func hasStandardMsgSendPubKey(pubKey cryptotypes.PubKey) bool {
@@ -292,50 +316,141 @@ func hasStandardMsgSendPubKey(pubKey cryptotypes.PubKey) bool {
 	}
 }
 
-type standardMsgSendGasMeter struct {
-	actual       storetypes.GasMeter
-	limit        storetypes.Gas
-	reportedGas  storetypes.Gas
-	executionGas storetypes.Gas
+// StandardMsgSendGasDecorator is the first setup router in the local Cosmos
+// ante chain. Eligible FixedSendGas transactions get a staged accounting meter;
+// ordinary Cosmos transactions retain the SDK SetUpContextDecorator.
+type StandardMsgSendGasDecorator struct {
+	classifier StandardMsgSendClassifier
+	upstream   authante.SetUpContextDecorator
 }
 
-func newStandardMsgSendGasMeter(
-	actual storetypes.GasMeter,
-	limit uint64,
-	executionGas uint64,
-	reportExecutionGas bool,
-) storetypes.GasMeter {
-	reportedGas := uint64(0)
-	if reportExecutionGas {
-		reportedGas = executionGas
+func NewStandardMsgSendGasDecorator(
+	accountKeeper authante.AccountKeeper,
+) StandardMsgSendGasDecorator {
+	return StandardMsgSendGasDecorator{
+		classifier: NewStandardMsgSendClassifier(accountKeeper),
+		upstream:   authante.NewSetUpContextDecorator(),
+	}
+}
+
+func (d StandardMsgSendGasDecorator) AnteHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	next sdk.AnteHandler,
+) (newCtx sdk.Context, err error) {
+	classification, eligible := standardMsgSendClassificationFromContext(ctx)
+	if !eligible {
+		classified, classifiedEligible, classifyErr := d.classifier.classify(ctx, tx, simulate)
+		if classifyErr != nil {
+			return ctx, classifyErr
+		}
+		if !classifiedEligible {
+			return d.upstream.AnteHandle(ctx, tx, simulate, next)
+		}
+		classification = &classified
 	}
 
-	return &standardMsgSendGasMeter{
-		actual:       actual,
-		limit:        storetypes.Gas(limit),
-		reportedGas:  storetypes.Gas(reportedGas),
-		executionGas: storetypes.Gas(executionGas),
+	actualMeter := storetypes.NewInfiniteGasMeter()
+	if ctx.GasMeter() != nil {
+		if consumed := ctx.GasMeter().GasConsumed(); consumed > 0 {
+			actualMeter.ConsumeGas(consumed, "FixedSendGas pre-setup gas")
+		}
 	}
+	meter := newStandardMsgSendGasMeter(actualMeter)
+	fixedCtx := ctx.
+		WithGasMeter(meter).
+		WithValue(standardMsgSendContextKey{}, classification)
+	if block := ctx.ConsensusParams().Block; block != nil &&
+		block.MaxGas > 0 && StandardMsgSendGas > uint64(block.MaxGas) {
+		return fixedCtx, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidGasLimit,
+			"FixedSendGas accounting gas %d exceeds block max gas %d",
+			StandardMsgSendGas,
+			block.MaxGas,
+		)
+	}
+
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			switch outOfGas := recovered.(type) {
+			case storetypes.ErrorOutOfGas:
+				newCtx = fixedCtx
+				err = errorsmod.Wrapf(
+					sdkerrors.ErrOutOfGas,
+					"out of gas in location: %v; gasWanted: %d; gasUsed: %d",
+					outOfGas.Descriptor,
+					StandardMsgSendGas,
+					meter.GasConsumed(),
+				)
+			default:
+				panic(recovered)
+			}
+		}
+	}()
+
+	newCtx, err = next(fixedCtx, tx, simulate)
+	if newCtx.IsZero() {
+		newCtx = fixedCtx
+	}
+	returnedMeter, ok := newCtx.GasMeter().(*standardMsgSendGasMeter)
+	if !ok || returnedMeter != meter {
+		if err != nil {
+			// Preserve the canonical downstream error, but return the fixed
+			// context so failed ante accounting cannot escape the staged meter.
+			return fixedCtx, err
+		}
+		return fixedCtx, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas meter was replaced during ante handling",
+		)
+	}
+	if err != nil {
+		return newCtx, err
+	}
+	meter.anteSucceeded = true
+	return newCtx, nil
+}
+
+func standardMsgSendClassificationFromContext(
+	ctx sdk.Context,
+) (*standardMsgSendClassification, bool) {
+	classification, ok := ctx.Value(standardMsgSendContextKey{}).(*standardMsgSendClassification)
+	return classification, ok && classification != nil
+}
+
+func isStandardMsgSendGasContext(ctx sdk.Context) bool {
+	_, classified := standardMsgSendClassificationFromContext(ctx)
+	_, metered := ctx.GasMeter().(*standardMsgSendGasMeter)
+	return classified && metered
+}
+
+type standardMsgSendGasMeter struct {
+	actual        storetypes.GasMeter
+	anteSucceeded bool
+}
+
+func newStandardMsgSendGasMeter(actual storetypes.GasMeter) *standardMsgSendGasMeter {
+	return &standardMsgSendGasMeter{actual: actual}
 }
 
 func (m *standardMsgSendGasMeter) GasConsumed() storetypes.Gas {
-	return m.reportedGas
+	return storetypes.Gas(StandardMsgSendGas)
 }
 
 func (m *standardMsgSendGasMeter) GasConsumedToLimit() storetypes.Gas {
-	return m.reportedGas
+	if !m.anteSucceeded {
+		return 0
+	}
+	return storetypes.Gas(StandardMsgSendGas)
 }
 
 func (m *standardMsgSendGasMeter) GasRemaining() storetypes.Gas {
-	if m.reportedGas >= m.limit {
-		return 0
-	}
-
-	return m.limit - m.reportedGas
+	return 0
 }
 
 func (m *standardMsgSendGasMeter) Limit() storetypes.Gas {
-	return m.limit
+	return storetypes.Gas(StandardMsgSendGas)
 }
 
 func (m *standardMsgSendGasMeter) ConsumeGas(amount storetypes.Gas, descriptor string) {
@@ -356,10 +471,9 @@ func (m *standardMsgSendGasMeter) IsOutOfGas() bool {
 
 func (m *standardMsgSendGasMeter) String() string {
 	return fmt.Sprintf(
-		"StandardMsgSendGasMeter{limit: %d, execution: %d, reported: %d, actual: %s}",
-		m.limit,
-		m.executionGas,
-		m.reportedGas,
+		"FixedSendGasMeter{accounting: %d, ante_succeeded: %t, actual: %s}",
+		StandardMsgSendGas,
+		m.anteSucceeded,
 		m.actual.String(),
 	)
 }

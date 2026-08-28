@@ -1,272 +1,182 @@
 package ante
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/big"
-	"slices"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	cosmosante "github.com/cosmos/evm/ante/cosmos"
+	evmanteevm "github.com/cosmos/evm/ante/evm"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	chainconfig "github.com/gurufinglobal/guru/v2/config"
 )
 
-// checkStandardMsgSendDynamicFee applies the FixedSendGas fee and settlement
-// policy after the application-wide Cosmos checker selects an eligible MsgSend.
-// It uses the Ethereum transaction price model against declared gas D, then
-// settles that price against execution gas E.
-//
-// This application's native EVM denom has 18 decimals. Consequently, the EVM
-// path's ConvertAmountTo18DecimalsLegacy step is a no-op, while converting the
-// LegacyDec base fee to *big.Int still truncates its fractional component.
-func checkStandardMsgSendDynamicFee(
-	ctx sdk.Context,
-	tx sdk.Tx,
-	feemarketParams *feemarkettypes.Params,
-	upstream authante.TxFeeChecker,
-) (sdk.Coins, int64, error) {
-	feeTx, ok := tx.(sdk.FeeTx)
-	if !ok {
-		return nil, 0, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
-	}
-	settlementGas, ok := standardMsgSendSettlementGas(ctx)
-	if !ok {
-		return nil, 0, errorsmod.Wrap(sdkerrors.ErrLogic, "standard MsgSend execution gas is unavailable")
-	}
-	if ctx.BlockHeight() == 0 ||
-		!evmtypes.IsLondon(evmtypes.GetEthChainConfig(), ctx.BlockHeight()) {
-		fees, priority, err := upstream(ctx, tx)
-		if err != nil || isStandardMsgSendAdmissionContext(ctx) {
-			return fees, priority, err
-		}
-		settled, settleErr := settleStandardMsgSendFees(
-			fees,
-			feeTx.GetGas(),
-			settlementGas,
-		)
-		return settled, priority, settleErr
-	}
+const (
+	EventTypeFixedSendGas           = "fixed_send_gas"
+	AttributeKeyDeclaredGas         = "declared_gas"
+	AttributeKeyAccountingGas       = "accounting_gas"
+	AttributeKeySubmittedFee        = "submitted_fee"
+	AttributeKeyEffectiveGasPrice   = "effective_gas_price"
+	AttributeKeyActualFee           = "actual_fee"
+	standardMsgSendDecimalPrecision = 18
+)
 
-	if isStandardMsgSendAdmissionContext(ctx) {
-		return checkAndSettleStandardMsgSendFee(
-			ctx,
-			feeTx,
-			feemarketParams,
-			feeTx.GetGas(),
-		)
-	}
-	return checkAndSettleStandardMsgSendFee(
-		ctx,
-		feeTx,
-		feemarketParams,
-		settlementGas,
+type standardMsgSendFeePlanContextKey struct{}
+
+type standardMsgSendSpendableBankKeeper interface {
+	SpendableCoin(context.Context, sdk.AccAddress, string) sdk.Coin
+}
+
+type standardMsgSendPrice struct {
+	numerator   *big.Int
+	denominator *big.Int
+}
+
+type standardMsgSendFeePlan struct {
+	declaredGas    uint64
+	submittedFee   sdk.Coin
+	effectivePrice standardMsgSendPrice
+	actualFee      sdk.Coins
+	priority       int64
+}
+
+func standardMsgSendDecimalScale() *big.Int {
+	return new(big.Int).Exp(
+		big.NewInt(10),
+		big.NewInt(standardMsgSendDecimalPrecision),
+		nil,
 	)
 }
 
-// newStandardMsgSendValidatorFeeChecker mirrors the Cosmos SDK v0.53
-// validator-min-gas-price checker. Admission and priority use the declared gas;
-// eligible MsgSend settlement alone uses execution gas.
-func newStandardMsgSendValidatorFeeChecker() authante.TxFeeChecker {
-	return func(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, int64, error) {
-		fees, priority, err := checkStandardMsgSendValidatorFee(ctx, tx)
-		if err != nil || !isStandardMsgSendGasContext(ctx) {
-			return fees, priority, err
-		}
-		if isStandardMsgSendAdmissionContext(ctx) {
-			return fees, priority, nil
-		}
-
-		feeTx, ok := tx.(sdk.FeeTx)
-		if !ok {
-			return nil, 0, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
-		}
-
-		settlementGas, ok := standardMsgSendSettlementGas(ctx)
-		if !ok {
-			return fees, priority, nil
-		}
-
-		settled, settleErr := settleStandardMsgSendFees(
-			fees,
-			feeTx.GetGas(),
-			settlementGas,
-		)
-		return settled, priority, settleErr
+func standardMsgSendScaledDec(value sdkmath.LegacyDec) *big.Int {
+	if value.IsNil() {
+		return new(big.Int)
 	}
+	return value.BigInt()
 }
 
-func isStandardMsgSendAdmissionContext(ctx sdk.Context) bool {
-	return ctx.IsCheckTx() || ctx.IsReCheckTx()
+func compareStandardMsgSendPrices(left, right standardMsgSendPrice) int {
+	leftProduct := new(big.Int).Mul(left.numerator, right.denominator)
+	rightProduct := new(big.Int).Mul(right.numerator, left.denominator)
+	return leftProduct.Cmp(rightProduct)
 }
 
-func isStandardMsgSendGasContext(ctx sdk.Context) bool {
-	_, ok := ctx.GasMeter().(*standardMsgSendGasMeter)
-	return ok
-}
-
-func standardMsgSendSettlementGas(ctx sdk.Context) (uint64, bool) {
-	meter, ok := ctx.GasMeter().(*standardMsgSendGasMeter)
-	if !ok {
-		return 0, false
+func ceilStandardMsgSendQuotient(numerator, denominator *big.Int) *big.Int {
+	quotient := new(big.Int)
+	remainder := new(big.Int)
+	quotient.QuoRem(numerator, denominator, remainder)
+	if remainder.Sign() != 0 {
+		quotient.Add(quotient, big.NewInt(1))
 	}
-	return uint64(meter.executionGas), true
+	return quotient
 }
 
-// checkAndSettleStandardMsgSendFee applies the successful Ethereum plain
-// transfer price semantics:
-//
-//   - legacy/no extension: P = F = submittedFee / D
-//   - dynamic extension: P = min(B + tip, F)
-//   - admission and priority use D; deduction is ceil(P * E)
-//
-// B is the integer EVM base fee. NoBaseFee and pre-enable heights produce B=0.
-func checkAndSettleStandardMsgSendFee(
+func standardMsgSendPriceString(price standardMsgSendPrice) string {
+	quotient := new(big.Int)
+	remainder := new(big.Int)
+	quotient.QuoRem(price.numerator, price.denominator, remainder)
+	if remainder.Sign() == 0 {
+		return quotient.String()
+	}
+	return fmt.Sprintf("%s/%s", price.numerator, price.denominator)
+}
+
+// buildStandardMsgSendFeePlan is the only FixedSendGas fee formula. It uses
+// exact integer cross-products throughout: feeCap F/D is never rounded into a
+// LegacyDec before BaseFee, MGP, settlement, or priority is decided.
+func buildStandardMsgSendFeePlan(
 	ctx sdk.Context,
-	feeTx sdk.FeeTx,
+	classification *standardMsgSendClassification,
 	feemarketParams *feemarkettypes.Params,
-	executionGas uint64,
-) (sdk.Coins, int64, error) {
+	accountKeeper authante.AccountKeeper,
+	bankKeeper standardMsgSendSpendableBankKeeper,
+	checkSpendability bool,
+) (standardMsgSendFeePlan, error) {
+	if classification == nil || classification.feeTx == nil || classification.msg == nil {
+		return standardMsgSendFeePlan{}, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas classification is unavailable",
+		)
+	}
+	if feemarketParams == nil {
+		return standardMsgSendFeePlan{}, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas fee market params are not configured",
+		)
+	}
+	if feemarketParams.MinGasPrice.IsNil() || feemarketParams.MinGasPrice.IsNegative() {
+		return standardMsgSendFeePlan{}, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas minimum gas price must be configured and non-negative",
+		)
+	}
+
+	feeTx := classification.feeTx
 	declaredGas := feeTx.GetGas()
-	if declaredGas == 0 {
-		return nil, 0, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "gas cannot be zero")
+	if declaredGas < StandardMsgSendGas {
+		return standardMsgSendFeePlan{}, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidGasLimit,
+			"FixedSendGas requires at least %d declared gas",
+			StandardMsgSendGas,
+		)
 	}
-
-	denom := evmtypes.GetEVMCoinDenom()
-	declaredGasInt := sdkmath.NewIntFromUint64(declaredGas)
-	feeAmount := feeTx.GetFee().AmountOf(denom)
-	feeCap := sdkmath.LegacyNewDecFromInt(feeAmount).QuoInt(declaredGasInt)
-	baseFee := standardMsgSendEthereumBaseFee(ctx, feemarketParams)
-
-	dynamicFee, hasDynamicFee := dynamicFeeExtension(feeTx)
-	effectivePrice := feeCap
-	priorityPrice := feeCap.Sub(baseFee)
-	if hasDynamicFee {
-		tipCap := dynamicFee.MaxPriorityPrice
-		if tipCap.IsNil() {
-			tipCap = sdkmath.LegacyZeroDec()
-		}
-		if tipCap.IsNegative() {
-			return nil, 0, errorsmod.Wrap(sdkerrors.ErrInsufficientFee, "max priority price cannot be negative")
-		}
-		if tipCap.GT(feeCap) {
-			return nil, 0, errorsmod.Wrapf(
-				sdkerrors.ErrInsufficientFee,
-				"max priority price %s exceeds fee cap %s",
-				tipCap,
-				feeCap,
-			)
-		}
-		if feeCap.LT(baseFee) {
-			return nil, 0, errorsmod.Wrapf(
-				sdkerrors.ErrInsufficientFee,
-				"gas prices too low, got: %s%s required: %s%s. Please retry using a higher gas price or a higher fee",
-				feeCap,
-				denom,
-				baseFee,
-				denom,
-			)
-		}
-
-		effectivePrice = sdkmath.LegacyMinDec(baseFee.Add(tipCap), feeCap)
-		priorityPrice = effectivePrice.Sub(baseFee)
-	} else if feeCap.LT(baseFee) {
-		// Ethereum legacy transactions must cover the current base fee.
-		return nil, 0, errorsmod.Wrapf(
+	fees := feeTx.GetFee()
+	if len(fees) != 1 || fees[0].Denom != chainconfig.BaseDenom || !fees[0].IsPositive() {
+		return standardMsgSendFeePlan{}, errorsmod.Wrapf(
 			sdkerrors.ErrInsufficientFee,
-			"gas prices too low, got: %s%s required: %s%s. Please retry using a higher gas price or a higher fee",
-			feeCap,
-			denom,
-			baseFee,
-			denom,
+			"FixedSendGas requires one positive %s fee",
+			chainconfig.BaseDenom,
 		)
 	}
 
-	priorityInt := priorityPrice.QuoInt(evmtypes.DefaultPriorityReduction).TruncateInt()
-	priority := int64(math.MaxInt64)
-	if priorityInt.IsInt64() {
-		priority = priorityInt.Int64()
+	declaredGasInt := new(big.Int).SetUint64(declaredGas)
+	submittedFeeInt := fees[0].Amount.BigInt()
+	decimalScale := standardMsgSendDecimalScale()
+	feeCap := standardMsgSendPrice{
+		numerator:   new(big.Int).Set(submittedFeeInt),
+		denominator: declaredGasInt,
 	}
 
-	settledAmount := effectivePrice.
-		MulInt(sdkmath.NewIntFromUint64(executionGas)).
-		Ceil().
-		RoundInt()
-	return sdk.Coins{{Denom: denom, Amount: settledAmount}}, priority, nil
-}
-
-func standardMsgSendEthereumBaseFee(
-	ctx sdk.Context,
-	feemarketParams *feemarkettypes.Params,
-) sdkmath.LegacyDec {
-	if feemarketParams == nil || !feemarketParams.IsBaseFeeEnabled(ctx.BlockHeight()) {
-		return sdkmath.LegacyZeroDec()
+	if standardMsgSendBaseFeeEnabled(ctx, feemarketParams) && feemarketParams.BaseFee.IsNil() {
+		return standardMsgSendFeePlan{}, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas active base fee is not configured",
+		)
+	}
+	baseFee := standardMsgSendBaseFee(ctx, feemarketParams)
+	if baseFee.IsNegative() {
+		return standardMsgSendFeePlan{}, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas base fee cannot be negative",
+		)
+	}
+	baseFeeScaled := standardMsgSendScaledDec(baseFee)
+	baseFeePrice := standardMsgSendPrice{
+		numerator:   baseFeeScaled,
+		denominator: decimalScale,
+	}
+	if compareStandardMsgSendPrices(feeCap, baseFeePrice) < 0 {
+		return standardMsgSendFeePlan{}, errorsmod.Wrapf(
+			sdkerrors.ErrInsufficientFee,
+			"FixedSendGas fee cap below base fee (%s%s < %s%s)",
+			standardMsgSendPriceString(feeCap),
+			chainconfig.BaseDenom,
+			baseFee,
+			chainconfig.BaseDenom,
+		)
 	}
 
-	baseFee := feemarketParams.BaseFee
-	if baseFee.IsNil() || baseFee.IsZero() {
-		return sdkmath.LegacyZeroDec()
-	}
-
-	// The application config fixes the native EVM denom exponent to 18, so
-	// ConvertAmountTo18DecimalsLegacy is intentionally not needed here.
-	return sdkmath.LegacyNewDecFromInt(baseFee.TruncateInt())
-}
-
-// standardMsgSendMinGasPriceDecorator preserves the upstream Cosmos decorator
-// for ordinary transactions. For an eligible MsgSend it checks the Ethereum
-// effective price P against the global minimum price, both multiplied by D.
-type standardMsgSendMinGasPriceDecorator struct {
-	upstream        cosmosante.MinGasPriceDecorator
-	feemarketParams *feemarkettypes.Params
-}
-
-func newStandardMsgSendMinGasPriceDecorator(
-	feemarketParams *feemarkettypes.Params,
-) standardMsgSendMinGasPriceDecorator {
-	return standardMsgSendMinGasPriceDecorator{
-		upstream:        cosmosante.NewMinGasPriceDecorator(feemarketParams),
-		feemarketParams: feemarketParams,
-	}
-}
-
-func (d standardMsgSendMinGasPriceDecorator) AnteHandle(
-	ctx sdk.Context,
-	tx sdk.Tx,
-	simulate bool,
-	next sdk.AnteHandler,
-) (sdk.Context, error) {
-	if !isStandardMsgSendGasContext(ctx) {
-		return d.upstream.AnteHandle(ctx, tx, simulate, next)
-	}
-
-	feeTx, ok := tx.(sdk.FeeTx)
-	if !ok {
-		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "invalid transaction type %T, expected sdk.FeeTx", tx)
-	}
-
-	feeCoins := feeTx.GetFee()
-	denom := evmtypes.GetEVMCoinDenom()
-	validFees := len(feeCoins) == 0 ||
-		(len(feeCoins) == 1 && slices.Contains([]string{denom, sdk.DefaultBondDenom}, feeCoins.GetDenomByIndex(0)))
-	if !validFees && !simulate {
-		return ctx, fmt.Errorf("expected only native token %s for fee, but got %s", denom, feeCoins.String())
-	}
-	if d.feemarketParams.MinGasPrice.IsZero() || simulate {
-		return next(ctx, tx, simulate)
-	}
-	if feeTx.GetGas() == 0 {
-		return ctx, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "gas cannot be zero")
-	}
-
-	feeCap := sdkmath.LegacyNewDecFromInt(feeCoins.AmountOf(denom)).
-		QuoInt(sdkmath.NewIntFromUint64(feeTx.GetGas()))
 	effectivePrice := feeCap
 	if dynamicFee, ok := dynamicFeeExtension(feeTx); ok {
 		tipCap := dynamicFee.MaxPriorityPrice
@@ -274,112 +184,359 @@ func (d standardMsgSendMinGasPriceDecorator) AnteHandle(
 			tipCap = sdkmath.LegacyZeroDec()
 		}
 		if tipCap.IsNegative() {
-			return ctx, errorsmod.Wrap(sdkerrors.ErrInsufficientFee, "max priority price cannot be negative")
+			return standardMsgSendFeePlan{}, errorsmod.Wrap(
+				sdkerrors.ErrInsufficientFee,
+				"max priority price cannot be negative",
+			)
 		}
-		if tipCap.GT(feeCap) {
-			return ctx, errorsmod.Wrapf(sdkerrors.ErrInsufficientFee, "max priority price %s exceeds fee cap %s", tipCap, feeCap)
+		basePlusTip := standardMsgSendPrice{
+			numerator: new(big.Int).Add(
+				baseFeeScaled,
+				standardMsgSendScaledDec(tipCap),
+			),
+			denominator: decimalScale,
 		}
-		baseFee := standardMsgSendEthereumBaseFee(ctx, d.feemarketParams)
-		if feeCap.LT(baseFee) {
-			return ctx, errorsmod.Wrapf(sdkerrors.ErrInsufficientFee, "gas prices too low, got: %s%s required: %s%s", feeCap, denom, baseFee, denom)
+		if compareStandardMsgSendPrices(basePlusTip, feeCap) < 0 {
+			effectivePrice = basePlusTip
 		}
-		effectivePrice = sdkmath.LegacyMinDec(baseFee.Add(tipCap), feeCap)
 	}
 
-	gasLimit := sdkmath.LegacyNewDecFromBigInt(new(big.Int).SetUint64(feeTx.GetGas()))
-	providedFee := effectivePrice.Mul(gasLimit)
-	requiredFee := d.feemarketParams.MinGasPrice.Mul(gasLimit)
-	if providedFee.LT(requiredFee) {
-		return ctx, errorsmod.Wrapf(
+	minimumPrice := feemarketParams.MinGasPrice
+	minimumPriceRatio := standardMsgSendPrice{
+		numerator:   standardMsgSendScaledDec(minimumPrice),
+		denominator: decimalScale,
+	}
+	if compareStandardMsgSendPrices(effectivePrice, minimumPriceRatio) < 0 {
+		return standardMsgSendFeePlan{}, errorsmod.Wrapf(
 			sdkerrors.ErrInsufficientFee,
-			"provided fee < minimum global fee (%s < %s). Please increase the priority tip (for EIP-1559 txs) or the gas prices (for legacy txs)",
-			providedFee.TruncateInt(),
-			requiredFee.TruncateInt(),
+			"FixedSendGas effective gas price below minimum global gas price (%s%s < %s%s)",
+			standardMsgSendPriceString(effectivePrice),
+			chainconfig.BaseDenom,
+			minimumPrice,
+			chainconfig.BaseDenom,
 		)
 	}
 
-	return next(ctx, tx, simulate)
-}
-
-// settleStandardMsgSendFees preserves each submitted coin's gas price while
-// replacing the declared gas multiplier with executionGas.
-func settleStandardMsgSendFees(
-	fees sdk.Coins,
-	declaredGas uint64,
-	executionGas uint64,
-) (sdk.Coins, error) {
-	if declaredGas == 0 {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "gas cannot be zero")
+	actualFeeInt := ceilStandardMsgSendQuotient(
+		new(big.Int).Mul(
+			new(big.Int).Set(effectivePrice.numerator),
+			new(big.Int).SetUint64(StandardMsgSendGas),
+		),
+		effectivePrice.denominator,
+	)
+	if actualFeeInt.Cmp(submittedFeeInt) > 0 {
+		return standardMsgSendFeePlan{}, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas actual fee exceeds submitted fee",
+		)
 	}
 
-	declaredGasInt := sdkmath.NewIntFromUint64(declaredGas)
-	settlementGas := sdkmath.NewIntFromUint64(executionGas)
-	settled := make(sdk.Coins, len(fees))
-	for i, fee := range fees {
-		amount := sdkmath.LegacyNewDecFromInt(fee.Amount).
-			QuoInt(declaredGasInt).
-			MulInt(settlementGas).
-			Ceil().
-			RoundInt()
-		settled[i] = sdk.NewCoin(fee.Denom, amount)
+	actualFee := sdk.NewCoins()
+	if actualFeeInt.Sign() > 0 {
+		actualFee = sdk.NewCoins(sdk.NewCoin(
+			chainconfig.BaseDenom,
+			sdkmath.NewIntFromBigInt(actualFeeInt),
+		))
 	}
 
-	return settled, nil
+	priorityNumerator := new(big.Int).Sub(
+		new(big.Int).Mul(
+			new(big.Int).Set(effectivePrice.numerator),
+			decimalScale,
+		),
+		new(big.Int).Mul(
+			baseFeeScaled,
+			effectivePrice.denominator,
+		),
+	)
+	if priorityNumerator.Sign() < 0 {
+		return standardMsgSendFeePlan{}, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas effective price is below base fee",
+		)
+	}
+	priorityReduction := evmtypes.DefaultPriorityReduction.BigInt()
+	if priorityReduction == nil || priorityReduction.Sign() <= 0 {
+		return standardMsgSendFeePlan{}, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas priority reduction must be positive",
+		)
+	}
+	priorityDenominator := new(big.Int).Mul(
+		new(big.Int).Mul(
+			new(big.Int).Set(effectivePrice.denominator),
+			decimalScale,
+		),
+		priorityReduction,
+	)
+	priorityInt := new(big.Int).Quo(priorityNumerator, priorityDenominator)
+	priority := int64(math.MaxInt64)
+	if priorityInt.IsInt64() {
+		priority = priorityInt.Int64()
+	}
+
+	if checkSpendability {
+		if accountKeeper == nil {
+			return standardMsgSendFeePlan{}, errorsmod.Wrap(
+				sdkerrors.ErrLogic,
+				"FixedSendGas account keeper is not configured",
+			)
+		}
+		if accountKeeper.GetAccount(ctx, classification.sender) == nil {
+			return standardMsgSendFeePlan{}, errorsmod.Wrapf(
+				sdkerrors.ErrUnknownAddress,
+				"fee payer address %s does not exist",
+				classification.sender,
+			)
+		}
+		if bankKeeper == nil {
+			return standardMsgSendFeePlan{}, errorsmod.Wrap(
+				sdkerrors.ErrLogic,
+				"FixedSendGas spendable bank keeper is not configured",
+			)
+		}
+		spendable := bankKeeper.SpendableCoin(
+			ctx,
+			classification.sender,
+			chainconfig.BaseDenom,
+		).Amount.BigInt()
+		required := new(big.Int).Add(
+			classification.msg.Amount[0].Amount.BigInt(),
+			submittedFeeInt,
+		)
+		if spendable.Cmp(required) < 0 {
+			return standardMsgSendFeePlan{}, errorsmod.Wrapf(
+				sdkerrors.ErrInsufficientFunds,
+				"FixedSendGas spendable balance %s%s is below transfer plus submitted fee %s%s",
+				spendable,
+				chainconfig.BaseDenom,
+				required,
+				chainconfig.BaseDenom,
+			)
+		}
+	}
+
+	return standardMsgSendFeePlan{
+		declaredGas:    declaredGas,
+		submittedFee:   fees[0],
+		effectivePrice: effectivePrice,
+		actualFee:      actualFee,
+		priority:       priority,
+	}, nil
 }
 
-// checkStandardMsgSendValidatorFee is the local equivalent of the unexported
-// Cosmos SDK v0.53 default checker. It intentionally evaluates the original
-// FeeTx and its declared gas before execution-gas settlement occurs.
-func checkStandardMsgSendValidatorFee(
+func standardMsgSendBaseFee(
+	ctx sdk.Context,
+	feemarketParams *feemarkettypes.Params,
+) sdkmath.LegacyDec {
+	if !standardMsgSendBaseFeeEnabled(ctx, feemarketParams) ||
+		feemarketParams.BaseFee.IsNil() {
+		return sdkmath.LegacyZeroDec()
+	}
+	return feemarketParams.BaseFee
+}
+
+func standardMsgSendBaseFeeEnabled(
+	ctx sdk.Context,
+	feemarketParams *feemarkettypes.Params,
+) bool {
+	return ctx.BlockHeight() != 0 &&
+		evmtypes.IsLondon(evmtypes.GetEthChainConfig(), ctx.BlockHeight()) &&
+		feemarketParams != nil &&
+		feemarketParams.IsBaseFeeEnabled(ctx.BlockHeight())
+}
+
+type standardMsgSendFeePlanDecorator struct {
+	upstream        cosmosante.MinGasPriceDecorator
+	feemarketParams *feemarkettypes.Params
+	accountKeeper   authante.AccountKeeper
+	bankKeeper      standardMsgSendSpendableBankKeeper
+}
+
+func newStandardMsgSendFeePlanDecorator(
+	feemarketParams *feemarkettypes.Params,
+	accountKeeper authante.AccountKeeper,
+	bankKeeper standardMsgSendSpendableBankKeeper,
+) standardMsgSendFeePlanDecorator {
+	return standardMsgSendFeePlanDecorator{
+		upstream:        cosmosante.NewMinGasPriceDecorator(feemarketParams),
+		feemarketParams: feemarketParams,
+		accountKeeper:   accountKeeper,
+		bankKeeper:      bankKeeper,
+	}
+}
+
+func (d standardMsgSendFeePlanDecorator) AnteHandle(
 	ctx sdk.Context,
 	tx sdk.Tx,
-) (sdk.Coins, int64, error) {
-	feeTx, ok := tx.(sdk.FeeTx)
-	if !ok {
-		return nil, 0, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+	simulate bool,
+	next sdk.AnteHandler,
+) (sdk.Context, error) {
+	classification, fixed := standardMsgSendClassificationFromContext(ctx)
+	if !fixed {
+		return d.upstream.AnteHandle(ctx, tx, simulate, next)
+	}
+	if simulate && classification.feeTx.GetGas() == 0 {
+		return next(ctx.WithPriority(0), tx, simulate)
 	}
 
-	fees := feeTx.GetFee()
-	gas := feeTx.GetGas()
-	if ctx.IsCheckTx() && !ctx.MinGasPrices().IsZero() {
-		requiredFees := make(sdk.Coins, len(ctx.MinGasPrices()))
-		gasLimit := sdkmath.LegacyNewDec(int64(gas)) // #nosec G115 -- ValidateBasic bounds gas before fee deduction.
-		for i, gasPrice := range ctx.MinGasPrices() {
-			requiredFee := gasPrice.Amount.Mul(gasLimit)
-			requiredFees[i] = sdk.NewCoin(
-				gasPrice.Denom,
-				requiredFee.Ceil().RoundInt(),
-			)
-		}
-
-		if !fees.IsAnyGTE(requiredFees) {
-			return nil, 0, errorsmod.Wrapf(
-				sdkerrors.ErrInsufficientFee,
-				"insufficient fees; got: %s required: %s",
-				fees,
-				requiredFees,
-			)
-		}
+	plan, err := buildStandardMsgSendFeePlan(
+		ctx,
+		classification,
+		d.feemarketParams,
+		d.accountKeeper,
+		d.bankKeeper,
+		true,
+	)
+	if err != nil {
+		return ctx, err
 	}
-
-	return fees, standardMsgSendValidatorPriority(fees, int64(gas)), nil // #nosec G115 -- ValidateBasic bounds gas.
+	return next(
+		ctx.WithValue(standardMsgSendFeePlanContextKey{}, &plan),
+		tx,
+		simulate,
+	)
 }
 
-func standardMsgSendValidatorPriority(fees sdk.Coins, gas int64) int64 {
-	if gas <= 0 {
-		return 0
+func standardMsgSendFeePlanFromContext(ctx sdk.Context) (*standardMsgSendFeePlan, bool) {
+	plan, ok := ctx.Value(standardMsgSendFeePlanContextKey{}).(*standardMsgSendFeePlan)
+	return plan, ok && plan != nil
+}
+
+type standardMsgSendDeductFeeDecorator struct {
+	ordinary authante.DeductFeeDecorator
+	fixed    authante.DeductFeeDecorator
+}
+
+func newStandardMsgSendDeductFeeDecorator(
+	accountKeeper authante.AccountKeeper,
+	bankKeeper authtypes.BankKeeper,
+	feegrantKeeper authante.FeegrantKeeper,
+	ordinaryChecker authante.TxFeeChecker,
+) standardMsgSendDeductFeeDecorator {
+	fixedChecker := func(ctx sdk.Context, _ sdk.Tx) (sdk.Coins, int64, error) {
+		plan, ok := standardMsgSendFeePlanFromContext(ctx)
+		if !ok {
+			return nil, 0, errorsmod.Wrap(
+				sdkerrors.ErrLogic,
+				"FixedSendGas fee plan is unavailable",
+			)
+		}
+		return plan.actualFee, plan.priority, nil
 	}
 
-	var priority int64
-	for _, fee := range fees {
-		candidate := int64(math.MaxInt64)
-		gasPrice := fee.Amount.QuoRaw(gas)
-		if gasPrice.IsInt64() {
-			candidate = gasPrice.Int64()
-		}
-		if priority == 0 || candidate < priority {
-			priority = candidate
-		}
+	return standardMsgSendDeductFeeDecorator{
+		ordinary: authante.NewDeductFeeDecorator(
+			accountKeeper,
+			bankKeeper,
+			feegrantKeeper,
+			ordinaryChecker,
+		),
+		fixed: authante.NewDeductFeeDecorator(
+			accountKeeper,
+			bankKeeper,
+			feegrantKeeper,
+			fixedChecker,
+		),
 	}
-	return priority
+}
+
+func (d standardMsgSendDeductFeeDecorator) AnteHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	next sdk.AnteHandler,
+) (sdk.Context, error) {
+	classification, fixed := standardMsgSendClassificationFromContext(ctx)
+	if !fixed {
+		return d.ordinary.AnteHandle(ctx, tx, simulate, next)
+	}
+	if simulate && classification.feeTx.GetGas() == 0 {
+		return next(ctx.WithPriority(0), tx, simulate)
+	}
+
+	plan, ok := standardMsgSendFeePlanFromContext(ctx)
+	if !ok {
+		return ctx, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas fee plan is unavailable",
+		)
+	}
+	return d.fixed.AnteHandle(
+		ctx,
+		tx,
+		false,
+		func(nextCtx sdk.Context, nextTx sdk.Tx, _ bool) (sdk.Context, error) {
+			nextCtx.EventManager().EmitEvent(sdk.NewEvent(
+				EventTypeFixedSendGas,
+				sdk.NewAttribute(AttributeKeyDeclaredGas, fmt.Sprintf("%d", plan.declaredGas)),
+				sdk.NewAttribute(AttributeKeyAccountingGas, fmt.Sprintf("%d", StandardMsgSendGas)),
+				sdk.NewAttribute(AttributeKeySubmittedFee, plan.submittedFee.String()),
+				sdk.NewAttribute(AttributeKeyEffectiveGasPrice, standardMsgSendPriceString(plan.effectivePrice)),
+				sdk.NewAttribute(AttributeKeyActualFee, plan.actualFee.String()),
+			))
+			return next(nextCtx, nextTx, simulate)
+		},
+	)
+}
+
+type standardMsgSendGasWantedDecorator struct {
+	ordinary        evmanteevm.GasWantedDecorator
+	feeMarketKeeper interface {
+		AddTransientGasWanted(sdk.Context, uint64) (uint64, error)
+	}
+	feemarketParams *feemarkettypes.Params
+}
+
+func newStandardMsgSendGasWantedDecorator(
+	ordinary evmanteevm.GasWantedDecorator,
+	feeMarketKeeper interface {
+		AddTransientGasWanted(sdk.Context, uint64) (uint64, error)
+	},
+	feemarketParams *feemarkettypes.Params,
+) standardMsgSendGasWantedDecorator {
+	return standardMsgSendGasWantedDecorator{
+		ordinary:        ordinary,
+		feeMarketKeeper: feeMarketKeeper,
+		feemarketParams: feemarketParams,
+	}
+}
+
+func (d standardMsgSendGasWantedDecorator) AnteHandle(
+	ctx sdk.Context,
+	tx sdk.Tx,
+	simulate bool,
+	next sdk.AnteHandler,
+) (sdk.Context, error) {
+	if !isStandardMsgSendGasContext(ctx) {
+		return d.ordinary.AnteHandle(ctx, tx, simulate, next)
+	}
+
+	newCtx, err := next(ctx, tx, simulate)
+	if err != nil {
+		return newCtx, err
+	}
+	if newCtx.ExecMode() != sdk.ExecModeFinalize ||
+		!evmtypes.IsLondon(evmtypes.GetEthChainConfig(), newCtx.BlockHeight()) {
+		return newCtx, nil
+	}
+	if d.feemarketParams == nil {
+		return newCtx, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas fee market params are not configured",
+		)
+	}
+	if !d.feemarketParams.IsBaseFeeEnabled(newCtx.BlockHeight()) {
+		return newCtx, nil
+	}
+	if d.feeMarketKeeper == nil {
+		return newCtx, errorsmod.Wrap(
+			sdkerrors.ErrLogic,
+			"FixedSendGas fee market keeper is not configured",
+		)
+	}
+	if _, err := d.feeMarketKeeper.AddTransientGasWanted(newCtx, StandardMsgSendGas); err != nil {
+		return newCtx, errorsmod.Wrap(err, "add FixedSendGas transient gas wanted")
+	}
+	return newCtx, nil
 }

@@ -66,8 +66,12 @@ Guru installs Cosmos SDK modules, Cosmos EVM VM/FeeMarket/ERC20 modules, IBC
 core, and ICS-20. It also installs the Guru Constitution and Oracle modules and
 wraps upstream staking so the chain-wide minimum validator self-bond is applied
 at genesis and during validator-set updates. The ante handler preserves the
-upstream Ethereum transaction path while applying Guru's standard `MsgSend`
-gas and fee rules to eligible Cosmos transactions.
+upstream Ethereum transaction path while applying Guru's FixedSendGas policy to
+bounded, single-key Cosmos `MsgSend` transactions. Eligible transactions retain
+their signed gas limit and raw bytes, but use exactly `21,000` gas for public
+accounting, proposal budgeting, FeeMarket contribution, and fee settlement. The
+eligibility ceiling is 2,048 raw bytes; a larger decode-valid transaction follows
+the ordinary upstream Cosmos path instead of being rejected for size alone.
 
 The generated default genesis:
 
@@ -82,14 +86,28 @@ The generated default genesis:
 
 These are bootstrap values. Operators may edit a new network's genesis subject
 to both upstream module validation and Guru's cross-module checks. Guru validates
-the Constitution self-bond denomination and amount and the required FeeMarket
-policy before accepting genesis.
+the Constitution self-bond denomination and amount, the required FeeMarket
+policy, and that both EVM denomination fields remain equal to the immutable
+`config.BaseDenom` before accepting genesis.
+
+Runtime EVM parameter updates are a trusted-governance boundary. Under that
+trust model, Guru accepts the operational risk that the upstream
+`MsgUpdateParams` path does not revalidate `EvmDenom` or
+`ExtendedDenomOptions`. Operators MUST NOT use that message to change either
+field: both denominations are operationally immutable after genesis, and
+denomination changes are upgrade-only. Any such change requires a coordinated
+binary upgrade and an explicit state migration covering bank metadata and
+balances, stored and global EVM coin information, FeeMarket and FixedSendGas
+policy, transaction and RPC clients, and export/import validation. Other EVM
+parameters remain governable subject to their normal validation.
 
 ## Mempool and proposal behavior
 
 Guru deliberately uses the SDK `NoOpMempool` because CometBFT owns transaction
-storage and gossip. The normal transaction selection path delegates to the SDK
-default proposal handler for a no-op application mempool.
+storage and gossip. Its application proposal handler preserves FIFO order and
+the original raw bytes while applying mixed gas budgeting: eligible
+FixedSendGas transactions count as `21,000`, and ordinary transactions count by
+their signed gas limit.
 
 Guru wraps that default path with Oracle proposal handling. When an Oracle
 payload is expected, `PrepareProposal` validates the extended commit, builds a
@@ -99,9 +117,21 @@ a missing, malformed, or mismatched Oracle payload.
 
 Broadcast transactions normally pass `CheckTx` before entering the CometBFT
 mempool. Ante verification runs again during `FinalizeBlock`; an invalid or
-stale normal transaction therefore produces a deterministic failed transaction
-result without committing its state. Oracle consensus records are stricter: the
-proposal is rejected when their canonical content or position is invalid.
+stale ordinary transaction therefore produces a deterministic failed
+transaction result without committing its state. FixedSendGas proposal
+admission uses an ante-only snapshot: the height `H-1` committed state, the
+projected target-height BaseFee, the minimum gas price already effective for
+height `H`, and successful ante writes from preceding proposal transactions.
+It does not apply `PreBlock`, `BeginBlock`, or preceding transaction message
+state transitions. `ProcessProposal` rejects the whole proposal when a normal
+raw transaction cannot be decoded, a FixedSendGas transaction violates
+consensus/admission rules under that snapshot, or the mixed gas budget is
+exceeded. Decode-valid ordinary ante failures retain the existing `NoOp`
+behavior. Failures that arise only in `FinalizeBlock` because of the excluded
+lifecycle or preceding message effects follow the normal per-transaction
+ante/message semantics and do not retroactively reject the proposal. Oracle
+consensus records remain stricter: the proposal is rejected when their canonical
+content or position is invalid.
 
 Each validator may run the standalone `oracled` process and configure its Unix
 socket in the node's `[oracle]` section. Oracle participation is enabled by

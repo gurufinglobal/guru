@@ -47,6 +47,7 @@ import (
 	ethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/require"
 
+	appante "github.com/gurufinglobal/guru/v2/app/ante"
 	"github.com/gurufinglobal/guru/v2/config"
 	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
 	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
@@ -309,13 +310,39 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.Empty(t, vmGenesis.Params.ActiveStaticPrecompiles)
 	require.Equal(t, []evmtypes.Preinstall{mustHistoryStoragePreinstall()}, vmGenesis.Preinstalls)
 
-	governanceDenomGenesis := cloneGenesisState(genesis)
-	governanceDenomVM := new(evmtypes.GenesisState)
-	application.AppCodec().MustUnmarshalJSON(governanceDenomGenesis[evmtypes.ModuleName], governanceDenomVM)
-	governanceDenomVM.Params.EvmDenom = "uother"
-	governanceDenomVM.Params.ExtendedDenomOptions.ExtendedDenom = "uother"
-	governanceDenomGenesis[evmtypes.ModuleName] = application.AppCodec().MustMarshalJSON(governanceDenomVM)
-	require.NoError(t, application.ValidateGenesis(governanceDenomGenesis))
+	for _, tc := range []struct {
+		name        string
+		mutate      func(*evmtypes.GenesisState)
+		errorString string
+	}{
+		{
+			name: "EVM denom",
+			mutate: func(genesis *evmtypes.GenesisState) {
+				genesis.Params.EvmDenom = "uother"
+			},
+			errorString: "evm evm_denom must be immutable config base denom",
+		},
+		{
+			name: "extended denom",
+			mutate: func(genesis *evmtypes.GenesisState) {
+				genesis.Params.ExtendedDenomOptions.ExtendedDenom = "uother"
+			},
+			errorString: "evm extended_denom must be immutable config base denom",
+		},
+	} {
+		t.Run("rejects mutable "+tc.name, func(t *testing.T) {
+			invalidGenesis := cloneGenesisState(genesis)
+			invalidEVMGenesis := new(evmtypes.GenesisState)
+			application.AppCodec().MustUnmarshalJSON(
+				invalidGenesis[evmtypes.ModuleName],
+				invalidEVMGenesis,
+			)
+			tc.mutate(invalidEVMGenesis)
+			invalidGenesis[evmtypes.ModuleName] = application.AppCodec().MustMarshalJSON(invalidEVMGenesis)
+
+			require.ErrorContains(t, application.ValidateGenesis(invalidGenesis), tc.errorString)
+		})
+	}
 
 	erc20Genesis := new(erc20types.GenesisState)
 	application.AppCodec().MustUnmarshalJSON(genesis[erc20types.ModuleName], erc20Genesis)
@@ -450,8 +477,8 @@ func TestApplicationStateMachine(t *testing.T) {
 			Txs:    [][]byte{ordinaryDynamicFloorTxBytes},
 		})
 		require.NoError(t, proposalErr)
-		// Guru intentionally uses the SDK no-op proposal handler; execution safety
-		// is enforced when the same production ante handler runs in FinalizeBlock.
+		// The FixedSendGas proposal verifier preserves the SDK NoOp semantics for
+		// decode-valid ordinary transactions, including ordinary ante failures.
 		require.Equal(t, abci.ResponseProcessProposal_ACCEPT, proposalResponse.Status)
 		assertUnchanged(proposalBefore, committedContext(t, application))
 	})
@@ -600,13 +627,14 @@ func TestApplicationStateMachine(t *testing.T) {
 	transferValue := big.NewInt(12_345)
 	minGasMultiplier := application.FeeMarketKeeper.GetParams(queryContext).MinGasMultiplier
 	require.True(t, minGasMultiplier.Equal(feemarkettypes.DefaultMinGasMultiplier))
-	minimumGasUsed := minGasMultiplier.
+	ethereumGasUsed := minGasMultiplier.
 		MulInt64(int64(submittedGas)).
 		TruncateInt().Uint64()
-	expectedBlockGasWanted := minGasMultiplier.
-		MulInt64(int64(2 * submittedGas)).
-		TruncateInt().Uint64()
-	protocolFee := sdkmath.NewIntFromUint64(minimumGasUsed).Mul(sdkmath.NewIntFromBigInt(gasPrice))
+	expectedBlockGasWanted := ethereumGasUsed + appante.StandardMsgSendGas
+	ethereumProtocolFee := sdkmath.NewIntFromUint64(ethereumGasUsed).
+		Mul(sdkmath.NewIntFromBigInt(gasPrice))
+	fixedSendActualFee := sdkmath.NewIntFromUint64(appante.StandardMsgSendGas).
+		Mul(sdkmath.NewIntFromBigInt(gasPrice))
 	submittedFee := sdkmath.NewIntFromUint64(submittedGas).
 		Mul(sdkmath.NewIntFromBigInt(gasPrice))
 
@@ -639,6 +667,58 @@ func TestApplicationStateMachine(t *testing.T) {
 		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, submittedFee)),
 		submittedGas,
 	)
+	cosmosGasOnlySimulationBytes := signAndEncodeCosmosTx(
+		t,
+		application,
+		cosmosPrivateKey,
+		cosmosSenderAccount.GetAccountNumber(),
+		cosmosSenderAccount.GetSequence(),
+		banktypes.NewMsgSend(
+			cosmosSender,
+			sdk.AccAddress(cosmosRecipient.Bytes()),
+			sdk.NewCoins(sdk.NewCoin(
+				config.BaseDenom,
+				sdkmath.NewIntFromBigInt(transferValue),
+			)),
+		),
+		nil,
+		0,
+	)
+	t.Run("FixedSendGas D zero simulation is gas-only", func(t *testing.T) {
+		beforeSender := application.BankKeeper.GetBalance(
+			queryContext,
+			cosmosSender,
+			config.BaseDenom,
+		)
+		beforeRecipient := application.BankKeeper.GetBalance(
+			queryContext,
+			sdk.AccAddress(cosmosRecipient.Bytes()),
+			config.BaseDenom,
+		)
+		beforeSequence := application.AccountKeeper.GetAccount(queryContext, cosmosSender).GetSequence()
+
+		gasInfo, _, simulateErr := application.Simulate(cosmosGasOnlySimulationBytes)
+		require.NoError(t, simulateErr)
+		require.Equal(t, appante.StandardMsgSendGas, gasInfo.GasWanted)
+		require.Equal(t, appante.StandardMsgSendGas, gasInfo.GasUsed)
+
+		afterContext := committedContext(t, application)
+		require.Equal(t, beforeSender, application.BankKeeper.GetBalance(
+			afterContext,
+			cosmosSender,
+			config.BaseDenom,
+		))
+		require.Equal(t, beforeRecipient, application.BankKeeper.GetBalance(
+			afterContext,
+			sdk.AccAddress(cosmosRecipient.Bytes()),
+			config.BaseDenom,
+		))
+		require.Equal(
+			t,
+			beforeSequence,
+			application.AccountKeeper.GetAccount(afterContext, cosmosSender).GetSequence(),
+		)
+	})
 
 	const proposalGas uint64 = 60_000_000
 	proposalFee := sdkmath.NewIntFromUint64(proposalGas).
@@ -653,6 +733,17 @@ func TestApplicationStateMachine(t *testing.T) {
 			Value:    transferValue,
 			Gas:      proposalGas,
 			GasPrice: gasPrice,
+		}),
+	)
+	overflowEthereumBytes, _ := signAndEncodeEthereumTx(
+		t,
+		application,
+		ethereumPrivateKey,
+		ethtypes.NewTx(&ethtypes.LegacyTx{
+			Nonce:    0,
+			To:       &ethereumRecipient,
+			Gas:      ^uint64(0),
+			GasPrice: big.NewInt(1),
 		}),
 	)
 	proposalCosmosBytes := signAndEncodeCosmosTx(
@@ -672,6 +763,269 @@ func TestApplicationStateMachine(t *testing.T) {
 		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, proposalFee)),
 		proposalGas,
 	)
+	invalidFixedFee := feeMarketParams.MinGasPrice.
+		MulInt(sdkmath.NewIntFromUint64(appante.StandardMsgSendGas)).
+		Ceil().
+		RoundInt().
+		SubRaw(1)
+	invalidFixedBytes := signAndEncodeCosmosTx(
+		t,
+		application,
+		cosmosPrivateKey,
+		cosmosSenderAccount.GetAccountNumber(),
+		cosmosSenderAccount.GetSequence(),
+		banktypes.NewMsgSend(
+			cosmosSender,
+			sdk.AccAddress(cosmosRecipient.Bytes()),
+			sdk.NewCoins(sdk.NewCoin(
+				config.BaseDenom,
+				sdkmath.NewIntFromBigInt(transferValue),
+			)),
+		),
+		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, invalidFixedFee)),
+		appante.StandardMsgSendGas,
+	)
+	sequentialTransfer := senderFunds.AmountOf(config.BaseDenom).QuoRaw(2)
+	sequentialFixedBytes := make([][]byte, 2)
+	for sequence := range sequentialFixedBytes {
+		sequentialFixedBytes[sequence] = signAndEncodeCosmosTx(
+			t,
+			application,
+			cosmosPrivateKey,
+			cosmosSenderAccount.GetAccountNumber(),
+			uint64(sequence),
+			banktypes.NewMsgSend(
+				cosmosSender,
+				sdk.AccAddress(cosmosRecipient.Bytes()),
+				sdk.NewCoins(sdk.NewCoin(config.BaseDenom, sequentialTransfer)),
+			),
+			sdk.NewCoins(sdk.NewCoin(config.BaseDenom, submittedFee)),
+			submittedGas,
+		)
+	}
+	type proposalStateSnapshot struct {
+		senderBalance       sdkmath.Int
+		recipientBalance    sdkmath.Int
+		feeCollectorBalance sdkmath.Int
+		sequence            uint64
+		blockGasWanted      uint64
+		lastBlockHeight     int64
+	}
+	proposalSnapshot := func() proposalStateSnapshot {
+		state := committedContext(t, application)
+		account := application.AccountKeeper.GetAccount(state, cosmosSender)
+		require.NotNil(t, account)
+		return proposalStateSnapshot{
+			senderBalance: application.BankKeeper.GetBalance(
+				state,
+				cosmosSender,
+				config.BaseDenom,
+			).Amount,
+			recipientBalance: application.BankKeeper.GetBalance(
+				state,
+				sdk.AccAddress(cosmosRecipient.Bytes()),
+				config.BaseDenom,
+			).Amount,
+			feeCollectorBalance: application.BankKeeper.GetBalance(
+				state,
+				authtypes.NewModuleAddress(authtypes.FeeCollectorName),
+				config.BaseDenom,
+			).Amount,
+			sequence:        account.GetSequence(),
+			blockGasWanted:  application.FeeMarketKeeper.GetBlockGasWanted(state),
+			lastBlockHeight: application.LastBlockHeight(),
+		}
+	}
+
+	t.Run("proposal rejects malformed raw transaction", func(t *testing.T) {
+		malformed := []byte{0xff}
+		prepared, prepareErr := application.PrepareProposal(&abci.RequestPrepareProposal{
+			Height:     2,
+			Time:       blockTime.Add(2 * time.Second),
+			MaxTxBytes: simtestutil.DefaultConsensusParams.Block.MaxBytes,
+			Txs:        [][]byte{malformed},
+		})
+		require.NoError(t, prepareErr)
+		require.Empty(t, prepared.Txs)
+
+		processed, processErr := application.ProcessProposal(&abci.RequestProcessProposal{
+			Height: 2,
+			Time:   blockTime.Add(2 * time.Second),
+			Txs:    [][]byte{proposalCosmosBytes, malformed},
+		})
+		require.NoError(t, processErr)
+		require.Equal(t, abci.ResponseProcessProposal_REJECT, processed.Status)
+	})
+
+	t.Run("proposal rejects FixedSendGas fee admission failure", func(t *testing.T) {
+		prepared, prepareErr := application.PrepareProposal(&abci.RequestPrepareProposal{
+			Height:     2,
+			Time:       blockTime.Add(2 * time.Second),
+			MaxTxBytes: simtestutil.DefaultConsensusParams.Block.MaxBytes,
+			Txs:        [][]byte{invalidFixedBytes},
+		})
+		require.NoError(t, prepareErr)
+		require.Empty(t, prepared.Txs)
+
+		processed, processErr := application.ProcessProposal(&abci.RequestProcessProposal{
+			Height: 2,
+			Time:   blockTime.Add(2 * time.Second),
+			Txs:    [][]byte{invalidFixedBytes},
+		})
+		require.NoError(t, processErr)
+		require.Equal(t, abci.ResponseProcessProposal_REJECT, processed.Status)
+	})
+
+	t.Run("proposal snapshots ante sequence without applying message transfers", func(t *testing.T) {
+		// Both transactions transfer half the committed balance. The second sequence
+		// is valid only after the first ante succeeds, while applying the first
+		// MsgSend would make the second A+F check fail.
+		before := proposalSnapshot()
+		prepared, prepareErr := application.PrepareProposal(&abci.RequestPrepareProposal{
+			Height:     2,
+			Time:       blockTime.Add(2 * time.Second),
+			MaxTxBytes: simtestutil.DefaultConsensusParams.Block.MaxBytes,
+			Txs:        sequentialFixedBytes,
+		})
+		require.NoError(t, prepareErr)
+		require.Equal(t, sequentialFixedBytes, prepared.Txs)
+		require.Equal(t, before, proposalSnapshot())
+
+		processed, processErr := application.ProcessProposal(&abci.RequestProcessProposal{
+			Height: 2,
+			Time:   blockTime.Add(2 * time.Second),
+			Txs:    sequentialFixedBytes,
+		})
+		require.NoError(t, processErr)
+		require.Equal(t, abci.ResponseProcessProposal_ACCEPT, processed.Status)
+		require.Equal(t, before, proposalSnapshot())
+	})
+
+	t.Run("proposal snapshots successful ante fee deductions", func(t *testing.T) {
+		// The first message is a self-send, so its message execution has zero net
+		// balance effect. The second requires the complete starting balance as A+F
+		// and therefore fails only because the first successful ante deducted its fee.
+		feeBoundaryTransfer := senderFunds.AmountOf(config.BaseDenom).Sub(submittedFee)
+		require.True(t, feeBoundaryTransfer.IsPositive())
+		feeBoundaryBytes := [][]byte{
+			signAndEncodeCosmosTx(
+				t,
+				application,
+				cosmosPrivateKey,
+				cosmosSenderAccount.GetAccountNumber(),
+				0,
+				banktypes.NewMsgSend(
+					cosmosSender,
+					cosmosSender,
+					sdk.NewCoins(sdk.NewInt64Coin(config.BaseDenom, 1)),
+				),
+				sdk.NewCoins(sdk.NewCoin(config.BaseDenom, submittedFee)),
+				submittedGas,
+			),
+			signAndEncodeCosmosTx(
+				t,
+				application,
+				cosmosPrivateKey,
+				cosmosSenderAccount.GetAccountNumber(),
+				1,
+				banktypes.NewMsgSend(
+					cosmosSender,
+					sdk.AccAddress(cosmosRecipient.Bytes()),
+					sdk.NewCoins(sdk.NewCoin(config.BaseDenom, feeBoundaryTransfer)),
+				),
+				sdk.NewCoins(sdk.NewCoin(config.BaseDenom, submittedFee)),
+				submittedGas,
+			),
+		}
+
+		before := proposalSnapshot()
+		prepared, prepareErr := application.PrepareProposal(&abci.RequestPrepareProposal{
+			Height:     2,
+			Time:       blockTime.Add(2 * time.Second),
+			MaxTxBytes: simtestutil.DefaultConsensusParams.Block.MaxBytes,
+			Txs:        feeBoundaryBytes,
+		})
+		require.NoError(t, prepareErr)
+		require.Equal(t, feeBoundaryBytes[:1], prepared.Txs)
+		require.Equal(t, before, proposalSnapshot())
+
+		processed, processErr := application.ProcessProposal(&abci.RequestProcessProposal{
+			Height: 2,
+			Time:   blockTime.Add(2 * time.Second),
+			Txs:    feeBoundaryBytes,
+		})
+		require.NoError(t, processErr)
+		require.Equal(t, abci.ResponseProcessProposal_REJECT, processed.Status)
+		require.Equal(t, before, proposalSnapshot())
+	})
+
+	t.Run("proposal enforces the consensus block gas budget", func(t *testing.T) {
+		overBudget := [][]byte{proposalEthereumBytes, proposalEthereumBytes}
+		prepared, prepareErr := application.PrepareProposal(&abci.RequestPrepareProposal{
+			Height:     2,
+			Time:       blockTime.Add(2 * time.Second),
+			MaxTxBytes: simtestutil.DefaultConsensusParams.Block.MaxBytes,
+			Txs:        overBudget,
+		})
+		require.NoError(t, prepareErr)
+		require.Equal(t, overBudget[:1], prepared.Txs)
+
+		processed, processErr := application.ProcessProposal(&abci.RequestProcessProposal{
+			Height: 2,
+			Time:   blockTime.Add(2 * time.Second),
+			Txs:    overBudget,
+		})
+		require.NoError(t, processErr)
+		require.Equal(t, abci.ResponseProcessProposal_REJECT, processed.Status)
+	})
+
+	t.Run("proposal rejects uint64 gas overflow when block gas is unlimited", func(t *testing.T) {
+		unlimitedConsensusParams := *simtestutil.DefaultConsensusParams
+		unlimitedBlockParams := *simtestutil.DefaultConsensusParams.Block
+		unlimitedBlockParams.MaxGas = -1
+		unlimitedConsensusParams.Block = &unlimitedBlockParams
+		handler := newStandardMsgSendProposalHandler(application)
+		baseProposalContext := committedContext(t, application).
+			WithBlockHeight(2).
+			WithBlockTime(blockTime.Add(2 * time.Second)).
+			WithConsensusParams(unlimitedConsensusParams)
+		overflowTxs := [][]byte{overflowEthereumBytes, overflowEthereumBytes}
+
+		prepared, prepareErr := handler.PrepareProposal(
+			baseProposalContext.WithExecMode(sdk.ExecModePrepareProposal),
+			&abci.RequestPrepareProposal{
+				Height:     2,
+				Time:       blockTime.Add(2 * time.Second),
+				MaxTxBytes: simtestutil.DefaultConsensusParams.Block.MaxBytes,
+				Txs:        overflowTxs,
+			},
+		)
+		require.NoError(t, prepareErr)
+		require.Equal(t, overflowTxs[:1], prepared.Txs)
+
+		processedPrepared, processErr := handler.ProcessProposal(
+			baseProposalContext.WithExecMode(sdk.ExecModeProcessProposal),
+			&abci.RequestProcessProposal{
+				Height: 2,
+				Time:   blockTime.Add(2 * time.Second),
+				Txs:    prepared.Txs,
+			},
+		)
+		require.NoError(t, processErr)
+		require.Equal(t, abci.ResponseProcessProposal_ACCEPT, processedPrepared.Status)
+
+		processedOverflow, processErr := handler.ProcessProposal(
+			baseProposalContext.WithExecMode(sdk.ExecModeProcessProposal),
+			&abci.RequestProcessProposal{
+				Height: 2,
+				Time:   blockTime.Add(2 * time.Second),
+				Txs:    overflowTxs,
+			},
+		)
+		require.NoError(t, processErr)
+		require.Equal(t, abci.ResponseProcessProposal_REJECT, processedOverflow.Status)
+	})
+
 	for _, proposalTxs := range [][][]byte{
 		{proposalEthereumBytes, proposalCosmosBytes},
 		{proposalCosmosBytes, proposalEthereumBytes},
@@ -683,24 +1037,46 @@ func TestApplicationStateMachine(t *testing.T) {
 			Txs:        proposalTxs,
 		})
 		require.NoError(t, prepareErr)
-		require.Equal(t, proposalTxs[:1], proposalGasResult.Txs)
+		require.Equal(t, proposalTxs, proposalGasResult.Txs)
+
+		processed, processErr := application.ProcessProposal(&abci.RequestProcessProposal{
+			Height: 2,
+			Time:   blockTime.Add(2 * time.Second),
+			Txs:    proposalGasResult.Txs,
+		})
+		require.NoError(t, processErr)
+		require.Equal(t, abci.ResponseProcessProposal_ACCEPT, processed.Status)
 	}
 
 	require.Zero(t, application.FeeMarketKeeper.GetTransientGasWanted(
 		application.GetContextForCheckTx(nil),
 	))
 	for _, test := range []struct {
-		name    string
-		txBytes []byte
+		name            string
+		txBytes         []byte
+		gasWanted       uint64
+		simulateGasUsed uint64
+		checkGasUsed    int64
 	}{
-		{name: "ethereum", txBytes: ethereumBytes},
-		{name: "msgsend", txBytes: cosmosBytes},
+		{
+			name:            "ethereum",
+			txBytes:         ethereumBytes,
+			gasWanted:       submittedGas,
+			simulateGasUsed: ethereumGasUsed,
+		},
+		{
+			name:            "FixedSendGas MsgSend",
+			txBytes:         cosmosBytes,
+			gasWanted:       appante.StandardMsgSendGas,
+			simulateGasUsed: appante.StandardMsgSendGas,
+			checkGasUsed:    int64(appante.StandardMsgSendGas),
+		},
 	} {
 		t.Run(test.name+" gas queries", func(t *testing.T) {
 			gasInfo, _, simulateErr := application.Simulate(test.txBytes)
 			require.NoError(t, simulateErr)
-			require.Equal(t, submittedGas, gasInfo.GasWanted)
-			require.Equal(t, minimumGasUsed, gasInfo.GasUsed)
+			require.Equal(t, test.gasWanted, gasInfo.GasWanted)
+			require.Equal(t, test.simulateGasUsed, gasInfo.GasUsed)
 
 			checkResult, checkErr := application.CheckTx(&abci.RequestCheckTx{
 				Tx:   test.txBytes,
@@ -708,8 +1084,8 @@ func TestApplicationStateMachine(t *testing.T) {
 			})
 			require.NoError(t, checkErr)
 			require.Equal(t, abci.CodeTypeOK, checkResult.Code, checkResult.Log)
-			require.Equal(t, int64(submittedGas), checkResult.GasWanted)
-			require.Zero(t, checkResult.GasUsed)
+			require.Equal(t, int64(test.gasWanted), checkResult.GasWanted)
+			require.Equal(t, test.checkGasUsed, checkResult.GasUsed)
 			require.Zero(t, application.FeeMarketKeeper.GetTransientGasWanted(
 				application.GetContextForCheckTx(nil),
 			))
@@ -797,17 +1173,27 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.Equal(t, sdkerrors.ErrInsufficientFee.ABCICode(), rejectedDynamicResult.Code)
 	require.Equal(t, int64(ordinaryDynamicFloorGas), rejectedDynamicResult.GasWanted)
 	require.Positive(t, rejectedDynamicResult.GasUsed)
-	for index, result := range finalized.TxResults[1:] {
-		require.True(t, result.IsOK(), result.Log)
-		require.Equal(t, int64(submittedGas), result.GasWanted)
-		require.Equal(t, int64(minimumGasUsed), result.GasUsed)
-		if index == 0 {
-			ethereumResult, decodeErr := evmtypes.DecodeTxResponse(result.Data)
-			require.NoError(t, decodeErr)
-			require.False(t, ethereumResult.Failed(), ethereumResult.VmError)
-			require.Equal(t, ethereumTx.Hash().Hex(), ethereumResult.Hash)
-		}
-	}
+	ethereumFinalizeResult := finalized.TxResults[1]
+	require.True(t, ethereumFinalizeResult.IsOK(), ethereumFinalizeResult.Log)
+	require.Equal(t, int64(submittedGas), ethereumFinalizeResult.GasWanted)
+	require.Equal(t, int64(ethereumGasUsed), ethereumFinalizeResult.GasUsed)
+	ethereumResult, decodeErr := evmtypes.DecodeTxResponse(ethereumFinalizeResult.Data)
+	require.NoError(t, decodeErr)
+	require.False(t, ethereumResult.Failed(), ethereumResult.VmError)
+	require.Equal(t, ethereumTx.Hash().Hex(), ethereumResult.Hash)
+
+	fixedSendFinalizeResult := finalized.TxResults[2]
+	require.True(t, fixedSendFinalizeResult.IsOK(), fixedSendFinalizeResult.Log)
+	require.Equal(t, int64(appante.StandardMsgSendGas), fixedSendFinalizeResult.GasWanted)
+	require.Equal(t, int64(appante.StandardMsgSendGas), fixedSendFinalizeResult.GasUsed)
+	requireFixedSendGasEvent(
+		t,
+		fixedSendFinalizeResult.Events,
+		submittedGas,
+		sdk.NewCoin(config.BaseDenom, submittedFee),
+		gasPrice.String(),
+		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, fixedSendActualFee)),
+	)
 	finalizeContext := application.GetContextForFinalizeBlock(nil)
 	require.Zero(t, application.FeeMarketKeeper.GetTransientGasWanted(finalizeContext))
 	expectedBlockGasWantedWithRejected := expectedBlockGasWanted + uint64(rejectedDynamicResult.GasUsed)
@@ -820,16 +1206,22 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.NoError(t, err)
 
 	queryContext = committedContext(t, application)
-	expectedSenderBalance := senderFunds.AmountOf(config.BaseDenom).
+	expectedEthereumSenderBalance := senderFunds.AmountOf(config.BaseDenom).
 		Sub(sdkmath.NewIntFromBigInt(transferValue)).
-		Sub(protocolFee)
-	for _, sender := range []sdk.AccAddress{ethereumSender, cosmosSender} {
-		require.True(t, application.BankKeeper.GetBalance(
-			queryContext,
-			sender,
-			config.BaseDenom,
-		).Amount.Equal(expectedSenderBalance))
-	}
+		Sub(ethereumProtocolFee)
+	expectedCosmosSenderBalance := senderFunds.AmountOf(config.BaseDenom).
+		Sub(sdkmath.NewIntFromBigInt(transferValue)).
+		Sub(fixedSendActualFee)
+	require.True(t, application.BankKeeper.GetBalance(
+		queryContext,
+		ethereumSender,
+		config.BaseDenom,
+	).Amount.Equal(expectedEthereumSenderBalance))
+	require.True(t, application.BankKeeper.GetBalance(
+		queryContext,
+		cosmosSender,
+		config.BaseDenom,
+	).Amount.Equal(expectedCosmosSenderBalance))
 	for _, recipient := range []common.Address{ethereumRecipient, cosmosRecipient} {
 		require.True(t, application.BankKeeper.GetBalance(
 			queryContext,
@@ -862,9 +1254,42 @@ func TestApplicationStateMachine(t *testing.T) {
 			Data:     common.FromHex("0x60006000fd"),
 		}),
 	)
+	const blockedTransferAmount int64 = 9_876
+	blockedFixedBytes := signAndEncodeCosmosTx(
+		t,
+		application,
+		cosmosPrivateKey,
+		cosmosSenderAccount.GetAccountNumber(),
+		1,
+		banktypes.NewMsgSend(
+			cosmosSender,
+			erc20ModuleAccount.GetAddress(),
+			sdk.NewCoins(sdk.NewInt64Coin(config.BaseDenom, blockedTransferAmount)),
+		),
+		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, submittedFee)),
+		submittedGas,
+	)
+	blockedProcessResult, err := application.ProcessProposal(&abci.RequestProcessProposal{
+		Height: 3,
+		Time:   blockTime.Add(3 * time.Second),
+		Txs:    [][]byte{revertBytes, blockedFixedBytes},
+	})
+	require.NoError(t, err)
+	require.Equal(t, abci.ResponseProcessProposal_ACCEPT, blockedProcessResult.Status)
+
 	senderBalanceBeforeRevert := application.BankKeeper.GetBalance(
 		queryContext,
 		ethereumSender,
+		config.BaseDenom,
+	)
+	senderBalanceBeforeBlocked := application.BankKeeper.GetBalance(
+		queryContext,
+		cosmosSender,
+		config.BaseDenom,
+	)
+	blockedBalanceBefore := application.BankKeeper.GetBalance(
+		queryContext,
+		erc20ModuleAccount.GetAddress(),
 		config.BaseDenom,
 	)
 	finalized = finalizeAndCommit(
@@ -873,14 +1298,27 @@ func TestApplicationStateMachine(t *testing.T) {
 		3,
 		blockTime.Add(3*time.Second),
 		proposerAddress,
-		[][]byte{revertBytes},
+		[][]byte{revertBytes, blockedFixedBytes},
 	)
-	require.Len(t, finalized.TxResults, 1)
+	require.Len(t, finalized.TxResults, 2)
 	require.True(t, finalized.TxResults[0].IsOK(), finalized.TxResults[0].Log)
 	revertResult, err := evmtypes.DecodeTxResponse(finalized.TxResults[0].Data)
 	require.NoError(t, err)
 	require.True(t, revertResult.Failed())
 	require.Equal(t, ethvm.ErrExecutionReverted.Error(), revertResult.VmError)
+	blockedFixedResult := finalized.TxResults[1]
+	require.False(t, blockedFixedResult.IsOK(), blockedFixedResult.Log)
+	require.Contains(t, blockedFixedResult.Log, "not allowed to receive funds")
+	require.Equal(t, int64(appante.StandardMsgSendGas), blockedFixedResult.GasWanted)
+	require.Equal(t, int64(appante.StandardMsgSendGas), blockedFixedResult.GasUsed)
+	requireFixedSendGasEvent(
+		t,
+		blockedFixedResult.Events,
+		submittedGas,
+		sdk.NewCoin(config.BaseDenom, submittedFee),
+		gasPrice.String(),
+		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, fixedSendActualFee)),
+	)
 
 	queryContext = committedContext(t, application)
 	createdContract := ethcrypto.CreateAddress(senderEVMAddress, 1)
@@ -904,14 +1342,193 @@ func TestApplicationStateMachine(t *testing.T) {
 	expectedRevertFee := sdkmath.NewIntFromUint64(revertResult.GasUsed).
 		Mul(sdkmath.NewIntFromBigInt(revertGasPrice))
 	require.True(t, revertCharge.Equal(expectedRevertFee))
+	senderBalanceAfterBlocked := application.BankKeeper.GetBalance(
+		queryContext,
+		cosmosSender,
+		config.BaseDenom,
+	)
+	require.True(t, senderBalanceBeforeBlocked.Amount.Sub(senderBalanceAfterBlocked.Amount).Equal(
+		fixedSendActualFee,
+	))
+	require.Equal(t, blockedBalanceBefore, application.BankKeeper.GetBalance(
+		queryContext,
+		erc20ModuleAccount.GetAddress(),
+		config.BaseDenom,
+	))
+	require.Equal(t, uint64(2), application.AccountKeeper.GetAccount(
+		queryContext,
+		cosmosSender,
+	).GetSequence())
+	require.Equal(
+		t,
+		uint64(revertResult.GasUsed)+appante.StandardMsgSendGas,
+		application.FeeMarketKeeper.GetBlockGasWanted(queryContext),
+	)
 	require.Equal(t, int64(3), application.LastBlockHeight())
+
+	messageEffectContext := committedContext(t, application)
+	messageEffectSenderBefore := application.BankKeeper.GetBalance(
+		messageEffectContext,
+		cosmosSender,
+		config.BaseDenom,
+	)
+	messageEffectRecipientBefore := application.BankKeeper.GetBalance(
+		messageEffectContext,
+		sdk.AccAddress(cosmosRecipient.Bytes()),
+		config.BaseDenom,
+	)
+	messageEffectSequence := application.AccountKeeper.GetAccount(
+		messageEffectContext,
+		cosmosSender,
+	).GetSequence()
+	depletingTransfer := messageEffectSenderBefore.Amount.Sub(submittedFee)
+	require.True(t, depletingTransfer.IsPositive())
+	depletingFixedBytes := signAndEncodeCosmosTx(
+		t,
+		application,
+		cosmosPrivateKey,
+		cosmosSenderAccount.GetAccountNumber(),
+		messageEffectSequence,
+		banktypes.NewMsgSend(
+			cosmosSender,
+			sdk.AccAddress(cosmosRecipient.Bytes()),
+			sdk.NewCoins(sdk.NewCoin(config.BaseDenom, depletingTransfer)),
+		),
+		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, submittedFee)),
+		submittedGas,
+	)
+	dependentFixedBytes := signAndEncodeCosmosTx(
+		t,
+		application,
+		cosmosPrivateKey,
+		cosmosSenderAccount.GetAccountNumber(),
+		messageEffectSequence+1,
+		banktypes.NewMsgSend(
+			cosmosSender,
+			sdk.AccAddress(cosmosRecipient.Bytes()),
+			sdk.NewCoins(sdk.NewInt64Coin(config.BaseDenom, 1)),
+		),
+		sdk.NewCoins(sdk.NewCoin(config.BaseDenom, submittedFee)),
+		submittedGas,
+	)
+	// Proposal admission ignores the first MsgSend and admits both transactions.
+	// Finalize executes it, leaving submittedFee-actualFee and causing the second
+	// transaction's transfer-plus-submitted-fee check to fail per transaction.
+	messageEffectProposal := [][]byte{depletingFixedBytes, dependentFixedBytes}
+	messageEffectSnapshot := proposalSnapshot()
+	preparedMessageEffect, err := application.PrepareProposal(&abci.RequestPrepareProposal{
+		Height:     4,
+		Time:       blockTime.Add(4 * time.Second),
+		MaxTxBytes: simtestutil.DefaultConsensusParams.Block.MaxBytes,
+		Txs:        messageEffectProposal,
+	})
+	require.NoError(t, err)
+	require.Equal(t, messageEffectProposal, preparedMessageEffect.Txs)
+	require.Equal(t, messageEffectSnapshot, proposalSnapshot())
+	processedMessageEffect, err := application.ProcessProposal(&abci.RequestProcessProposal{
+		Height: 4,
+		Time:   blockTime.Add(4 * time.Second),
+		Txs:    messageEffectProposal,
+	})
+	require.NoError(t, err)
+	require.Equal(t, abci.ResponseProcessProposal_ACCEPT, processedMessageEffect.Status)
+	require.Equal(t, messageEffectSnapshot, proposalSnapshot())
+
+	finalized = finalizeAndCommit(
+		t,
+		application,
+		4,
+		blockTime.Add(4*time.Second),
+		proposerAddress,
+		messageEffectProposal,
+	)
+	require.Len(t, finalized.TxResults, 2)
+	require.True(t, finalized.TxResults[0].IsOK(), finalized.TxResults[0].Log)
+	require.Equal(t, int64(appante.StandardMsgSendGas), finalized.TxResults[0].GasWanted)
+	require.Equal(t, int64(appante.StandardMsgSendGas), finalized.TxResults[0].GasUsed)
+	dependentFixedResult := finalized.TxResults[1]
+	require.False(t, dependentFixedResult.IsOK(), dependentFixedResult.Log)
+	require.Equal(
+		t,
+		sdkerrors.ErrInsufficientFunds.ABCICode(),
+		dependentFixedResult.Code,
+	)
+	require.Contains(t, dependentFixedResult.Log, "FixedSendGas spendable balance")
+	require.Equal(t, int64(appante.StandardMsgSendGas), dependentFixedResult.GasWanted)
+	require.Equal(t, int64(appante.StandardMsgSendGas), dependentFixedResult.GasUsed)
+	requireNoFixedSendGasEvent(t, dependentFixedResult.Events)
+
+	queryContext = committedContext(t, application)
+	require.True(t, application.BankKeeper.GetBalance(
+		queryContext,
+		cosmosSender,
+		config.BaseDenom,
+	).Amount.Equal(
+		messageEffectSenderBefore.Amount.
+			Sub(fixedSendActualFee).
+			Sub(depletingTransfer),
+	))
+	require.True(t, application.BankKeeper.GetBalance(
+		queryContext,
+		sdk.AccAddress(cosmosRecipient.Bytes()),
+		config.BaseDenom,
+	).Amount.Equal(messageEffectRecipientBefore.Amount.Add(depletingTransfer)))
+	require.Equal(t, messageEffectSequence+1, application.AccountKeeper.GetAccount(
+		queryContext,
+		cosmosSender,
+	).GetSequence())
+	require.Equal(
+		t,
+		appante.StandardMsgSendGas,
+		application.FeeMarketKeeper.GetBlockGasWanted(queryContext),
+	)
+	require.Equal(t, int64(4), application.LastBlockHeight())
 
 	exported, err := application.ExportAppStateAndValidators(false, nil, nil)
 	require.NoError(t, err)
-	require.Equal(t, int64(4), exported.Height)
+	require.Equal(t, int64(5), exported.Height)
 	var exportedGenesis GenesisState
 	require.NoError(t, json.Unmarshal(exported.AppState, &exportedGenesis))
 	require.NoError(t, application.ValidateGenesis(exportedGenesis))
+}
+
+func requireFixedSendGasEvent(
+	t *testing.T,
+	events []abci.Event,
+	declaredGas uint64,
+	submittedFee sdk.Coin,
+	effectiveGasPrice string,
+	actualFee sdk.Coins,
+) {
+	t.Helper()
+
+	var fixedEvent *abci.Event
+	for index := range events {
+		if events[index].Type == appante.EventTypeFixedSendGas {
+			fixedEvent = &events[index]
+			break
+		}
+	}
+	require.NotNil(t, fixedEvent)
+
+	attributes := make(map[string]string, len(fixedEvent.Attributes))
+	for _, attribute := range fixedEvent.Attributes {
+		attributes[attribute.Key] = attribute.Value
+	}
+	require.Equal(t, map[string]string{
+		appante.AttributeKeyDeclaredGas:       new(big.Int).SetUint64(declaredGas).String(),
+		appante.AttributeKeyAccountingGas:     new(big.Int).SetUint64(appante.StandardMsgSendGas).String(),
+		appante.AttributeKeySubmittedFee:      submittedFee.String(),
+		appante.AttributeKeyEffectiveGasPrice: effectiveGasPrice,
+		appante.AttributeKeyActualFee:         actualFee.String(),
+	}, attributes)
+}
+
+func requireNoFixedSendGasEvent(t *testing.T, events []abci.Event) {
+	t.Helper()
+	for _, event := range events {
+		require.NotEqual(t, appante.EventTypeFixedSendGas, event.Type)
+	}
 }
 
 func assertOracleFeeMarketProductionWiring(
