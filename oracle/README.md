@@ -159,11 +159,11 @@ recovery, omission, and graceful-shutdown messages. JSON logging retains the
 stable event records for machine consumers. Both modes remain foreground-only;
 a service manager owns process lifecycle and log rotation.
 
-`init` writes working bootstrap feeds for BTC/USD, ETH/USD, and SOL/USD. Each
-uses a 10-second interval, a 20-second stale boundary, and Coinbase, Kraken,
-Bitstamp, and Gemini sources. Four configured sources require a local strict
-majority of three, allowing one source failure while matching the default
-on-chain `min_sources` of three.
+`init` writes a working default feed configuration for BTC/USD, ETH/USD, and
+SOL/USD. Each uses a 10-second interval, a 20-second stale boundary, and
+Coinbase, Kraken, Bitstamp, and Gemini sources. Four configured sources require
+a local strict majority of three, allowing one source failure while matching
+the default on-chain `min_sources` of three.
 
 The repository-level `make oracle-4v-testnet` harness uses this initialized
 publication unchanged for four local validators. It starts all four sidecars
@@ -173,10 +173,10 @@ checks node gRPC reconciliation after the chain is producing blocks. This
 keeps sidecar source validation separate from Docker; the Docker node image
 contains `gurud` only.
 
-These public endpoints are editable validator-local bootstrap policy, not a
-chain requirement, provider endorsement, or availability guarantee. Operators
-must review and replace them as appropriate for production. The generated
-format is:
+These public endpoints are part of the editable default validator-local source
+configuration, not a chain requirement, provider endorsement, or availability
+guarantee. Operators must review and replace them as appropriate for
+production. The generated format is:
 
 ```toml
 schema_version = 1
