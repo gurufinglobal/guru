@@ -12,7 +12,7 @@ import (
 // ExportAppStateAndValidators exports the currently loaded state at the next
 // genesis height. Zero-height state rewriting is deliberately not implicit;
 // it requires staking, distribution, and slashing transformations that are
-// outside this bootstrap runtime.
+// outside Guru's supported export path.
 func (app *App) ExportAppStateAndValidators(
 	forZeroHeight bool,
 	jailAllowedAddrs []string,

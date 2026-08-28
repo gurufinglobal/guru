@@ -80,10 +80,10 @@ The generated default genesis:
 - installs the upstream EIP-2935 history-storage preinstall;
 - starts without ERC-20 token pairs or IBC clients/channels.
 
-These are bootstrap values. Operators may edit a new network's genesis subject
-to both upstream module validation and Guru's cross-module checks. Guru validates
-the Constitution self-bond denomination and amount and the required FeeMarket
-policy before accepting genesis.
+These are default genesis values. Operators may edit a new network's genesis
+subject to both upstream module validation and Guru's cross-module checks. Guru
+validates the Constitution self-bond denomination and amount and the required
+FeeMarket policy before accepting genesis.
 
 ## Mempool and proposal behavior
 
@@ -325,7 +325,7 @@ Start the node:
 ## Export
 
 Normal-height export is supported. Zero-height rewriting and a jail allowlist
-are not implemented by this bootstrap application.
+are intentionally unsupported.
 
 ```bash
 ./build/gurud export \
@@ -338,7 +338,8 @@ are not implemented by this bootstrap application.
 
 ## Mainnet configuration notes
 
-Generated configuration is a bootstrap template, not a mainnet profile.
+Generated configuration is an initialization template, not a production or
+mainnet operating profile.
 Before launch:
 
 - choose a finite CometBFT `consensus.params.block.max_gas` based on measured
