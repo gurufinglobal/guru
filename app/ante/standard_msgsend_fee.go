@@ -10,8 +10,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	cosmosante "github.com/cosmos/evm/ante/cosmos"
-	evmanteevm "github.com/cosmos/evm/ante/evm"
-	antetypes "github.com/cosmos/evm/ante/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
@@ -20,61 +18,56 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 )
 
-// newStandardMsgSendDynamicFeeChecker leaves ordinary transactions on the
-// upstream Cosmos EVM v0.6.2 checker. Eligible MsgSend transactions use the
-// Ethereum transaction price model against declared gas D, then settle that
-// price against execution gas E.
+// checkStandardMsgSendDynamicFee applies the FixedSendGas fee and settlement
+// policy after the application-wide Cosmos checker selects an eligible MsgSend.
+// It uses the Ethereum transaction price model against declared gas D, then
+// settles that price against execution gas E.
 //
 // This application's native EVM denom has 18 decimals. Consequently, the EVM
 // path's ConvertAmountTo18DecimalsLegacy step is a no-op, while converting the
 // LegacyDec base fee to *big.Int still truncates its fractional component.
-func newStandardMsgSendDynamicFeeChecker(
+func checkStandardMsgSendDynamicFee(
+	ctx sdk.Context,
+	tx sdk.Tx,
 	feemarketParams *feemarkettypes.Params,
-) authante.TxFeeChecker {
-	upstream := evmanteevm.NewDynamicFeeChecker(feemarketParams)
+	upstream authante.TxFeeChecker,
+) (sdk.Coins, int64, error) {
+	feeTx, ok := tx.(sdk.FeeTx)
+	if !ok {
+		return nil, 0, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+	}
+	settlementGas, ok := standardMsgSendSettlementGas(ctx)
+	if !ok {
+		return nil, 0, errorsmod.Wrap(sdkerrors.ErrLogic, "standard MsgSend execution gas is unavailable")
+	}
+	if ctx.BlockHeight() == 0 ||
+		!evmtypes.IsLondon(evmtypes.GetEthChainConfig(), ctx.BlockHeight()) {
+		fees, priority, err := upstream(ctx, tx)
+		if err != nil || isStandardMsgSendAdmissionContext(ctx) {
+			return fees, priority, err
+		}
+		settled, settleErr := settleStandardMsgSendFees(
+			fees,
+			feeTx.GetGas(),
+			settlementGas,
+		)
+		return settled, priority, settleErr
+	}
 
-	return func(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, int64, error) {
-		if !isStandardMsgSendGasContext(ctx) {
-			return upstream(ctx, tx)
-		}
-
-		feeTx, ok := tx.(sdk.FeeTx)
-		if !ok {
-			return nil, 0, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
-		}
-		settlementGas, ok := standardMsgSendSettlementGas(ctx)
-		if !ok {
-			return nil, 0, errorsmod.Wrap(sdkerrors.ErrLogic, "standard MsgSend execution gas is unavailable")
-		}
-		if ctx.BlockHeight() == 0 ||
-			!evmtypes.IsLondon(evmtypes.GetEthChainConfig(), ctx.BlockHeight()) {
-			fees, priority, err := upstream(ctx, tx)
-			if err != nil || isStandardMsgSendAdmissionContext(ctx) {
-				return fees, priority, err
-			}
-			settled, settleErr := settleStandardMsgSendFees(
-				fees,
-				feeTx.GetGas(),
-				settlementGas,
-			)
-			return settled, priority, settleErr
-		}
-
-		if isStandardMsgSendAdmissionContext(ctx) {
-			return checkAndSettleStandardMsgSendFee(
-				ctx,
-				feeTx,
-				feemarketParams,
-				feeTx.GetGas(),
-			)
-		}
+	if isStandardMsgSendAdmissionContext(ctx) {
 		return checkAndSettleStandardMsgSendFee(
 			ctx,
 			feeTx,
 			feemarketParams,
-			settlementGas,
+			feeTx.GetGas(),
 		)
 	}
+	return checkAndSettleStandardMsgSendFee(
+		ctx,
+		feeTx,
+		feemarketParams,
+		settlementGas,
+	)
 }
 
 // newStandardMsgSendValidatorFeeChecker mirrors the Cosmos SDK v0.53
@@ -151,7 +144,7 @@ func checkAndSettleStandardMsgSendFee(
 	feeCap := sdkmath.LegacyNewDecFromInt(feeAmount).QuoInt(declaredGasInt)
 	baseFee := standardMsgSendEthereumBaseFee(ctx, feemarketParams)
 
-	dynamicFee, hasDynamicFee := standardMsgSendDynamicFee(feeTx)
+	dynamicFee, hasDynamicFee := dynamicFeeExtension(feeTx)
 	effectivePrice := feeCap
 	priorityPrice := feeCap.Sub(baseFee)
 	if hasDynamicFee {
@@ -226,19 +219,6 @@ func standardMsgSendEthereumBaseFee(
 	return sdkmath.LegacyNewDecFromInt(baseFee.TruncateInt())
 }
 
-func standardMsgSendDynamicFee(feeTx sdk.FeeTx) (*antetypes.ExtensionOptionDynamicFeeTx, bool) {
-	extensionTx, ok := feeTx.(authante.HasExtensionOptionsTx)
-	if !ok {
-		return nil, false
-	}
-	for _, option := range extensionTx.GetExtensionOptions() {
-		if dynamicFee, ok := option.GetCachedValue().(*antetypes.ExtensionOptionDynamicFeeTx); ok {
-			return dynamicFee, true
-		}
-	}
-	return nil, false
-}
-
 // standardMsgSendMinGasPriceDecorator preserves the upstream Cosmos decorator
 // for ordinary transactions. For an eligible MsgSend it checks the Ethereum
 // effective price P against the global minimum price, both multiplied by D.
@@ -288,7 +268,7 @@ func (d standardMsgSendMinGasPriceDecorator) AnteHandle(
 	feeCap := sdkmath.LegacyNewDecFromInt(feeCoins.AmountOf(denom)).
 		QuoInt(sdkmath.NewIntFromUint64(feeTx.GetGas()))
 	effectivePrice := feeCap
-	if dynamicFee, ok := standardMsgSendDynamicFee(feeTx); ok {
+	if dynamicFee, ok := dynamicFeeExtension(feeTx); ok {
 		tipCap := dynamicFee.MaxPriorityPrice
 		if tipCap.IsNil() {
 			tipCap = sdkmath.LegacyZeroDec()
