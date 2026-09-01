@@ -304,6 +304,12 @@ VALIDATOR_ADDRESS="$(
 ./build/gurud genesis validate --home "$GURU_HOME"
 ```
 
+Fresh `gurud init` always writes
+`consensus.params.abci.vote_extensions_enable_height = 0`, so Vote Extensions
+start disabled and the init command exposes no activation-height override. For
+an existing network, install its independently verified genesis; after
+`InitChain`, committed consensus params are authoritative.
+
 The gentx gas price matches Guru's default genesis FeeMarket minimum. A lower
 fee may pass file-level genesis validation but will fail when the application
 executes the gentx during `InitChain`.

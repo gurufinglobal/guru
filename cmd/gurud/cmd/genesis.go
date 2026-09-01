@@ -141,6 +141,8 @@ func newInitCommand(defaultHome string) *cobra.Command {
 			if err := application.ValidateGenesis(appState); err != nil {
 				return fmt.Errorf("validate default Guru genesis: %w", err)
 			}
+			consensusParams := cmttypes.DefaultConsensusParams()
+			consensusParams.ABCI.VoteExtensionsEnableHeight = 0
 			appStateJSON, err := json.MarshalIndent(appState, "", "  ")
 			if err != nil {
 				return fmt.Errorf("marshal Guru genesis: %w", err)
@@ -156,9 +158,7 @@ func newInitCommand(defaultHome string) *cobra.Command {
 				ChainID:       chainID,
 				InitialHeight: initialHeight,
 				AppState:      appStateJSON,
-				Consensus: &genutiltypes.ConsensusGenesis{
-					Params: cmttypes.DefaultConsensusParams(),
-				},
+				Consensus:     &genutiltypes.ConsensusGenesis{Params: consensusParams},
 			}
 			genesis.Consensus.Params.Validator.PubKeyTypes = []string{consensusKey}
 			if err := genutil.ExportGenesisFile(genesis, genesisPath); err != nil {

@@ -102,6 +102,12 @@ docker_gurud init validator-0 \
   --constitution-moderator-address "$CONSTITUTION_MODERATOR_ADDRESS"
 ```
 
+Fresh `gurud init` always writes Vote Extensions as disabled
+(`consensus.params.abci.vote_extensions_enable_height = 0`) and exposes no
+activation-height override. The value is not duplicated in `app.toml`; after
+`InitChain`, committed consensus params are the runtime source of truth. An
+existing network must use its independently verified canonical genesis.
+
 Create and fund a development validator, then assemble and validate genesis:
 
 ```bash
@@ -219,8 +225,9 @@ GURU_P2P_SEEDS=node-id@seed.example.org:26656
 GURU_PERSISTENT_PEERS=node-id@peer.example.org:26656
 ```
 
-Run `gurud init` as above to create the node and configuration files. Use the
-network's real Constitution addresses for the required flags. Download genesis
+Run `gurud init` as above to create the node and configuration files, using the
+network's real Constitution addresses. The downloaded, verified genesis—not the
+temporary init genesis—is authoritative for an existing network. Download it
 through the testnet's trusted distribution channel and verify its advertised
 SHA-256 checksum on the host:
 

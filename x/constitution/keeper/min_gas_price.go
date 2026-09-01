@@ -10,6 +10,14 @@ import (
 	oraclev1 "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
+type minGasPriceScheduleTiming uint8
+
+const (
+	minGasPriceScheduleMissed minGasPriceScheduleTiming = iota
+	minGasPriceScheduleDueNextBlock
+	minGasPriceScheduleFuture
+)
+
 func (k Keeper) GetMinGasPriceSchedule(ctx context.Context) (*types.MinGasPriceSchedule, error) {
 	schedule, err := k.minGasPriceSchedule.Get(ctx)
 	if err != nil {
@@ -28,7 +36,8 @@ func (k Keeper) GetCurrentMinGasPrice(ctx context.Context) (sdkmath.LegacyDec, e
 }
 
 func (k Keeper) SetMinGasPriceSchedule(ctx context.Context, schedule *types.MinGasPriceSchedule) error {
-	if err := k.ValidateMinGasPriceSchedule(schedule); err != nil {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if err := k.validateMinGasPriceScheduleForCurrentHeight(schedule, sdkCtx.BlockHeight()); err != nil {
 		return err
 	}
 
@@ -84,15 +93,6 @@ func (k Keeper) AfterOracleValueApplied(ctx context.Context, value *oraclev1.Ora
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	delayBlocks := pendingDelayBlocksForInterval(sourceSubmissionInterval)
 
-	replaced := false
-	previousEffectiveHeight := int64(0)
-	if existing, err := k.minGasPriceSchedule.Get(ctx); err == nil {
-		replaced = true
-		previousEffectiveHeight = existing.GetEffectiveHeight()
-	} else if !isNotFound(err) {
-		return err
-	}
-
 	schedule := &types.MinGasPriceSchedule{
 		EffectiveHeight:                value.GetBlockHeight() + int64(delayBlocks),
 		ScheduledMinGasPrice:           clampedMinGasPrice.String(),
@@ -105,6 +105,25 @@ func (k Keeper) AfterOracleValueApplied(ctx context.Context, value *oraclev1.Ora
 		RawMinGasPrice:                 rawMinGasPrice.String(),
 		PreviousMinGasPrice:            currentMinGasPrice.String(),
 	}
+	if err := k.validateMinGasPriceScheduleForCurrentHeight(schedule, sdkCtx.BlockHeight()); err != nil {
+		return err
+	}
+
+	replaced := false
+	previousEffectiveHeight := int64(0)
+	if existing, err := k.minGasPriceSchedule.Get(ctx); err == nil {
+		if classifyMinGasPriceSchedule(existing.GetEffectiveHeight(), sdkCtx.BlockHeight()) == minGasPriceScheduleMissed {
+			if err := k.handleMissedMinGasPriceSchedule(ctx, &existing); err != nil {
+				return err
+			}
+		} else {
+			replaced = true
+			previousEffectiveHeight = existing.GetEffectiveHeight()
+		}
+	} else if !isNotFound(err) {
+		return err
+	}
+
 	if err := k.SetMinGasPriceSchedule(ctx, schedule); err != nil {
 		return err
 	}
@@ -124,13 +143,12 @@ func (k Keeper) ApplyDueMinGasPriceSchedule(ctx context.Context) error {
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	nextHeight := sdkCtx.BlockHeight() + 1
-	if schedule.GetEffectiveHeight() > nextHeight {
+	switch classifyMinGasPriceSchedule(schedule.GetEffectiveHeight(), sdkCtx.BlockHeight()) {
+	case minGasPriceScheduleFuture:
 		return nil
-	}
-	if schedule.GetEffectiveHeight() < nextHeight {
-		k.emitMinGasPriceSkipped(ctx, "stale_pending_schedule", oracleValueFromSchedule(schedule), "")
-		return k.ClearMinGasPriceSchedule(ctx)
+	case minGasPriceScheduleMissed:
+		return k.handleMissedMinGasPriceSchedule(ctx, schedule)
+	case minGasPriceScheduleDueNextBlock:
 	}
 	if err := k.ValidateMinGasPriceSchedule(schedule); err != nil {
 		k.emitMinGasPriceSkipped(ctx, "invalid_pending_schedule", oracleValueFromSchedule(schedule), "")
@@ -226,4 +244,56 @@ func (k Keeper) ValidateMinGasPriceSchedule(schedule *types.MinGasPriceSchedule)
 	}
 
 	return nil
+}
+
+func (k Keeper) validateMinGasPriceScheduleForCurrentHeight(schedule *types.MinGasPriceSchedule, currentHeight int64) error {
+	if err := k.ValidateMinGasPriceSchedule(schedule); err != nil {
+		return err
+	}
+	if classifyMinGasPriceSchedule(schedule.GetEffectiveHeight(), currentHeight) == minGasPriceScheduleMissed {
+		return types.ErrInvalidMinGasPrice.Wrapf(
+			"effective_height %d must be greater than current block height %d",
+			schedule.GetEffectiveHeight(),
+			currentHeight,
+		)
+	}
+
+	return nil
+}
+
+func classifyMinGasPriceSchedule(effectiveHeight, currentHeight int64) minGasPriceScheduleTiming {
+	switch {
+	case effectiveHeight <= currentHeight:
+		return minGasPriceScheduleMissed
+	case effectiveHeight == currentHeight+1:
+		return minGasPriceScheduleDueNextBlock
+	default:
+		return minGasPriceScheduleFuture
+	}
+}
+
+func (k Keeper) handleMissedMinGasPriceSchedule(ctx context.Context, schedule *types.MinGasPriceSchedule) error {
+	current, err := k.GetCurrentMinGasPrice(ctx)
+	if err != nil {
+		return err
+	}
+	currentMinGasPrice := current.String()
+
+	k.emitMissedMinGasPriceSchedule(ctx, schedule, currentMinGasPrice)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	k.Logger(ctx).Warn(
+		"discarding missed minimum gas price schedule",
+		types.AttributeKeyReason, types.MinGasPriceUpdateReasonMissedEffectiveHeight,
+		types.AttributeKeyHeight, sdkCtx.BlockHeight(),
+		types.AttributeKeyObservedHeight, sdkCtx.BlockHeight(),
+		types.AttributeKeyNextHeight, sdkCtx.BlockHeight()+1,
+		types.AttributeKeyEffectiveHeight, schedule.GetEffectiveHeight(),
+		types.AttributeKeyCurrentMinGasPrice, currentMinGasPrice,
+		types.AttributeKeyScheduledMinGasPrice, schedule.GetScheduledMinGasPrice(),
+		types.AttributeKeyPendingMinGasPrice, schedule.GetScheduledMinGasPrice(),
+		types.AttributeKeySourceOracleHeight, schedule.GetSourceOracleHeight(),
+		types.AttributeKeyPendingDelayBlocks, schedule.GetPendingDelayBlocks(),
+	)
+
+	return k.ClearMinGasPriceSchedule(ctx)
 }

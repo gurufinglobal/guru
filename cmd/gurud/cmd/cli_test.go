@@ -21,6 +21,15 @@ func TestConstitutionCommandRootsAreRegistered(t *testing.T) {
 	}
 }
 
+func TestVoteExtensionPolicyIsNotExposedAsBootstrapCLI(t *testing.T) {
+	rootCommand, err := NewRootCmd()
+	require.NoError(t, err)
+	initCommand := findImmediateSubcommand(rootCommand, "init")
+	require.NotNil(t, initCommand)
+	require.Nil(t, initCommand.Flags().Lookup("vote-extensions-enable-height"))
+	require.Nil(t, findImmediateSubcommand(rootCommand, "vote-extension-preflight"))
+}
+
 func findImmediateSubcommand(root *cobra.Command, name string) *cobra.Command {
 	for _, command := range root.Commands() {
 		if command.Name() == name {

@@ -15,6 +15,8 @@ const (
 	EventTypeMinGasPriceUpdateApplied   = "min_gas_price_update_applied"
 	EventTypeMinGasPriceUpdateSkipped   = "min_gas_price_update_skipped"
 
+	MinGasPriceUpdateReasonMissedEffectiveHeight = "missed_effective_height"
+
 	AttributeKeySourceSymbol             = "source_symbol"
 	AttributeKeySourceValue              = "source_value"
 	AttributeKeySourceOracleHeight       = "source_oracle_height"
@@ -27,12 +29,16 @@ const (
 	AttributeKeyPreviousMinGasPrice      = "previous_min_gas_price"
 	AttributeKeyRawMinGasPrice           = "raw_min_gas_price"
 	AttributeKeyClampedMinGasPrice       = "clamped_min_gas_price"
+	AttributeKeyPendingMinGasPrice       = "pending_min_gas_price"
 	AttributeKeyScaleFactor              = "scale_factor"
 	AttributeKeyClampPPM                 = "clamp_ppm"
 	AttributeKeyReplaced                 = "replaced"
 	AttributeKeyApplyHeight              = "apply_height"
 	AttributeKeyNewMinGasPrice           = "new_min_gas_price"
 	AttributeKeyHeight                   = "height"
+	AttributeKeyObservedHeight           = "observed_height"
+	AttributeKeyNextHeight               = "next_height"
 	AttributeKeyReason                   = "reason"
 	AttributeKeyCurrentMinGasPrice       = "current_min_gas_price"
+	AttributeKeyScheduledMinGasPrice     = "scheduled_min_gas_price"
 )

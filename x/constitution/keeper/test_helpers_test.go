@@ -130,7 +130,8 @@ func testHexAddress(b byte) string {
 }
 
 type mockFeeMarketKeeper struct {
-	params feemarkettypes.Params
+	params              feemarkettypes.Params
+	setMinGasPriceCalls int
 }
 
 func newMockFeeMarketKeeper() *mockFeeMarketKeeper {
@@ -158,6 +159,7 @@ func (m *mockFeeMarketKeeper) SetMinGasPrice(
 	_ context.Context,
 	minGasPrice sdkmath.LegacyDec,
 ) error {
+	m.setMinGasPriceCalls++
 	m.params.MinGasPrice = minGasPrice
 	return nil
 }
