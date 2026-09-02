@@ -15,7 +15,8 @@ KEYRING_BACKEND="test"
 KEY_ALGORITHM="eth_secp256k1"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 BASE_FEE="${BASE_FEE:-630000000000}"
-BUILD_GOTOOLCHAIN="${GURU_GOTOOLCHAIN:-go1.23.8}"
+MODULE_GO_VERSION="$(awk '$1 == "go" { print $2; exit }' "$SCRIPT_DIR/go.mod")"
+BUILD_GOTOOLCHAIN="${GURU_GOTOOLCHAIN:-go${MODULE_GO_VERSION}}"
 
 CONFIG_TOML="$CHAIN_HOME/config/config.toml"
 APP_TOML="$CHAIN_HOME/config/app.toml"
@@ -52,7 +53,7 @@ Environment:
   EVM_CHAIN_ID             EIP-155 chain ID (default: 631)
   BOND_DENOM               Native base denomination (default: agxn)
   DISPLAY_DENOM            Native display denomination (default: gxn)
-  GURU_GOTOOLCHAIN         Go toolchain used to build (default: go1.23.8)
+  GURU_GOTOOLCHAIN         Go toolchain used to build (default: go${MODULE_GO_VERSION} from go.mod)
 EOF
 }
 
