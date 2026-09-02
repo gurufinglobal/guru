@@ -9,7 +9,11 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/address"
 	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -24,6 +28,7 @@ import (
 
 type genesisTestFixture struct {
 	ctx              sdk.Context
+	storeKey         *storetypes.KVStoreKey
 	module           AppModule
 	keeper           constitutionkeeper.Keeper
 	authorityAddress string
@@ -48,6 +53,7 @@ func setupGenesisTestFixture(t *testing.T) genesisTestFixture {
 
 	return genesisTestFixture{
 		ctx:              testCtx.Ctx,
+		storeKey:         key,
 		module:           module,
 		keeper:           keeper,
 		authorityAddress: authorityAddress,
@@ -250,6 +256,88 @@ func TestValidateGenesisRejectsInvalidPendingMinGasPrice(t *testing.T) {
 	err := f.module.ValidateGenesis(newGenesisSource(mustGenesisFieldsFromState(t, state)))
 	require.Error(t, err)
 	require.ErrorContains(t, err, "raw_min_gas_price does not match")
+}
+
+func TestInitGenesisValidatesPendingMinGasPriceAgainstInitialHeight(t *testing.T) {
+	const testChainID = "constitution-genesis-height-test"
+
+	tests := []struct {
+		name          string
+		initialHeight int64
+		wantErr       bool
+	}{
+		{
+			name:          "rejects effective height equal to initial height",
+			initialHeight: 15,
+			wantErr:       true,
+		},
+		{
+			name:          "accepts effective height at the next block",
+			initialHeight: 14,
+			wantErr:       false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			f := setupGenesisTestFixture(t)
+			state := validGenesisState(f)
+			state.PendingMinGasPrice = validPendingMinGasPriceSchedule()
+			fields := mustGenesisFieldsFromState(t, state)
+
+			baseApplication := baseapp.NewBaseApp(
+				t.Name(),
+				log.NewNopLogger(),
+				dbm.NewMemDB(),
+				nil,
+				baseapp.SetChainID(testChainID),
+			)
+			t.Cleanup(func() {
+				require.NoError(t, baseApplication.Close())
+			})
+			baseApplication.MountStores(f.storeKey)
+
+			var observedHeight int64
+			var storedEffectiveHeight int64
+			baseApplication.SetInitChainer(func(
+				ctx sdk.Context,
+				_ *abci.RequestInitChain,
+			) (*abci.ResponseInitChain, error) {
+				observedHeight = ctx.BlockHeight()
+				if err := f.module.InitGenesis(ctx, newGenesisSource(fields)); err != nil {
+					return nil, err
+				}
+				stored, err := f.keeper.GetMinGasPriceSchedule(ctx)
+				if err != nil {
+					return nil, err
+				}
+				storedEffectiveHeight = stored.GetEffectiveHeight()
+
+				return &abci.ResponseInitChain{}, nil
+			})
+			require.NoError(t, baseApplication.LoadLatestVersion())
+
+			_, err := baseApplication.InitChain(&abci.RequestInitChain{
+				ChainId:       testChainID,
+				InitialHeight: tc.initialHeight,
+				AppStateBytes: []byte("{}"),
+			})
+			require.Equal(t, tc.initialHeight, observedHeight)
+
+			if tc.wantErr {
+				require.ErrorIs(t, err, constitutiontypes.ErrInvalidMinGasPrice)
+				require.ErrorContains(
+					t,
+					err,
+					"effective_height 15 must be greater than current block height 15",
+				)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, int64(15), storedEffectiveHeight)
+		})
+	}
 }
 
 func TestInitGenesisAndExportGenesisRoundTrip(t *testing.T) {

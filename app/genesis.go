@@ -152,6 +152,38 @@ func (app *App) ValidateGenesis(genesis GenesisState) error {
 	return nil
 }
 
+// ValidateGenesisAtHeight validates the application genesis and the
+// state-transition constraints that depend on its initial block height.
+func (app *App) ValidateGenesisAtHeight(genesis GenesisState, initialHeight int64) error {
+	if err := app.ValidateGenesis(genesis); err != nil {
+		return err
+	}
+
+	raw, ok := genesis[constitutiontypes.ModuleName]
+	if !ok {
+		return fmt.Errorf("constitution genesis is missing")
+	}
+	constitutionGenesis := new(constitutiontypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(raw, constitutionGenesis); err != nil {
+		return fmt.Errorf("decode constitution genesis: %w", err)
+	}
+	if constitutionGenesis.PendingMinGasPrice == nil {
+		return nil
+	}
+	if err := app.ConstitutionKeeper.ValidateMinGasPriceScheduleAtHeight(
+		constitutionGenesis.PendingMinGasPrice,
+		initialHeight,
+	); err != nil {
+		return fmt.Errorf(
+			"validate constitution pending min gas price at initial height %d: %w",
+			initialHeight,
+			err,
+		)
+	}
+
+	return nil
+}
+
 func (app *App) validateGenesisValidatorSelfBonds(genesis GenesisState) error {
 	stakingGenesis := stakingtypes.DefaultGenesisState()
 	if raw, ok := genesis[stakingtypes.ModuleName]; ok {

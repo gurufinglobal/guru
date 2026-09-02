@@ -9,6 +9,9 @@ BIN="${BIN:-$REPO/build/gurud}"
 ORACLED="${ORACLED:-$REPO/build/oracled}"
 CHAIN_ID="${CHAIN_ID:-guru_631-1}"
 EVM_CHAIN_ID="${EVM_CHAIN_ID:-631}"
+VOTE_EXTENSIONS_ENABLE_HEIGHT="${VOTE_EXTENSIONS_ENABLE_HEIGHT:-1}"
+ORACLE_VOTE_EXTENSION_ACCEPTANCE="${ORACLE_VOTE_EXTENSION_ACCEPTANCE:-0}"
+ORACLE_TASK_SUBMISSION_INTERVAL="${ORACLE_TASK_SUBMISSION_INTERVAL:-1}"
 BOND_DENOM="${BOND_DENOM:-agxn}"
 GENTX_GAS_PRICE="${GENTX_GAS_PRICE:-630000000000agxn}"
 NODE_MINIMUM_GAS_PRICES="${NODE_MINIMUM_GAS_PRICES:-0agxn}"
@@ -39,6 +42,9 @@ Environment:
   ORACLED                   oracled binary. Defaults build/oracled.
   NODE_MINIMUM_GAS_PRICES   Runtime admission minimum. Defaults 0agxn.
   GENTX_GAS_PRICE           Genesis gentx gas price. Defaults 630000000000agxn.
+  VOTE_EXTENSIONS_ENABLE_HEIGHT  Test-genesis consensus activation height. Defaults 1.
+  ORACLE_VOTE_EXTENSION_ACCEPTANCE  Set to 1 for E/E+1/E+2 consensus acceptance checks. Defaults 0.
+  ORACLE_TASK_SUBMISSION_INTERVAL  Acceptance-mode Oracle cadence. Must be at least 3. Defaults 1 otherwise.
 EOF
 }
 
@@ -115,6 +121,25 @@ PY
 
 validate_runtime_inputs() {
 	require_positive_integer WAIT_TIMEOUT "$WAIT_TIMEOUT"
+	require_positive_integer VOTE_EXTENSIONS_ENABLE_HEIGHT "$VOTE_EXTENSIONS_ENABLE_HEIGHT"
+	case "$ORACLE_VOTE_EXTENSION_ACCEPTANCE" in
+	0 | 1) ;;
+	*)
+		echo "ORACLE_VOTE_EXTENSION_ACCEPTANCE must be 0 or 1, got: $ORACLE_VOTE_EXTENSION_ACCEPTANCE" >&2
+		exit 2
+		;;
+	esac
+	if [[ "$VOTE_EXTENSIONS_ENABLE_HEIGHT" -gt 4 ]]; then
+		echo "VOTE_EXTENSIONS_ENABLE_HEIGHT must be between 1 and 4 for this bounded startup harness; got: $VOTE_EXTENSIONS_ENABLE_HEIGHT" >&2
+		exit 2
+	fi
+	if [[ "$ORACLE_VOTE_EXTENSION_ACCEPTANCE" -eq 1 ]]; then
+		require_positive_integer ORACLE_TASK_SUBMISSION_INTERVAL "$ORACLE_TASK_SUBMISSION_INTERVAL"
+		if [[ "$ORACLE_TASK_SUBMISSION_INTERVAL" -lt 3 ]]; then
+			echo "ORACLE_TASK_SUBMISSION_INTERVAL must be at least 3 in acceptance mode so E+2 has no Oracle payload; got: $ORACLE_TASK_SUBMISSION_INTERVAL" >&2
+			exit 2
+		fi
+	fi
 	if [[ "$WAIT_TIMEOUT" -lt 30 || "$WAIT_TIMEOUT" -gt 3600 ]]; then
 		echo "WAIT_TIMEOUT must be between 30 and 3600 seconds, got: $WAIT_TIMEOUT" >&2
 		exit 2
@@ -317,10 +342,11 @@ require_file_mode "$BASE" "700"
 echo "base_dir=$BASE"
 echo "chain_id=$CHAIN_ID evm_chain_id=$EVM_CHAIN_ID"
 
-declare -a HOMES RPC_PORTS P2P_PORTS PROXY_PORTS PPROF_PORTS GRPC_PORTS API_PORTS JSONRPC_PORTS JSONRPC_WS_PORTS ORACLE_HOMES ORACLE_SOCKETS TX_ADDRS NODE_IDS PEERS
+declare -a HOMES RPC_PORTS P2P_PORTS PROXY_PORTS PPROF_PORTS GRPC_PORTS API_PORTS METRICS_PORTS JSONRPC_PORTS JSONRPC_WS_PORTS ORACLE_HOMES ORACLE_SOCKETS TX_ADDRS NODE_IDS PEERS
 
 choose_ports() {
 	local attempt base i idx port ports collision explicit_port
+	local -a ports_to_check
 	if [[ -n "${PORT_BASE:-}" ]]; then
 		base="$PORT_BASE"
 		explicit_port=1
@@ -343,9 +369,14 @@ choose_ports() {
 			PPROF_PORTS[$i]=$((base + idx * 20 + 4))
 			GRPC_PORTS[$i]=$((base + idx * 20 + 5))
 			API_PORTS[$i]=$((base + idx * 20 + 6))
+			METRICS_PORTS[$i]=$((base + idx * 20 + 7))
 			JSONRPC_PORTS[$i]=$((base + idx * 20 + 8))
 			JSONRPC_WS_PORTS[$i]=$((base + idx * 20 + 9))
-			for port in "${RPC_PORTS[$i]}" "${P2P_PORTS[$i]}" "${PROXY_PORTS[$i]}" "${PPROF_PORTS[$i]}" "${GRPC_PORTS[$i]}" "${API_PORTS[$i]}" "${JSONRPC_PORTS[$i]}" "${JSONRPC_WS_PORTS[$i]}"; do
+			ports_to_check=("${RPC_PORTS[$i]}" "${P2P_PORTS[$i]}" "${PROXY_PORTS[$i]}" "${PPROF_PORTS[$i]}" "${GRPC_PORTS[$i]}" "${API_PORTS[$i]}" "${JSONRPC_PORTS[$i]}" "${JSONRPC_WS_PORTS[$i]}")
+			if [[ "$ORACLE_VOTE_EXTENSION_ACCEPTANCE" -eq 1 ]]; then
+				ports_to_check+=("${METRICS_PORTS[$i]}")
+			fi
+			for port in "${ports_to_check[@]}"; do
 				if printf '%s\n' "$ports" | grep -qx "$port"; then
 					collision=1
 				fi
@@ -486,10 +517,11 @@ edit_config_toml() {
 	local proxy="$4"
 	local pprof="$5"
 	local peers="$6"
-	python3 - "$cfg" "$rpc" "$p2p" "$proxy" "$pprof" "$peers" <<'PY'
+	local metrics="$7"
+	python3 - "$cfg" "$rpc" "$p2p" "$proxy" "$pprof" "$peers" "$metrics" <<'PY'
 import sys
 
-path, rpc, p2p, proxy, pprof, peers = sys.argv[1:]
+path, rpc, p2p, proxy, pprof, peers, metrics = sys.argv[1:]
 section = ""
 out = []
 with open(path, "r", encoding="utf-8") as handle:
@@ -512,6 +544,11 @@ with open(path, "r", encoding="utf-8") as handle:
                 line = "addr_book_strict = false\n"
             elif stripped.startswith("allow_duplicate_ip ="):
                 line = "allow_duplicate_ip = true\n"
+        elif section == "instrumentation" and metrics:
+            if stripped.startswith("prometheus ="):
+                line = "prometheus = true\n"
+            elif stripped.startswith("prometheus_listen_addr ="):
+                line = f'prometheus_listen_addr = "127.0.0.1:{metrics}"\n'
         elif stripped.startswith("timeout_commit ="):
             line = 'timeout_commit = "2s"\n'
         out.append(line)
@@ -522,28 +559,56 @@ PY
 
 patch_genesis() {
 	local genesis_path="$1"
-	jq --arg chain_id "$CHAIN_ID" --arg denom "$BOND_DENOM" '
+	jq \
+		--arg chain_id "$CHAIN_ID" \
+		--arg denom "$BOND_DENOM" \
+		--arg vote_extensions_enable_height "$VOTE_EXTENSIONS_ENABLE_HEIGHT" \
+		--argjson vote_extension_acceptance "$ORACLE_VOTE_EXTENSION_ACCEPTANCE" \
+		--argjson task_submission_interval "$ORACLE_TASK_SUBMISSION_INTERVAL" '
 		.chain_id = $chain_id |
+		.consensus.params.abci.vote_extensions_enable_height = $vote_extensions_enable_height |
 		.app_state.staking.params.bond_denom = $denom |
 		.app_state.mint.params.mint_denom = $denom |
 		.app_state.evm.params.evm_denom = $denom |
-		.consensus.params.abci.vote_extensions_enable_height = "1" |
 		.app_state.oracle.params.min_validators = 4 |
 		.app_state.oracle.params.min_sources = 3 |
 		.app_state.oracle.params.history_limit = 100 |
-		.app_state.oracle.tasks = [
-			{"symbol":"BTC/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":1},
-			{"symbol":"ETH/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":1},
-			{"symbol":"SOL/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":1}
-		] |
-		.app_state.oracle.task_schedule = [
-			{"symbol":"BTC/USD","height":"3"},
-			{"symbol":"ETH/USD","height":"3"},
-			{"symbol":"SOL/USD","height":"3"},
-			{"symbol":"BTC/USD","height":"4"},
-			{"symbol":"ETH/USD","height":"4"},
-			{"symbol":"SOL/USD","height":"4"}
-		] |
+		.app_state.oracle.tasks = (
+			if $vote_extension_acceptance == 1 then
+				[
+					{"symbol":"BTC/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":$task_submission_interval},
+					{"symbol":"ETH/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":$task_submission_interval},
+					{"symbol":"SOL/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":$task_submission_interval}
+				]
+			else
+				[
+					{"symbol":"BTC/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":1},
+					{"symbol":"ETH/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":1},
+					{"symbol":"SOL/USD","value_type":"VALUE_TYPE_NUMERIC","enabled":true,"submission_interval":1}
+				]
+			end
+		) |
+		.app_state.oracle.task_schedule = (
+			if $vote_extension_acceptance == 1 then
+				[
+					{"symbol":"BTC/USD","height":$vote_extensions_enable_height},
+					{"symbol":"ETH/USD","height":$vote_extensions_enable_height},
+					{"symbol":"SOL/USD","height":$vote_extensions_enable_height},
+					{"symbol":"BTC/USD","height":(($vote_extensions_enable_height | tonumber) + $task_submission_interval | tostring)},
+					{"symbol":"ETH/USD","height":(($vote_extensions_enable_height | tonumber) + $task_submission_interval | tostring)},
+					{"symbol":"SOL/USD","height":(($vote_extensions_enable_height | tonumber) + $task_submission_interval | tostring)}
+				]
+			else
+				[
+					{"symbol":"BTC/USD","height":"3"},
+					{"symbol":"ETH/USD","height":"3"},
+					{"symbol":"SOL/USD","height":"3"},
+					{"symbol":"BTC/USD","height":"4"},
+					{"symbol":"ETH/USD","height":"4"},
+					{"symbol":"SOL/USD","height":"4"}
+				]
+			end
+		) |
 		.app_state.oracle.latest_values = [] |
 		.app_state.oracle.history = []
 	' "$genesis_path" >"$BASE/genesis.patched.json"
@@ -552,14 +617,30 @@ patch_genesis() {
 
 validate_genesis_contract() {
 	local genesis_path="$1"
-	jq -e '
+	jq -e \
+		--arg vote_extensions_enable_height "$VOTE_EXTENSIONS_ENABLE_HEIGHT" \
+		--argjson vote_extension_acceptance "$ORACLE_VOTE_EXTENSION_ACCEPTANCE" \
+		--argjson task_submission_interval "$ORACLE_TASK_SUBMISSION_INTERVAL" '
 		.app_state.oracle.params.min_validators == 4 and
 		.app_state.oracle.params.min_sources == 3 and
 		([.app_state.oracle.tasks[] | select(.enabled == true) | .symbol] | sort) == ["BTC/USD","ETH/USD","SOL/USD"] and
-		([.app_state.oracle.task_schedule[] | .symbol] | length) == 6 and
-		([.app_state.oracle.task_schedule[] | select(.height == "3" or .height == 3)] | length) == 3 and
-		([.app_state.oracle.task_schedule[] | select(.height == "4" or .height == 4)] | length) == 3 and
-		((.consensus.params.abci.vote_extensions_enable_height // "0") | tonumber) > 0 and
+		(if $vote_extension_acceptance == 1 then
+			. as $root |
+			($vote_extensions_enable_height | tonumber) as $activation_height |
+			($activation_height + $task_submission_interval) as $next_height |
+			([.app_state.oracle.tasks[] | select((.submission_interval | tonumber) == $task_submission_interval)] | length) == 3 and
+			([.app_state.oracle.task_schedule[]] | length) == 6 and
+			all(["BTC/USD","ETH/USD","SOL/USD"][]; . as $symbol |
+				([$root.app_state.oracle.task_schedule[] |
+					select(.symbol == $symbol) |
+					(.height | tonumber)] | sort) == [$activation_height, $next_height]
+			)
+		else
+			([.app_state.oracle.task_schedule[] | .symbol] | length) == 6 and
+			([.app_state.oracle.task_schedule[] | select(.height == "3" or .height == 3)] | length) == 3 and
+			([.app_state.oracle.task_schedule[] | select(.height == "4" or .height == 4)] | length) == 3
+		end) and
+		((.consensus.params.abci.vote_extensions_enable_height // "0") | tostring) == $vote_extensions_enable_height and
 		((.app_state.feemarket.params.min_gas_price // "0") | tonumber) > 0
 	' "$genesis_path" >/dev/null
 }
@@ -627,7 +708,11 @@ for i in 1 2 3 4; do
 			peers="$peers${PEERS[$j]}"
 		fi
 	done
-	edit_config_toml "${HOMES[$i]}/config/config.toml" "${RPC_PORTS[$i]}" "${P2P_PORTS[$i]}" "${PROXY_PORTS[$i]}" "${PPROF_PORTS[$i]}" "$peers"
+	metrics_port=""
+	if [[ "$ORACLE_VOTE_EXTENSION_ACCEPTANCE" -eq 1 ]]; then
+		metrics_port="${METRICS_PORTS[$i]}"
+	fi
+	edit_config_toml "${HOMES[$i]}/config/config.toml" "${RPC_PORTS[$i]}" "${P2P_PORTS[$i]}" "${PROXY_PORTS[$i]}" "${PPROF_PORTS[$i]}" "$peers" "$metrics_port"
 	edit_app_toml "${HOMES[$i]}/config/app.toml" "tcp://127.0.0.1:${API_PORTS[$i]}" "127.0.0.1:${GRPC_PORTS[$i]}" "127.0.0.1:${JSONRPC_PORTS[$i]}" "127.0.0.1:${JSONRPC_WS_PORTS[$i]}" "${ORACLE_SOCKETS[$i]}"
 	assert_node_app_config "${HOMES[$i]}/config/app.toml" "${ORACLE_SOCKETS[$i]}"
 done
@@ -847,7 +932,11 @@ wait_for_all_increasing() {
 }
 
 declare -a INITIAL_HEIGHTS
-wait_for_all_heights 4
+initial_height_target=4
+if [[ "$ORACLE_VOTE_EXTENSION_ACCEPTANCE" -eq 1 ]]; then
+	initial_height_target=$((VOTE_EXTENSIONS_ENABLE_HEIGHT + 2))
+fi
+wait_for_all_heights "$initial_height_target"
 for i in 1 2 3 4; do
 	INITIAL_HEIGHTS[$i]="$(node_height "$i")"
 done
@@ -941,6 +1030,293 @@ while true; do
 	sleep 2
 done
 
+metric_count() {
+	local file="$1"
+	local status="$2"
+	awk -v wanted_status="$status" '
+		$1 ~ /^cometbft_consensus_vote_extension_receive_count(_total)?\{/ &&
+		index($1, "status=\"" wanted_status "\"") {
+			total += $2
+		}
+		END { printf "%.0f\n", total + 0 }
+	' "$file"
+}
+
+fetch_rpc_receipt() {
+	local i="$1"
+	local endpoint="$2"
+	local output="$3"
+	if ! curl -fsS "http://127.0.0.1:${RPC_PORTS[$i]}/$endpoint" >"$output"; then
+		echo "failed to fetch /$endpoint from node $i" >&2
+		dump_diagnostics "acceptance-rpc-node-$i"
+		exit 1
+	fi
+}
+
+run_vote_extension_acceptance() {
+	local activation_height="$VOTE_EXTENSIONS_ENABLE_HEIGHT"
+	local payload_height=$((activation_height + 1))
+	local no_payload_height=$((activation_height + 2))
+	local i height expected_txs actual_txs block_file reference_block_hash reference_app_hash
+	local consensus_file metrics_file accepted_count rejected_count payload_b64 payload_file
+	local commit_file validators_height_file signed_power total_power
+	local progress_start_max=0 progress_target current_height progress_block_file
+	local latest_node_file acceptance_receipt
+
+	wait_for_all_heights "$no_payload_height"
+
+	for i in 1 2 3 4; do
+		consensus_file="$BASE/logs/acceptance-consensus-params-node-$i.json"
+		fetch_rpc_receipt "$i" "consensus_params?height=$activation_height" "$consensus_file"
+		if ! jq -e --arg height "$activation_height" '
+			((.result.consensus_params.abci.vote_extensions_enable_height // "0") | tonumber) == ($height | tonumber)
+		' "$consensus_file" >/dev/null; then
+			echo "node $i committed vote-extension height does not equal $activation_height" >&2
+			cat "$consensus_file" >&2
+			exit 1
+		fi
+
+		for height in "$activation_height" "$payload_height" "$no_payload_height"; do
+			block_file="$BASE/logs/acceptance-block-$height-node-$i.json"
+			fetch_rpc_receipt "$i" "block?height=$height" "$block_file"
+		done
+
+		fetch_rpc_receipt "$i" "block_results?height=$payload_height" "$BASE/logs/acceptance-block-results-$payload_height-node-$i.json"
+		fetch_rpc_receipt "$i" "commit?height=$no_payload_height" "$BASE/logs/acceptance-commit-$no_payload_height-node-$i.json"
+		fetch_rpc_receipt "$i" "validators?height=$no_payload_height&per_page=100" "$BASE/logs/acceptance-validators-$no_payload_height-node-$i.json"
+
+		metrics_file="$BASE/logs/acceptance-metrics-node-$i.txt"
+		if ! curl -fsS "http://127.0.0.1:${METRICS_PORTS[$i]}/metrics" >"$metrics_file"; then
+			echo "failed to fetch CometBFT metrics from node $i" >&2
+			dump_diagnostics "acceptance-metrics-node-$i"
+			exit 1
+		fi
+		accepted_count="$(metric_count "$metrics_file" accepted)"
+		rejected_count="$(metric_count "$metrics_file" rejected)"
+		if (( accepted_count <= 0 || rejected_count != 0 )); then
+			echo "node $i vote-extension verification metrics are invalid: accepted=$accepted_count rejected=$rejected_count" >&2
+			exit 1
+		fi
+		echo "vote_extension_verify_metrics_node=$i accepted=$accepted_count rejected=$rejected_count"
+	done
+
+	for height in "$activation_height" "$payload_height" "$no_payload_height"; do
+		case "$height" in
+		"$payload_height") expected_txs=1 ;;
+		*) expected_txs=0 ;;
+		esac
+		reference_block_hash="$(jq -er '.result.block_id.hash' "$BASE/logs/acceptance-block-$height-node-1.json")"
+		reference_app_hash="$(jq -er '.result.block.header.app_hash' "$BASE/logs/acceptance-block-$height-node-1.json")"
+		for i in 1 2 3 4; do
+			block_file="$BASE/logs/acceptance-block-$height-node-$i.json"
+			actual_txs="$(jq -er '((.result.block.data.txs // []) | length)' "$block_file")"
+			if [[ "$actual_txs" != "$expected_txs" ]]; then
+				echo "node $i block $height transaction count mismatch: expected=$expected_txs actual=$actual_txs" >&2
+				exit 1
+			fi
+			if [[ "$(jq -er '.result.block_id.hash' "$block_file")" != "$reference_block_hash" ]]; then
+				echo "node $i block hash diverged at height $height" >&2
+				exit 1
+			fi
+			if [[ "$(jq -er '.result.block.header.app_hash' "$block_file")" != "$reference_app_hash" ]]; then
+				echo "node $i AppHash diverged at height $height" >&2
+				exit 1
+			fi
+		done
+		echo "fixed_height_consensus=$height block_hash=$reference_block_hash app_hash=$reference_app_hash txs=$expected_txs"
+	done
+
+	payload_b64="$(jq -er '.result.block.data.txs[0]' "$BASE/logs/acceptance-block-$payload_height-node-1.json")"
+	payload_file="$BASE/logs/acceptance-oracle-payload-$payload_height.json"
+	if ! "$BIN" tx decode "$payload_b64" \
+		--offline \
+		--home "${HOMES[1]}" \
+		>"$payload_file" 2>"$BASE/logs/acceptance-oracle-payload-$payload_height.err"; then
+		echo "failed to decode Oracle proposal payload at height $payload_height" >&2
+		cat "$BASE/logs/acceptance-oracle-payload-$payload_height.err" >&2 || true
+		exit 1
+	fi
+	if ! jq -e --arg height "$payload_height" '
+		.body.extension_options as $options |
+		($options | length) == 1 and
+		($options[0] as $payload |
+			$payload["@type"] == "/guru.oracle.v1.OracleProposalPayload" and
+			($payload.height | tonumber) == ($height | tonumber) and
+			($payload.vote_extensions.votes | length) == 4 and
+			([$payload.vote_extensions.votes[].validator_address] | unique | length) == 4 and
+			all($payload.vote_extensions.votes[];
+				(.block_id_flag | tonumber) == 2 and
+				(.vote_extension | length) > 0 and
+				(.extension_signature | length) > 0
+			) and
+			([$payload.values[].symbol] | sort) == ["BTC/USD","ETH/USD","SOL/USD"] and
+			all($payload.values[];
+				(.block_height | tonumber) == ($height | tonumber) and
+				(.value | tonumber) > 0 and
+				(.block_time_unix | tonumber) > 0
+			)
+		)
+	' "$payload_file" >/dev/null; then
+		echo "decoded Oracle proposal payload at height $payload_height failed its signed ExtendedCommit contract" >&2
+		cat "$payload_file" >&2
+		exit 1
+	fi
+	echo "oracle_payload_height=$payload_height vote_height=$activation_height signed_vote_extensions=4 values=3"
+
+	reference_app_hash="$(jq -er '.result.app_hash' "$BASE/logs/acceptance-block-results-$payload_height-node-1.json")"
+	if [[ -z "$reference_app_hash" ]]; then
+		echo "empty FinalizeBlock AppHash at height $payload_height" >&2
+		exit 1
+	fi
+	for i in 2 3 4; do
+		if [[ "$(jq -er '.result.app_hash' "$BASE/logs/acceptance-block-results-$payload_height-node-$i.json")" != "$reference_app_hash" ]]; then
+			echo "node $i FinalizeBlock AppHash diverged at payload height $payload_height" >&2
+			exit 1
+		fi
+	done
+	echo "payload_finalize_app_hash=$reference_app_hash"
+
+	for i in 1 2 3 4; do
+		latest_node_file="$BASE/logs/acceptance-latest-values-node-$i.json"
+		if ! "$BIN" query oracle latest-values \
+			--node "tcp://127.0.0.1:${RPC_PORTS[$i]}" \
+			--home "${HOMES[$i]}" \
+			--chain-id "$CHAIN_ID" \
+			--height "$payload_height" \
+			--output json >"$latest_node_file" 2>"$BASE/logs/acceptance-query-latest-node-$i.err"; then
+			echo "failed to query Oracle latest values from node $i" >&2
+			exit 1
+		fi
+		if ! jq -e --arg height "$payload_height" '
+			([.values[].symbol] | sort) == ["BTC/USD","ETH/USD","SOL/USD"] and
+			all(.values[]; (.block_height | tonumber) == ($height | tonumber))
+		' "$latest_node_file" >/dev/null; then
+			echo "node $i Oracle latest values are not the payload-height state" >&2
+			cat "$latest_node_file" >&2
+			exit 1
+		fi
+		jq -S '.values | sort_by(.symbol)' "$latest_node_file" >"$BASE/logs/acceptance-latest-values-node-$i.canonical.json"
+	done
+	for i in 2 3 4; do
+		if ! cmp -s "$BASE/logs/acceptance-latest-values-node-1.canonical.json" "$BASE/logs/acceptance-latest-values-node-$i.canonical.json"; then
+			echo "node $i Oracle latest-value state diverged" >&2
+			exit 1
+		fi
+	done
+
+	reference_block_hash="$(jq -er '.result.block_id.hash' "$BASE/logs/acceptance-block-$no_payload_height-node-1.json")"
+	for i in 1 2 3 4; do
+		commit_file="$BASE/logs/acceptance-commit-$no_payload_height-node-$i.json"
+		validators_height_file="$BASE/logs/acceptance-validators-$no_payload_height-node-$i.json"
+		if ! jq -e --arg height "$no_payload_height" --arg block_hash "$reference_block_hash" '
+			.result.canonical == true and
+			(.result.signed_header.header.height | tonumber) == ($height | tonumber) and
+			.result.signed_header.commit.block_id.hash == $block_hash
+		' "$commit_file" >/dev/null; then
+			echo "node $i canonical commit does not bind block $no_payload_height" >&2
+			exit 1
+		fi
+		if ! jq -e -n \
+			--slurpfile validators "$validators_height_file" \
+			--slurpfile commit "$commit_file" '
+			($validators[0].result.validators |
+				map({key: .address, value: (.voting_power | tonumber)}) |
+				from_entries) as $powers |
+			($powers | to_entries | map(.value) | add) as $total |
+			([$commit[0].result.signed_header.commit.signatures[] |
+				select(
+					.block_id_flag == 2 or
+					.block_id_flag == "2" or
+					.block_id_flag == "BLOCK_ID_FLAG_COMMIT"
+				) |
+				select((.signature // "") | length > 0) |
+				($powers[.validator_address] // 0)] | add // 0) as $signed |
+			($powers | length) == 4 and
+			$total > 0 and
+			($signed * 3) > ($total * 2)
+		' >/dev/null; then
+			echo "node $i commit at height $no_payload_height lacks greater-than-two-thirds validator power" >&2
+			exit 1
+		fi
+	done
+	validators_height_file="$BASE/logs/acceptance-validators-$no_payload_height-node-1.json"
+	commit_file="$BASE/logs/acceptance-commit-$no_payload_height-node-1.json"
+	total_power="$(jq -nr --slurpfile validators "$validators_height_file" '[$validators[0].result.validators[].voting_power | tonumber] | add')"
+	signed_power="$(jq -nr \
+		--slurpfile validators "$validators_height_file" \
+		--slurpfile commit "$commit_file" '
+		($validators[0].result.validators |
+			map({key: .address, value: (.voting_power | tonumber)}) |
+			from_entries) as $powers |
+		[$commit[0].result.signed_header.commit.signatures[] |
+			select(
+				.block_id_flag == 2 or
+				.block_id_flag == "2" or
+				.block_id_flag == "BLOCK_ID_FLAG_COMMIT"
+			) |
+			select((.signature // "") | length > 0) |
+			($powers[.validator_address] // 0)] | add // 0
+	')"
+	echo "canonical_finality_height=$no_payload_height signed_power=$signed_power total_power=$total_power"
+
+	for i in 1 2 3 4; do
+		current_height="$(node_height "$i")"
+		if [[ ! "$current_height" =~ ^[0-9]+$ ]]; then
+			echo "node $i returned invalid progress baseline height: $current_height" >&2
+			exit 1
+		fi
+		if (( current_height > progress_start_max )); then
+			progress_start_max="$current_height"
+		fi
+	done
+	progress_target=$((progress_start_max + 2))
+	wait_for_all_heights "$progress_target"
+	for i in 1 2 3 4; do
+		progress_block_file="$BASE/logs/acceptance-progress-block-$progress_target-node-$i.json"
+		fetch_rpc_receipt "$i" "block?height=$progress_target" "$progress_block_file"
+	done
+	reference_block_hash="$(jq -er '.result.block_id.hash' "$BASE/logs/acceptance-progress-block-$progress_target-node-1.json")"
+	reference_app_hash="$(jq -er '.result.block.header.app_hash' "$BASE/logs/acceptance-progress-block-$progress_target-node-1.json")"
+	for i in 2 3 4; do
+		progress_block_file="$BASE/logs/acceptance-progress-block-$progress_target-node-$i.json"
+		if [[ "$(jq -er '.result.block_id.hash' "$progress_block_file")" != "$reference_block_hash" ]] ||
+			[[ "$(jq -er '.result.block.header.app_hash' "$progress_block_file")" != "$reference_app_hash" ]]; then
+			echo "node $i diverged at bounded-progress height $progress_target" >&2
+			exit 1
+		fi
+	done
+	echo "bounded_progress_start_max=$progress_start_max target=$progress_target block_hash=$reference_block_hash app_hash=$reference_app_hash"
+
+	acceptance_receipt="$BASE/logs/vote-extension-acceptance.json"
+	jq -n \
+		--arg status "PASS" \
+		--argjson activation_height "$activation_height" \
+		--argjson payload_height "$payload_height" \
+		--argjson no_payload_height "$no_payload_height" \
+		--argjson signed_power "$signed_power" \
+		--argjson total_power "$total_power" \
+		--argjson progress_target "$progress_target" \
+		--arg progress_block_hash "$reference_block_hash" \
+		--arg progress_app_hash "$reference_app_hash" '
+		{
+			status: $status,
+			activation_height: $activation_height,
+			payload_height: $payload_height,
+			no_payload_height: $no_payload_height,
+			signed_power: $signed_power,
+			total_power: $total_power,
+			progress_target: $progress_target,
+			progress_block_hash: $progress_block_hash,
+			progress_app_hash: $progress_app_hash
+		}
+	' >"$acceptance_receipt"
+	cat "$acceptance_receipt"
+}
+
+if [[ "$ORACLE_VOTE_EXTENSION_ACCEPTANCE" -eq 1 ]]; then
+	run_vote_extension_acceptance
+fi
+
 ready_env="$BASE/ready.env"
 {
 	printf 'BASE=%q\n' "$BASE"
@@ -949,10 +1325,15 @@ ready_env="$BASE/ready.env"
 	printf 'ORACLED=%q\n' "$ORACLED"
 	printf 'CHAIN_ID=%q\n' "$CHAIN_ID"
 	printf 'EVM_CHAIN_ID=%q\n' "$EVM_CHAIN_ID"
+	printf 'VOTE_EXTENSIONS_ENABLE_HEIGHT=%q\n' "$VOTE_EXTENSIONS_ENABLE_HEIGHT"
+	printf 'ORACLE_VOTE_EXTENSION_ACCEPTANCE=%q\n' "$ORACLE_VOTE_EXTENSION_ACCEPTANCE"
 	for i in 1 2 3 4; do
 		printf 'HOME_%s=%q\n' "$i" "${HOMES[$i]}"
 		printf 'RPC_%s=%q\n' "$i" "${RPC_PORTS[$i]}"
 		printf 'GRPC_%s=%q\n' "$i" "${GRPC_PORTS[$i]}"
+		if [[ "$ORACLE_VOTE_EXTENSION_ACCEPTANCE" -eq 1 ]]; then
+			printf 'METRICS_%s=%q\n' "$i" "${METRICS_PORTS[$i]}"
+		fi
 		printf 'ORACLE_HOME_%s=%q\n' "$i" "${ORACLE_HOMES[$i]}"
 		printf 'ORACLE_SOCKET_%s=%q\n' "$i" "${ORACLE_SOCKETS[$i]}"
 		printf 'AGENT_NAME_%s=%q\n' "$i" "agent$i"

@@ -1,10 +1,13 @@
 package app
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"math/big"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,6 +18,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
@@ -61,8 +65,9 @@ func TestApplicationStateMachine(t *testing.T) {
 		testChainID    = "guru-test-1"
 		testEVMChainID = uint64(9631)
 	)
+	var applicationLog bytes.Buffer
 	application, err := New(Options{
-		Logger:     log.NewNopLogger(),
+		Logger:     log.NewLogger(&applicationLog, log.OutputJSONOption()),
 		DB:         dbm.NewMemDB(),
 		LoadLatest: true,
 		HomePath:   t.TempDir(),
@@ -352,14 +357,17 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.Empty(t, erc20Genesis.Allowances)
 	require.Empty(t, erc20Genesis.NativePrecompiles)
 	require.Empty(t, erc20Genesis.DynamicPrecompiles)
+
 	genesisBytes, err := json.Marshal(genesis)
 	require.NoError(t, err)
 	blockTime := time.Unix(1_700_000_000, 0).UTC()
+	consensusParams := *simtestutil.DefaultConsensusParams
+	consensusParams.Abci = &cmtproto.ABCIParams{VoteExtensionsEnableHeight: 1}
 	_, err = application.InitChain(&abci.RequestInitChain{
 		Time:            blockTime,
 		ChainId:         testChainID,
 		InitialHeight:   1,
-		ConsensusParams: simtestutil.DefaultConsensusParams,
+		ConsensusParams: &consensusParams,
 		AppStateBytes:   genesisBytes,
 	})
 	require.NoError(t, err)
@@ -367,6 +375,10 @@ func TestApplicationStateMachine(t *testing.T) {
 	finalizeAndCommit(t, application, 1, blockTime.Add(time.Second), proposerAddress, nil)
 
 	queryContext := committedContext(t, application)
+	committedConsensusParams, err := application.ConsensusParamsKeeper.ParamsStore.Get(queryContext)
+	require.NoError(t, err)
+	require.NotNil(t, committedConsensusParams.Abci)
+	require.Equal(t, int64(1), committedConsensusParams.Abci.VoteExtensionsEnableHeight)
 	feeMarketParams := application.FeeMarketKeeper.GetParams(queryContext)
 	require.True(t, feeMarketParams.NoBaseFee)
 	require.True(t, feeMarketParams.BaseFee.IsZero())
@@ -1490,6 +1502,145 @@ func TestApplicationStateMachine(t *testing.T) {
 	var exportedGenesis GenesisState
 	require.NoError(t, json.Unmarshal(exported.AppState, &exportedGenesis))
 	require.NoError(t, application.ValidateGenesis(exportedGenesis))
+
+	t.Run("missed minimum gas price schedule is discarded by the application end blocker", func(t *testing.T) {
+		committedHeight := application.LastBlockHeight()
+		require.Equal(t, int64(3), committedHeight)
+
+		beforeCtx := committedContext(t, application)
+		beforeParams := application.FeeMarketKeeper.GetParams(beforeCtx)
+
+		// Seed the only state that current future-height validation cannot produce
+		// through a normal block: a valid schedule that existed before its effective
+		// height but was not processed there. This models a legacy/recovered store
+		// condition while leaving the production ModuleManager and keeper graph intact.
+		seedCtx := application.NewUncachedContext(false, cmtproto.Header{
+			ChainID: testChainID,
+			Height:  committedHeight,
+			Time:    blockTime.Add(time.Duration(committedHeight) * time.Second),
+		}).WithEventManager(sdk.NewEventManager())
+		require.NoError(t, application.ConstitutionKeeper.AfterOracleValueApplied(
+			seedCtx,
+			&oracletypes.OracleValue{
+				Symbol:        config.MinGasPriceOracleSymbol,
+				ValueType:     oracletypes.ValueType_VALUE_TYPE_NUMERIC,
+				Value:         "0.5",
+				BlockHeight:   committedHeight,
+				BlockTimeUnix: blockTime.Add(time.Duration(committedHeight) * time.Second).Unix(),
+			},
+			1,
+		))
+		seededSchedule, err := application.ConstitutionKeeper.GetMinGasPriceSchedule(seedCtx)
+		require.NoError(t, err)
+		require.Equal(t, int64(4), seededSchedule.GetEffectiveHeight())
+		require.False(t, beforeParams.MinGasPrice.Equal(
+			sdkmath.LegacyMustNewDecFromStr(seededSchedule.GetScheduledMinGasPrice()),
+		))
+
+		var storeTrace synchronizedBuffer
+		application.SetCommitMultiStoreTracer(&storeTrace)
+		defer application.SetCommitMultiStoreTracer(nil)
+		applicationLog.Reset()
+
+		missedResult := finalizeAndCommit(
+			t,
+			application,
+			4,
+			blockTime.Add(4*time.Second),
+			proposerAddress,
+			nil,
+		)
+		missedEvents := matchingABCIEvents(
+			missedResult.Events,
+			constitutiontypes.EventTypeMinGasPriceUpdateSkipped,
+			constitutiontypes.AttributeKeyReason,
+			constitutiontypes.MinGasPriceUpdateReasonMissedEffectiveHeight,
+		)
+		require.Len(t, missedEvents, 1)
+		require.True(t, abciEventHasAttribute(
+			missedEvents[0], constitutiontypes.AttributeKeyHeight, "4",
+		))
+		require.True(t, abciEventHasAttribute(
+			missedEvents[0], constitutiontypes.AttributeKeyObservedHeight, "4",
+		))
+		require.True(t, abciEventHasAttribute(
+			missedEvents[0], constitutiontypes.AttributeKeyNextHeight, "5",
+		))
+		require.True(t, abciEventHasAttribute(
+			missedEvents[0], constitutiontypes.AttributeKeyEffectiveHeight, "4",
+		))
+		require.True(t, abciEventHasAttribute(
+			missedEvents[0],
+			constitutiontypes.AttributeKeyCurrentMinGasPrice,
+			beforeParams.MinGasPrice.String(),
+		))
+		require.True(t, abciEventHasAttribute(
+			missedEvents[0],
+			constitutiontypes.AttributeKeyScheduledMinGasPrice,
+			seededSchedule.GetScheduledMinGasPrice(),
+		))
+		require.True(t, abciEventHasAttribute(
+			missedEvents[0],
+			constitutiontypes.AttributeKeyPendingMinGasPrice,
+			seededSchedule.GetScheduledMinGasPrice(),
+		))
+		require.True(t, abciEventHasAttribute(
+			missedEvents[0], constitutiontypes.AttributeKeySourceOracleHeight, "3",
+		))
+		require.True(t, abciEventHasAttribute(
+			missedEvents[0], constitutiontypes.AttributeKeyPendingDelayBlocks, "1",
+		))
+
+		warningLog := applicationLog.String()
+		require.Contains(t, warningLog, `"level":"warn"`)
+		require.Contains(t, warningLog, "discarding missed minimum gas price schedule")
+		require.Contains(t, warningLog, `"reason":"missed_effective_height"`)
+		require.Contains(t, warningLog, `"observed_height":4`)
+		require.Contains(t, warningLog, `"effective_height":4`)
+		require.Contains(t, warningLog, `"next_height":5`)
+		require.Contains(t, warningLog, `"scheduled_min_gas_price":"`+seededSchedule.GetScheduledMinGasPrice()+`"`)
+
+		afterMissedCtx := committedContext(t, application)
+		require.Equal(t, beforeParams, application.FeeMarketKeeper.GetParams(afterMissedCtx))
+		_, err = application.ConstitutionKeeper.GetMinGasPriceSchedule(afterMissedCtx)
+		require.ErrorIs(t, err, collections.ErrNotFound)
+		require.Zero(t, countStoreWrites(
+			t,
+			storeTrace.Bytes(),
+			feemarkettypes.StoreKey,
+			feemarkettypes.ParamsKey,
+		), "missed handling must not call the FeeMarket parameter setter")
+
+		storeTrace.Reset()
+		applicationLog.Reset()
+		repeatedResult := finalizeAndCommit(
+			t,
+			application,
+			5,
+			blockTime.Add(5*time.Second),
+			proposerAddress,
+			nil,
+		)
+		require.Empty(t, matchingABCIEvents(
+			repeatedResult.Events,
+			constitutiontypes.EventTypeMinGasPriceUpdateSkipped,
+			constitutiontypes.AttributeKeyReason,
+			constitutiontypes.MinGasPriceUpdateReasonMissedEffectiveHeight,
+		))
+		require.NotContains(t, applicationLog.String(), constitutiontypes.MinGasPriceUpdateReasonMissedEffectiveHeight)
+		afterRepeatCtx := committedContext(t, application)
+		require.Equal(t, beforeParams, application.FeeMarketKeeper.GetParams(afterRepeatCtx))
+		_, err = application.ConstitutionKeeper.GetMinGasPriceSchedule(afterRepeatCtx)
+		require.ErrorIs(t, err, collections.ErrNotFound)
+		require.Zero(t, countStoreWrites(
+			t,
+			storeTrace.Bytes(),
+			feemarkettypes.StoreKey,
+			feemarkettypes.ParamsKey,
+		), "the cleared schedule must not trigger a later FeeMarket parameter write")
+		require.Equal(t, int64(5), application.LastBlockHeight())
+	})
+
 }
 
 func requireFixedSendGasEvent(
@@ -1627,6 +1778,79 @@ func committedContext(t *testing.T, application *App) sdk.Context {
 	ctx, err := application.CreateQueryContext(0, false)
 	require.NoError(t, err)
 	return ctx
+}
+
+func matchingABCIEvents(
+	events []abci.Event,
+	eventType string,
+	attributeKey string,
+	attributeValue string,
+) []abci.Event {
+	matched := make([]abci.Event, 0, 1)
+	for _, event := range events {
+		if event.Type == eventType && abciEventHasAttribute(event, attributeKey, attributeValue) {
+			matched = append(matched, event)
+		}
+	}
+	return matched
+}
+
+func abciEventHasAttribute(event abci.Event, key, value string) bool {
+	for _, attribute := range event.Attributes {
+		if attribute.Key == key && attribute.Value == value {
+			return true
+		}
+	}
+	return false
+}
+
+// synchronizedBuffer keeps the multistore tracer valid if writes are emitted
+// concurrently. Production file-backed trace writers are concurrency-safe,
+// whereas bytes.Buffer is not.
+type synchronizedBuffer struct {
+	mutex  sync.Mutex
+	buffer bytes.Buffer
+}
+
+func (buffer *synchronizedBuffer) Write(data []byte) (int, error) {
+	buffer.mutex.Lock()
+	defer buffer.mutex.Unlock()
+	return buffer.buffer.Write(data)
+}
+
+func (buffer *synchronizedBuffer) Bytes() []byte {
+	buffer.mutex.Lock()
+	defer buffer.mutex.Unlock()
+	return bytes.Clone(buffer.buffer.Bytes())
+}
+
+func (buffer *synchronizedBuffer) Reset() {
+	buffer.mutex.Lock()
+	defer buffer.mutex.Unlock()
+	buffer.buffer.Reset()
+}
+
+func countStoreWrites(t *testing.T, trace []byte, storeName string, key []byte) int {
+	t.Helper()
+	encodedKey := base64.StdEncoding.EncodeToString(key)
+	writes := 0
+	for _, line := range bytes.Split(bytes.TrimSpace(trace), []byte{'\n'}) {
+		if len(line) == 0 {
+			continue
+		}
+		var operation struct {
+			Operation string         `json:"operation"`
+			Key       string         `json:"key"`
+			Metadata  map[string]any `json:"metadata"`
+		}
+		require.NoError(t, json.Unmarshal(line, &operation))
+		if operation.Operation == "write" &&
+			operation.Key == encodedKey &&
+			operation.Metadata["store_name"] == storeName {
+			writes++
+		}
+	}
+	return writes
 }
 
 func signAndEncodeEthereumTx(

@@ -83,6 +83,31 @@ func (k Keeper) emitMinGasPriceSkipped(ctx context.Context, reason string, value
 	))
 }
 
+func (k Keeper) emitMissedMinGasPriceSchedule(
+	ctx context.Context,
+	schedule *types.MinGasPriceSchedule,
+	currentMinGasPrice string,
+) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeMinGasPriceUpdateSkipped,
+		sdk.NewAttribute(types.AttributeKeyHeight, strconv.FormatInt(sdkCtx.BlockHeight(), 10)),
+		sdk.NewAttribute(types.AttributeKeyObservedHeight, strconv.FormatInt(sdkCtx.BlockHeight(), 10)),
+		sdk.NewAttribute(types.AttributeKeyNextHeight, strconv.FormatInt(sdkCtx.BlockHeight()+1, 10)),
+		sdk.NewAttribute(types.AttributeKeyReason, types.MinGasPriceUpdateReasonMissedEffectiveHeight),
+		sdk.NewAttribute(types.AttributeKeyEffectiveHeight, strconv.FormatInt(schedule.GetEffectiveHeight(), 10)),
+		sdk.NewAttribute(types.AttributeKeyCurrentMinGasPrice, currentMinGasPrice),
+		sdk.NewAttribute(types.AttributeKeyScheduledMinGasPrice, schedule.GetScheduledMinGasPrice()),
+		sdk.NewAttribute(types.AttributeKeyClampedMinGasPrice, schedule.GetScheduledMinGasPrice()),
+		sdk.NewAttribute(types.AttributeKeyPendingMinGasPrice, schedule.GetScheduledMinGasPrice()),
+		sdk.NewAttribute(types.AttributeKeySourceSymbol, schedule.GetSourceSymbol()),
+		sdk.NewAttribute(types.AttributeKeySourceValue, schedule.GetSourceValue()),
+		sdk.NewAttribute(types.AttributeKeySourceOracleHeight, strconv.FormatInt(schedule.GetSourceOracleHeight(), 10)),
+		sdk.NewAttribute(types.AttributeKeySourceSubmissionInterval, strconv.FormatUint(uint64(schedule.GetSourceSubmissionIntervalBlocks()), 10)),
+		sdk.NewAttribute(types.AttributeKeyPendingDelayBlocks, strconv.FormatUint(uint64(schedule.GetPendingDelayBlocks()), 10)),
+	))
+}
+
 func oracleValueFromSchedule(schedule *types.MinGasPriceSchedule) *oraclev1.OracleValue {
 	if schedule == nil {
 		return nil

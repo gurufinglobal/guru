@@ -1,9 +1,11 @@
 package keeper
 
 import (
+	"bytes"
 	"testing"
 
 	"cosmossdk.io/collections"
+	"cosmossdk.io/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	evmante "github.com/cosmos/evm/ante/evm"
 	appparams "github.com/gurufinglobal/guru/v2/config"
@@ -84,6 +86,7 @@ func TestApplyDueMinGasPriceScheduleAppliesForNextBlock(t *testing.T) {
 	dueCtx := ctx.WithBlockHeight(29).WithEventManager(sdk.NewEventManager())
 	require.NoError(t, f.keeper.ApplyDueMinGasPriceSchedule(dueCtx))
 	require.Equal(t, upperClampedDec, f.feeMarketKeeper.GetParams(dueCtx).MinGasPrice.String())
+	require.Equal(t, 1, f.feeMarketKeeper.setMinGasPriceCalls)
 	_, err := f.keeper.GetMinGasPriceSchedule(dueCtx)
 	require.ErrorIs(t, err, collections.ErrNotFound)
 
@@ -94,21 +97,53 @@ func TestApplyDueMinGasPriceScheduleAppliesForNextBlock(t *testing.T) {
 	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyNewMinGasPrice, upperClampedDec))
 }
 
-func TestApplyDueMinGasPriceScheduleClearsStaleSchedule(t *testing.T) {
+func TestApplyDueMinGasPriceScheduleClearsMissedSchedule(t *testing.T) {
 	f := setupKeeperFixture(t)
 	ctx := f.ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
 	require.NoError(t, f.keeper.AfterOracleValueApplied(ctx, testOracleValue(appparams.MinGasPriceOracleSymbol, "0.5", 20), 2))
 
-	staleCtx := ctx.WithBlockHeight(22).WithEventManager(sdk.NewEventManager())
-	require.NoError(t, f.keeper.ApplyDueMinGasPriceSchedule(staleCtx))
-	require.Equal(t, defaultMinGasPriceDec, f.feeMarketKeeper.GetParams(staleCtx).MinGasPrice.String())
-	_, err := f.keeper.GetMinGasPriceSchedule(staleCtx)
+	var warningLog bytes.Buffer
+	missedCtx := ctx.WithBlockHeight(22).
+		WithEventManager(sdk.NewEventManager()).
+		WithLogger(log.NewLogger(&warningLog, log.OutputJSONOption()))
+	require.NoError(t, f.keeper.ApplyDueMinGasPriceSchedule(missedCtx))
+	require.Equal(t, defaultMinGasPriceDec, f.feeMarketKeeper.GetParams(missedCtx).MinGasPrice.String())
+	require.Zero(t, f.feeMarketKeeper.setMinGasPriceCalls)
+	_, err := f.keeper.GetMinGasPriceSchedule(missedCtx)
 	require.ErrorIs(t, err, collections.ErrNotFound)
 
-	events := staleCtx.EventManager().Events()
+	events := missedCtx.EventManager().Events()
 	require.Len(t, events, 1)
 	require.Equal(t, constitutiontypes.EventTypeMinGasPriceUpdateSkipped, events[0].Type)
-	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyReason, "stale_pending_schedule"))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyReason, constitutiontypes.MinGasPriceUpdateReasonMissedEffectiveHeight))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyHeight, "22"))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyObservedHeight, "22"))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyNextHeight, "23"))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyEffectiveHeight, "22"))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyCurrentMinGasPrice, defaultMinGasPriceDec))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyScheduledMinGasPrice, upperClampedDec))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyClampedMinGasPrice, upperClampedDec))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyPendingMinGasPrice, upperClampedDec))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeySourceOracleHeight, "20"))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyPendingDelayBlocks, "2"))
+
+	logOutput := warningLog.String()
+	require.Contains(t, logOutput, `"level":"warn"`)
+	require.Contains(t, logOutput, `"reason":"missed_effective_height"`)
+	require.Contains(t, logOutput, `"observed_height":22`)
+	require.Contains(t, logOutput, `"effective_height":22`)
+	require.Contains(t, logOutput, `"next_height":23`)
+	require.Contains(t, logOutput, `"scheduled_min_gas_price":"`+upperClampedDec+`"`)
+	require.Contains(t, logOutput, `"pending_min_gas_price":"`+upperClampedDec+`"`)
+
+	var repeatedWarningLog bytes.Buffer
+	nextCtx := missedCtx.WithBlockHeight(23).
+		WithEventManager(sdk.NewEventManager()).
+		WithLogger(log.NewLogger(&repeatedWarningLog, log.OutputJSONOption()))
+	require.NoError(t, f.keeper.ApplyDueMinGasPriceSchedule(nextCtx))
+	require.Empty(t, nextCtx.EventManager().Events())
+	require.Empty(t, repeatedWarningLog.String())
+	require.Zero(t, f.feeMarketKeeper.setMinGasPriceCalls)
 }
 
 func TestAppliedMinGasPriceControlsEVMGlobalFee(t *testing.T) {
@@ -174,6 +209,93 @@ func TestAfterOracleValueAppliedReplacesSinglePendingSchedule(t *testing.T) {
 	require.Equal(t, constitutiontypes.EventTypeMinGasPriceUpdateScheduled, events[0].Type)
 	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyPreviousEffectiveHeight, "30"))
 	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyReplaced, "true"))
+}
+
+func TestAfterOracleValueAppliedDiagnosesMissedScheduleBeforeReplacement(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(20).WithEventManager(sdk.NewEventManager())
+	require.NoError(t, f.keeper.AfterOracleValueApplied(
+		ctx,
+		testOracleValue(appparams.MinGasPriceOracleSymbol, "0.5", 20),
+		2,
+	))
+
+	var warningLog bytes.Buffer
+	replacementCtx := ctx.WithBlockHeight(22).
+		WithEventManager(sdk.NewEventManager()).
+		WithLogger(log.NewLogger(&warningLog, log.OutputJSONOption()))
+	require.NoError(t, f.keeper.AfterOracleValueApplied(
+		replacementCtx,
+		testOracleValue(appparams.MinGasPriceOracleSymbol, "1.0", 22),
+		2,
+	))
+
+	schedule, err := f.keeper.GetMinGasPriceSchedule(replacementCtx)
+	require.NoError(t, err)
+	require.Equal(t, int64(24), schedule.GetEffectiveHeight())
+	require.Equal(t, int64(22), schedule.GetSourceOracleHeight())
+	require.Equal(t, defaultMinGasPriceDec, schedule.GetScheduledMinGasPrice())
+	require.Equal(t, defaultMinGasPriceDec, f.feeMarketKeeper.GetParams(replacementCtx).MinGasPrice.String())
+	require.Zero(t, f.feeMarketKeeper.setMinGasPriceCalls)
+
+	events := replacementCtx.EventManager().Events()
+	require.Len(t, events, 2)
+	require.Equal(t, constitutiontypes.EventTypeMinGasPriceUpdateSkipped, events[0].Type)
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyReason, constitutiontypes.MinGasPriceUpdateReasonMissedEffectiveHeight))
+	require.True(t, eventHasAttribute(events[0], constitutiontypes.AttributeKeyEffectiveHeight, "22"))
+	require.Equal(t, constitutiontypes.EventTypeMinGasPriceUpdateScheduled, events[1].Type)
+	require.True(t, eventHasAttribute(events[1], constitutiontypes.AttributeKeyPreviousEffectiveHeight, "0"))
+	require.True(t, eventHasAttribute(events[1], constitutiontypes.AttributeKeyReplaced, "false"))
+	require.Contains(t, warningLog.String(), `"reason":"missed_effective_height"`)
+}
+
+func TestSetMinGasPriceScheduleRequiresFutureEffectiveHeight(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		effectiveHeight int64
+		wantErr         bool
+	}{
+		{name: "rejects effective height below current height", effectiveHeight: 19, wantErr: true},
+		{name: "rejects effective height equal to current height", effectiveHeight: 20, wantErr: true},
+		{name: "allows effective height at next block", effectiveHeight: 21, wantErr: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := setupKeeperFixture(t)
+			ctx := f.ctx.WithBlockHeight(20)
+			schedule := testMinGasPriceSchedule(tc.effectiveHeight-1, 1)
+
+			err := f.keeper.SetMinGasPriceSchedule(ctx, schedule)
+			if tc.wantErr {
+				require.ErrorIs(t, err, constitutiontypes.ErrInvalidMinGasPrice)
+				require.ErrorContains(t, err, "must be greater than current block height")
+				_, getErr := f.keeper.GetMinGasPriceSchedule(ctx)
+				require.ErrorIs(t, getErr, collections.ErrNotFound)
+				return
+			}
+
+			require.NoError(t, err)
+			stored, getErr := f.keeper.GetMinGasPriceSchedule(ctx)
+			require.NoError(t, getErr)
+			require.Equal(t, int64(21), stored.GetEffectiveHeight())
+		})
+	}
+}
+
+func TestAfterOracleValueAppliedRejectsNonFutureSchedule(t *testing.T) {
+	f := setupKeeperFixture(t)
+	ctx := f.ctx.WithBlockHeight(22).WithEventManager(sdk.NewEventManager())
+
+	err := f.keeper.AfterOracleValueApplied(
+		ctx,
+		testOracleValue(appparams.MinGasPriceOracleSymbol, "1.0", 20),
+		2,
+	)
+	require.ErrorIs(t, err, constitutiontypes.ErrInvalidMinGasPrice)
+	require.ErrorContains(t, err, "must be greater than current block height")
+	_, getErr := f.keeper.GetMinGasPriceSchedule(ctx)
+	require.ErrorIs(t, getErr, collections.ErrNotFound)
+	require.Empty(t, ctx.EventManager().Events())
+	require.Zero(t, f.feeMarketKeeper.setMinGasPriceCalls)
 }
 
 func TestAfterOracleValueAppliedSkipsInvalidTargetPrice(t *testing.T) {
@@ -301,6 +423,22 @@ func testOracleValue(symbol, value string, height int64) *oraclev1.OracleValue {
 		ValueType:   oraclev1.ValueType_VALUE_TYPE_NUMERIC,
 		Value:       value,
 		BlockHeight: height,
+	}
+}
+
+func testMinGasPriceSchedule(sourceHeight int64, sourceSubmissionInterval uint32) *constitutiontypes.MinGasPriceSchedule {
+	delayBlocks := pendingDelayBlocksForInterval(sourceSubmissionInterval)
+	return &constitutiontypes.MinGasPriceSchedule{
+		EffectiveHeight:                sourceHeight + int64(delayBlocks),
+		ScheduledMinGasPrice:           defaultMinGasPriceDec,
+		SourceSymbol:                   appparams.MinGasPriceOracleSymbol,
+		SourceValue:                    "1.0",
+		SourceOracleHeight:             sourceHeight,
+		SourceSubmissionIntervalBlocks: sourceSubmissionInterval,
+		PendingDelayBlocks:             delayBlocks,
+		PendingDelayCapBlocks:          constitutiontypes.MinGasPricePendingDelayCap,
+		RawMinGasPrice:                 constitutiontypes.MinGasPriceScaleFactor,
+		PreviousMinGasPrice:            defaultMinGasPriceDec,
 	}
 }
 

@@ -226,6 +226,107 @@ func TestOraclePayloadExpectedRequiresDueTasks(t *testing.T) {
 	require.True(t, expected)
 }
 
+func TestOraclePayloadExpectedVoteExtensionActivationBoundary(t *testing.T) {
+	tests := []struct {
+		name         string
+		enableHeight int64
+		blockHeight  int64
+		dueTasks     bool
+		wantExpected bool
+		wantQueries  []int64
+	}{
+		{
+			name:         "E=0 H=9 due tasks remain disabled",
+			enableHeight: 0,
+			blockHeight:  9,
+			dueTasks:     true,
+		},
+		{
+			name:         "E=0 H=9 no due tasks remain disabled",
+			enableHeight: 0,
+			blockHeight:  9,
+		},
+		{
+			name:         "E=0 H=10 due tasks remain disabled",
+			enableHeight: 0,
+			blockHeight:  10,
+			dueTasks:     true,
+		},
+		{
+			name:         "E=0 H=10 no due tasks remain disabled",
+			enableHeight: 0,
+			blockHeight:  10,
+		},
+		{
+			name:         "E=0 H=11 due tasks remain disabled",
+			enableHeight: 0,
+			blockHeight:  11,
+			dueTasks:     true,
+		},
+		{
+			name:         "E=0 H=11 no due tasks remain disabled",
+			enableHeight: 0,
+			blockHeight:  11,
+		},
+		{
+			name:         "E=10 H=9 E-1 due tasks are not queried",
+			enableHeight: 10,
+			blockHeight:  9,
+			dueTasks:     true,
+		},
+		{
+			name:         "E=10 H=9 E-1 no due tasks are not queried",
+			enableHeight: 10,
+			blockHeight:  9,
+		},
+		{
+			name:         "E=10 H=10 E due tasks are not queried",
+			enableHeight: 10,
+			blockHeight:  10,
+			dueTasks:     true,
+		},
+		{
+			name:         "E=10 H=10 E no due tasks are not queried",
+			enableHeight: 10,
+			blockHeight:  10,
+		},
+		{
+			name:         "E=10 H=11 E+1 no due tasks queries E",
+			enableHeight: 10,
+			blockHeight:  11,
+			wantQueries:  []int64{10},
+		},
+		{
+			name:         "E=10 H=11 E+1 due tasks queries E",
+			enableHeight: 10,
+			blockHeight:  11,
+			dueTasks:     true,
+			wantExpected: true,
+			wantQueries:  []int64{10},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			keeper := &trackingKeeper{fakeKeeper: fakeKeeper{dueHeight: tc.blockHeight - 1}}
+			if tc.dueTasks {
+				keeper.tasks = oracleTestTasks()
+			}
+
+			ctx := sdk.Context{}.
+				WithBlockHeight(tc.blockHeight).
+				WithConsensusParams(cmtproto.ConsensusParams{Abci: &cmtproto.ABCIParams{
+					VoteExtensionsEnableHeight: tc.enableHeight,
+				}})
+
+			expected, err := (Aggregator{keeper: keeper}).OraclePayloadExpected(ctx)
+			require.NoError(t, err)
+			require.Equal(t, tc.wantExpected, expected)
+			require.Equal(t, tc.wantQueries, keeper.dueTaskQueries)
+		})
+	}
+}
+
 func mustVoteExtensionBz(t *testing.T, symbol string, value string) []byte {
 	t.Helper()
 
@@ -244,6 +345,16 @@ type fakeKeeper struct {
 	tasks       []*oraclev1.OracleTask
 	dueHeight   int64
 	paramsCalls *atomic.Int32
+}
+
+type trackingKeeper struct {
+	fakeKeeper
+	dueTaskQueries []int64
+}
+
+func (k *trackingKeeper) DueTasksForVoteExtension(ctx context.Context, height int64) ([]*oraclev1.OracleTask, error) {
+	k.dueTaskQueries = append(k.dueTaskQueries, height)
+	return k.fakeKeeper.DueTasksForVoteExtension(ctx, height)
 }
 
 func (f fakeKeeper) GetParams(context.Context) (*oraclev1.Params, error) {

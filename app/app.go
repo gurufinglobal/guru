@@ -185,7 +185,14 @@ func (app *App) InitChainer(
 	if err := json.Unmarshal(req.AppStateBytes, &genesis); err != nil {
 		return nil, fmt.Errorf("decode genesis: %w", err)
 	}
-	if err := app.ValidateGenesis(genesis); err != nil {
+	// BaseApp invokes InitChainer at context height zero for the SDK default
+	// initial height of one. Validate against the normalized request height so
+	// operator preflight and InitChain apply the same genesis boundary.
+	initialHeight := req.InitialHeight
+	if initialHeight == 0 {
+		initialHeight = 1
+	}
+	if err := app.ValidateGenesisAtHeight(genesis, initialHeight); err != nil {
 		return nil, err
 	}
 	if err := app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap()); err != nil {
