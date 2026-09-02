@@ -238,7 +238,7 @@ func newValidateGenesisCommand() *cobra.Command {
 				return fmt.Errorf("construct genesis validator: %w", err)
 			}
 			defer application.Close() //nolint:errcheck
-			err = application.ValidateGenesis(appState)
+			err = application.ValidateGenesisAtHeight(appState, genesis.InitialHeight)
 			if err != nil {
 				return fmt.Errorf("validate Guru application genesis: %w", err)
 			}

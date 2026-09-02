@@ -37,7 +37,7 @@ func (k Keeper) GetCurrentMinGasPrice(ctx context.Context) (sdkmath.LegacyDec, e
 
 func (k Keeper) SetMinGasPriceSchedule(ctx context.Context, schedule *types.MinGasPriceSchedule) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if err := k.validateMinGasPriceScheduleForCurrentHeight(schedule, sdkCtx.BlockHeight()); err != nil {
+	if err := k.ValidateMinGasPriceScheduleAtHeight(schedule, sdkCtx.BlockHeight()); err != nil {
 		return err
 	}
 
@@ -105,7 +105,7 @@ func (k Keeper) AfterOracleValueApplied(ctx context.Context, value *oraclev1.Ora
 		RawMinGasPrice:                 rawMinGasPrice.String(),
 		PreviousMinGasPrice:            currentMinGasPrice.String(),
 	}
-	if err := k.validateMinGasPriceScheduleForCurrentHeight(schedule, sdkCtx.BlockHeight()); err != nil {
+	if err := k.ValidateMinGasPriceScheduleAtHeight(schedule, sdkCtx.BlockHeight()); err != nil {
 		return err
 	}
 
@@ -246,7 +246,9 @@ func (k Keeper) ValidateMinGasPriceSchedule(schedule *types.MinGasPriceSchedule)
 	return nil
 }
 
-func (k Keeper) validateMinGasPriceScheduleForCurrentHeight(schedule *types.MinGasPriceSchedule, currentHeight int64) error {
+// ValidateMinGasPriceScheduleAtHeight validates a schedule and requires its
+// effective height to remain in the future relative to currentHeight.
+func (k Keeper) ValidateMinGasPriceScheduleAtHeight(schedule *types.MinGasPriceSchedule, currentHeight int64) error {
 	if err := k.ValidateMinGasPriceSchedule(schedule); err != nil {
 		return err
 	}
