@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"math/big"
 	"slices"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -1505,7 +1506,11 @@ func TestApplicationStateMachine(t *testing.T) {
 
 	t.Run("missed minimum gas price schedule is discarded by the application end blocker", func(t *testing.T) {
 		committedHeight := application.LastBlockHeight()
-		require.Equal(t, int64(3), committedHeight)
+		effectiveHeight := committedHeight + 1
+		nextHeight := effectiveHeight + 1
+		committedHeightText := strconv.FormatInt(committedHeight, 10)
+		effectiveHeightText := strconv.FormatInt(effectiveHeight, 10)
+		nextHeightText := strconv.FormatInt(nextHeight, 10)
 
 		beforeCtx := committedContext(t, application)
 		beforeParams := application.FeeMarketKeeper.GetParams(beforeCtx)
@@ -1532,7 +1537,7 @@ func TestApplicationStateMachine(t *testing.T) {
 		))
 		seededSchedule, err := application.ConstitutionKeeper.GetMinGasPriceSchedule(seedCtx)
 		require.NoError(t, err)
-		require.Equal(t, int64(4), seededSchedule.GetEffectiveHeight())
+		require.Equal(t, effectiveHeight, seededSchedule.GetEffectiveHeight())
 		require.False(t, beforeParams.MinGasPrice.Equal(
 			sdkmath.LegacyMustNewDecFromStr(seededSchedule.GetScheduledMinGasPrice()),
 		))
@@ -1545,8 +1550,8 @@ func TestApplicationStateMachine(t *testing.T) {
 		missedResult := finalizeAndCommit(
 			t,
 			application,
-			4,
-			blockTime.Add(4*time.Second),
+			effectiveHeight,
+			blockTime.Add(time.Duration(effectiveHeight)*time.Second),
 			proposerAddress,
 			nil,
 		)
@@ -1558,16 +1563,16 @@ func TestApplicationStateMachine(t *testing.T) {
 		)
 		require.Len(t, missedEvents, 1)
 		require.True(t, abciEventHasAttribute(
-			missedEvents[0], constitutiontypes.AttributeKeyHeight, "4",
+			missedEvents[0], constitutiontypes.AttributeKeyHeight, effectiveHeightText,
 		))
 		require.True(t, abciEventHasAttribute(
-			missedEvents[0], constitutiontypes.AttributeKeyObservedHeight, "4",
+			missedEvents[0], constitutiontypes.AttributeKeyObservedHeight, effectiveHeightText,
 		))
 		require.True(t, abciEventHasAttribute(
-			missedEvents[0], constitutiontypes.AttributeKeyNextHeight, "5",
+			missedEvents[0], constitutiontypes.AttributeKeyNextHeight, nextHeightText,
 		))
 		require.True(t, abciEventHasAttribute(
-			missedEvents[0], constitutiontypes.AttributeKeyEffectiveHeight, "4",
+			missedEvents[0], constitutiontypes.AttributeKeyEffectiveHeight, effectiveHeightText,
 		))
 		require.True(t, abciEventHasAttribute(
 			missedEvents[0],
@@ -1585,7 +1590,7 @@ func TestApplicationStateMachine(t *testing.T) {
 			seededSchedule.GetScheduledMinGasPrice(),
 		))
 		require.True(t, abciEventHasAttribute(
-			missedEvents[0], constitutiontypes.AttributeKeySourceOracleHeight, "3",
+			missedEvents[0], constitutiontypes.AttributeKeySourceOracleHeight, committedHeightText,
 		))
 		require.True(t, abciEventHasAttribute(
 			missedEvents[0], constitutiontypes.AttributeKeyPendingDelayBlocks, "1",
@@ -1595,9 +1600,9 @@ func TestApplicationStateMachine(t *testing.T) {
 		require.Contains(t, warningLog, `"level":"warn"`)
 		require.Contains(t, warningLog, "discarding missed minimum gas price schedule")
 		require.Contains(t, warningLog, `"reason":"missed_effective_height"`)
-		require.Contains(t, warningLog, `"observed_height":4`)
-		require.Contains(t, warningLog, `"effective_height":4`)
-		require.Contains(t, warningLog, `"next_height":5`)
+		require.Contains(t, warningLog, `"observed_height":`+effectiveHeightText)
+		require.Contains(t, warningLog, `"effective_height":`+effectiveHeightText)
+		require.Contains(t, warningLog, `"next_height":`+nextHeightText)
 		require.Contains(t, warningLog, `"scheduled_min_gas_price":"`+seededSchedule.GetScheduledMinGasPrice()+`"`)
 
 		afterMissedCtx := committedContext(t, application)
@@ -1616,8 +1621,8 @@ func TestApplicationStateMachine(t *testing.T) {
 		repeatedResult := finalizeAndCommit(
 			t,
 			application,
-			5,
-			blockTime.Add(5*time.Second),
+			nextHeight,
+			blockTime.Add(time.Duration(nextHeight)*time.Second),
 			proposerAddress,
 			nil,
 		)
@@ -1638,7 +1643,7 @@ func TestApplicationStateMachine(t *testing.T) {
 			feemarkettypes.StoreKey,
 			feemarkettypes.ParamsKey,
 		), "the cleared schedule must not trigger a later FeeMarket parameter write")
-		require.Equal(t, int64(5), application.LastBlockHeight())
+		require.Equal(t, nextHeight, application.LastBlockHeight())
 	})
 
 }
