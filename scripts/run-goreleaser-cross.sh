@@ -5,10 +5,10 @@ set -euo pipefail
 readonly default_image='ghcr.io/goreleaser/goreleaser-cross:v1.26.5-v2.17.1@sha256:0cf2b7f757b40397d2bef5423adb88d0ac63899e88a9f0c4bbb370d3fb7b2fb5'
 readonly image="${GORELEASER_CROSS_IMAGE:-$default_image}"
 readonly repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-readonly module_go_version="$(awk '$1 == "go" { print $2; exit }' "$repository_root/go.mod")"
 readonly container_workdir='/workspace'
+readonly module_go_version="$(awk '$1 == "go" { print $2; exit }' "$repository_root/go.mod")"
+readonly oracle_go_version="$(awk '$1 == "go" { print $2; exit }' "$repository_root/oracle/go.mod")"
 readonly host_temp_root="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
-readonly cache_root="${GORELEASER_CROSS_CACHE_DIR:-${host_temp_root%/}/goreleaser-cross}"
 readonly container_cache_root='/goreleaser-cache'
 
 if [[ ! "$module_go_version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
@@ -16,7 +16,19 @@ if [[ ! "$module_go_version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
   exit 2
 fi
 
-readonly build_go_toolchain="go${module_go_version}"
+if [[ ! "$oracle_go_version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+  echo >&2 "unable to determine Go toolchain version from $repository_root/oracle/go.mod"
+  exit 2
+fi
+
+if [[ "$module_go_version" != "$oracle_go_version" ]]; then
+  echo "Go version mismatch: go.mod=$module_go_version oracle/go.mod=$oracle_go_version" >&2
+  exit 2
+fi
+
+readonly release_toolchain="go${module_go_version}"
+readonly default_cache_root="${host_temp_root%/}/goreleaser-cross/$release_toolchain"
+readonly cache_root="${GORELEASER_CROSS_CACHE_DIR:-$default_cache_root}"
 
 usage() {
   echo "usage: $0 {check|snapshot|release}" >&2
@@ -54,7 +66,7 @@ docker_args=(
   --env "GOMODCACHE=$container_cache_root/go-mod"
   --env "GOTMPDIR=$container_cache_root/go-tmp"
   --env "TMPDIR=$container_cache_root/tmp"
-  --env "GOTOOLCHAIN=$build_go_toolchain"
+  --env "GOTOOLCHAIN=$release_toolchain"
   --env "TMVERSION=$tm_version"
   --volume "$repository_root:$container_workdir"
   --volume "$cache_root:$container_cache_root"
@@ -69,5 +81,6 @@ fi
 docker "${docker_args[@]}" "$image" -euc '
   mkdir -p "$HOME" "$GOCACHE" "$GOMODCACHE" "$GOTMPDIR" "$TMPDIR"
   git config --global --add safe.directory "$PWD"
+  go version
   exec goreleaser "$@"
 ' -- "${goreleaser_args[@]}"

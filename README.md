@@ -154,7 +154,7 @@ query-gas limits for the node role.
 
 ## Build
 
-The module declares Go `1.23.8`.
+The root and Oracle modules declare Go `1.26.7`.
 
 ```bash
 make build
