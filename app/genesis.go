@@ -131,7 +131,7 @@ func (app *App) unmarshalGenesis(
 }
 
 // ValidateGenesis delegates structural validation to the wired modules and
-// then enforces Guru's cross-module self-bond and FeeMarket policies.
+// then enforces Guru's consensus-critical cross-module policies.
 func (app *App) ValidateGenesis(genesis GenesisState) error {
 	if err := app.BasicModuleManager.ValidateGenesis(
 		app.AppCodec(),
@@ -144,6 +144,9 @@ func (app *App) ValidateGenesis(genesis GenesisState) error {
 		return err
 	}
 	if err := app.validateFeeMarketGenesisPolicy(genesis); err != nil {
+		return err
+	}
+	if err := app.validateEVMGenesisDenomPolicy(genesis); err != nil {
 		return err
 	}
 	return nil
@@ -303,6 +306,36 @@ func (app *App) validateFeeMarketGenesisPolicy(genesis GenesisState) error {
 	}
 	if !params.MinGasPrice.IsPositive() {
 		return fmt.Errorf("feemarket min_gas_price must be positive, got %s", params.MinGasPrice.String())
+	}
+
+	return nil
+}
+
+func (app *App) validateEVMGenesisDenomPolicy(genesis GenesisState) error {
+	evmGenesis := evmtypes.DefaultGenesisState()
+	if raw, ok := genesis[evmtypes.ModuleName]; ok {
+		if err := app.AppCodec().UnmarshalJSON(raw, evmGenesis); err != nil {
+			return fmt.Errorf("decode evm genesis: %w", err)
+		}
+	}
+
+	if evmGenesis.Params.EvmDenom != config.BaseDenom {
+		return fmt.Errorf(
+			"evm evm_denom must be immutable config base denom %q, got %q",
+			config.BaseDenom,
+			evmGenesis.Params.EvmDenom,
+		)
+	}
+	extendedDenomOptions := evmGenesis.Params.ExtendedDenomOptions
+	if extendedDenomOptions == nil {
+		return fmt.Errorf("evm extended_denom_options cannot be nil")
+	}
+	if extendedDenomOptions.ExtendedDenom != config.BaseDenom {
+		return fmt.Errorf(
+			"evm extended_denom must be immutable config base denom %q, got %q",
+			config.BaseDenom,
+			extendedDenomOptions.ExtendedDenom,
+		)
 	}
 
 	return nil

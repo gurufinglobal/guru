@@ -7,6 +7,7 @@ import (
 	evmante "github.com/cosmos/evm/ante"
 	cosmosante "github.com/cosmos/evm/ante/cosmos"
 	evmanteevm "github.com/cosmos/evm/ante/evm"
+	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
 	antetypes "github.com/cosmos/evm/ante/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -23,15 +24,59 @@ var (
 	dynamicFeeExtensionURL   = sdk.MsgTypeURL(&antetypes.ExtensionOptionDynamicFeeTx{})
 )
 
+// ProspectiveFeeMarketKeeper extends the upstream ante keeper contract with
+// the deterministic EIP-1559 calculation used by the fee market BeginBlocker.
+type ProspectiveFeeMarketKeeper interface {
+	anteinterfaces.FeeMarketKeeper
+	CalculateBaseFee(ctx sdk.Context) sdkmath.LegacyDec
+}
+
+// prospectiveFeeMarketParamsAdapter makes proposal-time ante verification use
+// the same target-height BaseFee that FinalizeBlock will install in BeginBlock.
+// CheckTx, ReCheckTx, Simulate, and FinalizeBlock retain the keeper's stored
+// parameters exactly.
+type prospectiveFeeMarketParamsAdapter struct {
+	ProspectiveFeeMarketKeeper
+}
+
+// NewProspectiveFeeMarketParamsAdapter adapts the application fee market
+// keeper without changing the upstream HandlerOptions contract.
+func NewProspectiveFeeMarketParamsAdapter(
+	keeper ProspectiveFeeMarketKeeper,
+) anteinterfaces.FeeMarketKeeper {
+	return prospectiveFeeMarketParamsAdapter{ProspectiveFeeMarketKeeper: keeper}
+}
+
+func (a prospectiveFeeMarketParamsAdapter) GetParams(ctx sdk.Context) feemarkettypes.Params {
+	params := a.ProspectiveFeeMarketKeeper.GetParams(ctx)
+	switch ctx.ExecMode() {
+	case sdk.ExecModePrepareProposal, sdk.ExecModeProcessProposal:
+		prospectiveBaseFee := a.ProspectiveFeeMarketKeeper.CalculateBaseFee(ctx)
+		// FeeMarket BeginBlock only stores a newly calculated BaseFee when the
+		// calculation is non-nil. Mirror that lifecycle boundary so proposal ante
+		// never replaces the stored value with an uninitialized decimal.
+		if !prospectiveBaseFee.IsNil() {
+			params.BaseFee = prospectiveBaseFee
+		}
+	}
+	return params
+}
+
 // NewAnteHandler preserves the upstream Cosmos EVM v0.6.2 Ethereum path and
 // routes Cosmos transactions through the application-local fee policy and
 // standard MsgSend gas extension.
 func NewAnteHandler(options evmante.HandlerOptions) sdk.AnteHandler {
 	upstreamHandler := evmante.NewAnteHandler(options)
+	classifier := NewStandardMsgSendClassifier(options.AccountKeeper)
 
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-		if tx == nil {
-			return upstreamHandler(ctx, tx, simulate)
+		classification, fixed, err := classifier.classify(ctx, tx, simulate)
+		if err != nil {
+			return ctx, err
+		}
+		if fixed {
+			fixedCtx := ctx.WithValue(standardMsgSendContextKey{}, &classification)
+			return newCosmosAnteHandler(fixedCtx, options)(fixedCtx, tx, simulate)
 		}
 
 		if extensionTx, ok := tx.(authante.HasExtensionOptionsTx); ok {
@@ -60,9 +105,13 @@ func newCosmosAnteHandler(ctx sdk.Context, options evmante.HandlerOptions) sdk.A
 	var txFeeChecker authante.TxFeeChecker
 	if options.DynamicFeeChecker {
 		txFeeChecker = newCosmosDynamicFeeChecker(&feemarketParams)
-	} else {
-		txFeeChecker = newStandardMsgSendValidatorFeeChecker()
 	}
+	spendableBankKeeper, _ := options.BankKeeper.(standardMsgSendSpendableBankKeeper)
+	ordinaryGasWanted := evmanteevm.NewGasWantedDecorator(
+		options.EvmKeeper,
+		options.FeeMarketKeeper,
+		&feemarketParams,
+	)
 
 	return sdk.ChainAnteDecorators(
 		cosmosante.NewRejectMessagesDecorator(),
@@ -70,19 +119,18 @@ func newCosmosAnteHandler(ctx sdk.Context, options evmante.HandlerOptions) sdk.A
 			sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),
 			sdk.MsgTypeURL(&sdkvesting.MsgCreateVestingAccount{}),
 		),
-		authante.NewSetUpContextDecorator(),
-		NewStandardMsgSendGasDecorator(
-			options.AccountKeeper,
-			feemarketParams.MinGasMultiplier,
-			options.MaxTxGasWanted,
-		),
+		NewStandardMsgSendGasDecorator(options.AccountKeeper),
 		authante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
 		authante.NewTxTimeoutHeightDecorator(),
 		authante.NewValidateMemoDecorator(options.AccountKeeper),
-		newStandardMsgSendMinGasPriceDecorator(&feemarketParams),
+		newStandardMsgSendFeePlanDecorator(
+			&feemarketParams,
+			options.AccountKeeper,
+			spendableBankKeeper,
+		),
 		authante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		authante.NewDeductFeeDecorator(
+		newStandardMsgSendDeductFeeDecorator(
 			options.AccountKeeper,
 			options.BankKeeper,
 			options.FeegrantKeeper,
@@ -94,8 +142,8 @@ func newCosmosAnteHandler(ctx sdk.Context, options evmante.HandlerOptions) sdk.A
 		authante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		authante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
-		evmanteevm.NewGasWantedDecorator(
-			options.EvmKeeper,
+		newStandardMsgSendGasWantedDecorator(
+			ordinaryGasWanted,
 			options.FeeMarketKeeper,
 			&feemarketParams,
 		),
@@ -105,18 +153,14 @@ func newCosmosAnteHandler(ctx sdk.Context, options evmante.HandlerOptions) sdk.A
 // newCosmosDynamicFeeChecker owns the application-wide Cosmos dynamic-fee
 // policy. Ordinary transactions preserve the upstream Cosmos EVM v0.6.2 fee,
 // priority, fallback, and error ordering, then enforce the global floor against
-// the exact dynamic effective price. Eligible MsgSend transactions delegate to
-// the separate FixedSendGas fee and settlement policy.
+// the exact dynamic effective price. FixedSendGas transactions use their
+// context fee plan instead of this checker.
 func newCosmosDynamicFeeChecker(
 	feemarketParams *feemarkettypes.Params,
 ) authante.TxFeeChecker {
 	upstream := evmanteevm.NewDynamicFeeChecker(feemarketParams)
 
 	return func(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, int64, error) {
-		if isStandardMsgSendGasContext(ctx) {
-			return checkStandardMsgSendDynamicFee(ctx, tx, feemarketParams, upstream)
-		}
-
 		feeTx, ok := tx.(sdk.FeeTx)
 		if !ok {
 			return upstream(ctx, tx)

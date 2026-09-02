@@ -11,12 +11,13 @@ import (
 )
 
 func (app *App) configureAnteHandler(maxTxGasWanted uint64) error {
+	feeMarketKeeper := appante.NewProspectiveFeeMarketParamsAdapter(app.FeeMarketKeeper)
 	options := evmante.HandlerOptions{
 		Cdc:                    app.AppCodec(),
 		AccountKeeper:          app.AccountKeeper,
 		BankKeeper:             app.BankKeeper,
 		IBCKeeper:              app.IBCKeeper,
-		FeeMarketKeeper:        app.FeeMarketKeeper,
+		FeeMarketKeeper:        feeMarketKeeper,
 		EvmKeeper:              app.EVMKeeper,
 		FeegrantKeeper:         app.FeeGrantKeeper,
 		ExtensionOptionChecker: anteevmtypes.HasDynamicFeeExtensionOption,

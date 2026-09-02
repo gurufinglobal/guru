@@ -4,22 +4,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	oracleabci "github.com/gurufinglobal/guru/v2/x/oracle/abci"
 	"github.com/spf13/cast"
 )
 
 func (app *App) configureOracleConsensus(appOptions AppOptions) error {
-	proposalHandler := baseapp.NewDefaultProposalHandler(
-		sdkmempool.NoOpMempool{},
-		app.BaseApp,
-	)
+	proposalHandler := newStandardMsgSendProposalHandler(app)
 	aggregator := oracleabci.NewAggregator(app.OracleKeeper, app.StakingKeeper)
 	oracleProposalHandler := oracleabci.NewProposalHandler(
 		aggregator,
-		proposalHandler.PrepareProposalHandler(),
-		proposalHandler.ProcessProposalHandler(),
+		proposalHandler.PrepareProposal,
+		proposalHandler.ProcessProposal,
 	)
 	app.SetPrepareProposal(oracleProposalHandler.PrepareProposal)
 	app.SetProcessProposal(oracleProposalHandler.ProcessProposal)
