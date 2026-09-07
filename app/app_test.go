@@ -20,6 +20,7 @@ import (
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
@@ -36,6 +37,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	antetypes "github.com/cosmos/evm/ante/types"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
@@ -138,8 +140,9 @@ func TestApplicationStateMachine(t *testing.T) {
 	cosmosSender := sdk.AccAddress(cosmosPrivateKey.PubKey().Address())
 	ethereumRecipient := common.HexToAddress("0x000000000000000000000000000000000000bEEF")
 	cosmosRecipient := common.HexToAddress("0x000000000000000000000000000000000000CAfE")
-	validatorSet, err := simtestutil.CreateRandomValidatorSet()
-	require.NoError(t, err)
+	validatorSet := cmttypes.NewValidatorSet([]*cmttypes.Validator{
+		cmttypes.NewValidator(exportRuntimeValidatorKey().PubKey(), 1),
+	})
 	proposerAddress := validatorSet.GetProposer().Address
 
 	genesis := application.DefaultGenesis()
@@ -359,6 +362,17 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.Empty(t, erc20Genesis.NativePrecompiles)
 	require.Empty(t, erc20Genesis.DynamicPrecompiles)
 
+	// GenesisStateWithValSet supplies an already-bonded synthetic validator,
+	// so the bonding hook does not create its signing info. Include the state
+	// a real gentx-created validator has before testing CometBFT restarts.
+	slashingGenesis := new(slashingtypes.GenesisState)
+	application.AppCodec().MustUnmarshalJSON(genesis[slashingtypes.ModuleName], slashingGenesis)
+	consensusAddress := sdk.ConsAddress(proposerAddress)
+	slashingGenesis.SigningInfos = []slashingtypes.SigningInfo{{
+		Address:              consensusAddress.String(),
+		ValidatorSigningInfo: slashingtypes.NewValidatorSigningInfo(consensusAddress, 0, 0, time.Unix(0, 0), false, 0),
+	}}
+	genesis[slashingtypes.ModuleName] = application.AppCodec().MustMarshalJSON(slashingGenesis)
 	genesisBytes, err := json.Marshal(genesis)
 	require.NoError(t, err)
 	blockTime := time.Unix(1_700_000_000, 0).UTC()
@@ -1497,12 +1511,7 @@ func TestApplicationStateMachine(t *testing.T) {
 	)
 	require.Equal(t, int64(4), application.LastBlockHeight())
 
-	exported, err := application.ExportAppStateAndValidators(false, nil, nil)
-	require.NoError(t, err)
-	require.Equal(t, int64(5), exported.Height)
-	var exportedGenesis GenesisState
-	require.NoError(t, json.Unmarshal(exported.AppState, &exportedGenesis))
-	require.NoError(t, application.ValidateGenesis(exportedGenesis))
+	testApplicationExport(t, application, blockTime, committedConsensusParams, &applicationLog, cosmosSender)
 
 	t.Run("missed minimum gas price schedule is discarded by the application end blocker", func(t *testing.T) {
 		committedHeight := application.LastBlockHeight()

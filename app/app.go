@@ -195,6 +195,13 @@ func (app *App) InitChainer(
 	if err := app.ValidateGenesisAtHeight(genesis, initialHeight); err != nil {
 		return nil, err
 	}
+	if err := app.ValidateGenesisConsensusAtHeight(
+		genesis,
+		initialHeight,
+		req.ConsensusParams,
+	); err != nil {
+		return nil, fmt.Errorf("validate consensus-dependent genesis state: %w", err)
+	}
 	if err := app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap()); err != nil {
 		return nil, fmt.Errorf("set module version map: %w", err)
 	}
