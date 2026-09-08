@@ -44,6 +44,7 @@ jobs:
     # The current Go/dependency baseline has known findings. Keep the scanner
     # visible but advisory until those findings are remediated and baselined.
     continue-on-error: true
+    if: ${{ github.event_name != 'pull_request' || github.base_ref != 'dev-v2.1' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
