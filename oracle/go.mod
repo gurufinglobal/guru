@@ -107,6 +107,6 @@ require (
 )
 
 replace (
-	github.com/cosmos/evm => github.com/gurufinglobal/evm v0.6.2-guru.1
+	github.com/cosmos/evm => github.com/gurufinglobal/evm v0.6.3-guru.1
 	github.com/gurufinglobal/guru/v2 => ..
 )
