@@ -76,6 +76,10 @@ func appExport(
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
+	if err := app.ValidateExportRequest(forZeroHeight, jailAllowedAddrs, modulesToExport); err != nil {
+		return servertypes.ExportedApp{}, err
+	}
+
 	cfg, err := resolveRuntimeConfig(appOpts)
 	if err != nil {
 		return servertypes.ExportedApp{}, err
@@ -99,11 +103,7 @@ func appExport(
 			return servertypes.ExportedApp{}, fmt.Errorf("load export height %d: %w", height, err)
 		}
 	}
-	return application.ExportAppStateAndValidators(
-		forZeroHeight,
-		jailAllowedAddrs,
-		modulesToExport,
-	)
+	return application.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
 }
 
 func newAppOptions(

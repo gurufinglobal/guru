@@ -110,6 +110,16 @@ func TestReadGenesisStateAcceptsCanonicalProtoJSON(t *testing.T) {
 	require.Equal(t, int64(80), genesis.GetLatestValues()[0].GetBlockTimeUnix())
 }
 
+func TestValidateGenesisAllowsUnscheduledTaskConfiguration(t *testing.T) {
+	state := &oracletypes.GenesisState{
+		Params: oraclekeeper.DefaultParams(),
+		Tasks:  []*oracletypes.OracleTask{genesisTask("BTC/USD", true, 5)},
+	}
+	require.NoError(t, (AppModule{}).validateGenesisState(state))
+	state.Tasks[0].SubmissionInterval = 0
+	require.Error(t, (AppModule{}).validateGenesisState(state))
+}
+
 func TestValidateGenesisRejectsInvalidTaskSchedule(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -148,13 +158,6 @@ func TestValidateGenesisRejectsInvalidTaskSchedule(t *testing.T) {
 				Params:       oraclekeeper.DefaultParams(),
 				Tasks:        []*oracletypes.OracleTask{genesisTask("BTC/USD", false, 5)},
 				TaskSchedule: []*oracletypes.OracleTaskScheduleEntry{{Symbol: "BTC/USD", Height: 8}},
-			},
-		},
-		{
-			name: "enabled task missing schedule",
-			genesis: &oracletypes.GenesisState{
-				Params: oraclekeeper.DefaultParams(),
-				Tasks:  []*oracletypes.OracleTask{genesisTask("BTC/USD", true, 5)},
 			},
 		},
 		{

@@ -4,15 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 	"slices"
+	"sort"
 
 	sdkmath "cosmossdk.io/math"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -22,6 +26,8 @@ import (
 
 	"github.com/gurufinglobal/guru/v2/config"
 	constitutiontypes "github.com/gurufinglobal/guru/v2/x/constitution/types"
+	oraclekeeper "github.com/gurufinglobal/guru/v2/x/oracle/keeper"
+	oracletypes "github.com/gurufinglobal/guru/v2/x/oracle/types"
 )
 
 // GenesisState contains the module genesis documents consumed by InitChain.
@@ -156,6 +162,9 @@ func (app *App) ValidateGenesis(genesis GenesisState) error {
 // state-transition constraints that depend on its initial block height.
 func (app *App) ValidateGenesisAtHeight(genesis GenesisState, initialHeight int64) error {
 	if err := app.ValidateGenesis(genesis); err != nil {
+		return err
+	}
+	if err := app.validateZeroHeightRestartState(genesis, initialHeight); err != nil {
 		return err
 	}
 
@@ -404,4 +413,216 @@ func mustInt(value string) sdkmath.Int {
 		panic(fmt.Errorf("invalid integer constant %q", value))
 	}
 	return result
+}
+
+func (app *App) ValidateGenesisConsensusAtHeight(
+	genesis GenesisState,
+	initialHeight int64,
+	consensusParams *cmtproto.ConsensusParams,
+) error {
+	// Module validation permits an empty schedule as an export/configuration
+	// artifact. An active chain must never start with unscheduled enabled tasks,
+	// including ordinary and height-preserving genesis imports.
+	if consensusParams != nil && consensusParams.Abci != nil && consensusParams.Abci.VoteExtensionsEnableHeight > 0 {
+		state := new(oracletypes.GenesisState)
+		if err := app.AppCodec().UnmarshalJSON(genesis[oracletypes.ModuleName], state); err != nil {
+			return fmt.Errorf("decode oracle genesis: %w", err)
+		}
+		if len(state.TaskSchedule) == 0 {
+			for _, task := range state.Tasks {
+				if task.GetEnabled() {
+					return fmt.Errorf("initial Oracle schedule has 0 entries for enabled task %q; configure target Oracle before startup", task.GetSymbol())
+				}
+			}
+		}
+	}
+	if initialHeight != zeroHeightEffectiveInitialHeight {
+		return nil
+	}
+	stakingRaw, ok := genesis[stakingtypes.ModuleName]
+	if !ok {
+		return fmt.Errorf("staking genesis is missing")
+	}
+	stakingState := new(stakingtypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(stakingRaw, stakingState); err != nil {
+		return fmt.Errorf("decode staking genesis: %w", err)
+	}
+	if !stakingState.Exported {
+		return nil
+	}
+	if consensusParams == nil {
+		return fmt.Errorf("consensus params are required to validate the initial Oracle schedule")
+	}
+	if consensusParams.Abci == nil {
+		return fmt.Errorf("ABCI consensus params are required to validate the initial Oracle schedule")
+	}
+	voteExtensionsEnableHeight := consensusParams.Abci.VoteExtensionsEnableHeight
+	raw, ok := genesis[oracletypes.ModuleName]
+	if !ok {
+		return fmt.Errorf("oracle genesis is missing")
+	}
+	state := new(oracletypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(raw, state); err != nil {
+		return fmt.Errorf("decode oracle genesis: %w", err)
+	}
+	if voteExtensionsEnableHeight == 0 {
+		if len(state.TaskSchedule) != 0 {
+			return fmt.Errorf("disabled target Oracle must have an empty initial schedule")
+		}
+		return nil
+	}
+	expected, err := buildInitialOracleSchedule(state.Tasks, voteExtensionsEnableHeight)
+	if err != nil {
+		return err
+	}
+	if len(state.TaskSchedule) != len(expected) {
+		return fmt.Errorf(
+			"initial Oracle schedule has %d entries; expected %d from vote_extensions_enable_height %d",
+			len(state.TaskSchedule),
+			len(expected),
+			voteExtensionsEnableHeight,
+		)
+	}
+	for i := range expected {
+		actual := state.TaskSchedule[i]
+		if actual == nil {
+			return fmt.Errorf("initial Oracle schedule contains a nil entry at index %d", i)
+		}
+		if actual.Symbol != expected[i].Symbol || actual.Height != expected[i].Height {
+			return fmt.Errorf(
+				"initial Oracle schedule entry %d is %s@%d; expected %s@%d from vote_extensions_enable_height %d",
+				i,
+				actual.Symbol,
+				actual.Height,
+				expected[i].Symbol,
+				expected[i].Height,
+				voteExtensionsEnableHeight,
+			)
+		}
+	}
+	return nil
+}
+
+// validateZeroHeightRestartState rejects an edited or hand-built exported
+// genesis before InitGenesis can reintroduce source-height lifecycle state.
+// Consensus-owned Oracle scheduling is checked separately with the CometBFT
+// consensus parameters in ValidateGenesisConsensusAtHeight.
+func (app *App) validateZeroHeightRestartState(
+	genesis GenesisState,
+	initialHeight int64,
+) error {
+	if initialHeight != zeroHeightEffectiveInitialHeight {
+		return nil
+	}
+
+	stakingState := new(stakingtypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(genesis[stakingtypes.ModuleName], stakingState); err != nil {
+		return fmt.Errorf("decode staking genesis for zero-height restart: %w", err)
+	}
+	if !stakingState.Exported {
+		return nil
+	}
+	if err := validateZeroHeightStakingTarget(stakingState); err != nil {
+		return fmt.Errorf("validate zero-height restart staking state: %w", err)
+	}
+	distributionState := new(distrtypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(
+		genesis[distrtypes.ModuleName],
+		distributionState,
+	); err != nil {
+		return fmt.Errorf("decode distribution genesis for zero-height restart: %w", err)
+	}
+	if err := validateZeroHeightDistributionTarget(distributionState, stakingState); err != nil {
+		return fmt.Errorf("validate zero-height restart distribution state: %w", err)
+	}
+
+	oracleState := new(oracletypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(genesis[oracletypes.ModuleName], oracleState); err != nil {
+		return fmt.Errorf("decode oracle genesis for zero-height restart: %w", err)
+	}
+	if err := validateZeroHeightOracleTarget(oracleState); err != nil {
+		return fmt.Errorf("validate zero-height restart Oracle state: %w", err)
+	}
+
+	constitutionState := new(constitutiontypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(
+		genesis[constitutiontypes.ModuleName],
+		constitutionState,
+	); err != nil {
+		return fmt.Errorf("decode constitution genesis for zero-height restart: %w", err)
+	}
+	if err := validateZeroHeightConstitutionTarget(constitutionState); err != nil {
+		return fmt.Errorf("validate zero-height restart Constitution state: %w", err)
+	}
+	if err := app.validateEVMHistoryContract(genesis, true); err != nil {
+		return fmt.Errorf("validate zero-height restart EIP-2935 state: %w", err)
+	}
+
+	slashingState := new(slashingtypes.GenesisState)
+	if err := app.AppCodec().UnmarshalJSON(genesis[slashingtypes.ModuleName], slashingState); err != nil {
+		return fmt.Errorf("decode slashing genesis for zero-height restart: %w", err)
+	}
+	if err := app.validateZeroHeightSlashingTarget(slashingState, stakingState); err != nil {
+		return fmt.Errorf("validate zero-height restart slashing state: %w", err)
+	}
+	if err := app.validateExportInvariants(genesis); err != nil {
+		return fmt.Errorf("validate zero-height restart export invariants: %w", err)
+	}
+
+	return nil
+}
+
+// buildInitialOracleSchedule defines the target launch schedule, never the export transform.
+func buildInitialOracleSchedule(
+	tasks []*oracletypes.OracleTask,
+	voteExtensionsEnableHeight int64,
+) ([]*oracletypes.OracleTaskScheduleEntry, error) {
+	if voteExtensionsEnableHeight < 0 {
+		return nil, fmt.Errorf(
+			"vote extensions enable height cannot be negative: %d",
+			voteExtensionsEnableHeight,
+		)
+	}
+	baseHeight := zeroHeightEffectiveInitialHeight
+	if voteExtensionsEnableHeight > baseHeight {
+		baseHeight = voteExtensionsEnableHeight
+	}
+	schedule := make([]*oracletypes.OracleTaskScheduleEntry, 0, 2*len(tasks))
+	for _, task := range tasks {
+		if task == nil {
+			return nil, fmt.Errorf("oracle genesis contains a nil task")
+		}
+		if !task.Enabled {
+			continue
+		}
+		interval := int64(task.GetSubmissionInterval())
+		if interval == 0 {
+			return nil, fmt.Errorf(
+				"enabled oracle task %q has zero submission_interval",
+				task.Symbol,
+			)
+		}
+		if baseHeight > math.MaxInt64-(2*interval) {
+			return nil, fmt.Errorf("oracle task %q target schedule overflows int64", task.Symbol)
+		}
+		symbol := oraclekeeper.NormalizeSymbol(task.Symbol)
+		schedule = append(
+			schedule,
+			&oracletypes.OracleTaskScheduleEntry{
+				Symbol: symbol,
+				Height: baseHeight + interval,
+			},
+			&oracletypes.OracleTaskScheduleEntry{
+				Symbol: symbol,
+				Height: baseHeight + 2*interval,
+			},
+		)
+	}
+	sort.Slice(schedule, func(i, j int) bool {
+		if schedule[i].Symbol == schedule[j].Symbol {
+			return schedule[i].Height < schedule[j].Height
+		}
+		return schedule[i].Symbol < schedule[j].Symbol
+	})
+	return schedule, nil
 }

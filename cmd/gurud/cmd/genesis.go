@@ -242,6 +242,14 @@ func newValidateGenesisCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("validate Guru application genesis: %w", err)
 			}
+			consensusParams := genesis.Consensus.Params.ToProto()
+			if err := application.ValidateGenesisConsensusAtHeight(
+				appState,
+				genesis.InitialHeight,
+				&consensusParams,
+			); err != nil {
+				return fmt.Errorf("validate consensus-dependent Guru genesis: %w", err)
+			}
 			_, err = fmt.Fprintf(command.OutOrStdout(), "File at %s is a valid Guru genesis file\n", genesisPath)
 			return err
 		},

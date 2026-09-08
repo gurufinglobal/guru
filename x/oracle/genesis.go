@@ -154,12 +154,15 @@ func (am AppModule) validateGenesisState(data *oracletypes.GenesisState) error {
 		}
 		scheduledTaskCounts[symbol]++
 	}
+	// An empty schedule is a valid export/configuration state with preserved
+	// tasks. The App validates consensus activation before allowing startup.
+	// A nonempty schedule must still include the full window for every enabled task.
 	for _, task := range data.GetTasks() {
 		if !task.GetEnabled() {
 			continue
 		}
 		symbol := oraclekeeper.NormalizeSymbol(task.GetSymbol())
-		if scheduledTaskCounts[symbol] < 2 {
+		if len(data.GetTaskSchedule()) != 0 && scheduledTaskCounts[symbol] < 2 {
 			return oracletypes.ErrInvalidTask.Wrapf("enabled task %q must have at least two schedule entries", symbol)
 		}
 	}
