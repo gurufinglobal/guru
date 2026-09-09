@@ -29,6 +29,7 @@ fi
 readonly release_toolchain="go${module_go_version}"
 readonly default_cache_root="${host_temp_root%/}/goreleaser-cross/$release_toolchain"
 readonly cache_root="${GORELEASER_CROSS_CACHE_DIR:-$default_cache_root}"
+readonly release_mode="${1:-}"
 
 usage() {
   echo "usage: $0 {check|snapshot|release}" >&2
@@ -68,6 +69,7 @@ docker_args=(
   --env "TMPDIR=$container_cache_root/tmp"
   --env "GOTOOLCHAIN=$release_toolchain"
   --env "TMVERSION=$tm_version"
+  --env "GORELEASER_CROSS_MODE=$release_mode"
   --volume "$repository_root:$container_workdir"
   --volume "$cache_root:$container_cache_root"
   --workdir "$container_workdir"
@@ -81,6 +83,39 @@ fi
 docker "${docker_args[@]}" "$image" -euc '
   mkdir -p "$HOME" "$GOCACHE" "$GOMODCACHE" "$GOTMPDIR" "$TMPDIR"
   git config --global --add safe.directory "$PWD"
+
+  toolchain_os="$(GOTOOLCHAIN=local go env GOHOSTOS)"
+  toolchain_arch="$(GOTOOLCHAIN=local go env GOHOSTARCH)"
+  toolchain_cache="$GOMODCACHE/golang.org/toolchain@v0.0.1-${GOTOOLCHAIN}.${toolchain_os}-${toolchain_arch}"
+
+  case "$toolchain_cache" in
+    "$GOMODCACHE"/golang.org/toolchain@v0.0.1-go*.*-*) ;;
+    *)
+      echo >&2 "refusing to repair unexpected Go toolchain cache path: $toolchain_cache"
+      exit 2
+      ;;
+  esac
+
+  if [[ -d "$toolchain_cache" && ! -x "$toolchain_cache/bin/go" ]]; then
+    echo >&2 "removing incomplete Go toolchain cache: $toolchain_cache"
+    chmod -R u+w -- "$toolchain_cache"
+    rm -rf -- "$toolchain_cache"
+  fi
+
   go version
+
+  if [[ "$GORELEASER_CROSS_MODE" != "check" ]]; then
+    # Cross-target cache entries are not useful enough to justify carrying a
+    # partially written build cache into a release build.
+    GOTOOLCHAIN=local go clean -cache
+
+    if ! go mod verify >/dev/null 2>&1 ||
+      ! (cd oracle && GOWORK=off go mod verify >/dev/null 2>&1); then
+      echo >&2 "Go module cache integrity check failed; rebuilding the module cache"
+      GOTOOLCHAIN=local go clean -modcache
+      go version
+    fi
+  fi
+
   exec goreleaser "$@"
 ' -- "${goreleaser_args[@]}"
