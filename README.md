@@ -360,8 +360,8 @@ Start the node:
 
 ## Export
 
-Normal-height export is supported. Zero-height rewriting and a jail allowlist
-are intentionally unsupported.
+Both normal-height and zero-height export are supported. To export the current
+state at its normal height:
 
 ```bash
 ./build/gurud export \
@@ -371,6 +371,34 @@ are intentionally unsupported.
 ./build/gurud genesis validate exported-genesis.json \
   --home "$GURU_HOME"
 ```
+
+For a restart from height one, export a complete genesis with
+`--for-zero-height`:
+
+```bash
+./build/gurud export \
+  --home "$GURU_HOME" \
+  --for-zero-height \
+  --output-document zero-height-genesis.json
+```
+
+The exported `initial_height` is `0`, which CometBFT normalizes to first block
+height `1`. The transformation settles rewards and resets height-dependent
+state in an isolated context without writing changes to the source database.
+Oracle task definitions are preserved, while Oracle schedules, values and
+history, pending Constitution gas-price updates, and EIP-2935 block history are
+cleared. Configure the target network's Oracle activation and initial schedules
+before running `gurud genesis validate` on the final genesis.
+
+Zero-height export has these constraints:
+
+- It requires all modules; do not combine it with `--modules-to-export`.
+- The optional `--jail-allowed-addrs` accepts comma-separated validator operator
+  addresses and requires `--for-zero-height`. A nonempty list jails validators
+  outside the list; it does not automatically unjail listed validators.
+- Preflight rejects active or unclassified IBC lifecycle state, active or
+  unclassified governance proposals, and pending software upgrades. Module,
+  state, and economic-continuity checks must also pass before export succeeds.
 
 ## Mainnet configuration notes
 
@@ -392,6 +420,11 @@ Before launch:
   multi-validator load.
 
 These deployment choices are intentionally not hard-coded in the application.
+
+An existing-chain software upgrade also requires a named upgrade handler,
+an upgrade plan, and validated state migrations. This application does not yet
+wire a named upgrade handler to run module migrations; merging this code or
+exporting genesis alone does not establish an in-place upgrade path.
 
 ## Contributing and conduct
 
