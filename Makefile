@@ -29,6 +29,10 @@ BUILDDIR ?= $(CURDIR)/build
 # Keep BUILD_DIR as a compatibility override for the original Guru Makefile.
 BUILD_DIR ?= $(BUILDDIR)
 BUILD_DIR := $(abspath $(strip $(BUILD_DIR)))
+DIST_DIR ?= $(CURDIR)/dist
+DIST_DIR := $(abspath $(strip $(DIST_DIR)))
+PROJECT_CACHE_DIR ?= $(CURDIR)/cache
+PROJECT_CACHE_DIR := $(abspath $(strip $(PROJECT_CACHE_DIR)))
 MAIN_PKG := ./cmd/gurud
 ORACLE_MAIN_PKG := ./cmd/oracled
 VERSION_SMOKE_ROOT ?= $(BUILD_DIR)/version-smoke
@@ -446,6 +450,43 @@ release:
 	@bash scripts/run-goreleaser-cross.sh release
 
 .PHONY: release-check release-dry-run release
+
+###############################################################################
+###                               Cleanup                                   ###
+###############################################################################
+
+# Keep the default cleanup repository-local. Go and Docker caches are shared
+# with other projects and must only be removed through explicit commands.
+clean:
+	@set -eu; \
+	for dir in "$(BUILD_DIR)" "$(DIST_DIR)"; do \
+		case "$$dir" in \
+			"$(CURDIR)"/*) ;; \
+			*) echo "Refusing to remove path outside repository: $$dir" >&2; exit 2 ;; \
+		esac; \
+		echo "Removing $$dir"; \
+		rm -rf -- "$$dir"; \
+	done
+
+clean-project-cache:
+	@set -eu; \
+	dir="$(PROJECT_CACHE_DIR)"; \
+	case "$$dir" in \
+		"$(CURDIR)"/*) ;; \
+		*) echo "Refusing to remove path outside repository: $$dir" >&2; exit 2 ;; \
+	esac; \
+	echo "Removing $$dir"; \
+	rm -rf -- "$$dir"
+
+clean-go-build-cache:
+	@echo "Removing the shared Go build cache"
+	@$(GO) clean -cache
+
+clean-go-module-cache:
+	@echo "Removing the shared Go module cache; dependencies will be downloaded again"
+	@$(GO) clean -modcache
+
+.PHONY: clean clean-project-cache clean-go-build-cache clean-go-module-cache
 
 ###############################################################################
 ###                           Default Verification                          ###
