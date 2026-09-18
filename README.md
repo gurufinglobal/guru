@@ -1,12 +1,14 @@
 # Guru
 
-Guru is a Cosmos SDK v0.53.6 application assembled on Cosmos EVM v0.6.2.
+Guru is a Cosmos SDK v0.53.6 application using the Guru EVM fork
+(`github.com/gurufinglobal/evm v0.6.3-guru.1`).
 
 The repository owns the Guru application composition: keeper and module wiring,
 genesis and transaction policy, Oracle consensus integration, and the operator
-command tree. Cosmos SDK, Cosmos EVM, IBC-Go, and CometBFT remain upstream
-dependencies, while Guru adds application-specific Constitution, Oracle,
-staking, fee, and proposal behavior around them.
+command tree. Cosmos SDK, IBC-Go, and CometBFT remain upstream dependencies,
+while Cosmos EVM is provided by the pinned Guru EVM fork. Guru adds
+application-specific Constitution, Oracle, staking, fee, and proposal behavior
+around them.
 
 ## Repository layout
 
@@ -142,11 +144,12 @@ Oracle contribution and does not halt ordinary consensus. See the
 
 ## RPC behavior
 
-Guru uses the Cosmos EVM v0.6.2 server implementation without a local RPC
-quarantine or lifecycle patch. The generated application configuration keeps
-the upstream service defaults, including JSON-RPC disabled by default.
+Guru uses the server implementation provided by the pinned Guru EVM fork
+(`github.com/gurufinglobal/evm v0.6.3-guru.1`). The generated application
+configuration keeps that dependency's service defaults, including JSON-RPC
+disabled by default.
 Operators may enable JSON-RPC, WebSocket, the custom indexer, gRPC, or REST
-through the normal upstream `app.toml` and command flags.
+through `app.toml` and command flags.
 
 For production, place public endpoints behind appropriate network controls and
 set finite connection, batch, response, timeout, filter, log, block-range, and
@@ -371,6 +374,12 @@ state at its normal height:
 ./build/gurud genesis validate exported-genesis.json \
   --home "$GURU_HOME"
 ```
+
+Normal-height export sets `initial_height` to the next block height of the
+loaded source state. The export wrapper resets `consensus.params.version.app`
+and `consensus.params.abci.vote_extensions_enable_height` to zero. Review these
+fields against the target network's intended consensus configuration before
+restarting, and run `gurud genesis validate` again after any changes.
 
 For a restart from height one, export a complete genesis with
 `--for-zero-height`:
