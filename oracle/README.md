@@ -27,7 +27,7 @@ CGO_ENABLED=0 GOWORK=off go -C oracle build -mod=readonly ./cmd/oracled
 ```
 
 The module intentionally requires the Guru root module through
-`replace github.com/gurufinglobal/guru/v3 => ..`. Handwritten sidecar code
+`replace github.com/gurufinglobal/guru/v2 => ..`. Handwritten sidecar code
 imports only the root-generated internal gogo Oracle types for node-facing
 gRPC. Admin and storage protocols are sidecar-native and use no private
 protobuf tree.

@@ -82,8 +82,9 @@ Configured tasks must have a positive `submission_interval`.
 
 `ActiveTasks`, `LatestValues`, and `History` are paginated. If the request does
 not set `pagination.limit`, the module returns 30 items. Clients can request a
-different page size with `pagination.limit`, use `pagination.offset`, or pass the
-previous response `pagination.next_key` as `pagination.key`.
+different page size with `pagination.limit`, use `pagination.offset`, set
+`pagination.reverse`, or pass the previous response `pagination.next_key` as
+`pagination.key`.
 
 ## Proposal Payload Rules
 
@@ -142,4 +143,11 @@ gurud query oracle task BTC/USD
 gurud query oracle latest-value BTC/USD
 gurud query oracle latest-values
 gurud query oracle history BTC/USD
+```
+
+Use `--enabled=false` with `upsert-task` to store a task definition without
+scheduling active submissions:
+
+```sh
+gurud tx oracle upsert-task BTC/USD 5 --enabled=false --from <moderator>
 ```
