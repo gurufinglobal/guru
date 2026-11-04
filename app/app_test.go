@@ -400,6 +400,15 @@ func TestApplicationStateMachine(t *testing.T) {
 	require.True(t, application.FeeMarketAdapter.GetMinGasPrice(
 		queryContext,
 	).Equal(mustInt(constitutiontypes.MinGasPriceScaleFactor).ToLegacyDec()))
+	t.Run("Cosmos EVM security integration", func(t *testing.T) {
+		t.Run("EIP-712 through Guru ante", func(t *testing.T) {
+			testEIP712AnteIntegration(t, application, cosmosPrivateKey)
+		})
+		t.Run("staking account deletion", func(t *testing.T) {
+			testStakingAccountDeletionIntegration(t, application,
+				queryContext.WithBlockTime(blockTime.Add(time.Second)), cosmosSender)
+		})
+	})
 	const ordinaryDynamicFloorGas = uint64(200_000)
 	var ordinaryDynamicFloorTxBytes []byte
 	t.Run("ordinary SDK dynamic fee enforces effective price floor", func(t *testing.T) {
