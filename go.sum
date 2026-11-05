@@ -532,8 +532,8 @@ github.com/grpc-ecosystem/grpc-gateway v1.16.0 h1:gmcG1KaJ57LophUzW0Hy8NmPhnMZb4
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
 github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c h1:6rhixN/i8ZofjG1Y75iExal34USq5p+wiN1tpie8IrU=
 github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c/go.mod h1:NMPJylDgVpX0MLRlPy15sqSwOFv/U1GZ2m21JhFfek0=
-github.com/gurufinglobal/evm v0.6.3-guru.1 h1:TMAydOJ8CSyxjB/BzaA1EgXInUYPFP61lX5mh2+wjmA=
-github.com/gurufinglobal/evm v0.6.3-guru.1/go.mod h1:X0Mhla3t3xtRHIUk2piFgilnPEUGmNm0oaLI/xEDPWY=
+github.com/gurufinglobal/evm v0.6.4-guru.1 h1:1pw5RNfSUtHeSyDoVq06Re9AMzQzQ+fhHEy6MrNnruo=
+github.com/gurufinglobal/evm v0.6.4-guru.1/go.mod h1:X0Mhla3t3xtRHIUk2piFgilnPEUGmNm0oaLI/xEDPWY=
 github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.72 h1:vTCWu1wbdYo7PEZFem/rlr01+Un+wwVmI7wiegFdRLk=
 github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.72/go.mod h1:Vn+BBgKQHVQYdVQ4NZDICE1Brb+JfaONyDHr3q07oQc=
 github.com/hashicorp/consul/api v1.3.0/go.mod h1:MmDNSzIMUjNpY/mQ398R4bk2FnqQLoPndWW5VkKPlCE=
