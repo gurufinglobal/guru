@@ -4,7 +4,7 @@ go 1.26.7
 
 require (
 	cosmossdk.io/math v1.5.3
-	github.com/cosmos/cosmos-sdk v0.53.6
+	github.com/cosmos/cosmos-sdk v0.53.8
 	github.com/gurufinglobal/guru/v2 v2.0.0
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/spf13/cobra v1.10.1
